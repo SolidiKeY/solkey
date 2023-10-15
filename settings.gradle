@@ -30,6 +30,7 @@ include "keyext.caching"
 include "keyext.isabelletranslation"
 
 include 'keyext.api'
+include 'keyext.api.doc'
 
 include 'keyext.solidity.core'
 
