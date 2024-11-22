@@ -31,6 +31,7 @@ include "keyext.isabelletranslation"
 
 include 'keyext.api'
 include 'keyext.api.doc'
+include 'keyext.client.java'
 
 include 'keyext.solidity.core'
 
