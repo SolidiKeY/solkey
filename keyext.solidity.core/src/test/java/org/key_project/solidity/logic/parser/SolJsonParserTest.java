@@ -1,15 +1,16 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.logic.parser;
-
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.key_project.logic.SyntaxElement;
-import org.key_project.solidity.logic.ast.SolidityProgramElement;
-import org.key_project.util.helper.FindResources;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Path;
+
+import org.key_project.solidity.logic.ast.SolidityProgramElement;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 class SolJsonParserTest {
 
@@ -24,7 +25,7 @@ class SolJsonParserTest {
 
     private static URI getFile(String solFileName) {
         try {
-            //return FindResources.getResource(solFileName, SolJsonParserTest.class).toUri();
+            // return FindResources.getResource(solFileName, SolJsonParserTest.class).toUri();
             return SolJsonParser.class.getResource(solFileName).toURI();
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
