@@ -25,8 +25,16 @@ class SolJsonParserTest {
     }
 
     @Test
-    void parseSecond() throws IOException {
+    void parseContractWithIntAndBool() throws IOException {
         SolidityProgramElement programElement = getSolidityProgramElement("SimpleContract2.json");
+        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
+        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        Assertions.assertEquals(2, contractDeclaration.getFieldDeclarations().size());
+    }
+
+    @Test
+    void parseContractWithIntAndBoolSet() throws IOException {
+        SolidityProgramElement programElement = getSolidityProgramElement("SimpleContract3.json");
         Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
         ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
         Assertions.assertEquals(2, contractDeclaration.getFieldDeclarations().size());

@@ -84,6 +84,7 @@ public class SolJSONParser {
         // fieldNode.findValue("typeName").findValue("nodeType").asText().equals("ElementaryTypeName");
         String visibility = fieldNode.findValue("visibility").asText();
         // todo: initializer
+        JsonNode initializer = fieldNode.findValue("value");
         return new FieldDeclaration(new Name(fieldName), new TypeReference(new Name(fieldType)),
             null);
     }
