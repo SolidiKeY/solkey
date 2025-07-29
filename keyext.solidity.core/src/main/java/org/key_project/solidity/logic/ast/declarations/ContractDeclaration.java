@@ -6,24 +6,38 @@ package org.key_project.solidity.logic.ast.declarations;
 import java.util.List;
 
 import org.key_project.logic.Name;
+import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.logic.ast.abstractions.Type;
 
-public class ContractDeclaration {
+import org.jspecify.annotations.NonNull;
 
-    private final Name name;
+public class ContractDeclaration extends Declaration implements Type {
+
     private final FieldDeclaration[] field;
 
     public ContractDeclaration(Name name, List<FieldDeclaration> fields) {
-        this.name = name;
+        super(name);
         this.field = fields.toArray(new FieldDeclaration[0]);
     }
 
-    public String toString() {
+    @Override
+    public @NonNull String toString() {
         String contract = "contract ";
-        contract += name.toString() + " {";
+        contract += getName() + " {";
         for (int i = 0; i < field.length; i++) {
             contract += field[i].toString();
             contract += "\n";
         }
         return contract + "\n}";
+    }
+
+    @Override
+    public SyntaxElement getChild(int n) {
+        return field[n];
+    }
+
+    @Override
+    public int getChildCount() {
+        return field.length;
     }
 }
