@@ -8,24 +8,29 @@ import java.util.List;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.ast.abstractions.Type;
+import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
 
 public class ContractDeclaration extends Declaration implements Type {
 
-    private final FieldDeclaration[] field;
+    private final ImmutableArray<FieldDeclaration> fields;
 
     public ContractDeclaration(Name name, List<FieldDeclaration> fields) {
         super(name);
-        this.field = fields.toArray(new FieldDeclaration[0]);
+        this.fields = new ImmutableArray<>(fields.toArray(new FieldDeclaration[0]));
+    }
+
+    public ImmutableArray<FieldDeclaration> getFieldDeclarations() {
+        return fields;
     }
 
     @Override
     public @NonNull String toString() {
         String contract = "contract ";
         contract += getName() + " {";
-        for (int i = 0; i < field.length; i++) {
-            contract += field[i].toString();
+        for (int i = 0; i < fields.size(); i++) {
+            contract += fields.get(i);
             contract += "\n";
         }
         return contract + "\n}";
@@ -33,11 +38,12 @@ public class ContractDeclaration extends Declaration implements Type {
 
     @Override
     public SyntaxElement getChild(int n) {
-        return field[n];
+        return fields.get(n);
     }
 
     @Override
     public int getChildCount() {
-        return field.length;
+        return fields.size();
     }
+
 }
