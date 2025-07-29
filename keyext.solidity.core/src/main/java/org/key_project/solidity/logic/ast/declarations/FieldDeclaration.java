@@ -52,9 +52,7 @@ public class FieldDeclaration extends Declaration {
         if (i == 0) {
             return typeReference;
         }
-        if (i == 1) {
-            return initializer;
-        }
+        return initializer;
     }
 
 
