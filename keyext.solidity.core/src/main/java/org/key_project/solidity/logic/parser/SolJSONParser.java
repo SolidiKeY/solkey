@@ -15,6 +15,7 @@ import com.fasterxml.jackson.core.io.BigIntegerParser;
 import org.key_project.logic.Name;
 import org.key_project.solidity.logic.ast.SolidityProgramElement;
 import org.key_project.solidity.logic.ast.declarations.ContractDeclaration;
+import org.key_project.solidity.logic.ast.declarations.Declaration;
 import org.key_project.solidity.logic.ast.declarations.FieldDeclaration;
 import org.key_project.solidity.logic.ast.expressions.AddOperation;
 import org.key_project.solidity.logic.ast.expressions.Expression;
@@ -63,14 +64,11 @@ public class SolJSONParser {
         return elements;
     }
 
-    private HashMap<String, String> id2Name = new HashMap<>();
+    private HashMap<String, Declaration> id2Name = new HashMap<>();
 
     private ContractDeclaration parseContract(JsonNode contractNode) {
         String contractName = contractNode.findValue("canonicalName").asText(); // there is also a
                                                                                 // field "name"
-        String contractId = contractNode.findValue("id").asText();
-        id2Name.put(contractId, contractName);
-
         // now retrieve declared fields, functions, structs etc.
         List<FieldDeclaration> fields = new ArrayList<>();
 
@@ -81,7 +79,10 @@ public class SolJSONParser {
             }
         }
 
-        return new ContractDeclaration(new Name(contractName), fields);
+        final ContractDeclaration cdecl =  new ContractDeclaration(new Name(contractName), fields);
+        String contractId = contractNode.findValue("id").asText();
+        id2Name.put(contractId, cdecl);
+        return cdecl;
     }
 
     private FieldDeclaration parseField(JsonNode fieldNode) {
@@ -96,8 +97,11 @@ public class SolJSONParser {
         if (initializer != null) {
              initializerExp = parseExpression(initializer);
         }
-        return new FieldDeclaration(new Name(fieldName), new TypeReference(new Name(fieldType)),
+        FieldDeclaration field = new FieldDeclaration(new Name(fieldName), new TypeReference(new Name(fieldType)),
                 initializerExp);
+        String id = fieldNode.findValue("id").asText();
+        id2Name.put(id, field);
+        return field;
     }
 
     private Expression parseExpression(JsonNode initializer) {
