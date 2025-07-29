@@ -16,7 +16,6 @@ public class FieldDeclaration extends Declaration {
     private final @NonNull TypeReference typeReference;
     private final @Nullable Expression initializer;
 
-
     public FieldDeclaration(@NonNull Name name, @NonNull TypeReference type) {
         super(name);
         this.typeReference = type;

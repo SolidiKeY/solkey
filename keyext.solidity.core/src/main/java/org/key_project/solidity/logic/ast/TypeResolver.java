@@ -4,7 +4,9 @@
 package org.key_project.solidity.logic.ast;
 
 import org.key_project.logic.Name;
+import org.key_project.solidity.logic.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.logic.ast.abstractions.Type;
+import org.key_project.solidity.logic.ast.expressions.AddOperation;
 
 /** This class resolves the type of a reference or expression */
 public class TypeResolver {
@@ -17,5 +19,9 @@ public class TypeResolver {
 
     public Type resolveTypeByName(Name typeName) {
         return solidityModel.getType(typeName);
+    }
+
+    public Type resolve(AddOperation addOperation) {
+        return PrimitiveType.getPrimitiveType("uint256");
     }
 }

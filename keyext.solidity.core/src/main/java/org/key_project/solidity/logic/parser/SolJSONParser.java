@@ -4,16 +4,22 @@
 package org.key_project.solidity.logic.parser;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
+import com.fasterxml.jackson.core.io.BigIntegerParser;
 import org.key_project.logic.Name;
 import org.key_project.solidity.logic.ast.SolidityProgramElement;
 import org.key_project.solidity.logic.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.logic.ast.declarations.FieldDeclaration;
+import org.key_project.solidity.logic.ast.expressions.AddOperation;
+import org.key_project.solidity.logic.ast.expressions.Expression;
+import org.key_project.solidity.logic.ast.expressions.Literal;
+import org.key_project.solidity.logic.ast.expressions.Uint256Literal;
 import org.key_project.solidity.logic.ast.references.TypeReference;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -48,7 +54,7 @@ public class SolJSONParser {
     }
 
     private List<SolidityProgramElement> parseSourceUnit(List<JsonNode> nodes) {
-        List<SolidityProgramElement> elements = new ArrayList<SolidityProgramElement>();
+        List<SolidityProgramElement> elements = new ArrayList<>();
         for (var node : nodes) {
             if (node.findValue("contractKind").asText().equals("contract")) {
                 elements.add(parseContract(node));
@@ -67,6 +73,7 @@ public class SolJSONParser {
 
         // now retrieve declared fields, functions, structs etc.
         List<FieldDeclaration> fields = new ArrayList<>();
+
         for (Iterator<JsonNode> it = contractNode.findValue("nodes").elements(); it.hasNext(); ) {
             var node = it.next();
             if (node.findValue("nodeType").asText().equals("VariableDeclaration")) {
@@ -85,7 +92,43 @@ public class SolJSONParser {
         String visibility = fieldNode.findValue("visibility").asText();
         // todo: initializer
         JsonNode initializer = fieldNode.findValue("value");
+        Expression initializerExp = null;
+        if (initializer != null) {
+             initializerExp = parseExpression(initializer);
+        }
         return new FieldDeclaration(new Name(fieldName), new TypeReference(new Name(fieldType)),
-            null);
+                initializerExp);
+    }
+
+    private Expression parseExpression(JsonNode initializer) {
+        if (initializer.findValue("nodeType").asText().equals("Literal")) {
+            return parseLiteral(initializer);
+        } else if (initializer.findValue("nodeType").asText().equals("BinaryOperation")) {
+            return parseBinaryOperation(initializer);
+        }
+        throw new RuntimeException("Not yet supported expression");
+    }
+
+    private Expression parseBinaryOperation(JsonNode initializer) {
+        // TO BE Implemented
+        JsonNode leftExpression = null;
+        JsonNode rightExpression = null;
+
+        final String operator = initializer.findValue("operator").asText();
+        switch (operator) {
+            case "+": return new AddOperation(parseExpression(leftExpression),
+                    parseExpression(rightExpression));
+            default: throw new RuntimeException("Not yet supported binary operation: " + operator);
+        }
+    }
+
+    private Literal parseLiteral(JsonNode literal) {
+        if (literal.findValue("kind").asText().equals("number")) {
+            String initializerExp = literal.findValue("value").asText();
+            return new Uint256Literal(BigIntegerParser.parseWithFastParser(initializerExp));
+        } else if (literal.findValue("kind").asText().equals("bool")) {
+            return new Uint256Literal(BigInteger.ZERO); // FIX!!!!
+        }
+        throw new RuntimeException("Not yet supported literal");
     }
 }
