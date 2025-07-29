@@ -18,17 +18,29 @@ class SolJsonParserTest {
 
     @Test
     void parse() throws IOException {
+        SolidityProgramElement programElement = getSolidityProgramElement("SimpleContract1.json");
+        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
+        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
+    }
+
+    @Test
+    void parseSecond() throws IOException {
+        SolidityProgramElement programElement = getSolidityProgramElement("SimpleContract2.json");
+        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
+        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        Assertions.assertEquals(2, contractDeclaration.getFieldDeclarations().size());
+    }
+
+    private static SolidityProgramElement getSolidityProgramElement(String solFileName) throws IOException {
         SolJSONParser jsonParser = new SolJSONParser();
-        String solFileName = "SimpleContract1.json";
         URI fileURI = getFile(solFileName);
         Assertions.assertNotNull(fileURI);
         List<SolidityProgramElement> unit = jsonParser.parse(fileURI);
         Assertions.assertNotNull(unit);
         Assertions.assertEquals(1, unit.size());
         SolidityProgramElement programElement = unit.get(0);
-        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
-        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
-        Assertions.assertTrue(contractDeclaration.getFieldDeclarations().size() == 1);
+        return programElement;
     }
 
     private static URI getFile(String solFileName) {

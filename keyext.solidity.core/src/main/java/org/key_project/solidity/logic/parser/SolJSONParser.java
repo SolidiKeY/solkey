@@ -67,7 +67,8 @@ public class SolJSONParser {
 
         // now retrieve declared fields, functions, structs etc.
         List<FieldDeclaration> fields = new ArrayList<>();
-        for (var node : contractNode.findValues("nodes")) {
+        for (Iterator<JsonNode> it = contractNode.findValue("nodes").elements(); it.hasNext(); ) {
+            var node = it.next();
             if (node.findValue("nodeType").asText().equals("VariableDeclaration")) {
                 fields.add(parseField(node));
             }
