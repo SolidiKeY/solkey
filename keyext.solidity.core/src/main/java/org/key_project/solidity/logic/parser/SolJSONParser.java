@@ -4,7 +4,6 @@
 package org.key_project.solidity.logic.parser;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -208,7 +207,11 @@ public class SolJSONParser {
                 String initializerExp = literal.findValue("value").asText();
                 yield new Uint256Literal(BigIntegerParser.parseWithFastParser(initializerExp));
             }
-            case "bool" -> new Uint256Literal(BigInteger.ZERO); // FIX!!!!
+            case "bool" -> {
+                String initializerExp = literal.findValue("value").asText();
+                yield initializerExp.equals("true") ? BoolLiteral.TRUE : BoolLiteral.FALSE;
+            }
+            // FIX!!!!
             default -> throw new RuntimeException("Not yet supported literal");
         };
     }

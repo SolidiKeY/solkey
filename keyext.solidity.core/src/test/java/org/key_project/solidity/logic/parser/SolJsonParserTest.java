@@ -11,7 +11,9 @@ import java.util.List;
 import org.key_project.solidity.logic.ast.SolidityProgramElement;
 import org.key_project.solidity.logic.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.logic.ast.declarations.FunctionDeclaration;
+import org.key_project.solidity.logic.ast.declarations.StateVariableDeclaration;
 import org.key_project.solidity.logic.ast.expressions.AddOperation;
+import org.key_project.solidity.logic.ast.expressions.BoolLiteral;
 import org.key_project.solidity.logic.ast.expressions.Expression;
 import org.key_project.solidity.logic.ast.expressions.Uint256Literal;
 import org.key_project.solidity.logic.ast.references.StateVariableReference;
@@ -44,6 +46,13 @@ class SolJsonParserTest {
         Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
         ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
         Assertions.assertEquals(2, contractDeclaration.getFieldDeclarations().size());
+        StateVariableDeclaration firstField = contractDeclaration.getFieldDeclarations().get(0);
+        Assertions.assertInstanceOf(Uint256Literal.class, firstField.getInitializer());
+        Assertions.assertEquals(1000,
+            ((Uint256Literal) firstField.getInitializer()).getValue().longValue());
+        StateVariableDeclaration secondField = contractDeclaration.getFieldDeclarations().get(1);
+        Assertions.assertInstanceOf(BoolLiteral.class, secondField.getInitializer());
+        Assertions.assertSame(BoolLiteral.TRUE, secondField.getInitializer());
     }
 
     @Test

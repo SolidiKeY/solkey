@@ -3,25 +3,26 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.logic.ast.expressions;
 
-import java.math.BigInteger;
-
 import org.key_project.solidity.logic.ast.abstractions.PrimitiveType;
 
-public class Uint256Literal extends Literal {
+public class BoolLiteral extends Literal {
 
-    private final BigInteger value;
+    public static final BoolLiteral TRUE = new BoolLiteral(true);
+    public static final BoolLiteral FALSE = new BoolLiteral(false);
 
-    public Uint256Literal(BigInteger value) {
-        super(PrimitiveType.UINT256);
+    private final boolean value;
+
+    private BoolLiteral(boolean value) {
+        super(PrimitiveType.BOOL);
         this.value = value;
     }
 
-    public BigInteger getValue() {
+    public boolean getValue() {
         return value;
     }
 
     @Override
     public String toString() {
-        return value.toString();
+        return value ? "true" : "false";
     }
 }
