@@ -10,9 +10,14 @@ import java.util.List;
 
 import org.key_project.solidity.logic.ast.SolidityProgramElement;
 import org.key_project.solidity.logic.ast.declarations.ContractDeclaration;
+import org.key_project.solidity.logic.ast.expressions.AddOperation;
+import org.key_project.solidity.logic.ast.expressions.Expression;
+import org.key_project.solidity.logic.ast.expressions.StateVariableReference;
+import org.key_project.solidity.logic.ast.expressions.Uint256Literal;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
 
 class SolJsonParserTest {
 
@@ -54,6 +59,12 @@ class SolJsonParserTest {
         Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
         ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
         Assertions.assertEquals(2, contractDeclaration.getFieldDeclarations().size());
+        Expression initializer = contractDeclaration.getFieldDeclarations().get(1).getInitializer();
+        Assertions.assertNotNull(initializer);
+        Assertions.assertInstanceOf(AddOperation.class, initializer);
+        Assertions.assertInstanceOf(StateVariableReference.class,
+            ((AddOperation) initializer).getChild(0));
+        Assertions.assertInstanceOf(Uint256Literal.class, ((AddOperation) initializer).getChild(1));
     }
 
 

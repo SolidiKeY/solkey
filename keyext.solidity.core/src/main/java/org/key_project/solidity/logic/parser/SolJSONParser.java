@@ -18,13 +18,14 @@ import org.key_project.solidity.logic.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.logic.ast.declarations.Declaration;
 import org.key_project.solidity.logic.ast.declarations.FieldDeclaration;
 import org.key_project.solidity.logic.ast.expressions.*;
-import org.key_project.solidity.logic.ast.expressions.Identifier;
+import org.key_project.solidity.logic.ast.expressions.StateVariableReference;
 import org.key_project.solidity.logic.ast.references.TypeReference;
 
 import com.fasterxml.jackson.core.io.BigIntegerParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import static org.key_project.solidity.logic.ast.abstractions.PrimitiveType.BOOL;
 import static org.key_project.solidity.logic.ast.abstractions.PrimitiveType.UINT256;
 
 ///
@@ -37,7 +38,7 @@ public class SolJSONParser {
     /// keeps track of JSON ids assigned to declarations, required for resolving field references,
     /// types etc.
     /// TODO: what if a type under declaration references itself (is that possible in Solidity?)
-    private HashMap<String, Declaration> id2Name = new HashMap<>();
+    private HashMap<Integer, Declaration> id2Name = new HashMap<>();
 
     /// parses the Solidity file found at the provided [URI] and converts it into a
     /// list of [SolidityProgramElement]s of declarations representing the Solidity programs
@@ -86,7 +87,7 @@ public class SolJSONParser {
         }
 
         final ContractDeclaration cdecl = new ContractDeclaration(new Name(contractName), fields);
-        String contractId = contractNode.findValue("id").asText();
+        final int contractId = contractNode.findValue("id").asInt();
         id2Name.put(contractId, cdecl);
         return cdecl;
     }
@@ -109,7 +110,7 @@ public class SolJSONParser {
         final FieldDeclaration field =
             new FieldDeclaration(new Name(fieldName), new TypeReference(new Name(fieldType)),
                 initializerExp);
-        final String id = fieldNode.findValue("id").asText();
+        final int id = fieldNode.findValue("id").asInt();
         id2Name.put(id, field);
 
         return field;
@@ -142,15 +143,31 @@ public class SolJSONParser {
         }
     }
 
-    private Identifier parseIdentifier(JsonNode literal) {
+    private StateVariableReference parseIdentifier(JsonNode literal) {
         final String name = literal.findValue("name").asText();
-        final int id = literal.findValue("referencedDeclaration").asInt();
+        final int referenceDeclarationId = literal.findValue("referencedDeclaration").asInt();
         String type_str = literal.findValue("typeDescriptions").findValue("typeString").asText();
+
+        Type type = getType(type_str);
+
+        final Declaration declaration = id2Name.get(referenceDeclarationId);
+        if (declaration instanceof FieldDeclaration stateVarDeclaration) {
+            return new StateVariableReference(new Name(name), stateVarDeclaration, type);
+        } else if (declaration == null) {
+            throw new RuntimeException("Unknown reference declaration " + referenceDeclarationId);
+        } else {
+            throw new RuntimeException(
+                "Unexpected reference declaration " + declaration + " expected a state variable.");
+        }
+    }
+
+    private Type getType(String type_str) {
         Type type = switch (type_str) {
             case "uint256" -> UINT256;
+            case "bool" -> BOOL;
             default -> throw new IllegalStateException("Type " + type_str + " not covered");
         };
-        return new Identifier(name, id, type);
+        return type;
     }
 
     private Literal parseLiteral(JsonNode literal) {
