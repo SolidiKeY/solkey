@@ -40,6 +40,14 @@ class SolJsonParserTest {
         Assertions.assertEquals(2, contractDeclaration.getFieldDeclarations().size());
     }
 
+    @Test
+    void parseContractWithAddition() throws IOException {
+        SolidityProgramElement programElement = getSolidityProgramElement("SimpleContract4.json");
+        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
+        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        Assertions.assertEquals(2, contractDeclaration.getFieldDeclarations().size());
+    }
+
     private static SolidityProgramElement getSolidityProgramElement(String solFileName)
             throws IOException {
         SolJSONParser jsonParser = new SolJSONParser();

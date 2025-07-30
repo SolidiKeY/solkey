@@ -127,6 +127,8 @@ public class SolJSONParser {
         final String operator = initializer.findValue("operator").asText();
         switch (operator) {
             case "+":
+                leftExpression = initializer.findValue("leftExpression");
+                rightExpression = initializer.findValue("rightExpression");
                 return new AddOperation(parseExpression(leftExpression),
                     parseExpression(rightExpression));
             default:
