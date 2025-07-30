@@ -13,6 +13,7 @@ import java.util.List;
 
 import org.key_project.logic.Name;
 import org.key_project.solidity.logic.ast.SolidityProgramElement;
+import org.key_project.solidity.logic.ast.abstractions.Type;
 import org.key_project.solidity.logic.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.logic.ast.declarations.Declaration;
 import org.key_project.solidity.logic.ast.declarations.FieldDeclaration;
@@ -140,7 +141,12 @@ public class SolJSONParser {
     private Identifier parseIdentifier(JsonNode literal) {
         final String name = literal.findValue("name").asText();
         final int id = literal.findValue("referencedDeclaration").asInt();
-        return new Identifier(name, id, UINT256);
+        String type_str = literal.findValue("typeDescriptions").findValue("typeString").asText();
+        Type type = switch (type_str) {
+            case "uint256" -> UINT256;
+            default -> throw new IllegalStateException("Type " + type_str + " not covered");
+        };
+        return new Identifier(name, id, type);
     }
 
     private Literal parseLiteral(JsonNode literal) {
