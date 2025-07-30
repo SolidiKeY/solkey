@@ -16,7 +16,7 @@ import org.key_project.solidity.logic.ast.SolidityProgramElement;
 import org.key_project.solidity.logic.ast.abstractions.Type;
 import org.key_project.solidity.logic.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.logic.ast.declarations.Declaration;
-import org.key_project.solidity.logic.ast.declarations.FieldDeclaration;
+import org.key_project.solidity.logic.ast.declarations.StateVariableDeclaration;
 import org.key_project.solidity.logic.ast.expressions.*;
 import org.key_project.solidity.logic.ast.expressions.StateVariableReference;
 import org.key_project.solidity.logic.ast.references.TypeReference;
@@ -75,7 +75,7 @@ public class SolJSONParser {
         String contractName = contractNode.findValue("canonicalName").asText(); // there is also a
         // field "name"
         // now retrieve declared fields, functions, structs etc.
-        List<FieldDeclaration> fields = new ArrayList<>();
+        List<StateVariableDeclaration> fields = new ArrayList<>();
 
         for (Iterator<JsonNode> it = contractNode.findValue("nodes").elements(); it.hasNext();) {
             final JsonNode node = it.next();
@@ -92,7 +92,7 @@ public class SolJSONParser {
         return cdecl;
     }
 
-    private FieldDeclaration parseField(JsonNode fieldNode) {
+    private StateVariableDeclaration parseField(JsonNode fieldNode) {
         final String fieldName = fieldNode.findValue("name").asText();
         final String fieldType = fieldNode.findValue("typeName").findValue("name").asText();
         // boolean isPrimitive =
@@ -107,8 +107,9 @@ public class SolJSONParser {
             initializerExp = parseExpression(initializer);
         }
 
-        final FieldDeclaration field =
-            new FieldDeclaration(new Name(fieldName), new TypeReference(new Name(fieldType)),
+        final StateVariableDeclaration field =
+            new StateVariableDeclaration(new Name(fieldName),
+                new TypeReference(new Name(fieldType)),
                 initializerExp);
         final int id = fieldNode.findValue("id").asInt();
         id2Name.put(id, field);
@@ -151,7 +152,7 @@ public class SolJSONParser {
         Type type = getType(type_str);
 
         final Declaration declaration = id2Name.get(referenceDeclarationId);
-        if (declaration instanceof FieldDeclaration stateVarDeclaration) {
+        if (declaration instanceof StateVariableDeclaration stateVarDeclaration) {
             return new StateVariableReference(new Name(name), stateVarDeclaration, type);
         } else if (declaration == null) {
             throw new RuntimeException("Unknown reference declaration " + referenceDeclarationId);

@@ -11,25 +11,25 @@ import org.key_project.solidity.logic.ast.references.TypeReference;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-public class FieldDeclaration extends Declaration {
+public class StateVariableDeclaration extends Declaration {
 
     private final @NonNull TypeReference typeReference;
     private final @Nullable Expression initializer;
 
-    public FieldDeclaration(@NonNull Name name, @NonNull TypeReference type) {
+    public StateVariableDeclaration(@NonNull Name name, @NonNull TypeReference type) {
         super(name);
         this.typeReference = type;
         this.initializer = null;
     }
 
-    public FieldDeclaration(@NonNull Name name, @NonNull TypeReference typeReference,
+    public StateVariableDeclaration(@NonNull Name name, @NonNull TypeReference typeReference,
             @Nullable Expression initializer) {
         super(name);
         this.typeReference = typeReference;
         this.initializer = initializer;
     }
 
-    public TypeReference getTypeReference() {
+    public @NonNull TypeReference getTypeReference() {
         return typeReference;
     }
 

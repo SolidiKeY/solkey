@@ -14,14 +14,14 @@ import org.jspecify.annotations.NonNull;
 
 public class ContractDeclaration extends Declaration implements Type {
 
-    private final ImmutableArray<FieldDeclaration> fields;
+    private final ImmutableArray<StateVariableDeclaration> fields;
 
-    public ContractDeclaration(Name name, List<FieldDeclaration> fields) {
+    public ContractDeclaration(Name name, List<StateVariableDeclaration> fields) {
         super(name);
-        this.fields = new ImmutableArray<>(fields.toArray(new FieldDeclaration[0]));
+        this.fields = new ImmutableArray<>(fields.toArray(new StateVariableDeclaration[0]));
     }
 
-    public ImmutableArray<FieldDeclaration> getFieldDeclarations() {
+    public ImmutableArray<StateVariableDeclaration> getFieldDeclarations() {
         return fields;
     }
 

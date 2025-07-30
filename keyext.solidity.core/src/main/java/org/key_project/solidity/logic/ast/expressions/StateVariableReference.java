@@ -7,23 +7,25 @@ import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.ast.TypeResolver;
 import org.key_project.solidity.logic.ast.abstractions.Type;
-import org.key_project.solidity.logic.ast.declarations.FieldDeclaration;
+import org.key_project.solidity.logic.ast.declarations.StateVariableDeclaration;
 
 public class StateVariableReference implements Expression {
 
     private final Name name;
-    private final FieldDeclaration referedDeclaration;
+    private final StateVariableDeclaration referedDeclaration;
     private Type type;
     private Name typeName;
 
-    public StateVariableReference(Name name, FieldDeclaration referedDeclaration, Type type) {
+    public StateVariableReference(Name name, StateVariableDeclaration referedDeclaration,
+            Type type) {
         this.name = name;
         this.referedDeclaration = referedDeclaration;
         this.type = type;
         this.typeName = type.getName();
     }
 
-    public StateVariableReference(Name name, FieldDeclaration referedDeclaration, Name typeName) {
+    public StateVariableReference(Name name, StateVariableDeclaration referedDeclaration,
+            Name typeName) {
         this.name = name;
         this.referedDeclaration = referedDeclaration;
         this.typeName = type.getName();
