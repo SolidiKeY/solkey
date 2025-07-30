@@ -67,13 +67,20 @@ class SolJsonParserTest {
         Assertions.assertInstanceOf(Uint256Literal.class, ((AddOperation) initializer).getChild(1));
     }
 
-
     @Test
     void parseContractWithBoth() throws IOException {
         SolidityProgramElement programElement = getSolidityProgramElement("SimpleContract6.json");
         Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
         ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
         Assertions.assertEquals(2, contractDeclaration.getFieldDeclarations().size());
+    }
+
+    @Test
+    void parseFunction() throws IOException {
+        SolidityProgramElement programElement = getSolidityProgramElement("SimpleContract7.json");
+        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
+        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        Assertions.assertEquals(1, contractDeclaration.getFunctions().size());
     }
 
     private static SolidityProgramElement getSolidityProgramElement(String solFileName)

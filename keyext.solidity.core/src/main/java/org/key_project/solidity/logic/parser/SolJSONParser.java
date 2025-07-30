@@ -16,6 +16,7 @@ import org.key_project.solidity.logic.ast.SolidityProgramElement;
 import org.key_project.solidity.logic.ast.abstractions.Type;
 import org.key_project.solidity.logic.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.logic.ast.declarations.Declaration;
+import org.key_project.solidity.logic.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.logic.ast.declarations.StateVariableDeclaration;
 import org.key_project.solidity.logic.ast.expressions.*;
 import org.key_project.solidity.logic.ast.expressions.StateVariableReference;
@@ -76,20 +77,27 @@ public class SolJSONParser {
         // field "name"
         // now retrieve declared fields, functions, structs etc.
         List<StateVariableDeclaration> fields = new ArrayList<>();
+        List<FunctionDeclaration> functions = new ArrayList<>();
 
         for (Iterator<JsonNode> it = contractNode.findValue("nodes").elements(); it.hasNext();) {
             final JsonNode node = it.next();
             final String nodeType = node.findValue("nodeType").asText();
             switch (nodeType) {
                 case "VariableDeclaration" -> fields.add(parseField(node));
+                case "FunctionDefinition" -> functions.add(parseFunction(node));
                 default -> throw new RuntimeException("Unknown node type " + nodeType);
             }
         }
 
-        final ContractDeclaration cdecl = new ContractDeclaration(new Name(contractName), fields);
+        final ContractDeclaration cdecl = new ContractDeclaration(new Name(contractName), fields, functions);
         final int contractId = contractNode.findValue("id").asInt();
         id2Name.put(contractId, cdecl);
         return cdecl;
+    }
+
+    private FunctionDeclaration parseFunction(JsonNode node) {
+        final String name = node.findValue("name").asText();
+        return new FunctionDeclaration(new Name(name));
     }
 
     private StateVariableDeclaration parseField(JsonNode fieldNode) {

@@ -15,10 +15,12 @@ import org.jspecify.annotations.NonNull;
 public class ContractDeclaration extends Declaration implements Type {
 
     private final ImmutableArray<StateVariableDeclaration> fields;
+    private final List<FunctionDeclaration> functions;
 
-    public ContractDeclaration(Name name, List<StateVariableDeclaration> fields) {
+    public ContractDeclaration(Name name, List<StateVariableDeclaration> fields, List<FunctionDeclaration> functions) {
         super(name);
         this.fields = new ImmutableArray<>(fields.toArray(new StateVariableDeclaration[0]));
+        this.functions = functions;
     }
 
     public ImmutableArray<StateVariableDeclaration> getFieldDeclarations() {
@@ -46,4 +48,7 @@ public class ContractDeclaration extends Declaration implements Type {
         return fields.size();
     }
 
+    public List<FunctionDeclaration> getFunctions() {
+        return functions;
+    }
 }
