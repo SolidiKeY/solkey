@@ -1,7 +1,7 @@
 {
   "absolutePath": "SimpleContract5.sol",
   "exportedSymbols": {
-    "SimpleContract": [
+    "SimpleContract5": [
       9
     ]
   },
@@ -11,7 +11,7 @@
     {
       "abstract": false,
       "baseContracts": [],
-      "canonicalName": "SimpleContract",
+      "canonicalName": "SimpleContract5",
       "contractDependencies": [],
       "contractKind": "contract",
       "fullyImplemented": true,
@@ -19,8 +19,8 @@
       "linearizedBaseContracts": [
         9
       ],
-      "name": "SimpleContract",
-      "nameLocation": "9:14:0",
+      "name": "SimpleContract5",
+      "nameLocation": "9:15:0",
       "nodeType": "ContractDefinition",
       "nodes": [
         {

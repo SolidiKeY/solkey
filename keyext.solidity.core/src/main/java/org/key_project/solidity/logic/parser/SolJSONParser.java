@@ -92,22 +92,26 @@ public class SolJSONParser {
     }
 
     private FieldDeclaration parseField(JsonNode fieldNode) {
-        String fieldName = fieldNode.findValue("name").asText();
-        String fieldType = fieldNode.findValue("typeName").findValue("name").asText();
+        final String fieldName = fieldNode.findValue("name").asText();
+        final String fieldType = fieldNode.findValue("typeName").findValue("name").asText();
         // boolean isPrimitive =
         // fieldNode.findValue("typeName").findValue("nodeType").asText().equals("ElementaryTypeName");
+
+        // TODO: Implement modifiers
         String visibility = fieldNode.findValue("visibility").asText();
-        // todo: initializer
+
         JsonNode initializer = fieldNode.findValue("value");
         Expression initializerExp = null;
         if (initializer != null) {
             initializerExp = parseExpression(initializer);
         }
-        FieldDeclaration field =
+
+        final FieldDeclaration field =
             new FieldDeclaration(new Name(fieldName), new TypeReference(new Name(fieldType)),
                 initializerExp);
         final String id = fieldNode.findValue("id").asText();
         id2Name.put(id, field);
+
         return field;
     }
 
