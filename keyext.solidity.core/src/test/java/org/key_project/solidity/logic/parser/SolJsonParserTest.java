@@ -40,7 +40,8 @@ class SolJsonParserTest {
         Assertions.assertEquals(2, contractDeclaration.getFieldDeclarations().size());
     }
 
-    private static SolidityProgramElement getSolidityProgramElement(String solFileName) throws IOException {
+    private static SolidityProgramElement getSolidityProgramElement(String solFileName)
+            throws IOException {
         SolJSONParser jsonParser = new SolJSONParser();
         URI fileURI = getFile(solFileName);
         Assertions.assertNotNull(fileURI);
