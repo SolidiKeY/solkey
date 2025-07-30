@@ -10,15 +10,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 import org.key_project.logic.Name;
 import org.key_project.solidity.logic.ast.SolidityProgramElement;
 import org.key_project.solidity.logic.ast.abstractions.Type;
 import org.key_project.solidity.logic.ast.declarations.*;
 import org.key_project.solidity.logic.ast.expressions.*;
-import org.key_project.solidity.logic.ast.expressions.StateVariableReference;
+import org.key_project.solidity.logic.ast.references.StateVariableReference;
 import org.key_project.solidity.logic.ast.references.TypeReference;
 
 import com.fasterxml.jackson.core.io.BigIntegerParser;
@@ -88,7 +86,8 @@ public class SolJSONParser {
             }
         }
 
-        final ContractDeclaration cdecl = new ContractDeclaration(new Name(contractName), fields, functions);
+        final ContractDeclaration cdecl =
+            new ContractDeclaration(new Name(contractName), fields, functions);
         final int contractId = contractNode.findValue("id").asInt();
         id2Name.put(contractId, cdecl);
         return cdecl;
@@ -98,23 +97,25 @@ public class SolJSONParser {
         final String name = node.findValue("name").asText();
         List<JsonNode> parameters = node.findValue("returnParameters").findValues("parameters");
         List<ParameterDeclaration> returnParameters =
-                parameters.getFirst().isEmpty() ? List.of() : parameters.stream().map(this::parseParam).toList();
+            parameters.getFirst().isEmpty() ? List.of()
+                    : parameters.stream().map(this::parseParam).toList();
         List<JsonNode> statements = node.findValues("statements");
         List<ParameterDeclaration> inputParamenters =
             statements.getFirst().isEmpty() ? List.of() : statements.stream().map(it -> {
                 return parseParam(it.findValue("expression"));
-        }).toList();
+            }).toList();
 
         return new FunctionDeclaration(new Name(name), returnParameters, inputParamenters);
     }
 
-    private ParameterDeclaration parseParam(JsonNode node){
+    private ParameterDeclaration parseParam(JsonNode node) {
         final String fieldName = node.findValue("name").asText();
-        final String fieldType = node.findValue("typeDescriptions").findValue("typeString").asText();
+        final String fieldType =
+            node.findValue("typeDescriptions").findValue("typeString").asText();
 
         final ParameterDeclaration field =
-                new ParameterDeclaration(new Name(fieldName),
-                        new TypeReference(new Name(fieldType)));
+            new ParameterDeclaration(new Name(fieldName),
+                new TypeReference(new Name(fieldType)));
         final int id = node.findValue("id").asInt();
         id2Name.put(id, field);
 

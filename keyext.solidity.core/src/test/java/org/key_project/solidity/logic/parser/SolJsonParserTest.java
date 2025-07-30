@@ -13,8 +13,8 @@ import org.key_project.solidity.logic.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.logic.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.logic.ast.expressions.AddOperation;
 import org.key_project.solidity.logic.ast.expressions.Expression;
-import org.key_project.solidity.logic.ast.expressions.StateVariableReference;
 import org.key_project.solidity.logic.ast.expressions.Uint256Literal;
+import org.key_project.solidity.logic.ast.references.StateVariableReference;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

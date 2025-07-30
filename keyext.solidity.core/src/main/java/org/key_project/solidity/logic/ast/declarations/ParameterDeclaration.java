@@ -1,9 +1,13 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.logic.ast.declarations;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.ast.references.TypeReference;
+
+import org.jspecify.annotations.NonNull;
 
 public class ParameterDeclaration extends Declaration {
     private final @NonNull TypeReference typeReference;
@@ -15,12 +19,15 @@ public class ParameterDeclaration extends Declaration {
 
     @Override
     public SyntaxElement getChild(int n) {
-        return null;
+        if (n == 0) {
+            return typeReference;
+        }
+        throw new IndexOutOfBoundsException("Parameter declarations have only one child");
     }
 
     @Override
     public int getChildCount() {
-        return 0;
+        return 1;
     }
 
     public @NonNull TypeReference getTypeReference() {

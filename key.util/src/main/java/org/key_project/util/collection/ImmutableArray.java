@@ -58,7 +58,7 @@ public class ImmutableArray<S extends @Nullable Object>
      */
     @SuppressWarnings("unchecked")
     public ImmutableArray(@NonNull Collection<? extends S> list) {
-        content = (S[]) list.toArray();
+        content = (S[]) list.toArray(list.toArray());
     }
 
     /**

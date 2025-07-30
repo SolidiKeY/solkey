@@ -1,37 +1,45 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.logic.ast.declarations;
-
-import org.key_project.logic.Name;
-import org.key_project.logic.SyntaxElement;
-import org.key_project.solidity.logic.ast.abstractions.Type;
-import org.key_project.solidity.logic.ast.expressions.Expression;
 
 import java.util.List;
 
-public class FunctionDeclaration extends Declaration {
-    private final List<ParameterDeclaration> returnParameters;
-    private final List<ParameterDeclaration> inputParameters;
+import org.key_project.logic.Name;
+import org.key_project.logic.SyntaxElement;
+import org.key_project.util.collection.ImmutableArray;
 
-    public FunctionDeclaration(Name name, List<ParameterDeclaration> returnParameters, List<ParameterDeclaration> inputParameters) {
+public class FunctionDeclaration extends Declaration {
+    private final ImmutableArray<ParameterDeclaration> returnParameters;
+    private final ImmutableArray<ParameterDeclaration> inputParameters;
+    // private final Statement body;
+
+    public FunctionDeclaration(Name name, List<ParameterDeclaration> returnParameters,
+            List<ParameterDeclaration> inputParameters) {
         super(name);
-        this.returnParameters = returnParameters;
-        this.inputParameters = inputParameters;
+        this.returnParameters = new ImmutableArray<>(returnParameters);
+        this.inputParameters = new ImmutableArray<>(inputParameters);
     }
 
     @Override
     public SyntaxElement getChild(int n) {
-        return null;
+        if (n < returnParameters.size()) {
+            return returnParameters.get(n);
+        } else {
+            return inputParameters.get(n - returnParameters.size());
+        }
     }
 
     @Override
     public int getChildCount() {
-        return 0;
+        return returnParameters.size() + inputParameters.size();
     }
 
-    public List<ParameterDeclaration> getReturnParameters() {
+    public ImmutableArray<ParameterDeclaration> getReturnParameters() {
         return returnParameters;
     }
 
-    public List<ParameterDeclaration> getInputParameters() {
+    public ImmutableArray<ParameterDeclaration> getInputParameters() {
         return inputParameters;
     }
 }
