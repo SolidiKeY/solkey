@@ -1,0 +1,114 @@
+{
+  "absolutePath": "SimpleContract6.sol",
+  "exportedSymbols": {
+    "SimpleContract": [
+      7
+    ]
+  },
+  "id": 8,
+  "nodeType": "SourceUnit",
+  "nodes": [
+    {
+      "abstract": false,
+      "baseContracts": [],
+      "canonicalName": "SimpleContract",
+      "contractDependencies": [],
+      "contractKind": "contract",
+      "fullyImplemented": true,
+      "id": 7,
+      "linearizedBaseContracts": [
+        7
+      ],
+      "name": "SimpleContract",
+      "nameLocation": "9:14:0",
+      "nodeType": "ContractDefinition",
+      "nodes": [
+        {
+          "constant": false,
+          "id": 3,
+          "mutability": "mutable",
+          "name": "balance",
+          "nameLocation": "37:7:0",
+          "nodeType": "VariableDeclaration",
+          "scope": 7,
+          "src": "29:22:0",
+          "stateVariable": true,
+          "storageLocation": "default",
+          "typeDescriptions": {
+            "typeIdentifier": "t_uint256",
+            "typeString": "uint256"
+          },
+          "typeName": {
+            "id": 1,
+            "name": "uint256",
+            "nodeType": "ElementaryTypeName",
+            "src": "29:7:0",
+            "typeDescriptions": {
+              "typeIdentifier": "t_uint256",
+              "typeString": "uint256"
+            }
+          },
+          "value": {
+            "hexValue": "31303030",
+            "id": 2,
+            "isConstant": false,
+            "isLValue": false,
+            "isPure": true,
+            "kind": "number",
+            "lValueRequested": false,
+            "nodeType": "Literal",
+            "src": "47:4:0",
+            "typeDescriptions": {
+              "typeIdentifier": "t_rational_1000_by_1",
+              "typeString": "int_const 1000"
+            },
+            "value": "1000"
+          },
+          "visibility": "internal"
+        },
+        {
+          "constant": false,
+          "id": 6,
+          "mutability": "mutable",
+          "name": "other",
+          "nameLocation": "71:5:0",
+          "nodeType": "VariableDeclaration",
+          "scope": 7,
+          "src": "56:20:0",
+          "stateVariable": true,
+          "storageLocation": "default",
+          "typeDescriptions": {
+            "typeIdentifier": "t_contract$_SimpleContract_$7",
+            "typeString": "contract SimpleContract"
+          },
+          "typeName": {
+            "id": 5,
+            "nodeType": "UserDefinedTypeName",
+            "pathNode": {
+              "id": 4,
+              "name": "SimpleContract",
+              "nameLocations": [
+                "56:14:0"
+              ],
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 7,
+              "src": "56:14:0"
+            },
+            "referencedDeclaration": 7,
+            "src": "56:14:0",
+            "typeDescriptions": {
+              "typeIdentifier": "t_contract$_SimpleContract_$7",
+              "typeString": "contract SimpleContract"
+            }
+          },
+          "visibility": "internal"
+        }
+      ],
+      "scope": 8,
+      "src": "0:79:0",
+      "usedErrors": [],
+      "usedEvents": []
+    }
+  ],
+  "src": "0:80:0"
+}
