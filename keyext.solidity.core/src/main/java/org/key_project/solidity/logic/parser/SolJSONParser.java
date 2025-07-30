@@ -96,10 +96,13 @@ public class SolJSONParser {
 
     private FunctionDeclaration parseFunction(JsonNode node) {
         final String name = node.findValue("name").asText();
-        List<ParameterDeclaration> returnParameters = node.findValue("returnParameters")
-                .findValues("parameters").stream().map(this::parseParam).toList();
-        List<ParameterDeclaration> inputParamenters = node.findValues("statements").stream().map(it -> {
-            return parseParam(it.findValue("expression"));
+        List<JsonNode> parameters = node.findValue("returnParameters").findValues("parameters");
+        List<ParameterDeclaration> returnParameters =
+                parameters.getFirst().isEmpty() ? List.of() : parameters.stream().map(this::parseParam).toList();
+        List<JsonNode> statements = node.findValues("statements");
+        List<ParameterDeclaration> inputParamenters =
+            statements.getFirst().isEmpty() ? List.of() : statements.stream().map(it -> {
+                return parseParam(it.findValue("expression"));
         }).toList();
 
         return new FunctionDeclaration(new Name(name), returnParameters, inputParamenters);
