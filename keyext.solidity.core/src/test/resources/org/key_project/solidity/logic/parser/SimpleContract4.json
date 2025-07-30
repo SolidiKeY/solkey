@@ -1,7 +1,7 @@
 {
   "absolutePath": "SimpleContract4.sol",
   "exportedSymbols": {
-    "SimpleContract4": [
+    "SimpleContract": [
       9
     ]
   },
@@ -11,7 +11,7 @@
     {
       "abstract": false,
       "baseContracts": [],
-      "canonicalName": "SimpleContract4",
+      "canonicalName": "SimpleContract",
       "contractDependencies": [],
       "contractKind": "contract",
       "fullyImplemented": true,
@@ -19,8 +19,8 @@
       "linearizedBaseContracts": [
         9
       ],
-      "name": "SimpleContract4",
-      "nameLocation": "9:15:0",
+      "name": "SimpleContract",
+      "nameLocation": "9:14:0",
       "nodeType": "ContractDefinition",
       "nodes": [
         {
@@ -28,10 +28,10 @@
           "id": 3,
           "mutability": "mutable",
           "name": "balance",
-          "nameLocation": "38:7:0",
+          "nameLocation": "37:7:0",
           "nodeType": "VariableDeclaration",
           "scope": 9,
-          "src": "30:22:0",
+          "src": "29:22:0",
           "stateVariable": true,
           "storageLocation": "default",
           "typeDescriptions": {
@@ -42,7 +42,7 @@
             "id": 1,
             "name": "uint256",
             "nodeType": "ElementaryTypeName",
-            "src": "30:7:0",
+            "src": "29:7:0",
             "typeDescriptions": {
               "typeIdentifier": "t_uint256",
               "typeString": "uint256"
@@ -57,7 +57,7 @@
             "kind": "number",
             "lValueRequested": false,
             "nodeType": "Literal",
-            "src": "48:4:0",
+            "src": "47:4:0",
             "typeDescriptions": {
               "typeIdentifier": "t_rational_1000_by_1",
               "typeString": "int_const 1000"
@@ -71,10 +71,10 @@
           "id": 8,
           "mutability": "mutable",
           "name": "deposit",
-          "nameLocation": "65:7:0",
+          "nameLocation": "64:7:0",
           "nodeType": "VariableDeclaration",
           "scope": 9,
-          "src": "57:25:0",
+          "src": "56:25:0",
           "stateVariable": true,
           "storageLocation": "default",
           "typeDescriptions": {
@@ -85,7 +85,7 @@
             "id": 4,
             "name": "uint256",
             "nodeType": "ElementaryTypeName",
-            "src": "57:7:0",
+            "src": "56:7:0",
             "typeDescriptions": {
               "typeIdentifier": "t_uint256",
               "typeString": "uint256"
@@ -110,7 +110,7 @@
               "kind": "number",
               "lValueRequested": false,
               "nodeType": "Literal",
-              "src": "75:1:0",
+              "src": "74:1:0",
               "typeDescriptions": {
                 "typeIdentifier": "t_rational_5_by_1",
                 "typeString": "int_const 5"
@@ -128,14 +128,14 @@
               "kind": "number",
               "lValueRequested": false,
               "nodeType": "Literal",
-              "src": "79:3:0",
+              "src": "78:3:0",
               "typeDescriptions": {
                 "typeIdentifier": "t_rational_100_by_1",
                 "typeString": "int_const 100"
               },
               "value": "100"
             },
-            "src": "75:7:0",
+            "src": "74:7:0",
             "typeDescriptions": {
               "typeIdentifier": "t_rational_105_by_1",
               "typeString": "int_const 105"
@@ -145,10 +145,10 @@
         }
       ],
       "scope": 10,
-      "src": "0:85:0",
+      "src": "0:84:0",
       "usedErrors": [],
       "usedEvents": []
     }
   ],
-  "src": "0:86:0"
+  "src": "0:85:0"
 }

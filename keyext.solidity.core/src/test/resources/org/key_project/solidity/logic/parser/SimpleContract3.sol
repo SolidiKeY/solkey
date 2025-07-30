@@ -1,4 +1,4 @@
-contract SimpleContract3 {
+contract SimpleContract {
    uint256 balance = 1000;
    bool closed = true;
 }

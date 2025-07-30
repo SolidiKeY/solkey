@@ -1,3 +1,3 @@
-contract SimpleContract1 {
+contract SimpleContract {
    uint256 balance;
 }
