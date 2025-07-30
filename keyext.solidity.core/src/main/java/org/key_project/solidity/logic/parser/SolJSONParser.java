@@ -13,11 +13,11 @@ import java.util.List;
 
 import org.key_project.logic.Name;
 import org.key_project.solidity.logic.ast.SolidityProgramElement;
-import org.key_project.solidity.logic.ast.abstractions.Type;
 import org.key_project.solidity.logic.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.logic.ast.declarations.Declaration;
 import org.key_project.solidity.logic.ast.declarations.FieldDeclaration;
 import org.key_project.solidity.logic.ast.expressions.*;
+import org.key_project.solidity.logic.ast.expressions.Identifier;
 import org.key_project.solidity.logic.ast.references.TypeReference;
 
 import com.fasterxml.jackson.core.io.BigIntegerParser;
@@ -138,12 +138,9 @@ public class SolJSONParser {
     }
 
     private Identifier parseIdentifier(JsonNode literal) {
-        final String kind = literal.findValue("typeDescriptions").findValue("typeString").asText();
-        Type type = switch (kind) {
-            case "uint256" -> UINT256;
-            default -> throw new RuntimeException("Not yet supported identifier");
-        };
-        return new Identifier(type);
+        final String name = literal.findValue("name").asText();
+        final int id = literal.findValue("referencedDeclaration").asInt();
+        return new Identifier(name, id, UINT256);
     }
 
     private Literal parseLiteral(JsonNode literal) {
