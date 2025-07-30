@@ -1,4 +1,4 @@
 contract SimpleContract {
-   function doSomething() public pure {
+   function func() public pure {
    }
 }

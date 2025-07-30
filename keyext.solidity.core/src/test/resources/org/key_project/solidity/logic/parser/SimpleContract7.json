@@ -27,41 +27,41 @@
           "body": {
             "id": 3,
             "nodeType": "Block",
-            "src": "64:6:0",
+            "src": "57:6:0",
             "statements": []
           },
-          "functionSelector": "82692679",
+          "functionSelector": "bfa814b5",
           "id": 4,
           "implemented": true,
           "kind": "function",
           "modifiers": [],
-          "name": "doSomething",
-          "nameLocation": "38:11:0",
+          "name": "func",
+          "nameLocation": "38:4:0",
           "nodeType": "FunctionDefinition",
           "parameters": {
             "id": 1,
             "nodeType": "ParameterList",
             "parameters": [],
-            "src": "49:2:0"
+            "src": "42:2:0"
           },
           "returnParameters": {
             "id": 2,
             "nodeType": "ParameterList",
             "parameters": [],
-            "src": "64:0:0"
+            "src": "57:0:0"
           },
           "scope": 5,
-          "src": "29:41:0",
+          "src": "29:34:0",
           "stateMutability": "pure",
           "virtual": false,
           "visibility": "public"
         }
       ],
       "scope": 6,
-      "src": "0:72:0",
+      "src": "0:65:0",
       "usedErrors": [],
       "usedEvents": []
     }
   ],
-  "src": "0:73:0"
+  "src": "0:66:0"
 }

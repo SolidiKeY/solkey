@@ -10,14 +10,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import org.key_project.logic.Name;
 import org.key_project.solidity.logic.ast.SolidityProgramElement;
 import org.key_project.solidity.logic.ast.abstractions.Type;
-import org.key_project.solidity.logic.ast.declarations.ContractDeclaration;
-import org.key_project.solidity.logic.ast.declarations.Declaration;
-import org.key_project.solidity.logic.ast.declarations.FunctionDeclaration;
-import org.key_project.solidity.logic.ast.declarations.StateVariableDeclaration;
+import org.key_project.solidity.logic.ast.declarations.*;
 import org.key_project.solidity.logic.ast.expressions.*;
 import org.key_project.solidity.logic.ast.expressions.StateVariableReference;
 import org.key_project.solidity.logic.ast.references.TypeReference;
@@ -97,7 +96,26 @@ public class SolJSONParser {
 
     private FunctionDeclaration parseFunction(JsonNode node) {
         final String name = node.findValue("name").asText();
-        return new FunctionDeclaration(new Name(name));
+        List<ParameterDeclaration> returnParameters = node.findValue("returnParameters")
+                .findValues("parameters").stream().map(this::parseParam).toList();
+        List<ParameterDeclaration> inputParamenters = node.findValues("statements").stream().map(it -> {
+            return parseParam(it.findValue("expression"));
+        }).toList();
+
+        return new FunctionDeclaration(new Name(name), returnParameters, inputParamenters);
+    }
+
+    private ParameterDeclaration parseParam(JsonNode node){
+        final String fieldName = node.findValue("name").asText();
+        final String fieldType = node.findValue("typeDescriptions").findValue("typeString").asText();
+
+        final ParameterDeclaration field =
+                new ParameterDeclaration(new Name(fieldName),
+                        new TypeReference(new Name(fieldType)));
+        final int id = node.findValue("id").asInt();
+        id2Name.put(id, field);
+
+        return field;
     }
 
     private StateVariableDeclaration parseField(JsonNode fieldNode) {

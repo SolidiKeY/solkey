@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.key_project.solidity.logic.ast.SolidityProgramElement;
 import org.key_project.solidity.logic.ast.declarations.ContractDeclaration;
+import org.key_project.solidity.logic.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.logic.ast.expressions.AddOperation;
 import org.key_project.solidity.logic.ast.expressions.Expression;
 import org.key_project.solidity.logic.ast.expressions.StateVariableReference;
@@ -81,6 +82,17 @@ class SolJsonParserTest {
         Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
         ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
         Assertions.assertEquals(1, contractDeclaration.getFunctions().size());
+    }
+
+    @Test
+    void parseComplexFunction() throws IOException {
+        SolidityProgramElement programElement = getSolidityProgramElement("SimpleContract8.json");
+        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
+        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        Assertions.assertEquals(1, contractDeclaration.getFunctions().size());
+        FunctionDeclaration function = contractDeclaration.getFunctions().getFirst();
+        Assertions.assertEquals(1, function.getInputParameters().size());
+        Assertions.assertEquals(1, function.getReturnParameters().size());
     }
 
     private static SolidityProgramElement getSolidityProgramElement(String solFileName)
