@@ -10,7 +10,7 @@ import org.key_project.util.collection.ImmutableArray;
 
 public class Block implements Statement {
 
-    private ImmutableArray<Statement> statements;
+    private final ImmutableArray<Statement> statements;
 
     public Block(ImmutableArray<Statement> statements) {
         this.statements = statements;
@@ -38,4 +38,6 @@ public class Block implements Statement {
         }
         return body + "}";
     }
+
+    public ImmutableArray<Statement> getStatements() { return statements; }
 }

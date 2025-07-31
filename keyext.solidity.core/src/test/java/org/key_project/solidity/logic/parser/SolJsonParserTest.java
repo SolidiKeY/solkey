@@ -95,7 +95,7 @@ class SolJsonParserTest {
         FunctionDeclaration functionDeclaration = contractDeclaration.getFunctions().get(0);
         Block block = functionDeclaration.getBody();
         Assertions.assertNotNull(block);
-        Assertions.assertTrue(block.getChildCount() == 0);
+        Assertions.assertEquals(0, block.getChildCount());
     }
 
     @Test
@@ -109,7 +109,20 @@ class SolJsonParserTest {
         Assertions.assertEquals(1, function.getReturnParameters().size());
         Block block = function.getBody();
         Assertions.assertNotNull(block);
-        Assertions.assertTrue(block.getChildCount() == 1);
+        Assertions.assertEquals (1, block.getChildCount());
+    }
+
+    @Test
+    void parseSimpleAssignment() throws IOException {
+        SolidityProgramElement programElement = getSolidityProgramElement("SimpleAssignment.json");
+        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
+        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        Assertions.assertEquals(1, contractDeclaration.getFunctions().size());
+        FunctionDeclaration function = contractDeclaration.getFunctions().getFirst();
+        Block block = function.getBody();
+        Assertions.assertNotNull(block);
+        Assertions.assertEquals(1, block.getChildCount());
+        Assertions.assertEquals(1, block.getStatements().size());
     }
 
 

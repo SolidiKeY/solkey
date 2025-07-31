@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
+import org.jspecify.annotations.NonNull;
 import org.key_project.logic.Name;
 import org.key_project.solidity.logic.ast.SolidityProgramElement;
 import org.key_project.solidity.logic.ast.abstractions.Type;
@@ -21,6 +22,7 @@ import org.key_project.solidity.logic.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.logic.ast.expressions.operators.AddOperation;
 import org.key_project.solidity.logic.ast.references.StateVariableReference;
 import org.key_project.solidity.logic.ast.references.TypeReference;
+import org.key_project.solidity.logic.ast.statement.AssignmentStatement;
 import org.key_project.solidity.logic.ast.statement.Block;
 import org.key_project.solidity.logic.ast.statement.Statement;
 
@@ -104,28 +106,39 @@ public class SolJSONParser {
         List<ParameterDeclaration> returnParameters =
             parameters.getFirst().isEmpty() ? List.of()
                     : parameters.stream().map(this::parseParam).toList();
-        List<JsonNode> statements = node.findValues("statements");
+//        List<JsonNode> statements =
+//        List<ParameterDeclaration> inputParamenters =
+//            statements.getFirst().isEmpty() ? List.of() : statements.stream().map(it -> {
+//                return parseParam(it.findValue("expression"));
+//            }).toList();
         List<ParameterDeclaration> inputParamenters =
-            statements.getFirst().isEmpty() ? List.of() : statements.stream().map(it -> {
-                return parseParam(it.findValue("expression"));
-            }).toList();
+                node.findValue("parameters").findValue("parameters").valueStream()
+                        .map(this::parseParam).toList();
 
         Block body = parseBlock(node.findValue("body")); // TODO
         return new FunctionDeclaration(new Name(name), returnParameters, inputParamenters, body);
     }
 
     private Block parseBlock(JsonNode jsonBody) {
-        List<JsonNode> statements = jsonBody.findValues("statements");
-        if (statements.getFirst().isEmpty()) {
-            return new Block(List.of());
-        }
-        List<Statement> blockStatements = statements.stream().map(this::parseStatement).toList();
+//        List<JsonNode> statements =
+//        if (statements.getFirst().isEmpty()) {
+//            return new Block(List.of());
+//        }
+        List<Statement> blockStatements = jsonBody.findValue("statements").valueStream().map(this::parseStatement).toList();
+//        statements.stream().map(this::parseStatement).toList();
         return new Block(blockStatements);
     }
 
-    private Statement parseStatement(JsonNode statement) {
+    private @NonNull Statement parseStatement(JsonNode statement) {
+        JsonNode expSt = statement.findValue("expression");
+        String nodeType = expSt.findValue("nodeType").asText();
+        return switch (nodeType) {
+            case "Assignment" -> new AssignmentStatement
+                    (parseExpression(expSt.findValue("leftHandSide")),
+                     parseExpression(expSt.findValue("rightHandSide")));
+            default -> throw new RuntimeException("Assignment type " + nodeType + " not supported");
+        };
 
-        return null;
     }
 
     private ParameterDeclaration parseParam(JsonNode node) {
@@ -204,8 +217,11 @@ public class SolJSONParser {
         final Declaration declaration = id2Name.get(referenceDeclarationId);
         if (declaration instanceof StateVariableDeclaration stateVarDeclaration) {
             return new StateVariableReference(new Name(name), stateVarDeclaration, type);
+        } else if(declaration instanceof  ParameterDeclaration parameterDeclaration) {
+            // TODO: FIX this part
+            return new StateVariableReference(new Name(name), parameterDeclaration, type);
         } else if (declaration == null) {
-            throw new RuntimeException("Unknown reference declaration " + referenceDeclarationId);
+             throw new RuntimeException("Unknown reference declaration " + referenceDeclarationId);
         } else {
             throw new RuntimeException(
                 "Unexpected reference declaration " + declaration + " expected a state variable.");

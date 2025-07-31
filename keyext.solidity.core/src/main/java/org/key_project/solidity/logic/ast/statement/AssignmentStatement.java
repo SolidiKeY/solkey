@@ -11,6 +11,11 @@ public class AssignmentStatement implements Statement {
     private Expression leftHandSide;
     private Expression rightHandSide;
 
+    public AssignmentStatement(Expression leftSide, Expression rightSide) {
+        this.leftHandSide = leftSide;
+        this.rightHandSide = rightSide;
+    }
+
 
     public Expression getLeftHandSide() {
         return leftHandSide;

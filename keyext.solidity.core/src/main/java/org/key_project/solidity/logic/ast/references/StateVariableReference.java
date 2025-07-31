@@ -7,6 +7,7 @@ import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.ast.TypeResolver;
 import org.key_project.solidity.logic.ast.abstractions.Type;
+import org.key_project.solidity.logic.ast.declarations.ParameterDeclaration;
 import org.key_project.solidity.logic.ast.declarations.StateVariableDeclaration;
 import org.key_project.solidity.logic.ast.expressions.Expression;
 
@@ -29,6 +30,13 @@ public class StateVariableReference implements Expression {
             Name typeName) {
         this.name = name;
         this.referedDeclaration = referedDeclaration;
+        this.typeName = type.getName();
+    }
+
+    public StateVariableReference(Name name, ParameterDeclaration parameterDeclaration, Type type) {
+        this.name = name;
+        // TODO: Fix constructor
+        this.referedDeclaration = null;
         this.typeName = type.getName();
     }
 
