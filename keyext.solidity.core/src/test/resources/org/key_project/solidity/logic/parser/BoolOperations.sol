@@ -1,3 +1,3 @@
 contract SimpleContract {
-   bool deposit = true && true || false;
+   bool v = true && true || false;
 }

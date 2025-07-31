@@ -15,10 +15,7 @@ import org.key_project.solidity.logic.ast.declarations.StateVariableDeclaration;
 import org.key_project.solidity.logic.ast.expressions.Expression;
 import org.key_project.solidity.logic.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.logic.ast.expressions.literals.Uint256Literal;
-import org.key_project.solidity.logic.ast.expressions.operators.AddOperator;
-import org.key_project.solidity.logic.ast.expressions.operators.AndOperator;
-import org.key_project.solidity.logic.ast.expressions.operators.ExponentialOperator;
-import org.key_project.solidity.logic.ast.expressions.operators.OrOperator;
+import org.key_project.solidity.logic.ast.expressions.operators.*;
 import org.key_project.solidity.logic.ast.references.StateVariableReference;
 import org.key_project.solidity.logic.ast.statement.AssignmentStatement;
 import org.key_project.solidity.logic.ast.statement.Block;
@@ -147,7 +144,17 @@ class SolJsonParserTest {
         ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
         Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
         Assertions.assertInstanceOf(OrOperator.class,
-                contractDeclaration.getFieldDeclarations().get(0).getChild(1));
+                contractDeclaration.getFieldDeclarations().get(0).getInitializer());
+    }
+
+    @Test
+    void parseContractWithBoolIntOperations() throws IOException {
+        SolidityProgramElement programElement = getSolidityProgramElement("BoolIntOperations.json");
+        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
+        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
+        Assertions.assertInstanceOf(AndOperator.class,
+                contractDeclaration.getFieldDeclarations().get(0).getInitializer());
     }
 
     private static SolidityProgramElement getSolidityProgramElement(String solFileName)

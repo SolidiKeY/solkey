@@ -46,10 +46,34 @@ public class TypeResolver {
     }
 
     public Type resolve(AndOperator andOperation) {
-        return PrimitiveType.getPrimitiveType("bool");
+        return null;
     }
 
     public Type resolve(OrOperator orOperator) {
+        return PrimitiveType.getPrimitiveType("bool");
+    }
+
+    public Type resolve(UnequalOperator unequalOperator) {
+        return PrimitiveType.getPrimitiveType("bool");
+    }
+
+    public Type resolve(EqualOperator equalOperator) {
+        return PrimitiveType.getPrimitiveType("bool");
+    }
+
+    public Type resolve(GreaterEqualOperator greaterEqualOperator) {
+        return PrimitiveType.getPrimitiveType("bool");
+    }
+
+    public Type resolve(GreaterOperator greaterOperator) {
+        return PrimitiveType.getPrimitiveType("bool");
+    }
+
+    public Type resolve(LessOperator lessOperator) {
+        return PrimitiveType.getPrimitiveType("bool");
+    }
+
+    public Type resolve(LessEqualOperator lessEqualOperator) {
         return PrimitiveType.getPrimitiveType("bool");
     }
 }

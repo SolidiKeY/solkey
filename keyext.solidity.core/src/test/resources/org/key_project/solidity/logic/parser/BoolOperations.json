@@ -27,11 +27,11 @@
           "constant": false,
           "id": 7,
           "mutability": "mutable",
-          "name": "deposit",
-          "nameLocation": "34:7:0",
+          "name": "v",
+          "nameLocation": "34:1:0",
           "nodeType": "VariableDeclaration",
           "scope": 8,
-          "src": "29:36:0",
+          "src": "29:30:0",
           "stateVariable": true,
           "storageLocation": "default",
           "typeDescriptions": {
@@ -77,7 +77,7 @@
                 "kind": "bool",
                 "lValueRequested": false,
                 "nodeType": "Literal",
-                "src": "44:4:0",
+                "src": "38:4:0",
                 "typeDescriptions": {
                   "typeIdentifier": "t_bool",
                   "typeString": "bool"
@@ -95,14 +95,14 @@
                 "kind": "bool",
                 "lValueRequested": false,
                 "nodeType": "Literal",
-                "src": "52:4:0",
+                "src": "46:4:0",
                 "typeDescriptions": {
                   "typeIdentifier": "t_bool",
                   "typeString": "bool"
                 },
                 "value": "true"
               },
-              "src": "44:12:0",
+              "src": "38:12:0",
               "typeDescriptions": {
                 "typeIdentifier": "t_bool",
                 "typeString": "bool"
@@ -119,14 +119,14 @@
               "kind": "bool",
               "lValueRequested": false,
               "nodeType": "Literal",
-              "src": "60:5:0",
+              "src": "54:5:0",
               "typeDescriptions": {
                 "typeIdentifier": "t_bool",
                 "typeString": "bool"
               },
               "value": "false"
             },
-            "src": "44:21:0",
+            "src": "38:21:0",
             "typeDescriptions": {
               "typeIdentifier": "t_bool",
               "typeString": "bool"
@@ -136,10 +136,10 @@
         }
       ],
       "scope": 9,
-      "src": "0:68:0",
+      "src": "0:62:0",
       "usedErrors": [],
       "usedEvents": []
     }
   ],
-  "src": "0:69:0"
+  "src": "0:63:0"
 }
