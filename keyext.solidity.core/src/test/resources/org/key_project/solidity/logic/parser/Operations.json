@@ -2,10 +2,10 @@
   "absolutePath": "Operations.sol",
   "exportedSymbols": {
     "SimpleContract": [
-      10
+      14
     ]
   },
-  "id": 11,
+  "id": 15,
   "nodeType": "SourceUnit",
   "nodes": [
     {
@@ -15,9 +15,9 @@
       "contractDependencies": [],
       "contractKind": "contract",
       "fullyImplemented": true,
-      "id": 10,
+      "id": 14,
       "linearizedBaseContracts": [
-        10
+        14
       ],
       "name": "SimpleContract",
       "nameLocation": "9:14:0",
@@ -25,13 +25,13 @@
       "nodes": [
         {
           "constant": false,
-          "id": 9,
+          "id": 13,
           "mutability": "mutable",
           "name": "deposit",
           "nameLocation": "37:7:0",
           "nodeType": "VariableDeclaration",
-          "scope": 10,
-          "src": "29:33:0",
+          "scope": 14,
+          "src": "29:41:0",
           "stateVariable": true,
           "storageLocation": "default",
           "typeDescriptions": {
@@ -50,20 +50,20 @@
           },
           "value": {
             "commonType": {
-              "typeIdentifier": "t_rational_103_by_1",
-              "typeString": "int_const 103"
+              "typeIdentifier": "t_rational_4_by_1",
+              "typeString": "int_const 4"
             },
-            "id": 8,
+            "id": 12,
             "isConstant": false,
             "isLValue": false,
             "isPure": true,
             "lValueRequested": false,
             "leftExpression": {
               "commonType": {
-                "typeIdentifier": "t_rational_105_by_1",
-                "typeString": "int_const 105"
+                "typeIdentifier": "t_rational_5_by_1",
+                "typeString": "int_const 5"
               },
-              "id": 4,
+              "id": 6,
               "isConstant": false,
               "isLValue": false,
               "isPure": true,
@@ -87,93 +87,161 @@
               "nodeType": "BinaryOperation",
               "operator": "+",
               "rightExpression": {
-                "hexValue": "313030",
-                "id": 3,
+                "commonType": {
+                  "typeIdentifier": "t_rational_0_by_1",
+                  "typeString": "int_const 0"
+                },
+                "id": 5,
                 "isConstant": false,
                 "isLValue": false,
                 "isPure": true,
-                "kind": "number",
                 "lValueRequested": false,
-                "nodeType": "Literal",
-                "src": "51:3:0",
-                "typeDescriptions": {
-                  "typeIdentifier": "t_rational_100_by_1",
-                  "typeString": "int_const 100"
+                "leftExpression": {
+                  "hexValue": "313030",
+                  "id": 3,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": true,
+                  "kind": "number",
+                  "lValueRequested": false,
+                  "nodeType": "Literal",
+                  "src": "51:3:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_rational_100_by_1",
+                    "typeString": "int_const 100"
+                  },
+                  "value": "100"
                 },
-                "value": "100"
+                "nodeType": "BinaryOperation",
+                "operator": "%",
+                "rightExpression": {
+                  "hexValue": "34",
+                  "id": 4,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": true,
+                  "kind": "number",
+                  "lValueRequested": false,
+                  "nodeType": "Literal",
+                  "src": "57:1:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_rational_4_by_1",
+                    "typeString": "int_const 4"
+                  },
+                  "value": "4"
+                },
+                "src": "51:7:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_rational_0_by_1",
+                  "typeString": "int_const 0"
+                }
               },
-              "src": "47:7:0",
+              "src": "47:11:0",
               "typeDescriptions": {
-                "typeIdentifier": "t_rational_105_by_1",
-                "typeString": "int_const 105"
+                "typeIdentifier": "t_rational_5_by_1",
+                "typeString": "int_const 5"
               }
             },
             "nodeType": "BinaryOperation",
             "operator": "-",
             "rightExpression": {
               "commonType": {
-                "typeIdentifier": "t_rational_2_by_1",
-                "typeString": "int_const 2"
+                "typeIdentifier": "t_rational_1_by_1",
+                "typeString": "int_const 1"
               },
-              "id": 7,
+              "id": 11,
               "isConstant": false,
               "isLValue": false,
               "isPure": true,
               "lValueRequested": false,
               "leftExpression": {
-                "hexValue": "31",
-                "id": 5,
+                "commonType": {
+                  "typeIdentifier": "t_rational_3_by_1",
+                  "typeString": "int_const 3"
+                },
+                "id": 9,
                 "isConstant": false,
                 "isLValue": false,
                 "isPure": true,
-                "kind": "number",
                 "lValueRequested": false,
-                "nodeType": "Literal",
-                "src": "57:1:0",
-                "typeDescriptions": {
-                  "typeIdentifier": "t_rational_1_by_1",
-                  "typeString": "int_const 1"
+                "leftExpression": {
+                  "hexValue": "31",
+                  "id": 7,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": true,
+                  "kind": "number",
+                  "lValueRequested": false,
+                  "nodeType": "Literal",
+                  "src": "61:1:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_rational_1_by_1",
+                    "typeString": "int_const 1"
+                  },
+                  "value": "1"
                 },
-                "value": "1"
+                "nodeType": "BinaryOperation",
+                "operator": "*",
+                "rightExpression": {
+                  "hexValue": "33",
+                  "id": 8,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": true,
+                  "kind": "number",
+                  "lValueRequested": false,
+                  "nodeType": "Literal",
+                  "src": "65:1:0",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_rational_3_by_1",
+                    "typeString": "int_const 3"
+                  },
+                  "value": "3"
+                },
+                "src": "61:5:0",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_rational_3_by_1",
+                  "typeString": "int_const 3"
+                }
               },
               "nodeType": "BinaryOperation",
-              "operator": "*",
+              "operator": "/",
               "rightExpression": {
-                "hexValue": "32",
-                "id": 6,
+                "hexValue": "33",
+                "id": 10,
                 "isConstant": false,
                 "isLValue": false,
                 "isPure": true,
                 "kind": "number",
                 "lValueRequested": false,
                 "nodeType": "Literal",
-                "src": "61:1:0",
+                "src": "69:1:0",
                 "typeDescriptions": {
-                  "typeIdentifier": "t_rational_2_by_1",
-                  "typeString": "int_const 2"
+                  "typeIdentifier": "t_rational_3_by_1",
+                  "typeString": "int_const 3"
                 },
-                "value": "2"
+                "value": "3"
               },
-              "src": "57:5:0",
+              "src": "61:9:0",
               "typeDescriptions": {
-                "typeIdentifier": "t_rational_2_by_1",
-                "typeString": "int_const 2"
+                "typeIdentifier": "t_rational_1_by_1",
+                "typeString": "int_const 1"
               }
             },
-            "src": "47:15:0",
+            "src": "47:23:0",
             "typeDescriptions": {
-              "typeIdentifier": "t_rational_103_by_1",
-              "typeString": "int_const 103"
+              "typeIdentifier": "t_rational_4_by_1",
+              "typeString": "int_const 4"
             }
           },
           "visibility": "internal"
         }
       ],
-      "scope": 11,
-      "src": "0:65:0",
+      "scope": 15,
+      "src": "0:73:0",
       "usedErrors": [],
       "usedEvents": []
     }
   ],
-  "src": "0:66:0"
+  "src": "0:74:0"
 }

@@ -6,9 +6,7 @@ package org.key_project.solidity.logic.ast;
 import org.key_project.logic.Name;
 import org.key_project.solidity.logic.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.logic.ast.abstractions.Type;
-import org.key_project.solidity.logic.ast.expressions.operators.AddOperation;
-import org.key_project.solidity.logic.ast.expressions.operators.MultiplicationOperation;
-import org.key_project.solidity.logic.ast.expressions.operators.SubtractionOperation;
+import org.key_project.solidity.logic.ast.expressions.operators.*;
 
 /** This class resolves the type of a reference or expression */
 public class TypeResolver {
@@ -32,6 +30,18 @@ public class TypeResolver {
     }
 
     public Type resolve(MultiplicationOperation multiplicationOperation) {
+        return PrimitiveType.getPrimitiveType("uint256");
+    }
+
+    public Type resolve(DivOperation divOperation) {
+        return null;
+    }
+
+    public Type resolve(ModOperation modOperation) {
+        return PrimitiveType.getPrimitiveType("uint256");
+    }
+
+    public Type resolve(ExponentialOperator exponentialOperator) {
         return PrimitiveType.getPrimitiveType("uint256");
     }
 }

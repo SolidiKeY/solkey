@@ -18,9 +18,7 @@ import org.key_project.solidity.logic.ast.expressions.*;
 import org.key_project.solidity.logic.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.logic.ast.expressions.literals.Literal;
 import org.key_project.solidity.logic.ast.expressions.literals.Uint256Literal;
-import org.key_project.solidity.logic.ast.expressions.operators.AddOperation;
-import org.key_project.solidity.logic.ast.expressions.operators.MultiplicationOperation;
-import org.key_project.solidity.logic.ast.expressions.operators.SubtractionOperation;
+import org.key_project.solidity.logic.ast.expressions.operators.*;
 import org.key_project.solidity.logic.ast.references.ParameterVariableReference;
 import org.key_project.solidity.logic.ast.references.StateVariableReference;
 import org.key_project.solidity.logic.ast.references.TypeReference;
@@ -206,6 +204,8 @@ public class SolJSONParser {
             case "+" -> new AddOperation(leftExpression, rightExpression);
             case "-" -> new SubtractionOperation(leftExpression, rightExpression);
             case "*" -> new MultiplicationOperation(leftExpression, rightExpression);
+            case "/" -> new DivOperation(leftExpression, rightExpression);
+            case "%" -> new ModOperation(leftExpression, rightExpression);
             default ->
                 throw new RuntimeException("Not yet supported binary operation: " + operator);
         };
