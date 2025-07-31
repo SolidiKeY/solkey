@@ -5,43 +5,38 @@ package org.key_project.solidity.logic.ast.references;
 
 import org.key_project.logic.Name;
 import org.key_project.solidity.logic.ast.abstractions.Type;
-import org.key_project.solidity.logic.ast.declarations.StateVariableDeclaration;
+import org.key_project.solidity.logic.ast.declarations.ParameterDeclaration;
 
-public class StateVariableReference extends VariableReference {
-
+public class ParameterVariableReference extends VariableReference {
     private final Name name;
-    private final StateVariableDeclaration referencedDeclaration;
+    private final ParameterDeclaration referencedDeclaration;
 
-    public StateVariableReference(Name name, StateVariableDeclaration referencedDeclaration,
+    public ParameterVariableReference(Name name, ParameterDeclaration referencedDeclaration,
             Type type) {
         super(type);
         this.name = name;
         this.referencedDeclaration = referencedDeclaration;
     }
 
-    public StateVariableReference(Name name, StateVariableDeclaration referencedDeclaration,
+    public ParameterVariableReference(Name name, ParameterDeclaration referencedDeclaration,
             Name typeName) {
         super(typeName);
         this.name = name;
         this.referencedDeclaration = referencedDeclaration;
     }
 
-    public StateVariableDeclaration getDeclaration() {
+    @Override
+    public ParameterDeclaration getDeclaration() {
         return referencedDeclaration;
     }
 
+    @Override
     public Name getName() {
         return name;
-    }
-
-    @Override
-    public Type getType() {
-        return type;
     }
 
     @Override
     public String toString() {
         return name.toString();
     }
-
 }

@@ -6,7 +6,6 @@ package org.key_project.solidity.logic.ast.expressions.operators;
 import org.key_project.solidity.logic.ast.TypeResolver;
 import org.key_project.solidity.logic.ast.abstractions.Type;
 import org.key_project.solidity.logic.ast.expressions.Expression;
-import org.key_project.solidity.logic.ast.expressions.UnresolvedTypeException;
 
 public class AddOperation extends BinaryOperation {
     public AddOperation(Expression left, Expression right) {

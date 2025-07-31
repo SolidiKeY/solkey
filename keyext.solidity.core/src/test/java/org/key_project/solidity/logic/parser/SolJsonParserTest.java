@@ -111,7 +111,7 @@ class SolJsonParserTest {
         Assertions.assertEquals(1, function.getReturnParameters().size());
         Block block = function.getBody();
         Assertions.assertNotNull(block);
-        Assertions.assertEquals (1, block.getChildCount());
+        Assertions.assertEquals(1, block.getChildCount());
     }
 
     @Test
@@ -134,7 +134,8 @@ class SolJsonParserTest {
         Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
         ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
         Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
-        Assertions.assertInstanceOf(SubtractionOperation.class, contractDeclaration.getFieldDeclarations().get(0).getChild(1));
+        Assertions.assertInstanceOf(SubtractionOperation.class,
+            contractDeclaration.getFieldDeclarations().get(0).getChild(1));
     }
 
     private static SolidityProgramElement getSolidityProgramElement(String solFileName)
