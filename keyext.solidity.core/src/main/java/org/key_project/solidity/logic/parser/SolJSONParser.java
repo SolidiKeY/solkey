@@ -20,6 +20,8 @@ import org.key_project.solidity.logic.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.logic.ast.expressions.literals.Literal;
 import org.key_project.solidity.logic.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.logic.ast.expressions.operators.AddOperation;
+import org.key_project.solidity.logic.ast.expressions.operators.MultiplicationOperation;
+import org.key_project.solidity.logic.ast.expressions.operators.SubtractionOperation;
 import org.key_project.solidity.logic.ast.references.StateVariableReference;
 import org.key_project.solidity.logic.ast.references.TypeReference;
 import org.key_project.solidity.logic.ast.statement.AssignmentStatement;
@@ -194,16 +196,20 @@ public class SolJSONParser {
 
     private Expression parseBinaryOperation(JsonNode initializer) {
         // To be Implemented
-        JsonNode leftExpression = null;
-        JsonNode rightExpression = null;
+        Expression leftExpression = null;
+        Expression rightExpression = null;
 
         final String operator = initializer.findValue("operator").asText();
         switch (operator) {
-            case "+":
-                leftExpression = initializer.findValue("leftExpression");
-                rightExpression = initializer.findValue("rightExpression");
-                return new AddOperation(parseExpression(leftExpression),
-                    parseExpression(rightExpression));
+            case "+", "-", "*":
+                leftExpression = parseExpression(initializer.findValue("leftExpression"));
+                rightExpression = parseExpression(initializer.findValue("rightExpression"));
+                return switch (operator) {
+                    case "+" -> new AddOperation(leftExpression, rightExpression);
+                    case "-" -> new SubtractionOperation(leftExpression, rightExpression);
+                    case "*" -> new MultiplicationOperation(leftExpression, rightExpression);
+                    default -> throw new IllegalStateException("Impossible case");
+                };
             default:
                 throw new RuntimeException("Not yet supported binary operation: " + operator);
         }

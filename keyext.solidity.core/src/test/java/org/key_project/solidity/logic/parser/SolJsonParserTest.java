@@ -16,6 +16,7 @@ import org.key_project.solidity.logic.ast.expressions.Expression;
 import org.key_project.solidity.logic.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.logic.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.logic.ast.expressions.operators.AddOperation;
+import org.key_project.solidity.logic.ast.expressions.operators.SubtractionOperation;
 import org.key_project.solidity.logic.ast.references.StateVariableReference;
 import org.key_project.solidity.logic.ast.statement.AssignmentStatement;
 import org.key_project.solidity.logic.ast.statement.Block;
@@ -125,6 +126,15 @@ class SolJsonParserTest {
         Assertions.assertEquals(1, block.getChildCount());
         Assertions.assertEquals(1, block.getStatements().size());
         Assertions.assertInstanceOf(AssignmentStatement.class, block.getStatements().get(0));
+    }
+
+    @Test
+    void parseContractWithOperations() throws IOException {
+        SolidityProgramElement programElement = getSolidityProgramElement("Operations.json");
+        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
+        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
+        Assertions.assertInstanceOf(SubtractionOperation.class, contractDeclaration.getFieldDeclarations().get(0).getChild(1));
     }
 
     private static SolidityProgramElement getSolidityProgramElement(String solFileName)
