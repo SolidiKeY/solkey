@@ -15,6 +15,10 @@ import org.key_project.solidity.logic.ast.SolidityProgramElement;
 import org.key_project.solidity.logic.ast.abstractions.Type;
 import org.key_project.solidity.logic.ast.declarations.*;
 import org.key_project.solidity.logic.ast.expressions.*;
+import org.key_project.solidity.logic.ast.expressions.literals.BoolLiteral;
+import org.key_project.solidity.logic.ast.expressions.literals.Literal;
+import org.key_project.solidity.logic.ast.expressions.literals.Uint256Literal;
+import org.key_project.solidity.logic.ast.expressions.operators.AddOperation;
 import org.key_project.solidity.logic.ast.references.StateVariableReference;
 import org.key_project.solidity.logic.ast.references.TypeReference;
 
