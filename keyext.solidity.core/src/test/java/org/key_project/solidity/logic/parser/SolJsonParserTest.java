@@ -17,6 +17,7 @@ import org.key_project.solidity.logic.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.logic.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.logic.ast.expressions.operators.AddOperation;
 import org.key_project.solidity.logic.ast.references.StateVariableReference;
+import org.key_project.solidity.logic.ast.statement.AssignmentStatement;
 import org.key_project.solidity.logic.ast.statement.Block;
 
 import org.junit.jupiter.api.Assertions;
@@ -123,8 +124,8 @@ class SolJsonParserTest {
         Assertions.assertNotNull(block);
         Assertions.assertEquals(1, block.getChildCount());
         Assertions.assertEquals(1, block.getStatements().size());
+        Assertions.assertInstanceOf(AssignmentStatement.class, block.getStatements().get(0));
     }
-
 
     private static SolidityProgramElement getSolidityProgramElement(String solFileName)
             throws IOException {

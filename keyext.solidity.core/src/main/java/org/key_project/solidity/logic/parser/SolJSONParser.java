@@ -24,6 +24,7 @@ import org.key_project.solidity.logic.ast.references.StateVariableReference;
 import org.key_project.solidity.logic.ast.references.TypeReference;
 import org.key_project.solidity.logic.ast.statement.AssignmentStatement;
 import org.key_project.solidity.logic.ast.statement.Block;
+import org.key_project.solidity.logic.ast.statement.ReturnStatment;
 import org.key_project.solidity.logic.ast.statement.Statement;
 
 import com.fasterxml.jackson.core.io.BigIntegerParser;
@@ -136,6 +137,7 @@ public class SolJSONParser {
             case "Assignment" -> new AssignmentStatement
                     (parseExpression(expSt.findValue("leftHandSide")),
                      parseExpression(expSt.findValue("rightHandSide")));
+            case "Identifier" -> new ReturnStatment(parseExpression(expSt));
             default -> throw new RuntimeException("Assignment type " + nodeType + " not supported");
         };
 
@@ -217,7 +219,7 @@ public class SolJSONParser {
         final Declaration declaration = id2Name.get(referenceDeclarationId);
         if (declaration instanceof StateVariableDeclaration stateVarDeclaration) {
             return new StateVariableReference(new Name(name), stateVarDeclaration, type);
-        } else if(declaration instanceof  ParameterDeclaration parameterDeclaration) {
+        } else if(declaration instanceof ParameterDeclaration parameterDeclaration) {
             // TODO: FIX this part
             return new StateVariableReference(new Name(name), parameterDeclaration, type);
         } else if (declaration == null) {

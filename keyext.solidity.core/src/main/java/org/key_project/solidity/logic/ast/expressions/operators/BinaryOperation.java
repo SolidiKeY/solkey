@@ -4,13 +4,16 @@
 package org.key_project.solidity.logic.ast.expressions.operators;
 
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.logic.ast.TypeResolver;
 import org.key_project.solidity.logic.ast.abstractions.Type;
 import org.key_project.solidity.logic.ast.expressions.Expression;
+import org.key_project.solidity.logic.ast.expressions.UnresolvedTypeException;
 
 public abstract class BinaryOperation implements Expression {
 
     protected final Expression left;
     protected final Expression right;
+    protected Type type;
 
     protected BinaryOperation(Expression left, Expression right) {
         this.left = left;
@@ -18,7 +21,12 @@ public abstract class BinaryOperation implements Expression {
     }
 
     @Override
-    public abstract Type getType();
+    public Type getType() {
+        if (type == null) {
+            throw new UnresolvedTypeException("Could not determine type of " + this);
+        }
+        return type;
+    }
 
     @Override
     public SyntaxElement getChild(int n) {
@@ -36,4 +44,19 @@ public abstract class BinaryOperation implements Expression {
     public int getChildCount() {
         return 2;
     }
+
+    public abstract char getOperator();
+
+    public String toString() {
+        return left + " " + getOperator() + " " + right;
+    }
+
+    protected abstract Type resolving(TypeResolver resolver);
+
+    public void resolve(TypeResolver resolver) {
+        if (type == null) {
+            type = resolving(resolver);
+        }
+    }
+
 }

@@ -9,29 +9,15 @@ import org.key_project.solidity.logic.ast.expressions.Expression;
 import org.key_project.solidity.logic.ast.expressions.UnresolvedTypeException;
 
 public class AddOperation extends BinaryOperation {
-
-    private Type type;
-
     public AddOperation(Expression left, Expression right) {
         super(left, right);
     }
 
-    public void resolve(TypeResolver resolver) {
-        if (type == null) {
-            type = resolver.resolve(this);
-        }
-    }
+    @Override
+    public char getOperator() { return '+'; }
 
     @Override
-    public Type getType() {
-        if (type == null) {
-            throw new UnresolvedTypeException("Could not determine type of " + this);
-        }
-        return type;
-    }
-
-    @Override
-    public String toString() {
-        return left + " + " + right;
+    public Type resolving(TypeResolver resolver) {
+        return resolver.resolve(this);
     }
 }
