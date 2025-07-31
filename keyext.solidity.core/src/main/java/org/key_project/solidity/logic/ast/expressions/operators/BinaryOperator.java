@@ -9,7 +9,12 @@ import org.key_project.solidity.logic.ast.abstractions.Type;
 import org.key_project.solidity.logic.ast.expressions.Expression;
 import org.key_project.solidity.logic.ast.expressions.UnresolvedTypeException;
 
-public abstract class BinaryOperator implements Expression {
+public sealed abstract class BinaryOperator implements Expression permits
+        AddOperator, AndOperator, DivOperator, EqualOperator,
+        ExponentialOperator, GreaterEqualOperator,
+        GreaterOperator, LessEqualOperator, LessOperator,
+        ModOperator, MultiplicationOperator, OrOperator,
+        SubtractionOperator, UnequalOperator {
 
     protected final Expression left;
     protected final Expression right;

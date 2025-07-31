@@ -7,7 +7,7 @@ import org.key_project.solidity.logic.ast.TypeResolver;
 import org.key_project.solidity.logic.ast.abstractions.Type;
 import org.key_project.solidity.logic.ast.expressions.Expression;
 
-public class GreaterOperator extends BinaryOperator {
+public final class GreaterOperator extends BinaryOperator {
     public GreaterOperator(Expression left, Expression right) {
         super(left, right);
     }

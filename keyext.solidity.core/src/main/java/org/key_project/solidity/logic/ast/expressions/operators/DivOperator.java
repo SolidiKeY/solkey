@@ -7,7 +7,7 @@ import org.key_project.solidity.logic.ast.TypeResolver;
 import org.key_project.solidity.logic.ast.abstractions.Type;
 import org.key_project.solidity.logic.ast.expressions.Expression;
 
-public class DivOperator extends BinaryOperator {
+public final class DivOperator extends BinaryOperator {
     public DivOperator(Expression left, Expression right) {
         super(left, right);
     }

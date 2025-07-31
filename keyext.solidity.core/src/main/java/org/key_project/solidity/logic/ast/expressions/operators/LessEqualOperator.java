@@ -7,7 +7,7 @@ import org.key_project.solidity.logic.ast.TypeResolver;
 import org.key_project.solidity.logic.ast.abstractions.Type;
 import org.key_project.solidity.logic.ast.expressions.Expression;
 
-public class LessEqualOperator extends BinaryOperator {
+public final class LessEqualOperator extends BinaryOperator {
     public LessEqualOperator(Expression left, Expression right) {
         super(left, right);
     }
