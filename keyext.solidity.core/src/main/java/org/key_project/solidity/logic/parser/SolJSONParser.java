@@ -198,24 +198,17 @@ public class SolJSONParser {
     }
 
     private Expression parseBinaryOperation(JsonNode initializer) {
-        // To be Implemented
-        Expression leftExpression = null;
-        Expression rightExpression = null;
+        Expression leftExpression = parseExpression(initializer.findValue("leftExpression"));
+        Expression rightExpression = parseExpression(initializer.findValue("rightExpression"));
 
         final String operator = initializer.findValue("operator").asText();
-        switch (operator) {
-            case "+", "-", "*":
-                leftExpression = parseExpression(initializer.findValue("leftExpression"));
-                rightExpression = parseExpression(initializer.findValue("rightExpression"));
-                return switch (operator) {
-                    case "+" -> new AddOperation(leftExpression, rightExpression);
-                    case "-" -> new SubtractionOperation(leftExpression, rightExpression);
-                    case "*" -> new MultiplicationOperation(leftExpression, rightExpression);
-                    default -> throw new IllegalStateException("Impossible case");
-                };
-            default:
+        return switch (operator) {
+            case "+" -> new AddOperation(leftExpression, rightExpression);
+            case "-" -> new SubtractionOperation(leftExpression, rightExpression);
+            case "*" -> new MultiplicationOperation(leftExpression, rightExpression);
+            default ->
                 throw new RuntimeException("Not yet supported binary operation: " + operator);
-        }
+        };
     }
 
     private VariableReference parseIdentifier(JsonNode literal) {

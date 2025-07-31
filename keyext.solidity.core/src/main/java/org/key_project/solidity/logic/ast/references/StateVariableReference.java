@@ -9,6 +9,8 @@ import org.key_project.solidity.logic.ast.declarations.StateVariableDeclaration;
 
 public class StateVariableReference extends VariableReference {
 
+    // private ReferencePrefix prefix; // a reference prefix for account.person.age here
+    // account.person is the prefix
     private final Name name;
     private final StateVariableDeclaration referencedDeclaration;
 
