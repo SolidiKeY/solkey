@@ -208,6 +208,7 @@ public class SolJSONParser {
             case "%" -> new ModOperator(leftExpression, rightExpression);
             case "^" -> new ExponentialOperator(leftExpression, rightExpression);
             case "&&" -> new AndOperator(leftExpression, rightExpression);
+            case "||" -> new OrOperator(leftExpression, rightExpression);
             default ->
                 throw new RuntimeException("Not yet supported binary operation: " + operator);
         };

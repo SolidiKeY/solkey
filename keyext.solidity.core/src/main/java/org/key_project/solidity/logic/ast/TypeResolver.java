@@ -48,4 +48,8 @@ public class TypeResolver {
     public Type resolve(AndOperator andOperation) {
         return PrimitiveType.getPrimitiveType("bool");
     }
+
+    public Type resolve(OrOperator orOperator) {
+        return PrimitiveType.getPrimitiveType("bool");
+    }
 }

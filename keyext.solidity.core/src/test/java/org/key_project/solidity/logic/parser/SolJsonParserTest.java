@@ -18,6 +18,7 @@ import org.key_project.solidity.logic.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.logic.ast.expressions.operators.AddOperator;
 import org.key_project.solidity.logic.ast.expressions.operators.AndOperator;
 import org.key_project.solidity.logic.ast.expressions.operators.ExponentialOperator;
+import org.key_project.solidity.logic.ast.expressions.operators.OrOperator;
 import org.key_project.solidity.logic.ast.references.StateVariableReference;
 import org.key_project.solidity.logic.ast.statement.AssignmentStatement;
 import org.key_project.solidity.logic.ast.statement.Block;
@@ -145,7 +146,7 @@ class SolJsonParserTest {
         Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
         ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
         Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
-        Assertions.assertInstanceOf(AndOperator.class,
+        Assertions.assertInstanceOf(OrOperator.class,
                 contractDeclaration.getFieldDeclarations().get(0).getChild(1));
     }
 
