@@ -12,11 +12,12 @@ import org.key_project.solidity.logic.ast.SolidityProgramElement;
 import org.key_project.solidity.logic.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.logic.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.logic.ast.declarations.StateVariableDeclaration;
-import org.key_project.solidity.logic.ast.expressions.operators.AddOperation;
-import org.key_project.solidity.logic.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.logic.ast.expressions.Expression;
+import org.key_project.solidity.logic.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.logic.ast.expressions.literals.Uint256Literal;
+import org.key_project.solidity.logic.ast.expressions.operators.AddOperation;
 import org.key_project.solidity.logic.ast.references.StateVariableReference;
+import org.key_project.solidity.logic.ast.statement.Block;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -91,6 +92,10 @@ class SolJsonParserTest {
         Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
         ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
         Assertions.assertEquals(1, contractDeclaration.getFunctions().size());
+        FunctionDeclaration functionDeclaration = contractDeclaration.getFunctions().get(0);
+        Block block = functionDeclaration.getBody();
+        Assertions.assertNotNull(block);
+        Assertions.assertTrue(block.getChildCount() == 0);
     }
 
     @Test
@@ -102,7 +107,11 @@ class SolJsonParserTest {
         FunctionDeclaration function = contractDeclaration.getFunctions().getFirst();
         Assertions.assertEquals(1, function.getInputParameters().size());
         Assertions.assertEquals(1, function.getReturnParameters().size());
+        Block block = function.getBody();
+        Assertions.assertNotNull(block);
+        Assertions.assertTrue(block.getChildCount() == 1);
     }
+
 
     private static SolidityProgramElement getSolidityProgramElement(String solFileName)
             throws IOException {
@@ -115,6 +124,8 @@ class SolJsonParserTest {
         SolidityProgramElement programElement = unit.get(0);
         return programElement;
     }
+
+
 
     private static URI getFile(String solFileName) {
         try {

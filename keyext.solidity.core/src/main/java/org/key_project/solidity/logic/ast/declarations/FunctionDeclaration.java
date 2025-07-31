@@ -7,32 +7,24 @@ import java.util.List;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.logic.ast.statement.Block;
 import org.key_project.util.collection.ImmutableArray;
 
 public class FunctionDeclaration extends Declaration {
     private final ImmutableArray<ParameterDeclaration> returnParameters;
     private final ImmutableArray<ParameterDeclaration> inputParameters;
-    // private final Statement body;
+    private final Block body;
 
     public FunctionDeclaration(Name name, List<ParameterDeclaration> returnParameters,
-            List<ParameterDeclaration> inputParameters) {
+            List<ParameterDeclaration> inputParameters, Block body) {
         super(name);
         this.returnParameters = new ImmutableArray<>(returnParameters);
         this.inputParameters = new ImmutableArray<>(inputParameters);
+        this.body = body;
     }
 
-    @Override
-    public SyntaxElement getChild(int n) {
-        if (n < returnParameters.size()) {
-            return returnParameters.get(n);
-        } else {
-            return inputParameters.get(n - returnParameters.size());
-        }
-    }
-
-    @Override
-    public int getChildCount() {
-        return returnParameters.size() + inputParameters.size();
+    public Block getBody() {
+        return body;
     }
 
     public ImmutableArray<ParameterDeclaration> getReturnParameters() {
@@ -42,4 +34,30 @@ public class FunctionDeclaration extends Declaration {
     public ImmutableArray<ParameterDeclaration> getInputParameters() {
         return inputParameters;
     }
+
+    // Interface SolidityProgramElement
+
+    @Override
+    public SyntaxElement getChild(int n) {
+        if (n < returnParameters.size()) {
+            return returnParameters.get(n);
+        } else {
+            n -= returnParameters.size();
+            if (n < inputParameters.size()) {
+                return inputParameters.get(n);
+            } else {
+                n -= inputParameters.size();
+                if (n == 0) {
+                    return body;
+                }
+                throw new IndexOutOfBoundsException("Index out of bounds");
+            }
+        }
+    }
+
+    @Override
+    public int getChildCount() {
+        return returnParameters.size() + inputParameters.size();
+    }
+
 }

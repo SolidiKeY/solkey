@@ -21,6 +21,8 @@ import org.key_project.solidity.logic.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.logic.ast.expressions.operators.AddOperation;
 import org.key_project.solidity.logic.ast.references.StateVariableReference;
 import org.key_project.solidity.logic.ast.references.TypeReference;
+import org.key_project.solidity.logic.ast.statement.Block;
+import org.key_project.solidity.logic.ast.statement.Statement;
 
 import com.fasterxml.jackson.core.io.BigIntegerParser;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -108,7 +110,22 @@ public class SolJSONParser {
                 return parseParam(it.findValue("expression"));
             }).toList();
 
-        return new FunctionDeclaration(new Name(name), returnParameters, inputParamenters);
+        Block body = parseBlock(node.findValue("body")); // TODO
+        return new FunctionDeclaration(new Name(name), returnParameters, inputParamenters, body);
+    }
+
+    private Block parseBlock(JsonNode jsonBody) {
+        List<JsonNode> statements = jsonBody.findValues("statements");
+        if (statements.getFirst().isEmpty()) {
+            return new Block(List.of());
+        }
+        List<Statement> blockStatements = statements.stream().map(this::parseStatement).toList();
+        return new Block(blockStatements);
+    }
+
+    private Statement parseStatement(JsonNode statement) {
+
+        return null;
     }
 
     private ParameterDeclaration parseParam(JsonNode node) {
