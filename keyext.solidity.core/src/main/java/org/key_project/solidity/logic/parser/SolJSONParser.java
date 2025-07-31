@@ -201,11 +201,13 @@ public class SolJSONParser {
 
         final String operator = initializer.findValue("operator").asText();
         return switch (operator) {
-            case "+" -> new AddOperation(leftExpression, rightExpression);
-            case "-" -> new SubtractionOperation(leftExpression, rightExpression);
-            case "*" -> new MultiplicationOperation(leftExpression, rightExpression);
-            case "/" -> new DivOperation(leftExpression, rightExpression);
-            case "%" -> new ModOperation(leftExpression, rightExpression);
+            case "+" -> new AddOperator(leftExpression, rightExpression);
+            case "-" -> new SubtractionOperator(leftExpression, rightExpression);
+            case "*" -> new MultiplicationOperator(leftExpression, rightExpression);
+            case "/" -> new DivOperator(leftExpression, rightExpression);
+            case "%" -> new ModOperator(leftExpression, rightExpression);
+            case "^" -> new ExponentialOperator(leftExpression, rightExpression);
+            case "&&" -> new AndOperator(leftExpression, rightExpression);
             default ->
                 throw new RuntimeException("Not yet supported binary operation: " + operator);
         };

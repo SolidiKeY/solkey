@@ -1,0 +1,111 @@
+{
+  "absolutePath": "BoolOperations.sol",
+  "exportedSymbols": {
+    "SimpleContract": [
+      6
+    ]
+  },
+  "id": 7,
+  "nodeType": "SourceUnit",
+  "nodes": [
+    {
+      "abstract": false,
+      "baseContracts": [],
+      "canonicalName": "SimpleContract",
+      "contractDependencies": [],
+      "contractKind": "contract",
+      "fullyImplemented": true,
+      "id": 6,
+      "linearizedBaseContracts": [
+        6
+      ],
+      "name": "SimpleContract",
+      "nameLocation": "9:14:0",
+      "nodeType": "ContractDefinition",
+      "nodes": [
+        {
+          "constant": false,
+          "id": 5,
+          "mutability": "mutable",
+          "name": "deposit",
+          "nameLocation": "34:7:0",
+          "nodeType": "VariableDeclaration",
+          "scope": 6,
+          "src": "29:27:0",
+          "stateVariable": true,
+          "storageLocation": "default",
+          "typeDescriptions": {
+            "typeIdentifier": "t_bool",
+            "typeString": "bool"
+          },
+          "typeName": {
+            "id": 1,
+            "name": "bool",
+            "nodeType": "ElementaryTypeName",
+            "src": "29:4:0",
+            "typeDescriptions": {
+              "typeIdentifier": "t_bool",
+              "typeString": "bool"
+            }
+          },
+          "value": {
+            "commonType": {
+              "typeIdentifier": "t_bool",
+              "typeString": "bool"
+            },
+            "id": 4,
+            "isConstant": false,
+            "isLValue": false,
+            "isPure": true,
+            "lValueRequested": false,
+            "leftExpression": {
+              "hexValue": "74727565",
+              "id": 2,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": true,
+              "kind": "bool",
+              "lValueRequested": false,
+              "nodeType": "Literal",
+              "src": "44:4:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_bool",
+                "typeString": "bool"
+              },
+              "value": "true"
+            },
+            "nodeType": "BinaryOperation",
+            "operator": "&&",
+            "rightExpression": {
+              "hexValue": "74727565",
+              "id": 3,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": true,
+              "kind": "bool",
+              "lValueRequested": false,
+              "nodeType": "Literal",
+              "src": "52:4:0",
+              "typeDescriptions": {
+                "typeIdentifier": "t_bool",
+                "typeString": "bool"
+              },
+              "value": "true"
+            },
+            "src": "44:12:0",
+            "typeDescriptions": {
+              "typeIdentifier": "t_bool",
+              "typeString": "bool"
+            }
+          },
+          "visibility": "internal"
+        }
+      ],
+      "scope": 7,
+      "src": "0:59:0",
+      "usedErrors": [],
+      "usedEvents": []
+    }
+  ],
+  "src": "0:60:0"
+}

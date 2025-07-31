@@ -7,13 +7,13 @@ import org.key_project.solidity.logic.ast.TypeResolver;
 import org.key_project.solidity.logic.ast.abstractions.Type;
 import org.key_project.solidity.logic.ast.expressions.Expression;
 
-public class ModOperation extends BinaryOperation {
-    public ModOperation(Expression left, Expression right) {
+public class ModOperator extends BinaryOperator {
+    public ModOperator(Expression left, Expression right) {
         super(left, right);
     }
 
     @Override
-    public char getOperator() { return '%'; }
+    public String getOperator() { return "%"; }
 
     @Override
     public Type resolving(TypeResolver resolver) {

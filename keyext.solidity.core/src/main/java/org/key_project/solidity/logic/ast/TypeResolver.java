@@ -21,27 +21,31 @@ public class TypeResolver {
         return solidityModel.getType(typeName);
     }
 
-    public Type resolve(AddOperation addOperation) {
+    public Type resolve(AddOperator addOperation) {
         return PrimitiveType.getPrimitiveType("uint256");
     }
 
-    public Type resolve(SubtractionOperation subtractionOperation) {
+    public Type resolve(SubtractionOperator subtractionOperation) {
         return PrimitiveType.getPrimitiveType("uint256");
     }
 
-    public Type resolve(MultiplicationOperation multiplicationOperation) {
+    public Type resolve(MultiplicationOperator multiplicationOperation) {
         return PrimitiveType.getPrimitiveType("uint256");
     }
 
-    public Type resolve(DivOperation divOperation) {
+    public Type resolve(DivOperator divOperation) {
         return null;
     }
 
-    public Type resolve(ModOperation modOperation) {
+    public Type resolve(ModOperator modOperation) {
         return PrimitiveType.getPrimitiveType("uint256");
     }
 
     public Type resolve(ExponentialOperator exponentialOperator) {
         return PrimitiveType.getPrimitiveType("uint256");
+    }
+
+    public Type resolve(AndOperator andOperation) {
+        return PrimitiveType.getPrimitiveType("bool");
     }
 }

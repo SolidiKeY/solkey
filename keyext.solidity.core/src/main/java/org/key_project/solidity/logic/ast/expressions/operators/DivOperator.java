@@ -7,13 +7,13 @@ import org.key_project.solidity.logic.ast.TypeResolver;
 import org.key_project.solidity.logic.ast.abstractions.Type;
 import org.key_project.solidity.logic.ast.expressions.Expression;
 
-public class SubtractionOperation extends BinaryOperation {
-    public SubtractionOperation(Expression left, Expression right) {
+public class DivOperator extends BinaryOperator {
+    public DivOperator(Expression left, Expression right) {
         super(left, right);
     }
 
     @Override
-    public char getOperator() { return '-'; }
+    public String getOperator() { return "/"; }
 
     @Override
     public Type resolving(TypeResolver resolver) {

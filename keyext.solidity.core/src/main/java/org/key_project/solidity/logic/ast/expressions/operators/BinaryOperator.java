@@ -9,13 +9,13 @@ import org.key_project.solidity.logic.ast.abstractions.Type;
 import org.key_project.solidity.logic.ast.expressions.Expression;
 import org.key_project.solidity.logic.ast.expressions.UnresolvedTypeException;
 
-public abstract class BinaryOperation implements Expression {
+public abstract class BinaryOperator implements Expression {
 
     protected final Expression left;
     protected final Expression right;
     protected Type type;
 
-    protected BinaryOperation(Expression left, Expression right) {
+    protected BinaryOperator(Expression left, Expression right) {
         this.left = left;
         this.right = right;
     }
@@ -45,7 +45,7 @@ public abstract class BinaryOperation implements Expression {
         return 2;
     }
 
-    public abstract char getOperator();
+    public abstract String getOperator();
 
     public String toString() {
         return left + " " + getOperator() + " " + right;

@@ -15,8 +15,9 @@ import org.key_project.solidity.logic.ast.declarations.StateVariableDeclaration;
 import org.key_project.solidity.logic.ast.expressions.Expression;
 import org.key_project.solidity.logic.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.logic.ast.expressions.literals.Uint256Literal;
-import org.key_project.solidity.logic.ast.expressions.operators.AddOperation;
-import org.key_project.solidity.logic.ast.expressions.operators.SubtractionOperation;
+import org.key_project.solidity.logic.ast.expressions.operators.AddOperator;
+import org.key_project.solidity.logic.ast.expressions.operators.AndOperator;
+import org.key_project.solidity.logic.ast.expressions.operators.ExponentialOperator;
 import org.key_project.solidity.logic.ast.references.StateVariableReference;
 import org.key_project.solidity.logic.ast.statement.AssignmentStatement;
 import org.key_project.solidity.logic.ast.statement.Block;
@@ -74,10 +75,10 @@ class SolJsonParserTest {
         Assertions.assertEquals(2, contractDeclaration.getFieldDeclarations().size());
         Expression initializer = contractDeclaration.getFieldDeclarations().get(1).getInitializer();
         Assertions.assertNotNull(initializer);
-        Assertions.assertInstanceOf(AddOperation.class, initializer);
+        Assertions.assertInstanceOf(AddOperator.class, initializer);
         Assertions.assertInstanceOf(StateVariableReference.class,
-            ((AddOperation) initializer).getChild(0));
-        Assertions.assertInstanceOf(Uint256Literal.class, ((AddOperation) initializer).getChild(1));
+            ((AddOperator) initializer).getChild(0));
+        Assertions.assertInstanceOf(Uint256Literal.class, ((AddOperator) initializer).getChild(1));
     }
 
     @Test
@@ -134,8 +135,18 @@ class SolJsonParserTest {
         Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
         ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
         Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
-        Assertions.assertInstanceOf(SubtractionOperation.class,
+        Assertions.assertInstanceOf(ExponentialOperator.class,
             contractDeclaration.getFieldDeclarations().get(0).getChild(1));
+    }
+
+    @Test
+    void parseContractWithBoolOperations() throws IOException {
+        SolidityProgramElement programElement = getSolidityProgramElement("BoolOperations.json");
+        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
+        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
+        Assertions.assertInstanceOf(AndOperator.class,
+                contractDeclaration.getFieldDeclarations().get(0).getChild(1));
     }
 
     private static SolidityProgramElement getSolidityProgramElement(String solFileName)

@@ -7,13 +7,13 @@ import org.key_project.solidity.logic.ast.TypeResolver;
 import org.key_project.solidity.logic.ast.abstractions.Type;
 import org.key_project.solidity.logic.ast.expressions.Expression;
 
-public class ExponentialOperator extends BinaryOperator {
-    public ExponentialOperator(Expression left, Expression right) {
+public class AddOperator extends BinaryOperator {
+    public AddOperator(Expression left, Expression right) {
         super(left, right);
     }
 
     @Override
-    public String getOperator() { return "^"; }
+    public String getOperator() { return "+"; }
 
     @Override
     public Type resolving(TypeResolver resolver) {
