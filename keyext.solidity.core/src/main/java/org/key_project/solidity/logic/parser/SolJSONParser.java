@@ -220,25 +220,6 @@ public class SolJSONParser {
         };
     }
 
-    private String operators(BinaryOperator op) {
-        return switch (op) {
-            case AddOperator addOperator -> "+";
-            case AndOperator andOperator -> "&&";
-            case DivOperator divOperator -> "/";
-            case EqualOperator equalOperator -> "==";
-            case ExponentialOperator exponentialOperator -> null;
-            case GreaterEqualOperator greaterEqualOperator -> null;
-            case GreaterOperator greaterOperator -> null;
-            case LessEqualOperator lessEqualOperator -> null;
-            case LessOperator lessOperator -> null;
-            case ModOperator modOperator -> null;
-            case MultiplicationOperator multiplicationOperator -> null;
-            case OrOperator orOperator -> null;
-            case SubtractionOperator subtractionOperator -> null;
-            case UnequalOperator unequalOperator -> null;
-        };
-    }
-
     private VariableReference parseIdentifier(JsonNode literal) {
         final String name = literal.findValue("name").asText();
         final int referenceDeclarationId = literal.findValue("referencedDeclaration").asInt();
