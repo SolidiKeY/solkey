@@ -14,9 +14,4 @@ public final class LessEqualOperator extends BinaryOperator {
 
     @Override
     public String getOperator() { return "<="; }
-
-    @Override
-    public Type resolving(TypeResolver resolver) {
-        return resolver.resolve(this);
-    }
 }

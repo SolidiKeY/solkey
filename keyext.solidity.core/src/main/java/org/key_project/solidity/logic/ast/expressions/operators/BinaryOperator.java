@@ -56,7 +56,9 @@ public sealed abstract class BinaryOperator implements Expression permits
         return left + " " + getOperator() + " " + right;
     }
 
-    protected abstract Type resolving(TypeResolver resolver);
+    protected Type resolving(TypeResolver resolver) {
+        return resolver.resolve(this);
+    }
 
     public void resolve(TypeResolver resolver) {
         if (type == null) {

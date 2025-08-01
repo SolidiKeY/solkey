@@ -21,59 +21,24 @@ public class TypeResolver {
         return solidityModel.getType(typeName);
     }
 
-    public Type resolve(AddOperator addOperation) {
-        return PrimitiveType.getPrimitiveType("uint256");
-    }
-
-    public Type resolve(SubtractionOperator subtractionOperation) {
-        return PrimitiveType.getPrimitiveType("uint256");
-    }
-
-    public Type resolve(MultiplicationOperator multiplicationOperation) {
-        return PrimitiveType.getPrimitiveType("uint256");
-    }
-
-    public Type resolve(DivOperator divOperation) {
-        return null;
-    }
-
-    public Type resolve(ModOperator modOperation) {
-        return PrimitiveType.getPrimitiveType("uint256");
-    }
-
-    public Type resolve(ExponentialOperator exponentialOperator) {
-        return PrimitiveType.getPrimitiveType("uint256");
-    }
-
-    public Type resolve(AndOperator andOperation) {
-        return null;
-    }
-
-    public Type resolve(OrOperator orOperator) {
-        return PrimitiveType.getPrimitiveType("bool");
-    }
-
-    public Type resolve(UnequalOperator unequalOperator) {
-        return PrimitiveType.getPrimitiveType("bool");
-    }
-
-    public Type resolve(EqualOperator equalOperator) {
-        return PrimitiveType.getPrimitiveType("bool");
-    }
-
-    public Type resolve(GreaterEqualOperator greaterEqualOperator) {
-        return PrimitiveType.getPrimitiveType("bool");
-    }
-
-    public Type resolve(GreaterOperator greaterOperator) {
-        return PrimitiveType.getPrimitiveType("bool");
-    }
-
-    public Type resolve(LessOperator lessOperator) {
-        return PrimitiveType.getPrimitiveType("bool");
-    }
-
-    public Type resolve(LessEqualOperator lessEqualOperator) {
-        return PrimitiveType.getPrimitiveType("bool");
+    public Type resolve(BinaryOperator binOp) {
+        Type uint256 = PrimitiveType.getPrimitiveType("uint256");
+        Type bool = PrimitiveType.getPrimitiveType("bool");
+        return switch (binOp) {
+            case AddOperator addOperator -> uint256;
+            case AndOperator andOperator -> bool;
+            case DivOperator divOperator -> uint256;
+            case EqualOperator equalOperator -> bool;
+            case ExponentialOperator exponentialOperator -> uint256;
+            case GreaterEqualOperator greaterEqualOperator -> uint256;
+            case GreaterOperator greaterOperator -> uint256;
+            case LessEqualOperator lessEqualOperator -> uint256;
+            case LessOperator lessOperator -> uint256;
+            case ModOperator modOperator -> uint256;
+            case MultiplicationOperator multiplicationOperator -> uint256;
+            case OrOperator orOperator -> bool;
+            case SubtractionOperator subtractionOperator -> uint256;
+            case UnequalOperator unequalOperator -> bool;
+        };
     }
 }
