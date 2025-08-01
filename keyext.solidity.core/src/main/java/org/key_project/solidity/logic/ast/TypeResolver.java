@@ -25,20 +25,20 @@ public class TypeResolver {
         Type uint256 = PrimitiveType.getPrimitiveType("uint256");
         Type bool = PrimitiveType.getPrimitiveType("bool");
         return switch (binOp) {
-            case AddOperator addOperator -> uint256;
-            case AndOperator andOperator -> bool;
-            case DivOperator divOperator -> uint256;
-            case EqualOperator equalOperator -> bool;
-            case ExponentialOperator exponentialOperator -> uint256;
-            case GreaterEqualOperator greaterEqualOperator -> uint256;
-            case GreaterOperator greaterOperator -> uint256;
-            case LessEqualOperator lessEqualOperator -> uint256;
-            case LessOperator lessOperator -> uint256;
-            case ModOperator modOperator -> uint256;
-            case MultiplicationOperator multiplicationOperator -> uint256;
-            case OrOperator orOperator -> bool;
-            case SubtractionOperator subtractionOperator -> uint256;
-            case UnequalOperator unequalOperator -> bool;
+            case AddOperator ignored -> uint256;
+            case AndOperator ignored -> bool;
+            case DivOperator ignored -> uint256;
+            case EqualOperator ignored -> bool;
+            case ExponentialOperator ignored -> uint256;
+            case GreaterEqualOperator ignored -> uint256;
+            case GreaterOperator ignored -> uint256;
+            case LessEqualOperator ignored -> uint256;
+            case LessOperator ignored -> uint256;
+            case ModOperator ignored -> uint256;
+            case MultiplicationOperator ignored -> uint256;
+            case OrOperator ignored -> bool;
+            case SubtractionOperator ignored -> uint256;
+            case UnequalOperator ignored -> bool;
         };
     }
 }
