@@ -9,11 +9,10 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.UnresolvedTypeException;
 
-public abstract class BinaryOperator implements Expression {
+public abstract class BinaryOperator extends Expression {
 
     protected final Expression left;
     protected final Expression right;
-    protected Type type;
 
     protected BinaryOperator(Expression left, Expression right) {
         this.left = left;

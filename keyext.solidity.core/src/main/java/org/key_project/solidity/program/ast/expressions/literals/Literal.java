@@ -7,17 +7,9 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 
-public abstract class Literal implements Expression {
-
-    private Type type;
-
+public abstract class Literal extends Expression {
     protected Literal(Type type) {
         this.type = type;
-    }
-
-    @Override
-    public Type getType() {
-        return type;
     }
 
     @Override

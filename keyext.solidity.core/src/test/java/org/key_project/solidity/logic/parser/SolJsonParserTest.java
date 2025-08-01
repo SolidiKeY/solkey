@@ -26,6 +26,8 @@ import org.key_project.solidity.program.parser.SolJSONParser;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.INT;
+
 
 class SolJsonParserTest {
 
@@ -138,8 +140,10 @@ class SolJsonParserTest {
         Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
         ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
         Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
-        Assertions.assertInstanceOf(ExponentialOperator.class,
-            contractDeclaration.getFieldDeclarations().get(0).getChild(1));
+        SolidityProgramElement expOpSynt = contractDeclaration.getFieldDeclarations().get(0).getChild(1);
+        Assertions.assertInstanceOf(ExponentialOperator.class, expOpSynt);
+        ExponentialOperator expOp = (ExponentialOperator) expOpSynt;
+        Assertions.assertEquals(INT, expOp.getType());
     }
 
     @Test

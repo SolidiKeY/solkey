@@ -36,6 +36,7 @@ public class PrimitiveType implements Type {
     }
 
     public static final @NonNull PrimitiveType UINT256 = newPrimitiveType("uint256");
+    public static final @NonNull PrimitiveType INT = newPrimitiveType("int");
     public static final @NonNull PrimitiveType BOOL = newPrimitiveType("bool");
     public static final @NonNull PrimitiveType ADDRESS = newPrimitiveType("address");
     // TODO add all primitive types

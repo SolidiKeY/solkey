@@ -10,7 +10,7 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 
-public abstract class VariableReference implements Expression {
+public abstract class VariableReference extends Expression {
     protected Type type;
     protected final Name typeName;
 

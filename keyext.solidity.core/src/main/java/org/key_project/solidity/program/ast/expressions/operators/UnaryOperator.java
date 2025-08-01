@@ -9,7 +9,7 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.UnresolvedTypeException;
 
-public abstract class UnaryOperator implements Expression {
+public abstract class UnaryOperator extends Expression {
 
     protected final Expression exp;
     protected Type type;

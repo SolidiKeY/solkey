@@ -6,6 +6,12 @@ package org.key_project.solidity.program.ast.expressions;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 
-public interface Expression extends SolidityProgramElement {
-    Type getType();
+public abstract class Expression implements SolidityProgramElement {
+    protected Type type;
+    public Type getType(){
+        return type;
+    }
+    public void setType(Type type){
+        this.type = type;
+    }
 }
