@@ -172,6 +172,15 @@ class SolJsonParserTest {
         Assertions.assertInstanceOf(PlusPlusOperator.class, exp);
     }
 
+    @Test
+    void parseComplexAssignment() throws IOException {
+        SolidityProgramElement programElement = getSolidityProgramElement("ComplexAssignment.json");
+        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
+        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        Assertions.assertEquals(1, contractDeclaration.getFunctions().size());
+        Assertions.assertInstanceOf(PlusEqualOperator.class, contractDeclaration.getFunctions().get(0).getBody().getStatements().get(0).getChild(0));
+    }
+
     private static SolidityProgramElement getSolidityProgramElement(String solFileName)
             throws IOException {
         SolJSONParser jsonParser = new SolJSONParser();

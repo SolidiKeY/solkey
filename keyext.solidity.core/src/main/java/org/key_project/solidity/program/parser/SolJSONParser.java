@@ -30,7 +30,6 @@ import org.key_project.solidity.program.ast.references.TypeReference;
 import org.key_project.solidity.program.ast.references.VariableReference;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.program.ast.statement.ExpressionStatement;
-import org.key_project.solidity.program.ast.statement.ReturnStatment;
 import org.key_project.solidity.program.ast.statement.Statement;
 
 import com.fasterxml.jackson.core.io.BigIntegerParser;
@@ -194,8 +193,16 @@ public class SolJSONParser {
     }
 
     private Expression parseAssignment(JsonNode assign) {
-        return new AssignmentExpression(parseExpression(assign.findValue("leftHandSide")),
-                        parseExpression(assign.findValue("rightHandSide")));
+        final String op = assign.findValue("operator").asText();
+        Expression left = parseExpression(assign.findValue("leftHandSide"));
+        Expression right = parseExpression(assign.findValue("rightHandSide"));
+        
+        return switch (op) {
+            case "=" -> new AssignmentExpression(left, right);
+            case "+=" -> new PlusEqualOperator(left, right);
+            case "-=" -> new MinusEqualOperator(left, right);
+            default -> throw new RuntimeException("Assignment: " + op + " not supported");
+        };
     }
 
     private Expression parseUnaryOperation(JsonNode initializer) {
