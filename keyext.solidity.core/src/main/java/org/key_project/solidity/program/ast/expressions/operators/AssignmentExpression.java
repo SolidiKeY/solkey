@@ -3,12 +3,13 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions.operators;
 
+import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 
 public class AssignmentExpression extends BinaryOperator {
 
-    public AssignmentExpression(Expression leftSide, Expression rightSide) {
-        super(leftSide, rightSide);
+    public AssignmentExpression(Expression left, Expression right, Type type) {
+        super(left, right, type);
     }
 
     @Override

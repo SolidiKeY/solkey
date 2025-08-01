@@ -4,6 +4,7 @@
 package org.key_project.solidity.program.ast.declarations;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
@@ -15,12 +16,14 @@ import org.jspecify.annotations.NonNull;
 public class ContractDeclaration extends Declaration implements Type {
 
     private final ImmutableArray<StateVariableDeclaration> fields;
+    private final List<StructDeclaration> structs;
     private final List<FunctionDeclaration> functions;
 
-    public ContractDeclaration(Name name, List<StateVariableDeclaration> fields,
-            List<FunctionDeclaration> functions) {
+    public ContractDeclaration(Name name, List<StateVariableDeclaration> fields, List<StructDeclaration> structs,
+                               List<FunctionDeclaration> functions) {
         super(name);
         this.fields = new ImmutableArray<>(fields.toArray(new StateVariableDeclaration[0]));
+        this.structs = structs;
         this.functions = functions;
     }
 
@@ -31,7 +34,12 @@ public class ContractDeclaration extends Declaration implements Type {
     @Override
     public @NonNull String toString() {
         String contract = "contract ";
-        contract += getName() + " {";
+        contract += getName() + " {\n";
+        contract += structs.stream().map(it ->
+            "struct " + it.getName() + " {\n"
+            + it.fields.stream().map(jt ->
+                    jt.toString() + "\n"
+                ).collect(Collectors.joining()) + "}\n").collect(Collectors.joining());
         for (int i = 0; i < fields.size(); i++) {
             contract += fields.get(i);
             contract += "\n";

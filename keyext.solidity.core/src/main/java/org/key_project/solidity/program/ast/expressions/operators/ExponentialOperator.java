@@ -3,11 +3,13 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions.operators;
 
+import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 
 public final class ExponentialOperator extends BinaryOperator {
-    public ExponentialOperator(Expression left, Expression right) {
-        super(left, right);
+
+    public ExponentialOperator(Expression left, Expression right, Type type) {
+        super(left, right, type);
     }
 
     @Override

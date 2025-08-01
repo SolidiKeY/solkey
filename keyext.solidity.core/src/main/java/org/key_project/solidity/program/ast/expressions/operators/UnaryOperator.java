@@ -14,7 +14,8 @@ public abstract class UnaryOperator extends Expression {
     protected final Expression exp;
     protected Type type;
 
-    protected UnaryOperator(Expression exp) {
+    protected UnaryOperator(Expression exp, Type type) {
+        super(type);
         this.exp = exp;
     }
 

@@ -7,11 +7,13 @@ import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 
 public abstract class Expression implements SolidityProgramElement {
-    protected Type type;
+    protected final Type type;
+
+    public Expression(Type type) {
+        this.type = type;
+    }
+
     public Type getType(){
         return type;
-    }
-    public void setType(Type type){
-        this.type = type;
     }
 }

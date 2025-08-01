@@ -9,7 +9,7 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 
 public abstract class Literal extends Expression {
     protected Literal(Type type) {
-        this.type = type;
+        super(type);
     }
 
     @Override

@@ -22,8 +22,8 @@ public class StateVariableReference extends VariableReference {
     }
 
     public StateVariableReference(Name name, StateVariableDeclaration referencedDeclaration,
-            Name typeName) {
-        super(typeName);
+            Name typeName, Type type) {
+        super(type);
         this.name = name;
         this.referencedDeclaration = referencedDeclaration;
     }

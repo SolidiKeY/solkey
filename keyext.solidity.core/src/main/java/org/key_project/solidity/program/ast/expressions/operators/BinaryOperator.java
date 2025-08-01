@@ -14,7 +14,8 @@ public abstract class BinaryOperator extends Expression {
     protected final Expression left;
     protected final Expression right;
 
-    protected BinaryOperator(Expression left, Expression right) {
+    protected BinaryOperator(Expression left, Expression right, Type type) {
+        super(type);
         this.left = left;
         this.right = right;
     }
@@ -49,15 +50,4 @@ public abstract class BinaryOperator extends Expression {
     public String toString() {
         return left + " " + getOperator() + " " + right;
     }
-
-    protected Type resolving(TypeResolver resolver) {
-        return resolver.resolve(this);
-    }
-
-    public void resolve(TypeResolver resolver) {
-        if (type == null) {
-            type = resolving(resolver);
-        }
-    }
-
 }

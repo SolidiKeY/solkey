@@ -19,8 +19,8 @@ public class ParameterVariableReference extends VariableReference {
     }
 
     public ParameterVariableReference(Name name, ParameterDeclaration referencedDeclaration,
-            Name typeName) {
-        super(typeName);
+            Name typeName, Type type) {
+        super(type);
         this.name = name;
         this.referencedDeclaration = referencedDeclaration;
     }

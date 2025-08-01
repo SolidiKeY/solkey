@@ -15,11 +15,13 @@ public abstract class VariableReference extends Expression {
     protected final Name typeName;
 
     protected VariableReference(Type type) {
+        super(type);
         this.type = type;
         this.typeName = type.getName();
     }
 
-    protected VariableReference(Name typeName) {
+    protected VariableReference(Name typeName, Type type) {
+        super(type);
         this.typeName = typeName;
     }
 

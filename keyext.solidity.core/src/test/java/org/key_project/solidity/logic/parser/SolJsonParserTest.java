@@ -157,6 +157,11 @@ class SolJsonParserTest {
         Assertions.assertInstanceOf(PlusEqualOperator.class, contractDeclaration.getFunctions().get(0).getBody().getStatements().get(0).getChild(0));
     }
 
+    @Test
+    void parseStruct() throws IOException {
+        ContractDeclaration contractDeclaration = getDeclaration("Struct.json");
+    }
+
     private static ContractDeclaration getDeclaration(String fileName) throws IOException {
         SolidityProgramElement programElement = getSolidityProgramElement(fileName);
         Assertions.assertInstanceOf(ContractDeclaration.class, programElement);

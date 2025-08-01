@@ -13,11 +13,7 @@ import java.util.List;
 import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
-import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
-import org.key_project.solidity.program.ast.declarations.Declaration;
-import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
-import org.key_project.solidity.program.ast.declarations.ParameterDeclaration;
-import org.key_project.solidity.program.ast.declarations.StateVariableDeclaration;
+import org.key_project.solidity.program.ast.declarations.*;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Literal;
@@ -88,6 +84,7 @@ public class SolJSONParser {
         // now retrieve declared fields, functions, structs etc.
         List<StateVariableDeclaration> fields = new ArrayList<>();
         List<FunctionDeclaration> functions = new ArrayList<>();
+        List<StructDeclaration> structs = new ArrayList<>();
 
         for (Iterator<JsonNode> it = contractNode.findValue("nodes").elements(); it.hasNext();) {
             final JsonNode node = it.next();
@@ -95,15 +92,23 @@ public class SolJSONParser {
             switch (nodeType) {
                 case "VariableDeclaration" -> fields.add(parseField(node));
                 case "FunctionDefinition" -> functions.add(parseFunction(node));
+                case "StructDefinition" -> structs.add(parseStruct(node));
                 default -> throw new RuntimeException("Unknown node type " + nodeType);
             }
         }
 
         final ContractDeclaration cdecl =
-            new ContractDeclaration(new Name(contractName), fields, functions);
+            new ContractDeclaration(new Name(contractName), fields, structs, functions);
         final int contractId = contractNode.findValue("id").asInt();
         id2Name.put(contractId, cdecl);
         return cdecl;
+    }
+
+    private StructDeclaration parseStruct(JsonNode structNode) {
+        String name = structNode.findValue("name").asText();
+        List<StateVariableDeclaration> fields = structNode.findValue("members").valueStream().map(this::parseField).toList();
+
+        return new StructDeclaration(new Name(name), fields);
     }
 
     private FunctionDeclaration parseFunction(JsonNode node) {
@@ -181,69 +186,68 @@ public class SolJSONParser {
 
     private Expression parseExpression(JsonNode initializer) {
         final String nodeType = initializer.findValue("nodeType").asText();
+        Type expType = getType(initializer.findValue("typeDescriptions").findValue("typeString").textValue());
         Expression exp = switch (nodeType) {
-            case "Literal" -> parseLiteral(initializer);
-            case "BinaryOperation" -> parseBinaryOperation(initializer);
-            case "UnaryOperation" -> parseUnaryOperation(initializer);
-            case "Identifier" -> parseIdentifier(initializer);
-            case "Assignment" -> parseAssignment(initializer);
+            case "Literal" -> parseLiteral(expType, initializer);
+            case "BinaryOperation" -> parseBinaryOperation(expType, initializer);
+            case "UnaryOperation" -> parseUnaryOperation(expType, initializer);
+            case "Identifier" -> parseIdentifier(expType, initializer);
+            case "Assignment" -> parseAssignment(expType, initializer);
             default -> throw new RuntimeException("Not yet supported expression type: " + nodeType);
         };
-        String typ_str = initializer.findValue("typeDescriptions").findValue("typeString").textValue();
-        exp.setType(getType(typ_str));
         return exp;
     }
 
-    private Expression parseAssignment(JsonNode assign) {
+    private Expression parseAssignment(Type expType, JsonNode assign) {
         final String op = assign.findValue("operator").asText();
         Expression left = parseExpression(assign.findValue("leftHandSide"));
         Expression right = parseExpression(assign.findValue("rightHandSide"));
         
         return switch (op) {
-            case "=" -> new AssignmentExpression(left, right);
-            case "+=" -> new PlusEqualOperator(left, right);
-            case "-=" -> new MinusEqualOperator(left, right);
+            case "=" -> new AssignmentExpression(left, right, expType);
+            case "+=" -> new PlusEqualOperator(left, right, expType);
+            case "-=" -> new MinusEqualOperator(left, right, expType);
             default -> throw new RuntimeException("Assignment: " + op + " not supported");
         };
     }
 
-    private Expression parseUnaryOperation(JsonNode initializer) {
+    private Expression parseUnaryOperation(Type expType, JsonNode initializer) {
         Expression uExp = parseExpression(initializer.findValue("subExpression"));
         final String operator = initializer.findValue("operator").asText();
         boolean prefix = initializer.findValue("prefix").asBoolean();
         return switch (operator) {
-            case "++" -> new PlusPlusOperator(uExp, prefix);
-            case "--" -> new MinusMinusOperator(uExp, prefix);
+            case "++" -> new PlusPlusOperator(uExp, expType, prefix);
+            case "--" -> new MinusMinusOperator(uExp, expType, prefix);
             default -> throw new RuntimeException("Not yet supported binary operation: " + operator);
         };
     }
 
-    private Expression parseBinaryOperation(JsonNode initializer) {
+    private Expression parseBinaryOperation(Type expType, JsonNode initializer) {
         Expression leftExpression = parseExpression(initializer.findValue("leftExpression"));
         Expression rightExpression = parseExpression(initializer.findValue("rightExpression"));
 
         final String operator = initializer.findValue("operator").asText();
         return switch (operator) {
-            case "+" -> new AddOperator(leftExpression, rightExpression);
-            case "-" -> new SubtractionOperator(leftExpression, rightExpression);
-            case "*" -> new MultiplicationOperator(leftExpression, rightExpression);
-            case "/" -> new DivOperator(leftExpression, rightExpression);
-            case "%" -> new ModOperator(leftExpression, rightExpression);
-            case "^" -> new ExponentialOperator(leftExpression, rightExpression);
-            case "&&" -> new AndOperator(leftExpression, rightExpression);
-            case "||" -> new OrOperator(leftExpression, rightExpression);
-            case "!=" -> new UnequalOperator(leftExpression, rightExpression);
-            case "==" -> new EqualOperator(leftExpression, rightExpression);
-            case ">=" -> new GreaterEqualOperator(leftExpression, rightExpression);
-            case ">" -> new GreaterOperator(leftExpression, rightExpression);
-            case "<=" -> new LessEqualOperator(leftExpression, rightExpression);
-            case "<" -> new LessOperator(leftExpression, rightExpression);
+            case "+" -> new AddOperator(leftExpression, rightExpression, expType);
+            case "-" -> new SubtractionOperator(leftExpression, rightExpression, expType);
+            case "*" -> new MultiplicationOperator(leftExpression, rightExpression, expType);
+            case "/" -> new DivOperator(leftExpression, rightExpression, expType);
+            case "%" -> new ModOperator(leftExpression, rightExpression, expType);
+            case "^" -> new ExponentialOperator(leftExpression, rightExpression, expType);
+            case "&&" -> new AndOperator(leftExpression, rightExpression, expType);
+            case "||" -> new OrOperator(leftExpression, rightExpression, expType);
+            case "!=" -> new UnequalOperator(leftExpression, rightExpression, expType);
+            case "==" -> new EqualOperator(leftExpression, rightExpression, expType);
+            case ">=" -> new GreaterEqualOperator(leftExpression, rightExpression, expType);
+            case ">" -> new GreaterOperator(leftExpression, rightExpression, expType);
+            case "<=" -> new LessEqualOperator(leftExpression, rightExpression, expType);
+            case "<" -> new LessOperator(leftExpression, rightExpression, expType);
             default ->
                 throw new RuntimeException("Not yet supported binary operation: " + operator);
         };
     }
 
-    private VariableReference parseIdentifier(JsonNode literal) {
+    private VariableReference parseIdentifier(Type expType, JsonNode literal) {
         final String name = literal.findValue("name").asText();
         final int referenceDeclarationId = literal.findValue("referencedDeclaration").asInt();
         final String type_str =
@@ -278,7 +282,7 @@ public class SolJSONParser {
         return type;
     }
 
-    private Literal parseLiteral(JsonNode literal) {
+    private Literal parseLiteral(Type expType, JsonNode literal) {
         final String kind = literal.findValue("kind").asText();
         return switch (kind) {
             case "number" -> {
