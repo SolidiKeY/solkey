@@ -138,20 +138,8 @@ public class SolJSONParser {
         return new Block(blockStatements);
     }
 
-
-    /// TODO
     private @NonNull Statement parseStatement(JsonNode statement) {
-        JsonNode expSt = statement.findValue("expression");
-        String nodeType = expSt.findValue("nodeType").asText();
-        return switch (nodeType) {
-            case "Assignment" ->
-                new ExpressionStatement(
-                    new AssignmentExpression(parseExpression(expSt.findValue("leftHandSide")),
-                        parseExpression(expSt.findValue("rightHandSide"))));
-            case "Identifier" -> new ReturnStatment(parseExpression(expSt));
-            default -> throw new RuntimeException("Assignment type " + nodeType + " not supported");
-        };
-
+        return new ExpressionStatement(parseExpression(statement.findValue("expression")));
     }
 
     private ParameterDeclaration parseParam(JsonNode node) {
@@ -200,8 +188,14 @@ public class SolJSONParser {
             case "BinaryOperation" -> parseBinaryOperation(initializer);
             case "UnaryOperation" -> parseUnaryOperation(initializer);
             case "Identifier" -> parseIdentifier(initializer);
+            case "Assignment" -> parseAssignment(initializer);
             default -> throw new RuntimeException("Not yet supported expression type: " + nodeType);
         };
+    }
+
+    private Expression parseAssignment(JsonNode assign) {
+        return new AssignmentExpression(parseExpression(assign.findValue("leftHandSide")),
+                        parseExpression(assign.findValue("rightHandSide")));
     }
 
     private Expression parseUnaryOperation(JsonNode initializer) {

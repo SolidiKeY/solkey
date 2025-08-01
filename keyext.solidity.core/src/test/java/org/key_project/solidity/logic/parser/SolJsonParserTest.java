@@ -8,6 +8,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
@@ -15,11 +16,7 @@ import org.key_project.solidity.program.ast.declarations.StateVariableDeclaratio
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
-import org.key_project.solidity.program.ast.expressions.operators.AddOperator;
-import org.key_project.solidity.program.ast.expressions.operators.AndOperator;
-import org.key_project.solidity.program.ast.expressions.operators.AssignmentExpression;
-import org.key_project.solidity.program.ast.expressions.operators.ExponentialOperator;
-import org.key_project.solidity.program.ast.expressions.operators.OrOperator;
+import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.references.StateVariableReference;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.program.ast.statement.ExpressionStatement;
@@ -171,6 +168,8 @@ class SolJsonParserTest {
         Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
         ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
         Assertions.assertEquals(3, contractDeclaration.getFieldDeclarations().size());
+        SyntaxElement exp = contractDeclaration.getChild(2).getChild(1).getChild(0);
+        Assertions.assertInstanceOf(PlusPlusOperator.class, exp);
     }
 
     private static SolidityProgramElement getSolidityProgramElement(String solFileName)
