@@ -13,6 +13,7 @@ import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.StateVariableDeclaration;
+import org.key_project.solidity.program.ast.declarations.StructDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
@@ -160,6 +161,10 @@ class SolJsonParserTest {
     @Test
     void parseStruct() throws IOException {
         ContractDeclaration contractDeclaration = getDeclaration("Struct.json");
+        List<StructDeclaration> structs = contractDeclaration.getStructs();
+        Assertions.assertEquals(1, structs.size());
+        var struct = structs.get(0);
+        Assertions.assertEquals(1, structs.get(0).getFields().size());
     }
 
     private static ContractDeclaration getDeclaration(String fileName) throws IOException {

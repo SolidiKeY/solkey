@@ -57,6 +57,10 @@ public class ContractDeclaration extends Declaration implements Type {
         return fields.size();
     }
 
+    public List<StructDeclaration> getStructs() {
+        return structs;
+    }
+
     public List<FunctionDeclaration> getFunctions() {
         return functions;
     }

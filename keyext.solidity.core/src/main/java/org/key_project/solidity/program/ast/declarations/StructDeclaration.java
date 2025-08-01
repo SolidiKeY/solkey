@@ -8,20 +8,26 @@ import java.lang.reflect.Field;
 import java.util.List;
 
 public class StructDeclaration extends Declaration {
-    List<StateVariableDeclaration> fields;
+    List<FieldDeclaration> fields;
 
-    public StructDeclaration(@NonNull Name name, List<StateVariableDeclaration> fields) {
+    public StructDeclaration(@NonNull Name name, List<FieldDeclaration> fields) {
         super(name);
         this.fields = fields;
     }
 
+    public List<FieldDeclaration> getFields() {
+        return fields;
+    }
+
     @Override
     public SyntaxElement getChild(int n) {
-        return null;
+        if(0 < n && n < getChildCount())
+            return fields.get(n);
+        throw new RuntimeException("Child " + n + " out of bound");
     }
 
     @Override
     public int getChildCount() {
-        return 0;
+        return fields.size();
     }
 }

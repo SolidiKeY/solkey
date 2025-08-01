@@ -90,7 +90,7 @@ public class SolJSONParser {
             final JsonNode node = it.next();
             final String nodeType = node.findValue("nodeType").asText();
             switch (nodeType) {
-                case "VariableDeclaration" -> fields.add(parseField(node));
+                case "VariableDeclaration" -> fields.add(parseVariableField(node));
                 case "FunctionDefinition" -> functions.add(parseFunction(node));
                 case "StructDefinition" -> structs.add(parseStruct(node));
                 default -> throw new RuntimeException("Unknown node type " + nodeType);
@@ -106,9 +106,16 @@ public class SolJSONParser {
 
     private StructDeclaration parseStruct(JsonNode structNode) {
         String name = structNode.findValue("name").asText();
-        List<StateVariableDeclaration> fields = structNode.findValue("members").valueStream().map(this::parseField).toList();
+        List<FieldDeclaration> fields = structNode.findValue("members").valueStream().map(this::parseField).toList();
 
         return new StructDeclaration(new Name(name), fields);
+    }
+
+    private FieldDeclaration parseField(JsonNode fieldNode) {
+        final String fieldName = fieldNode.findValue("name").asText();
+        final String fieldType = fieldNode.findValue("typeName").findValue("name").asText();
+
+        return new FieldDeclaration(new Name(fieldName), new TypeReference(new Name(fieldType)));
     }
 
     private FunctionDeclaration parseFunction(JsonNode node) {
@@ -159,7 +166,7 @@ public class SolJSONParser {
         return field;
     }
 
-    private StateVariableDeclaration parseField(JsonNode fieldNode) {
+    private StateVariableDeclaration parseVariableField(JsonNode fieldNode) {
         final String fieldName = fieldNode.findValue("name").asText();
         final String fieldType = fieldNode.findValue("typeName").findValue("name").asText();
         // boolean isPrimitive =
