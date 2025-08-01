@@ -33,25 +33,19 @@ class SolJsonParserTest {
 
     @Test
     void parse() throws IOException {
-        SolidityProgramElement programElement = getSolidityProgramElement("SimpleContract1.json");
-        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
-        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        ContractDeclaration contractDeclaration = getDeclaration("SimpleContract1.json");
         Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
     }
 
     @Test
     void parseContractWithIntAndBool() throws IOException {
-        SolidityProgramElement programElement = getSolidityProgramElement("SimpleContract2.json");
-        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
-        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        ContractDeclaration contractDeclaration = getDeclaration("SimpleContract2.json");
         Assertions.assertEquals(2, contractDeclaration.getFieldDeclarations().size());
     }
 
     @Test
     void parseContractWithIntAndBoolSet() throws IOException {
-        SolidityProgramElement programElement = getSolidityProgramElement("SimpleContract3.json");
-        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
-        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        ContractDeclaration contractDeclaration = getDeclaration("SimpleContract3.json");
         Assertions.assertEquals(2, contractDeclaration.getFieldDeclarations().size());
         StateVariableDeclaration firstField = contractDeclaration.getFieldDeclarations().get(0);
         Assertions.assertInstanceOf(Uint256Literal.class, firstField.getInitializer());
@@ -64,17 +58,13 @@ class SolJsonParserTest {
 
     @Test
     void parseContractWithAddition() throws IOException {
-        SolidityProgramElement programElement = getSolidityProgramElement("SimpleContract4.json");
-        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
-        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        ContractDeclaration contractDeclaration = getDeclaration("SimpleContract4.json");
         Assertions.assertEquals(2, contractDeclaration.getFieldDeclarations().size());
     }
 
     @Test
     void parseContractWithReferenceAddition() throws IOException {
-        SolidityProgramElement programElement = getSolidityProgramElement("SimpleContract5.json");
-        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
-        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        ContractDeclaration contractDeclaration = getDeclaration("SimpleContract5.json");
         Assertions.assertEquals(2, contractDeclaration.getFieldDeclarations().size());
         Expression initializer = contractDeclaration.getFieldDeclarations().get(1).getInitializer();
         Assertions.assertNotNull(initializer);
@@ -86,17 +76,13 @@ class SolJsonParserTest {
 
     @Test
     void parseContractWithBoth() throws IOException {
-        SolidityProgramElement programElement = getSolidityProgramElement("SimpleContract6.json");
-        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
-        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        ContractDeclaration contractDeclaration = getDeclaration("SimpleContract6.json");
         Assertions.assertEquals(2, contractDeclaration.getFieldDeclarations().size());
     }
 
     @Test
     void parseFunction() throws IOException {
-        SolidityProgramElement programElement = getSolidityProgramElement("SimpleContract7.json");
-        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
-        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        ContractDeclaration contractDeclaration = getDeclaration("SimpleContract7.json");
         Assertions.assertEquals(1, contractDeclaration.getFunctions().size());
         FunctionDeclaration functionDeclaration = contractDeclaration.getFunctions().get(0);
         Block block = functionDeclaration.getBody();
@@ -106,9 +92,7 @@ class SolJsonParserTest {
 
     @Test
     void parseComplexFunction() throws IOException {
-        SolidityProgramElement programElement = getSolidityProgramElement("SimpleContract8.json");
-        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
-        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        ContractDeclaration contractDeclaration = getDeclaration("SimpleContract8.json");
         Assertions.assertEquals(1, contractDeclaration.getFunctions().size());
         FunctionDeclaration function = contractDeclaration.getFunctions().getFirst();
         Assertions.assertEquals(1, function.getInputParameters().size());
@@ -120,9 +104,7 @@ class SolJsonParserTest {
 
     @Test
     void parseSimpleAssignment() throws IOException {
-        SolidityProgramElement programElement = getSolidityProgramElement("SimpleAssignment.json");
-        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
-        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        ContractDeclaration contractDeclaration = getDeclaration("SimpleAssignment.json");
         Assertions.assertEquals(1, contractDeclaration.getFunctions().size());
         FunctionDeclaration function = contractDeclaration.getFunctions().getFirst();
         Block block = function.getBody();
@@ -136,9 +118,7 @@ class SolJsonParserTest {
 
     @Test
     void parseContractWithOperations() throws IOException {
-        SolidityProgramElement programElement = getSolidityProgramElement("Operations.json");
-        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
-        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        ContractDeclaration contractDeclaration = getDeclaration("Operations.json");
         Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
         SolidityProgramElement expOpSynt = contractDeclaration.getFieldDeclarations().get(0).getChild(1);
         Assertions.assertInstanceOf(ExponentialOperator.class, expOpSynt);
@@ -148,9 +128,7 @@ class SolJsonParserTest {
 
     @Test
     void parseContractWithBoolOperations() throws IOException {
-        SolidityProgramElement programElement = getSolidityProgramElement("BoolOperations.json");
-        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
-        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        ContractDeclaration contractDeclaration = getDeclaration("BoolOperations.json");
         Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
         Assertions.assertInstanceOf(OrOperator.class,
             contractDeclaration.getFieldDeclarations().get(0).getInitializer());
@@ -158,9 +136,7 @@ class SolJsonParserTest {
 
     @Test
     void parseContractWithBoolIntOperations() throws IOException {
-        SolidityProgramElement programElement = getSolidityProgramElement("BoolIntOperations.json");
-        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
-        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        ContractDeclaration contractDeclaration = getDeclaration("BoolIntOperations.json");
         Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
         Assertions.assertInstanceOf(AndOperator.class,
             contractDeclaration.getFieldDeclarations().get(0).getInitializer());
@@ -168,9 +144,7 @@ class SolJsonParserTest {
 
     @Test
     void parseUnaryOperations() throws IOException {
-        SolidityProgramElement programElement = getSolidityProgramElement("UnaryOperator.json");
-        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
-        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        ContractDeclaration contractDeclaration = getDeclaration("UnaryOperator.json");
         Assertions.assertEquals(3, contractDeclaration.getFieldDeclarations().size());
         SyntaxElement exp = contractDeclaration.getChild(2).getChild(1).getChild(0);
         Assertions.assertInstanceOf(PlusPlusOperator.class, exp);
@@ -178,11 +152,15 @@ class SolJsonParserTest {
 
     @Test
     void parseComplexAssignment() throws IOException {
-        SolidityProgramElement programElement = getSolidityProgramElement("ComplexAssignment.json");
-        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
-        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        ContractDeclaration contractDeclaration = getDeclaration("ComplexAssignment.json");
         Assertions.assertEquals(1, contractDeclaration.getFunctions().size());
         Assertions.assertInstanceOf(PlusEqualOperator.class, contractDeclaration.getFunctions().get(0).getBody().getStatements().get(0).getChild(0));
+    }
+
+    private static ContractDeclaration getDeclaration(String fileName) throws IOException {
+        SolidityProgramElement programElement = getSolidityProgramElement(fileName);
+        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
+        return (ContractDeclaration) programElement;
     }
 
     private static SolidityProgramElement getSolidityProgramElement(String solFileName)
@@ -196,8 +174,6 @@ class SolJsonParserTest {
         SolidityProgramElement programElement = unit.get(0);
         return programElement;
     }
-
-
 
     private static URI getFile(String solFileName) {
         try {
