@@ -8,17 +8,23 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import org.key_project.solidity.logic.ast.SolidityProgramElement;
-import org.key_project.solidity.logic.ast.declarations.ContractDeclaration;
-import org.key_project.solidity.logic.ast.declarations.FunctionDeclaration;
-import org.key_project.solidity.logic.ast.declarations.StateVariableDeclaration;
-import org.key_project.solidity.logic.ast.expressions.Expression;
-import org.key_project.solidity.logic.ast.expressions.literals.BoolLiteral;
-import org.key_project.solidity.logic.ast.expressions.literals.Uint256Literal;
-import org.key_project.solidity.logic.ast.expressions.operators.*;
-import org.key_project.solidity.logic.ast.references.StateVariableReference;
-import org.key_project.solidity.logic.ast.statement.AssignmentStatement;
-import org.key_project.solidity.logic.ast.statement.Block;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
+import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
+import org.key_project.solidity.program.ast.declarations.StateVariableDeclaration;
+import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
+import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
+import org.key_project.solidity.program.ast.expressions.operators.AddOperator;
+import org.key_project.solidity.program.ast.expressions.operators.AndOperator;
+import org.key_project.solidity.program.ast.expressions.operators.AssignmentExpression;
+import org.key_project.solidity.program.ast.expressions.operators.ExponentialOperator;
+import org.key_project.solidity.program.ast.expressions.operators.OrOperator;
+import org.key_project.solidity.program.ast.references.StateVariableReference;
+import org.key_project.solidity.program.ast.statement.Block;
+import org.key_project.solidity.program.ast.statement.ExpressionStatement;
+import org.key_project.solidity.program.ast.statement.Statement;
+import org.key_project.solidity.program.parser.SolJSONParser;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -124,7 +130,9 @@ class SolJsonParserTest {
         Assertions.assertNotNull(block);
         Assertions.assertEquals(1, block.getChildCount());
         Assertions.assertEquals(1, block.getStatements().size());
-        Assertions.assertInstanceOf(AssignmentStatement.class, block.getStatements().get(0));
+        Statement exprStmnt = block.getStatements().get(0);
+        Assertions.assertInstanceOf(ExpressionStatement.class, exprStmnt);
+        Assertions.assertInstanceOf(AssignmentExpression.class, exprStmnt.getChild(0));
     }
 
     @Test
@@ -144,7 +152,7 @@ class SolJsonParserTest {
         ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
         Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
         Assertions.assertInstanceOf(OrOperator.class,
-                contractDeclaration.getFieldDeclarations().get(0).getInitializer());
+            contractDeclaration.getFieldDeclarations().get(0).getInitializer());
     }
 
     @Test
@@ -154,7 +162,7 @@ class SolJsonParserTest {
         ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
         Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
         Assertions.assertInstanceOf(AndOperator.class,
-                contractDeclaration.getFieldDeclarations().get(0).getInitializer());
+            contractDeclaration.getFieldDeclarations().get(0).getInitializer());
     }
 
     private static SolidityProgramElement getSolidityProgramElement(String solFileName)

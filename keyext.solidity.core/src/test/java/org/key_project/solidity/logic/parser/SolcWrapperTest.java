@@ -9,9 +9,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 
-import org.junit.jupiter.api.Test;
+import org.key_project.solidity.program.parser.SolcWrapper;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 class SolcWrapperTest {
 
