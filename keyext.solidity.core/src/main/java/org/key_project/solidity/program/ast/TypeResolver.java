@@ -42,4 +42,8 @@ public class TypeResolver {
             default -> throw new IllegalStateException("Unexpected value: " + binOp);
         };
     }
+
+    public Type resolve(UnaryOperator unaryOperator) {
+        return null;
+    }
 }

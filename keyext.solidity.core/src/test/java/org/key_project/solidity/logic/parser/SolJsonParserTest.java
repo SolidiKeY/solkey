@@ -165,6 +165,14 @@ class SolJsonParserTest {
             contractDeclaration.getFieldDeclarations().get(0).getInitializer());
     }
 
+    @Test
+    void parseUnaryOperations() throws IOException {
+        SolidityProgramElement programElement = getSolidityProgramElement("UnaryOperator.json");
+        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
+        ContractDeclaration contractDeclaration = (ContractDeclaration) programElement;
+        Assertions.assertEquals(3, contractDeclaration.getFieldDeclarations().size());
+    }
+
     private static SolidityProgramElement getSolidityProgramElement(String solFileName)
             throws IOException {
         SolJSONParser jsonParser = new SolJSONParser();

@@ -198,8 +198,20 @@ public class SolJSONParser {
         return switch (nodeType) {
             case "Literal" -> parseLiteral(initializer);
             case "BinaryOperation" -> parseBinaryOperation(initializer);
+            case "UnaryOperation" -> parseUnaryOperation(initializer);
             case "Identifier" -> parseIdentifier(initializer);
             default -> throw new RuntimeException("Not yet supported expression type: " + nodeType);
+        };
+    }
+
+    private Expression parseUnaryOperation(JsonNode initializer) {
+        Expression uExp = parseExpression(initializer.findValue("subExpression"));
+        final String operator = initializer.findValue("operator").asText();
+        boolean prefix = initializer.findValue("prefix").asBoolean();
+        return switch (operator) {
+            case "++" -> new PlusPlusOperator(uExp, prefix);
+            case "--" -> new MinusMinusOperator(uExp, prefix);
+            default -> throw new RuntimeException("Not yet supported binary operation: " + operator);
         };
     }
 
