@@ -3,11 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.parser;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URI;
 import java.nio.file.Path;
 
@@ -40,8 +36,9 @@ public class SolcWrapper {
         }
 
         Process proc = pb.start();
-        proc.getOutputStream().write(contractContent);
-        proc.getOutputStream().flush();
+        OutputStream out = proc.getOutputStream();
+        out.write(contractContent);
+        out.close();
 
         return new BufferedReader(proc.inputReader());
     }
