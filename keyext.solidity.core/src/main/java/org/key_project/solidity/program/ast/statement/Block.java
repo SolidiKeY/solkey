@@ -32,11 +32,11 @@ public class Block implements Statement {
 
     @Override
     public String toString() {
-        String body = "{";
+        String body = "{\n";
         for (Statement statement : statements) {
-            body += statement.toString();
+            body += statement.toString() + "\n";
         }
-        return body + "}";
+        return body + "}\n";
     }
 
     public ImmutableArray<Statement> getStatements() { return statements; }

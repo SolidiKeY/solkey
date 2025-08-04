@@ -39,6 +39,7 @@ public class PrimitiveType implements Type {
     public static final @NonNull PrimitiveType INT = newPrimitiveType("int");
     public static final @NonNull PrimitiveType BOOL = newPrimitiveType("bool");
     public static final @NonNull PrimitiveType ADDRESS = newPrimitiveType("address");
+    public static final @NonNull PrimitiveType STRUCT = newPrimitiveType("struct");
     // TODO add all primitive types
 
     private final @NonNull Name name;

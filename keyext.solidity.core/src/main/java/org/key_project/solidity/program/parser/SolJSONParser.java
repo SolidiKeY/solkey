@@ -15,6 +15,7 @@ import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.*;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.expressions.MemberExp;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Literal;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
@@ -26,6 +27,7 @@ import org.key_project.solidity.program.ast.references.TypeReference;
 import org.key_project.solidity.program.ast.references.VariableReference;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.program.ast.statement.ExpressionStatement;
+import org.key_project.solidity.program.ast.statement.ReturnStatment;
 import org.key_project.solidity.program.ast.statement.Statement;
 
 import com.fasterxml.jackson.core.io.BigIntegerParser;
@@ -156,7 +158,13 @@ public class SolJSONParser {
     }
 
     private @NonNull Statement parseStatement(JsonNode statement) {
-        return new ExpressionStatement(parseExpression(statement.findValue("expression")));
+        String type = statement.findValue("nodeType").asText();
+        Expression expression = parseExpression(statement.findValue("expression"));
+        return switch (type) {
+            case "ExpressionStatement" -> new ExpressionStatement(expression);
+            case "Return" -> new ReturnStatment(expression);
+            default -> throw new RuntimeException("Statement type " + type + " is not supported");
+        };
     }
 
     private ParameterDeclaration parseParam(JsonNode node) {
@@ -207,9 +215,16 @@ public class SolJSONParser {
             case "UnaryOperation" -> parseUnaryOperation(expType, initializer);
             case "Identifier" -> parseIdentifier(expType, initializer);
             case "Assignment" -> parseAssignment(expType, initializer);
+            case "MemberAccess" -> parseMemberAccess(expType, initializer);
             default -> throw new RuntimeException("Not yet supported expression type: " + nodeType);
         };
         return exp;
+    }
+
+    private Expression parseMemberAccess(Type expType, JsonNode initializer) {
+        Expression leftExp = parseExpression(initializer.findValue("expression"));
+        String rightName = initializer.findValue("memberName").asText();
+        return new MemberExp(leftExp, rightName, expType);
     }
 
     private Expression parseAssignment(Type expType, JsonNode assign) {
@@ -291,6 +306,7 @@ public class SolJSONParser {
             case "uint256" -> UINT256;
             case "bool" -> BOOL;
             case "int" -> INT;
+            case "struct" -> STRUCT;
             default -> throw new IllegalStateException("Type " + type_str + " not covered");
         };
         return type;

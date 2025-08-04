@@ -44,7 +44,9 @@ public class ContractDeclaration extends Declaration implements Type {
             contract += fields.get(i);
             contract += "\n";
         }
-        return contract + "\n}";
+        contract += getFunctions().stream().map(FunctionDeclaration::toString).collect(Collectors.joining("\n"));
+        contract += "\n}";
+        return contract;
     }
 
     @Override

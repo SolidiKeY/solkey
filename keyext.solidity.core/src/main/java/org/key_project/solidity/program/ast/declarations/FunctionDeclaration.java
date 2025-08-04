@@ -60,4 +60,14 @@ public class FunctionDeclaration extends Declaration {
         return returnParameters.size() + inputParameters.size();
     }
 
+    @Override
+    public String toString() {
+        StringBuffer strBuffer = new StringBuffer();
+        strBuffer.append("function ");
+        strBuffer.append(name);
+        strBuffer.append(" () {\n");
+        strBuffer.append(getBody());
+        strBuffer.append("}\n");
+        return strBuffer.toString();
+    }
 }

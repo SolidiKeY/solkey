@@ -16,12 +16,14 @@ import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.StateVariableDeclaration;
 import org.key_project.solidity.program.ast.declarations.StructDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.expressions.MemberExp;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.references.StateVariableReference;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.program.ast.statement.ExpressionStatement;
+import org.key_project.solidity.program.ast.statement.ReturnStatment;
 import org.key_project.solidity.program.ast.statement.Statement;
 import org.key_project.solidity.program.parser.SolJSONParser;
 
@@ -257,8 +259,33 @@ class SolJsonParserTest {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         List<StructDeclaration> structs = contractDeclaration.getStructs();
         Assertions.assertEquals(1, structs.size());
-        var struct = structs.get(0);
         Assertions.assertEquals(1, structs.get(0).getFields().size());
+    }
+
+    @Test
+    void parseUsingStruct() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    struct Person {
+                       uint256 age;
+                    }
+                    Person alice;
+                    
+                    function f() public returns (uint256) {
+                        return alice.age;
+                    }
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        List<StructDeclaration> structs = contractDeclaration.getStructs();
+        Assertions.assertEquals(1, structs.size());
+        Assertions.assertEquals(1, structs.get(0).getFields().size());
+        FunctionDeclaration function = contractDeclaration.getFunctions().get(0);
+        var retStmSynt = function.getBody().getStatements().get(0);
+        Assertions.assertInstanceOf(ReturnStatment.class, retStmSynt);
+        ReturnStatment retStm = (ReturnStatment) retStmSynt;
+        Expression retExp = retStm.getReturnExp();
+        Assertions.assertInstanceOf(MemberExp.class, retExp);
     }
 
     private static ContractDeclaration getDeclStr(String contract) throws IOException {

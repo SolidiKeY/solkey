@@ -26,4 +26,9 @@ public class ReturnStatment implements Statement {
     public Expression getReturnExp() {
         return returnExp;
     }
+
+    @Override
+    public String toString() {
+        return "return " + getReturnExp().toString() + ";";
+    }
 }
