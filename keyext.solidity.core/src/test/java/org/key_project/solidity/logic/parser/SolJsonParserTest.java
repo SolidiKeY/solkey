@@ -6,6 +6,7 @@ package org.key_project.solidity.logic.parser;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.List;
 
 import org.key_project.logic.SyntaxElement;
@@ -26,11 +27,23 @@ import org.key_project.solidity.program.parser.SolJSONParser;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.key_project.solidity.program.parser.SolcWrapper;
 
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.INT;
 
 
 class SolJsonParserTest {
+
+    @Test
+    void parseSimple() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                   uint256 balance;
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
+    }
 
     @Test
     void parse() throws IOException {
@@ -167,10 +180,29 @@ class SolJsonParserTest {
         Assertions.assertEquals(1, structs.get(0).getFields().size());
     }
 
+    private static ContractDeclaration getDeclStr(String contract) throws IOException {
+        final Path solc = Path.of("/opt", "local", "bin", "solc");
+        SolcWrapper solcWrapper = new SolcWrapper(solc);
+        String contractJson = solcWrapper.readSol(contract);
+        SolidityProgramElement programElement = getSolidityFromStr(contractJson);
+        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
+        return (ContractDeclaration) programElement;
+    }
+
     private static ContractDeclaration getDeclaration(String fileName) throws IOException {
         SolidityProgramElement programElement = getSolidityProgramElement(fileName);
         Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
         return (ContractDeclaration) programElement;
+    }
+
+    private static SolidityProgramElement getSolidityFromStr(String contract)
+            throws IOException {
+        SolJSONParser jsonParser = new SolJSONParser();
+        List<SolidityProgramElement> unit = jsonParser.parse(contract);
+        Assertions.assertNotNull(unit);
+        Assertions.assertEquals(1, unit.size());
+        SolidityProgramElement programElement = unit.get(0);
+        return programElement;
     }
 
     private static SolidityProgramElement getSolidityProgramElement(String solFileName)

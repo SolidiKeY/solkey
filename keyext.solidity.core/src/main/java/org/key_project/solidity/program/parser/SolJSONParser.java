@@ -57,6 +57,13 @@ public class SolJSONParser {
         return json2SolidityAST(root);
     }
 
+    public List<SolidityProgramElement> parse(String contract) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+
+        JsonNode root = mapper.readTree(contract);
+        return json2SolidityAST(root);
+    }
+
     /// convert the JSON AST representation into a KeY for Solidity representation
     /// @param root the root node representing the JSON AST
     /// @return the KeY AST representation of {@code root}
