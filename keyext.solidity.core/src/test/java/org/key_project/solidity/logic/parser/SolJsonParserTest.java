@@ -271,7 +271,7 @@ class SolJsonParserTest {
                        uint256 age;
                     }
                     Person alice;
-                    
+                
                     function f() public returns (uint256) {
                         return alice.age;
                     }

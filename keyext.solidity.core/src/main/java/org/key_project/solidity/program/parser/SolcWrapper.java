@@ -9,6 +9,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.stream.Collectors;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 public class SolcWrapper {
 
     private final Path solc;
@@ -32,8 +34,20 @@ public class SolcWrapper {
         OutputStream out = proc.getOutputStream();
         out.write(contract);
         out.close();
+        BufferedReader procInput = proc.inputReader();
+        int exitCode;
+        try {
+            exitCode = proc.waitFor();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        if (exitCode == 1){
+            InputStream errorStream = proc.getErrorStream();
+            String errorStr = new String(errorStream.readAllBytes(), UTF_8);
+            throw new RuntimeException("Not possible to compile solidity code:\n" + errorStr);
+        }
 
-        return new BufferedReader(proc.inputReader());
+        return new BufferedReader(procInput);
     }
 
     public BufferedReader readSolBuff(URI file) throws IOException {
@@ -48,7 +62,7 @@ public class SolcWrapper {
     }
 
     public BufferedReader readSolString(String contract) throws IOException {
-        return readSolBuff(contract.getBytes(StandardCharsets.UTF_8));
+        return readSolBuff(contract.getBytes(UTF_8));
     }
 
     public String readSol(URI file) throws IOException {

@@ -49,6 +49,20 @@ class SolcWrapperTest {
         Assertions.assertNotNull(result);
     }
 
+    @Test
+    void compilationFail() throws IOException {
+        SolcWrapper wrapper = new SolcWrapper(solc);
+        String contract = """
+            contract SimpleContract {
+                uint256 balance
+            }""";
+        try {
+            wrapper.readSol(contract);
+            Assertions.fail();
+        } catch (RuntimeException exception){
+        };
+    }
+
     private static URI getFile(String solFileName) {
         try {
             return SolcWrapper.class.getResource(solFileName).toURI();
