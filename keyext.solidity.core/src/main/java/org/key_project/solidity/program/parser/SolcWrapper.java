@@ -5,7 +5,9 @@ package org.key_project.solidity.program.parser;
 
 import java.io.*;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.stream.Collectors;
 
 public class SolcWrapper {
 
@@ -15,7 +17,7 @@ public class SolcWrapper {
         this.solc = solc;
     }
 
-    public BufferedOutputStream readSol(Path filename) throws IOException {
+    public BufferedOutputStream readSolBuff(Path filename) throws IOException {
         ProcessBuilder pb =
             new ProcessBuilder(solc.toAbsolutePath().toString(), "----ast-compact-json",
                 filename.toAbsolutePath().toString());
@@ -23,10 +25,18 @@ public class SolcWrapper {
         return new BufferedOutputStream(p.getOutputStream());
     }
 
-    public BufferedReader readSol(URI file) throws IOException {
-        ProcessBuilder pb = new ProcessBuilder(solc.toFile().getAbsoluteFile().toString(),
-            "--ast-compact-json", "-");
+    public BufferedReader readSolBuff(byte[] contract) throws IOException {
+        ProcessBuilder pb = new ProcessBuilder("solc", "--ast-compact-json", "-");
 
+        Process proc = pb.start();
+        OutputStream out = proc.getOutputStream();
+        out.write(contract);
+        out.close();
+
+        return new BufferedReader(proc.inputReader());
+    }
+
+    public BufferedReader readSolBuff(URI file) throws IOException {
         final InputStream solidityInputStream = new BufferedInputStream(file.toURL().openStream());
         byte[] contractContent;
         try (solidityInputStream) {
@@ -34,13 +44,25 @@ public class SolcWrapper {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return readSolBuff(contractContent);
+    }
 
-        Process proc = pb.start();
-        OutputStream out = proc.getOutputStream();
-        out.write(contractContent);
-        out.close();
+    public BufferedReader readSolString(String contract) throws IOException {
+        return readSolBuff(contract.getBytes(StandardCharsets.UTF_8));
+    }
 
-        return new BufferedReader(proc.inputReader());
+    public String readSol(URI file) throws IOException {
+        BufferedReader reader = readSolBuff(file);
+        return extract4lines(reader);
+    }
+
+    private static String extract4lines(BufferedReader reader) {
+        return reader.lines().skip(4).collect(Collectors.joining());
+    }
+
+    public String readSol(String s) throws IOException {
+        BufferedReader reader = readSolString(s);
+        return extract4lines(reader);
     }
 
 }
