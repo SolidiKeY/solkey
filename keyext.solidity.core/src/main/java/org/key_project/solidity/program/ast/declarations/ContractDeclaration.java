@@ -3,16 +3,23 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.declarations;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.util.collection.ImmutableArray;
+import org.jetbrains.annotations.Debug.Renderer;
 
 import org.jspecify.annotations.NonNull;
 
+// TODO: fix the render to have fields, structs and functions
+@Renderer(text = "name",
+        childrenArray = "fields",
+        hasChildren = "fields.!isEmpty()")
 public class ContractDeclaration extends Declaration implements Type {
 
     private final ImmutableArray<StateVariableDeclaration> fields;
