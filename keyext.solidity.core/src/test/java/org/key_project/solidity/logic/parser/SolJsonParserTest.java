@@ -35,7 +35,7 @@ import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.IN
 class SolJsonParserTest {
 
     @Test
-    void parseSimple() throws IOException {
+    void parse() throws IOException {
         //language=solidity
         String contract = """
                 contract SimpleContract {
@@ -46,20 +46,26 @@ class SolJsonParserTest {
     }
 
     @Test
-    void parse() throws IOException {
-        ContractDeclaration contractDeclaration = getDeclaration("SimpleContract1.json");
-        Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
-    }
-
-    @Test
     void parseContractWithIntAndBool() throws IOException {
-        ContractDeclaration contractDeclaration = getDeclaration("SimpleContract2.json");
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                   uint256 balance;
+                   bool closed;
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
         Assertions.assertEquals(2, contractDeclaration.getFieldDeclarations().size());
     }
 
     @Test
     void parseContractWithIntAndBoolSet() throws IOException {
-        ContractDeclaration contractDeclaration = getDeclaration("SimpleContract3.json");
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                   uint256 balance = 1000;
+                   bool closed = true;
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
         Assertions.assertEquals(2, contractDeclaration.getFieldDeclarations().size());
         StateVariableDeclaration firstField = contractDeclaration.getFieldDeclarations().get(0);
         Assertions.assertInstanceOf(Uint256Literal.class, firstField.getInitializer());
@@ -72,13 +78,25 @@ class SolJsonParserTest {
 
     @Test
     void parseContractWithAddition() throws IOException {
-        ContractDeclaration contractDeclaration = getDeclaration("SimpleContract4.json");
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                   uint256 balance = 1000;
+                   uint256 deposit = 5 + 100;
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
         Assertions.assertEquals(2, contractDeclaration.getFieldDeclarations().size());
     }
 
     @Test
     void parseContractWithReferenceAddition() throws IOException {
-        ContractDeclaration contractDeclaration = getDeclaration("SimpleContract5.json");
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                   uint256 balance = 1000;
+                   uint256 deposit = balance + 100;
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
         Assertions.assertEquals(2, contractDeclaration.getFieldDeclarations().size());
         Expression initializer = contractDeclaration.getFieldDeclarations().get(1).getInitializer();
         Assertions.assertNotNull(initializer);
@@ -90,13 +108,25 @@ class SolJsonParserTest {
 
     @Test
     void parseContractWithBoth() throws IOException {
-        ContractDeclaration contractDeclaration = getDeclaration("SimpleContract6.json");
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                   uint256 balance = 1000;
+                   SimpleContract other;
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
         Assertions.assertEquals(2, contractDeclaration.getFieldDeclarations().size());
     }
 
     @Test
     void parseFunction() throws IOException {
-        ContractDeclaration contractDeclaration = getDeclaration("SimpleContract7.json");
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                   function func() public pure {
+                   }
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
         Assertions.assertEquals(1, contractDeclaration.getFunctions().size());
         FunctionDeclaration functionDeclaration = contractDeclaration.getFunctions().get(0);
         Block block = functionDeclaration.getBody();
@@ -106,7 +136,14 @@ class SolJsonParserTest {
 
     @Test
     void parseComplexFunction() throws IOException {
-        ContractDeclaration contractDeclaration = getDeclaration("SimpleContract8.json");
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function func(uint256 v) public pure returns(uint256) {
+                       return v;
+                    }
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
         Assertions.assertEquals(1, contractDeclaration.getFunctions().size());
         FunctionDeclaration function = contractDeclaration.getFunctions().getFirst();
         Assertions.assertEquals(1, function.getInputParameters().size());
@@ -118,7 +155,14 @@ class SolJsonParserTest {
 
     @Test
     void parseSimpleAssignment() throws IOException {
-        ContractDeclaration contractDeclaration = getDeclaration("SimpleAssignment.json");
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                   function func(uint256 v) public pure  {
+                      v = 4;
+                   }
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
         Assertions.assertEquals(1, contractDeclaration.getFunctions().size());
         FunctionDeclaration function = contractDeclaration.getFunctions().getFirst();
         Block block = function.getBody();
@@ -132,7 +176,12 @@ class SolJsonParserTest {
 
     @Test
     void parseContractWithOperations() throws IOException {
-        ContractDeclaration contractDeclaration = getDeclaration("Operations.json");
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                   uint256 deposit = 5 ^ 5 + 100 % 4 - 1 * 3 / 3;
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
         Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
         SolidityProgramElement expOpSynt = contractDeclaration.getFieldDeclarations().get(0).getChild(1);
         Assertions.assertInstanceOf(ExponentialOperator.class, expOpSynt);
@@ -142,7 +191,12 @@ class SolJsonParserTest {
 
     @Test
     void parseContractWithBoolOperations() throws IOException {
-        ContractDeclaration contractDeclaration = getDeclaration("BoolOperations.json");
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                   bool v = true && true || false;
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
         Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
         Assertions.assertInstanceOf(OrOperator.class,
             contractDeclaration.getFieldDeclarations().get(0).getInitializer());
@@ -150,7 +204,12 @@ class SolJsonParserTest {
 
     @Test
     void parseContractWithBoolIntOperations() throws IOException {
-        ContractDeclaration contractDeclaration = getDeclaration("BoolIntOperations.json");
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                   bool v = 1 != 0 && 1 == 1 && 0 < 0 && 0 <= 0 && 0 > 0 && 0 > 0;
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
         Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
         Assertions.assertInstanceOf(AndOperator.class,
             contractDeclaration.getFieldDeclarations().get(0).getInitializer());
@@ -158,7 +217,14 @@ class SolJsonParserTest {
 
     @Test
     void parseUnaryOperations() throws IOException {
-        ContractDeclaration contractDeclaration = getDeclaration("UnaryOperator.json");
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                   uint256 i;
+                   uint256 j;
+                   uint256 v = i++ + j--;
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
         Assertions.assertEquals(3, contractDeclaration.getFieldDeclarations().size());
         SyntaxElement exp = contractDeclaration.getChild(2).getChild(1).getChild(0);
         Assertions.assertInstanceOf(PlusPlusOperator.class, exp);
@@ -166,14 +232,29 @@ class SolJsonParserTest {
 
     @Test
     void parseComplexAssignment() throws IOException {
-        ContractDeclaration contractDeclaration = getDeclaration("ComplexAssignment.json");
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function func(uint256 u, uint256 v, uint256 w) public pure  {
+                        v += w = u -= 1;
+                    }
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
         Assertions.assertEquals(1, contractDeclaration.getFunctions().size());
         Assertions.assertInstanceOf(PlusEqualOperator.class, contractDeclaration.getFunctions().get(0).getBody().getStatements().get(0).getChild(0));
     }
 
     @Test
     void parseStruct() throws IOException {
-        ContractDeclaration contractDeclaration = getDeclaration("Struct.json");
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    struct Person {
+                       int age;
+                    }
+                    Person alice;
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
         List<StructDeclaration> structs = contractDeclaration.getStructs();
         Assertions.assertEquals(1, structs.size());
         var struct = structs.get(0);
