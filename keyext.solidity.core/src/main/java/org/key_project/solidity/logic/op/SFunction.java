@@ -9,6 +9,7 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.logic.SolidityDLTheory;
 import org.key_project.util.collection.ImmutableArray;
 
+/// This class represents a function or predicate symbol in the logic
 public class SFunction extends Function {
     protected SFunction(Name name, ImmutableArray<Sort> argSorts, Sort sort,
             ImmutableArray<Boolean> whereToBind, boolean isRigid, boolean unique,
