@@ -9,6 +9,8 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
@@ -177,6 +179,7 @@ class SolJsonParserTest {
     }
 
     @Test
+    @EnabledOnOs(OS.LINUX)
     void parseContractWithOperations() throws IOException {
         //language=solidity
         String contract = """
@@ -205,6 +208,7 @@ class SolJsonParserTest {
     }
 
     @Test
+    @EnabledOnOs(OS.LINUX)
     void parseContractWithBoolIntOperations() throws IOException {
         //language=solidity
         String contract = """
