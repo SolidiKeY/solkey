@@ -1,0 +1,336 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
+package org.key_project.solidity.logic.parser;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.util.List;
+
+import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
+import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
+import org.key_project.solidity.program.ast.declarations.StateVariableDeclaration;
+import org.key_project.solidity.program.ast.declarations.StructDeclaration;
+import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.expressions.MemberExp;
+import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
+import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
+import org.key_project.solidity.program.ast.expressions.operators.*;
+import org.key_project.solidity.program.ast.references.StateVariableReference;
+import org.key_project.solidity.program.ast.statement.Block;
+import org.key_project.solidity.program.ast.statement.ExpressionStatement;
+import org.key_project.solidity.program.ast.statement.ReturnStatment;
+import org.key_project.solidity.program.ast.statement.Statement;
+import org.key_project.solidity.program.parser.SolJSONParser;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.key_project.solidity.program.parser.SolcWrapper;
+
+import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.INT;
+
+
+class SolJsonParserTest {
+
+    @Test
+    void parse() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                   uint256 balance;
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
+    }
+
+    @Test
+    void parseContractWithIntAndBool() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                   uint256 balance;
+                   bool closed;
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        Assertions.assertEquals(2, contractDeclaration.getFieldDeclarations().size());
+    }
+
+    @Test
+    void parseContractWithIntAndBoolSet() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                   uint256 balance = 1000;
+                   bool closed = true;
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        Assertions.assertEquals(2, contractDeclaration.getFieldDeclarations().size());
+        StateVariableDeclaration firstField = contractDeclaration.getFieldDeclarations().get(0);
+        Assertions.assertInstanceOf(Uint256Literal.class, firstField.getInitializer());
+        Assertions.assertEquals(1000,
+            ((Uint256Literal) firstField.getInitializer()).getValue().longValue());
+        StateVariableDeclaration secondField = contractDeclaration.getFieldDeclarations().get(1);
+        Assertions.assertInstanceOf(BoolLiteral.class, secondField.getInitializer());
+        Assertions.assertSame(BoolLiteral.TRUE, secondField.getInitializer());
+    }
+
+    @Test
+    void parseContractWithAddition() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                   uint256 balance = 1000;
+                   uint256 deposit = 5 + 100;
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        Assertions.assertEquals(2, contractDeclaration.getFieldDeclarations().size());
+    }
+
+    @Test
+    void parseContractWithReferenceAddition() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                   uint256 balance = 1000;
+                   uint256 deposit = balance + 100;
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        Assertions.assertEquals(2, contractDeclaration.getFieldDeclarations().size());
+        Expression initializer = contractDeclaration.getFieldDeclarations().get(1).getInitializer();
+        Assertions.assertNotNull(initializer);
+        Assertions.assertInstanceOf(AddOperator.class, initializer);
+        Assertions.assertInstanceOf(StateVariableReference.class,
+            ((AddOperator) initializer).getChild(0));
+        Assertions.assertInstanceOf(Uint256Literal.class, ((AddOperator) initializer).getChild(1));
+    }
+
+    @Test
+    void parseContractWithBoth() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                   uint256 balance = 1000;
+                   SimpleContract other;
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        Assertions.assertEquals(2, contractDeclaration.getFieldDeclarations().size());
+    }
+
+    @Test
+    void parseFunction() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                   function func() public pure {
+                   }
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        Assertions.assertEquals(1, contractDeclaration.getFunctions().size());
+        FunctionDeclaration functionDeclaration = contractDeclaration.getFunctions().get(0);
+        Block block = functionDeclaration.getBody();
+        Assertions.assertNotNull(block);
+        Assertions.assertEquals(0, block.getChildCount());
+    }
+
+    @Test
+    void parseComplexFunction() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function func(uint256 v) public pure returns(uint256) {
+                       return v;
+                    }
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        Assertions.assertEquals(1, contractDeclaration.getFunctions().size());
+        FunctionDeclaration function = contractDeclaration.getFunctions().getFirst();
+        Assertions.assertEquals(1, function.getInputParameters().size());
+        Assertions.assertEquals(1, function.getReturnParameters().size());
+        Block block = function.getBody();
+        Assertions.assertNotNull(block);
+        Assertions.assertEquals(1, block.getChildCount());
+    }
+
+    @Test
+    void parseSimpleAssignment() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                   function func(uint256 v) public pure  {
+                      v = 4;
+                   }
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        Assertions.assertEquals(1, contractDeclaration.getFunctions().size());
+        FunctionDeclaration function = contractDeclaration.getFunctions().getFirst();
+        Block block = function.getBody();
+        Assertions.assertNotNull(block);
+        Assertions.assertEquals(1, block.getChildCount());
+        Assertions.assertEquals(1, block.getStatements().size());
+        Statement exprStmnt = block.getStatements().get(0);
+        Assertions.assertInstanceOf(ExpressionStatement.class, exprStmnt);
+        Assertions.assertInstanceOf(AssignmentExpression.class, exprStmnt.getChild(0));
+    }
+
+    @Test
+    void parseContractWithOperations() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                   uint256 deposit = 5 ^ 5 + 100 % 4 - 1 * 3 / 3;
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
+        SolidityProgramElement expOpSynt = contractDeclaration.getFieldDeclarations().get(0).getChild(1);
+        Assertions.assertInstanceOf(ExponentialOperator.class, expOpSynt);
+        ExponentialOperator expOp = (ExponentialOperator) expOpSynt;
+        Assertions.assertEquals(INT, expOp.getType());
+    }
+
+    @Test
+    void parseContractWithBoolOperations() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                   bool v = true && true || false;
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
+        Assertions.assertInstanceOf(OrOperator.class,
+            contractDeclaration.getFieldDeclarations().get(0).getInitializer());
+    }
+
+    @Test
+    void parseContractWithBoolIntOperations() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                   bool v = 1 != 0 && 1 == 1 && 0 < 0 && 0 <= 0 && 0 > 0 && 0 > 0;
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
+        Assertions.assertInstanceOf(AndOperator.class,
+            contractDeclaration.getFieldDeclarations().get(0).getInitializer());
+    }
+
+    @Test
+    void parseUnaryOperations() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                   uint256 i;
+                   uint256 j;
+                   uint256 v = i++ + j--;
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        Assertions.assertEquals(3, contractDeclaration.getFieldDeclarations().size());
+        SyntaxElement exp = contractDeclaration.getChild(2).getChild(1).getChild(0);
+        Assertions.assertInstanceOf(PlusPlusOperator.class, exp);
+    }
+
+    @Test
+    void parseComplexAssignment() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function func(uint256 u, uint256 v, uint256 w) public pure  {
+                        v += w = u -= 1;
+                    }
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        Assertions.assertEquals(1, contractDeclaration.getFunctions().size());
+        Assertions.assertInstanceOf(PlusEqualOperator.class, contractDeclaration.getFunctions().get(0).getBody().getStatements().get(0).getChild(0));
+    }
+
+    @Test
+    void parseStruct() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    struct Person {
+                       int age;
+                    }
+                    Person alice;
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        List<StructDeclaration> structs = contractDeclaration.getStructs();
+        Assertions.assertEquals(1, structs.size());
+        Assertions.assertEquals(1, structs.get(0).getFields().size());
+    }
+
+    @Test
+    void parseUsingStruct() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    struct Person {
+                       uint256 age;
+                    }
+                    Person alice;
+                
+                    function f() public returns (uint256) {
+                        return alice.age;
+                    }
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        List<StructDeclaration> structs = contractDeclaration.getStructs();
+        Assertions.assertEquals(1, structs.size());
+        Assertions.assertEquals(1, structs.get(0).getFields().size());
+        FunctionDeclaration function = contractDeclaration.getFunctions().get(0);
+        var retStmSynt = function.getBody().getStatements().get(0);
+        Assertions.assertInstanceOf(ReturnStatment.class, retStmSynt);
+        ReturnStatment retStm = (ReturnStatment) retStmSynt;
+        Expression retExp = retStm.getReturnExp();
+        Assertions.assertInstanceOf(MemberExp.class, retExp);
+    }
+
+    private static ContractDeclaration getDeclStr(String contract) throws IOException {
+        final Path solc = Path.of("/opt", "local", "bin", "solc");
+        SolcWrapper solcWrapper = new SolcWrapper(solc);
+        String contractJson = solcWrapper.readSol(contract);
+        SolidityProgramElement programElement = getSolidityFromStr(contractJson);
+        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
+        return (ContractDeclaration) programElement;
+    }
+
+    private static ContractDeclaration getDeclaration(String fileName) throws IOException {
+        SolidityProgramElement programElement = getSolidityProgramElement(fileName);
+        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
+        return (ContractDeclaration) programElement;
+    }
+
+    private static SolidityProgramElement getSolidityFromStr(String contract)
+            throws IOException {
+        SolJSONParser jsonParser = new SolJSONParser();
+        List<SolidityProgramElement> unit = jsonParser.parse(contract);
+        Assertions.assertNotNull(unit);
+        Assertions.assertEquals(1, unit.size());
+        SolidityProgramElement programElement = unit.get(0);
+        return programElement;
+    }
+
+    private static SolidityProgramElement getSolidityProgramElement(String solFileName)
+            throws IOException {
+        SolJSONParser jsonParser = new SolJSONParser();
+        URI fileURI = getFile(solFileName);
+        Assertions.assertNotNull(fileURI);
+        List<SolidityProgramElement> unit = jsonParser.parse(fileURI);
+        Assertions.assertNotNull(unit);
+        Assertions.assertEquals(1, unit.size());
+        SolidityProgramElement programElement = unit.get(0);
+        return programElement;
+    }
+
+    private static URI getFile(String solFileName) {
+        try {
+            // return FindResources.getResource(solFileName, SolJsonParserTest.class).toUri();
+            return SolJSONParser.class.getResource(solFileName).toURI();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}

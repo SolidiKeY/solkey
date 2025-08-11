@@ -1,0 +1,37 @@
+plugins {
+}
+
+description = "The core data structures for KeY for Solidity"
+
+configurations { }
+
+dependencies {
+    api project(':key.util')
+    api project(':key.ncore')
+    implementation 'org.jspecify:jspecify:1.0.0'
+    implementation platform("com.fasterxml.jackson:jackson-bom:2.19.1")
+    implementation "com.fasterxml.jackson.core:jackson-databind"
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.8.7'
+    compileOnly 'org.jetbrains:annotations:26.0.2'
+}
+
+tasks.withType(Test) {
+    enableAssertions = true
+}
+
+
+checkerFramework {
+    if(System.getProperty("ENABLE_NULLNESS")) {
+        checkers = [
+                "org.checkerframework.checker.nullness.NullnessChecker",
+        ]
+        extraJavacArgs = [
+                "-AonlyDefs=^org\\.key_project\\.solidity\\.logic",
+                "-Xmaxerrs", "10000",
+                "-Astubs=$rootDir/key.util/src/main/checkerframework:permit-nullness-assertion-exception.astub",
+                "-AstubNoWarnIfNotFound",
+                "-Werror",
+                "-Aversion",
+        ]
+    }
+}
