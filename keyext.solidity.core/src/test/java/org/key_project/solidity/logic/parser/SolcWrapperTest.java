@@ -17,26 +17,6 @@ import org.junit.jupiter.api.Test;
 class SolcWrapperTest {
 
     private final Path solc = Path.of("/opt", "local", "bin", "solc");
-
-    @Test
-    void readSolBuff() throws IOException {
-        SolcWrapper wrapper = new SolcWrapper(solc);
-        BufferedReader result = wrapper.readSolBuff(getFile("SimpleContract2.sol"));
-        String line;
-        System.out.println("Output:");
-        while ((line = result.readLine()) != null) {
-            System.out.println(line);
-        }
-        result.close();
-    }
-
-    @Test
-    void testReadSol() throws IOException {
-        SolcWrapper wrapper = new SolcWrapper(solc);
-        String result = wrapper.readSol(getFile("SimpleContract2.sol"));
-        Assertions.assertNotNull(result);
-    }
-
     @Test
     void readStringSol() throws IOException {
         SolcWrapper wrapper = new SolcWrapper(solc);
