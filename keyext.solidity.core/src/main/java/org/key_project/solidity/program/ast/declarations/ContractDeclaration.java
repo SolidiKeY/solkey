@@ -16,10 +16,6 @@ import org.jetbrains.annotations.Debug.Renderer;
 
 import org.jspecify.annotations.NonNull;
 
-// TODO: fix the render to have fields, structs and functions
-@Renderer(text = "name",
-        childrenArray = "fields",
-        hasChildren = "fields.!isEmpty()")
 public class ContractDeclaration extends Declaration implements Type {
 
     private final ImmutableArray<StateVariableDeclaration> fields;
