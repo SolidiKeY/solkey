@@ -13,20 +13,14 @@ import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
-import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
-import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
-import org.key_project.solidity.program.ast.declarations.StateVariableDeclaration;
-import org.key_project.solidity.program.ast.declarations.StructDeclaration;
+import org.key_project.solidity.program.ast.declarations.*;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.MemberExp;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.references.StateVariableReference;
-import org.key_project.solidity.program.ast.statement.Block;
-import org.key_project.solidity.program.ast.statement.ExpressionStatement;
-import org.key_project.solidity.program.ast.statement.ReturnStatment;
-import org.key_project.solidity.program.ast.statement.Statement;
+import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.program.parser.SolJSONParser;
 
 import org.junit.jupiter.api.Assertions;
@@ -290,6 +284,26 @@ class SolJsonParserTest {
         ReturnStatment retStm = (ReturnStatment) retStmSynt;
         Expression retExp = retStm.getReturnExp();
         Assertions.assertInstanceOf(MemberExp.class, retExp);
+    }
+
+    @Test
+    void parseMemory() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    struct Person {
+                       uint256 age;
+                    }
+                
+                    function f() public pure {
+                        Person memory alice;
+                    }
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        var declStmS = contractDeclaration.getFunctions().getFirst().getBody().getStatements().get(0);
+        Assertions.assertInstanceOf(DeclarationStatement.class, declStmS);
+        DeclarationStatement declStms = (DeclarationStatement) declStmS;
+        MemoryDeclaration decl = declStms.getDeclarations().getFirst();
     }
 
     private static ContractDeclaration getDeclStr(String contract) throws IOException {

@@ -25,10 +25,7 @@ import org.key_project.solidity.program.ast.references.ParameterVariableReferenc
 import org.key_project.solidity.program.ast.references.StateVariableReference;
 import org.key_project.solidity.program.ast.references.TypeReference;
 import org.key_project.solidity.program.ast.references.VariableReference;
-import org.key_project.solidity.program.ast.statement.Block;
-import org.key_project.solidity.program.ast.statement.ExpressionStatement;
-import org.key_project.solidity.program.ast.statement.ReturnStatment;
-import org.key_project.solidity.program.ast.statement.Statement;
+import org.key_project.solidity.program.ast.statement.*;
 
 import com.fasterxml.jackson.core.io.BigIntegerParser;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -159,12 +156,22 @@ public class SolJSONParser {
 
     private @NonNull Statement parseStatement(JsonNode statement) {
         String type = statement.findValue("nodeType").asText();
-        Expression expression = parseExpression(statement.findValue("expression"));
-        return switch (type) {
-            case "ExpressionStatement" -> new ExpressionStatement(expression);
-            case "Return" -> new ReturnStatment(expression);
-            default -> throw new RuntimeException("Statement type " + type + " is not supported");
-        };
+        if(statement.has("expression")) {
+            Expression expression = parseExpression(statement.findValue("expression"));
+            return switch (type) {
+                case "ExpressionStatement" -> new ExpressionStatement(expression);
+                case "Return" -> new ReturnStatment(expression);
+                default -> throw new RuntimeException("Statement type " + type + " is not supported");
+            };
+        }
+        List<MemoryDeclaration> declarations = statement.findValue("declarations").valueStream().map(this::parseDeclaration).toList();
+        return new DeclarationStatement(declarations);
+    }
+
+    private MemoryDeclaration parseDeclaration(JsonNode declaration){
+        String name = declaration.findValue("name").asText();
+        String struct = declaration.findValue("typeName").findValue("pathNode").findValue("name").asText();
+        return new MemoryDeclaration(new Name(name), struct);
     }
 
     private ParameterDeclaration parseParam(JsonNode node) {
