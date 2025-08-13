@@ -256,7 +256,7 @@ public class SolJSONParser {
 
     private Expression parseIndexAccess(Type expType, JsonNode initializer) {
         String leftExp = initializer.findValue("baseExpression").findValue("name").asText();
-        String indexExp = initializer.findValue("indexExpression").findValue("value").asText();
+        Expression indexExp = parseExpression(initializer.findValue("indexExpression"));
         return new IndexExpression(leftExp, indexExp, expType);
     }
 

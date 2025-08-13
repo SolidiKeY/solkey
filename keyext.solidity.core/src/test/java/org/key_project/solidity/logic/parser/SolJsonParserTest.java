@@ -316,11 +316,11 @@ class SolJsonParserTest {
                     int[] v;
                 
                     function f() public returns (int) {
-                        return v[0];
+                        return v[1+1];
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
-        Assertions.assertTrue(contractDec.toString().contains("v[0]"));
+        Assertions.assertTrue(contractDec.toString().contains("v[1 + 1]"));
     }
 
     @Test

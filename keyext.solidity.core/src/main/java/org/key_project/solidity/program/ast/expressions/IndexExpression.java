@@ -6,9 +6,9 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 public class IndexExpression extends Expression {
 
     String leftExp;
-    String indexExp;
+    Expression indexExp;
 
-    public IndexExpression(String leftExp, String indexExp, Type expType) {
+    public IndexExpression(String leftExp, Expression indexExp, Type expType) {
         super(expType);
         this.leftExp = leftExp;
         this.indexExp = indexExp;
