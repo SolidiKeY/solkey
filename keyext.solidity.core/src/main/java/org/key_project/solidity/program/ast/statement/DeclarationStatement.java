@@ -5,6 +5,7 @@ import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.declarations.MemoryDeclaration;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class DeclarationStatement implements Statement {
     private List<MemoryDeclaration> declarations;
@@ -25,5 +26,10 @@ public class DeclarationStatement implements Statement {
 
     public List<MemoryDeclaration> getDeclarations() {
         return declarations;
+    }
+
+    @Override
+    public String toString() {
+        return declarations.stream().map(MemoryDeclaration::toString).collect(Collectors.joining(""));
     }
 }

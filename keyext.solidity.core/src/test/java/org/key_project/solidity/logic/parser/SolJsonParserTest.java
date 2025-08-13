@@ -304,6 +304,8 @@ class SolJsonParserTest {
         Assertions.assertInstanceOf(DeclarationStatement.class, declStmS);
         DeclarationStatement declStms = (DeclarationStatement) declStmS;
         MemoryDeclaration decl = declStms.getDeclarations().getFirst();
+        String contractStr = contractDeclaration.toString();
+        Assertions.assertTrue(contractStr.contains("Person memory alice"));
     }
 
     private static ContractDeclaration getDeclStr(String contract) throws IOException {

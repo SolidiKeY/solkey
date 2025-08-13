@@ -25,4 +25,9 @@ public class MemoryDeclaration extends Declaration {
     public String getStruct() {
         return struct;
     }
+
+    @Override
+    public String toString() {
+        return getStruct() + " memory " + getName();
+    }
 }
