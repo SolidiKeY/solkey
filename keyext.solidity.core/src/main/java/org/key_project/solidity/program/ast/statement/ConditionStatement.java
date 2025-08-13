@@ -5,11 +5,18 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 
 public class ConditionStatement implements Statement {
     Expression condition;
-    Statement body;
+    Statement trueBody;
+    Statement falseBody;
 
-    public ConditionStatement(Expression condition, Statement body) {
+    public ConditionStatement(Expression condition, Statement trueBody) {
         this.condition = condition;
-        this.body = body;
+        this.trueBody = trueBody;
+    }
+
+    public ConditionStatement(Expression condition, Statement trueBody, Statement falseBody) {
+        this.condition = condition;
+        this.trueBody = trueBody;
+        this.falseBody = falseBody;
     }
 
     @Override
@@ -24,6 +31,9 @@ public class ConditionStatement implements Statement {
 
     @Override
     public String toString() {
-        return "if(" + condition + ") " + body;
+        String s = "if(" + condition + ") " + trueBody;
+        if(falseBody != null)
+            s += " else " + falseBody;
+        return s;
     }
 }

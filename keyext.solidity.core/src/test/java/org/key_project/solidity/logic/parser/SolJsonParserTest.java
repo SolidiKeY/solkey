@@ -334,8 +334,30 @@ class SolJsonParserTest {
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
-        Assertions.assertTrue(contractDec.toString().contains("if"));
-        Assertions.assertTrue(contractDec.toString().contains("i = 0"));
+        String contractS = contractDec.toString();
+        Assertions.assertTrue(contractS.contains("if"));
+        Assertions.assertTrue(contractS.contains("i = 0"));
+    }
+
+    @Test
+    void parseIfElseStm() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    int i;
+                    function f() public {
+                        if(true)
+                            i = 0;
+                        else
+                            i = 1;
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        String contractS = contractDec.toString();
+        Assertions.assertTrue(contractS.contains("if"));
+        Assertions.assertTrue(contractS.contains("i = 0"));
+        Assertions.assertTrue(contractS.contains("else"));
+        Assertions.assertTrue(contractS.contains("i = 1"));
     }
 
     private static ContractDeclaration getDeclStr(String contract) throws IOException {

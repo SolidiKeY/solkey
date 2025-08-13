@@ -165,8 +165,11 @@ public class SolJSONParser {
         }
         else if(statement.has("condition")){
             Expression condition = parseExpression(statement.findValue("condition"));
-            Statement body = parseStatement(statement.findValue("trueBody"));
-            return new ConditionStatement(condition, body);
+            Statement trueBody = parseStatement(statement.findValue("trueBody"));
+            if(!statement.has("falseBody"))
+                return new ConditionStatement(condition, trueBody);
+            Statement falseBody = parseStatement(statement.findValue("falseBody"));
+            return new ConditionStatement(condition, trueBody, falseBody);
         }
 
 
