@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
@@ -127,15 +128,8 @@ public class SolJSONParser {
 
     private FunctionDeclaration parseFunction(JsonNode node) {
         final String name = node.findValue("name").asText();
-        List<JsonNode> parameters = node.findValue("returnParameters").findValues("parameters");
-        List<ParameterDeclaration> returnParameters =
-            parameters.getFirst().isEmpty() ? List.of()
-                    : parameters.stream().map(this::parseParam).toList();
-        // List<JsonNode> statements =
-        // List<ParameterDeclaration> inputParamenters =
-        // statements.getFirst().isEmpty() ? List.of() : statements.stream().map(it -> {
-        // return parseParam(it.findValue("expression"));
-        // }).toList();
+        Stream<JsonNode> parameters = node.findValue("returnParameters").findValue("parameters").valueStream();
+        List<ParameterDeclaration> returnParameters = parameters.map(this::parseParam).toList();
         List<ParameterDeclaration> inputParamenters =
             node.findValue("parameters").findValue("parameters").valueStream()
                     .map(this::parseParam).toList();
@@ -165,8 +159,18 @@ public class SolJSONParser {
                 default -> throw new RuntimeException("Statement type " + type + " is not supported");
             };
         }
-        List<MemoryDeclaration> declarations = statement.findValue("declarations").valueStream().map(this::parseDeclaration).toList();
-        return new DeclarationStatement(declarations);
+        else if(statement.has("declarations")) {
+            List<MemoryDeclaration> declarations = statement.findValue("declarations").valueStream().map(this::parseDeclaration).toList();
+            return new DeclarationStatement(declarations);
+        }
+        else if(statement.has("condition")){
+            Expression condition = parseExpression(statement.findValue("condition"));
+            Statement body = parseStatement(statement.findValue("trueBody"));
+            return new ConditionStatement(condition, body);
+        }
+
+
+        return null;
     }
 
     private MemoryDeclaration parseDeclaration(JsonNode declaration){
