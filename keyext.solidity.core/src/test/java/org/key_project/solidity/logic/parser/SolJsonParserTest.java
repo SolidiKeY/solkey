@@ -378,6 +378,25 @@ class SolJsonParserTest {
         Assertions.assertTrue(contractS.contains("i = 1"));
     }
 
+    @Test
+    void parseWhileStmYul() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function f() public {
+                        while(true) {
+                            continue;
+                            break;
+                        }
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        String contractS = contractDec.toString();
+        Assertions.assertTrue(contractS.contains("while"));
+        Assertions.assertTrue(contractS.contains("continue"));
+        Assertions.assertTrue(contractS.contains("break"));
+    }
+
     private static ContractDeclaration getDeclStr(String contract) throws IOException {
         final Path solc = Path.of("/opt", "local", "bin", "solc");
         SolcWrapper solcWrapper = new SolcWrapper(solc);

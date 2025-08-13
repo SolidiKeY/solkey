@@ -179,6 +179,15 @@ public class SolJSONParser {
 
             }
         }
+        else if(statement.has("statements")){
+            return parseBlock(statement);
+        }
+        else if(type.equals("Continue")){
+            return new ContinueStatement();
+        }
+        else if(type.equals("Break")){
+            return new BreakStatement();
+        }
 
 
         return null;
