@@ -308,6 +308,21 @@ class SolJsonParserTest {
         Assertions.assertTrue(contractStr.contains("Person memory alice"));
     }
 
+    @Test
+    void parseElementaryType() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    int[] v;
+                
+                    function f() public returns (int) {
+                        return v[0];
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        Assertions.assertTrue(contractDec.toString().contains("v[0]"));
+    }
+
     private static ContractDeclaration getDeclStr(String contract) throws IOException {
         final Path solc = Path.of("/opt", "local", "bin", "solc");
         SolcWrapper solcWrapper = new SolcWrapper(solc);

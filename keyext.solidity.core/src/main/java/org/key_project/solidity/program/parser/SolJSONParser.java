@@ -15,6 +15,7 @@ import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.*;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.expressions.IndexExpression;
 import org.key_project.solidity.program.ast.expressions.MemberExp;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Literal;
@@ -223,9 +224,16 @@ public class SolJSONParser {
             case "Identifier" -> parseIdentifier(expType, initializer);
             case "Assignment" -> parseAssignment(expType, initializer);
             case "MemberAccess" -> parseMemberAccess(expType, initializer);
+            case "IndexAccess" -> parseIndexAccess(expType, initializer);
             default -> throw new RuntimeException("Not yet supported expression type: " + nodeType);
         };
         return exp;
+    }
+
+    private Expression parseIndexAccess(Type expType, JsonNode initializer) {
+        String leftExp = initializer.findValue("baseExpression").findValue("name").asText();
+        String indexExp = initializer.findValue("indexExpression").findValue("value").asText();
+        return new IndexExpression(leftExp, indexExp, expType);
     }
 
     private Expression parseMemberAccess(Type expType, JsonNode initializer) {
@@ -313,6 +321,7 @@ public class SolJSONParser {
             case "uint256" -> UINT256;
             case "bool" -> BOOL;
             case "int" -> INT;
+            case "int256" -> INT;
             case "struct" -> STRUCT;
             default -> throw new IllegalStateException("Type " + type_str + " not covered");
         };
