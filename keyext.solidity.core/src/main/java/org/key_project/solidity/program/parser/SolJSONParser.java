@@ -165,11 +165,19 @@ public class SolJSONParser {
         }
         else if(statement.has("condition")){
             Expression condition = parseExpression(statement.findValue("condition"));
-            Statement trueBody = parseStatement(statement.findValue("trueBody"));
-            if(!statement.has("falseBody"))
-                return new ConditionStatement(condition, trueBody);
-            Statement falseBody = parseStatement(statement.findValue("falseBody"));
-            return new ConditionStatement(condition, trueBody, falseBody);
+            if(type.equals("IfStatement")){
+                Statement trueBody = parseStatement(statement.findValue("trueBody"));
+                if(!statement.has("falseBody"))
+                    return new ConditionStatement(condition, trueBody);
+                Statement falseBody = parseStatement(statement.findValue("falseBody"));
+                return new ConditionStatement(condition, trueBody, falseBody);
+
+            }
+            else if(type.equals("WhileStatement")) {
+                Statement body = parseStatement(statement.findValue("body"));
+                return new WhileStatement(condition, body);
+
+            }
         }
 
 

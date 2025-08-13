@@ -346,7 +346,7 @@ class SolJsonParserTest {
                 contract SimpleContract {
                     int i;
                     function f() public {
-                        if(true)
+                        if(i == 2)
                             i = 0;
                         else
                             i = 1;
@@ -354,9 +354,27 @@ class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
+        Assertions.assertTrue(contractS.contains("i == 2"));
         Assertions.assertTrue(contractS.contains("if"));
         Assertions.assertTrue(contractS.contains("i = 0"));
         Assertions.assertTrue(contractS.contains("else"));
+        Assertions.assertTrue(contractS.contains("i = 1"));
+    }
+
+    @Test
+    void parseWhileStm() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    int i;
+                    function f() public {
+                        while(i == 0) i = 1;
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        String contractS = contractDec.toString();
+        Assertions.assertTrue(contractS.contains("while"));
+        Assertions.assertTrue(contractS.contains("i == 0"));
         Assertions.assertTrue(contractS.contains("i = 1"));
     }
 

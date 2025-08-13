@@ -65,9 +65,8 @@ public class FunctionDeclaration extends Declaration {
         StringBuffer strBuffer = new StringBuffer();
         strBuffer.append("function ");
         strBuffer.append(name);
-        strBuffer.append(" () {\n");
+        strBuffer.append(" ()");
         strBuffer.append(getBody());
-        strBuffer.append("}\n");
         return strBuffer.toString();
     }
 }
