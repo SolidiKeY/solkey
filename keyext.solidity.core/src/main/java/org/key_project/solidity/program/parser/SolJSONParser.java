@@ -286,6 +286,10 @@ public class SolJSONParser {
         return switch (operator) {
             case "++" -> new PlusPlusOperator(uExp, expType, prefix);
             case "--" -> new MinusMinusOperator(uExp, expType, prefix);
+            case "~" -> new BitwiseNotOperator(uExp, expType);
+            case "!" -> new NotOperator(uExp, expType);
+            case "-" -> new NegateOperator(uExp, expType);
+            case "delete" -> new DeleteOperator(uExp, expType);
             default -> throw new RuntimeException("Not yet supported binary operation: " + operator);
         };
     }
