@@ -126,7 +126,7 @@ class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         Assertions.assertEquals(1, contractDeclaration.getFunctions().size());
-        FunctionDeclaration functionDeclaration = contractDeclaration.getFunctions().get(0);
+        FunctionDeclaration functionDeclaration = contractDeclaration.getFunctions().getFirst();
         Block block = functionDeclaration.getBody();
         Assertions.assertNotNull(block);
         Assertions.assertEquals(0, block.getChildCount());
@@ -241,7 +241,7 @@ class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         Assertions.assertEquals(1, contractDeclaration.getFunctions().size());
-        Assertions.assertInstanceOf(PlusEqualOperator.class, contractDeclaration.getFunctions().get(0).getBody().getStatements().get(0).getChild(0));
+        Assertions.assertInstanceOf(PlusEqualOperator.class, contractDeclaration.getFunctions().getFirst().getBody().getStatements().get(0).getChild(0));
     }
 
     @Test
@@ -257,7 +257,7 @@ class SolJsonParserTest {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         List<StructDeclaration> structs = contractDeclaration.getStructs();
         Assertions.assertEquals(1, structs.size());
-        Assertions.assertEquals(1, structs.get(0).getFields().size());
+        Assertions.assertEquals(1, structs.getFirst().getFields().size());
     }
 
     @Test
@@ -277,8 +277,8 @@ class SolJsonParserTest {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         List<StructDeclaration> structs = contractDeclaration.getStructs();
         Assertions.assertEquals(1, structs.size());
-        Assertions.assertEquals(1, structs.get(0).getFields().size());
-        FunctionDeclaration function = contractDeclaration.getFunctions().get(0);
+        Assertions.assertEquals(1, structs.getFirst().getFields().size());
+        FunctionDeclaration function = contractDeclaration.getFunctions().getFirst();
         var retStmSynt = function.getBody().getStatements().get(0);
         Assertions.assertInstanceOf(ReturnStatment.class, retStmSynt);
         ReturnStatment retStm = (ReturnStatment) retStmSynt;
@@ -418,7 +418,7 @@ class SolJsonParserTest {
         List<SolidityProgramElement> unit = jsonParser.parse(contract);
         Assertions.assertNotNull(unit);
         Assertions.assertEquals(1, unit.size());
-        SolidityProgramElement programElement = unit.get(0);
+        SolidityProgramElement programElement = unit.getFirst();
         return programElement;
     }
 
@@ -430,7 +430,7 @@ class SolJsonParserTest {
         List<SolidityProgramElement> unit = jsonParser.parse(fileURI);
         Assertions.assertNotNull(unit);
         Assertions.assertEquals(1, unit.size());
-        SolidityProgramElement programElement = unit.get(0);
+        SolidityProgramElement programElement = unit.getFirst();
         return programElement;
     }
 
