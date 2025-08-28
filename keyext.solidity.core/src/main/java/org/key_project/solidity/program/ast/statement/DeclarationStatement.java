@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class DeclarationStatement implements Statement {
-    private List<MemoryDeclaration> declarations;
+    private List<Declaration> declarations;
 
-    public DeclarationStatement(List<MemoryDeclaration> declarations) {
+    public DeclarationStatement(List<Declaration> declarations) {
         this.declarations = declarations;
     }
 
@@ -24,12 +24,12 @@ public class DeclarationStatement implements Statement {
         return 0;
     }
 
-    public List<MemoryDeclaration> getDeclarations() {
+    public List<Declaration> getDeclarations() {
         return declarations;
     }
 
     @Override
     public String toString() {
-        return declarations.stream().map(MemoryDeclaration::toString).collect(Collectors.joining(""));
+        return declarations.stream().map(Declaration::toString).collect(Collectors.joining(""));
     }
 }

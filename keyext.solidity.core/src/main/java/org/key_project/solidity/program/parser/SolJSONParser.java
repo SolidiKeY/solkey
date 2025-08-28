@@ -160,7 +160,7 @@ public class SolJSONParser {
             };
         }
         else if(statement.has("declarations")) {
-            List<MemoryDeclaration> declarations = statement.findValue("declarations").valueStream().map(this::parseDeclaration).toList();
+            List<Declaration> declarations = statement.findValue("declarations").valueStream().map(this::parseDeclaration).toList();
             return new DeclarationStatement(declarations);
         }
         else if(statement.has("condition")){
@@ -193,10 +193,17 @@ public class SolJSONParser {
         return null;
     }
 
-    private MemoryDeclaration parseDeclaration(JsonNode declaration){
-        String name = declaration.findValue("name").asText();
+    private Declaration parseDeclaration(JsonNode declaration){
+        String nameS = declaration.findValue("name").asText();
+        Name name = new Name(nameS);
+        String typeName = declaration.findValue("typeName").findValue("nodeType").asText();
+        if(typeName.equals("ArrayTypeName")){
+            int length = declaration.findValue("typeName").findValue("length").findValue("value").asInt();
+            String struct = declaration.findValue("typeName").findValue("baseType").findValue("name").asText();
+            return new ArrayDeclaration(name, struct, length);
+        }
         String struct = declaration.findValue("typeName").findValue("pathNode").findValue("name").asText();
-        return new MemoryDeclaration(new Name(name), struct);
+        return new MemoryDeclaration(name, struct);
     }
 
     private ParameterDeclaration parseParam(JsonNode node) {

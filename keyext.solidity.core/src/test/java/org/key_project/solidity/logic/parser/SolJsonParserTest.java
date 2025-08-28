@@ -317,7 +317,7 @@ class SolJsonParserTest {
         var declStmS = contractDeclaration.getFunctions().getFirst().getBody().getStatements().get(0);
         Assertions.assertInstanceOf(DeclarationStatement.class, declStmS);
         DeclarationStatement declStms = (DeclarationStatement) declStmS;
-        MemoryDeclaration decl = declStms.getDeclarations().getFirst();
+        MemoryDeclaration decl = (MemoryDeclaration) declStms.getDeclarations().getFirst();
         String contractStr = contractDeclaration.toString();
         Assertions.assertTrue(contractStr.contains("Person memory alice"));
     }
@@ -335,6 +335,19 @@ class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         Assertions.assertTrue(contractDec.toString().contains("v[1 + 1]"));
+    }
+
+    @Test
+    void parseInlineArray() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function f() public {
+                        bool[3] memory foo = [false, true, false];
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        Assertions.assertTrue(contractDec.toString().contains("bool[3] memory foo"));
     }
 
     @Test
