@@ -282,8 +282,17 @@ public class SolJSONParser {
         
         return switch (op) {
             case "=" -> new AssignmentExpression(left, right, expType);
+            case "|=" -> new OrEqualOperator(left, right, expType);
+            case "^=" -> new XorEqualOperator(left, right, expType);
+            case "&=" -> new AndEqualOperator(left, right, expType);
+            case "<<=" -> new LeftShiftEqualOperator(left, right, expType);
+            case ">>=" -> new RightShiftEqualOperator(left, right, expType);
+            case ">>>=" -> new LogicalRightShiftEqualOperator(left, right, expType);
             case "+=" -> new PlusEqualOperator(left, right, expType);
             case "-=" -> new MinusEqualOperator(left, right, expType);
+            case "*=" -> new MultiplicationEqualOperator(left, right, expType);
+            case "/=" -> new DivisionEqualOperator(left, right, expType);
+            case "%=" -> new ModEqualOperator(left, right, expType);
             default -> throw new RuntimeException("Assignment: " + op + " not supported");
         };
     }
