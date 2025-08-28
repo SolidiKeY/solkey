@@ -249,9 +249,18 @@ public class SolJSONParser {
             case "Assignment" -> parseAssignment(expType, initializer);
             case "MemberAccess" -> parseMemberAccess(expType, initializer);
             case "IndexAccess" -> parseIndexAccess(expType, initializer);
+            case "Conditional" -> parseConditional(expType, initializer);
             default -> throw new RuntimeException("Not yet supported expression type: " + nodeType);
         };
         return exp;
+    }
+
+    private Expression parseConditional(Type expType, JsonNode initializer) {
+        Expression cond = parseExpression(initializer.findValue("condition"));
+        Expression falseExpression = parseExpression(initializer.findValue("falseExpression"));
+        Expression trueExpression = parseExpression(initializer.findValue("trueExpression"));
+
+        return new TernaryOperator(expType, cond, falseExpression, trueExpression);
     }
 
     private Expression parseIndexAccess(Type expType, JsonNode initializer) {
