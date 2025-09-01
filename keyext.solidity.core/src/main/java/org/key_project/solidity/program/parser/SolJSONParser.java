@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.jetbrains.annotations.NotNull;
 import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
@@ -247,7 +248,7 @@ public class SolJSONParser {
 
     private Expression parseExpression(JsonNode initializer) {
         final String nodeType = initializer.findValue("nodeType").asText();
-        Type expType = getType(initializer.findValue("typeDescriptions").findValue("typeString").textValue());
+        Type expType = getType(initializer.findValue("typeDescriptions").findValue("typeIdentifier").textValue());
         Expression exp = switch (nodeType) {
             case "Literal" -> parseLiteral(expType, initializer);
             case "BinaryOperation" -> parseBinaryOperation(expType, initializer);
@@ -370,18 +371,34 @@ public class SolJSONParser {
     }
 
     private Type getType(String type_str) {
-        if(type_str.contains(" "))
-            type_str = type_str.split(" ")[0];
-        if(type_str.contains("_"))
-            type_str = type_str.split("_")[0];
 
-        Type type = switch (type_str) {
+        @NotNull String[] type_parts = type_str.split("\\$");
+        String typeS;
+        String array_type = "";
+        if(type_parts.length == 1){
+            type_parts = type_parts[0].split("_");
+            if(type_parts.length == 1){
+                typeS = type_parts[0];
+            }
+            else {
+                typeS = type_parts[1];
+                if(typeS.equals("rational")){
+                    typeS = "int";
+                }
+            }
+        }
+        else {
+            array_type = type_parts[0].substring(2);
+            typeS = type_parts[1].split("_")[1];
+        }
+
+        Type type = switch (typeS) {
             case "uint256" -> UINT256;
             case "bool" -> BOOL;
             case "int" -> INT;
             case "int256" -> INT;
-            case "struct" -> STRUCT;
-            default -> throw new IllegalStateException("Type " + type_str + " not covered");
+            // TODO: Fix this case
+            default -> STRUCT;
         };
         return type;
     }
