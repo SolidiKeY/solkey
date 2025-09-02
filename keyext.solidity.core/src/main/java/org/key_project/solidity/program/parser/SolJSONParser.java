@@ -196,16 +196,18 @@ public class SolJSONParser {
         String nameS = declaration.findValue("name").asText();
         Name name = new Name(nameS);
         String typeName = declaration.findValue("typeName").findValue("nodeType").asText();
+        int id = declaration.findValue("id").asInt();
         if(typeName.equals("ArrayTypeName")){
             int length = declaration.findValue("typeName").findValue("length").findValue("value").asInt();
             String struct = declaration.findValue("typeName").findValue("baseType").findValue("name").asText();
             ArrayDeclaration field = new ArrayDeclaration(name, struct, length);
-            int id = declaration.findValue("id").asInt();
             id2Name.put(id, field);
             return field;
         }
         String struct = declaration.findValue("typeName").findValue("pathNode").findValue("name").asText();
-        return new MemoryDeclaration(name, struct);
+        MemoryDeclaration memDeclaration = new MemoryDeclaration(name, struct);
+        id2Name.put(id, memDeclaration);
+        return memDeclaration;
     }
 
     private ParameterDeclaration parseParam(JsonNode node) {
