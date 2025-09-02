@@ -344,7 +344,7 @@ class SolJsonParserTest {
                 contract SimpleContract {
                     function f() public {
                         bool[3] memory foo;
-                         // foo = [false, true, false];
+                        foo = [false, true, false];
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);

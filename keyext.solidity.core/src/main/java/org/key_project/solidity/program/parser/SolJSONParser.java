@@ -19,15 +19,13 @@ import org.key_project.solidity.program.ast.declarations.*;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.IndexExpression;
 import org.key_project.solidity.program.ast.expressions.MemberExp;
+import org.key_project.solidity.program.ast.expressions.TupleExpression;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Literal;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.expressions.operators.AssignmentExpression;
-import org.key_project.solidity.program.ast.references.ParameterVariableReference;
-import org.key_project.solidity.program.ast.references.StateVariableReference;
-import org.key_project.solidity.program.ast.references.TypeReference;
-import org.key_project.solidity.program.ast.references.VariableReference;
+import org.key_project.solidity.program.ast.references.*;
 import org.key_project.solidity.program.ast.statement.*;
 
 import com.fasterxml.jackson.core.io.BigIntegerParser;
@@ -201,7 +199,10 @@ public class SolJSONParser {
         if(typeName.equals("ArrayTypeName")){
             int length = declaration.findValue("typeName").findValue("length").findValue("value").asInt();
             String struct = declaration.findValue("typeName").findValue("baseType").findValue("name").asText();
-            return new ArrayDeclaration(name, struct, length);
+            ArrayDeclaration field = new ArrayDeclaration(name, struct, length);
+            int id = declaration.findValue("id").asInt();
+            id2Name.put(id, field);
+            return field;
         }
         String struct = declaration.findValue("typeName").findValue("pathNode").findValue("name").asText();
         return new MemoryDeclaration(name, struct);
@@ -258,9 +259,15 @@ public class SolJSONParser {
             case "MemberAccess" -> parseMemberAccess(expType, initializer);
             case "IndexAccess" -> parseIndexAccess(expType, initializer);
             case "Conditional" -> parseConditional(expType, initializer);
+            case "TupleExpression" -> parseTuple(expType, initializer);
             default -> throw new RuntimeException("Not yet supported expression type: " + nodeType);
         };
         return exp;
+    }
+
+    private Expression parseTuple(Type expType, JsonNode initializer) {
+        List<Expression> components = initializer.findValue("components").valueStream().map(this::parseExpression).toList();
+        return new TupleExpression(expType, components);
     }
 
     private Expression parseConditional(Type expType, JsonNode initializer) {
@@ -354,7 +361,7 @@ public class SolJSONParser {
         final String name = literal.findValue("name").asText();
         final int referenceDeclarationId = literal.findValue("referencedDeclaration").asInt();
         final String type_str =
-            literal.findValue("typeDescriptions").findValue("typeString").asText();
+            literal.findValue("typeDescriptions").findValue("typeIdentifier").asText();
         final Type type = getType(type_str);
 
         final Declaration declaration = id2Name.get(referenceDeclarationId);
@@ -363,6 +370,8 @@ public class SolJSONParser {
                 new StateVariableReference(new Name(name), stateVarDeclaration, type);
             case ParameterDeclaration parameterDeclaration ->
                 new ParameterVariableReference(new Name(name), parameterDeclaration, type);
+            case ArrayDeclaration arrayDeclaration ->
+                    new ArrayReference(new Name(name), arrayDeclaration, type);
             case null -> throw new RuntimeException(
                 "Unknown reference declaration " + referenceDeclarationId);
             default -> throw new RuntimeException(
@@ -389,7 +398,11 @@ public class SolJSONParser {
         }
         else {
             array_type = type_parts[0].substring(2);
-            typeS = type_parts[1].split("_")[1];
+            type_parts = type_parts[1].split("_");
+            if(type_parts[1].equals("t"))
+                typeS = type_parts[2];
+            else
+                typeS = type_parts[1];
         }
 
         Type type = switch (typeS) {
@@ -398,7 +411,10 @@ public class SolJSONParser {
             case "int" -> INT;
             case "int256" -> INT;
             // TODO: Fix this case
-            default -> STRUCT;
+            default -> switch (array_type) {
+                case "struct" -> STRUCT;
+                default -> throw new RuntimeException();
+            };
         };
         return type;
     }
