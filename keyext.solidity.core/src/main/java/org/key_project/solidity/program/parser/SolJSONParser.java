@@ -16,10 +16,7 @@ import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.*;
-import org.key_project.solidity.program.ast.expressions.Expression;
-import org.key_project.solidity.program.ast.expressions.IndexExpression;
-import org.key_project.solidity.program.ast.expressions.MemberExp;
-import org.key_project.solidity.program.ast.expressions.TupleExpression;
+import org.key_project.solidity.program.ast.expressions.*;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Literal;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
@@ -262,9 +259,17 @@ public class SolJSONParser {
             case "IndexAccess" -> parseIndexAccess(expType, initializer);
             case "Conditional" -> parseConditional(expType, initializer);
             case "TupleExpression" -> parseTuple(expType, initializer);
+            case "IndexRangeAccess" -> parseIndexRangeAccess(expType, initializer);
             default -> throw new RuntimeException("Not yet supported expression type: " + nodeType);
         };
         return exp;
+    }
+
+    private Expression parseIndexRangeAccess(Type expType, JsonNode initializer) {
+        Expression baseExp = parseExpression(initializer.findValue("baseExpression"));
+        Expression startExp = parseExpression(initializer.findValue("startExpression"));
+        Expression endExp = parseExpression(initializer.findValue("endExpression"));
+        return new IndexRangeExpression(baseExp, startExp, endExp, expType);
     }
 
     private Expression parseTuple(Type expType, JsonNode initializer) {

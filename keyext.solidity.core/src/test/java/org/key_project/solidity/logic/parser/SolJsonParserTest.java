@@ -355,6 +355,19 @@ class SolJsonParserTest {
     }
 
     @Test
+    void parseSlice() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function f(bool[] calldata v) public {
+                        v[0:1];
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        Assertions.assertTrue(contractDec.toString().contains("v[0:1]"));
+    }
+
+    @Test
     void parseIfStatement() throws IOException {
         //language=solidity
         String contract = """
@@ -426,6 +439,20 @@ class SolJsonParserTest {
         Assertions.assertTrue(contractS.contains("while"));
         Assertions.assertTrue(contractS.contains("continue"));
         Assertions.assertTrue(contractS.contains("break"));
+    }
+
+    @Test
+    void tupleReturn() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function f() public returns (bool, bool) {
+                        return (false, true);
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        String contractS = contractDec.toString();
+        Assertions.assertTrue(contractS.contains("false, true"));
     }
 
     private static ContractDeclaration getDeclStr(String contract) throws IOException {

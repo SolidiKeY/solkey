@@ -1,0 +1,32 @@
+package org.key_project.solidity.program.ast.expressions;
+
+import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.abstractions.Type;
+
+public class IndexRangeExpression extends Expression {
+
+    private final Expression baseExp;
+    private final Expression startExp;
+    private final Expression endExp;
+
+    public IndexRangeExpression(Expression baseExp, Expression startExp, Expression endExp, Type expType) {
+        super(expType);
+        this.baseExp = baseExp;
+        this.startExp = startExp;
+        this.endExp = endExp;
+    }
+
+    @Override
+    public SyntaxElement getChild(int n) {
+        return null;
+    }
+
+    @Override
+    public int getChildCount() {
+        return 0;
+    }
+
+    public String toString(){
+        return baseExp + "[" + startExp + ":" + endExp + "]";
+    }
+}
