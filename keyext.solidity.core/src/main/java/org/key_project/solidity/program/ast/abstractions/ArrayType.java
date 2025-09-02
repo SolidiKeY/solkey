@@ -5,17 +5,17 @@ import org.key_project.logic.Name;
 
 public class ArrayType implements Type {
 
-    PrimitiveType primitiveType;
+    Type type;
     int length;
 
-    public ArrayType(PrimitiveType primitiveType, int length) {
-        this.primitiveType = primitiveType;
+    public ArrayType(Type type, int length) {
+        this.type = type;
         this.length = length;
     }
 
 
     @Override
     public @NonNull Name getName() {
-        return primitiveType.getName();
+        return type.getName();
     }
 }
