@@ -348,7 +348,10 @@ class SolJsonParserTest {
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
-        Assertions.assertTrue(contractDec.toString().contains("bool[3] memory foo"));
+        String contractS = contractDec.toString();
+        Assertions.assertTrue(contractS.contains("bool[3] memory foo"));
+        Assertions.assertTrue(contractS.contains("foo = [false, true, false]"));
+
     }
 
     @Test
