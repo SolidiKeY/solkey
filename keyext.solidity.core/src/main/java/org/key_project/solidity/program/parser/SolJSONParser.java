@@ -16,6 +16,7 @@ import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.*;
+import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.StateMutability;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.expressions.*;
@@ -207,7 +208,8 @@ public class SolJSONParser {
             return field;
         }
         String struct = declaration.findValue("typeName").findValue("pathNode").findValue("name").asText();
-        MemoryDeclaration memDeclaration = new MemoryDeclaration(name, struct);
+        DataLocation dataLocation = DataLocation.valueOf(declaration.findValue("storageLocation").asText());
+        StatementVariableDeclaration memDeclaration = new StatementVariableDeclaration(name, struct, dataLocation);
         id2Name.put(id, memDeclaration);
         return memDeclaration;
     }

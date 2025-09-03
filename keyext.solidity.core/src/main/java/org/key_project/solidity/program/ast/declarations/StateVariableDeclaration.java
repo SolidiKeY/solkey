@@ -61,8 +61,8 @@ public class StateVariableDeclaration extends Declaration {
 
     // common interface
     public String toString() {
-        return typeReference + " " + visibility + " " + getName() + (initializer != null ? " = " + initializer : "")
-            + ";";
+        return typeReference + " " + visibility + " " + getName()
+                + (initializer != null ? " = " + initializer : "") + ";";
     }
 
 }

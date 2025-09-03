@@ -318,7 +318,7 @@ class SolJsonParserTest {
         var declStmS = contractDeclaration.getFunctions().getFirst().getBody().getStatements().get(0);
         Assertions.assertInstanceOf(DeclarationStatement.class, declStmS);
         DeclarationStatement declStms = (DeclarationStatement) declStmS;
-        MemoryDeclaration decl = (MemoryDeclaration) declStms.getDeclarations().getFirst();
+        StatementVariableDeclaration decl = (StatementVariableDeclaration) declStms.getDeclarations().getFirst();
         String contractStr = contractDeclaration.toString();
         Assertions.assertTrue(contractStr.contains("Person memory alice"));
     }

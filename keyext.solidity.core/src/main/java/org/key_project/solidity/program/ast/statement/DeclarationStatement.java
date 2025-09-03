@@ -2,7 +2,6 @@ package org.key_project.solidity.program.ast.statement;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.declarations.Declaration;
-import org.key_project.solidity.program.ast.declarations.MemoryDeclaration;
 
 import java.util.List;
 import java.util.stream.Collectors;
