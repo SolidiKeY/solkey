@@ -233,7 +233,7 @@ public class SolJSONParser {
         // fieldNode.findValue("typeName").findValue("nodeType").asText().equals("ElementaryTypeName");
 
         // TODO: Implement modifiers
-        String visibility = fieldNode.findValue("visibility").asText();
+        Visibility visibility = Visibility.fromString(fieldNode.findValue("visibility").asText());
 
         JsonNode initializer = fieldNode.findValue("value");
         Expression initializerExp = null;
@@ -243,8 +243,7 @@ public class SolJSONParser {
 
         final StateVariableDeclaration field =
             new StateVariableDeclaration(new Name(fieldName),
-                new TypeReference(new Name(fieldType)),
-                initializerExp);
+                new TypeReference(new Name(fieldType)), initializerExp, visibility);
         final int id = fieldNode.findValue("id").asInt();
         id2Name.put(id, field);
 

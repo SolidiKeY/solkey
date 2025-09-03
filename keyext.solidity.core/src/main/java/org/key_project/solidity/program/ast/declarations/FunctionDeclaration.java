@@ -17,8 +17,8 @@ public class FunctionDeclaration extends Declaration {
     private final ImmutableArray<ParameterDeclaration> inputParameters;
     private final Block body;
     private final String kind;
-    private final StateMutability stateMutability;
     private final Visibility visibility;
+    private final StateMutability stateMutability;
 
     public FunctionDeclaration(Name name, List<ParameterDeclaration> returnParameters,
                                List<ParameterDeclaration> inputParameters, Block body, String kind, Visibility visibility, StateMutability stateMutability) {

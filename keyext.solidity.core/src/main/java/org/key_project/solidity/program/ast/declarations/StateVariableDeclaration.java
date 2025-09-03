@@ -5,6 +5,7 @@ package org.key_project.solidity.program.ast.declarations;
 
 import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.references.TypeReference;
 
@@ -15,18 +16,21 @@ public class StateVariableDeclaration extends Declaration {
 
     private final @NonNull TypeReference typeReference;
     private final @Nullable Expression initializer;
+    private final Visibility visibility;
 
-    public StateVariableDeclaration(@NonNull Name name, @NonNull TypeReference type) {
+    public StateVariableDeclaration(@NonNull Name name, @NonNull TypeReference type, Visibility visibility) {
         super(name);
         this.typeReference = type;
         this.initializer = null;
+        this.visibility = visibility;
     }
 
     public StateVariableDeclaration(@NonNull Name name, @NonNull TypeReference typeReference,
-            @Nullable Expression initializer) {
+                                    @Nullable Expression initializer, Visibility visibility) {
         super(name);
         this.typeReference = typeReference;
         this.initializer = initializer;
+        this.visibility = visibility;
     }
 
     public @NonNull TypeReference getTypeReference() {
@@ -57,7 +61,7 @@ public class StateVariableDeclaration extends Declaration {
 
     // common interface
     public String toString() {
-        return typeReference + " " + getName() + (initializer != null ? " = " + initializer : "")
+        return typeReference + " " + visibility + " " + getName() + (initializer != null ? " = " + initializer : "")
             + ";";
     }
 
