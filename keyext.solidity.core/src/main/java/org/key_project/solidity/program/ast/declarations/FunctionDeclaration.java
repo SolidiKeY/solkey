@@ -14,13 +14,15 @@ public class FunctionDeclaration extends Declaration {
     private final ImmutableArray<ParameterDeclaration> returnParameters;
     private final ImmutableArray<ParameterDeclaration> inputParameters;
     private final Block body;
+    private final String kind;
 
     public FunctionDeclaration(Name name, List<ParameterDeclaration> returnParameters,
-            List<ParameterDeclaration> inputParameters, Block body) {
+                               List<ParameterDeclaration> inputParameters, Block body, String kind) {
         super(name);
         this.returnParameters = new ImmutableArray<>(returnParameters);
         this.inputParameters = new ImmutableArray<>(inputParameters);
         this.body = body;
+        this.kind = kind;
     }
 
     public Block getBody() {

@@ -130,8 +130,9 @@ public class SolJSONParser {
             node.findValue("parameters").findValue("parameters").valueStream()
                     .map(this::parseParam).toList();
 
-        Block body = parseBlock(node.findValue("body")); // TODO
-        return new FunctionDeclaration(new Name(name), returnParameters, inputParamenters, body);
+        Block body = parseBlock(node.findValue("body"));
+        String kind = node.findValue("kind").asText();
+        return new FunctionDeclaration(new Name(name), returnParameters, inputParamenters, body, kind);
     }
 
     private Block parseBlock(JsonNode jsonBody) {
