@@ -7,6 +7,8 @@ import java.util.List;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.declarations.FunctionEnums.StateMutability;
+import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.util.collection.ImmutableArray;
 
@@ -15,14 +17,18 @@ public class FunctionDeclaration extends Declaration {
     private final ImmutableArray<ParameterDeclaration> inputParameters;
     private final Block body;
     private final String kind;
+    private final StateMutability stateMutability;
+    private final Visibility visibility;
 
     public FunctionDeclaration(Name name, List<ParameterDeclaration> returnParameters,
-                               List<ParameterDeclaration> inputParameters, Block body, String kind) {
+                               List<ParameterDeclaration> inputParameters, Block body, String kind, Visibility visibility, StateMutability stateMutability) {
         super(name);
         this.returnParameters = new ImmutableArray<>(returnParameters);
         this.inputParameters = new ImmutableArray<>(inputParameters);
         this.body = body;
         this.kind = kind;
+        this.visibility = visibility;
+        this.stateMutability = stateMutability;
     }
 
     public Block getBody() {
@@ -66,9 +72,13 @@ public class FunctionDeclaration extends Declaration {
     public String toString() {
         StringBuffer strBuffer = new StringBuffer();
         strBuffer.append("function ");
-        strBuffer.append(name);
-        strBuffer.append(" ()");
-        strBuffer.append(getBody());
+        strBuffer.append(name)
+                 .append(" () ")
+                 .append(visibility)
+                 .append(" ")
+                 .append(stateMutability)
+                 .append(" ")
+                 .append(getBody());
         return strBuffer.toString();
     }
 }

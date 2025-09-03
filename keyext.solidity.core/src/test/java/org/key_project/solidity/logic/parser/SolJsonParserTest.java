@@ -130,6 +130,7 @@ class SolJsonParserTest {
         Block block = functionDeclaration.getBody();
         Assertions.assertNotNull(block);
         Assertions.assertEquals(0, block.getChildCount());
+        Assertions.assertTrue(functionDeclaration.toString().contains("function func () public pure"));
     }
 
     @Test

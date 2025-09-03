@@ -16,6 +16,8 @@ import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.*;
+import org.key_project.solidity.program.ast.declarations.FunctionEnums.StateMutability;
+import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.expressions.*;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Literal;
@@ -132,7 +134,9 @@ public class SolJSONParser {
 
         Block body = parseBlock(node.findValue("body"));
         String kind = node.findValue("kind").asText();
-        return new FunctionDeclaration(new Name(name), returnParameters, inputParamenters, body, kind);
+        Visibility visibility = Visibility.fromString(node.findValue("visibility").asText());
+        StateMutability stateMutability = StateMutability.valueOf(node.findValue("stateMutability").asText());
+        return new FunctionDeclaration(new Name(name), returnParameters, inputParamenters, body, kind, visibility, stateMutability);
     }
 
     private Block parseBlock(JsonNode jsonBody) {
