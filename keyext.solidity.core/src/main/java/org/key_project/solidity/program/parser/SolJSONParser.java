@@ -137,7 +137,9 @@ public class SolJSONParser {
         String kind = node.findValue("kind").asText();
         Visibility visibility = Visibility.fromString(node.findValue("visibility").asText());
         StateMutability stateMutability = StateMutability.valueOf(node.findValue("stateMutability").asText());
-        return new FunctionDeclaration(new Name(name), returnParameters, inputParamenters, body, kind, visibility, stateMutability);
+        FunctionDeclaration function = new FunctionDeclaration(new Name(name), returnParameters, inputParamenters, body, kind, visibility, stateMutability);
+        id2Name.put(node.findValue("id").asInt(), function);
+        return function;
     }
 
     private Block parseBlock(JsonNode jsonBody) {
@@ -266,9 +268,16 @@ public class SolJSONParser {
             case "Conditional" -> parseConditional(expType, initializer);
             case "TupleExpression" -> parseTuple(expType, initializer);
             case "IndexRangeAccess" -> parseIndexRangeAccess(expType, initializer);
+            case "FunctionCall" -> parseFunctionCall(expType, initializer);
             default -> throw new RuntimeException("Not yet supported expression type: " + nodeType);
         };
         return exp;
+    }
+
+    private Expression parseFunctionCall(Type expType, JsonNode initializer) {
+        Expression functionExp = parseExpression(initializer.findValue("expression"));
+        List<Expression> arguments = initializer.findValue("arguments").valueStream().map(this::parseExpression).toList();
+        return new FunctionCallExpression(expType, functionExp, arguments);
     }
 
     private Expression parseIndexRangeAccess(Type expType, JsonNode initializer) {
@@ -371,7 +380,8 @@ public class SolJSONParser {
     }
 
     private VariableReference parseIdentifier(Type expType, JsonNode literal) {
-        final String name = literal.findValue("name").asText();
+        final String nameS = literal.findValue("name").asText();
+        final Name name = new Name(nameS);
         final int referenceDeclarationId = literal.findValue("referencedDeclaration").asInt();
         final String type_str =
             literal.findValue("typeDescriptions").findValue("typeIdentifier").asText();
@@ -380,11 +390,13 @@ public class SolJSONParser {
         final Declaration declaration = id2Name.get(referenceDeclarationId);
         return switch (declaration) {
             case StateVariableDeclaration stateVarDeclaration ->
-                new StateVariableReference(new Name(name), stateVarDeclaration, type);
+                new StateVariableReference(name, stateVarDeclaration, type);
             case ParameterDeclaration parameterDeclaration ->
-                new ParameterVariableReference(new Name(name), parameterDeclaration, type);
+                new ParameterVariableReference(name, parameterDeclaration, type);
             case ArrayDeclaration arrayDeclaration ->
-                    new ArrayReference(new Name(name), arrayDeclaration, type);
+                new ArrayReference(name, arrayDeclaration, type);
+            case FunctionDeclaration functionDeclaration ->
+                new FunctionReference(name, functionDeclaration, type);
             case null -> throw new RuntimeException(
                 "Unknown reference declaration " + referenceDeclarationId);
             default -> throw new RuntimeException(
@@ -397,7 +409,7 @@ public class SolJSONParser {
         @NotNull String[] type_parts = type_str.split("\\$");
         String typeS;
         String array_type = "";
-        if(type_parts.length == 1){
+        if(type_parts.length == 1 || type_parts[1].equals("__")){
             type_parts = type_parts[0].split("_");
             if(type_parts.length == 1){
                 typeS = type_parts[0];
@@ -526,6 +538,8 @@ public class SolJSONParser {
             case "string" -> STRING;
             case "fixed" -> FIXED;
             case "ufixed" -> UFIXED;
+            case "tuple" -> TUPLE;
+
             // TODO: Fix this case
             default -> switch (array_type) {
                 case "struct" -> STRUCT;

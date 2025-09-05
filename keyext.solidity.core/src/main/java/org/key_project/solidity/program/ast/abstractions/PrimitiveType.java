@@ -174,4 +174,5 @@ public class PrimitiveType implements Type {
     public static final @NonNull PrimitiveType UFIXED = newPrimitiveType("ufixed");
 
     public static final @NonNull PrimitiveType STRUCT = newPrimitiveType("struct");
+    public static final @NonNull PrimitiveType TUPLE = newPrimitiveType("tuple");
 }
