@@ -369,6 +369,19 @@ class SolJsonParserTest {
     }
 
     @Test
+    void cast() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function f() public {
+                        bool(true);
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        Assertions.assertTrue(contractDec.toString().contains("bool(true)"));
+    }
+
+    @Test
     void functionCall() throws IOException {
         //language=solidity
         String contract = """

@@ -269,9 +269,14 @@ public class SolJSONParser {
             case "TupleExpression" -> parseTuple(expType, initializer);
             case "IndexRangeAccess" -> parseIndexRangeAccess(expType, initializer);
             case "FunctionCall" -> parseFunctionCall(expType, initializer);
+            case "ElementaryTypeNameExpression" -> parseElementaryExpression(expType, initializer);
             default -> throw new RuntimeException("Not yet supported expression type: " + nodeType);
         };
         return exp;
+    }
+
+    private Expression parseElementaryExpression(Type expType, JsonNode initializer) {
+        return new ElementaryExpression(expType);
     }
 
     private Expression parseFunctionCall(Type expType, JsonNode initializer) {
