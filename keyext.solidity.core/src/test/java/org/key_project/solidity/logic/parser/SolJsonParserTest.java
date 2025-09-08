@@ -472,6 +472,20 @@ class SolJsonParserTest {
     }
 
     @Test
+    void parseFor() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    int i;
+                    function f() public {
+                        for(i = 0; i<10; i++){}
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        String contractS = contractDec.toString();
+    }
+
+    @Test
     void tupleReturn() throws IOException {
         //language=solidity
         String contract = """

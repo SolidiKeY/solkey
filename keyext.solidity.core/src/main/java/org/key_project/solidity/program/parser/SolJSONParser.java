@@ -186,15 +186,19 @@ public class SolJSONParser {
         else if(statement.has("statements")){
             return parseBlock(statement);
         }
-        else if(type.equals("Continue")){
-            return new ContinueStatement();
-        }
-        else if(type.equals("Break")){
-            return new BreakStatement();
-        }
 
-
-        return null;
+        return switch (type) {
+            case "Continue" -> new ContinueStatement();
+            case "Break" -> new BreakStatement();
+            case "ForStatement" -> {
+                Expression initializationExpression = parseExpression(statement.findValue("initializationExpression"));
+                Expression condition = parseExpression(statement.findValue("condition"));
+                Expression loopExpression = parseExpression(statement.findValue("loopExpression"));
+                Statement body = parseStatement(statement.findValue("body"));
+                yield new ForStatement(initializationExpression, condition, loopExpression, body);
+            }
+            default -> throw new IllegalStateException("Statement does not have type " + type);
+        };
     }
 
     private Declaration parseDeclaration(JsonNode declaration){
@@ -270,6 +274,7 @@ public class SolJSONParser {
             case "IndexRangeAccess" -> parseIndexRangeAccess(expType, initializer);
             case "FunctionCall" -> parseFunctionCall(expType, initializer);
             case "ElementaryTypeNameExpression" -> parseElementaryExpression(expType, initializer);
+            case "ExpressionStatement" -> parseExpression(initializer.findValue("expression"));
             default -> throw new RuntimeException("Not yet supported expression type: " + nodeType);
         };
         return exp;
