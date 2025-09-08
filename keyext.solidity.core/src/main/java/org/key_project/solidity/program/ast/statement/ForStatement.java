@@ -35,6 +35,7 @@ public class ForStatement implements Statement {
 
     @Override
     public String toString() {
-        return "for(" + initializationExpression + "; " + condition + "; " + loopExpression + ")\n" + body;
+        return "for(" + (initializationExpression == null ? "" : initializationExpression)
+                + "; " + condition + "; " + loopExpression + ")\n" + body;
     }
 }
