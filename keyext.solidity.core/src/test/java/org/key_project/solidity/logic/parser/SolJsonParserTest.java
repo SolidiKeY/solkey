@@ -483,6 +483,7 @@ class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
+        Assertions.assertTrue(contractS.contains("for(i = 0; i < 10; i ++)"));
     }
 
     @Test
