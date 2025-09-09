@@ -203,6 +203,10 @@ public class SolJSONParser {
                 Statement body = parseStatement(statement.findValue("body"));
                 yield new DoWhileStatement(condition, body);
             }
+            case "TryStatement" -> {
+                // TODO
+                yield null;
+            }
             default -> throw new IllegalStateException("Statement does not have type " + type);
         };
     }

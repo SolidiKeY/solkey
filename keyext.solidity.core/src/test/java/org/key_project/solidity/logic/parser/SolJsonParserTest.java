@@ -9,6 +9,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.key_project.logic.SyntaxElement;
@@ -491,7 +492,6 @@ class SolJsonParserTest {
         //language=solidity
         String contract = """
                 contract SimpleContract {
-                    int i;
                     function f() public {
                         for(; ; ){}
                     }
@@ -506,7 +506,6 @@ class SolJsonParserTest {
         //language=solidity
         String contract = """
                 contract SimpleContract {
-                    int i;
                     function f() public {
                         do {} while (true);
                     }
@@ -515,6 +514,24 @@ class SolJsonParserTest {
         String contractS = contractDec.toString();
         Assertions.assertTrue(contractS.contains("do"));
         Assertions.assertTrue(contractS.contains("while (true)"));
+    }
+
+    @Disabled("Try catch not implemented")
+    @Test
+    void parseTryCatch() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function f(address target) public {
+                        try SimpleContract(target).g() {}
+                        catch {}
+                    }
+                    function g() external pure {
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        String contractS = contractDec.toString();
+        Assertions.assertTrue(contractS.contains(""));
     }
 
     @Test
