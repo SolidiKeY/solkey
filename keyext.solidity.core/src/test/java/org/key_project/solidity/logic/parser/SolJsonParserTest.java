@@ -534,6 +534,22 @@ class SolJsonParserTest {
         Assertions.assertTrue(contractS.contains(""));
     }
 
+    @Disabled("Revert and require should be implemented as a regular function")
+    @Test
+    void parseRevertRequire() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function f(address target) public {
+                        revert("");
+                        require(true);
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        String contractS = contractDec.toString();
+        Assertions.assertTrue(contractS.contains(""));
+    }
+
     @Test
     void tupleReturn() throws IOException {
         //language=solidity
