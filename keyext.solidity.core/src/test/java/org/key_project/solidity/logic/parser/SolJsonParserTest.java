@@ -502,6 +502,22 @@ class SolJsonParserTest {
     }
 
     @Test
+    void parseDoWhile() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    int i;
+                    function f() public {
+                        do {} while (true);
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        String contractS = contractDec.toString();
+        Assertions.assertTrue(contractS.contains("do"));
+        Assertions.assertTrue(contractS.contains("while (true)"));
+    }
+
+    @Test
     void tupleReturn() throws IOException {
         //language=solidity
         String contract = """

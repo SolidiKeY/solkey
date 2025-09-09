@@ -1,0 +1,34 @@
+package org.key_project.solidity.program.ast.statement;
+
+import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.expressions.Expression;
+
+public class DoWhileStatement implements Statement {
+
+    private final Expression condition;
+    private final Statement body;
+
+    public DoWhileStatement(Expression condition, Statement body) {
+        this.condition = condition;
+        this.body = body;
+    }
+
+    @Override
+    public SyntaxElement getChild(int n) {
+        return switch (n) {
+            case 0 -> condition;
+            case 1 -> body;
+            default -> throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+        };
+    }
+
+    @Override
+    public int getChildCount() {
+        return 2;
+    }
+
+    @Override
+    public String toString() {
+        return "do " + body + " while (" + condition + ")";
+    }
+}

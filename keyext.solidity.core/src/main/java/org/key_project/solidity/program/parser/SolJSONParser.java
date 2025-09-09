@@ -198,6 +198,11 @@ public class SolJSONParser {
                 Statement body = parseStatement(statement.findValue("body"));
                 yield new ForStatement(initializationExpression, condition, loopExpression, body);
             }
+            case "DoWhileStatement" -> {
+                Expression condition = parseExpression(statement.findValue("condition"));
+                Statement body = parseStatement(statement.findValue("body"));
+                yield new DoWhileStatement(condition, body);
+            }
             default -> throw new IllegalStateException("Statement does not have type " + type);
         };
     }
