@@ -33,9 +33,13 @@ public class ForStatement implements Statement {
         return 4;
     }
 
+    public String nullOrEmpty(Expression e){
+        return e == null ? "" : e.toString();
+    }
+
     @Override
     public String toString() {
-        return "for(" + (initializationExpression == null ? "" : initializationExpression)
-                + "; " + condition + "; " + loopExpression + ")\n" + body;
+        return "for(" + nullOrEmpty(initializationExpression)
+                + "; " + nullOrEmpty(condition ) + "; " + nullOrEmpty(loopExpression) + ")\n" + body;
     }
 }

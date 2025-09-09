@@ -493,12 +493,12 @@ class SolJsonParserTest {
                 contract SimpleContract {
                     int i;
                     function f() public {
-                        for(; i<10; i++){}
+                        for(; ; ){}
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
-        Assertions.assertTrue(contractS.contains("for(; i < 10; i ++)"));
+        Assertions.assertTrue(contractS.contains("for(; ; )"));
     }
 
     @Test

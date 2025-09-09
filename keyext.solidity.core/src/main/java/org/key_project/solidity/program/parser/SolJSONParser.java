@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
@@ -191,10 +192,9 @@ public class SolJSONParser {
             case "Continue" -> new ContinueStatement();
             case "Break" -> new BreakStatement();
             case "ForStatement" -> {
-                Expression initializationExpression = statement.has("initializationExpression") ?
-                    parseExpression(statement.findValue("initializationExpression")) : null;
-                Expression condition = parseExpression(statement.findValue("condition"));
-                Expression loopExpression = parseExpression(statement.findValue("loopExpression"));
+                Expression initializationExpression = findOrNullExpression(statement, "initializationExpression");
+                Expression condition = findOrNullExpression(statement,"condition");
+                Expression loopExpression = findOrNullExpression(statement, "loopExpression");
                 Statement body = parseStatement(statement.findValue("body"));
                 yield new ForStatement(initializationExpression, condition, loopExpression, body);
             }
@@ -574,5 +574,9 @@ public class SolJSONParser {
             // FIX!!!!
             default -> throw new RuntimeException("Not yet supported literal");
         };
+    }
+
+    private @Nullable Expression findOrNullExpression(JsonNode statement, String field) {
+        return statement.has(field) ? parseExpression(statement.findValue(field)) : null;
     }
 }
