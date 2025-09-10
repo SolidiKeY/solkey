@@ -93,6 +93,7 @@ public class SolJSONParser {
         List<StateVariableDeclaration> fields = new ArrayList<>();
         List<FunctionDeclaration> functions = new ArrayList<>();
         List<StructDeclaration> structs = new ArrayList<>();
+        List<ModifierDeclaration> modifiers = new ArrayList<>();
 
         for (Iterator<JsonNode> it = contractNode.findValue("nodes").elements(); it.hasNext();) {
             final JsonNode node = it.next();
@@ -101,15 +102,28 @@ public class SolJSONParser {
                 case "VariableDeclaration" -> fields.add(parseVariableField(node));
                 case "FunctionDefinition" -> functions.add(parseFunction(node));
                 case "StructDefinition" -> structs.add(parseStruct(node));
+                case "ModifierDefinition" -> modifiers.add(parseModifier(node));
                 default -> throw new RuntimeException("Unknown node type " + nodeType);
             }
         }
 
         final ContractDeclaration cdecl =
-            new ContractDeclaration(new Name(contractName), fields, structs, functions);
+            new ContractDeclaration(new Name(contractName), fields, structs, modifiers, functions);
         final int contractId = contractNode.findValue("id").asInt();
         id2Name.put(contractId, cdecl);
         return cdecl;
+    }
+
+    private ModifierDeclaration parseModifier(JsonNode node) {
+        final String name = node.findValue("name").asText();
+        List<ParameterDeclaration> inputParameters =
+                node.findValue("parameters").findValue("parameters").valueStream()
+                        .map(this::parseParam).toList();
+        Block body = parseBlock(node.findValue("body"));
+        Visibility visibility = Visibility.fromString(node.findValue("visibility").asText());
+        ModifierDeclaration modifier = new ModifierDeclaration(new Name(name), inputParameters, body, visibility);
+        id2Name.put(node.findValue("id").asInt(), modifier);
+        return modifier;
     }
 
     private StructDeclaration parseStruct(JsonNode structNode) {
@@ -207,6 +221,7 @@ public class SolJSONParser {
                 // TODO
                 yield null;
             }
+            case "PlaceholderStatement" -> new PlaceholdStatement();
             default -> throw new IllegalStateException("Statement does not have type " + type);
         };
     }

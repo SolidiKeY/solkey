@@ -588,6 +588,22 @@ class SolJsonParserTest {
         Assertions.assertTrue(contractS.contains(""));
     }
 
+    @Test
+    void modifier() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    modifier mod(){
+                        _;
+                    }
+                    function f() public mod {
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        String contractS = contractDec.toString();
+        Assertions.assertTrue(contractS.contains("_;"));
+    }
+
     private static ContractDeclaration getDeclStr(String contract) throws IOException {
         final Path solc = Path.of("/opt", "local", "bin", "solc");
         SolcWrapper solcWrapper = new SolcWrapper(solc);

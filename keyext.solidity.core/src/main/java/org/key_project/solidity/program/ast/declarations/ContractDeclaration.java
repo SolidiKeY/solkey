@@ -17,13 +17,15 @@ public class ContractDeclaration extends Declaration implements Type {
 
     private final ImmutableArray<StateVariableDeclaration> fields;
     private final List<StructDeclaration> structs;
+    private final List<ModifierDeclaration> modifiers;
     private final List<FunctionDeclaration> functions;
 
     public ContractDeclaration(Name name, List<StateVariableDeclaration> fields, List<StructDeclaration> structs,
-                               List<FunctionDeclaration> functions) {
+                               List<ModifierDeclaration> modifiers, List<FunctionDeclaration> functions) {
         super(name);
         this.fields = new ImmutableArray<>(fields.toArray(new StateVariableDeclaration[0]));
         this.structs = structs;
+        this.modifiers = modifiers;
         this.functions = functions;
     }
 
@@ -44,6 +46,7 @@ public class ContractDeclaration extends Declaration implements Type {
             contract += fields.get(i);
             contract += "\n";
         }
+        contract += modifiers.stream().map(ModifierDeclaration::toString).collect(Collectors.joining("\n"));
         contract += getFunctions().stream().map(FunctionDeclaration::toString).collect(Collectors.joining("\n"));
         contract += "}";
         return contract;
