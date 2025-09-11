@@ -88,8 +88,6 @@ public class SolJSONParser {
 
     private ContractDeclaration parseContract(JsonNode contractNode) {
         String contractName = contractNode.findValue("canonicalName").asText(); // there is also a
-        // field "name"
-        // now retrieve declared fields, functions, structs etc.
         List<StateVariableDeclaration> fields = new ArrayList<>();
         List<FunctionDeclaration> functions = new ArrayList<>();
         List<StructDeclaration> structs = new ArrayList<>();
@@ -164,13 +162,8 @@ public class SolJSONParser {
     }
 
     private Block parseBlock(JsonNode jsonBody) {
-        // List<JsonNode> statements =
-        // if (statements.getFirst().isEmpty()) {
-        // return new Block(List.of());
-        // }
         List<Statement> blockStatements =
             jsonBody.findValue("statements").valueStream().map(this::parseStatement).toList();
-        // statements.stream().map(this::parseStatement).toList();
         return new Block(blockStatements);
     }
 
@@ -268,10 +261,7 @@ public class SolJSONParser {
     private StateVariableDeclaration parseVariableField(JsonNode fieldNode) {
         final String fieldName = fieldNode.findValue("name").asText();
         final String fieldType = fieldNode.findValue("typeName").findValue("name").asText();
-        // boolean isPrimitive =
-        // fieldNode.findValue("typeName").findValue("nodeType").asText().equals("ElementaryTypeName");
 
-        // TODO: Implement modifiers
         Visibility visibility = Visibility.fromString(fieldNode.findValue("visibility").asText());
 
         JsonNode initializer = fieldNode.findValue("value");
