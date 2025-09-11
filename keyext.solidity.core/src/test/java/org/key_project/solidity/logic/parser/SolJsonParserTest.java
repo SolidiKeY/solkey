@@ -532,22 +532,21 @@ class SolJsonParserTest {
         Assertions.assertTrue(contractS.contains("SimpleContract(target).f()"));
     }
 
-    @Disabled("Try catch not implemented")
     @Test
     void parseTryCatch() throws IOException {
         //language=solidity
         String contract = """
                 contract SimpleContract {
                     function f(address target) public {
-                        try SimpleContract(target).g() {}
+                        try SimpleContract(target).g() { }
                         catch {}
                     }
                     function g() external pure {
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
-        String contractS = contractDec.toString();
-        Assertions.assertTrue(contractS.contains(""));
+//        String contractS = contractDec.toString();
+//        Assertions.assertTrue(contractS.contains(""));
     }
 
     @Disabled("Revert and require should be implemented as a regular function")
