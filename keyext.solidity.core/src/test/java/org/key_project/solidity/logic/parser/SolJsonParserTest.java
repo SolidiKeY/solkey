@@ -516,6 +516,22 @@ class SolJsonParserTest {
         Assertions.assertTrue(contractS.contains("while (true)"));
     }
 
+    @Test
+    void externalContract() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function f() external pure {
+                    }
+                    function g(address target) public {
+                        SimpleContract(target).f();
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        String contractS = contractDec.toString();
+        Assertions.assertTrue(contractS.contains("SimpleContract(target).f()"));
+    }
+
     @Disabled("Try catch not implemented")
     @Test
     void parseTryCatch() throws IOException {

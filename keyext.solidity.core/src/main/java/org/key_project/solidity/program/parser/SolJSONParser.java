@@ -430,6 +430,7 @@ public class SolJSONParser {
                 new FunctionReference(name, functionDeclaration, type);
             case null -> switch (expType.toString()) {
                 case "function" -> new FunctionReference(name, type);
+                case "contract" -> new ContractReference(name, type);
                 default -> throw new RuntimeException("Unknown type " + expType);
             };
             default -> throw new RuntimeException(
@@ -573,11 +574,13 @@ public class SolJSONParser {
             case "ufixed" -> UFIXED;
             case "tuple" -> TUPLE;
             case "function" -> FUNCTION;
+            case "contract" -> CONTRACT;
 
             // TODO: Fix this case
             default -> switch (array_type) {
                 case "struct" -> STRUCT;
-                default -> throw new RuntimeException();
+                case "contract" -> CONTRACT;
+                default -> throw new RuntimeException("type " + typeS + " does not exist and array type " + array_type + " also");
             };
         };
         return type;
