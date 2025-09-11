@@ -428,8 +428,10 @@ public class SolJSONParser {
                 new ArrayReference(name, arrayDeclaration, type);
             case FunctionDeclaration functionDeclaration ->
                 new FunctionReference(name, functionDeclaration, type);
-            case null -> throw new RuntimeException(
-                "Unknown reference declaration " + referenceDeclarationId);
+            case null -> switch (expType.toString()) {
+                case "function" -> new FunctionReference(name, type);
+                default -> throw new RuntimeException("Unknown type " + expType);
+            };
             default -> throw new RuntimeException(
                 "Unexpected reference declaration " + declaration + " expected a state variable.");
         };
@@ -570,6 +572,7 @@ public class SolJSONParser {
             case "fixed" -> FIXED;
             case "ufixed" -> UFIXED;
             case "tuple" -> TUPLE;
+            case "function" -> FUNCTION;
 
             // TODO: Fix this case
             default -> switch (array_type) {

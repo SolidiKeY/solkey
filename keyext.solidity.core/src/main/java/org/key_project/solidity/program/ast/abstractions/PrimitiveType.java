@@ -175,4 +175,5 @@ public class PrimitiveType implements Type {
 
     public static final @NonNull PrimitiveType STRUCT = newPrimitiveType("struct");
     public static final @NonNull PrimitiveType TUPLE = newPrimitiveType("tuple");
+    public static final @NonNull PrimitiveType FUNCTION = newPrimitiveType("function");
 }
