@@ -152,9 +152,15 @@ public class SolJSONParser {
         String kind = node.findValue("kind").asText();
         Visibility visibility = Visibility.fromString(node.findValue("visibility").asText());
         StateMutability stateMutability = StateMutability.valueOf(node.findValue("stateMutability").asText());
-        FunctionDeclaration function = new FunctionDeclaration(new Name(name), returnParameters, inputParamenters, body, kind, visibility, stateMutability);
+        List<ModifierReference> modifiers = node.findValue("modifiers").valueStream().map(this::parseModifierRefence).toList();
+        FunctionDeclaration function = new FunctionDeclaration(new Name(name), returnParameters, inputParamenters, body, kind, visibility, stateMutability, modifiers);
         id2Name.put(node.findValue("id").asInt(), function);
         return function;
+    }
+
+    private ModifierReference parseModifierRefence(JsonNode node) {
+        String name = node.findValue("modifierName").findValue("name").asText();
+        return new ModifierReference(name);
     }
 
     private Block parseBlock(JsonNode jsonBody) {

@@ -593,15 +593,19 @@ class SolJsonParserTest {
         //language=solidity
         String contract = """
                 contract SimpleContract {
-                    modifier mod(){
+                    modifier mod1(){
                         _;
                     }
-                    function f() public mod {
+                    modifier mod2(){
+                        _;
+                    }
+                    function f() public mod1 mod2 {
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
         Assertions.assertTrue(contractS.contains("_;"));
+        Assertions.assertTrue(contractS.contains("mod1 mod2"));
     }
 
     private static ContractDeclaration getDeclStr(String contract) throws IOException {
