@@ -16,6 +16,6 @@ public class MappingType implements Type {
 
     @Override
     public @NonNull Name getName() {
-        return new Name("mapping(" + keyType + " => " + valueType + ")");
+        return new Name("mapping(" + keyType + " => " + valueType.getName().toString() + ")");
     }
 }

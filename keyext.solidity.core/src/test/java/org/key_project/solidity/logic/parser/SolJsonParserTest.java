@@ -590,7 +590,6 @@ class SolJsonParserTest {
         ContractDeclaration contractDec = getDeclStr(contract);
     }
 
-//    @Disabled("Mapping type is not implemented")
     @Test
     void mapping() throws IOException {
         //language=solidity
@@ -601,6 +600,18 @@ class SolJsonParserTest {
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
         Assertions.assertTrue(contractS.contains("mapping(bool => int256)"));
+    }
+
+    @Test
+    void nestedMapping() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    mapping(bool => mapping(bool => int256)) public b;
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        String contractS = contractDec.toString();
+        Assertions.assertTrue(contractS.contains("mapping(bool => mapping(bool => int256))"));
     }
 
     @Test

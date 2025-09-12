@@ -574,15 +574,19 @@ public class SolJSONParser {
                 .map(x -> x.split("_"))
                 .map(list -> nextAfterT(Arrays.asList(list)))
                 .flatMap(Optional::stream).toArray(String[]::new);
+        return getType(List.of(type_parts));
+    }
+
+    private Type getType(List<String> type_parts) {
         String array_type = "";
-        if(type_parts.length > 1){
-            array_type = type_parts[0];
+        if(type_parts.size() > 1){
+            array_type = type_parts.getFirst();
         }
         return switch (array_type) {
-            case "" -> getPrimitiveType(type_parts[0]);
-            case "mapping" -> new MappingType(getPrimitiveType(type_parts[1]), getPrimitiveType(type_parts[2]));
-            case "array" -> new ArrayType(getPrimitiveType(type_parts[1]), 0);
-            case "function", "type", "tuple" -> getPrimitiveType(type_parts[1]);
+            case "" -> getPrimitiveType(type_parts.getFirst());
+            case "mapping" -> new MappingType(getPrimitiveType(type_parts.get(1)), getType(type_parts.subList(2, type_parts.size())));
+            case "array" -> new ArrayType(getPrimitiveType(type_parts.get(1)), 0);
+            case "function", "type", "tuple" -> getPrimitiveType(type_parts.get(1));
             default -> throw new RuntimeException("Array type " + array_type + " is not implemented");
         };
     }
