@@ -5,16 +5,16 @@ package org.key_project.solidity.program.parser;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.abstractions.ArrayType;
+import org.key_project.solidity.program.ast.abstractions.MappingType;
+import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.*;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
@@ -260,6 +260,7 @@ public class SolJSONParser {
 
     private StateVariableDeclaration parseVariableField(JsonNode fieldNode) {
         final String fieldName = fieldNode.findValue("name").asText();
+        Type expType = getType(fieldNode.findValue("typeDescriptions").findValue("typeIdentifier").textValue());
         final String fieldType = fieldNode.findValue("typeName").findValue("name").asText();
 
         Visibility visibility = Visibility.fromString(fieldNode.findValue("visibility").asText());
@@ -270,9 +271,12 @@ public class SolJSONParser {
             initializerExp = parseExpression(initializer);
         }
 
+//        final StateVariableDeclaration field =
+//            new StateVariableDeclaration(new Name(fieldName),
+//                new TypeReference(new Name(fieldType)), initializerExp, visibility);
         final StateVariableDeclaration field =
-            new StateVariableDeclaration(new Name(fieldName),
-                new TypeReference(new Name(fieldType)), initializerExp, visibility);
+                new StateVariableDeclaration(new Name(fieldName),
+                        new TypeReference(expType), initializerExp, visibility);
         final int id = fieldNode.findValue("id").asInt();
         id2Name.put(id, field);
 
@@ -438,33 +442,15 @@ public class SolJSONParser {
         };
     }
 
-    private Type getType(String type_str) {
+    Optional<String> nextAfterT(List<String> list) {
+        return java.util.stream.IntStream.range(0, list.size() - 1)
+                .filter(i -> list.get(i).equals("t"))
+                .mapToObj(i -> list.get(i + 1))
+                .findFirst();
+    }
 
-        @NotNull String[] type_parts = type_str.split("\\$");
-        String typeS;
-        String array_type = "";
-        if(type_parts.length == 1 || type_parts[1].equals("__")){
-            type_parts = type_parts[0].split("_");
-            if(type_parts.length == 1){
-                typeS = type_parts[0];
-            }
-            else {
-                typeS = type_parts[1];
-                if(typeS.equals("rational")){
-                    typeS = "int";
-                }
-            }
-        }
-        else {
-            array_type = type_parts[0].substring(2);
-            type_parts = type_parts[1].split("_");
-            if(type_parts[1].equals("t"))
-                typeS = type_parts[2];
-            else
-                typeS = type_parts[1];
-        }
-
-        Type type = switch (typeS) {
+    PrimitiveType getPrimitiveType(String typeS){
+        return switch (typeS) {
             case "int" -> INT;
             case "int8" -> INT8;
             case "int16" -> INT16;
@@ -567,6 +553,8 @@ public class SolJSONParser {
             case "bytes31" -> BYTES31;
             case "bytes32" -> BYTES32;
 
+            case "rational" -> INT256;
+            case "struct" -> STRUCT;
             case "bool" -> BOOL;
             case "address" -> ADDRESS;
             case "string" -> STRING;
@@ -576,14 +564,27 @@ public class SolJSONParser {
             case "function" -> FUNCTION;
             case "contract" -> CONTRACT;
 
-            // TODO: Fix this case
-            default -> switch (array_type) {
-                case "struct" -> STRUCT;
-                case "contract" -> CONTRACT;
-                default -> throw new RuntimeException("type " + typeS + " does not exist and array type " + array_type + " also");
-            };
+            default -> throw new RuntimeException("Primitive type " + typeS + " does not exist");
         };
-        return type;
+    }
+
+    private Type getType(String type_str) {
+        @NotNull String[] type_parts = type_str.split("\\$");
+        type_parts = Arrays.stream(type_parts)
+                .map(x -> x.split("_"))
+                .map(list -> nextAfterT(Arrays.asList(list)))
+                .flatMap(Optional::stream).toArray(String[]::new);
+        String array_type = "";
+        if(type_parts.length > 1){
+            array_type = type_parts[0];
+        }
+        return switch (array_type) {
+            case "" -> getPrimitiveType(type_parts[0]);
+            case "mapping" -> new MappingType(getPrimitiveType(type_parts[1]), getPrimitiveType(type_parts[2]));
+            case "array" -> new ArrayType(getPrimitiveType(type_parts[1]), 0);
+            case "function", "type", "tuple" -> getPrimitiveType(type_parts[1]);
+            default -> throw new RuntimeException("Array type " + array_type + " is not implemented");
+        };
     }
 
     private Literal parseLiteral(Type expType, JsonNode literal) {

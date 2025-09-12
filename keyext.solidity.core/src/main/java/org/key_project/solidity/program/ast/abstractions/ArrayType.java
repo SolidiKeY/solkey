@@ -13,7 +13,6 @@ public class ArrayType implements Type {
         this.length = length;
     }
 
-
     @Override
     public @NonNull Name getName() {
         return type.getName();
