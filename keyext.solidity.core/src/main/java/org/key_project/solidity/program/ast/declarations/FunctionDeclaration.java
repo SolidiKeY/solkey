@@ -60,17 +60,23 @@ public class FunctionDeclaration extends Declaration {
                 return inputParameters.get(n);
             } else {
                 n -= inputParameters.size();
-                if (n == 0) {
-                    return body;
+                if(n < modifiers.size()){
+                    return modifiers.get(n);
                 }
-                throw new IndexOutOfBoundsException("Index out of bounds");
+                else {
+                    n -= modifiers.size();
+                    if (n == 0) {
+                        return body;
+                    }
+                    throw new IndexOutOfBoundsException("Index out of bounds");
+                }
             }
         }
     }
 
     @Override
     public int getChildCount() {
-        return returnParameters.size() + inputParameters.size();
+        return returnParameters.size() + inputParameters.size() + modifiers.size();
     }
 
     @Override
