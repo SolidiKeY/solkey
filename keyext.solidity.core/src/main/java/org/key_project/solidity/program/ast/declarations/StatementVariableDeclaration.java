@@ -3,14 +3,19 @@ package org.key_project.solidity.program.ast.declarations;
 import org.jspecify.annotations.NonNull;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 
+import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Default;
+
 public class StatementVariableDeclaration extends Declaration {
+    private final Type type;
     private String struct;
     private final DataLocation dataLocation;
 
-    public StatementVariableDeclaration(@NonNull Name name, String struct, DataLocation dataLocation) {
+    public StatementVariableDeclaration(@NonNull Name name, Type type, String struct, DataLocation dataLocation) {
         super(name);
+        this.type = type;
         this.struct = struct;
         this.dataLocation = dataLocation;
     }
@@ -31,6 +36,10 @@ public class StatementVariableDeclaration extends Declaration {
 
     @Override
     public String toString() {
-        return getStruct() + " " + dataLocation + " " + getName();
+        if(struct != null)
+            return struct + " " + dataLocation + " " + getName();
+        if(dataLocation == Default)
+            return type + " " + getName();
+        return type + " " + dataLocation + " " + getName();
     }
 }

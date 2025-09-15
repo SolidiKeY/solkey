@@ -237,9 +237,12 @@ public class SolJSONParser {
             id2Name.put(id, field);
             return field;
         }
-        String struct = declaration.findValue("typeName").findValue("pathNode").findValue("name").asText();
-        DataLocation dataLocation = DataLocation.valueOf(declaration.findValue("storageLocation").asText());
-        StatementVariableDeclaration memDeclaration = new StatementVariableDeclaration(name, struct, dataLocation);
+        String struct = null;
+        if(declaration.findValue("typeName").has("pathNode"))
+            struct = declaration.findValue("typeName").findValue("pathNode").findValue("name").asText();
+        DataLocation dataLocation = DataLocation.fromString(declaration.findValue("storageLocation").asText());
+        Type type = getType(declaration.findValue("typeName").findValue("typeDescriptions").findValue("typeIdentifier").asText());
+        StatementVariableDeclaration memDeclaration = new StatementVariableDeclaration(name, type, struct, dataLocation);
         id2Name.put(id, memDeclaration);
         return memDeclaration;
     }
