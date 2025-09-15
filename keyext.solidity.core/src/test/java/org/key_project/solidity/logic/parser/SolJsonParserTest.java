@@ -582,14 +582,14 @@ class SolJsonParserTest {
                 contract SimpleContract {
                     function f(address target) public {
                         try SimpleContract(target).g() { }
-                        catch {}
+                        catch { }
                     }
                     function g() external pure {
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
-//        String contractS = contractDec.toString();
-//        Assertions.assertTrue(contractS.contains(""));
+        String contractS = contractDec.toString();
+        Assertions.assertTrue(contractS.contains("SimpleContract(target).g()"));
     }
 
     @Disabled("Revert and require should be implemented as a regular function")

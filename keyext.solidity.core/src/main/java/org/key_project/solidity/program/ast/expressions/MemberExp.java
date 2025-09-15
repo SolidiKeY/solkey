@@ -25,6 +25,6 @@ public class MemberExp extends Expression {
 
     @Override
     public String toString() {
-        return leftExp.toString() + "." + rightName;
+        return leftExp.toString() + "." + rightName + "()";
     }
 }

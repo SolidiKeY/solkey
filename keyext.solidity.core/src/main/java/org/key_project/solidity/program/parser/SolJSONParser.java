@@ -218,8 +218,9 @@ public class SolJSONParser {
                 yield new DoWhileStatement(condition, body);
             }
             case "TryStatement" -> {
+                Expression expression = parseExpression(statement.findValue("externalCall").findValue("expression"));
                 List<Block> blocks = statement.findValue("clauses").valueStream().map(this::parseBlock).toList();
-                yield new TryStatement(blocks);
+                yield new TryStatement(expression, blocks);
             }
             case "PlaceholderStatement" -> new PlaceholdStatement();
             default -> throw new IllegalStateException("Statement does not have type " + type);
