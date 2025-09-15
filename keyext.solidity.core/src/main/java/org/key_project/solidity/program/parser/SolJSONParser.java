@@ -179,7 +179,8 @@ public class SolJSONParser {
         }
         else if(statement.has("declarations")) {
             List<Declaration> declarations = statement.findValue("declarations").valueStream().map(this::parseDeclaration).toList();
-            return new DeclarationStatement(declarations);
+            Expression initialValue = findOrNullExpression(statement, "initialValue");
+            return new DeclarationStatement(declarations, initialValue);
         }
         else if(statement.has("condition")){
             Expression condition = parseExpression(statement.findValue("condition"));

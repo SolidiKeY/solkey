@@ -202,6 +202,22 @@ class SolJsonParserTest {
     }
 
     @Test
+    void variableDeclarationAssignedSameStatement() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                   function func() public pure {
+                      bool b = true;
+                      bool c = true || false;
+                   }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        String s = contractDec.toString();
+        Assertions.assertTrue(s.contains("bool b = true"));
+        Assertions.assertTrue(s.contains("bool c = true || false"));
+    }
+
+    @Test
     @EnabledOnOs(OS.LINUX)
     void parseContractWithOperations() throws IOException {
         //language=solidity
