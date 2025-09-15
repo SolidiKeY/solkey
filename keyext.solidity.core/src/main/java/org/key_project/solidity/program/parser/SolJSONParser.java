@@ -435,6 +435,8 @@ public class SolJSONParser {
                 new ArrayReference(name, arrayDeclaration, type);
             case FunctionDeclaration functionDeclaration ->
                 new FunctionReference(name, functionDeclaration, type);
+            case StatementVariableDeclaration stmVarDeclaration ->
+                new StatementVariableReference(name, stmVarDeclaration, type);
             case null -> switch (expType.toString()) {
                 case "function" -> new FunctionReference(name, type);
                 case "contract" -> new ContractReference(name, type);
