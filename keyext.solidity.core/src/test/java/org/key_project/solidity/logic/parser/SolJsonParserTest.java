@@ -592,6 +592,31 @@ class SolJsonParserTest {
         Assertions.assertTrue(contractS.contains("SimpleContract(target).g()"));
     }
 
+    @Test
+    @EnabledOnOs(OS.LINUX)
+    void parseTryCatchMoreCases() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function f(address target) public {
+                        try SimpleContract(target).g() {
+                            int i;
+                        }
+                        catch Error(string memory reason) {
+                            int j;
+                        }
+                        catch {
+                            int k;
+                        }
+                    }
+                    function g() external pure {
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+//        String contractS = contractDec.toString();
+//        Assertions.assertTrue(contractS.contains(""));
+    }
+
     @Disabled("Revert and require should be implemented as a regular function")
     @Test
     void parseRevertRequire() throws IOException {

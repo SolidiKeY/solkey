@@ -6,14 +6,23 @@ package org.key_project.solidity.program.ast.statement;
 import java.util.List;
 
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.declarations.ParameterDeclaration;
 import org.key_project.util.collection.ImmutableArray;
 
 public class Block implements Statement {
 
     private final ImmutableArray<Statement> statements;
+    private String errorName;
+    private List<ParameterDeclaration> inputParamenters;
 
     public Block(ImmutableArray<Statement> statements) {
         this.statements = statements;
+    }
+
+    public Block(List<Statement> statements, String errorName, List<ParameterDeclaration> inputParamenters) {
+        this.statements = new ImmutableArray<>(statements);
+        this.errorName = errorName;
+        this.inputParamenters = inputParamenters;
     }
 
     public Block(List<Statement> statements) {

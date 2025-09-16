@@ -164,6 +164,14 @@ public class SolJSONParser {
     private Block parseBlock(JsonNode jsonBody) {
         List<Statement> blockStatements =
             jsonBody.findValue("statements").valueStream().map(this::parseStatement).toList();
+        if(jsonBody.has("errorName")){
+            String errorName = jsonBody.findValue("errorName").asText();
+            if(!errorName.isEmpty()){
+                List<ParameterDeclaration> inputParamenters =
+                        jsonBody.findValue("parameters").findValue("parameters").valueStream().map(this::parseParam).toList();
+                return new Block(blockStatements, errorName, inputParamenters);
+            }
+        }
         return new Block(blockStatements);
     }
 
