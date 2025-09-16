@@ -15,6 +15,14 @@ import org.key_project.solidity.logic.SolidityDLTheory;
 import java.lang.ref.WeakReference;
 import java.util.WeakHashMap;
 
+/// Represents an elementary update {@code x:=t } where {@code x} is a program variable and {@code t} a term of
+/// compatible sort.
+/// The program variable {@code x} is part of the operator, hence, there is one elementary update for each program
+/// variable. This class ensures that there is also at most one per program variable to ensure reference identity
+/// required for operators.
+///
+/// @see UpdateJunctor
+/// @see UpdateApplication
 public class ElementaryUpdate extends AbstractSortedOperator {
 
     private static final WeakHashMap<UpdateableOperator, WeakReference<ElementaryUpdate>> instances =
