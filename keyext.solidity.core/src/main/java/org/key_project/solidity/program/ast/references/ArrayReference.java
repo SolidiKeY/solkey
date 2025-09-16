@@ -31,7 +31,7 @@ public class ArrayReference extends VariableReference {
     }
 
     @Override
-    public Name getName() {
+    public Name name() {
         return name;
     }
 

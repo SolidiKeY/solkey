@@ -6,13 +6,14 @@ package org.key_project.solidity.program.ast.expressions;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 
-public abstract class Expression implements SolidityProgramElement {
+public abstract class Expression implements SolidityProgramElement, SoliditiyExpression {
     protected final Type type;
 
     public Expression(Type type) {
         this.type = type;
     }
 
+    @Override
     public Type getType(){
         return type;
     }

@@ -1,0 +1,34 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
+package org.key_project.solidity.rule;
+
+import org.key_project.prover.rules.instantiation.MatchResultInfo;
+import org.key_project.prover.rules.instantiation.SVInstantiations;
+import org.key_project.solidity.rule.inst.SolSVInstantiations;
+
+public class MatchConditions extends MatchResultInfo {
+    public static final MatchConditions EMPTY_MATCHCONDITIONS =
+        new MatchConditions(SolSVInstantiations.EMPTY_SVINSTANTIATIONS);
+
+    public MatchConditions() {
+        super(SolSVInstantiations.EMPTY_SVINSTANTIATIONS);
+    }
+
+    public MatchConditions(SVInstantiations p_instantiations) {
+        super(p_instantiations);
+    }
+
+    public SVInstantiations getInstantiations() {
+        return instantiations;
+    }
+
+    public MatchConditions setInstantiations(
+            org.key_project.prover.rules.instantiation.SVInstantiations p_instantiations) {
+        if (instantiations == p_instantiations) {
+            return this;
+        } else {
+            return new MatchConditions((SVInstantiations) p_instantiations);
+        }
+    }
+}

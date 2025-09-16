@@ -15,7 +15,7 @@ public abstract class Declaration implements SolidityProgramElement {
         this.name = name;
     }
 
-    public @NonNull Name getName() {
+    public @NonNull Name name() {
         return name;
     }
 

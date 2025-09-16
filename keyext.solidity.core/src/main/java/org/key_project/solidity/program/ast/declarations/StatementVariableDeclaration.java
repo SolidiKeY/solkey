@@ -37,9 +37,9 @@ public class StatementVariableDeclaration extends Declaration {
     @Override
     public String toString() {
         if(struct != null)
-            return struct + " " + dataLocation + " " + getName();
+            return struct + " " + dataLocation + " " + name();
         if(dataLocation == Default)
-            return type + " " + getName();
-        return type + " " + dataLocation + " " + getName();
+            return type + " " + name();
+        return type + " " + dataLocation + " " + name();
     }
 }

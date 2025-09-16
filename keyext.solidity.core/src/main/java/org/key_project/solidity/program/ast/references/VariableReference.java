@@ -17,7 +17,7 @@ public abstract class VariableReference extends Expression {
     protected VariableReference(Type type) {
         super(type);
         this.type = type;
-        this.typeName = type.getName();
+        this.typeName = type.name();
     }
 
     protected VariableReference(Name typeName, Type type) {
@@ -35,7 +35,7 @@ public abstract class VariableReference extends Expression {
         }
     }
 
-    public abstract Name getName();
+    public abstract Name name();
 
     public abstract Declaration getDeclaration();
 

@@ -8,9 +8,9 @@ import org.key_project.logic.SyntaxElement;
 public interface SolidityProgramElement extends SyntaxElement {
 
     @Override
-    public abstract SyntaxElement getChild(int n);
+    SyntaxElement getChild(int n);
 
     @Override
-    public int getChildCount();
+    int getChildCount();
 
 }

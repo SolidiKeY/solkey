@@ -1,7 +1,10 @@
 package org.key_project.solidity.program.ast.abstractions;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.key_project.logic.Name;
+import org.key_project.logic.sort.Sort;
+import org.key_project.solidity.common.Services;
 
 public class ArrayType implements Type {
 
@@ -14,7 +17,13 @@ public class ArrayType implements Type {
     }
 
     @Override
-    public @NonNull Name getName() {
-        return type.getName();
+    public @NonNull Name name() {
+        return type.name();
+    }
+
+    @Override
+    public @Nullable Sort getSort(Services services) {
+        // TODO
+        throw new UnsupportedOperationException("To be implemented");
     }
 }

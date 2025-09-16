@@ -45,7 +45,7 @@ public class FieldDeclaration extends Declaration {
     @Override
     public SolidityProgramElement getChild(int i) {
         if (i < 0 || i >= getChildCount()) {
-            throw new IndexOutOfBoundsException("No child at index " + i + " in " + getName());
+            throw new IndexOutOfBoundsException("No child at index " + i + " in " + name());
         }
         if (i == 0) {
             return typeReference;
@@ -56,7 +56,7 @@ public class FieldDeclaration extends Declaration {
 
     // common interface
     public String toString() {
-        return typeReference + " " + getName() + (initializer != null ? " = " + initializer : "")
+        return typeReference + " " + name() + (initializer != null ? " = " + initializer : "")
             + ";";
     }
 

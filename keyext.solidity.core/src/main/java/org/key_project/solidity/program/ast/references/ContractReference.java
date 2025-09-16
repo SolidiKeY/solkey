@@ -25,7 +25,7 @@ public class ContractReference extends VariableReference {
     }
 
     @Override
-    public Name getName() {
+    public Name name() {
         return name;
     }
 

@@ -32,7 +32,7 @@ public class StateVariableReference extends VariableReference {
         return referencedDeclaration;
     }
 
-    public Name getName() {
+    public Name name() {
         return name;
     }
 

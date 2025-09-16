@@ -6,8 +6,11 @@ package org.key_project.solidity.program.ast.declarations;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.logic.sort.Sort;
+import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.util.collection.ImmutableArray;
 
@@ -36,9 +39,9 @@ public class ContractDeclaration extends Declaration implements Type {
     @Override
     public @NonNull String toString() {
         String contract = "contract ";
-        contract += getName() + " {\n";
+        contract += name() + " {\n";
         contract += structs.stream().map(it ->
-            "struct " + it.getName() + " {\n"
+            "struct " + it.name() + " {\n"
             + it.fields.stream().map(jt ->
                     jt.toString() + "\n"
                 ).collect(Collectors.joining()) + "}\n").collect(Collectors.joining());
@@ -68,5 +71,11 @@ public class ContractDeclaration extends Declaration implements Type {
 
     public List<FunctionDeclaration> getFunctions() {
         return functions;
+    }
+
+    @Override
+    public @Nullable Sort getSort(Services services) {
+        // TODO
+        throw new UnsupportedOperationException("TO BE IMPLEMENTED");
     }
 }

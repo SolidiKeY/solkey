@@ -50,7 +50,7 @@ public class StateVariableDeclaration extends Declaration {
     @Override
     public SolidityProgramElement getChild(int i) {
         if (i < 0 || i >= getChildCount()) {
-            throw new IndexOutOfBoundsException("No child at index " + i + " in " + getName());
+            throw new IndexOutOfBoundsException("No child at index " + i + " in " + name());
         }
         if (i == 0) {
             return typeReference;
@@ -61,7 +61,7 @@ public class StateVariableDeclaration extends Declaration {
 
     // common interface
     public String toString() {
-        return typeReference + " " + visibility + " " + getName()
+        return typeReference + " " + visibility + " " + name()
                 + (initializer != null ? " = " + initializer : "") + ";";
     }
 
