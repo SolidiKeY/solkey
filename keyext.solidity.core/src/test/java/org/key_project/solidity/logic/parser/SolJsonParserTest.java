@@ -100,9 +100,8 @@ class SolJsonParserTest {
         Expression initializer = contractDeclaration.getFieldDeclarations().get(1).getInitializer();
         Assertions.assertNotNull(initializer);
         Assertions.assertInstanceOf(AddOperator.class, initializer);
-        Assertions.assertInstanceOf(StateVariableReference.class,
-            ((AddOperator) initializer).getChild(0));
-        Assertions.assertInstanceOf(Uint256Literal.class, ((AddOperator) initializer).getChild(1));
+        Assertions.assertInstanceOf(StateVariableReference.class, initializer.getChild(0));
+        Assertions.assertInstanceOf(Uint256Literal.class, initializer.getChild(1));
     }
 
     @Test
@@ -363,6 +362,7 @@ class SolJsonParserTest {
         Assertions.assertInstanceOf(DeclarationStatement.class, declStmS);
         DeclarationStatement declStms = (DeclarationStatement) declStmS;
         StatementVariableDeclaration decl = (StatementVariableDeclaration) declStms.getDeclarations().getFirst();
+        Assertions.assertNotNull(decl);
         String contractStr = contractDeclaration.toString();
         Assertions.assertTrue(contractStr.contains("Person memory alice"));
     }
@@ -613,8 +613,8 @@ class SolJsonParserTest {
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
-//        String contractS = contractDec.toString();
-//        Assertions.assertTrue(contractS.contains(""));
+        String contractS = contractDec.toString();
+        Assertions.assertTrue(contractS.contains(""));
     }
 
     @Disabled("Revert and require should be implemented as a regular function")
@@ -656,6 +656,7 @@ class SolJsonParserTest {
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
+        Assertions.assertNotNull(contractDec);
     }
 
     @Test
@@ -737,8 +738,7 @@ class SolJsonParserTest {
         List<SolidityProgramElement> unit = jsonParser.parse(contract);
         Assertions.assertNotNull(unit);
         Assertions.assertEquals(1, unit.size());
-        SolidityProgramElement programElement = unit.getFirst();
-        return programElement;
+        return unit.getFirst();
     }
 
     private static SolidityProgramElement getSolidityProgramElement(String solFileName)
@@ -755,7 +755,6 @@ class SolJsonParserTest {
 
     private static URI getFile(String solFileName) {
         try {
-            // return FindResources.getResource(solFileName, SolJsonParserTest.class).toUri();
             return SolJSONParser.class.getResource(solFileName).toURI();
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
