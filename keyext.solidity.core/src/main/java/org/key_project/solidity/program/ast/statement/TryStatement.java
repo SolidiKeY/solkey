@@ -31,6 +31,9 @@ public class TryStatement implements Statement {
 
     @Override
     public String toString() {
-        return "try " + expression + " " + blocks.stream().map(Block::toString).collect(Collectors.joining());
+        Block tryBlock = blocks.getFirst();
+        List<Block> catchBlocks = blocks.subList(1, blocks.size());
+        return "try " + expression + " " + tryBlock + " " +
+                catchBlocks.stream().map(Block::toStringCatch).collect(Collectors.joining());
     }
 }

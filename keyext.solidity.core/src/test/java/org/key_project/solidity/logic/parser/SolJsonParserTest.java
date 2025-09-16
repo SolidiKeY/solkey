@@ -614,7 +614,7 @@ class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
-        Assertions.assertTrue(contractS.contains(""));
+        Assertions.assertTrue(contractS.contains("catch Error (string memory reason)"));
     }
 
     @Disabled("Revert and require should be implemented as a regular function")
