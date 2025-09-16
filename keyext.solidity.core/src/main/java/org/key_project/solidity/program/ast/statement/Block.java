@@ -4,25 +4,26 @@
 package org.key_project.solidity.program.ast.statement;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.key_project.logic.SyntaxElement;
-import org.key_project.solidity.program.ast.declarations.ParameterDeclaration;
+import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.util.collection.ImmutableArray;
 
 public class Block implements Statement {
 
     private final ImmutableArray<Statement> statements;
     private String errorName;
-    private List<ParameterDeclaration> inputParamenters;
+    private List<Declaration> arguments;
 
     public Block(ImmutableArray<Statement> statements) {
         this.statements = statements;
     }
 
-    public Block(List<Statement> statements, String errorName, List<ParameterDeclaration> inputParamenters) {
+    public Block(List<Statement> statements, String errorName, List<Declaration> arguments) {
         this.statements = new ImmutableArray<>(statements);
         this.errorName = errorName;
-        this.inputParamenters = inputParamenters;
+        this.arguments = arguments;
     }
 
     public Block(List<Statement> statements) {
@@ -46,6 +47,15 @@ public class Block implements Statement {
             body += statement.toString() + "\n";
         }
         return body + "}\n";
+    }
+
+    public String toStringCatch() {
+        String body = "catch ";
+        if(errorName != null && !errorName.isEmpty()){
+            body += errorName + " (" +  arguments.stream().map(Object::toString).collect(Collectors.joining(", ")) + ")";
+        }
+        body += " " + this;
+        return body;
     }
 
     public ImmutableArray<Statement> getStatements() { return statements; }
