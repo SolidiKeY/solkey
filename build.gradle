@@ -13,12 +13,12 @@ plugins {
     // id "com.github.ben-manes.versions" version "0.39.0"
 
     // Code formatting
-    id "com.diffplug.spotless" version "7.1.0"
+    id "com.diffplug.spotless" version "7.2.1"
 
     // EISOP Checker Framework
-    id "org.checkerframework" version "0.6.55"
+    id "org.checkerframework" version "0.6.57"
 
-    id("org.sonarqube") version "6.2.0.5505"
+    id("org.sonarqube") version "6.3.1.5724"
 }
 
 sonar {
@@ -92,22 +92,23 @@ subprojects {
         checkerFramework "io.github.eisop:checker:$eisop_version"
 
         testImplementation("ch.qos.logback:logback-classic:1.5.18")
-        testImplementation("org.assertj:assertj-core:3.27.3")
+        testImplementation("org.assertj:assertj-core:3.27.4")
         testImplementation("ch.qos.logback:logback-classic:1.5.18")
 
-        testImplementation(platform("org.junit:junit-bom:5.13.2"))
+        testImplementation(platform("org.junit:junit-bom:5.13.4"))
         testImplementation ("org.junit.jupiter:junit-jupiter-api")
         testImplementation ("org.junit.jupiter:junit-jupiter-api")
         testImplementation ("org.junit.jupiter:junit-jupiter-params")
         testRuntimeOnly ("org.junit.jupiter:junit-jupiter-engine")
         testRuntimeOnly ("org.junit.platform:junit-platform-launcher")
+        testImplementation ("org.assertj:assertj-core:3.26.3")
         testImplementation project(':key.util')
 
         // test fixtures
-        testImplementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.19.1")
-        testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.19.1")
+        testImplementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.20.0")
+        testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.20.0")
 
-        testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.13.2'
+        testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.13.4'
     }
 
     tasks.withType(JavaCompile) {
@@ -125,7 +126,7 @@ subprojects {
         options.addBooleanOption('html5', true)
     }
 
-    tasks.withType(Test) {//Configure all tests
+    tasks.withType(Test).configureEach {//Configure all tests
 
         def examplesDir = rootProject.layout.projectDirectory.dir("key.ui/examples").getAsFile()
         def runAllProofsReportDir = layout.buildDirectory.dir("report/runallproves/").get().getAsFile()
@@ -141,11 +142,18 @@ subprojects {
 
         forkEvery = 0 //default
         maxParallelForks = 1 // weigl: test on master
-    }
 
-    tasks.withType(Test) {
         useJUnitPlatform {
             includeEngines 'junit-jupiter'
+        }
+
+        // these seems to be missing starting with Gradle 9
+        testClassesDirs = sourceSets.test.output.classesDirs
+        classpath = sourceSets.test.runtimeClasspath
+
+        // Fail on empty test suites
+        afterSuite { suite, result ->
+            assert result.testCount > 0, "There are no executed test. This is unexpected and should be investigated!"
         }
     }
 
