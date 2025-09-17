@@ -15,6 +15,6 @@ public class ContinueStatement implements Statement {
 
     @Override
     public String toString() {
-        return "continue";
+        return "continue;";
     }
 }

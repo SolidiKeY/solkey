@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class DeclarationStatement implements Statement {
-    private List<Declaration> declarations;
+    private final List<Declaration> declarations;
     private final Expression initialValue;
 
     public DeclarationStatement(List<Declaration> declarations, Expression initialValue) {
@@ -35,6 +35,6 @@ public class DeclarationStatement implements Statement {
         String s = declarations.stream().map(Declaration::toString).collect(Collectors.joining(""));
         if(initialValue != null)
             s += " = " + initialValue;
-        return s;
+        return s + ";";
     }
 }

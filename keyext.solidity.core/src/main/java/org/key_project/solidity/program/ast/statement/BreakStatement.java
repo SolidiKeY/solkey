@@ -15,6 +15,6 @@ public class BreakStatement implements Statement {
 
     @Override
     public String toString() {
-        return "break";
+        return "break;";
     }
 }

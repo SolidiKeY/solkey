@@ -90,7 +90,7 @@ public class FunctionDeclaration extends Declaration {
                  .append(stateMutability)
                  .append(" ")
                  .append(modifiers.stream().map(ModifierReference::toString).collect(Collectors.joining(" ")))
-                 .append(getBody());
+                 .append(getBody().toString());
         return strBuffer.toString();
     }
 }
