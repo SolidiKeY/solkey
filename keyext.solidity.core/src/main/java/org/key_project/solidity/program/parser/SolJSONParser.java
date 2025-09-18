@@ -92,6 +92,7 @@ public class SolJSONParser {
         List<FunctionDeclaration> functions = new ArrayList<>();
         List<StructDeclaration> structs = new ArrayList<>();
         List<ModifierDeclaration> modifiers = new ArrayList<>();
+        List<EnumDeclaration> enums = new ArrayList<>();
 
         for (Iterator<JsonNode> it = contractNode.findValue("nodes").elements(); it.hasNext();) {
             final JsonNode node = it.next();
@@ -101,15 +102,27 @@ public class SolJSONParser {
                 case "FunctionDefinition" -> functions.add(parseFunction(node));
                 case "StructDefinition" -> structs.add(parseStruct(node));
                 case "ModifierDefinition" -> modifiers.add(parseModifier(node));
+                case "EnumDefinition" -> enums.add(parseEnum(node));
                 default -> throw new RuntimeException("Unknown node type " + nodeType);
             }
         }
 
         final ContractDeclaration cdecl =
-            new ContractDeclaration(new Name(contractName), fields, structs, modifiers, functions);
+            new ContractDeclaration(new Name(contractName), fields, structs, modifiers, functions, enums);
         final int contractId = contractNode.findValue("id").asInt();
         id2Name.put(contractId, cdecl);
         return cdecl;
+    }
+
+    private EnumDeclaration parseEnum(JsonNode node) {
+        String name = node.findValue("name").asText();
+        List<MemberEnumDeclaration> members = node.findValue("members").valueStream().map(this::parseMemberEnum).toList();
+        return new EnumDeclaration(new Name(name), members);
+    }
+
+    private MemberEnumDeclaration parseMemberEnum(JsonNode node) {
+        String name = node.findValue("name").asText();
+        return new MemberEnumDeclaration(new Name(name));
     }
 
     private ModifierDeclaration parseModifier(JsonNode node) {

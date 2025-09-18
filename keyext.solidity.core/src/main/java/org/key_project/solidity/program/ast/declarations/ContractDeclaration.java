@@ -22,14 +22,16 @@ public class ContractDeclaration extends Declaration implements Type {
     private final List<StructDeclaration> structs;
     private final List<ModifierDeclaration> modifiers;
     private final List<FunctionDeclaration> functions;
+    private final List<EnumDeclaration> enums;
 
     public ContractDeclaration(Name name, List<StateVariableDeclaration> fields, List<StructDeclaration> structs,
-                               List<ModifierDeclaration> modifiers, List<FunctionDeclaration> functions) {
+                               List<ModifierDeclaration> modifiers, List<FunctionDeclaration> functions, List<EnumDeclaration> enums) {
         super(name);
         this.fields = new ImmutableArray<>(fields.toArray(new StateVariableDeclaration[0]));
         this.structs = structs;
         this.modifiers = modifiers;
         this.functions = functions;
+        this.enums = enums;
     }
 
     public ImmutableArray<StateVariableDeclaration> getFieldDeclarations() {
@@ -50,6 +52,7 @@ public class ContractDeclaration extends Declaration implements Type {
             contract += "\n";
         }
         contract += modifiers.stream().map(ModifierDeclaration::toString).collect(Collectors.joining("\n"));
+        contract += enums.stream().map(EnumDeclaration::toString).collect(Collectors.joining("\n"));
         contract += getFunctions().stream().map(FunctionDeclaration::toString).collect(Collectors.joining("\n"));
         contract += "}";
         return contract;
