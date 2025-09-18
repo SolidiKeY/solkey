@@ -12,10 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
-import org.key_project.solidity.program.ast.abstractions.ArrayType;
-import org.key_project.solidity.program.ast.abstractions.MappingType;
-import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
-import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.solidity.program.ast.abstractions.*;
 import org.key_project.solidity.program.ast.declarations.*;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.StateMutability;
@@ -117,7 +114,10 @@ public class SolJSONParser {
     private EnumDeclaration parseEnum(JsonNode node) {
         String name = node.findValue("name").asText();
         List<MemberEnumDeclaration> members = node.findValue("members").valueStream().map(this::parseMemberEnum).toList();
-        return new EnumDeclaration(new Name(name), members);
+        EnumDeclaration enumDeclaration = new EnumDeclaration(new Name(name), members);
+        final int id = node.findValue("id").asInt();
+        id2Name.put(id, enumDeclaration);
+        return enumDeclaration;
     }
 
     private MemberEnumDeclaration parseMemberEnum(JsonNode node) {
@@ -460,6 +460,8 @@ public class SolJSONParser {
                 new FunctionReference(name, functionDeclaration, type);
             case StatementVariableDeclaration stmVarDeclaration ->
                 new StatementVariableReference(name, stmVarDeclaration, type);
+            case EnumDeclaration enumDeclaration ->
+                new EnumReference(name, enumDeclaration, type);
             case null -> switch (expType.toString()) {
                 case "function" -> new FunctionReference(name, type);
                 case "contract" -> new ContractReference(name, type);
@@ -598,11 +600,19 @@ public class SolJSONParser {
 
     private Type getType(String type_str) {
         @NotNull String[] type_parts = type_str.split("\\$");
-        type_parts = Arrays.stream(type_parts)
-                .map(x -> x.split("_"))
+        List<String[]> type_parts_split = Arrays.stream(type_parts)
+                .map(x -> x.split("_")).toList();
+        type_parts = type_parts_split.stream()
                 .map(list -> nextAfterT(Arrays.asList(list)))
                 .flatMap(Optional::stream).toArray(String[]::new);
-        return getType(List.of(type_parts));
+        List<@NotNull String> parts = Arrays.stream(type_parts).toList();
+        if(parts.contains("enum")){
+            int i = parts.indexOf("enum");
+            String name = type_parts_split.get(i+1)[1];
+            List<@NotNull String> xs = List.of(parts.get(i), name);
+            return getType(xs);
+        }
+        return getType(parts);
     }
 
     private Type getType(List<String> type_parts) {
@@ -615,6 +625,7 @@ public class SolJSONParser {
             case "mapping" -> new MappingType(getPrimitiveType(type_parts.get(1)), getType(type_parts.subList(2, type_parts.size())));
             case "array" -> new ArrayType(getPrimitiveType(type_parts.get(1)), 0);
             case "function", "type", "tuple" -> getPrimitiveType(type_parts.get(1));
+            case "enum" -> new EnumType(new Name(type_parts.get(1)));
             default -> throw new RuntimeException("Array type " + array_type + " is not implemented");
         };
     }

@@ -733,6 +733,24 @@ class SolJsonParserTest {
         Assertions.assertTrue(contractS.contains("Begin, End"));
     }
 
+    @Test
+    void usingEnum() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    enum State {
+                        Begin,
+                        End
+                    }
+                    function f() public {
+                        State s = State.Begin;
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        String contractS = contractDec.toString();
+        Assertions.assertTrue(contractS.contains("State.Begin"));
+    }
+
     private static ContractDeclaration getDeclStr(String contract) throws IOException {
         final Path solc = Path.of("/opt", "local", "bin", "solc");
         SolcWrapper solcWrapper = new SolcWrapper(solc);
