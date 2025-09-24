@@ -84,7 +84,9 @@ public class FunctionDeclaration extends Declaration {
         StringBuffer strBuffer = new StringBuffer();
         strBuffer.append("function ");
         strBuffer.append(name)
-                 .append(" () ")
+                 .append(" (")
+                 .append(inputParameters.stream().map(ParameterDeclaration::toString).collect(Collectors.joining(", ")))
+                 .append(") ")
                  .append(visibility)
                  .append(" ")
                  .append(stateMutability)

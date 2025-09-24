@@ -5,16 +5,19 @@ package org.key_project.solidity.program.ast.declarations;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.references.TypeReference;
 
 import org.jspecify.annotations.NonNull;
 
 public class ParameterDeclaration extends Declaration {
     private final @NonNull TypeReference typeReference;
+    private final DataLocation dataLocation;
 
-    public ParameterDeclaration(@NonNull Name name, @NonNull TypeReference typeReference) {
+    public ParameterDeclaration(@NonNull Name name, @NonNull TypeReference typeReference, DataLocation dataLocation) {
         super(name);
         this.typeReference = typeReference;
+        this.dataLocation = dataLocation;
     }
 
     @Override
@@ -28,6 +31,11 @@ public class ParameterDeclaration extends Declaration {
     @Override
     public int getChildCount() {
         return 1;
+    }
+
+    @Override
+    public String toString() {
+        return typeReference + " " + dataLocation + " " + name;
     }
 
     public @NonNull TypeReference getTypeReference() {

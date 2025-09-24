@@ -704,6 +704,22 @@ class SolJsonParserTest {
     }
 
     @Test
+    void parameterListFunction() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    struct Person {
+                       int age;
+                    }
+                    function f(Person memory bob) public {
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        String contractS = contractDec.toString();
+        Assertions.assertTrue(contractS.contains("memory bob"));
+    }
+
+    @Test
     void selfReference() throws IOException {
         //language=solidity
         String contract = """
