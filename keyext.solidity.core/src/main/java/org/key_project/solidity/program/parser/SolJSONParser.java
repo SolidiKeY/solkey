@@ -85,6 +85,7 @@ public class SolJSONParser {
 
     private ContractDeclaration parseContract(JsonNode contractNode) {
         String contractName = contractNode.findValue("canonicalName").asText(); // there is also a
+        final int contractId = contractNode.findValue("id").asInt();
         List<StateVariableDeclaration> fields = new ArrayList<>();
         List<FunctionDeclaration> functions = new ArrayList<>();
         List<StructDeclaration> structs = new ArrayList<>();
@@ -105,8 +106,7 @@ public class SolJSONParser {
         }
 
         final ContractDeclaration cdecl =
-            new ContractDeclaration(new Name(contractName), fields, structs, modifiers, functions, enums);
-        final int contractId = contractNode.findValue("id").asInt();
+            new ContractDeclaration(contractId, new Name(contractName), fields, structs, modifiers, functions, enums);
         id2Name.put(contractId, cdecl);
         return cdecl;
     }
@@ -299,13 +299,9 @@ public class SolJSONParser {
             initializerExp = parseExpression(initializer);
         }
 
-//        final StateVariableDeclaration field =
-//            new StateVariableDeclaration(new Name(fieldName),
-//                new TypeReference(new Name(fieldType)), initializerExp, visibility);
         final StateVariableDeclaration field =
                 new StateVariableDeclaration(new Name(fieldName),
                         new TypeReference(expType), initializerExp, visibility);
-        final int id = fieldNode.findValue("id").asInt();
         id2Name.put(id, field);
 
         return field;

@@ -18,15 +18,17 @@ import org.jspecify.annotations.NonNull;
 
 public class ContractDeclaration extends Declaration implements Type {
 
+    private final int id;
     private final ImmutableArray<StateVariableDeclaration> fields;
     private final List<StructDeclaration> structs;
     private final List<ModifierDeclaration> modifiers;
     private final List<FunctionDeclaration> functions;
     private final List<EnumDeclaration> enums;
 
-    public ContractDeclaration(Name name, List<StateVariableDeclaration> fields, List<StructDeclaration> structs,
+    public ContractDeclaration(int contractId, Name name, List<StateVariableDeclaration> fields, List<StructDeclaration> structs,
                                List<ModifierDeclaration> modifiers, List<FunctionDeclaration> functions, List<EnumDeclaration> enums) {
         super(name);
+        this.id = contractId;
         this.fields = new ImmutableArray<>(fields.toArray(new StateVariableDeclaration[0]));
         this.structs = structs;
         this.modifiers = modifiers;
