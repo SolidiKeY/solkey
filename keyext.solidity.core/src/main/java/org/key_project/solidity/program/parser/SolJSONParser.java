@@ -287,6 +287,7 @@ public class SolJSONParser {
     }
 
     private StateVariableDeclaration parseVariableField(JsonNode fieldNode) {
+        final int id = fieldNode.findValue("id").asInt();
         final String fieldName = fieldNode.findValue("name").asText();
         Type expType = getType(fieldNode.findValue("typeDescriptions").findValue("typeIdentifier").textValue());
         final String fieldType = fieldNode.findValue("typeName").findValue("name").asText();
