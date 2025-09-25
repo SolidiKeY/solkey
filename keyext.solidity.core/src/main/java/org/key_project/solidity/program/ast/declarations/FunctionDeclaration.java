@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
-import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.StateMutability;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.references.ModifierReference;
@@ -16,6 +15,7 @@ import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.util.collection.ImmutableArray;
 
 public class FunctionDeclaration extends Declaration {
+    private final int id;
     private final ImmutableArray<ParameterDeclaration> returnParameters;
     private final ImmutableArray<ParameterDeclaration> inputParameters;
     private final Block body;
@@ -24,9 +24,10 @@ public class FunctionDeclaration extends Declaration {
     private final StateMutability stateMutability;
     private final List<ModifierReference> modifiers;
 
-    public FunctionDeclaration(Name name, List<ParameterDeclaration> returnParameters,
+    public FunctionDeclaration(int id, Name name, List<ParameterDeclaration> returnParameters,
                                List<ParameterDeclaration> inputParameters, Block body, String kind, Visibility visibility, StateMutability stateMutability, List<ModifierReference> modifiers) {
         super(name);
+        this.id = id;
         this.returnParameters = new ImmutableArray<>(returnParameters);
         this.inputParameters = new ImmutableArray<>(inputParameters);
         this.body = body;

@@ -2,25 +2,26 @@ package org.key_project.solidity.program.ast.references;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
-import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.program.ast.declarations.Declaration;
-import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 
 public class ContractReference extends VariableReference {
 
+    private int id;
     private final Name name;
     private ContractDeclaration contractDeclaration;
 
-    public ContractReference(Name name, Type type, ContractDeclaration contractDeclaration) {
+    public ContractReference(int id, Name name, Type type, ContractDeclaration contractDeclaration) {
         super(type);
+        this.id = id;
         this.name = name;
         this.contractDeclaration = contractDeclaration;
     }
 
-    public ContractReference(Name name, Type type) {
+    public ContractReference(int id, Name name, Type type) {
         super(type);
+        this.id = id;
         this.name = name;
     }
 

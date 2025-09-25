@@ -8,12 +8,14 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.ParameterDeclaration;
 
 public class ParameterVariableReference extends VariableReference {
+    private int id;
     private final Name name;
     private final ParameterDeclaration referencedDeclaration;
 
-    public ParameterVariableReference(Name name, ParameterDeclaration referencedDeclaration,
-            Type type) {
+    public ParameterVariableReference(int id, Name name, ParameterDeclaration referencedDeclaration,
+                                      Type type) {
         super(type);
+        this.id = id;
         this.name = name;
         this.referencedDeclaration = referencedDeclaration;
     }

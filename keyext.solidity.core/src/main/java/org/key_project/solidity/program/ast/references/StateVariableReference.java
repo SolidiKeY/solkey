@@ -9,14 +9,16 @@ import org.key_project.solidity.program.ast.declarations.StateVariableDeclaratio
 
 public class StateVariableReference extends VariableReference {
 
+    private int id;
     // private ReferencePrefix prefix; // a reference prefix for account.person.age here
     // account.person is the prefix
     private final Name name;
     private final StateVariableDeclaration referencedDeclaration;
 
-    public StateVariableReference(Name name, StateVariableDeclaration referencedDeclaration,
-            Type type) {
+    public StateVariableReference(int id, Name name, StateVariableDeclaration referencedDeclaration,
+                                  Type type) {
         super(type);
+        this.id = id;
         this.name = name;
         this.referencedDeclaration = referencedDeclaration;
     }

@@ -11,11 +11,13 @@ import org.key_project.solidity.program.ast.references.TypeReference;
 import org.jspecify.annotations.NonNull;
 
 public class ParameterDeclaration extends Declaration {
+    private final int id;
     private final @NonNull TypeReference typeReference;
     private final DataLocation dataLocation;
 
-    public ParameterDeclaration(@NonNull Name name, @NonNull TypeReference typeReference, DataLocation dataLocation) {
+    public ParameterDeclaration(int id, @NonNull Name name, @NonNull TypeReference typeReference, DataLocation dataLocation) {
         super(name);
+        this.id = id;
         this.typeReference = typeReference;
         this.dataLocation = dataLocation;
     }

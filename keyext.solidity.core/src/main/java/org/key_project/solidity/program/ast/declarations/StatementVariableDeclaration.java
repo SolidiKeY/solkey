@@ -9,12 +9,14 @@ import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocat
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Default;
 
 public class StatementVariableDeclaration extends Declaration {
+    private final int id;
     private final Type type;
     private String struct;
     private final DataLocation dataLocation;
 
-    public StatementVariableDeclaration(@NonNull Name name, Type type, String struct, DataLocation dataLocation) {
+    public StatementVariableDeclaration(int id, @NonNull Name name, Type type, String struct, DataLocation dataLocation) {
         super(name);
+        this.id = id;
         this.type = type;
         this.struct = struct;
         this.dataLocation = dataLocation;

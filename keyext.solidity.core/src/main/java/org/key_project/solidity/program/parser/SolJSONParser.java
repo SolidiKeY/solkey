@@ -112,10 +112,10 @@ public class SolJSONParser {
     }
 
     private EnumDeclaration parseEnum(JsonNode node) {
+        final int id = node.findValue("id").asInt();
         String name = node.findValue("name").asText();
         List<MemberEnumDeclaration> members = node.findValue("members").valueStream().map(this::parseMemberEnum).toList();
         EnumDeclaration enumDeclaration = new EnumDeclaration(new Name(name), members);
-        final int id = node.findValue("id").asInt();
         id2Name.put(id, enumDeclaration);
         return enumDeclaration;
     }
@@ -152,6 +152,7 @@ public class SolJSONParser {
     }
 
     private FunctionDeclaration parseFunction(JsonNode node) {
+        final int id = node.findValue("id").asInt();
         final String name = node.findValue("name").asText();
         Stream<JsonNode> parameters = node.findValue("returnParameters").findValue("parameters").valueStream();
         List<ParameterDeclaration> returnParameters = parameters.map(this::parseParam).toList();
@@ -164,8 +165,8 @@ public class SolJSONParser {
         Visibility visibility = Visibility.fromString(node.findValue("visibility").asText());
         StateMutability stateMutability = StateMutability.valueOf(node.findValue("stateMutability").asText());
         List<ModifierReference> modifiers = node.findValue("modifiers").valueStream().map(this::parseModifierRefence).toList();
-        FunctionDeclaration function = new FunctionDeclaration(new Name(name), returnParameters, inputParamenters, body, kind, visibility, stateMutability, modifiers);
-        id2Name.put(node.findValue("id").asInt(), function);
+        FunctionDeclaration function = new FunctionDeclaration(id, new Name(name), returnParameters, inputParamenters, body, kind, visibility, stateMutability, modifiers);
+        id2Name.put(id, function);
         return function;
     }
 
@@ -175,6 +176,7 @@ public class SolJSONParser {
     }
 
     private Block parseBlock(JsonNode jsonBody) {
+        final int id = jsonBody.findValue("id").asInt();
         List<Statement> blockStatements =
             jsonBody.findValue("statements").valueStream().map(this::parseStatement).toList();
         if(jsonBody.has("errorName")){
@@ -182,10 +184,10 @@ public class SolJSONParser {
             if(!errorName.isEmpty()){
                 List<Declaration> arguments =
                         jsonBody.findValue("parameters").findValue("parameters").valueStream().map(this::parseDeclaration).toList();
-                return new Block(blockStatements, errorName, arguments);
+                return new Block(id, blockStatements, errorName, arguments);
             }
         }
-        return new Block(blockStatements);
+        return new Block(id, blockStatements);
     }
 
     private @NonNull Statement parseStatement(JsonNode statement) {
@@ -249,10 +251,10 @@ public class SolJSONParser {
     }
 
     private Declaration parseDeclaration(JsonNode declaration){
+        final int id = declaration.findValue("id").asInt();
         String nameS = declaration.findValue("name").asText();
         Name name = new Name(nameS);
         String typeName = declaration.findValue("typeName").findValue("nodeType").asText();
-        int id = declaration.findValue("id").asInt();
         if(typeName.equals("ArrayTypeName")){
             int length = declaration.findValue("typeName").findValue("length").findValue("value").asInt();
             String struct = declaration.findValue("typeName").findValue("baseType").findValue("name").asText();
@@ -265,12 +267,13 @@ public class SolJSONParser {
             struct = declaration.findValue("typeName").findValue("pathNode").findValue("name").asText();
         DataLocation dataLocation = DataLocation.fromString(declaration.findValue("storageLocation").asText());
         Type type = getType(declaration.findValue("typeName").findValue("typeDescriptions").findValue("typeIdentifier").asText());
-        StatementVariableDeclaration memDeclaration = new StatementVariableDeclaration(name, type, struct, dataLocation);
+        StatementVariableDeclaration memDeclaration = new StatementVariableDeclaration(id, name, type, struct, dataLocation);
         id2Name.put(id, memDeclaration);
         return memDeclaration;
     }
 
     private ParameterDeclaration parseParam(JsonNode node) {
+        final int id = node.findValue("id").asInt();
         final String fieldName = node.findValue("name").asText();
         final String fieldType =
             node.findValue("typeDescriptions").findValue("typeString").asText();
@@ -278,9 +281,8 @@ public class SolJSONParser {
         final DataLocation dataLocation = DataLocation.fromString(dataLocationS);
 
         final ParameterDeclaration field =
-            new ParameterDeclaration(new Name(fieldName),
+            new ParameterDeclaration(id, new Name(fieldName),
                 new TypeReference(new Name(fieldType)), dataLocation);
-        final int id = node.findValue("id").asInt();
         id2Name.put(id, field);
 
         return field;
@@ -440,30 +442,30 @@ public class SolJSONParser {
     }
 
     private VariableReference parseIdentifier(Type expType, JsonNode literal) {
+        final int idDecl = literal.findValue("referencedDeclaration").asInt();
         final String nameS = literal.findValue("name").asText();
         final Name name = new Name(nameS);
-        final int referenceDeclarationId = literal.findValue("referencedDeclaration").asInt();
         final String type_str =
             literal.findValue("typeDescriptions").findValue("typeIdentifier").asText();
         final Type type = getType(type_str);
 
-        final Declaration declaration = id2Name.get(referenceDeclarationId);
+        final Declaration declaration = id2Name.get(idDecl);
         return switch (declaration) {
             case StateVariableDeclaration stateVarDeclaration ->
-                new StateVariableReference(name, stateVarDeclaration, type);
+                new StateVariableReference(idDecl, name, stateVarDeclaration, type);
             case ParameterDeclaration parameterDeclaration ->
-                new ParameterVariableReference(name, parameterDeclaration, type);
+                new ParameterVariableReference(idDecl, name, parameterDeclaration, type);
             case ArrayDeclaration arrayDeclaration ->
-                new ArrayReference(name, arrayDeclaration, type);
+                new ArrayReference(idDecl, name, arrayDeclaration, type);
             case FunctionDeclaration functionDeclaration ->
-                new FunctionReference(name, functionDeclaration, type);
+                new FunctionReference(idDecl, name, functionDeclaration, type);
             case StatementVariableDeclaration stmVarDeclaration ->
-                new StatementVariableReference(name, stmVarDeclaration, type);
+                new StatementVariableReference(idDecl, name, stmVarDeclaration, type);
             case EnumDeclaration enumDeclaration ->
-                new EnumReference(name, enumDeclaration, type);
+                new EnumReference(idDecl, name, enumDeclaration, type);
             case null -> switch (expType.toString()) {
-                case "function" -> new FunctionReference(name, type);
-                case "contract" -> new ContractReference(name, type);
+                case "function" -> new FunctionReference(idDecl, name, type);
+                case "contract" -> new ContractReference(idDecl, name, type);
                 default -> throw new RuntimeException("Unknown type " + expType);
             };
             default -> throw new RuntimeException(

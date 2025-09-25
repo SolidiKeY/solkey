@@ -7,17 +7,20 @@ import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 
 public class FunctionReference extends VariableReference {
 
+    private int id;
     private final Name name;
     private FunctionDeclaration referencedDeclaration;
 
-    public FunctionReference(Name name, FunctionDeclaration referencedDeclaration, Type type) {
+    public FunctionReference(int id, Name name, FunctionDeclaration referencedDeclaration, Type type) {
         super(type);
+        this.id = id;
         this.name = name;
         this.referencedDeclaration = referencedDeclaration;
     }
 
-    public FunctionReference(Name name, Type type) {
+    public FunctionReference(int id, Name name, Type type) {
         super(type);
+        this.id = id;
         this.name = name;
         this.referencedDeclaration = null;
     }

@@ -6,11 +6,13 @@ import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 
 public class StatementVariableReference extends VariableReference {
+    private final int id;
     private final Name name;
     private final StatementVariableDeclaration stmVarDecl;
 
-    public StatementVariableReference(Name name, StatementVariableDeclaration stmVarDeclaration, Type type) {
+    public StatementVariableReference(int id, Name name, StatementVariableDeclaration stmVarDeclaration, Type type) {
         super(type);
+        this.id = id;
         this.name = name;
         this.stmVarDecl = stmVarDeclaration;
     }

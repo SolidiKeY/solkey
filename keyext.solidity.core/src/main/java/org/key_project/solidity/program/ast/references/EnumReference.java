@@ -5,14 +5,14 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.declarations.EnumDeclaration;
 
-import javax.naming.Reference;
-
 public class EnumReference extends VariableReference {
+    private final int id;
     private final Name name;
     private final EnumDeclaration enumDeclaration;
 
-    public EnumReference(Name name, EnumDeclaration enumDeclaration, Type type) {
+    public EnumReference(int id, Name name, EnumDeclaration enumDeclaration, Type type) {
         super(type);
+        this.id = id;
         this.name = name;
         this.enumDeclaration = enumDeclaration;
     }

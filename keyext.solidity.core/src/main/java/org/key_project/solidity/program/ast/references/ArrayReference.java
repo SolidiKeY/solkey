@@ -8,12 +8,14 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.ArrayDeclaration;
 
 public class ArrayReference extends VariableReference {
+    private int id;
     private final Name name;
     private final ArrayDeclaration referencedDeclaration;
 
-    public ArrayReference(Name name, ArrayDeclaration referencedDeclaration,
+    public ArrayReference(int id, Name name, ArrayDeclaration referencedDeclaration,
                           Type type) {
         super(type);
+        this.id = id;
         this.name = name;
         this.referencedDeclaration = referencedDeclaration;
     }
