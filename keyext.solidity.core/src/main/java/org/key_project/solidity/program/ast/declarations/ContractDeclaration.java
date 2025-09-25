@@ -62,12 +62,28 @@ public class ContractDeclaration extends Declaration implements Type {
 
     @Override
     public SyntaxElement getChild(int n) {
-        return fields.get(n);
+        if(n < 0)
+            return null;
+        if(n < fields.size())
+            return fields.get(n);
+        n -= fields.size();
+        if(n < structs.size())
+            return structs.get(n);
+        n -= structs.size();
+        if(n < modifiers.size())
+            return modifiers.get(n);
+        n -= modifiers.size();
+        if(n < functions.size())
+            return functions.get(n);
+        n -= functions.size();;
+        if(n < enums.size())
+            return enums.get(n);
+        return null;
     }
 
     @Override
     public int getChildCount() {
-        return fields.size();
+        return fields.size() + structs.size() + modifiers.size() + functions.size() + enums.size();
     }
 
     public List<StructDeclaration> getStructs() {

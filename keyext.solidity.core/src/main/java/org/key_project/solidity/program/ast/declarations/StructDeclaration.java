@@ -21,7 +21,7 @@ public class StructDeclaration extends Declaration {
 
     @Override
     public SyntaxElement getChild(int n) {
-        if(0 < n && n < getChildCount())
+        if(0 <= n && n < getChildCount())
             return fields.get(n);
         throw new RuntimeException("Child " + n + " out of bound");
     }

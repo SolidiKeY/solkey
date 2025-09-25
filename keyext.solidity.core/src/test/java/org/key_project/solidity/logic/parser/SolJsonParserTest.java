@@ -16,10 +16,12 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.declarations.*;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
 import org.key_project.solidity.program.ast.expressions.MemberExp;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.*;
+import org.key_project.solidity.program.ast.references.FunctionReference;
 import org.key_project.solidity.program.ast.references.StateVariableReference;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.program.parser.SolJSONParser;
@@ -731,6 +733,10 @@ class SolJsonParserTest {
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
         Assertions.assertTrue(contractS.contains("f();"));
+        FunctionDeclaration refDecl = ((FunctionReference)
+                ((FunctionCallExpression) ((ExpressionStatement) contractDec.getFunctions().getFirst().getBody().getStatements().get(0))
+                .expression).functionExp).referencedDeclaration;
+        Assertions.assertNotNull(refDecl);
     }
 
     @Test

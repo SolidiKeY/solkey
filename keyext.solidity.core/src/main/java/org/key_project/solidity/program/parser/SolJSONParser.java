@@ -11,6 +11,8 @@ import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.key_project.logic.Name;
+import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.*;
 import org.key_project.solidity.program.ast.declarations.*;
@@ -105,10 +107,22 @@ public class SolJSONParser {
             }
         }
 
-        final ContractDeclaration cdecl =
+        final ContractDeclaration cDecl =
             new ContractDeclaration(contractId, new Name(contractName), fields, structs, modifiers, functions, enums);
-        id2Name.put(contractId, cdecl);
-        return cdecl;
+        id2Name.put(contractId, cDecl);
+        completeReferences(cDecl);
+        return cDecl;
+    }
+
+    private void completeReferences(SyntaxElement cDecl) {
+        if(cDecl == null)
+            return;
+        for(int i=0; i<cDecl.getChildCount(); i++){
+            SyntaxElement child = cDecl.getChild(i);
+            if(child instanceof Resolver)
+                ((Resolver) child).resolve(id2Name);
+            completeReferences(child);
+        }
     }
 
     private EnumDeclaration parseEnum(JsonNode node) {

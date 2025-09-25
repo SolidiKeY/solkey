@@ -1,15 +1,18 @@
 package org.key_project.solidity.program.ast.references;
 
 import org.key_project.logic.Name;
+import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 
-public class FunctionReference extends VariableReference {
+import java.util.HashMap;
 
-    private int id;
+public class FunctionReference extends VariableReference implements Resolver {
+
+    private final int id;
     private final Name name;
-    private FunctionDeclaration referencedDeclaration;
+    public FunctionDeclaration referencedDeclaration;
 
     public FunctionReference(int id, Name name, FunctionDeclaration referencedDeclaration, Type type) {
         super(type);
@@ -38,5 +41,10 @@ public class FunctionReference extends VariableReference {
     @Override
     public String toString() {
         return name.toString();
+    }
+
+    @Override
+    public void resolve(HashMap<Integer, Declaration> id2Name) {
+        this.referencedDeclaration = (FunctionDeclaration) id2Name.get(id);
     }
 }

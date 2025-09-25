@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 public class FunctionCallExpression extends Expression {
 
     private final List<Expression> arguments;
-    private final Expression functionExp;
+    public final Expression functionExp;
 
     public FunctionCallExpression(Type type, Expression functionExp, List<Expression> arguments) {
         super(type);
@@ -22,12 +22,14 @@ public class FunctionCallExpression extends Expression {
         if(0 <= n && n < arguments.size()){
             return arguments.get(n);
         }
-        throw new IndexOutOfBoundsException("Not 0 <= " + n + " < " + arguments.size());
+        if(n == arguments.size())
+            return functionExp;
+        throw new IndexOutOfBoundsException("Not 0 <= " + n + " < " + getChildCount());
     }
 
     @Override
     public int getChildCount() {
-        return arguments.size();
+        return arguments.size() + 1;
     }
 
     @Override

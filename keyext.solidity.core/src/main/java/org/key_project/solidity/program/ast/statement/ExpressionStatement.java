@@ -7,7 +7,7 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 
 public class ExpressionStatement implements Statement {
-    private final Expression expression;
+    public final Expression expression;
 
     public ExpressionStatement(Expression expression) {
         this.expression = expression;

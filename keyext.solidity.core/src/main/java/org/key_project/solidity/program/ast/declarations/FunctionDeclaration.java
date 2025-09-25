@@ -77,7 +77,7 @@ public class FunctionDeclaration extends Declaration {
 
     @Override
     public int getChildCount() {
-        return returnParameters.size() + inputParameters.size() + modifiers.size();
+        return returnParameters.size() + inputParameters.size() + modifiers.size() + 1;
     }
 
     @Override
