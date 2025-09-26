@@ -5,7 +5,9 @@ plugins {
 
 description = "The core data structures for KeY for Solidity"
 
-configurations { }
+repositories {
+    mavenCentral()
+}
 
 dependencies {
     api project(':key.util')
