@@ -1,6 +1,6 @@
 package org.key_project.solidity.program.ast.statement;
 
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 
@@ -18,7 +18,7 @@ public class ForStatement implements Statement {
     }
 
     @Override
-    public @NotNull SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         return switch (n){
             case 0 -> initializationExpression;
             case 1 -> condition;

@@ -5,7 +5,6 @@ package org.key_project.solidity.program.parser;
 
 import java.io.*;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.stream.Collectors;
 

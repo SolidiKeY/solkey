@@ -1,4 +1,6 @@
 plugins {
+     id 'java'
+     id 'antlr'
 }
 
 description = "The core data structures for KeY for Solidity"
@@ -9,11 +11,21 @@ dependencies {
     api project(':key.util')
     api project(':key.ncore')
     api project(':key.ncore.calculus')
+    antlr('org.antlr:antlr4:4.13.1')
     implementation 'org.jspecify:jspecify:1.0.0'
+    implementation('com.google.code.gson:gson:2.11.0')
+    testImplementation(platform('org.junit:junit-bom:5.10.0'))
+    testImplementation('org.junit.jupiter:junit-jupiter')
+
     implementation platform("com.fasterxml.jackson:jackson-bom:2.19.1")
     implementation "com.fasterxml.jackson.core:jackson-databind"
-    implementation 'com.fasterxml.jackson.core:jackson-core:2.8.7'
-    compileOnly 'org.jetbrains:annotations:26.0.2'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.19.1'
+}
+
+
+
+generateGrammarSource {
+    arguments += ["-visitor", "-lib" , "../key.ncore/src/main/antlr/"]
 }
 
 tasks.withType(Test) {
@@ -27,7 +39,7 @@ checkerFramework {
                 "org.checkerframework.checker.nullness.NullnessChecker",
         ]
         extraJavacArgs = [
-                "-AonlyDefs=^org\\.key_project\\.solidity\\.logic",
+                "-AonlyDefs=^org\\.key_project\\.solidity\\.parser\\.builder",
                 "-Xmaxerrs", "10000",
                 "-Astubs=$rootDir/key.util/src/main/checkerframework:permit-nullness-assertion-exception.astub",
                 "-AstubNoWarnIfNotFound",

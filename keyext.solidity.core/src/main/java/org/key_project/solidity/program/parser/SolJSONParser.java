@@ -4,12 +4,15 @@
 package org.key_project.solidity.program.parser;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.net.URI;
 import java.util.*;
 import java.util.stream.Stream;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jspecify.annotations.Nullable;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.Resolver;
@@ -28,9 +31,6 @@ import org.key_project.solidity.program.ast.expressions.operators.AssignmentExpr
 import org.key_project.solidity.program.ast.references.*;
 import org.key_project.solidity.program.ast.statement.*;
 
-import com.fasterxml.jackson.core.io.BigIntegerParser;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jspecify.annotations.NonNull;
 
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.*;
@@ -614,17 +614,17 @@ public class SolJSONParser {
     }
 
     private Type getType(String type_str) {
-        @NotNull String[] type_parts = type_str.split("\\$");
+        @NonNull String[] type_parts = type_str.split("\\$");
         List<String[]> type_parts_split = Arrays.stream(type_parts)
                 .map(x -> x.split("_")).toList();
         type_parts = type_parts_split.stream()
                 .map(list -> nextAfterT(Arrays.asList(list)))
                 .flatMap(Optional::stream).toArray(String[]::new);
-        List<@NotNull String> parts = Arrays.stream(type_parts).toList();
+        List<@NonNull String> parts = Arrays.stream(type_parts).toList();
         if(parts.contains("enum")){
             int i = parts.indexOf("enum");
             String name = type_parts_split.get(i+1)[1];
-            List<@NotNull String> xs = List.of(parts.get(i), name);
+            List<@NonNull String> xs = List.of(parts.get(i), name);
             return getType(xs);
         }
         return getType(parts);
@@ -650,7 +650,7 @@ public class SolJSONParser {
         return switch (kind) {
             case "number" -> {
                 String initializerExp = literal.findValue("value").asText();
-                yield new Uint256Literal(BigIntegerParser.parseWithFastParser(initializerExp));
+                yield new Uint256Literal(new BigInteger(initializerExp));
             }
             case "bool" -> {
                 String initializerExp = literal.findValue("value").asText();

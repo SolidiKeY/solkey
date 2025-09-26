@@ -1,6 +1,6 @@
 package org.key_project.solidity.program.ast.abstractions;
 
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.key_project.logic.Name;
 import org.key_project.logic.sort.Sort;
@@ -20,7 +20,7 @@ public class EnumType implements Type {
     }
 
     @Override
-    public @NotNull Name name() {
+    public @NonNull Name name() {
         return name;
     }
 }

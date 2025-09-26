@@ -96,7 +96,6 @@ public class SModality extends org.key_project.logic.op.Modality {
         /// reachable processing the program alpha the formula Phi holds'.
         public static final SolidityModalityKind BOX = new SolidityModalityKind(new Name("box"));
 
-        @SuppressWarnings("argument.type.incompatible")
         public SolidityModalityKind(Name name) {
             super(name);
             kinds.put(name.toString(), this);

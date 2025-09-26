@@ -12,18 +12,15 @@ import org.key_project.logic.op.AbstractOperator;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.logic.SolidityDLTheory;
 
-
-/// Singleton class defining a binary operator {u}t that applies updates u to terms, formulas, or
-/// other updates t.
+/// Singleton class defining a binary operator {@code {u}t} that applies updates {@code u} to terms, formulas, or
+/// other updates {@code t}.
 public final class UpdateApplication extends AbstractOperator {
 
     public static final UpdateApplication UPDATE_APPLICATION = new UpdateApplication();
 
-
     private UpdateApplication() {
         super(new Name("update-application"), 2, false);
     }
-
 
     @Override
     public @NonNull Sort sort(Sort @NonNull [] sorts) {
