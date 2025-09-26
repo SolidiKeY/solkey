@@ -306,6 +306,19 @@ class SolJsonParserTest {
     }
 
     @Test
+    @Disabled("Parsing type is not working")
+    void parseDictInFunction() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function f(bool a, bool b) public pure  {
+                        f({b : true, a : false});
+                    }
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+    }
+
+    @Test
     void parseStruct() throws IOException {
         //language=solidity
         String contract = """
