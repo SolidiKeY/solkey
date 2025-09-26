@@ -1,6 +1,5 @@
 package org.key_project.solidity.program.ast.statement;
 
-import org.jetbrains.annotations.NotNull;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 
@@ -21,7 +20,7 @@ public class ForStatement implements Statement {
     }
 
     @Override
-    public @NotNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         List<Expression> exps = new ArrayList<>();
         exps.add(initializationExpression);
         exps.add(condition);
