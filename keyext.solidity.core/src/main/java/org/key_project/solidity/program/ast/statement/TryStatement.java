@@ -18,6 +18,9 @@ public class TryStatement implements Statement {
 
     @Override
     public SyntaxElement getChild(int n) {
+        if(n == 0)
+            return expression;
+        n -= 1;
         if(n >= 0 && n < getChildCount()){
             return blocks.get(n);
         }
@@ -26,7 +29,7 @@ public class TryStatement implements Statement {
 
     @Override
     public int getChildCount() {
-        return blocks.size();
+        return blocks.size() + 1;
     }
 
     @Override

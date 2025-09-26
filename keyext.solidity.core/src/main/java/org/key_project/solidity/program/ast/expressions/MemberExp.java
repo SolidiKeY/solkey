@@ -15,12 +15,14 @@ public class MemberExp extends Expression {
 
     @Override
     public SyntaxElement getChild(int n) {
+        if(n == 0)
+            return leftExp;
         return null;
     }
 
     @Override
     public int getChildCount() {
-        return 0;
+        return 1;
     }
 
     @Override

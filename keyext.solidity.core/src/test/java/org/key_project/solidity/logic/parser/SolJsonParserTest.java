@@ -21,6 +21,7 @@ import org.key_project.solidity.program.ast.expressions.MemberExp;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.*;
+import org.key_project.solidity.program.ast.references.ContractReference;
 import org.key_project.solidity.program.ast.references.FunctionReference;
 import org.key_project.solidity.program.ast.references.StateVariableReference;
 import org.key_project.solidity.program.ast.statement.*;
@@ -592,6 +593,10 @@ class SolJsonParserTest {
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
         Assertions.assertTrue(contractS.contains("SimpleContract(target).g()"));
+        ContractReference contr =
+                (ContractReference) ((FunctionCallExpression) contractDec.getFunctions().getFirst().getBody().getStatements().get(0)
+                .getChild(0).getChild(0)).getChild(1);
+        Assertions.assertEquals(contr.getChildCount(), 1);
     }
 
     @Test

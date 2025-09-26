@@ -1,8 +1,11 @@
 package org.key_project.solidity.program.ast.statement;
 
-import org.jspecify.annotations.NonNull;
+import org.jetbrains.annotations.NotNull;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ForStatement implements Statement {
     private final Expression initializationExpression;
@@ -18,19 +21,30 @@ public class ForStatement implements Statement {
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
-        return switch (n){
-            case 0 -> initializationExpression;
-            case 1 -> condition;
-            case 2 -> loopExpression;
-            case 3 -> body;
-            default -> throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
-        };
+    public @NotNull SyntaxElement getChild(int n) {
+        List<Expression> exps = new ArrayList<>();
+        exps.add(initializationExpression);
+        exps.add(condition);
+        exps.add(loopExpression);
+        for(Expression exp: exps){
+            if(exp == null)
+                continue;
+            if(n == 0)
+                return exp;
+            n -= 1;
+        }
+        if(n == 0)
+            return body;
+        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override
     public int getChildCount() {
-        return 4;
+        int n = 4;
+        if(initializationExpression == null) n-= 1;
+        if(condition == null) n-= 1;
+        if(loopExpression == null) n-= 1;
+        return n;
     }
 
     public String nullOrEmpty(Expression e){

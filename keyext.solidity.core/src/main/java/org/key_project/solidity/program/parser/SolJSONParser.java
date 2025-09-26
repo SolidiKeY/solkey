@@ -33,6 +33,8 @@ import org.key_project.solidity.program.ast.statement.*;
 
 import org.jspecify.annotations.NonNull;
 
+import javax.swing.*;
+
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.*;
 
 ///
@@ -115,15 +117,22 @@ public class SolJSONParser {
     }
 
     private void completeReferences(SyntaxElement cDecl) {
-        if(cDecl == null)
-            return;
-        for(int i=0; i<cDecl.getChildCount(); i++){
-            SyntaxElement child = cDecl.getChild(i);
-            if(child instanceof Resolver)
-                ((Resolver) child).resolve(id2Name);
-            completeReferences(child);
+        List<SyntaxElement> elements = new ArrayList<>();
+        queueRefs(cDecl, elements);
+        for(SyntaxElement el : elements){
+            if(el instanceof Resolver)
+                ((Resolver) el).resolve(id2Name);
         }
     }
+
+    private void queueRefs(SyntaxElement cDecl, List<SyntaxElement> queue) {
+        for(int i=0; i<cDecl.getChildCount(); i++){
+            SyntaxElement child = cDecl.getChild(i);
+            queue.add(child);
+            queueRefs(child, queue);
+        }
+    }
+
 
     private EnumDeclaration parseEnum(JsonNode node) {
         final int id = node.findValue("id").asInt();

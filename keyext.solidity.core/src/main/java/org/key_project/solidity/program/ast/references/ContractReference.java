@@ -2,11 +2,14 @@ package org.key_project.solidity.program.ast.references;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.program.ast.declarations.Declaration;
 
-public class ContractReference extends VariableReference {
+import java.util.HashMap;
+
+public class ContractReference extends VariableReference implements Resolver {
 
     private int id;
     private final Name name;
@@ -37,19 +40,25 @@ public class ContractReference extends VariableReference {
 
     @Override
     public SyntaxElement getChild(int n) {
-        return switch (n){
-            case 0 -> contractDeclaration;
-            default -> throw new RuntimeException("Element " + n + " is different than 0");
-        };
+        if(contractDeclaration == null)
+            throw new RuntimeException("There is no contract to reference");
+        if(n == 0)
+            return contractDeclaration;
+        throw new RuntimeException("Element " + n + " is different than 0");
     }
 
     @Override
     public int getChildCount() {
-        return 1;
+        return contractDeclaration == null ? 0 : 1;
     }
 
     @Override
     public String toString() {
         return name.toString();
+    }
+
+    @Override
+    public void resolve(HashMap<Integer, Declaration> id2Name) {
+        this.contractDeclaration = (ContractDeclaration) id2Name.get(id);
     }
 }
