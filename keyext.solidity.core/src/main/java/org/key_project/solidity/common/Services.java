@@ -4,9 +4,25 @@
 package org.key_project.solidity.common;
 
 
+import org.jspecify.annotations.NonNull;
 import org.key_project.logic.LogicServices;
 import org.key_project.prover.proof.ProofServices;
+import org.key_project.solidity.logic.NamespaceSet;
+import org.key_project.solidity.program.ast.SolidityModel;
 
 public abstract class Services implements LogicServices, ProofServices {
 
+    /**
+     * proof specific namespaces (functions, predicates, sorts, variables)
+     */
+    private NamespaceSet namespaces = new NamespaceSet();
+    private SolidityModel solidityModel;
+
+    public @NonNull NamespaceSet getNamespaces() {
+        return namespaces;
+    }
+
+    public SolidityModel getSolidityInfo() {
+        return solidityModel;
+    }
 }

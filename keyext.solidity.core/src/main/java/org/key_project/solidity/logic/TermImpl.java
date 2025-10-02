@@ -7,6 +7,7 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.key_project.logic.Term;
+import org.key_project.logic.TermCreationException;
 import org.key_project.logic.Visitor;
 import org.key_project.logic.op.Modality;
 import org.key_project.logic.op.Operator;
@@ -53,8 +54,7 @@ public class TermImpl implements Term {
     private @MonotonicNonNull ImmutableSet<QuantifiableVariable> freeVars = null;
 
     /// Constructs a term for the given operator, with the given sub terms, bounded variables and
-    /// (if
-    /// applicable) the code block on this term.
+    /// (if applicable) the code block on this term.
     ///
     /// @param op the operator of the term, e.g., some arithmetic operation
     /// @param subs the sub terms of the constructed term (whose type is constrained by the used
@@ -220,8 +220,8 @@ public class TermImpl implements Term {
         visitor.subtreeLeft(this);
     }
 
-    /// Checks whether the Term is valid on the top level. If this is the case this method returns
-    /// the Term unmodified. Otherwise, a TermCreationException is thrown.
+    /// Checks whether {@code this} term is valid on the top level. If this is the case this method returns
+    /// the [Term] unmodified. Otherwise, a [TermCreationException] is thrown.
     public Term checked() {
         op.validTopLevelException(this);
         return this;
