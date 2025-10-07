@@ -2,9 +2,7 @@ parser grammar KeYParser;
 
 import KeYGlobalDeclParser;
 @ header
-{
-
-}
+{}
 @ members
 {}
 

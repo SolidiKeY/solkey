@@ -12,10 +12,8 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.key_project.solidity.parser.builder.ChoiceFinder;
 import org.key_project.solidity.proof.io.RuleSource;
-import org.key_project.solidity.parser.KeYSolidityDLParser;
-import org.key_project.solidity.parser.KeYSolidityDLLexer;
-import org.key_project.solidity.util.parsing.BuildingException;
 
 import java.io.BufferedInputStream;
 import java.io.File;

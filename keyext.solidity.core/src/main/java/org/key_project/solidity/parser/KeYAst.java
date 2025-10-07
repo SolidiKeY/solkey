@@ -4,13 +4,22 @@
 package org.key_project.solidity.parser;
 
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import org.key_project.solidity.parser.KeYSolidityDLParser.SeqContext;
+import org.key_project.solidity.parser.KeYSolidityDLParser.TermContext;
+import org.key_project.solidity.parser.builder.ChoiceFinder;
+import org.key_project.solidity.parser.builder.ConfigurationBuilder;
+import org.key_project.solidity.parser.builder.FindProblemInformation;
 import org.key_project.solidity.parser.builder.IncludeFinder;
+import org.key_project.solidity.proof.ProofSettings;
 import org.key_project.solidity.proof.init.Includes;
 
 import java.net.URL;
+import java.util.List;
 
 import static org.key_project.solidity.parser.KeYSolidityDLParser.*;
 
@@ -46,7 +55,7 @@ public abstract class KeYAst<T extends ParserRuleContext> {
             super(ctx);
         }
 
- /*      public @Nullable ProofSettings findProofSettings() {
+       public @Nullable ProofSettings findProofSettings() {
             ProofSettings settings = new ProofSettings(ProofSettings.DEFAULT_SETTINGS);
 
             if (ctx.preferences() != null && ctx.preferences().c != null) {
@@ -56,7 +65,6 @@ public abstract class KeYAst<T extends ParserRuleContext> {
             }
             return settings;
         }
-*/
 
         public Includes getIncludes(URL base) {
             IncludeFinder finder = new IncludeFinder(base);
@@ -69,24 +77,24 @@ public abstract class KeYAst<T extends ParserRuleContext> {
             accept(finder);
             return finder.getChoiceInformation();
         }
-/*
-        public ProblemInformation getProblemInformation() {
+
+       public ProblemInformation getProblemInformation() {
             FindProblemInformation fpi = new FindProblemInformation();
             ctx.accept(fpi);
             return fpi.getProblemInformation();
         }
 
         public Token findProof() {
-            KeYSolidityDLParser.ProofContext a = ctx.proof();
+            ProofContext a = ctx.proof();
             if (a != null) {
                 return a.PROOF().getSymbol();
             }
             return null;
-        }*/
+        }
     }
 
- /*   public static class ConfigurationFile extends KeYAst<KeYSolidityDLParser.CfileContext> {
-        ConfigurationFile(KeYSolidityDLParser.CfileContext ctx) {
+    public static class ConfigurationFile extends KeYAst<CfileContext> {
+        ConfigurationFile(CfileContext ctx) {
             super(ctx);
         }
 
@@ -99,7 +107,7 @@ public abstract class KeYAst<T extends ParserRuleContext> {
                 throw new RuntimeException();
         }
     }
-*/
+
     public static class Term extends KeYAst<TermContext> {
         Term(TermContext ctx) {
             super(ctx);

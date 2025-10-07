@@ -1,9 +1,10 @@
 plugins {
      id 'java'
-     id 'antlr'
 }
 
 description = "The core data structures for KeY for Solidity"
+
+configurations { antlr4 }
 
 repositories {
     mavenCentral()
@@ -13,7 +14,9 @@ dependencies {
     api project(':key.util')
     api project(':key.ncore')
     api project(':key.ncore.calculus')
-    antlr('org.antlr:antlr4:4.13.1')
+    antlr4 "org.antlr:antlr4:4.13.2"
+    api "org.antlr:antlr4-runtime:4.13.2"
+
     implementation 'org.jspecify:jspecify:1.0.0'
     implementation('com.google.code.gson:gson:2.11.0')
     testImplementation(platform('org.junit:junit-bom:5.10.0'))
@@ -24,11 +27,29 @@ dependencies {
     implementation 'com.fasterxml.jackson.core:jackson-core:2.19.1'
 }
 
+def antlr4OutputKey = String.valueOf(projectDir) + '/build/generated-src/antlr/main/org/key_project/solidity/parser'
+
+sourceSets.main.java.srcDirs(String.valueOf(projectDir) + '/build/generated-src/antlr/main/')
 
 
-generateGrammarSource {
-    arguments += ["-visitor", "-lib" , "../key.ncore/src/main/antlr/"]
+tasks.register('runAntlr4Key', JavaExec) {
+    //see incremental task api, prevents rerun if nothing has changed.
+    inputs.files "src/main/antlr/KeYSolidityDLLexer.g4", "src/main/antlr/KeYSolidityDLParser.g4"
+    outputs.dir antlr4OutputKey
+    classpath = configurations.antlr4
+    mainClass.set("org.antlr.v4.Tool")
+    args = ["-visitor",
+            "-lib", "../key.ncore/src/main/antlr/",
+            "-Xexact-output-dir", "-o", antlr4OutputKey,
+            //"-package", "org.key_project.solidity.parser",
+            "src/main/antlr/KeYSolidityDLLexer.g4", "src/main/antlr/KeYSolidityDLParser.g4"]
+    doFirst {
+        file(antlr4OutputKey).mkdirs()
+        println("create $antlr4OutputKey")
+    }
 }
+compileJava.dependsOn runAntlr4Key
+
 
 tasks.withType(Test) {
     enableAssertions = true

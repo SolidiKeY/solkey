@@ -1,6 +1,6 @@
 lexer grammar KeYLexer;
 
-@ header
+@header
 {
     import java.util.HashMap;
     import java.util.LinkedHashMap;

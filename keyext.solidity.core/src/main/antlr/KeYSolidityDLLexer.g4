@@ -1,7 +1,8 @@
 lexer grammar KeYSolidityDLLexer;
 
 import KeYLexer;
-@ header
+
+@header
 {
 package org.key_project.solidity.parser;
 }
