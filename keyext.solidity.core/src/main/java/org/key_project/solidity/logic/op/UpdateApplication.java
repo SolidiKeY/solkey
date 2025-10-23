@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.logic.op;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.Term;
@@ -12,7 +11,10 @@ import org.key_project.logic.op.AbstractOperator;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.logic.SolidityDLTheory;
 
-/// Singleton class defining a binary operator {@code {u}t} that applies updates {@code u} to terms, formulas, or
+import org.jspecify.annotations.NonNull;
+
+/// Singleton class defining a binary operator {@code {u}t} that applies updates {@code u} to terms,
+/// formulas, or
 /// other updates {@code t}.
 public final class UpdateApplication extends AbstractOperator {
 

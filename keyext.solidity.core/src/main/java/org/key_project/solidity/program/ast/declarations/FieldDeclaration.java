@@ -3,12 +3,13 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.declarations;
 
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.references.TypeReference;
+
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class FieldDeclaration extends Declaration {
 
@@ -22,7 +23,7 @@ public class FieldDeclaration extends Declaration {
     }
 
     public FieldDeclaration(@NonNull Name name, @NonNull TypeReference typeReference,
-                            @Nullable Expression initializer) {
+            @Nullable Expression initializer) {
         super(name);
         this.typeReference = typeReference;
         this.initializer = initializer;

@@ -1,12 +1,14 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.declarations;
 
-import org.jspecify.annotations.NonNull;
+import java.util.List;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.statement.Block;
-
-import java.util.List;
 
 public class ModifierDeclaration extends Declaration {
 
@@ -14,7 +16,8 @@ public class ModifierDeclaration extends Declaration {
     private final Block body;
     private final Visibility visibility;
 
-    public ModifierDeclaration(Name name, List<ParameterDeclaration> inputParameters, Block body, Visibility visibility) {
+    public ModifierDeclaration(Name name, List<ParameterDeclaration> inputParameters, Block body,
+            Visibility visibility) {
         super(name);
         this.inputParameters = inputParameters;
         this.body = body;

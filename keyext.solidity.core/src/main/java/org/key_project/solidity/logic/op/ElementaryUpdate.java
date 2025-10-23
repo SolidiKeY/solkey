@@ -3,7 +3,9 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.logic.op;
 
-import org.jspecify.annotations.NonNull;
+import java.lang.ref.WeakReference;
+import java.util.WeakHashMap;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.op.AbstractSortedOperator;
@@ -12,13 +14,15 @@ import org.key_project.logic.op.UpdateableOperator;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.logic.SolidityDLTheory;
 
-import java.lang.ref.WeakReference;
-import java.util.WeakHashMap;
+import org.jspecify.annotations.NonNull;
 
-/// Represents an elementary update {@code x:=t } where {@code x} is a program variable and {@code t} a term of
+/// Represents an elementary update {@code x:=t } where {@code x} is a program variable and {@code
+/// t} a term of
 /// compatible sort.
-/// The program variable {@code x} is part of the operator, hence, there is one elementary update for each program
-/// variable. This class ensures that there is also at most one per program variable to ensure reference identity
+/// The program variable {@code x} is part of the operator, hence, there is one elementary update
+/// for each program
+/// variable. This class ensures that there is also at most one per program variable to ensure
+/// reference identity
 /// required for operators.
 ///
 /// @see UpdateJunctor
@@ -31,7 +35,8 @@ public class ElementaryUpdate extends AbstractSortedOperator {
     private final UpdateableOperator lhs;
 
     private ElementaryUpdate(UpdateableOperator lhs) {
-        super(new Name("elem-update(" + lhs + ")"), new Sort[] { lhs.sort() }, SolidityDLTheory.UPDATE,
+        super(new Name("elem-update(" + lhs + ")"), new Sort[] { lhs.sort() },
+            SolidityDLTheory.UPDATE,
             Modifier.NONE);
         this.lhs = lhs;
         assert lhs.arity() == 0;

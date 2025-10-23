@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.logic.op;
 
-import org.jspecify.annotations.NonNull;
+import java.util.Arrays;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.op.AbstractSortedOperator;
@@ -11,7 +12,7 @@ import org.key_project.logic.op.Modifier;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.logic.SolidityDLTheory;
 
-import java.util.Arrays;
+import org.jspecify.annotations.NonNull;
 
 
 /// Class of junctor operators, i.e., operators connecting a given number of formula to create

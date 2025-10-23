@@ -3,12 +3,9 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser;
 
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.misc.Interval;
-import org.antlr.v4.runtime.tree.ParseTreeVisitor;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import java.net.URL;
+import java.util.List;
+
 import org.key_project.solidity.parser.KeYSolidityDLParser.SeqContext;
 import org.key_project.solidity.parser.KeYSolidityDLParser.TermContext;
 import org.key_project.solidity.parser.builder.ChoiceFinder;
@@ -18,8 +15,12 @@ import org.key_project.solidity.parser.builder.IncludeFinder;
 import org.key_project.solidity.proof.ProofSettings;
 import org.key_project.solidity.proof.init.Includes;
 
-import java.net.URL;
-import java.util.List;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.misc.Interval;
+import org.antlr.v4.runtime.tree.ParseTreeVisitor;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import static org.key_project.solidity.parser.KeYSolidityDLParser.*;
 
@@ -55,7 +56,7 @@ public abstract class KeYAst<T extends ParserRuleContext> {
             super(ctx);
         }
 
-       public @Nullable ProofSettings findProofSettings() {
+        public @Nullable ProofSettings findProofSettings() {
             ProofSettings settings = new ProofSettings(ProofSettings.DEFAULT_SETTINGS);
 
             if (ctx.preferences() != null && ctx.preferences().c != null) {
@@ -78,7 +79,7 @@ public abstract class KeYAst<T extends ParserRuleContext> {
             return finder.getChoiceInformation();
         }
 
-       public ProblemInformation getProblemInformation() {
+        public ProblemInformation getProblemInformation() {
             FindProblemInformation fpi = new FindProblemInformation();
             ctx.accept(fpi);
             return fpi.getProblemInformation();

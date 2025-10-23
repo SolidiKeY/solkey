@@ -3,16 +3,17 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser;
 
-import org.jspecify.annotations.NonNull;
-import org.key_project.logic.Choice;
-import org.key_project.logic.Namespace;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+
+import org.key_project.logic.Choice;
+import org.key_project.logic.Namespace;
+
+import org.jspecify.annotations.NonNull;
 
 /// A POJO representing the information on choices in ASTs.
 ///

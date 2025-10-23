@@ -3,18 +3,19 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.logic.op;
 
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import java.lang.ref.WeakReference;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.WeakHashMap;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.TermCreationException;
 import org.key_project.solidity.logic.SolidityBlock;
 import org.key_project.solidity.logic.SolidityDLTheory;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 
-import java.lang.ref.WeakReference;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.WeakHashMap;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /// This class is used to represent a dynamic logic modality like diamond and box (but also
 /// extensions of DL like preserves and throughout are possible in the future).
@@ -91,7 +92,8 @@ public class SModality extends org.key_project.logic.op.Modality {
         private static final Map<String, SolidityModalityKind> kinds = new HashMap<>();
         /// The diamond operator of dynamic logic. A formula <alpha;>Phi can be read as after
         /// processing the program alpha there exists a state such that Phi holds.
-        public static final SolidityModalityKind DIA = new SolidityModalityKind(new Name("diamond"));
+        public static final SolidityModalityKind DIA =
+            new SolidityModalityKind(new Name("diamond"));
         /// The box operator of dynamic logic. A formula \[alpha;]Phi can be read as 'In all states
         /// reachable processing the program alpha the formula Phi holds'.
         public static final SolidityModalityKind BOX = new SolidityModalityKind(new Name("box"));

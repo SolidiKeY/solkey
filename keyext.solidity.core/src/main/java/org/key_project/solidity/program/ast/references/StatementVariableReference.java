@@ -1,3 +1,6 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.references;
 
 import org.key_project.logic.Name;
@@ -10,7 +13,8 @@ public class StatementVariableReference extends VariableReference {
     private final Name name;
     private final StatementVariableDeclaration stmVarDecl;
 
-    public StatementVariableReference(int id, Name name, StatementVariableDeclaration stmVarDeclaration, Type type) {
+    public StatementVariableReference(int id, Name name,
+            StatementVariableDeclaration stmVarDeclaration, Type type) {
         super(type);
         this.id = id;
         this.name = name;

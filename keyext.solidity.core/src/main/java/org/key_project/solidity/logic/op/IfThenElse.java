@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.logic.op;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.TermCreationException;
@@ -11,6 +10,8 @@ import org.key_project.logic.op.AbstractOperator;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.logic.SolidityDLTheory;
 import org.key_project.util.collection.ImmutableSet;
+
+import org.jspecify.annotations.NonNull;
 
 
 /// This singleton class implements a general conditional operator
@@ -25,7 +26,8 @@ public final class IfThenElse extends AbstractOperator {
 
     private Sort getCommonSuperSort(Sort s1, Sort s2) {
         if (s1 == SolidityDLTheory.FORMULA) {
-            assert s2 == SolidityDLTheory.FORMULA : "Sorts FORMULA and " + s2 + " are incompatible.";
+            assert s2 == SolidityDLTheory.FORMULA
+                    : "Sorts FORMULA and " + s2 + " are incompatible.";
             return SolidityDLTheory.FORMULA;
         } else if (s1.extendsTrans(s2)) {
             return s2;

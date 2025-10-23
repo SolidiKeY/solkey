@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.logic.op;
 
-import org.jspecify.annotations.NonNull;
+import java.util.Objects;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.op.AbstractSortedOperator;
@@ -14,7 +15,7 @@ import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.SoliditiyExpression;
 
-import java.util.Objects;
+import org.jspecify.annotations.NonNull;
 
 public class ProgramVariable extends AbstractSortedOperator
         implements SoliditiyExpression, UpdateableOperator, IProgramVariable {
@@ -49,13 +50,13 @@ public class ProgramVariable extends AbstractSortedOperator
     }
 
     /// TODO: implement
-//    @Override
-//    public void visit(Visitor v) {
-//        v.performActionOnProgramVariable(this);
-//    }
-//
-//    @Override
-//    public Type type(Services services) {
-//        return type.getSolidityType();
-//    }
+    // @Override
+    // public void visit(Visitor v) {
+    // v.performActionOnProgramVariable(this);
+    // }
+    //
+    // @Override
+    // public Type type(Services services) {
+    // return type.getSolidityType();
+    // }
 }

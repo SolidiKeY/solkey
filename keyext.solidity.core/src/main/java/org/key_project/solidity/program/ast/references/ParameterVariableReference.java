@@ -13,7 +13,7 @@ public class ParameterVariableReference extends VariableReference {
     private final ParameterDeclaration referencedDeclaration;
 
     public ParameterVariableReference(int id, Name name, ParameterDeclaration referencedDeclaration,
-                                      Type type) {
+            Type type) {
         super(type);
         this.id = id;
         this.name = name;

@@ -1,11 +1,14 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions;
-
-import org.key_project.logic.SyntaxElement;
-import org.key_project.solidity.program.ast.abstractions.Type;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.abstractions.Type;
 
 public class TupleExpression extends Expression {
     List<Expression> expressions;
@@ -17,7 +20,7 @@ public class TupleExpression extends Expression {
 
     @Override
     public SyntaxElement getChild(int n) {
-        if(0 <= n && n < expressions.size())
+        if (0 <= n && n < expressions.size())
             return expressions.get(n);
         throw new IndexOutOfBoundsException("Not 0 <= " + n + " < " + expressions.size());
     }
@@ -29,6 +32,7 @@ public class TupleExpression extends Expression {
 
     @Override
     public String toString() {
-        return "[" + expressions.stream().map(Objects::toString).collect(Collectors.joining(", ")) + "]";
+        return "[" + expressions.stream().map(Objects::toString).collect(Collectors.joining(", "))
+            + "]";
     }
 }

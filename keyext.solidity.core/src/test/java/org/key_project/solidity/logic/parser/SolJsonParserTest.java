@@ -9,9 +9,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.condition.EnabledOnOs;
-import org.junit.jupiter.api.condition.OS;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.declarations.*;
@@ -26,10 +23,13 @@ import org.key_project.solidity.program.ast.references.FunctionReference;
 import org.key_project.solidity.program.ast.references.StateVariableReference;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.program.parser.SolJSONParser;
+import org.key_project.solidity.program.parser.SolcWrapper;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.key_project.solidity.program.parser.SolcWrapper;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.INT256;
 
@@ -38,7 +38,7 @@ class SolJsonParserTest {
 
     @Test
     void parse() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                    uint256 balance;
@@ -49,7 +49,7 @@ class SolJsonParserTest {
 
     @Test
     void parseContractWithIntAndBool() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                    uint256 balance;
@@ -61,7 +61,7 @@ class SolJsonParserTest {
 
     @Test
     void parseContractWithIntAndBoolSet() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                    uint256 balance = 1000;
@@ -80,7 +80,7 @@ class SolJsonParserTest {
 
     @Test
     void parseContractWithAddition() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                    uint256 balance = 1000;
@@ -92,7 +92,7 @@ class SolJsonParserTest {
 
     @Test
     void parseContractWithReferenceAddition() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                    uint256 balance = 1000;
@@ -109,7 +109,7 @@ class SolJsonParserTest {
 
     @Test
     void parseContractWithBoth() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                    uint256 balance = 1000;
@@ -121,7 +121,7 @@ class SolJsonParserTest {
 
     @Test
     void parseFunction() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                    function func() public pure {
@@ -133,12 +133,13 @@ class SolJsonParserTest {
         Block block = functionDeclaration.getBody();
         Assertions.assertNotNull(block);
         Assertions.assertEquals(0, block.getChildCount());
-        Assertions.assertTrue(functionDeclaration.toString().contains("function func () public pure"));
+        Assertions.assertTrue(
+            functionDeclaration.toString().contains("function func () public pure"));
     }
 
     @Test
     void parseComplexFunction() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     function func(uint256 v) public pure returns(uint256) {
@@ -157,7 +158,7 @@ class SolJsonParserTest {
 
     @Test
     void parseSimpleAssignment() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                    function func(uint256 v) public pure  {
@@ -178,7 +179,7 @@ class SolJsonParserTest {
 
     @Test
     void variableDeclaration() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                    function func() public pure {
@@ -191,7 +192,7 @@ class SolJsonParserTest {
 
     @Test
     void variableDeclarationAssigned() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                    function func() public pure {
@@ -205,7 +206,7 @@ class SolJsonParserTest {
 
     @Test
     void variableDeclarationAssignedSameStatement() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                    function func() public pure {
@@ -222,14 +223,15 @@ class SolJsonParserTest {
     @Test
     @EnabledOnOs(OS.LINUX)
     void parseContractWithOperations() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                    uint256 deposit = 5 ^ 5 + 100 % 4 - 1 * 3 / 3;
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
-        SolidityProgramElement expOpSynt = contractDeclaration.getFieldDeclarations().get(0).getChild(1);
+        SolidityProgramElement expOpSynt =
+            contractDeclaration.getFieldDeclarations().get(0).getChild(1);
         Assertions.assertInstanceOf(ExponentialOperator.class, expOpSynt);
         ExponentialOperator expOp = (ExponentialOperator) expOpSynt;
         Assertions.assertEquals(INT256, expOp.getType());
@@ -237,7 +239,7 @@ class SolJsonParserTest {
 
     @Test
     void parseContractWithManyOperations() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                    bool v = true && true || false;
@@ -251,7 +253,7 @@ class SolJsonParserTest {
 
     @Test
     void parseIf() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                    bool v = true ? false : true;
@@ -259,13 +261,13 @@ class SolJsonParserTest {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
         Assertions.assertInstanceOf(TernaryOperator.class,
-                contractDeclaration.getFieldDeclarations().get(0).getInitializer());
+            contractDeclaration.getFieldDeclarations().get(0).getInitializer());
     }
 
     @Test
     @EnabledOnOs(OS.LINUX)
     void parseContractWithBoolIntOperations() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                    bool v = 1 != 0 && 1 == 1 && 0 < 0 && 0 <= 0 && 0 > 0 && 0 > 0;
@@ -278,7 +280,7 @@ class SolJsonParserTest {
 
     @Test
     void parseUnaryOperations() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                    uint256 i;
@@ -293,7 +295,7 @@ class SolJsonParserTest {
 
     @Test
     void parseComplexAssignment() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     function func(uint256 u, uint256 v, uint256 w) public pure  {
@@ -302,13 +304,14 @@ class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         Assertions.assertEquals(1, contractDeclaration.getFunctions().size());
-        Assertions.assertInstanceOf(PlusEqualOperator.class, contractDeclaration.getFunctions().getFirst().getBody().getStatements().get(0).getChild(0));
+        Assertions.assertInstanceOf(PlusEqualOperator.class, contractDeclaration.getFunctions()
+                .getFirst().getBody().getStatements().get(0).getChild(0));
     }
 
     @Test
     @Disabled("Parsing type is not working")
     void parseDictInFunction() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     function f(bool a, bool b) public pure  {
@@ -320,7 +323,7 @@ class SolJsonParserTest {
 
     @Test
     void parseStruct() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     struct Person {
@@ -336,14 +339,14 @@ class SolJsonParserTest {
 
     @Test
     void parseUsingStruct() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     struct Person {
                        uint256 age;
                     }
                     Person alice;
-                
+
                     function f() public returns (uint256) {
                         return alice.age;
                     }
@@ -362,22 +365,24 @@ class SolJsonParserTest {
 
     @Test
     void parseMemory() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     struct Person {
                        uint256 age;
                     }
-                
+
                     function f() public pure {
                         Person memory alice;
                     }
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
-        var declStmS = contractDeclaration.getFunctions().getFirst().getBody().getStatements().get(0);
+        var declStmS =
+            contractDeclaration.getFunctions().getFirst().getBody().getStatements().get(0);
         Assertions.assertInstanceOf(DeclarationStatement.class, declStmS);
         DeclarationStatement declStms = (DeclarationStatement) declStmS;
-        StatementVariableDeclaration decl = (StatementVariableDeclaration) declStms.getDeclarations().getFirst();
+        StatementVariableDeclaration decl =
+            (StatementVariableDeclaration) declStms.getDeclarations().getFirst();
         Assertions.assertNotNull(decl);
         String contractStr = contractDeclaration.toString();
         Assertions.assertTrue(contractStr.contains("Person memory alice"));
@@ -385,11 +390,11 @@ class SolJsonParserTest {
 
     @Test
     void parseElementaryType() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     int[] v;
-                
+
                     function f() public returns (int) {
                         return v[1+1];
                     }
@@ -400,7 +405,7 @@ class SolJsonParserTest {
 
     @Test
     void parseInlineArray() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     function f() public {
@@ -417,7 +422,7 @@ class SolJsonParserTest {
 
     @Test
     void parseSlice() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     function f(bool[] calldata v) public {
@@ -430,7 +435,7 @@ class SolJsonParserTest {
 
     @Test
     void cast() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     function f() public {
@@ -443,7 +448,7 @@ class SolJsonParserTest {
 
     @Test
     void functionCall() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     function f(bool v) public returns (bool) {
@@ -459,7 +464,7 @@ class SolJsonParserTest {
 
     @Test
     void parseIfStatement() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     int i;
@@ -475,7 +480,7 @@ class SolJsonParserTest {
 
     @Test
     void parseIfElseStm() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     int i;
@@ -497,7 +502,7 @@ class SolJsonParserTest {
 
     @Test
     void parseWhileStm() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     int i;
@@ -514,7 +519,7 @@ class SolJsonParserTest {
 
     @Test
     void parseWhileStmYul() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     function f() public {
@@ -533,7 +538,7 @@ class SolJsonParserTest {
 
     @Test
     void parseFor() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     int i;
@@ -548,7 +553,7 @@ class SolJsonParserTest {
 
     @Test
     void parseForEmpty() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     function f() public {
@@ -562,7 +567,7 @@ class SolJsonParserTest {
 
     @Test
     void parseDoWhile() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     function f() public {
@@ -577,7 +582,7 @@ class SolJsonParserTest {
 
     @Test
     void externalContract() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     function f() external pure {
@@ -593,7 +598,7 @@ class SolJsonParserTest {
 
     @Test
     void parseTryCatch() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     function f(address target) public {
@@ -607,15 +612,16 @@ class SolJsonParserTest {
         String contractS = contractDec.toString();
         Assertions.assertTrue(contractS.contains("SimpleContract(target).g()"));
         ContractReference contr =
-                (ContractReference) ((FunctionCallExpression) contractDec.getFunctions().getFirst().getBody().getStatements().get(0)
-                .getChild(0).getChild(0)).getChild(1);
+            (ContractReference) ((FunctionCallExpression) contractDec.getFunctions().getFirst()
+                    .getBody().getStatements().get(0)
+                    .getChild(0).getChild(0)).getChild(1);
         Assertions.assertEquals(contr.getChildCount(), 1);
     }
 
     @Test
     @EnabledOnOs(OS.LINUX)
     void parseTryCatchMoreCases() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     function f(address target) public {
@@ -640,7 +646,7 @@ class SolJsonParserTest {
     @Disabled("Revert and require should be implemented as a regular function")
     @Test
     void parseRevertRequire() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     function f(address target) public {
@@ -655,7 +661,7 @@ class SolJsonParserTest {
 
     @Test
     void tupleReturn() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     function f() public returns (bool, bool) {
@@ -669,7 +675,7 @@ class SolJsonParserTest {
 
     @Test
     void constructor() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     constructor () {
@@ -681,7 +687,7 @@ class SolJsonParserTest {
 
     @Test
     void mapping() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     mapping(bool => int256) public b;
@@ -693,7 +699,7 @@ class SolJsonParserTest {
 
     @Test
     void nestedMapping() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     mapping(bool => mapping(bool => int256)) public b;
@@ -705,7 +711,7 @@ class SolJsonParserTest {
 
     @Test
     void modifier() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     modifier mod1(){
@@ -725,7 +731,7 @@ class SolJsonParserTest {
 
     @Test
     void parameterListFunction() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     struct Person {
@@ -741,7 +747,7 @@ class SolJsonParserTest {
 
     @Test
     void selfReference() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     function f() public {
@@ -751,15 +757,16 @@ class SolJsonParserTest {
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
         Assertions.assertTrue(contractS.contains("f();"));
-        FunctionDeclaration refDecl = ((FunctionReference)
-                ((FunctionCallExpression) ((ExpressionStatement) contractDec.getFunctions().getFirst().getBody().getStatements().get(0))
-                .expression).functionExp).referencedDeclaration;
+        FunctionDeclaration refDecl =
+            ((FunctionReference) ((FunctionCallExpression) ((ExpressionStatement) contractDec
+                    .getFunctions().getFirst().getBody().getStatements()
+                    .get(0)).expression).functionExp).referencedDeclaration;
         Assertions.assertNotNull(refDecl);
     }
 
     @Test
     void enumParse() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     enum State {
@@ -775,7 +782,7 @@ class SolJsonParserTest {
 
     @Test
     void usingEnum() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     enum State {

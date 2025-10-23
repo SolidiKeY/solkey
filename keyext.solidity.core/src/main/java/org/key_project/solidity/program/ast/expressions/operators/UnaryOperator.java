@@ -43,10 +43,11 @@ public abstract class UnaryOperator extends Expression {
     }
 
     public abstract String getOperator();
+
     public abstract boolean isPrefix();
 
     public String toString() {
-        if(isPrefix())
+        if (isPrefix())
             return getOperator() + " " + exp;
         else
             return exp + " " + getOperator();

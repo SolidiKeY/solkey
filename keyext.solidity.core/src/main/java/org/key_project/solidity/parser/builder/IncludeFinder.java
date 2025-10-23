@@ -3,16 +3,16 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser.builder;
 
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
+
 import org.key_project.solidity.parser.KeYSolidityDLParser;
 import org.key_project.solidity.proof.init.Includes;
 import org.key_project.solidity.proof.io.RuleSource;
 import org.key_project.solidity.proof.io.RuleSourceFactory;
 import org.key_project.solidity.util.parsing.BuildingException;
 import org.key_project.util.java.StringUtil;
-
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
 
 public class IncludeFinder extends AbstractBuilder<Void> {
     private final URL base;

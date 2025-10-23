@@ -1,3 +1,6 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.statement;
 
 import org.key_project.logic.SyntaxElement;
@@ -32,7 +35,7 @@ public class ConditionStatement implements Statement {
     @Override
     public String toString() {
         String s = "if(" + condition + ") " + trueBody;
-        if(falseBody != null)
+        if (falseBody != null)
             s += " else " + falseBody;
         return s;
     }

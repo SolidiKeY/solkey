@@ -14,7 +14,7 @@ public abstract class Expression implements SolidityProgramElement, SoliditiyExp
     }
 
     @Override
-    public Type getType(){
+    public Type getType() {
         return type;
     }
 }

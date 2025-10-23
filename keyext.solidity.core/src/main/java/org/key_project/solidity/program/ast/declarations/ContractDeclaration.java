@@ -6,7 +6,6 @@ package org.key_project.solidity.program.ast.declarations;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.jspecify.annotations.Nullable;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
@@ -15,6 +14,7 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class ContractDeclaration extends Declaration implements Type {
 
@@ -25,8 +25,10 @@ public class ContractDeclaration extends Declaration implements Type {
     private final List<FunctionDeclaration> functions;
     private final List<EnumDeclaration> enums;
 
-    public ContractDeclaration(int contractId, Name name, List<StateVariableDeclaration> fields, List<StructDeclaration> structs,
-                               List<ModifierDeclaration> modifiers, List<FunctionDeclaration> functions, List<EnumDeclaration> enums) {
+    public ContractDeclaration(int contractId, Name name, List<StateVariableDeclaration> fields,
+            List<StructDeclaration> structs,
+            List<ModifierDeclaration> modifiers, List<FunctionDeclaration> functions,
+            List<EnumDeclaration> enums) {
         super(name);
         this.id = contractId;
         this.fields = new ImmutableArray<>(fields.toArray(new StateVariableDeclaration[0]));
@@ -44,39 +46,39 @@ public class ContractDeclaration extends Declaration implements Type {
     public @NonNull String toString() {
         String contract = "contract ";
         contract += name() + " {\n";
-        contract += structs.stream().map(it ->
-            "struct " + it.name() + " {\n"
-            + it.fields.stream().map(jt ->
-                    jt.toString() + "\n"
-                ).collect(Collectors.joining()) + "}\n").collect(Collectors.joining());
+        contract += structs.stream().map(it -> "struct " + it.name() + " {\n"
+            + it.fields.stream().map(jt -> jt.toString() + "\n").collect(Collectors.joining())
+            + "}\n").collect(Collectors.joining());
         for (int i = 0; i < fields.size(); i++) {
             contract += fields.get(i);
             contract += "\n";
         }
-        contract += modifiers.stream().map(ModifierDeclaration::toString).collect(Collectors.joining("\n"));
+        contract +=
+            modifiers.stream().map(ModifierDeclaration::toString).collect(Collectors.joining("\n"));
         contract += enums.stream().map(EnumDeclaration::toString).collect(Collectors.joining("\n"));
-        contract += getFunctions().stream().map(FunctionDeclaration::toString).collect(Collectors.joining("\n"));
+        contract += getFunctions().stream().map(FunctionDeclaration::toString)
+                .collect(Collectors.joining("\n"));
         contract += "}";
         return contract;
     }
 
     @Override
     public SyntaxElement getChild(int n) {
-        if(n < 0)
+        if (n < 0)
             return null;
-        if(n < fields.size())
+        if (n < fields.size())
             return fields.get(n);
         n -= fields.size();
-        if(n < structs.size())
+        if (n < structs.size())
             return structs.get(n);
         n -= structs.size();
-        if(n < modifiers.size())
+        if (n < modifiers.size())
             return modifiers.get(n);
         n -= modifiers.size();
-        if(n < functions.size())
+        if (n < functions.size())
             return functions.get(n);
         n -= functions.size();;
-        if(n < enums.size())
+        if (n < enums.size())
             return enums.get(n);
         return null;
     }

@@ -3,13 +3,14 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.abstractions;
 
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import java.util.Objects;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 
-import java.util.Objects;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class KeYSolidityType implements Type {
     /// the AST type
@@ -75,9 +76,9 @@ public class KeYSolidityType implements Type {
         }
     }
 
-// TODO:implement
-//    @Override
-//    public Type instantiate(Map<GenericTyParam, GenericTyArg> instMap, Services services) {
-//        throw new UnsupportedOperationException();
-//    }
+    // TODO:implement
+    // @Override
+    // public Type instantiate(Map<GenericTyParam, GenericTyArg> instMap, Services services) {
+    // throw new UnsupportedOperationException();
+    // }
 }

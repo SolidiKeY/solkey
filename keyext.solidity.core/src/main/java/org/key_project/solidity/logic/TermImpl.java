@@ -3,11 +3,9 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.logic;
 
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.key_project.logic.Term;
-import org.key_project.logic.TermCreationException;
 import org.key_project.logic.Visitor;
 import org.key_project.logic.op.Modality;
 import org.key_project.logic.op.Operator;
@@ -19,7 +17,9 @@ import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableArray;
 import org.key_project.util.collection.ImmutableSet;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 // TODO: Basically everything here can be moved to ncore.
 public class TermImpl implements Term {
@@ -220,7 +220,8 @@ public class TermImpl implements Term {
         visitor.subtreeLeft(this);
     }
 
-    /// Checks whether {@code this} term is valid on the top level. If this is the case this method returns
+    /// Checks whether {@code this} term is valid on the top level. If this is the case this method
+    /// returns
     /// the [Term] unmodified. Otherwise, a [TermCreationException] is thrown.
     public Term checked() {
         op.validTopLevelException(this);

@@ -3,28 +3,28 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.logic.parser;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 
-import org.junit.jupiter.api.Assertions;
 import org.key_project.solidity.program.parser.SolcWrapper;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 class SolcWrapperTest {
 
     private final Path solc = Path.of("/opt", "local", "bin", "solc");
+
     @Test
     void readStringSol() throws IOException {
         SolcWrapper wrapper = new SolcWrapper(solc);
-        //language=solidity
+        // language=solidity
         String contract = """
-            contract SimpleContract {
-                uint256 balance;
-            }""";
+                contract SimpleContract {
+                    uint256 balance;
+                }""";
         String result = wrapper.readSol(contract);
         Assertions.assertNotNull(result);
     }
@@ -33,14 +33,14 @@ class SolcWrapperTest {
     void compilationFail() throws IOException {
         SolcWrapper wrapper = new SolcWrapper(solc);
         String contract = """
-            contract SimpleContract {
-                uint256 balance
-            }""";
+                contract SimpleContract {
+                    uint256 balance
+                }""";
         try {
             wrapper.readSol(contract);
             Assertions.fail();
-        } catch (RuntimeException exception){
-        };
+        } catch (RuntimeException exception) {
+        } ;
     }
 
     private static URI getFile(String solFileName) {

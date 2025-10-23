@@ -1,3 +1,6 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.statement;
 
 import org.key_project.logic.SyntaxElement;
@@ -18,7 +21,8 @@ public class DoWhileStatement implements Statement {
         return switch (n) {
             case 0 -> condition;
             case 1 -> body;
-            default -> throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+            default -> throw new IndexOutOfBoundsException(
+                "Index should be 0 <= " + n + " < " + getChildCount());
         };
     }
 

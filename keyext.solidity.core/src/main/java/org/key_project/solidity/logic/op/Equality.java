@@ -3,13 +3,14 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.logic.op;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.op.AbstractSortedOperator;
 import org.key_project.logic.op.Modifier;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.logic.SolidityDLTheory;
+
+import org.jspecify.annotations.NonNull;
 
 
 /// This class defines the logic equality operator `=`. It is a binary predicate accepting
@@ -28,7 +29,8 @@ public final class Equality extends AbstractSortedOperator {
 
 
     private Equality(Name name, Sort targetSort) {
-        super(name, new Sort[] { targetSort, targetSort }, SolidityDLTheory.FORMULA, Modifier.RIGID);
+        super(name, new Sort[] { targetSort, targetSort }, SolidityDLTheory.FORMULA,
+            Modifier.RIGID);
     }
 
     @Override

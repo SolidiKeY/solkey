@@ -4,12 +4,15 @@
 package org.key_project.solidity.common;
 
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.LogicServices;
 import org.key_project.prover.proof.ProofServices;
 import org.key_project.prover.proof.SessionCaches;
 import org.key_project.solidity.logic.NamespaceSet;
+import org.key_project.solidity.logic.TermBuilder;
+import org.key_project.solidity.logic.TermFactory;
 import org.key_project.solidity.program.ast.SolidityModel;
+
+import org.jspecify.annotations.NonNull;
 
 public class Services implements LogicServices, ProofServices {
 
@@ -18,6 +21,8 @@ public class Services implements LogicServices, ProofServices {
      */
     private NamespaceSet namespaces = new NamespaceSet();
     private SolidityModel solidityModel;
+    private final TermFactory termFactory = new TermFactory();
+    private final TermBuilder termBuilder = new TermBuilder(this);
 
     public Services() {}
 
@@ -31,6 +36,14 @@ public class Services implements LogicServices, ProofServices {
 
     @Override
     public SessionCaches getCaches() {
+        return null;
+    }
+
+    public TermFactory getTermFactory() {
+        return termFactory;
+    }
+
+    public TermBuilder getTermBuilder() {
         return null;
     }
 }

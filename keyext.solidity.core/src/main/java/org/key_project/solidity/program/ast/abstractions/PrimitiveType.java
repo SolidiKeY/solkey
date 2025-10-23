@@ -7,12 +7,12 @@ import java.util.HashMap;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
-import org.jspecify.annotations.Nullable;
 import org.key_project.logic.Name;
-
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
+
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class PrimitiveType implements Type {
 
@@ -67,7 +67,7 @@ public class PrimitiveType implements Type {
         // TODO
         throw new UnsupportedOperationException("TO BE IMPLEMENTED");
     }
-    
+
     @Override
     public String toString() {
         return name.toString();

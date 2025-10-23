@@ -15,7 +15,8 @@ public class ParameterDeclaration extends Declaration {
     private final @NonNull TypeReference typeReference;
     private final DataLocation dataLocation;
 
-    public ParameterDeclaration(int id, @NonNull Name name, @NonNull TypeReference typeReference, DataLocation dataLocation) {
+    public ParameterDeclaration(int id, @NonNull Name name, @NonNull TypeReference typeReference,
+            DataLocation dataLocation) {
         super(name);
         this.id = id;
         this.typeReference = typeReference;

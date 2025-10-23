@@ -25,7 +25,9 @@ public class FunctionDeclaration extends Declaration {
     private final List<ModifierReference> modifiers;
 
     public FunctionDeclaration(int id, Name name, List<ParameterDeclaration> returnParameters,
-                               List<ParameterDeclaration> inputParameters, Block body, String kind, Visibility visibility, StateMutability stateMutability, List<ModifierReference> modifiers) {
+            List<ParameterDeclaration> inputParameters, Block body, String kind,
+            Visibility visibility, StateMutability stateMutability,
+            List<ModifierReference> modifiers) {
         super(name);
         this.id = id;
         this.returnParameters = new ImmutableArray<>(returnParameters);
@@ -61,10 +63,9 @@ public class FunctionDeclaration extends Declaration {
                 return inputParameters.get(n);
             } else {
                 n -= inputParameters.size();
-                if(n < modifiers.size()){
+                if (n < modifiers.size()) {
                     return modifiers.get(n);
-                }
-                else {
+                } else {
                     n -= modifiers.size();
                     if (n == 0) {
                         return body;
@@ -85,15 +86,17 @@ public class FunctionDeclaration extends Declaration {
         StringBuffer strBuffer = new StringBuffer();
         strBuffer.append("function ");
         strBuffer.append(name)
-                 .append(" (")
-                 .append(inputParameters.stream().map(ParameterDeclaration::toString).collect(Collectors.joining(", ")))
-                 .append(") ")
-                 .append(visibility)
-                 .append(" ")
-                 .append(stateMutability)
-                 .append(" ")
-                 .append(modifiers.stream().map(ModifierReference::toString).collect(Collectors.joining(" ")))
-                 .append(getBody().toString());
+                .append(" (")
+                .append(inputParameters.stream().map(ParameterDeclaration::toString)
+                        .collect(Collectors.joining(", ")))
+                .append(") ")
+                .append(visibility)
+                .append(" ")
+                .append(stateMutability)
+                .append(" ")
+                .append(modifiers.stream().map(ModifierReference::toString)
+                        .collect(Collectors.joining(" ")))
+                .append(getBody().toString());
         return strBuffer.toString();
     }
 }

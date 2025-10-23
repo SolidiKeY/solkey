@@ -3,18 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser;
 
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CodePointCharStream;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.atn.PredictionMode;
-import org.antlr.v4.runtime.misc.ParseCancellationException;
-import org.antlr.v4.runtime.tree.TerminalNode;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
-import org.key_project.solidity.parser.builder.ChoiceFinder;
-import org.key_project.solidity.proof.io.RuleSource;
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -30,6 +18,19 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+
+import org.key_project.solidity.parser.builder.ChoiceFinder;
+import org.key_project.solidity.proof.io.RuleSource;
+
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CodePointCharStream;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.atn.PredictionMode;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.antlr.v4.runtime.tree.TerminalNode;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public final class ParsingFacade {
     private ParsingFacade() {
@@ -137,62 +138,63 @@ public final class ParsingFacade {
         // p.getErrorReporter().throwException();
         return seq;
     }
-/*
-    /// Parses the configuration determined by the given `file`.
-    /// A configuration corresponds to the grammar rule `cfile` in the `KeYParser.g4`.
-    ///
-    /// @param file non-null [Path] object
-    /// @return monad that encapsluate the ParserRuleContext
-    /// @throws IOException if the file is not found or not readable.
-    /// @throws BuildingException if the file is syntactical broken.
-    public static KeYAst.ConfigurationFile parseConfigurationFile(Path file) throws IOException {
-        return parseConfigurationFile(CharStreams.fromPath(file));
-    }
-
-    /// Parses the configuration determined by the given `stream`.
-    /// A configuration corresponds to the grammar rule `cfile` in the `KeYParser.g4`.
-    ///
-    /// @param stream non-null [CharStream] object
-    /// @return monad that encapsluate the ParserRuleContext
-    /// @throws BuildingException if the file is syntactical broken.
-    public static KeYAst.ConfigurationFile parseConfigurationFile(CharStream stream) {
-        KeYSolidityDLParser p = createParser(stream);
-        var ctx = p.cfile();
-        // p.getErrorReporter().throwException();
-        return new KeYAst.ConfigurationFile(ctx);
-    }
-
-    /// Parses the configuration determined by the given `stream`.
-    /// A configuration corresponds to the grammar rule `cfile` in the `KeYParser.g4`.
-    ///
-    /// @param input non-null [CharStream] object
-    /// @return a configuration object with the data deserialize from the given file
-    /// @throws BuildingException if the file is syntactical broken.
-    public static Configuration readConfigurationFile(CharStream input) {
-        return parseConfigurationFile(input).asConfiguration();
-    }
-
-    /// @see #readConfigurationFile(CharStream)
-    /// @throws IOException if the file is not found or not readable.
-    public static Configuration readConfigurationFile(Path file) throws IOException {
-        return readConfigurationFile(CharStreams.fromPath(file));
-    }
-
-    /// @see #readConfigurationFile(CharStream)
-    /// @throws IOException if the file is not found or not readable.
-    public static Configuration readConfigurationFile(File file) throws IOException {
-        return readConfigurationFile(file.toPath());
-    }
-
-    public static Configuration getConfiguration(KeYRustyParser.TableContext ctx) {
-        final var cfg = new ConfigurationBuilder();
-        return cfg.visitTable(ctx);
-    }
-
-    public static @NonNull String getValueDocumentation(KeYRustyParser.String_valueContext ctx) {
-        return ctx.getText().substring(1, ctx.getText().length() - 1).replace("\\\"", "\"")
-                .replace("\\\\", "\\");
-    }*/
+    /*
+     * /// Parses the configuration determined by the given `file`.
+     * /// A configuration corresponds to the grammar rule `cfile` in the `KeYParser.g4`.
+     * ///
+     * /// @param file non-null [Path] object
+     * /// @return monad that encapsluate the ParserRuleContext
+     * /// @throws IOException if the file is not found or not readable.
+     * /// @throws BuildingException if the file is syntactical broken.
+     * public static KeYAst.ConfigurationFile parseConfigurationFile(Path file) throws IOException {
+     * return parseConfigurationFile(CharStreams.fromPath(file));
+     * }
+     *
+     * /// Parses the configuration determined by the given `stream`.
+     * /// A configuration corresponds to the grammar rule `cfile` in the `KeYParser.g4`.
+     * ///
+     * /// @param stream non-null [CharStream] object
+     * /// @return monad that encapsluate the ParserRuleContext
+     * /// @throws BuildingException if the file is syntactical broken.
+     * public static KeYAst.ConfigurationFile parseConfigurationFile(CharStream stream) {
+     * KeYSolidityDLParser p = createParser(stream);
+     * var ctx = p.cfile();
+     * // p.getErrorReporter().throwException();
+     * return new KeYAst.ConfigurationFile(ctx);
+     * }
+     *
+     * /// Parses the configuration determined by the given `stream`.
+     * /// A configuration corresponds to the grammar rule `cfile` in the `KeYParser.g4`.
+     * ///
+     * /// @param input non-null [CharStream] object
+     * /// @return a configuration object with the data deserialize from the given file
+     * /// @throws BuildingException if the file is syntactical broken.
+     * public static Configuration readConfigurationFile(CharStream input) {
+     * return parseConfigurationFile(input).asConfiguration();
+     * }
+     *
+     * /// @see #readConfigurationFile(CharStream)
+     * /// @throws IOException if the file is not found or not readable.
+     * public static Configuration readConfigurationFile(Path file) throws IOException {
+     * return readConfigurationFile(CharStreams.fromPath(file));
+     * }
+     *
+     * /// @see #readConfigurationFile(CharStream)
+     * /// @throws IOException if the file is not found or not readable.
+     * public static Configuration readConfigurationFile(File file) throws IOException {
+     * return readConfigurationFile(file.toPath());
+     * }
+     *
+     * public static Configuration getConfiguration(KeYRustyParser.TableContext ctx) {
+     * final var cfg = new ConfigurationBuilder();
+     * return cfg.visitTable(ctx);
+     * }
+     *
+     * public static @NonNull String getValueDocumentation(KeYRustyParser.String_valueContext ctx) {
+     * return ctx.getText().substring(1, ctx.getText().length() - 1).replace("\\\"", "\"")
+     * .replace("\\\\", "\\");
+     * }
+     */
 
     public static @Nullable String getValueDocumentation(
             @Nullable TerminalNode docComment) {

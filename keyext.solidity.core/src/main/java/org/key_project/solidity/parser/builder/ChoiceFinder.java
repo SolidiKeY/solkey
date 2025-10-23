@@ -3,17 +3,18 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser.builder;
 
-import org.jspecify.annotations.NonNull;
-import org.key_project.logic.Choice;
-import org.key_project.logic.Name;
-import org.key_project.logic.Namespace;
-import org.key_project.solidity.parser.ChoiceInformation;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.key_project.logic.Choice;
+import org.key_project.logic.Name;
+import org.key_project.logic.Namespace;
+import org.key_project.solidity.parser.ChoiceInformation;
+
+import org.jspecify.annotations.NonNull;
 
 /// This visitor gathers the choice information in [org.key_project.solidity.parser.KeYAst.File]
 /// and
@@ -41,7 +42,8 @@ public class ChoiceFinder extends AbstractBuilder<Object> {
     }
 
     @Override
-    public Object visitChoice(org.key_project.solidity.parser.KeYSolidityDLParser.ChoiceContext ctx) {
+    public Object visitChoice(
+            org.key_project.solidity.parser.KeYSolidityDLParser.ChoiceContext ctx) {
         String category = ctx.category.getText();
         List<String> options = new ArrayList<>(ctx.optionDecl().size());
         ctx.optionDecl().forEach(it -> options.add(it.IDENT.getText()));

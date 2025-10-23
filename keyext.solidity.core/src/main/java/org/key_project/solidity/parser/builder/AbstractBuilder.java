@@ -2,16 +2,18 @@
  * KeY is licensed under the GNU General Public License Version 2
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser.builder;
+
 import java.util.*;
 import java.util.stream.Collectors;
+
+import org.key_project.solidity.parser.KeYSolidityDLParserBaseVisitor;
+import org.key_project.solidity.util.parsing.BuildingException;
+import org.key_project.solidity.util.parsing.BuildingIssue;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RuleContext;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.key_project.solidity.parser.KeYSolidityDLParserBaseVisitor;
-import org.key_project.solidity.util.parsing.BuildingException;
-import org.key_project.solidity.util.parsing.BuildingIssue;
 
 /// This class brings some nice features to the visitors of key's ast.
 ///

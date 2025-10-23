@@ -18,7 +18,8 @@ public class StateVariableDeclaration extends Declaration {
     private final @Nullable Expression initializer;
     private final Visibility visibility;
 
-    public StateVariableDeclaration(@NonNull Name name, @NonNull TypeReference type, Visibility visibility) {
+    public StateVariableDeclaration(@NonNull Name name, @NonNull TypeReference type,
+            Visibility visibility) {
         super(name);
         this.typeReference = type;
         this.initializer = null;
@@ -26,7 +27,7 @@ public class StateVariableDeclaration extends Declaration {
     }
 
     public StateVariableDeclaration(@NonNull Name name, @NonNull TypeReference typeReference,
-                                    @Nullable Expression initializer, Visibility visibility) {
+            @Nullable Expression initializer, Visibility visibility) {
         super(name);
         this.typeReference = typeReference;
         this.initializer = initializer;
@@ -62,7 +63,7 @@ public class StateVariableDeclaration extends Declaration {
     // common interface
     public String toString() {
         return typeReference + " " + visibility + " " + name()
-                + (initializer != null ? " = " + initializer : "") + ";";
+            + (initializer != null ? " = " + initializer : "") + ";";
     }
 
 }

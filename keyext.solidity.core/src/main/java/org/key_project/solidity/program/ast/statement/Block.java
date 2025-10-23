@@ -21,7 +21,8 @@ public class Block implements Statement {
         this.statements = statements;
     }
 
-    public Block(int id, List<Statement> statements, String errorName, List<Declaration> arguments) {
+    public Block(int id, List<Statement> statements, String errorName,
+            List<Declaration> arguments) {
         this.id = id;
         this.statements = new ImmutableArray<>(statements);
         this.errorName = errorName;
@@ -54,8 +55,9 @@ public class Block implements Statement {
 
     public String toStringCatch() {
         String body = "catch ";
-        if(errorName != null && !errorName.isEmpty()){
-            body += errorName + " (" +  arguments.stream().map(Object::toString).collect(Collectors.joining(", ")) + ")";
+        if (errorName != null && !errorName.isEmpty()) {
+            body += errorName + " ("
+                + arguments.stream().map(Object::toString).collect(Collectors.joining(", ")) + ")";
         }
         body += " " + this;
         return body;

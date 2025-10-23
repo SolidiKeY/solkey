@@ -315,7 +315,6 @@ public abstract class KeyAst<T extends ParserRuleContext> {
                     }
                 }
             }
-
             return new ScriptCommandAst(it.cmd.getText(), nargs, pargs, loc);
         }
     }

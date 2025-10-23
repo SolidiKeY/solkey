@@ -1,10 +1,13 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.statement;
-
-import org.key_project.logic.SyntaxElement;
-import org.key_project.solidity.program.ast.expressions.Expression;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.expressions.Expression;
 
 public class TryStatement implements Statement {
 
@@ -18,10 +21,10 @@ public class TryStatement implements Statement {
 
     @Override
     public SyntaxElement getChild(int n) {
-        if(n == 0)
+        if (n == 0)
             return expression;
         n -= 1;
-        if(n >= 0 && n < getChildCount()){
+        if (n >= 0 && n < getChildCount()) {
             return blocks.get(n);
         }
         return null;
@@ -37,6 +40,6 @@ public class TryStatement implements Statement {
         Block tryBlock = blocks.getFirst();
         List<Block> catchBlocks = blocks.subList(1, blocks.size());
         return "try " + expression + " " + tryBlock + " " +
-                catchBlocks.stream().map(Block::toStringCatch).collect(Collectors.joining());
+            catchBlocks.stream().map(Block::toStringCatch).collect(Collectors.joining());
     }
 }

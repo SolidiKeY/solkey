@@ -13,7 +13,7 @@ public class ArrayReference extends VariableReference {
     private final ArrayDeclaration referencedDeclaration;
 
     public ArrayReference(int id, Name name, ArrayDeclaration referencedDeclaration,
-                          Type type) {
+            Type type) {
         super(type);
         this.id = id;
         this.name = name;
@@ -21,7 +21,7 @@ public class ArrayReference extends VariableReference {
     }
 
     public ArrayReference(Name name, ArrayDeclaration referencedDeclaration,
-                          Name typeName, Type type) {
+            Name typeName, Type type) {
         super(type);
         this.name = name;
         this.referencedDeclaration = referencedDeclaration;

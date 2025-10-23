@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.key_project.logic.Name;
-import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.Type;
 
 public class SolidityModel {

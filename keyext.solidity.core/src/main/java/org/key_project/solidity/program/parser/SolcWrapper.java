@@ -40,7 +40,7 @@ public class SolcWrapper {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        if (exitCode == 1){
+        if (exitCode == 1) {
             InputStream errorStream = proc.getErrorStream();
             String errorStr = new String(errorStream.readAllBytes(), UTF_8);
             throw new RuntimeException("Not possible to compile solidity code:\n" + errorStr);

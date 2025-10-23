@@ -3,13 +3,14 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.util.parsing;
 
+import org.key_project.solidity.util.Position;
+
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.jspecify.annotations.Nullable;
-import org.key_project.solidity.util.Position;
 
 public record BuildingIssue(String message, @Nullable Throwable cause, boolean isWarning,
-                            @Nullable Position position, @Nullable String sourceName) {
+        @Nullable Position position, @Nullable String sourceName) {
 
     public static BuildingIssue createError(String message, @Nullable ParserRuleContext token,
             @Nullable Throwable cause) {

@@ -1,11 +1,14 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.statement;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class DeclarationStatement implements Statement {
     private final List<Declaration> declarations;
@@ -33,7 +36,7 @@ public class DeclarationStatement implements Statement {
     @Override
     public String toString() {
         String s = declarations.stream().map(Declaration::toString).collect(Collectors.joining(""));
-        if(initialValue != null)
+        if (initialValue != null)
             s += " = " + initialValue.toString();
         return s + ";";
     }

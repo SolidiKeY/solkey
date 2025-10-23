@@ -1,10 +1,13 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions;
-
-import org.key_project.logic.SyntaxElement;
-import org.key_project.solidity.program.ast.abstractions.Type;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.abstractions.Type;
 
 public class FunctionCallExpression extends Expression {
 
@@ -19,10 +22,10 @@ public class FunctionCallExpression extends Expression {
 
     @Override
     public SyntaxElement getChild(int n) {
-        if(0 <= n && n < arguments.size()){
+        if (0 <= n && n < arguments.size()) {
             return arguments.get(n);
         }
-        if(n == arguments.size())
+        if (n == arguments.size())
             return functionExp;
         throw new IndexOutOfBoundsException("Not 0 <= " + n + " < " + getChildCount());
     }
@@ -34,6 +37,7 @@ public class FunctionCallExpression extends Expression {
 
     @Override
     public String toString() {
-        return functionExp + "(" + arguments.stream().map(Object::toString).collect(Collectors.joining(", ")) + ")";
+        return functionExp + "("
+            + arguments.stream().map(Object::toString).collect(Collectors.joining(", ")) + ")";
     }
 }

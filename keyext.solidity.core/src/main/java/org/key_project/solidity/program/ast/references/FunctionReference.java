@@ -1,4 +1,9 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.references;
+
+import java.util.HashMap;
 
 import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.Resolver;
@@ -6,15 +11,14 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 
-import java.util.HashMap;
-
 public class FunctionReference extends VariableReference implements Resolver {
 
     private final int id;
     private final Name name;
     public FunctionDeclaration referencedDeclaration;
 
-    public FunctionReference(int id, Name name, FunctionDeclaration referencedDeclaration, Type type) {
+    public FunctionReference(int id, Name name, FunctionDeclaration referencedDeclaration,
+            Type type) {
         super(type);
         this.id = id;
         this.name = name;

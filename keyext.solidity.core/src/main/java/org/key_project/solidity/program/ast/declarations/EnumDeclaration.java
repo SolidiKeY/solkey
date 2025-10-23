@@ -1,10 +1,13 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.declarations;
-
-import org.key_project.logic.Name;
-import org.key_project.logic.SyntaxElement;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.key_project.logic.Name;
+import org.key_project.logic.SyntaxElement;
 
 public class EnumDeclaration extends Declaration {
     private final List<MemberEnumDeclaration> members;
@@ -27,7 +30,8 @@ public class EnumDeclaration extends Declaration {
     @Override
     public String toString() {
         String s = "enum " + name + " {\n";
-        s += members.stream().map(MemberEnumDeclaration::toString).collect(Collectors.joining(", "));
+        s += members.stream().map(MemberEnumDeclaration::toString)
+                .collect(Collectors.joining(", "));
         s += "\n}\n";
         return s;
     }
