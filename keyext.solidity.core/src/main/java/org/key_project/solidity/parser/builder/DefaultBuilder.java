@@ -207,7 +207,7 @@ public class DefaultBuilder extends AbstractBuilder<@Nullable Object> {
 
 
     /// looks up a function, (program) variable or static query of the given name varfunc_id and the
-    /// argument terms args in the namespaces and Rust info.
+    /// argument terms args in the namespaces and Solidity info.
     ///
     /// @param varfuncName the String with the symbols name
     /// @param genericArgsCtxt
@@ -326,19 +326,19 @@ public class DefaultBuilder extends AbstractBuilder<@Nullable Object> {
     @Override
     public KeYSolidityType visitTypemapping(KeYSolidityDLParser.TypemappingContext ctx) {
         String type = visitSimple_ident_dots(ctx.simple_ident_dots());
-        KeYSolidityType krt = services.getSolidityInfo().getKeYSolidityType(type);
-        if (krt == null) {
+        KeYSolidityType kst = services.getSolidityInfo().getKeYSolidityType(type);
+        if (kst == null) {
             Sort sort = lookupSort(type);
             if (sort != null) {
-                krt = new KeYSolidityType(null, sort);
+                kst = new KeYSolidityType(null, sort);
             }
         }
 
-        if (krt == null) {
+        if (kst == null) {
             semanticError(ctx, "Unknown type: " + type);
         }
 
-        return krt;
+        return kst;
     }
 
 

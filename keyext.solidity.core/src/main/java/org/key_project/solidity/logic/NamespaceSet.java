@@ -21,37 +21,50 @@ import org.jspecify.annotations.Nullable;
 /// Container of namespaces for the logic's signature (sorts, function symbols, predicate symbols
 /// etc.)
 /// as well as calculus related namespaces like rules
-public class NamespaceSet {
-
+public final class NamespaceSet {
     private Namespace<@NonNull Sort> sortNS = new Namespace<>();
-    private Namespace<@NonNull QuantifiableVariable> varNS = new Namespace<>();
-    private Namespace<@NonNull Function> funcNS = new Namespace<>();
-    private Namespace<@NonNull ProgramVariable> progVarNS = new Namespace<>();
-    private Namespace<@NonNull RuleSet> ruleSetNS = new Namespace<>();
     private Namespace<@NonNull ParametricSortDecl> parametricSortNS = new Namespace<>();
+    private Namespace<@NonNull Function> funcNS = new Namespace<>();
     private Namespace<@NonNull ParametricFunctionDecl> parametricFuncNS = new Namespace<>();
+    private Namespace<@NonNull ProgramVariable> progVarNS = new Namespace<>();
+    private Namespace<@NonNull QuantifiableVariable> varNS = new Namespace<>();
+    private Namespace<@NonNull RuleSet> ruleSetNS = new Namespace<>();
     private Namespace<@NonNull Choice> choicesNS = new Namespace<>();
 
-    public NamespaceSet() {}
-
-    public NamespaceSet(Namespace<@NonNull Sort> sortNS,
-            Namespace<@NonNull ProgramVariable> progVarNS,
-            Namespace<@NonNull Function> funcNS, Namespace<@NonNull QuantifiableVariable> varNS) {
-        this.sortNS = sortNS;
-        this.varNS = varNS;
-        this.progVarNS = progVarNS;
-        this.funcNS = funcNS;
+    public NamespaceSet() {
     }
 
-    public void add(NamespaceSet ns) {
-        variables().add(ns.variables());
-        sorts().add(ns.sorts());
-        programVariables().add(ns.programVariables());
-        functions().add(ns.functions());
+    public NamespaceSet(Namespace<@NonNull Sort> sortNS,
+            Namespace<@NonNull ParametricSortDecl> parametricSortNS,
+            Namespace<@NonNull Function> funcNS,
+            Namespace<@NonNull ParametricFunctionDecl> parametricFuncNS,
+            Namespace<@NonNull ProgramVariable> progVarNS,
+            Namespace<@NonNull QuantifiableVariable> varNS,
+            Namespace<@NonNull RuleSet> ruleSetNS,
+            Namespace<@NonNull Choice> choiceNS) {
+        this.sortNS = sortNS;
+        this.progVarNS = progVarNS;
+        this.funcNS = funcNS;
+        this.varNS = varNS;
+        this.parametricSortNS = parametricSortNS;
+        this.parametricFuncNS = parametricFuncNS;
+        this.ruleSetNS = ruleSetNS;
+        this.choicesNS = choiceNS;
+    }
+
+    public void add(NamespaceSet otherNamespace) {
+        final Namespace[] thisComponents = asArray();
+        final Namespace[] otherComponents = otherNamespace.asArray();
+        for (int i = 0; i < thisComponents.length; i++) {
+            thisComponents[i].add(otherComponents[i]);
+        }
     }
 
     private Namespace<?>[] asArray() {
-        return new Namespace[] { sorts(), programVariables(), functions(), variables() };
+        return new Namespace[] { sorts(), parametricSorts(),
+            functions(), parametricFunctions(),
+            programVariables(), variables(),
+            ruleSets(), choices() };
     }
 
     /// looks up if the given name is found in one of the namespaces and returns the named object or
@@ -76,14 +89,24 @@ public class NamespaceSet {
     }
 
     public NamespaceSet copy() {
-        return new NamespaceSet(sorts().copy(), programVariables().copy(), functions().copy(),
-            variables().copy());
+        return new NamespaceSet(sorts().copy(), parametricSorts().copy(),
+            functions().copy(), parametricFunctions().copy(),
+            programVariables().copy(), variables().copy(),
+            ruleSets().copy(), choices().copy());
     }
 
     @Override
     public String toString() {
-        return "Sorts: " + sorts() + "\n" + "ProgramVariables: " + programVariables()
-            + "\n" + "Functions: " + functions() + "\n" + "Variables: " + variables() + "\n";
+        return "NamespaceSet{" +
+            "Sorts: " + sortNS + "\n" +
+            "ParametricSorts: " + parametricSortNS + "\n" +
+            "Functions: " + funcNS + "\n" +
+            "ParametricFunctions: " + parametricFuncNS + "\n" +
+            "Programvariables: " + progVarNS + "\n" +
+            "Variables: " + varNS + "\n" +
+            "RuleSets: " + ruleSetNS + "\n" +
+            "ChoicesNS: " + choicesNS + "\n" +
+            '}';
     }
 
     public void setSorts(Namespace<@NonNull Sort> sorts) {
@@ -151,4 +174,40 @@ public class NamespaceSet {
         this.choicesNS = choices;
     }
 
+
+    /// looks up for the symbol in the namespaces sort, functions and programVariables
+    ///
+    /// @param name the Name to look up
+    /// @return the element of the given name or null
+    public @Nullable Named lookupLogicSymbol(Name name) {
+        return lookup(name, logicAsArray());
+    }
+
+    /// returns all namespaces with symbols that may occur in a real sequent (this means all
+    /// namespaces without variables, choices and ruleSets)
+    private Namespace<?>[] logicAsArray() {
+        return new Namespace[] { sorts(), functions(), programVariables() };
+    }
+
+    public void flushToParent() {
+        for (Namespace<?> ns : asArray()) {
+            ns.flushToParent();
+        }
+    }
+
+    // TODO: Nullness
+    @SuppressWarnings("argument.type.incompatible")
+    public NamespaceSet getParent() {
+        return new NamespaceSet(sortNS.parent(), parametricSorts().parent(),
+            funcNS.parent(), parametricFunctions().parent(),
+            progVarNS.parent(), varNS.parent(),
+            ruleSetNS.copy(), choicesNS.parent());
+    }
+
+    public NamespaceSet copyWithParent() {
+        return new NamespaceSet(new Namespace<>(sorts()), new Namespace<>(parametricSorts()),
+            new Namespace<>(functions()), new Namespace<>(parametricFunctions()),
+            new Namespace<>(programVariables()), new Namespace<>(variables()),
+            new Namespace<>(ruleSets()), new Namespace<>(choices()));
+    }
 }
