@@ -13,7 +13,7 @@ import org.jspecify.annotations.Nullable;
 
 /// This class represents a function or predicate symbol in the logic
 public class SFunction extends Function {
-    public SFunction(Name name, ImmutableArray<Sort> argSorts, Sort sort,
+    public SFunction(Name name, Sort sort, ImmutableArray<Sort> argSorts,
             @Nullable ImmutableArray<Boolean> whereToBind, boolean isRigid, boolean unique,
             boolean isSkolemConstant) {
         super(name, argSorts, sort, whereToBind, isRigid, unique, isSkolemConstant);
@@ -22,18 +22,43 @@ public class SFunction extends Function {
 
     }
 
-    public SFunction(Name name, ImmutableArray<Sort> argSorts, Sort sort, boolean isRigid,
+    public SFunction(Name name, Sort sort, ImmutableArray<Sort> argSorts, boolean isRigid,
             boolean unique, boolean isSkolemConstant) {
-        this(name, argSorts, sort, null, isRigid, unique, isSkolemConstant);
+        this(name, sort, argSorts, null, isRigid, unique, isSkolemConstant);
     }
 
-    public SFunction(Name name, ImmutableArray<Sort> argSorts, Sort sort, boolean isRigid,
+    public SFunction(Name name, Sort sort, ImmutableArray<Sort> argSorts, boolean isRigid,
             boolean unique) {
-        this(name, argSorts, sort, null, isRigid, unique, false);
+        this(name, sort, argSorts, null, isRigid, unique, false);
     }
 
-    public SFunction(Name name, ImmutableArray<Sort> argSorts, Sort sort, boolean isRigid) {
-        this(name, argSorts, sort, null, isRigid, false, false);
+    public SFunction(Name name, Sort sort, ImmutableArray<Sort> argSorts, boolean isRigid) {
+        this(name, sort, argSorts, null, isRigid, false, false);
     }
+
+    public SFunction(Name name, Sort sort, Sort[] argSorts, boolean isRigid, boolean unique) {
+        this(name, sort,
+            argSorts == null ? new ImmutableArray<>() : new ImmutableArray<>(argSorts),
+            null, isRigid, unique, false);
+    }
+
+    public SFunction(Name name, Sort sort, Sort[] argSorts, Boolean @Nullable [] whereToBind,
+            boolean unique, boolean isSkolemConstant) {
+        super(name, new ImmutableArray<>(argSorts), sort,
+            whereToBind == null ? null : new ImmutableArray<>(whereToBind),
+            true, unique, isSkolemConstant);
+    }
+
+    public SFunction(Name name, Sort sort, Sort[] argSorts, Boolean @Nullable [] whereToBind,
+            boolean unique) {
+        super(name, new ImmutableArray<>(argSorts), sort,
+            whereToBind == null ? null : new ImmutableArray<>(whereToBind),
+            true, unique, false);
+    }
+
+    public SFunction(Name name, Sort sort) {
+        this(name, sort, null, true, false, false);
+    }
+
 
 }

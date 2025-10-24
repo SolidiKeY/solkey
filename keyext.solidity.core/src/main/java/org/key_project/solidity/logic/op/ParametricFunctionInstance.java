@@ -42,7 +42,7 @@ public class ParametricFunctionInstance extends SFunction {
 
     private ParametricFunctionInstance(ParametricFunctionDecl base,
             ImmutableList<GenericArgument> args, ImmutableArray<Sort> argSorts, Sort sort) {
-        super(makeName(base, args), argSorts, sort, base.getWhereToBind(), base.isUnique(),
+        super(makeName(base, args), sort, argSorts, base.getWhereToBind(), base.isUnique(),
             base.isRigid(),
             base.isSkolemConstant());
         this.base = base;

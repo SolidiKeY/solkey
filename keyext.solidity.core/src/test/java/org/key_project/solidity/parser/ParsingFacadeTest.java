@@ -11,8 +11,6 @@ import org.key_project.util.collection.ImmutableArray;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 class ParsingFacadeTest {
 
     private Services services = new Services();
@@ -20,11 +18,11 @@ class ParsingFacadeTest {
     @Test
     void parseExpression() {
         services.getNamespaces().functions()
-                .add(new SFunction(new Name("A"), new ImmutableArray<>(), SolidityDLTheory.FORMULA,
+                .add(new SFunction(new Name("A"), SolidityDLTheory.FORMULA, new ImmutableArray<>(),
                     true));
         services.getNamespaces().functions()
-                .add(new SFunction(new Name("B"), new ImmutableArray<>(),
-                    SolidityDLTheory.FORMULA, true));
+                .add(new SFunction(new Name("B"), SolidityDLTheory.FORMULA, new ImmutableArray<>(),
+                    true));
         KeYIO io = new KeYIO(services);
         io.parseExpression("A & B");
     }

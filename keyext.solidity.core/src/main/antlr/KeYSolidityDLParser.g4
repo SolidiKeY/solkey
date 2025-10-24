@@ -86,6 +86,29 @@ primitive_term:
   | literals
   ;
 
+func_decl
+:
+    doc=DOC_COMMENT?
+    (UNIQUE)?
+    func_name = funcpred_name
+    formal_sort_param_decls?
+	whereToBind=where_to_bind?
+    argSorts = arg_sorts
+    IMP
+    retSort = sortId
+    SEMI
+;
+
+pred_decl
+:
+  doc=DOC_COMMENT?
+  pred_name = funcpred_name
+  formal_sort_param_decls?
+  (whereToBind=where_to_bind)?
+  argSorts=arg_sorts
+  SEMI
+;
+
 accessterm
 :
   // OLD
