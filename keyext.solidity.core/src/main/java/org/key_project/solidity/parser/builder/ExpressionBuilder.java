@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-import org.antlr.v4.runtime.Token;
 import org.key_project.logic.Name;
 import org.key_project.logic.Namespace;
 import org.key_project.logic.Term;
@@ -37,6 +36,7 @@ import org.key_project.util.collection.ImmutableArray;
 import org.key_project.util.java.StringUtil;
 
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.Token;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -125,13 +125,16 @@ public class ExpressionBuilder extends DefaultBuilder {
         try {
             try {
                 if (soliditySchemaModeAllowed) {// TEST
-                    final SchemaSolidityReader schemaSolidityReader = new SchemaSolidityReader(services, nss);
+                    final SchemaSolidityReader schemaSolidityReader =
+                        new SchemaSolidityReader(services, nss);
                     schemaSolidityReader.setSVNamespace(schemaVariables());
                     try {
                         sjb.solidityBlock =
-                                schemaSolidityReader.readBlockWithProgramVariables(programVariables(), cleanSolidity);
+                            schemaSolidityReader.readBlockWithProgramVariables(programVariables(),
+                                cleanSolidity);
                     } catch (Exception e) {
-                        sjb.solidityBlock = schemaSolidityReader.readBlockWithEmptyContext(cleanSolidity);
+                        sjb.solidityBlock =
+                            schemaSolidityReader.readBlockWithEmptyContext(cleanSolidity);
                     }
                 }
             } catch (Exception e) {
@@ -143,7 +146,8 @@ public class ExpressionBuilder extends DefaultBuilder {
             if (sjb.solidityBlock == null) {
                 SolidityReader solidityReader = new SolidityReader(services, nss);
                 try {
-                    sjb.solidityBlock = solidityReader.readBlockWithProgramVariables(programVariables(), cleanSolidity);
+                    sjb.solidityBlock = solidityReader
+                            .readBlockWithProgramVariables(programVariables(), cleanSolidity);
                 } catch (Exception e1) {
                     sjb.solidityBlock = solidityReader.readBlockWithEmptyContext(cleanSolidity);
                 }
