@@ -8,7 +8,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 
-import org.key_project.logic.*;
+import org.key_project.logic.Choice;
+import org.key_project.logic.Name;
+import org.key_project.logic.Named;
+import org.key_project.logic.Namespace;
+import org.key_project.logic.Term;
 import org.key_project.logic.op.Function;
 import org.key_project.logic.op.Operator;
 import org.key_project.logic.op.ParsableVariable;
@@ -21,20 +25,21 @@ import org.key_project.solidity.logic.NamespaceSet;
 import org.key_project.solidity.logic.SolidityDLTheory;
 import org.key_project.solidity.logic.op.ParametricFunctionInstance;
 import org.key_project.solidity.logic.op.ProgramVariable;
-import org.key_project.solidity.logic.sort.ConstParam;
-import org.key_project.solidity.logic.sort.GenericArgument;
-import org.key_project.solidity.logic.sort.GenericParameter;
-import org.key_project.solidity.logic.sort.SortArg;
-import org.key_project.solidity.logic.sort.TermArg;
+import org.key_project.solidity.logic.sort.*;
 import org.key_project.solidity.parser.KeYSolidityDLParser;
+import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DefaultBuilder extends AbstractBuilder<@Nullable Object> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultBuilder.class);
+
     protected final Services services;
     protected final NamespaceSet nss;
     private Namespace<@NonNull SchemaVariable> schemaVariablesNamespace = new Namespace<>();
@@ -44,39 +49,6 @@ public class DefaultBuilder extends AbstractBuilder<@Nullable Object> {
         this.nss = nss;
     }
 
-    /// looks up a function, (program) variable or static query of the given name varfunc_id and the
-    /// argument terms args in the namespaces and Rust info.
-    ///
-    /// @param varfuncName the String with the symbols name
-    /// @param genericArgsCtxt
-    protected Operator lookupVarfuncId(ParserRuleContext ctx, String varfuncName,
-            KeYSolidityDLParser.Formal_sort_argsContext genericArgsCtxt) {
-        Name name = new Name(varfuncName);
-        Operator[] operators =
-            { schemaVariables().lookup(name), variables().lookup(name),
-                programVariables().lookup(new Name(varfuncName)),
-                functions().lookup(name),
-            // TODO: AbstractTermTransformer.name2metaop(varfuncName)
-            };
-
-        for (Operator op : operators) {
-            if (op != null) {
-                return op;
-            }
-        }
-
-        if (genericArgsCtxt != null) {
-            var d = nss.parametricFunctions().lookup(name);
-            if (d == null) {
-                semanticError(ctx, "Could not find parametric function: %s", name);
-                return null;
-            }
-            var args = getParamSortArgs(genericArgsCtxt, d.getParameters());
-            return ParametricFunctionInstance.get(d, args);
-        }
-        semanticError(ctx, "Could not find (program) variable or constant %s", varfuncName);
-        return null;
-    }
 
     protected ImmutableList<GenericArgument> getParamSortArgs(
             KeYSolidityDLParser.Formal_sort_argsContext ctx,
@@ -190,15 +162,10 @@ public class DefaultBuilder extends AbstractBuilder<@Nullable Object> {
         return namespaces().ruleSets();
     }
 
-    /*
-     * protected Namespace<@NonNull Choice> choices() {
-     * return namespaces().choices();
-     * }
-     *
-     * protected Namespace<@NonNull ProgramVariable> programVariables() {
-     * return namespaces().programVariables();
-     * }
-     */
+    protected Namespace<@NonNull Choice> choices() {
+        return namespaces().choices();
+    }
+
     protected <T> T withSortAndConsts(Namespace<@NonNull Sort> sorts,
             Namespace<@NonNull Function> consts, Supplier<T> fn) {
         var oldSorts = nss.sorts();
@@ -238,19 +205,22 @@ public class DefaultBuilder extends AbstractBuilder<@Nullable Object> {
         return sorts().lookup(new Name(name));
     }
 
+
     /// looks up a function, (program) variable or static query of the given name varfunc_id and the
     /// argument terms args in the namespaces and Rust info.
     ///
     /// @param varfuncName the String with the symbols name
-    /// param genericArgsCtxt
-    protected Operator lookupVarfuncId(ParserRuleContext ctx, String varfuncName) {
-        // KeYSolidityDLParser.Formal_sort_argsContext genericArgsCtxt) {
+    /// @param genericArgsCtxt
+    protected Operator lookupVarfuncId(ParserRuleContext ctx, String varfuncName,
+            KeYSolidityDLParser.Formal_sort_argsContext genericArgsCtxt) {
         Name name = new Name(varfuncName);
+
+        LOGGER.debug("Lookup array ignores term transformers. Implement and fix.");
         Operator[] operators =
             { schemaVariables().lookup(name), variables().lookup(name),
-                // programVariables().lookup(new Name(varfuncName)),
+                programVariables().lookup(new Name(varfuncName)),
                 functions().lookup(name),
-            // AbstractTermTransformer.name2metaop(varfuncName)
+            // TODO: AbstractTermTransformer.name2metaop(varfuncName)
             };
 
         for (Operator op : operators) {
@@ -258,17 +228,16 @@ public class DefaultBuilder extends AbstractBuilder<@Nullable Object> {
                 return op;
             }
         }
-        /*
-         * if (genericArgsCtxt != null) {
-         * var d = nss.parametricFunctions().lookup(name);
-         * if (d == null) {
-         * semanticError(ctx, "Could not find parametric function: %s", name);
-         * return null;
-         * }
-         * var args = getParamSortArgs(genericArgsCtxt, d.getParameters());
-         * return ParametricFunctionInstance.get(d, args);
-         * }
-         */
+
+        if (genericArgsCtxt != null) {
+            var d = nss.parametricFunctions().lookup(name);
+            if (d == null) {
+                semanticError(ctx, "Could not find parametric function: %s", name);
+                return null;
+            }
+            var args = getParamSortArgs(genericArgsCtxt, d.getParameters());
+            return ParametricFunctionInstance.get(d, args);
+        }
         semanticError(ctx, "Could not find (program) variable or constant %s", varfuncName);
         return null;
     }
@@ -336,18 +305,16 @@ public class DefaultBuilder extends AbstractBuilder<@Nullable Object> {
     public Sort visitSortId(KeYSolidityDLParser.SortIdContext ctx) {
         String name = ctx.id.getText();
         Sort s;
-        /*
-         * if (ctx.formal_sort_args() != null) {
-         * // parametric sorts should be instantiated
-         * ParametricSortDecl sortDecl = nss.parametricSorts().lookup(name);
-         * if (sortDecl == null) {
-         * semanticError(ctx, "Could not find polymorphic sort: %s", name);
-         * }
-         * ImmutableList<GenericArgument> parameters =
-         * getParamSortArgs(ctx.formal_sort_args(), sortDecl.getParameters());
-         * s = ParametricSortInstance.get(sortDecl, parameters);
-         * } else
-         */ {
+        if (ctx.formal_sort_args() != null) {
+            // parametric sorts should be instantiated
+            ParametricSortDecl sortDecl = nss.parametricSorts().lookup(name);
+            if (sortDecl == null) {
+                semanticError(ctx, "Could not find polymorphic sort: %s", name);
+            }
+            ImmutableList<GenericArgument> parameters =
+                getParamSortArgs(ctx.formal_sort_args(), sortDecl.getParameters());
+            s = ParametricSortInstance.get(sortDecl, parameters);
+        } else {
             s = lookupSort(name);
             if (s == null) {
                 semanticError(ctx, "Could not find sort: %s", ctx.getText());
@@ -356,74 +323,45 @@ public class DefaultBuilder extends AbstractBuilder<@Nullable Object> {
         return s;
     }
 
-    /*
-     * protected ImmutableList<GenericArgument> getParamSortArgs(
-     * KeYSolidityDLParser.Formal_sort_argsContext ctx, ImmutableList<GenericParameter> params) {
-     * if (ctx.formal_sort_arg().size() != params.size()) {
-     * semanticError(ctx, "Expected %d sort arguments, got only %d",
-     * params.size(), ctx.formal_sort_arg().size());
-     * }
-     * ImmutableList<GenericArgument> args = ImmutableSLList.nil();
-     * for (int i = params.size() - 1; i >= 0; i--) {
-     * var expectConst = params.get(i) instanceof ConstParam;
-     * var arg = ctx.formal_sort_arg(i);
-     * var isConst = arg.CONST() != null;
-     * if (isConst && !expectConst) {
-     * semanticError(arg, "Expected argument %s to be a sort argument but got const %s",
-     * params.get(i), arg.getText());
-     * }
-     * if (!isConst && expectConst) {
-     * semanticError(arg, "Expected argument %s to be a const argument but got sort %s",
-     * params.get(i), arg.getText());
-     * }
-     * if (isConst) {
-     * var t = visitTerm(arg.term());
-     * Term c;
-     * if (t instanceof String s) {
-     * var op = nss.functions().lookup(s);
-     * if (op == null) {
-     * semanticError(arg, "Could not find constant: %s", s);
-     * }
-     * c = services.getTermBuilder().func(op);
-     * } else {
-     * c = (Term) t;
-     * }
-     *
-     * Sort expectedSort = ((ConstParam) params.get(i)).sort();
-     * if (!c.sort().extendsTrans(expectedSort) && !(c.op() instanceof SchemaVariable)) {
-     * semanticError(arg, "Constant %s is sort %s, which does not extend %s", c,
-     * c.sort(), expectedSort);
-     * }
-     * args = args.prepend(new TermArg(c));
-     * } else {
-     * var sort = visitSortId(arg.sortId());
-     * args = args.prepend(new SortArg(sort));
-     * }
-     * }
-     * return args;
-     * }
-     */
+    @Override
+    public KeYSolidityType visitTypemapping(KeYSolidityDLParser.TypemappingContext ctx) {
+        String type = visitSimple_ident_dots(ctx.simple_ident_dots());
+        KeYSolidityType krt = services.getSolidityInfo().getKeYSolidityType(type);
+        if (krt == null) {
+            Sort sort = lookupSort(type);
+            if (sort != null) {
+                krt = new KeYSolidityType(null, sort);
+            }
+        }
+
+        if (krt == null) {
+            semanticError(ctx, "Unknown type: " + type);
+        }
+
+        return krt;
+    }
+
 
     public Object visitFuncpred_name(KeYSolidityDLParser.Funcpred_nameContext ctx) {
         return ctx.getText();
     }
 
-    // @Override
-    // public @Nullable List<GenericParameter> visitFormal_sort_param_decls(
-    // KeYSolidityDLParser.Formal_sort_param_declsContext ctx) {
-    // return mapOf(ctx.formal_sort_param_decl());
-    // }
+    @Override
+    public @Nullable List<GenericParameter> visitFormal_sort_param_decls(
+            KeYSolidityDLParser.Formal_sort_param_declsContext ctx) {
+        return mapOf(ctx.formal_sort_param_decl());
+    }
 
-    // @Override
-    // public GenericParameter visitFormal_sort_param_decl(
-    // KeYSolidityDLParser.Formal_sort_param_declContext ctx) {
-    // if (ctx.simple_ident() != null) {
-    // var name = ctx.simple_ident().getText();
-    //
-    // return new GenericSortParam(new GenericSort(new Name(name)));
-    // }
-    // var name = new Name(ctx.const_param_decl().simple_ident().getText());
-    // var sort = visitSortId(ctx.const_param_decl().sortId());
-    // return new ConstParam(name, sort);
-    // }
+    @Override
+    public GenericParameter visitFormal_sort_param_decl(
+            KeYSolidityDLParser.Formal_sort_param_declContext ctx) {
+        if (ctx.simple_ident() != null) {
+            var name = ctx.simple_ident().getText();
+
+            return new GenericSortParam(new GenericSort(new Name(name)));
+        }
+        var name = new Name(ctx.const_param_decl().simple_ident().getText());
+        var sort = visitSortId(ctx.const_param_decl().sortId());
+        return new ConstParam(name, sort);
+    }
 }

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.logic;
 
+import org.key_project.logic.Choice;
 import org.key_project.logic.Name;
 import org.key_project.logic.Named;
 import org.key_project.logic.Namespace;
@@ -29,7 +30,7 @@ public class NamespaceSet {
     private Namespace<@NonNull RuleSet> ruleSetNS = new Namespace<>();
     private Namespace<@NonNull ParametricSortDecl> parametricSortNS = new Namespace<>();
     private Namespace<@NonNull ParametricFunctionDecl> parametricFuncNS = new Namespace<>();
-    // private Namespace<@NonNull Choice> choiceNS = new Namespace<>();
+    private Namespace<@NonNull Choice> choicesNS = new Namespace<>();
 
     public NamespaceSet() {}
 
@@ -140,6 +141,14 @@ public class NamespaceSet {
 
     public void programVariables(Namespace<@NonNull ProgramVariable> progVarNS) {
         this.progVarNS = progVarNS;
+    }
+
+    public Namespace<@NonNull Choice> choices() {
+        return choicesNS;
+    }
+
+    public void choices(Namespace<@NonNull Choice> choices) {
+        this.choicesNS = choices;
     }
 
 }

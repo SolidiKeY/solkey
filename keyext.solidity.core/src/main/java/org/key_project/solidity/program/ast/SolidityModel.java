@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.key_project.logic.Name;
+import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.Type;
 
 public class SolidityModel {
@@ -17,4 +18,7 @@ public class SolidityModel {
         return typeMap.get(typeName);
     }
 
+    public KeYSolidityType getKeYSolidityType(String type) {
+        throw new RuntimeException("Not implemented yet");
+    }
 }
