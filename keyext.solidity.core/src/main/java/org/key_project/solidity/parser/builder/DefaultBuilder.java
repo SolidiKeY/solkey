@@ -125,7 +125,7 @@ public class DefaultBuilder extends AbstractBuilder<@Nullable Object> {
         return args;
     }
 
-    private Namespace<@NonNull ProgramVariable> programVariables() {
+    protected Namespace<@NonNull ProgramVariable> programVariables() {
         return namespaces().programVariables();
     }
 

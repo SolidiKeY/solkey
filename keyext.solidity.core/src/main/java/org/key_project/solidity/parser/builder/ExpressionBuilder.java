@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+import org.antlr.v4.runtime.Token;
 import org.key_project.logic.Name;
 import org.key_project.logic.Namespace;
 import org.key_project.logic.Term;
@@ -20,6 +21,7 @@ import org.key_project.logic.op.sv.OperatorSV;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.NamespaceSet;
+import org.key_project.solidity.logic.SolidityBlock;
 import org.key_project.solidity.logic.TermFactory;
 import org.key_project.solidity.logic.op.BoundVariable;
 import org.key_project.solidity.logic.op.Equality;
@@ -28,6 +30,8 @@ import org.key_project.solidity.logic.op.LogicVariable;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.op.UpdateJunctor;
 import org.key_project.solidity.parser.KeYSolidityDLParser;
+import org.key_project.solidity.program.SchemaSolidityReader;
+import org.key_project.solidity.program.SolidityReader;
 import org.key_project.solidity.util.parsing.BuildingException;
 import org.key_project.util.collection.ImmutableArray;
 import org.key_project.util.java.StringUtil;
@@ -37,6 +41,9 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public class ExpressionBuilder extends DefaultBuilder {
+
+    private boolean soliditySchemaModeAllowed;
+
     public record BoundVar(Name name, Sort sort) {
     }
 
@@ -45,6 +52,106 @@ public class ExpressionBuilder extends DefaultBuilder {
 
     public ExpressionBuilder(Services services, NamespaceSet nss) {
         super(services, nss);
+    }
+
+    /**
+     * Given a raw modality string, this function trims the modality information.
+     *
+     * @param raw non-null string
+     * @return non-null string
+     */
+    public static String trimSolidityBlock(String raw) {
+        if (raw.startsWith("\\<")) {
+            return StringUtil.trim(raw, "\\<>");
+        }
+        if (raw.startsWith("\\[")) {
+            return StringUtil.trim(raw, "\\[]");
+        }
+        int end = raw.length() - (raw.endsWith("\\endmodality") ? "\\endmodality".length() : 0);
+        int start = 0;
+        if (raw.startsWith("\\diamond")) {
+            start = "\\diamond".length();
+        } else if (raw.startsWith("\\box")) {
+            start = "\\box".length();
+        } else if (raw.startsWith("\\modality")) {
+            start = raw.indexOf('}') + 1;
+        }
+        return raw.substring(start, end);
+    }
+
+    /**
+     * Given a raw modality string, this method determines the operator name.
+     */
+    public static String operatorOfSolidityBlock(String raw) {
+        if (raw.startsWith("\\<")) {
+            return "diamond";
+        }
+        if (raw.startsWith("\\[")) {
+            return "box";
+        }
+        if (raw.startsWith("\\diamond")) {
+            return "diamond";
+        }
+        if (raw.startsWith("\\box")) {
+            return "box";
+        }
+        if (raw.startsWith("\\modality")) {
+            int start = raw.indexOf('{') + 1;
+            int end = raw.indexOf('}');
+            return raw.substring(start, end);
+        }
+        return "n/a";
+    }
+
+    protected void enableSchemaMode() {
+        soliditySchemaModeAllowed = true;
+    }
+
+    protected void disableSchemaMode() {
+        soliditySchemaModeAllowed = false;
+    }
+
+    private static class PairOfStringAndSolidityBlock {
+        String opName;
+        SolidityBlock solidityBlock;
+    }
+
+    private PairOfStringAndSolidityBlock getJavaBlock(Token t) {
+        PairOfStringAndSolidityBlock sjb = new PairOfStringAndSolidityBlock();
+        String s = t.getText().trim();
+        String cleanSolidity = trimSolidityBlock(s);
+        sjb.opName = operatorOfSolidityBlock(s);
+
+        try {
+            try {
+                if (soliditySchemaModeAllowed) {// TEST
+                    final SchemaSolidityReader schemaSolidityReader = new SchemaSolidityReader(services, nss);
+                    schemaSolidityReader.setSVNamespace(schemaVariables());
+                    try {
+                        sjb.solidityBlock =
+                                schemaSolidityReader.readBlockWithProgramVariables(programVariables(), cleanSolidity);
+                    } catch (Exception e) {
+                        sjb.solidityBlock = schemaSolidityReader.readBlockWithEmptyContext(cleanSolidity);
+                    }
+                }
+            } catch (Exception e) {
+                if (cleanSolidity.startsWith("{..")) {// do not fallback
+                    throw e;
+                }
+            }
+
+            if (sjb.solidityBlock == null) {
+                SolidityReader solidityReader = new SolidityReader(services, nss);
+                try {
+                    sjb.solidityBlock = solidityReader.readBlockWithProgramVariables(programVariables(), cleanSolidity);
+                } catch (Exception e1) {
+                    sjb.solidityBlock = solidityReader.readBlockWithEmptyContext(cleanSolidity);
+                }
+            }
+        } catch (Exception e) {
+            throw new BuildingException(t, "Could not parse java: '" + cleanSolidity + "'", e);
+        }
+        return sjb;
     }
 
     protected Term capsulateTf(ParserRuleContext ctx, Supplier<Term> termSupplier) {

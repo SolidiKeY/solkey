@@ -21,7 +21,6 @@ public class SFunction extends Function {
         assert !(unique && sort == SolidityDLTheory.FORMULA);
 
     }
-
     public SFunction(Name name, ImmutableArray<Sort> argSorts, Sort sort, boolean isRigid,
             boolean unique, boolean isSkolemConstant) {
         this(name, argSorts, sort, null, isRigid, unique, isSkolemConstant);
