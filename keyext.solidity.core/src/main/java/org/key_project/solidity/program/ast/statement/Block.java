@@ -44,6 +44,10 @@ public class Block implements Statement {
         return statements.size();
     }
 
+    public boolean isEmpty() {
+        return statements.isEmpty();
+    }
+
     @Override
     public String toString() {
         String body = "{\n";

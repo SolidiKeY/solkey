@@ -11,6 +11,7 @@ import org.key_project.solidity.logic.NamespaceSet;
 import org.key_project.solidity.logic.TermBuilder;
 import org.key_project.solidity.logic.TermFactory;
 import org.key_project.solidity.program.ast.SolidityModel;
+import org.key_project.solidity.theory.TheoryInfo;
 
 import org.jspecify.annotations.NonNull;
 
@@ -21,10 +22,14 @@ public class Services implements LogicServices, ProofServices {
      */
     private NamespaceSet namespaces = new NamespaceSet();
     private SolidityModel solidityModel;
-    private final TermFactory termFactory = new TermFactory();
-    private final TermBuilder termBuilder = new TermBuilder(this);
+    private final TermFactory termFactory;
+    private final TermBuilder termBuilder;
+    private TheoryInfo theoryInfo;
 
-    public Services() {}
+    public Services() {
+        termFactory = new TermFactory();
+        termBuilder = new TermBuilder(termFactory, this);
+    }
 
     public @NonNull NamespaceSet getNamespaces() {
         return namespaces;
@@ -45,5 +50,13 @@ public class Services implements LogicServices, ProofServices {
 
     public TermBuilder getTermBuilder() {
         return null;
+    }
+
+    public TheoryInfo getTheoryInfo() {
+        return theoryInfo;
+    }
+
+    public void setTheoryInfo(TheoryInfo ldTs) {
+        this.theoryInfo = ldTs;
     }
 }
