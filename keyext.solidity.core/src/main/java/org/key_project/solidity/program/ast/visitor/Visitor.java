@@ -2,7 +2,6 @@ package org.key_project.solidity.program.ast.visitor;
 
 import org.key_project.solidity.program.ast.abstractions.*;
 import org.key_project.solidity.program.ast.declarations.*;
-import org.key_project.solidity.program.ast.declarations.FunctionEnums.*;
 import org.key_project.solidity.program.ast.expressions.*;
 import org.key_project.solidity.program.ast.expressions.literals.*;
 import org.key_project.solidity.program.ast.expressions.operators.*;
@@ -20,9 +19,6 @@ public interface Visitor {
     void performActionOnEnumDeclaration(EnumDeclaration x);
     void performActionOnFieldDeclaration(FieldDeclaration x);
     void performActionOnFunctionDeclaration(FunctionDeclaration x);
-    void performActionOnDataLocation(DataLocation x);
-    void performActionOnStateMutability(StateMutability x);
-    void performActionOnVisibility(Visibility x);
     void performActionOnMemberEnumDeclaration(MemberEnumDeclaration x);
     void performActionOnModifierDeclaration(ModifierDeclaration x);
     void performActionOnParameterDeclaration(ParameterDeclaration x);

@@ -11,6 +11,7 @@ import org.key_project.solidity.program.ast.references.TypeReference;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class StateVariableDeclaration extends Declaration {
 
@@ -66,4 +67,7 @@ public class StateVariableDeclaration extends Declaration {
             + (initializer != null ? " = " + initializer : "") + ";";
     }
 
+    public void visit(Visitor v){
+        v.performActionOnStateVariableDeclaration(this);
+    }
 }

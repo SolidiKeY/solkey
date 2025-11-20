@@ -10,6 +10,7 @@ import org.key_project.solidity.program.ast.references.TypeReference;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class FieldDeclaration extends Declaration {
 
@@ -61,4 +62,7 @@ public class FieldDeclaration extends Declaration {
             + ";";
     }
 
+    public void visit(Visitor v){
+        v.performActionOnFieldDeclaration(this);
+    }
 }
