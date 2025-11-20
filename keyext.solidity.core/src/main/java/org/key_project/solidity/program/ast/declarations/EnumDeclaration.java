@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class EnumDeclaration extends Declaration {
     private final List<MemberEnumDeclaration> members;
@@ -34,5 +35,9 @@ public class EnumDeclaration extends Declaration {
                 .collect(Collectors.joining(", "));
         s += "\n}\n";
         return s;
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnEnumDeclaration(this);
     }
 }

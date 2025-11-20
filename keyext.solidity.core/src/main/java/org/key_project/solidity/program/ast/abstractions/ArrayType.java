@@ -9,6 +9,7 @@ import org.key_project.solidity.common.Services;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class ArrayType implements Type {
 
@@ -29,5 +30,9 @@ public class ArrayType implements Type {
     public @Nullable Sort getSort(Services services) {
         // TODO
         throw new UnsupportedOperationException("To be implemented");
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnArrayType(this);
     }
 }

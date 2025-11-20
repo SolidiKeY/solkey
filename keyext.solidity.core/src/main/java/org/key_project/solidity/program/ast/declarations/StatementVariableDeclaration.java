@@ -11,6 +11,7 @@ import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocat
 import org.jspecify.annotations.NonNull;
 
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Default;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class StatementVariableDeclaration extends Declaration {
     private final int id;
@@ -48,5 +49,9 @@ public class StatementVariableDeclaration extends Declaration {
         if (dataLocation == Default)
             return type + " " + name();
         return type + " " + dataLocation + " " + name();
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnStatementVariableDeclaration(this);
     }
 }

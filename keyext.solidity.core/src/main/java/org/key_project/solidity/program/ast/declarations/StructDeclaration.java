@@ -9,6 +9,7 @@ import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 
 import org.jspecify.annotations.NonNull;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class StructDeclaration extends Declaration {
     List<FieldDeclaration> fields;
@@ -32,5 +33,9 @@ public class StructDeclaration extends Declaration {
     @Override
     public int getChildCount() {
         return fields.size();
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnStructDeclaration(this);
     }
 }

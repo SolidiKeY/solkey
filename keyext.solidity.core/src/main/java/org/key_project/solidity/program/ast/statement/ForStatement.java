@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class ForStatement implements Statement {
     private final Expression initializationExpression;
@@ -61,5 +62,9 @@ public class ForStatement implements Statement {
     public String toString() {
         return "for(" + nullOrEmpty(initializationExpression)
             + "; " + nullOrEmpty(condition) + "; " + nullOrEmpty(loopExpression) + ")\n" + body;
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnForStatement(this);
     }
 }

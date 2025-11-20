@@ -11,6 +11,7 @@ import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.program.ast.declarations.Declaration;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class ContractReference extends VariableReference implements Resolver {
 
@@ -64,5 +65,9 @@ public class ContractReference extends VariableReference implements Resolver {
     @Override
     public void resolve(HashMap<Integer, Declaration> id2Name) {
         this.contractDeclaration = (ContractDeclaration) id2Name.get(id);
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnContractReference(this);
     }
 }

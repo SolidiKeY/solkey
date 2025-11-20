@@ -9,6 +9,7 @@ import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocat
 import org.key_project.solidity.program.ast.references.TypeReference;
 
 import org.jspecify.annotations.NonNull;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class ParameterDeclaration extends Declaration {
     private final int id;
@@ -43,5 +44,9 @@ public class ParameterDeclaration extends Declaration {
 
     public @NonNull TypeReference getTypeReference() {
         return typeReference;
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnParameterDeclaration(this);
     }
 }

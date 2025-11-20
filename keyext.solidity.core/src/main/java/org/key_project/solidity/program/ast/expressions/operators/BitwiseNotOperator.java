@@ -5,6 +5,7 @@ package org.key_project.solidity.program.ast.expressions.operators;
 
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class BitwiseNotOperator extends UnaryOperator {
 
@@ -20,5 +21,9 @@ public class BitwiseNotOperator extends UnaryOperator {
     @Override
     public boolean isPrefix() {
         return true;
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnBitwiseNotOperator(this);
     }
 }

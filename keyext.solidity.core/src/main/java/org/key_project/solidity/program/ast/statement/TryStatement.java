@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class TryStatement implements Statement {
 
@@ -41,5 +42,9 @@ public class TryStatement implements Statement {
         List<Block> catchBlocks = blocks.subList(1, blocks.size());
         return "try " + expression + " " + tryBlock + " " +
             catchBlocks.stream().map(Block::toStringCatch).collect(Collectors.joining());
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnTryStatement(this);
     }
 }

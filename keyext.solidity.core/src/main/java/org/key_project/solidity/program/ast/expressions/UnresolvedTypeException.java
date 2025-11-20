@@ -2,9 +2,14 @@
  * KeY is licensed under the GNU General Public License Version 2
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class UnresolvedTypeException extends RuntimeException {
     public UnresolvedTypeException(String s) {
         super(s);
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnUnresolvedTypeException(this);
     }
 }

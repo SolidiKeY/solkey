@@ -4,6 +4,7 @@
 package org.key_project.solidity.program.ast.statement;
 
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class BreakStatement implements Statement {
     @Override
@@ -19,5 +20,9 @@ public class BreakStatement implements Statement {
     @Override
     public String toString() {
         return "break;";
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnBreakStatement(this);
     }
 }

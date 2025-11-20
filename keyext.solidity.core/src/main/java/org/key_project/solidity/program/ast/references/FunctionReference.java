@@ -10,6 +10,7 @@ import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class FunctionReference extends VariableReference implements Resolver {
 
@@ -50,5 +51,9 @@ public class FunctionReference extends VariableReference implements Resolver {
     @Override
     public void resolve(HashMap<Integer, Declaration> id2Name) {
         this.referencedDeclaration = (FunctionDeclaration) id2Name.get(id);
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnFunctionReference(this);
     }
 }

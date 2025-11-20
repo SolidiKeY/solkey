@@ -6,6 +6,7 @@ package org.key_project.solidity.program.ast.expressions.operators;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class TernaryOperator extends Expression {
 
@@ -41,5 +42,9 @@ public class TernaryOperator extends Expression {
     @Override
     public int getChildCount() {
         return 3;
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnTernaryOperator(this);
     }
 }

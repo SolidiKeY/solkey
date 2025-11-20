@@ -15,6 +15,7 @@ import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class ContractDeclaration extends Declaration implements Type {
 
@@ -100,5 +101,9 @@ public class ContractDeclaration extends Declaration implements Type {
     public @Nullable Sort getSort(Services services) {
         // TODO
         throw new UnsupportedOperationException("TO BE IMPLEMENTED");
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnContractDeclaration(this);
     }
 }

@@ -5,6 +5,7 @@ package org.key_project.solidity.program.ast.statement;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class ExpressionStatement implements Statement {
     public final Expression expression;
@@ -28,5 +29,9 @@ public class ExpressionStatement implements Statement {
     @Override
     public String toString() {
         return expression.toString() + ";";
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnExpressionStatement(this);
     }
 }

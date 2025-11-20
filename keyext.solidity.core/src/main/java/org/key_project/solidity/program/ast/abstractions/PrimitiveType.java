@@ -13,6 +13,7 @@ import org.key_project.solidity.common.Services;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class PrimitiveType implements Type {
 
@@ -187,4 +188,8 @@ public class PrimitiveType implements Type {
     public static final @NonNull PrimitiveType FUNCTION = newPrimitiveType("function");
     public static final @NonNull PrimitiveType CONTRACT = newPrimitiveType("contract");
 
+
+    public void visit(Visitor v){
+        v.performActionOnPrimitiveType(this);
+    }
 }

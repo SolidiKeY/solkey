@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class TupleExpression extends Expression {
     List<Expression> expressions;
@@ -34,5 +35,9 @@ public class TupleExpression extends Expression {
     public String toString() {
         return "[" + expressions.stream().map(Objects::toString).collect(Collectors.joining(", "))
             + "]";
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnTupleExpression(this);
     }
 }

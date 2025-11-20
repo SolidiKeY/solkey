@@ -8,6 +8,7 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.TypeResolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class TypeReference implements SolidityProgramElement {
 
@@ -59,5 +60,9 @@ public class TypeReference implements SolidityProgramElement {
     @Override
     public int getChildCount() {
         return 0;
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnTypeReference(this);
     }
 }

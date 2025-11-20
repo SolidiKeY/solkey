@@ -5,6 +5,7 @@ package org.key_project.solidity.program.ast.statement;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class ReturnStatment implements Statement {
     private Expression returnExp;
@@ -30,5 +31,9 @@ public class ReturnStatment implements Statement {
     @Override
     public String toString() {
         return "return " + getReturnExp().toString() + ";";
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnReturnStatment(this);
     }
 }

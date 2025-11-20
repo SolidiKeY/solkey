@@ -5,6 +5,7 @@ package org.key_project.solidity.program.ast.statement;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class ConditionStatement implements Statement {
     Expression condition;
@@ -38,5 +39,9 @@ public class ConditionStatement implements Statement {
         if (falseBody != null)
             s += " else " + falseBody;
         return s;
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnConditionStatement(this);
     }
 }

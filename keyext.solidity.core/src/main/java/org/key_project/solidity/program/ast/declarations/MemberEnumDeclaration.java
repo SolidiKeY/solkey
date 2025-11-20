@@ -7,6 +7,7 @@ import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 
 import org.jspecify.annotations.NonNull;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class MemberEnumDeclaration extends Declaration {
 
@@ -22,5 +23,9 @@ public class MemberEnumDeclaration extends Declaration {
     @Override
     public int getChildCount() {
         return 0;
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnMemberEnumDeclaration(this);
     }
 }

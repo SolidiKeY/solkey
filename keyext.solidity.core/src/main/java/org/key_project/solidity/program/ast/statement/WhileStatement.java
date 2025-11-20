@@ -5,6 +5,7 @@ package org.key_project.solidity.program.ast.statement;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class WhileStatement implements Statement {
 
@@ -37,5 +38,9 @@ public class WhileStatement implements Statement {
     @Override
     public String toString() {
         return "while(" + condition + ")\n" + body;
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnWhileStatement(this);
     }
 }

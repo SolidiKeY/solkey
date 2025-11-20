@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class DeclarationStatement implements Statement {
     private final List<Declaration> declarations;
@@ -39,5 +40,9 @@ public class DeclarationStatement implements Statement {
         if (initialValue != null)
             s += " = " + initialValue.toString();
         return s + ";";
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnDeclarationStatement(this);
     }
 }

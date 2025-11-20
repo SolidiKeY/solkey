@@ -4,6 +4,7 @@
 package org.key_project.solidity.program.ast.expressions.literals;
 
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class BoolLiteral extends Literal {
 
@@ -24,5 +25,9 @@ public class BoolLiteral extends Literal {
     @Override
     public String toString() {
         return value ? "true" : "false";
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnBoolLiteral(this);
     }
 }

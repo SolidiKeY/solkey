@@ -4,6 +4,7 @@
 package org.key_project.solidity.program.ast.statement;
 
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class PlaceholdStatement implements Statement {
 
@@ -20,5 +21,9 @@ public class PlaceholdStatement implements Statement {
     @Override
     public String toString() {
         return "_;";
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnPlaceholdStatement(this);
     }
 }

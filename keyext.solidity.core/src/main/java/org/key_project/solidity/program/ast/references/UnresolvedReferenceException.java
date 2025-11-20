@@ -4,9 +4,14 @@
 package org.key_project.solidity.program.ast.references;
 
 import org.key_project.logic.Name;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class UnresolvedReferenceException extends RuntimeException {
     public UnresolvedReferenceException(Name typeName) {
         super(typeName.toString() + " cannot be resolved");
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnUnresolvedReferenceException(this);
     }
 }

@@ -9,6 +9,7 @@ import org.key_project.solidity.common.Services;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class EnumType implements Type {
 
@@ -26,5 +27,9 @@ public class EnumType implements Type {
     @Override
     public @NonNull Name name() {
         return name;
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnEnumType(this);
     }
 }

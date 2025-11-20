@@ -6,6 +6,7 @@ package org.key_project.solidity.program.ast.references;
 import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.ParameterDeclaration;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class ParameterVariableReference extends VariableReference {
     private int id;
@@ -40,5 +41,9 @@ public class ParameterVariableReference extends VariableReference {
     @Override
     public String toString() {
         return name.toString();
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnParameterVariableReference(this);
     }
 }

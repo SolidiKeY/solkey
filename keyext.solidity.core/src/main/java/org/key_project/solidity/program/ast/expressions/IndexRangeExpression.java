@@ -5,6 +5,7 @@ package org.key_project.solidity.program.ast.expressions;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class IndexRangeExpression extends Expression {
 
@@ -32,5 +33,9 @@ public class IndexRangeExpression extends Expression {
 
     public String toString() {
         return baseExp + "[" + startExp + ":" + endExp + "]";
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnIndexRangeExpression(this);
     }
 }

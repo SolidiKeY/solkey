@@ -13,6 +13,7 @@ import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibilit
 import org.key_project.solidity.program.ast.references.ModifierReference;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.util.collection.ImmutableArray;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class FunctionDeclaration extends Declaration {
     private final int id;
@@ -98,5 +99,9 @@ public class FunctionDeclaration extends Declaration {
                         .collect(Collectors.joining(" ")))
                 .append(getBody().toString());
         return strBuffer.toString();
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnFunctionDeclaration(this);
     }
 }

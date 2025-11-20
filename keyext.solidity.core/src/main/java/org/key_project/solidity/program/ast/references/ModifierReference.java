@@ -4,6 +4,7 @@
 package org.key_project.solidity.program.ast.references;
 
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class ModifierReference implements SyntaxElement {
 
@@ -26,5 +27,9 @@ public class ModifierReference implements SyntaxElement {
     @Override
     public String toString() {
         return name;
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnModifierReference(this);
     }
 }

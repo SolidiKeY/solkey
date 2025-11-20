@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.util.collection.ImmutableArray;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class Block implements Statement {
 
@@ -68,4 +69,8 @@ public class Block implements Statement {
     }
 
     public ImmutableArray<Statement> getStatements() { return statements; }
+
+    public void visit(Visitor v){
+        v.performActionOnBlock(this);
+    }
 }

@@ -7,6 +7,7 @@ import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class StatementVariableReference extends VariableReference {
     private final int id;
@@ -34,5 +35,9 @@ public class StatementVariableReference extends VariableReference {
     @Override
     public String toString() {
         return name.toString();
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnStatementVariableReference(this);
     }
 }

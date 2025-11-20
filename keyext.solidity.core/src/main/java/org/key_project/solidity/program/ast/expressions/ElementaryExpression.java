@@ -5,6 +5,7 @@ package org.key_project.solidity.program.ast.expressions;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class ElementaryExpression extends Expression {
 
@@ -25,5 +26,9 @@ public class ElementaryExpression extends Expression {
     @Override
     public String toString() {
         return type.toString();
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnElementaryExpression(this);
     }
 }

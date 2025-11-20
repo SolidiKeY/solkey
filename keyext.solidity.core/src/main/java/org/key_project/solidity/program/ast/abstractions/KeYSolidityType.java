@@ -11,6 +11,7 @@ import org.key_project.solidity.common.Services;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class KeYSolidityType implements Type {
     /// the AST type
@@ -81,4 +82,8 @@ public class KeYSolidityType implements Type {
     // public Type instantiate(Map<GenericTyParam, GenericTyArg> instMap, Services services) {
     // throw new UnsupportedOperationException();
     // }
+
+    public void visit(Visitor v){
+        v.performActionOnKeYSolidityType(this);
+    }
 }

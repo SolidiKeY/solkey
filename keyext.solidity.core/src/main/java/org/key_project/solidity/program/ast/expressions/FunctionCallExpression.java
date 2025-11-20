@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class FunctionCallExpression extends Expression {
 
@@ -39,5 +40,9 @@ public class FunctionCallExpression extends Expression {
     public String toString() {
         return functionExp + "("
             + arguments.stream().map(Object::toString).collect(Collectors.joining(", ")) + ")";
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnFunctionCallExpression(this);
     }
 }

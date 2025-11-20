@@ -5,6 +5,7 @@ package org.key_project.solidity.program.ast.expressions.operators;
 
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public final class AddOperator extends BinaryOperator {
     public AddOperator(Expression left, Expression right, Type type) {
@@ -13,4 +14,8 @@ public final class AddOperator extends BinaryOperator {
 
     @Override
     public String getOperator() { return "+"; }
+
+    public void visit(Visitor v){
+        v.performActionOnAddOperator(this);
+    }
 }

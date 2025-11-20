@@ -5,6 +5,7 @@ package org.key_project.solidity.program.ast.expressions.operators;
 
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class NegateOperator extends UnaryOperator {
     public NegateOperator(Expression exp, Type type) {
@@ -19,5 +20,9 @@ public class NegateOperator extends UnaryOperator {
     @Override
     public boolean isPrefix() {
         return true;
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnNegateOperator(this);
     }
 }

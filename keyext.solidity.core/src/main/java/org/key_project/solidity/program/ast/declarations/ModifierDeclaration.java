@@ -9,6 +9,7 @@ import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.statement.Block;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class ModifierDeclaration extends Declaration {
 
@@ -37,5 +38,9 @@ public class ModifierDeclaration extends Declaration {
     @Override
     public String toString() {
         return name + " () " + visibility + " " + body;
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnModifierDeclaration(this);
     }
 }

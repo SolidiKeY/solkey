@@ -6,6 +6,7 @@ package org.key_project.solidity.program.ast.expressions.literals;
 import java.math.BigInteger;
 
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class Uint256Literal extends Literal {
 
@@ -23,5 +24,9 @@ public class Uint256Literal extends Literal {
     @Override
     public String toString() {
         return value.toString();
+    }
+
+    public void visit(Visitor v){
+        v.performActionOnUint256Literal(this);
     }
 }
