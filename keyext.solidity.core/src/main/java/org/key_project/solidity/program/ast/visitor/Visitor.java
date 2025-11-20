@@ -15,7 +15,6 @@ public interface Visitor {
     void performActionOnKeYSolidityType(KeYSolidityType x);
     void performActionOnMappingType(MappingType x);
     void performActionOnPrimitiveType(PrimitiveType x);
-    void performActionOnType(Type x);
     void performActionOnArrayDeclaration(ArrayDeclaration x);
     void performActionOnContractDeclaration(ContractDeclaration x);
     void performActionOnEnumDeclaration(EnumDeclaration x);
@@ -35,7 +34,6 @@ public interface Visitor {
     void performActionOnIndexExpression(IndexExpression x);
     void performActionOnIndexRangeExpression(IndexRangeExpression x);
     void performActionOnMemberExp(MemberExp x);
-    void performActionOnSoliditiyExpression(SoliditiyExpression x);
     void performActionOnTupleExpression(TupleExpression x);
     void performActionOnUnresolvedTypeException(UnresolvedTypeException x);
     void performActionOnBoolLiteral(BoolLiteral x);
@@ -99,9 +97,6 @@ public interface Visitor {
     void performActionOnForStatement(ForStatement x);
     void performActionOnPlaceholdStatement(PlaceholdStatement x);
     void performActionOnReturnStatment(ReturnStatment x);
-    void performActionOnStatement(Statement x);
     void performActionOnTryStatement(TryStatement x);
     void performActionOnWhileStatement(WhileStatement x);
-    void performActionOnSolidityASTWalker(SolidityASTWalker x);
-    void performActionOnVisitor(Visitor x);
 }
