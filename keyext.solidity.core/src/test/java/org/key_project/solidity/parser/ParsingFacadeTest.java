@@ -23,7 +23,6 @@ import org.key_project.util.collection.ImmutableArray;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -143,8 +142,6 @@ class ParsingFacadeTest {
         assert (((SModality) term.op()).programBlock().program() instanceof Block);
         Block block = (Block) ((SModality) term.op()).programBlock().program();
         assertTrue(block.getChildCount() == 1);
-        // assertTrue(block.getChild(0) instanceof Decl); local variable declaration representation
-        // in AST
     }
 
     @Test

@@ -14,7 +14,7 @@ import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.logic.sort.AbstractSort;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.logic.SolidityDLTheory;
-import org.key_project.solidity.rule.inst.SolSVInstantiations;
+import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
 import org.key_project.util.collection.ImmutableSet;
@@ -113,7 +113,7 @@ public class ParametricSortInstance extends AbstractSort implements SyntaxElemen
         return get(base, newParameters);
     }
 
-    public boolean isComplete(SolSVInstantiations instMap) {
+    public boolean isComplete(SVInstantiations instMap) {
         for (GenericArgument arg : args) {
             if (arg instanceof SortArg sa) {
                 if (sa.sort() instanceof ParametricSortInstance psi) {
@@ -133,7 +133,7 @@ public class ParametricSortInstance extends AbstractSort implements SyntaxElemen
     }
 
     public Sort resolveSort(SchemaVariable sv, SyntaxElement instCandidate,
-            SolSVInstantiations instMap) {
+            SVInstantiations instMap) {
         ImmutableList<GenericArgument> newArgs = ImmutableSLList.nil();
         for (int i = args.size() - 1; i >= 0; i--) {
             GenericArgument arg = args.get(i);

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.prover.rules.tacletbuilder;
 
+import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.op.QuantifiableVariable;
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.prover.rules.Taclet;
@@ -76,7 +77,13 @@ public abstract class TacletGoalTemplate {
         return addedProgVars;
     }
 
-    public @Nullable Object replaceWithExpressionAsObject() {
+    /**
+     * a Taclet may replace parts of sequent.
+     *
+     * @return term (or sequent) to be placed instead of the findexp-term. REMARK: returns 'null' if
+     *         there is no replace-with part ! Overwritten in subclasses !
+     */
+    public @Nullable SyntaxElement replaceWith() {
         return null;
     }
 

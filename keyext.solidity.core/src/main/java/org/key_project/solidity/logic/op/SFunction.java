@@ -60,5 +60,7 @@ public class SFunction extends Function {
         this(name, sort, null, true, false, false);
     }
 
-
+    public SFunction(Name name, Sort sort, boolean isSkolemConstant, Sort... argSorts) {
+        this(name, sort, argSorts, null, false, isSkolemConstant);
+    }
 }

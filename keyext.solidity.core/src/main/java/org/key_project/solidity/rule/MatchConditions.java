@@ -4,15 +4,14 @@
 package org.key_project.solidity.rule;
 
 import org.key_project.prover.rules.instantiation.MatchResultInfo;
-import org.key_project.prover.rules.instantiation.SVInstantiations;
-import org.key_project.solidity.rule.inst.SolSVInstantiations;
+import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 
 public class MatchConditions extends MatchResultInfo {
     public static final MatchConditions EMPTY_MATCHCONDITIONS =
-        new MatchConditions(SolSVInstantiations.EMPTY_SVINSTANTIATIONS);
+        new MatchConditions(SVInstantiations.EMPTY_SVINSTANTIATIONS);
 
     public MatchConditions() {
-        super(SolSVInstantiations.EMPTY_SVINSTANTIATIONS);
+        super(SVInstantiations.EMPTY_SVINSTANTIATIONS);
     }
 
     public MatchConditions(SVInstantiations p_instantiations) {
@@ -20,7 +19,7 @@ public class MatchConditions extends MatchResultInfo {
     }
 
     public SVInstantiations getInstantiations() {
-        return instantiations;
+        return (SVInstantiations) instantiations;
     }
 
     public MatchConditions setInstantiations(

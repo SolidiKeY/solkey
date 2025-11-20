@@ -4,6 +4,7 @@
 package org.key_project.solidity.proof;
 
 import org.key_project.solidity.parser.Configuration;
+import org.key_project.solidity.strategy.StrategySettings;
 
 public class ProofSettings {
     public static final ProofSettings DEFAULT_SETTINGS = new ProofSettings();
@@ -19,5 +20,9 @@ public class ProofSettings {
 
     public void readSettings(Configuration c) {
 
+    }
+
+    public StrategySettings getStrategySettings() {
+        throw new RuntimeException("Not implemented yet");
     }
 }

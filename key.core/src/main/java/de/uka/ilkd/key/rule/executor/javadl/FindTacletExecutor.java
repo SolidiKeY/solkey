@@ -178,7 +178,7 @@ public abstract class FindTacletExecutor extends TacletExecutor {
             SequentChangeInfo currentSequent) {
         PosInOccurrence result = tacletApp.posInOccurrence();
 
-        if (result != null && gt.replaceWithExpressionAsObject() != null) {
+        if (result != null && gt.replaceWith() != null) {
             final boolean inAntec = result.isInAntec();
             final ImmutableList<FormulaChangeInfo> modifiedFormulas =
                 currentSequent.modifiedFormulas(inAntec);

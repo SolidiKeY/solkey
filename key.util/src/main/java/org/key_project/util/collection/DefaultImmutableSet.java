@@ -66,6 +66,10 @@ public class DefaultImmutableSet<T extends @Nullable Object> implements Immutabl
         return new DefaultImmutableSet<>(ImmutableList.fromList(seq));
     }
 
+    public static <T> ImmutableSet<T> fromSet(Set<T> seq) {
+        return new DefaultImmutableSet<>(ImmutableList.fromList(seq));
+    }
+
     // private static HashSet<String> previousComplains = new HashSet<>();
     private void complainAboutSize() {
         // // Immutable linear sets are very expensive with O(n) addition

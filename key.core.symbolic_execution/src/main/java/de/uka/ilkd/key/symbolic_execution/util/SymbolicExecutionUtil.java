@@ -2587,10 +2587,10 @@ public final class SymbolicExecutionUtil {
         }
         // Instantiate replace object if required
         if (goalTemplate != null) {
-            if (goalTemplate.replaceWithExpressionAsObject() instanceof Sequent) {
+            if (goalTemplate.replaceWith() instanceof Sequent) {
                 // Remove replace part of symbolic execution rules
                 if (NodeInfo.isSymbolicExecution(app.taclet())) {
-                    Sequent sequent = (Sequent) goalTemplate.replaceWithExpressionAsObject();
+                    Sequent sequent = (Sequent) goalTemplate.replaceWith();
                     for (SequentFormula sf : sequent.antecedent()) {
                         JTerm replaceTerm = instantiateTerm(node, sf.formula(), app, services);
                         replaceTerm = services.getTermBuilder().applyUpdatePairsSequential(
@@ -2610,7 +2610,7 @@ public final class SymbolicExecutionUtil {
                         newSuccedents = newSuccedents.removeFirst(originalTerm);
                     }
                 }
-            } else if (goalTemplate.replaceWithExpressionAsObject() instanceof JTerm replaceTerm) {
+            } else if (goalTemplate.replaceWith() instanceof JTerm replaceTerm) {
                 replaceTerm = instantiateTerm(node, replaceTerm, app, services);
                 JTerm originalTerm =
                     findReplacement(app.posInOccurrence().isInAntec() ? node.sequent().antecedent()
@@ -2657,10 +2657,10 @@ public final class SymbolicExecutionUtil {
                     newAntecedents = tempAntecedents;
                     newSuccedents = tempSuccedents;
                 }
-            } else if (goalTemplate.replaceWithExpressionAsObject() != null) {
+            } else if (goalTemplate.replaceWith() != null) {
                 throw new ProofInputException("Expected replacement as Sequent or Term during "
                     + "branch condition computation but is \""
-                    + goalTemplate.replaceWithExpressionAsObject() + "\".");
+                    + goalTemplate.replaceWith() + "\".");
             }
         }
         // Compute branch condition

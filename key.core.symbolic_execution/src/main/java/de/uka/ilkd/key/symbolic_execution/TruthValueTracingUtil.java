@@ -419,7 +419,7 @@ public final class TruthValueTracingUtil {
             Node parent, TacletApp tacletApp,
             TacletGoalTemplate tacletGoal, List<LabelOccurrence> labels, Services services,
             Map<String, MultiEvaluationResult> results) {
-        Object replaceObject = tacletGoal.replaceWithExpressionAsObject();
+        Object replaceObject = tacletGoal.replaceWith();
         if (replaceObject instanceof JTerm) {
             JTerm replaceTerm = SymbolicExecutionUtil.instantiateTerm(parent, (JTerm) replaceObject,
                 tacletApp, services);

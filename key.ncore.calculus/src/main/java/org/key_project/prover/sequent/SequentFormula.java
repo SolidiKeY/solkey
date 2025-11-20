@@ -5,6 +5,7 @@ package org.key_project.prover.sequent;
 
 import java.util.Objects;
 
+import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.Term;
 
 import org.jspecify.annotations.Nullable;
@@ -17,7 +18,7 @@ import org.jspecify.annotations.Nullable;
 /// this
 /// class by providing a way to add additional annotations or to cache local information about the
 /// formula.
-public class SequentFormula {
+public class SequentFormula implements SyntaxElement {
     private final Term term;
 
     /// Cached value for [#hashCode()].
@@ -54,5 +55,18 @@ public class SequentFormula {
 
     public int hashCode() {
         return hashCode;
+    }
+
+    @Override
+    public SyntaxElement getChild(int n) {
+        if (n == 0) {
+            return formula();
+        }
+        throw new IndexOutOfBoundsException("A sequent formula has only 1 child.");
+    }
+
+    @Override
+    public int getChildCount() {
+        return 1;
     }
 }
