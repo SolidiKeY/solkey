@@ -8,14 +8,16 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 
 import org.key_project.logic.Name;
+import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 
-public class PrimitiveType implements Type {
+public class PrimitiveType implements Type, SolidityProgramElement {
 
     private static final HashMap<String, PrimitiveType> primitives = new HashMap<>();
 
@@ -188,6 +190,16 @@ public class PrimitiveType implements Type {
     public static final @NonNull PrimitiveType FUNCTION = newPrimitiveType("function");
     public static final @NonNull PrimitiveType CONTRACT = newPrimitiveType("contract");
 
+
+    @Override
+    public SyntaxElement getChild(int n) {
+        return null;
+    }
+
+    @Override
+    public int getChildCount() {
+        return 0;
+    }
 
     public void visit(Visitor v){
         v.performActionOnPrimitiveType(this);

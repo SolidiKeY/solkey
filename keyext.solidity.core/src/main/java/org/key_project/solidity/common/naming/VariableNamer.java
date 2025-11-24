@@ -323,7 +323,7 @@ public class VariableNamer {
         CustomSolidityASTWalker(SolidityProgramElement program,
                 @Nullable PosInProgram posOfDeclaration,
                 Services services) {
-            super(program, services);
+            super(program);
             if (posOfDeclaration != null) {
                 declarationNode = PosInProgram.getProgramAt(posOfDeclaration, program);
             }

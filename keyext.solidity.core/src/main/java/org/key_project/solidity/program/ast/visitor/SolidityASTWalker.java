@@ -6,8 +6,8 @@ package org.key_project.solidity.program.ast.visitor;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 
-public class SolidityASTWalker {
-    public SolidityASTWalker(SolidityProgramElement program, Services services) {
+public abstract class SolidityASTWalker {
+    public SolidityASTWalker(SolidityProgramElement program) {
     }
 
     public int depth() {
@@ -21,4 +21,6 @@ public class SolidityASTWalker {
     public void run() {
 
     }
+
+    protected abstract void doAction(SolidityProgramElement node);
 }

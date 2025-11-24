@@ -4,11 +4,23 @@
 package org.key_project.solidity.program.ast.references;
 
 import org.key_project.logic.Name;
+import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 
-public class UnresolvedReferenceException extends RuntimeException {
+public class UnresolvedReferenceException extends RuntimeException implements SolidityProgramElement {
     public UnresolvedReferenceException(Name typeName) {
         super(typeName.toString() + " cannot be resolved");
+    }
+
+    @Override
+    public SyntaxElement getChild(int n) {
+        return null;
+    }
+
+    @Override
+    public int getChildCount() {
+        return 0;
     }
 
     public void visit(Visitor v){

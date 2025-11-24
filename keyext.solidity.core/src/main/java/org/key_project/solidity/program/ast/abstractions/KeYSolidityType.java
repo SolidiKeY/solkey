@@ -6,14 +6,16 @@ package org.key_project.solidity.program.ast.abstractions;
 import java.util.Objects;
 
 import org.key_project.logic.Name;
+import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 
-public class KeYSolidityType implements Type {
+public class KeYSolidityType implements Type, SolidityProgramElement {
     /// the AST type
     private @Nullable Type solidityType = null;
     /// the logic sort
@@ -82,6 +84,16 @@ public class KeYSolidityType implements Type {
     // public Type instantiate(Map<GenericTyParam, GenericTyArg> instMap, Services services) {
     // throw new UnsupportedOperationException();
     // }
+
+    @Override
+    public SyntaxElement getChild(int n) {
+        return null;
+    }
+
+    @Override
+    public int getChildCount() {
+        return 0;
+    }
 
     public void visit(Visitor v){
         v.performActionOnKeYSolidityType(this);

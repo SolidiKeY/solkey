@@ -16,6 +16,7 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.SoliditiyExpression;
 
 import org.jspecify.annotations.NonNull;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class ProgramVariable extends AbstractSortedOperator
         implements SoliditiyExpression, UpdateableOperator, IProgramVariable {
@@ -38,6 +39,11 @@ public class ProgramVariable extends AbstractSortedOperator
     @Override
     public int getChildCount() {
         return 0;
+    }
+
+    @Override
+    public void visit(Visitor v) {
+
     }
 
     public KeYSolidityType getKeYSolidityType() {

@@ -4,9 +4,10 @@
 package org.key_project.solidity.program.ast.references;
 
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 
-public class ModifierReference implements SyntaxElement {
+public class ModifierReference implements SolidityProgramElement {
 
     private final String name;
 

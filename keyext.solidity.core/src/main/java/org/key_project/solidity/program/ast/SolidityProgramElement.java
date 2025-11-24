@@ -4,6 +4,7 @@
 package org.key_project.solidity.program.ast;
 
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public interface SolidityProgramElement extends SyntaxElement {
 
@@ -13,4 +14,5 @@ public interface SolidityProgramElement extends SyntaxElement {
     @Override
     int getChildCount();
 
+    void visit(Visitor v);
 }

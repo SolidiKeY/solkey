@@ -4,14 +4,16 @@
 package org.key_project.solidity.program.ast.abstractions;
 
 import org.key_project.logic.Name;
+import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 
-public class EnumType implements Type {
+public class EnumType implements Type, SolidityProgramElement {
 
     private final Name name;
 
@@ -27,6 +29,16 @@ public class EnumType implements Type {
     @Override
     public @NonNull Name name() {
         return name;
+    }
+
+    @Override
+    public SyntaxElement getChild(int n) {
+        return null;
+    }
+
+    @Override
+    public int getChildCount() {
+        return 0;
     }
 
     public void visit(Visitor v){
