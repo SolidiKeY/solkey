@@ -7,15 +7,36 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 
 public abstract class SolidityASTWalker {
-    public SolidityASTWalker(SolidityProgramElement program) {
+    private final SolidityProgramElement root;
+
+    private int depth = -1;
+
+    public SolidityASTWalker(SolidityProgramElement root) {
+        this.root = root;
+    }
+
+    public SolidityProgramElement root(){
+        return root;
+    }
+
+    public void start() {
+        walk(root);
     }
 
     public int depth() {
-        throw new RuntimeException("Not implemented yet");
+        return depth;
     }
 
     protected void walk(SolidityProgramElement node) {
-
+        if (node.getChildCount() > 0) {
+            depth++;
+            for (int i = 0; i < node.getChildCount(); i++) {
+                walk((SolidityProgramElement) node.getChild(i));
+            }
+            depth--;
+        }
+        // Otherwise, the node is left, so perform the action
+        doAction(node);
     }
 
     public void run() {
