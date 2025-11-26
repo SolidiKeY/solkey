@@ -1,0 +1,108 @@
+package org.key_project.solidity.program.ast.visitor;
+
+import org.checkerframework.checker.nullness.qual.Nullable;
+import org.key_project.logic.Term;
+import org.key_project.logic.op.Operator;
+import org.key_project.logic.op.QuantifiableVariable;
+import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.op.ElementaryUpdate;
+import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.util.ExtList;
+import org.key_project.util.collection.ImmutableArray;
+
+import java.util.Map;
+import java.util.Objects;
+
+public class ProgVarReplaceVisitor extends CreatingASTVisitor {
+    protected boolean replaceAllByNew = true;
+
+    /// stores the program variables to be replaced as keys and the new program variables as values
+    protected final Map<ProgramVariable, ProgramVariable> replaceMap;
+
+    private @Nullable SolidityProgramElement result = null;
+
+    /// creates a visitor that replaces the program variables in the given statement by new ones
+    /// with
+    /// the same name
+    ///
+    /// @param st the statement where the prog vars are replaced
+    /// @param map the HashMap with the replacements
+    /// @param services the services instance
+    public ProgVarReplaceVisitor(SolidityProgramElement st, Map<ProgramVariable, ProgramVariable> map,
+                                 boolean replaceAllByNew,
+                                 Services services) {
+        super(st, true, services);
+        this.replaceAllByNew = replaceAllByNew;
+        this.replaceMap = map;
+        assert services != null;
+    }
+
+    /// the action that is performed just before leaving the node the last time
+    ///
+    /// @param node the node described above
+    @Override
+    protected void doAction(SolidityProgramElement node) {
+        node.visit(this);
+    }
+
+    /// starts the walker
+    @Override
+    public void start() {
+        stack.push(new ExtList());
+        walk(root());
+        ExtList el = stack.peek();
+        assert el != null;
+        int i = 0;
+        while (!(el.get(i) instanceof SolidityProgramElement)) {
+            i++;
+        }
+        result = (SolidityProgramElement) Objects.requireNonNull(stack.peek()).get(i);
+    }
+
+    public SolidityProgramElement result() {
+        return Objects.requireNonNull(result);
+    }
+
+    @Override
+    public void performActionOnProgramVariable(ProgramVariable x) {
+        SolidityProgramElement newPV = replaceMap.get(x);
+        if (newPV != null) {
+            addChild(newPV);
+            changed();
+        } else {
+            doDefaultAction(x);
+        }
+    }
+
+
+    private @Nullable Term replaceVariablesInTerm(@Nullable Term t) {
+        if (t == null)
+            return null;
+        if (t.op() instanceof ProgramVariable pv) {
+            if (replaceMap.containsKey(pv)) {
+                ProgramVariable replacement = replaceMap.get(pv);
+                return services.getTermFactory().createTerm(replacement);
+            } else {
+                return t;
+            }
+        } else {
+            boolean changed = false;
+            Term[] subTerms = new Term[t.arity()];
+            for (int i = 0, n = t.arity(); i < n; i++) {
+                subTerms[i] = Objects.requireNonNull(replaceVariablesInTerm(t.sub(i)));
+                changed = changed || subTerms[i] != t.sub(i);
+            }
+            Operator op = t.op();
+            if (op instanceof ElementaryUpdate eu) {
+                if (replaceMap.containsKey(eu.lhs())) {
+                    ProgramVariable replacement = replaceMap.get(eu.lhs());
+                    op = ElementaryUpdate.getInstance(replacement);
+                    changed = changed || eu != op;
+                }
+            }
+            return changed ? services.getTermFactory().createTerm(op, subTerms,
+                    (ImmutableArray<QuantifiableVariable>) t.boundVars()) : t;
+        }
+    }
+}
