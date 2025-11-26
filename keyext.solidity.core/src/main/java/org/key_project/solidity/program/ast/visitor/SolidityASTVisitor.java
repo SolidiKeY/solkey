@@ -1,6 +1,7 @@
 package org.key_project.solidity.program.ast.visitor;
 
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.*;
 import org.key_project.solidity.program.ast.declarations.*;
@@ -32,6 +33,11 @@ public abstract class SolidityASTVisitor extends SolidityASTWalker implements Vi
     }
 
     protected abstract void doDefaultAction(SolidityProgramElement node);
+
+    @Override
+    public void performActionOnProgramVariable(ProgramVariable x) {
+        doDefaultAction(x);
+    }
 
     @Override
     public void performActionOnArrayType(ArrayType x) {

@@ -1,5 +1,6 @@
 package org.key_project.solidity.program.ast.visitor;
 
+import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.abstractions.*;
 import org.key_project.solidity.program.ast.declarations.*;
 import org.key_project.solidity.program.ast.expressions.*;
@@ -9,6 +10,8 @@ import org.key_project.solidity.program.ast.references.*;
 import org.key_project.solidity.program.ast.statement.*;
 
 public interface Visitor {
+    void performActionOnProgramVariable(ProgramVariable x);
+
     void performActionOnArrayType(ArrayType x);
     void performActionOnEnumType(EnumType x);
     void performActionOnKeYSolidityType(KeYSolidityType x);

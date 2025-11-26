@@ -1,0 +1,40 @@
+package org.key_project.solidity.program.ast.visitor;
+
+import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
+
+import java.util.LinkedHashSet;
+
+public class ProgramVariableCollector extends SolidityASTVisitor {
+    private final LinkedHashSet<ProgramVariable> result = new LinkedHashSet<>();
+
+    /// collects all program variables occurring in the AST <tt>root</tt> using this constructor is
+    /// equivalent to <tt>ProggramVariableCollector(root, false)</tt>
+    ///
+    /// @param root the ProgramElement which is the root of the AST
+    /// @param services the Services object
+    public ProgramVariableCollector(SolidityProgramElement root, Services services) {
+        super(root, services);
+        assert services != null;
+    }
+
+    @Override
+    public void start() {
+        walk(root());
+    }
+
+    public LinkedHashSet<ProgramVariable> result() {
+        return result;
+    }
+
+    @Override
+    protected void doDefaultAction(SolidityProgramElement x) {
+    }
+
+    @Override
+    public void performActionOnProgramVariable(ProgramVariable x) {
+        result.add(x);
+    }
+
+}
