@@ -21,7 +21,14 @@ public abstract class SolidityASTVisitor extends SolidityASTWalker implements Vi
     /// the action that is performed just before leaving the node the last time
     @Override
     protected void doAction(SolidityProgramElement node) {
-        node.visit(this);
+        super.walk(node);
+    }
+
+    @Override
+    protected void walk(SolidityProgramElement node) {
+        super.walk(node);
+        if (services != null) {
+        }
     }
 
     protected abstract void doDefaultAction(SolidityProgramElement node);
