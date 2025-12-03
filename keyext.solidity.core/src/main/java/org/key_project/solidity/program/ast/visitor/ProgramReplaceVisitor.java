@@ -1,6 +1,5 @@
 package org.key_project.solidity.program.ast.visitor;
 
-import de.uka.ilkd.key.rule.metaconstruct.ProgramTransformer;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.SolidityProgramElement;

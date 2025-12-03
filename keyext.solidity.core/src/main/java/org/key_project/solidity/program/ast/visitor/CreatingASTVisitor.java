@@ -2,7 +2,6 @@ package org.key_project.solidity.program.ast.visitor;
 
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
-import org.key_project.solidity.program.ast.expressions.operators.AssignmentExpression;
 import org.key_project.util.ExtList;
 
 import java.util.ArrayDeque;
