@@ -11,6 +11,7 @@ import org.key_project.solidity.program.ast.expressions.literals.*;
 import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.references.*;
 import org.key_project.solidity.program.ast.statement.*;
+import org.key_project.solidity.rule.metaconstruct.ProgramTransformer;
 
 public abstract class SolidityASTVisitor extends SolidityASTWalker implements Visitor {
     protected final Services services;
@@ -475,4 +476,8 @@ public abstract class SolidityASTVisitor extends SolidityASTWalker implements Vi
         doDefaultAction((SolidityProgramElement) x);
     }
 
+    @Override
+    public void performActionOnProgramMetaConstruct(ProgramTransformer x) {
+        doDefaultAction(x);
+    }
 }
