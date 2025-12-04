@@ -1,10 +1,12 @@
 package org.key_project.solidity.program.ast.visitor;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.util.ExtList;
+import org.key_project.util.collection.ImmutableArray;
 
 import java.util.Objects;
 
@@ -49,5 +51,33 @@ public class ProgramReplaceVisitor extends CreatingASTVisitor {
     @Override
     protected void doDefaultAction(SolidityProgramElement x) {
         addChild(x);
+    }
+
+    @Override
+    public void performActionOnSchemaVariable(SchemaVariable sv) {
+        final Object inst = svinsts.getInstantiation(sv);
+        if (inst instanceof SolidityProgramElement pe) {
+            addChild(pe);
+        } else if (inst instanceof ImmutableArray/* <ProgramElement> */) {
+            @SuppressWarnings("unchecked")
+            final var instArray = (ImmutableArray<SolidityProgramElement>) inst;
+            // the assertion ensures the intended instanceof check from above
+            addChildren(instArray);
+        } /*
+         * TODO: else if (inst instanceof Term t && t.op() instanceof ProgramInLogic) {
+         * addChild(services.getTypeConverter().convertToProgramElement((Term) inst));
+         * }
+         */ else {
+            throw new IllegalStateException(
+                    "program-replace-visitor: Instantiation missing " + "for schema variable " + sv);
+        }
+        changed();
+    }
+
+    private void addChildren(ImmutableArray<SolidityProgramElement> arr) {
+        stack.pop();
+        for (int i = 0, sz = arr.size(); i < sz; i++) {
+            addToTopOfStack(arr.get(i));
+        }
     }
 }

@@ -1,5 +1,6 @@
 package org.key_project.solidity.program.ast.visitor;
 
+import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
@@ -469,5 +470,9 @@ public abstract class SolidityASTVisitor extends SolidityASTWalker implements Vi
         doDefaultAction(x);
     }
 
+    @Override
+    public void performActionOnSchemaVariable(SchemaVariable x) {
+        doDefaultAction((SolidityProgramElement) x);
+    }
 
 }
