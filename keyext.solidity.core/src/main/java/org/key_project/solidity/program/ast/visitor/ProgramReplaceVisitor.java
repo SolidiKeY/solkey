@@ -7,6 +7,7 @@ import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
+import org.key_project.solidity.rule.metaconstruct.ProgramTransformer;
 
 import java.util.Objects;
 
@@ -79,5 +80,27 @@ public class ProgramReplaceVisitor extends CreatingASTVisitor {
         for (int i = 0, sz = arr.size(); i < sz; i++) {
             addToTopOfStack(arr.get(i));
         }
+    }
+
+    @Override
+    public void performActionOnProgramMetaConstruct(ProgramTransformer x) {
+        final ExtList changeList = getTop();
+
+        SolidityProgramElement body = null;
+        for (Object element : changeList) {
+            if (element instanceof SolidityProgramElement pe) {
+                body = pe;
+            }
+        }
+
+        assert body != null : "A program transformer without program to transform?";
+
+        final SolidityProgramElement[] result = x.transform(body, services, svinsts);
+        if (result == null) {
+            addChild(null);
+        } else {
+            addChildren(new ImmutableArray<>(result));
+        }
+        changed();
     }
 }

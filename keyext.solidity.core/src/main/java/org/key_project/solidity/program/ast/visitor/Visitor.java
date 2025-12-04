@@ -9,6 +9,7 @@ import org.key_project.solidity.program.ast.expressions.literals.*;
 import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.references.*;
 import org.key_project.solidity.program.ast.statement.*;
+import org.key_project.solidity.rule.metaconstruct.ProgramTransformer;
 
 public interface Visitor {
     void performActionOnProgramVariable(ProgramVariable x);
@@ -100,4 +101,5 @@ public interface Visitor {
     void performActionOnReturnStatment(ReturnStatment x);
     void performActionOnTryStatement(TryStatement x);
     void performActionOnWhileStatement(WhileStatement x);
+    void performActionOnProgramMetaConstruct(ProgramTransformer programTransformer);
 }
