@@ -3,12 +3,10 @@ package org.key_project.solidity.program.ast.visitor;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
-import org.key_project.solidity.program.ast.expressions.operators.AssignmentExpression;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.util.ExtList;
 
 import java.util.Objects;
-import java.util.regex.Pattern;
 
 public class ProgramReplaceVisitor extends CreatingASTVisitor {
     private @Nullable SolidityProgramElement result = null;
@@ -51,27 +49,5 @@ public class ProgramReplaceVisitor extends CreatingASTVisitor {
     @Override
     protected void doDefaultAction(SolidityProgramElement x) {
         addChild(x);
-    }
-
-    @Override
-    public void performActionOnAssignmentExpression(AssignmentExpression x) {
-        ExtList changeList = getTop();
-        if (!changeList.isEmpty() && changeList.getFirst() == CHANGED) {
-            changeList.removeFirst();
-            Pattern pat = changeList.removeFirstOccurrence(Pattern.class);
-            /*if (pat != null) {
-                if (pat instanceof BindingPattern b) {
-                    var pv = b.pv();
-                    stack.pop();
-                    var el = new ExtList();
-                    assert pv != null;
-                    el.add(pv);
-                    el.addAll(changeList);
-                    stack.push(el);
-                }
-            }*/
-            changed();
-        }
-        super.performActionOnAssignmentExpression(x);
     }
 }
