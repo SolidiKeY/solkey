@@ -5,6 +5,9 @@ package org.key_project.solidity.program.ast.expressions.operators;
 
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.util.ExtList;
+
+import java.util.Objects;
 
 abstract class UnaryBothCases extends UnaryOperator {
     protected boolean prefix;
@@ -12,6 +15,11 @@ abstract class UnaryBothCases extends UnaryOperator {
     protected UnaryBothCases(Expression exp, Type type, boolean prefix) {
         super(exp, type);
         this.prefix = prefix;
+    }
+
+    public UnaryBothCases(ExtList children) {
+        super(Objects.requireNonNull(children.removeFirstOccurrence(Expression.class)),
+                Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
     }
 
     @Override

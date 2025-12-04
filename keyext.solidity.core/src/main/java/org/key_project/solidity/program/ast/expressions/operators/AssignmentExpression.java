@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions.operators;
 
+import org.key_project.util.ExtList;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
@@ -21,5 +22,9 @@ public class AssignmentExpression extends BinaryOperator {
 
     public void visit(Visitor v){
         v.performActionOnAssignmentExpression(this);
+    }
+
+    public AssignmentExpression(ExtList changeList) {
+        super(changeList);
     }
 }
