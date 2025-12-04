@@ -8,6 +8,9 @@ import org.key_project.solidity.program.ast.TypeResolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.UnresolvedTypeException;
+import org.key_project.util.ExtList;
+
+import java.util.Objects;
 
 public abstract class UnaryOperator extends Expression {
 
@@ -17,6 +20,11 @@ public abstract class UnaryOperator extends Expression {
     protected UnaryOperator(Expression exp, Type type) {
         super(type);
         this.exp = exp;
+    }
+
+    public UnaryOperator(ExtList children) {
+        super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
+        this.exp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
     }
 
     @Override
