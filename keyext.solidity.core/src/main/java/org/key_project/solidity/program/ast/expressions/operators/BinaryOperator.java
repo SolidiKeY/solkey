@@ -7,6 +7,9 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.UnresolvedTypeException;
+import org.key_project.util.ExtList;
+
+import java.util.Objects;
 
 public abstract class BinaryOperator extends Expression {
 
@@ -17,6 +20,12 @@ public abstract class BinaryOperator extends Expression {
         super(type);
         this.left = left;
         this.right = right;
+    }
+
+    public BinaryOperator(ExtList children) {
+        super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
+        this.left = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.right = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
     }
 
     @Override

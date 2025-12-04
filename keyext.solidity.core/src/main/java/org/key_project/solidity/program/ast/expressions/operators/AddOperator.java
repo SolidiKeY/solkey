@@ -6,6 +6,7 @@ package org.key_project.solidity.program.ast.expressions.operators;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
 
 public final class AddOperator extends BinaryOperator {
     public AddOperator(Expression left, Expression right, Type type) {
@@ -17,5 +18,9 @@ public final class AddOperator extends BinaryOperator {
 
     public void visit(Visitor v){
         v.performActionOnAddOperator(this);
+    }
+
+    public AddOperator(ExtList changeList) {
+        super(changeList);
     }
 }

@@ -2,6 +2,7 @@ package org.key_project.solidity.program.ast.visitor;
 
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.expressions.operators.AddOperator;
 import org.key_project.util.ExtList;
 
 import java.util.ArrayDeque;
@@ -98,5 +99,16 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
             addChild(createNewElement(changeList));
             changed();
         }
+    }
+
+    @Override
+    public void performActionOnAddOperator(AddOperator x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new AddOperator(changeList);
+            }
+        };
+        def.doAction(x);
     }
 }

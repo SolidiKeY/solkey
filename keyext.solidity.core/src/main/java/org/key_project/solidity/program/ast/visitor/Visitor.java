@@ -14,6 +14,7 @@ import org.key_project.solidity.rule.metaconstruct.ProgramTransformer;
 public interface Visitor {
     void performActionOnProgramVariable(ProgramVariable x);
     void performActionOnSchemaVariable(SchemaVariable x);
+    void performActionOnProgramMetaConstruct(ProgramTransformer programTransformer);
 
     void performActionOnArrayType(ArrayType x);
     void performActionOnEnumType(EnumType x);
@@ -101,5 +102,4 @@ public interface Visitor {
     void performActionOnReturnStatment(ReturnStatment x);
     void performActionOnTryStatement(TryStatement x);
     void performActionOnWhileStatement(WhileStatement x);
-    void performActionOnProgramMetaConstruct(ProgramTransformer programTransformer);
 }
