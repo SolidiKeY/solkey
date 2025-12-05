@@ -4,9 +4,11 @@
 package org.key_project.solidity.program.ast.expressions.literals;
 
 import java.math.BigInteger;
+import java.util.Objects;
 
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
 
 public class Uint256Literal extends Literal {
 
@@ -15,6 +17,11 @@ public class Uint256Literal extends Literal {
     public Uint256Literal(BigInteger value) {
         super(PrimitiveType.UINT256);
         this.value = value;
+    }
+
+    public Uint256Literal(ExtList children) {
+        super(PrimitiveType.UINT256);
+        this.value = Objects.requireNonNull(children.removeFirstOccurrence(BigInteger.class));
     }
 
     public BigInteger getValue() {

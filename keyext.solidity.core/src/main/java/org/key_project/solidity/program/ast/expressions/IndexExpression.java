@@ -6,6 +6,9 @@ package org.key_project.solidity.program.ast.expressions;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
+
+import java.util.Objects;
 
 public class IndexExpression extends Expression {
 
@@ -16,6 +19,12 @@ public class IndexExpression extends Expression {
         super(expType);
         this.leftExp = leftExp;
         this.indexExp = indexExp;
+    }
+
+    public IndexExpression(ExtList children) {
+        super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
+        this.leftExp = Objects.requireNonNull(children.removeFirstOccurrence(String.class));
+        this.indexExp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
     }
 
     @Override

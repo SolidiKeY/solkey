@@ -4,11 +4,13 @@
 package org.key_project.solidity.program.ast.statement;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
 
 public class TryStatement implements Statement {
 
@@ -18,6 +20,11 @@ public class TryStatement implements Statement {
     public TryStatement(Expression expression, List<Block> blocks) {
         this.expression = expression;
         this.blocks = blocks;
+    }
+
+    public TryStatement(ExtList children) {
+        this.expression = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.blocks = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
     }
 
     @Override

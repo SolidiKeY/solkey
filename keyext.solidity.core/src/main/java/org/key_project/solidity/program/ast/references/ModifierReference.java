@@ -6,6 +6,9 @@ package org.key_project.solidity.program.ast.references;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
+
+import java.util.Objects;
 
 public class ModifierReference implements SolidityProgramElement {
 
@@ -13,6 +16,10 @@ public class ModifierReference implements SolidityProgramElement {
 
     public ModifierReference(String name) {
         this.name = name;
+    }
+
+    public ModifierReference(ExtList children) {
+        this.name = Objects.requireNonNull(children.removeFirstOccurrence(String.class));
     }
 
     @Override

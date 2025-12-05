@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
 
 public class TupleExpression extends Expression {
     List<Expression> expressions;
@@ -17,6 +18,11 @@ public class TupleExpression extends Expression {
     public TupleExpression(Type type, List<Expression> expressions) {
         super(type);
         this.expressions = expressions;
+    }
+
+    public TupleExpression(ExtList children) {
+        super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
+        this.expressions = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
     }
 
     @Override

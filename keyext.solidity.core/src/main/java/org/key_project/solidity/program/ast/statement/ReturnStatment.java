@@ -6,12 +6,19 @@ package org.key_project.solidity.program.ast.statement;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
+
+import java.util.Objects;
 
 public class ReturnStatment implements Statement {
     private Expression returnExp;
 
     public ReturnStatment(Expression returnExp) {
         this.returnExp = returnExp;
+    }
+
+    public ReturnStatment(ExtList children) {
+        this.returnExp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
     }
 
     @Override

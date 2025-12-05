@@ -6,11 +6,19 @@ package org.key_project.solidity.program.ast.expressions;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
+
+import java.util.Objects;
 
 public class ElementaryExpression extends Expression {
 
     public ElementaryExpression(Type type) {
         super(type);
+    }
+
+    public ElementaryExpression(ExtList children) {
+        super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
+
     }
 
     @Override

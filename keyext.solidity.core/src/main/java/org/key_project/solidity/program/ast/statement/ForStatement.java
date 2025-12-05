@@ -5,10 +5,12 @@ package org.key_project.solidity.program.ast.statement;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
 
 public class ForStatement implements Statement {
     private final Expression initializationExpression;
@@ -22,6 +24,13 @@ public class ForStatement implements Statement {
         this.condition = condition;
         this.loopExpression = loopExpression;
         this.body = body;
+    }
+
+    public ForStatement(ExtList children) {
+        this.initializationExpression = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.condition = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.loopExpression = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.body = Objects.requireNonNull(children.removeFirstOccurrence(Statement.class));
     }
 
     @Override

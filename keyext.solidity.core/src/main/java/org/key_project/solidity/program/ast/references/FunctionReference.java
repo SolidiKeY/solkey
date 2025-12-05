@@ -4,6 +4,7 @@
 package org.key_project.solidity.program.ast.references;
 
 import java.util.HashMap;
+import java.util.Objects;
 
 import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.Resolver;
@@ -11,6 +12,7 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
 
 public class FunctionReference extends VariableReference implements Resolver {
 
@@ -31,6 +33,13 @@ public class FunctionReference extends VariableReference implements Resolver {
         this.id = id;
         this.name = name;
         this.referencedDeclaration = null;
+    }
+
+    public FunctionReference(ExtList children) {
+        super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
+        this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
+        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
+        this.referencedDeclaration = Objects.requireNonNull(children.removeFirstOccurrence(FunctionDeclaration.class));
     }
 
     @Override

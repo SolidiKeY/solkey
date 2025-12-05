@@ -6,6 +6,9 @@ package org.key_project.solidity.program.ast.statement;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
+
+import java.util.Objects;
 
 public class WhileStatement implements Statement {
 
@@ -15,6 +18,11 @@ public class WhileStatement implements Statement {
     public WhileStatement(Expression condition, Statement body) {
         this.condition = condition;
         this.body = body;
+    }
+
+    public WhileStatement(ExtList children) {
+        this.condition = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.body = Objects.requireNonNull(children.removeFirstOccurrence(Statement.class));
     }
 
     @Override

@@ -4,10 +4,12 @@
 package org.key_project.solidity.program.ast.statement;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.declarations.Declaration;
+import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 
@@ -33,6 +35,15 @@ public class Block implements Statement {
     public Block(int id, List<Statement> statements) {
         this.id = id;
         this.statements = new ImmutableArray<>(statements);
+    }
+
+    public Block(ExtList children) {
+        this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
+        this.statements = new ImmutableArray<Statement>(
+                Objects.requireNonNull(children.removeFirstOccurrence(List.class))
+        );
+        this.errorName = Objects.requireNonNull(children.removeFirstOccurrence(String.class));
+        this.arguments = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
     }
 
     @Override

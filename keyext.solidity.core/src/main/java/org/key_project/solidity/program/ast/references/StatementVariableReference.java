@@ -8,6 +8,9 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
+
+import java.util.Objects;
 
 public class StatementVariableReference extends VariableReference {
     private final int id;
@@ -20,6 +23,13 @@ public class StatementVariableReference extends VariableReference {
         this.id = id;
         this.name = name;
         this.stmVarDecl = stmVarDeclaration;
+    }
+
+    public StatementVariableReference(ExtList children) {
+        super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
+        this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
+        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
+        this.stmVarDecl = Objects.requireNonNull(children.removeFirstOccurrence(StatementVariableDeclaration.class));
     }
 
     @Override

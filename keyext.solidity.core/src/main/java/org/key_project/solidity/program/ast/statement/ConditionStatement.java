@@ -6,6 +6,9 @@ package org.key_project.solidity.program.ast.statement;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
+
+import java.util.Objects;
 
 public class ConditionStatement implements Statement {
     Expression condition;
@@ -21,6 +24,12 @@ public class ConditionStatement implements Statement {
         this.condition = condition;
         this.trueBody = trueBody;
         this.falseBody = falseBody;
+    }
+
+    public ConditionStatement(ExtList children) {
+        this.condition = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.trueBody = Objects.requireNonNull(children.removeFirstOccurrence(Statement.class));
+        this.falseBody = Objects.requireNonNull(children.removeFirstOccurrence(Statement.class));
     }
 
     @Override

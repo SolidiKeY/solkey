@@ -6,6 +6,9 @@ package org.key_project.solidity.program.ast.expressions;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
+
+import java.util.Objects;
 
 public class MemberExp extends Expression {
     final Expression leftExp;
@@ -15,6 +18,12 @@ public class MemberExp extends Expression {
         super(type);
         this.leftExp = leftExp;
         this.rightName = name;
+    }
+
+    public MemberExp(ExtList children) {
+        super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
+        this.leftExp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.rightName = Objects.requireNonNull(children.removeFirstOccurrence(String.class));
     }
 
     @Override

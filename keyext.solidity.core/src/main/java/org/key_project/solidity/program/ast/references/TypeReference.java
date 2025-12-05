@@ -9,6 +9,9 @@ import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.TypeResolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
+
+import java.util.Objects;
 
 public class TypeReference implements SolidityProgramElement {
 
@@ -23,6 +26,11 @@ public class TypeReference implements SolidityProgramElement {
     public TypeReference(Name typeName) {
         this.typeName = typeName;
         this.referencedType = null;
+    }
+
+    public TypeReference(ExtList children) {
+        this.referencedType = Objects.requireNonNull(children.removeFirstOccurrence(Type.class));
+        this.typeName = referencedType.name();
     }
 
     public Name getTypeName() {

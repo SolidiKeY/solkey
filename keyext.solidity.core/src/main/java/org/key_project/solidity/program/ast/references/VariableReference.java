@@ -9,6 +9,9 @@ import org.key_project.solidity.program.ast.TypeResolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.util.ExtList;
+
+import java.util.Objects;
 
 public abstract class VariableReference extends Expression {
     protected Type type;
@@ -23,6 +26,12 @@ public abstract class VariableReference extends Expression {
     protected VariableReference(Name typeName, Type type) {
         super(type);
         this.typeName = typeName;
+    }
+
+    protected VariableReference(ExtList children) {
+        super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
+        this.type = Objects.requireNonNull(children.removeFirstOccurrence(Type.class));
+        this.typeName = type.name();
     }
 
     public boolean isResolved() {
