@@ -322,6 +322,20 @@ class SolJsonParserTest {
     }
 
     @Test
+    void parseMemoryParameter() throws IOException {
+        //language=solidity
+        String contract = """
+                contract SimpleContract {
+                    struct Person {
+                       int age;
+                    }
+                    function func(Person memory p) public pure  {
+                    }
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+    }
+
+    @Test
     void parseStruct() throws IOException {
         // language=solidity
         String contract = """

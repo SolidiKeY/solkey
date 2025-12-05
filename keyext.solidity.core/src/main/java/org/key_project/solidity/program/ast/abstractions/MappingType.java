@@ -12,6 +12,9 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
+
+import java.util.Objects;
 
 public class MappingType implements Type, SolidityProgramElement {
 
@@ -21,6 +24,11 @@ public class MappingType implements Type, SolidityProgramElement {
     public MappingType(Type keyType, Type valueType) {
         this.keyType = keyType;
         this.valueType = valueType;
+    }
+
+    public MappingType(ExtList children) {
+        this.keyType = Objects.requireNonNull(children.removeFirstOccurrence(Type.class));;
+        this.valueType = Objects.requireNonNull(children.removeFirstOccurrence(Type.class));;
     }
 
     @Override

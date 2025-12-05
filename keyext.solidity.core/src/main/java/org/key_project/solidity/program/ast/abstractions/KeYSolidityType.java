@@ -14,6 +14,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
 
 public class KeYSolidityType implements Type, SolidityProgramElement {
     /// the AST type
@@ -27,6 +28,11 @@ public class KeYSolidityType implements Type, SolidityProgramElement {
     public KeYSolidityType(Type solidityType, Sort sort) {
         this.solidityType = solidityType;
         this.sort = sort;
+    }
+
+    public KeYSolidityType(ExtList children) {
+        this.solidityType = Objects.requireNonNull(children.removeFirstOccurrence(Type.class));;
+        this.sort = Objects.requireNonNull(children.removeFirstOccurrence(Sort.class));;
     }
 
     public KeYSolidityType(Type solidityType) {

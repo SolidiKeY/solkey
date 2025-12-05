@@ -10,6 +10,9 @@ import org.key_project.solidity.program.ast.references.TypeReference;
 
 import org.jspecify.annotations.NonNull;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
+
+import java.util.Objects;
 
 public class ParameterDeclaration extends Declaration {
     private final int id;
@@ -22,6 +25,13 @@ public class ParameterDeclaration extends Declaration {
         this.id = id;
         this.typeReference = typeReference;
         this.dataLocation = dataLocation;
+    }
+
+    public ParameterDeclaration(ExtList children) {
+        super(Objects.requireNonNull(children.removeFirstOccurrence(Name.class)));
+        this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
+        this.typeReference = Objects.requireNonNull(children.removeFirstOccurrence(TypeReference.class));
+        this.dataLocation = Objects.requireNonNull(children.removeFirstOccurrence(DataLocation.class));
     }
 
     @Override

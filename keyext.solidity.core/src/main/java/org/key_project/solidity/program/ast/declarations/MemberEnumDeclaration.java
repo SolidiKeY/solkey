@@ -8,11 +8,18 @@ import org.key_project.logic.SyntaxElement;
 
 import org.jspecify.annotations.NonNull;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
+
+import java.util.Objects;
 
 public class MemberEnumDeclaration extends Declaration {
 
     public MemberEnumDeclaration(@NonNull Name name) {
         super(name);
+    }
+
+    public MemberEnumDeclaration(ExtList children) {
+        super(Objects.requireNonNull(children.removeFirstOccurrence(Name.class)));
     }
 
     @Override

@@ -11,6 +11,9 @@ import org.key_project.solidity.program.ast.references.TypeReference;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
+
+import java.util.Objects;
 
 public class FieldDeclaration extends Declaration {
 
@@ -28,6 +31,12 @@ public class FieldDeclaration extends Declaration {
         super(name);
         this.typeReference = typeReference;
         this.initializer = initializer;
+    }
+
+    public FieldDeclaration(ExtList children) {
+        super(Objects.requireNonNull(children.removeFirstOccurrence(Name.class)));
+        this.typeReference = Objects.requireNonNull(children.removeFirstOccurrence(TypeReference.class));
+        this.initializer = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
     }
 
     public @NonNull TypeReference getTypeReference() {

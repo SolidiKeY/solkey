@@ -12,6 +12,9 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
+
+import java.util.Objects;
 
 public class EnumType implements Type, SolidityProgramElement {
 
@@ -19,6 +22,10 @@ public class EnumType implements Type, SolidityProgramElement {
 
     public EnumType(Name name) {
         this.name = name;
+    }
+
+    public EnumType(ExtList children) {
+        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
     }
 
     @Override

@@ -12,6 +12,9 @@ import org.key_project.solidity.program.ast.references.TypeReference;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
+
+import java.util.Objects;
 
 public class StateVariableDeclaration extends Declaration {
 
@@ -33,6 +36,13 @@ public class StateVariableDeclaration extends Declaration {
         this.typeReference = typeReference;
         this.initializer = initializer;
         this.visibility = visibility;
+    }
+
+    public StateVariableDeclaration(ExtList children) {
+        super(Objects.requireNonNull(children.removeFirstOccurrence(Name.class)));
+        this.typeReference = Objects.requireNonNull(children.removeFirstOccurrence(TypeReference.class));
+        this.initializer = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.visibility = Objects.requireNonNull(children.removeFirstOccurrence(Visibility.class));
     }
 
     public @NonNull TypeReference getTypeReference() {

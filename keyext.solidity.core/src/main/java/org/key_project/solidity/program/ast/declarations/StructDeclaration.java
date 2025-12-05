@@ -4,12 +4,14 @@
 package org.key_project.solidity.program.ast.declarations;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 
 import org.jspecify.annotations.NonNull;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
 
 public class StructDeclaration extends Declaration {
     List<FieldDeclaration> fields;
@@ -17,6 +19,11 @@ public class StructDeclaration extends Declaration {
     public StructDeclaration(@NonNull Name name, List<FieldDeclaration> fields) {
         super(name);
         this.fields = fields;
+    }
+
+    public StructDeclaration(ExtList children) {
+        super(Objects.requireNonNull(children.removeFirstOccurrence(Name.class)));
+        this.fields = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
     }
 
     public List<FieldDeclaration> getFields() {

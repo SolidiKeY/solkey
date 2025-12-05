@@ -4,6 +4,7 @@
 package org.key_project.solidity.program.ast.declarations;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.key_project.logic.Name;
@@ -11,6 +12,7 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
@@ -37,6 +39,18 @@ public class ContractDeclaration extends Declaration implements Type {
         this.modifiers = modifiers;
         this.functions = functions;
         this.enums = enums;
+    }
+
+    public ContractDeclaration(ExtList children) {
+        super(Objects.requireNonNull(children.removeFirstOccurrence(Name.class)));
+        this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
+
+        ImmutableArray<StateVariableDeclaration> flds = Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class));
+        this.fields = new ImmutableArray<>(flds.toArray(new StateVariableDeclaration[0]));
+        this.structs = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
+        this.modifiers = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
+        this.functions = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
+        this.enums = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
     }
 
     public ImmutableArray<StateVariableDeclaration> getFieldDeclarations() {

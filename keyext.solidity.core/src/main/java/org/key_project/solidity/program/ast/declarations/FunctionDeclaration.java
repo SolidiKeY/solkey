@@ -4,6 +4,7 @@
 package org.key_project.solidity.program.ast.declarations;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.key_project.logic.Name;
@@ -12,6 +13,7 @@ import org.key_project.solidity.program.ast.declarations.FunctionEnums.StateMuta
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.references.ModifierReference;
 import org.key_project.solidity.program.ast.statement.Block;
+import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 
@@ -38,6 +40,18 @@ public class FunctionDeclaration extends Declaration {
         this.visibility = visibility;
         this.stateMutability = stateMutability;
         this.modifiers = modifiers;
+    }
+
+    public FunctionDeclaration(ExtList children) {
+        super(Objects.requireNonNull(children.removeFirstOccurrence(Name.class)));
+        this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
+        this.returnParameters = new ImmutableArray<>(Objects.requireNonNull(children.removeFirstOccurrence(List.class)));
+        this.inputParameters = new ImmutableArray<>(Objects.requireNonNull(children.removeFirstOccurrence(List.class)));
+        this.body = Objects.requireNonNull(children.removeFirstOccurrence(Block.class));
+        this.kind = Objects.requireNonNull(children.removeFirstOccurrence(String.class));
+        this.visibility = Objects.requireNonNull(children.removeFirstOccurrence(Visibility.class));
+        this.stateMutability = Objects.requireNonNull(children.removeFirstOccurrence(StateMutability.class));
+        this.modifiers = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
     }
 
     public Block getBody() {
