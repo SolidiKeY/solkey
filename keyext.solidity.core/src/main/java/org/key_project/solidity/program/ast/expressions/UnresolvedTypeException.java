@@ -5,10 +5,17 @@ package org.key_project.solidity.program.ast.expressions;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
+
+import java.util.Objects;
 
 public class UnresolvedTypeException extends RuntimeException implements SolidityProgramElement {
     public UnresolvedTypeException(String s) {
         super(s);
+    }
+
+    public UnresolvedTypeException(ExtList children) {
+        super(Objects.requireNonNull(children.removeFirstOccurrence(String.class)));
     }
 
     @Override

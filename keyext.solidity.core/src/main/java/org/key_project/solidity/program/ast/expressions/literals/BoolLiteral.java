@@ -5,6 +5,9 @@ package org.key_project.solidity.program.ast.expressions.literals;
 
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
+
+import java.util.Objects;
 
 public class BoolLiteral extends Literal {
 
@@ -16,6 +19,11 @@ public class BoolLiteral extends Literal {
     private BoolLiteral(boolean value) {
         super(PrimitiveType.BOOL);
         this.value = value;
+    }
+
+    public BoolLiteral(ExtList children) {
+        super(PrimitiveType.BOOL);
+        this.value = Objects.requireNonNull(children.removeFirstOccurrence(boolean.class));
     }
 
     public boolean getValue() {

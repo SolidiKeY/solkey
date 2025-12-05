@@ -107,6 +107,280 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         }
     }
 
+    @Override
+    public void performActionOnArrayType(ArrayType x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new ArrayType(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnEnumType(EnumType x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new EnumType(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnKeYSolidityType(KeYSolidityType x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new KeYSolidityType(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnMappingType(MappingType x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new MappingType(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnPrimitiveType(PrimitiveType x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new PrimitiveType(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnArrayDeclaration(ArrayDeclaration x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new ArrayDeclaration(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnContractDeclaration(ContractDeclaration x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new ContractDeclaration(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnEnumDeclaration(EnumDeclaration x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new EnumDeclaration(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnFieldDeclaration(FieldDeclaration x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new FieldDeclaration(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnFunctionDeclaration(FunctionDeclaration x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new FunctionDeclaration(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnMemberEnumDeclaration(MemberEnumDeclaration x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new MemberEnumDeclaration(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnModifierDeclaration(ModifierDeclaration x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new ModifierDeclaration(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnParameterDeclaration(ParameterDeclaration x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new ParameterDeclaration(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnStateVariableDeclaration(StateVariableDeclaration x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new StateVariableDeclaration(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnStatementVariableDeclaration(StatementVariableDeclaration x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new StatementVariableDeclaration(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnStructDeclaration(StructDeclaration x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new StructDeclaration(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnElementaryExpression(ElementaryExpression x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new ElementaryExpression(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnFunctionCallExpression(FunctionCallExpression x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new FunctionCallExpression(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnIndexExpression(IndexExpression x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new IndexExpression(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnIndexRangeExpression(IndexRangeExpression x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new IndexRangeExpression(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnMemberExp(MemberExp x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new MemberExp(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnTupleExpression(TupleExpression x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new TupleExpression(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnUnresolvedTypeException(UnresolvedTypeException x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new UnresolvedTypeException(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnBoolLiteral(BoolLiteral x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new BoolLiteral(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnUint256Literal(Uint256Literal x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new Uint256Literal(changeList);
+            }
+        };
+        def.doAction(x);
+    }
 
     @Override
     public void performActionOnAddOperator(AddOperator x) {
@@ -208,22 +482,22 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
     }
 
     @Override
-    public void performActionOnDivisionEqualOperator(DivisionEqualOperator x) {
+    public void performActionOnDivOperator(DivOperator x) {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new DivisionEqualOperator(changeList);
+                return new DivOperator(changeList);
             }
         };
         def.doAction(x);
     }
 
     @Override
-    public void performActionOnDivOperator(DivOperator x) {
+    public void performActionOnDivisionEqualOperator(DivisionEqualOperator x) {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new DivOperator(changeList);
+                return new DivisionEqualOperator(changeList);
             }
         };
         def.doAction(x);
@@ -532,6 +806,248 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
                 return new XorEqualOperator(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnArrayReference(ArrayReference x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new ArrayReference(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnContractReference(ContractReference x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new ContractReference(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnEnumReference(EnumReference x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new EnumReference(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnFunctionReference(FunctionReference x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new FunctionReference(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnModifierReference(ModifierReference x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new ModifierReference(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnParameterVariableReference(ParameterVariableReference x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new ParameterVariableReference(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnStateVariableReference(StateVariableReference x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new StateVariableReference(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnStatementVariableReference(StatementVariableReference x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new StatementVariableReference(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnTypeReference(TypeReference x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new TypeReference(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnUnresolvedReferenceException(UnresolvedReferenceException x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new UnresolvedReferenceException(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnBlock(Block x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new Block(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnBreakStatement(BreakStatement x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new BreakStatement();
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnConditionStatement(ConditionStatement x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new ConditionStatement(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnContinueStatement(ContinueStatement x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new ContinueStatement();
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnDeclarationStatement(DeclarationStatement x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new DeclarationStatement(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnDoWhileStatement(DoWhileStatement x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new DoWhileStatement(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnExpressionStatement(ExpressionStatement x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new ExpressionStatement(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnForStatement(ForStatement x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new ForStatement(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnPlaceholdStatement(PlaceholdStatement x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new PlaceholdStatement();
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnReturnStatment(ReturnStatment x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new ReturnStatment(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnTryStatement(TryStatement x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new TryStatement(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnWhileStatement(WhileStatement x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new WhileStatement(changeList);
             }
         };
         def.doAction(x);

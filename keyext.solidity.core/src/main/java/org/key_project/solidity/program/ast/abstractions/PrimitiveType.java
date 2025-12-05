@@ -16,6 +16,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.ExtList;
 
 public class PrimitiveType implements Type, SolidityProgramElement {
 
@@ -46,6 +47,11 @@ public class PrimitiveType implements Type, SolidityProgramElement {
     private PrimitiveType(@NonNull Name name) {
         this.name = name;
     }
+
+    public PrimitiveType(ExtList children) {
+        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
+    }
+
 
     @Override
     public boolean equals(Object o) {
