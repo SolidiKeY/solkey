@@ -39,7 +39,8 @@ public class FunctionReference extends VariableReference implements Resolver {
         super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
         this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
         this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
-        this.referencedDeclaration = Objects.requireNonNull(children.removeFirstOccurrence(FunctionDeclaration.class));
+        this.referencedDeclaration =
+            Objects.requireNonNull(children.removeFirstOccurrence(FunctionDeclaration.class));
     }
 
     @Override
@@ -62,7 +63,7 @@ public class FunctionReference extends VariableReference implements Resolver {
         this.referencedDeclaration = (FunctionDeclaration) id2Name.get(id);
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnFunctionReference(this);
     }
 }

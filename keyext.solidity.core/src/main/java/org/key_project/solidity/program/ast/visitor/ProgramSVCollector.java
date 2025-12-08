@@ -1,3 +1,6 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.visitor;
 
 import org.key_project.logic.op.sv.SchemaVariable;
@@ -19,7 +22,7 @@ public class ProgramSVCollector extends SolidityASTWalker {
     /// @param svInst the SVInstantiations previously found in order to determine the needed labels
     /// for the UnwindLoop construct.
     public ProgramSVCollector(SolidityProgramElement root, ImmutableList<SchemaVariable> vars,
-                              SVInstantiations svInst) {
+            SVInstantiations svInst) {
         super(root);
         result = vars;
         instantiations = svInst;

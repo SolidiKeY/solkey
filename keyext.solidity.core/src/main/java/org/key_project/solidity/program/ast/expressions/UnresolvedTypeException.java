@@ -2,12 +2,13 @@
  * KeY is licensed under the GNU General Public License Version 2
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions;
+
+import java.util.Objects;
+
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
-
-import java.util.Objects;
 
 public class UnresolvedTypeException extends RuntimeException implements SolidityProgramElement {
     public UnresolvedTypeException(String s) {
@@ -28,7 +29,7 @@ public class UnresolvedTypeException extends RuntimeException implements Solidit
         return 0;
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnUnresolvedTypeException(this);
     }
 }

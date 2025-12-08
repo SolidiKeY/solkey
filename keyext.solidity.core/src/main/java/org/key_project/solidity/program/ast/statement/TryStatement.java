@@ -51,7 +51,7 @@ public class TryStatement implements Statement {
             catchBlocks.stream().map(Block::toStringCatch).collect(Collectors.joining());
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnTryStatement(this);
     }
 }

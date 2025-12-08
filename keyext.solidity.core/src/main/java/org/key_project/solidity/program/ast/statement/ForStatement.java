@@ -27,9 +27,11 @@ public class ForStatement implements Statement {
     }
 
     public ForStatement(ExtList children) {
-        this.initializationExpression = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.initializationExpression =
+            Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
         this.condition = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
-        this.loopExpression = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.loopExpression =
+            Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
         this.body = Objects.requireNonNull(children.removeFirstOccurrence(Statement.class));
     }
 
@@ -73,7 +75,7 @@ public class ForStatement implements Statement {
             + "; " + nullOrEmpty(condition) + "; " + nullOrEmpty(loopExpression) + ")\n" + body;
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnForStatement(this);
     }
 }

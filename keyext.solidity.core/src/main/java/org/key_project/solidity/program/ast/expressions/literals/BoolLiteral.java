@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions.literals;
 
+import java.util.Objects;
+
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
-
-import java.util.Objects;
 
 public class BoolLiteral extends Literal {
 
@@ -35,7 +35,7 @@ public class BoolLiteral extends Literal {
         return value ? "true" : "false";
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnBoolLiteral(this);
     }
 }

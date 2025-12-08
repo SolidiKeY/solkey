@@ -8,10 +8,10 @@ import java.util.Objects;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
-
-import org.jspecify.annotations.NonNull;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
+
+import org.jspecify.annotations.NonNull;
 
 public class StructDeclaration extends Declaration {
     List<FieldDeclaration> fields;
@@ -42,7 +42,7 @@ public class StructDeclaration extends Declaration {
         return fields.size();
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnStructDeclaration(this);
     }
 }

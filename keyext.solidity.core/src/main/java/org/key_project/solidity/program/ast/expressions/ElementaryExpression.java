@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions;
 
+import java.util.Objects;
+
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
-
-import java.util.Objects;
 
 public class ElementaryExpression extends Expression {
 
@@ -36,7 +36,7 @@ public class ElementaryExpression extends Expression {
         return type.toString();
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnElementaryExpression(this);
     }
 }

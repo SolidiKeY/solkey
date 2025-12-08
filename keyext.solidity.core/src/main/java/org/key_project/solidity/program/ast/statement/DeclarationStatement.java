@@ -24,7 +24,8 @@ public class DeclarationStatement implements Statement {
 
     public DeclarationStatement(ExtList children) {
         this.declarations = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
-        this.initialValue = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.initialValue =
+            Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
     }
 
     @Override
@@ -49,7 +50,7 @@ public class DeclarationStatement implements Statement {
         return s + ";";
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnDeclarationStatement(this);
     }
 }

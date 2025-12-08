@@ -1,11 +1,14 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.visitor;
+
+import java.util.LinkedHashSet;
 
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
-
-import java.util.LinkedHashSet;
 
 public class ProgramVariableCollector extends SolidityASTVisitor {
     private final LinkedHashSet<ProgramVariable> result = new LinkedHashSet<>();

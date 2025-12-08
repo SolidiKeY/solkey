@@ -33,7 +33,7 @@ public class Uint256Literal extends Literal {
         return value.toString();
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnUint256Literal(this);
     }
 }

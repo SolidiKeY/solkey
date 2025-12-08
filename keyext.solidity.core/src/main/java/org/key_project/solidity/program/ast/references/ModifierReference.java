@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.references;
 
+import java.util.Objects;
+
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
-
-import java.util.Objects;
 
 public class ModifierReference implements SolidityProgramElement {
 
@@ -37,7 +37,7 @@ public class ModifierReference implements SolidityProgramElement {
         return name;
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnModifierReference(this);
     }
 }

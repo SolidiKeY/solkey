@@ -14,9 +14,9 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.SoliditiyExpression;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 import org.jspecify.annotations.NonNull;
-import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class ProgramVariable extends AbstractSortedOperator
         implements SoliditiyExpression, UpdateableOperator, IProgramVariable {

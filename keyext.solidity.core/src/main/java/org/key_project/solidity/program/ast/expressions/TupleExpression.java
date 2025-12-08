@@ -43,7 +43,7 @@ public class TupleExpression extends Expression {
             + "]";
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnTupleExpression(this);
     }
 }

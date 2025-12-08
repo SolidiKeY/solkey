@@ -3,13 +3,13 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions.operators;
 
-import org.key_project.util.ExtList;
+import java.util.Objects;
+
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
-
-import java.util.Objects;
+import org.key_project.util.ExtList;
 
 public class TernaryOperator extends Expression {
 
@@ -47,14 +47,16 @@ public class TernaryOperator extends Expression {
         return 3;
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnTernaryOperator(this);
     }
 
     public TernaryOperator(ExtList children) {
         super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
         this.condition = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
-        this.falseExpression = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
-        this.trueExpression = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.falseExpression =
+            Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.trueExpression =
+            Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
     }
 }

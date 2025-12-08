@@ -22,7 +22,7 @@ public class ContinueStatement implements Statement {
         return "continue;";
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnContinueStatement(this);
     }
 }

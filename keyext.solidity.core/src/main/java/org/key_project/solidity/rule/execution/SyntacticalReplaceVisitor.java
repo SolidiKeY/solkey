@@ -33,7 +33,7 @@ public class SyntacticalReplaceVisitor implements Visitor<Term> {
         this.rule = rule;
         this.ruleApp = ruleApp;
         this.services = services;
-        this.tb = services.getTermBuilder();
+        this.tb = services.getTb();
     }
 
     public Term getTerm() {

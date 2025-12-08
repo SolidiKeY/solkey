@@ -78,7 +78,7 @@ public class DefaultBuilder extends AbstractBuilder<@Nullable Object> {
                     if (op == null) {
                         semanticError(arg, "Could not find constant: %s", s);
                     }
-                    c = services.getTermBuilder().func(op);
+                    c = services.getTb().func(op);
                 } else {
                     c = (Term) t;
                 }

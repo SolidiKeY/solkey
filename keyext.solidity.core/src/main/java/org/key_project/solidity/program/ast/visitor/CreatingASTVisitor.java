@@ -1,4 +1,11 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.visitor;
+
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Objects;
 
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
@@ -11,10 +18,6 @@ import org.key_project.solidity.program.ast.references.*;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.util.ExtList;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.Objects;
-
 public class CreatingASTVisitor extends SolidityASTVisitor {
     protected static final Boolean CHANGED = Boolean.TRUE;
     protected final Deque<ExtList> stack = new ArrayDeque<>();
@@ -22,7 +25,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
     boolean preservesPositionInfo = true;
 
     public CreatingASTVisitor(SolidityProgramElement root, boolean preservesPos,
-                              Services services) {
+            Services services) {
         super(root, services);
         this.preservesPositionInfo = preservesPos;
     }

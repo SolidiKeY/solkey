@@ -9,7 +9,8 @@ import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public class UnresolvedReferenceException extends RuntimeException implements SolidityProgramElement {
+public class UnresolvedReferenceException extends RuntimeException
+        implements SolidityProgramElement {
     public UnresolvedReferenceException(Name typeName) {
         super(typeName.toString() + " cannot be resolved");
     }
@@ -27,7 +28,7 @@ public class UnresolvedReferenceException extends RuntimeException implements So
         return 0;
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnUnresolvedReferenceException(this);
     }
 }

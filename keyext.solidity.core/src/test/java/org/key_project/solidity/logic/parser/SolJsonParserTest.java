@@ -323,7 +323,7 @@ class SolJsonParserTest {
 
     @Test
     void parseMemoryParameter() throws IOException {
-        //language=solidity
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     struct Person {

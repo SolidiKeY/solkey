@@ -39,7 +39,8 @@ public class ContractReference extends VariableReference implements Resolver {
         super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
         this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
         this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
-        this.contractDeclaration = Objects.requireNonNull(children.removeFirstOccurrence(ContractDeclaration.class));
+        this.contractDeclaration =
+            Objects.requireNonNull(children.removeFirstOccurrence(ContractDeclaration.class));
     }
 
     @Override
@@ -76,7 +77,7 @@ public class ContractReference extends VariableReference implements Resolver {
         this.contractDeclaration = (ContractDeclaration) id2Name.get(id);
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnContractReference(this);
     }
 }

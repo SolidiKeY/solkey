@@ -1,6 +1,11 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.visitor;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
+import java.util.Map;
+import java.util.Objects;
+
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Operator;
 import org.key_project.logic.op.QuantifiableVariable;
@@ -11,8 +16,7 @@ import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
-import java.util.Map;
-import java.util.Objects;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class ProgVarReplaceVisitor extends CreatingASTVisitor {
     protected boolean replaceAllByNew = true;
@@ -29,9 +33,10 @@ public class ProgVarReplaceVisitor extends CreatingASTVisitor {
     /// @param st the statement where the prog vars are replaced
     /// @param map the HashMap with the replacements
     /// @param services the services instance
-    public ProgVarReplaceVisitor(SolidityProgramElement st, Map<ProgramVariable, ProgramVariable> map,
-                                 boolean replaceAllByNew,
-                                 Services services) {
+    public ProgVarReplaceVisitor(SolidityProgramElement st,
+            Map<ProgramVariable, ProgramVariable> map,
+            boolean replaceAllByNew,
+            Services services) {
         super(st, true, services);
         this.replaceAllByNew = replaceAllByNew;
         this.replaceMap = map;
@@ -82,7 +87,7 @@ public class ProgVarReplaceVisitor extends CreatingASTVisitor {
         if (t.op() instanceof ProgramVariable pv) {
             if (replaceMap.containsKey(pv)) {
                 ProgramVariable replacement = replaceMap.get(pv);
-                return services.getTermFactory().createTerm(replacement);
+                return services.getTf().createTerm(replacement);
             } else {
                 return t;
             }
@@ -101,8 +106,8 @@ public class ProgVarReplaceVisitor extends CreatingASTVisitor {
                     changed = changed || eu != op;
                 }
             }
-            return changed ? services.getTermFactory().createTerm(op, subTerms,
-                    (ImmutableArray<QuantifiableVariable>) t.boundVars()) : t;
+            return changed ? services.getTf().createTerm(op, subTerms,
+                (ImmutableArray<QuantifiableVariable>) t.boundVars()) : t;
         }
     }
 }

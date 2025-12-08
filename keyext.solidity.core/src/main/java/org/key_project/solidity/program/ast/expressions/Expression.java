@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions;
 
+import java.util.Objects;
+
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.util.ExtList;
-
-import java.util.Objects;
 
 public abstract class Expression implements SolidityProgramElement, SoliditiyExpression {
     protected final Type type;

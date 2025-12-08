@@ -3,13 +3,13 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.references;
 
+import java.util.Objects;
+
 import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.ParameterDeclaration;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
-
-import java.util.Objects;
 
 public class ParameterVariableReference extends VariableReference {
     private int id;
@@ -35,7 +35,8 @@ public class ParameterVariableReference extends VariableReference {
         super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
         this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
         this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
-        this.referencedDeclaration = Objects.requireNonNull(children.removeFirstOccurrence(ParameterDeclaration.class));
+        this.referencedDeclaration =
+            Objects.requireNonNull(children.removeFirstOccurrence(ParameterDeclaration.class));
     }
 
     @Override
@@ -53,7 +54,7 @@ public class ParameterVariableReference extends VariableReference {
         return name.toString();
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnParameterVariableReference(this);
     }
 }

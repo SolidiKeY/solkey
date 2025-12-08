@@ -4,11 +4,15 @@
 package org.key_project.solidity.common;
 
 
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+
 import org.key_project.logic.LogicServices;
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.prover.proof.ProofServices;
 import org.key_project.prover.proof.SessionCaches;
+import org.key_project.solidity.common.naming.NameRecorder;
 import org.key_project.solidity.common.naming.VariableNamer;
 import org.key_project.solidity.logic.NamespaceSet;
 import org.key_project.solidity.logic.TermBuilder;
@@ -31,13 +35,42 @@ public class Services implements LogicServices, ProofServices {
      */
     private NamespaceSet namespaces = new NamespaceSet();
     private SolidityModel solidityModel;
-    private final TermFactory termFactory;
-    private final TermBuilder termBuilder;
+    private final TermFactory tf;
+    private final TermBuilder tb;
     private TheoryInfo theoryInfo;
 
+    /// variable namer for inner renaming
+    @SuppressWarnings({ "assignment.type.incompatible", "argument.type.incompatible" })
+    private final VariableNamer innerVarNamer = new VariableNamer(this);
+
+    /// map of names to counters
+    private final HashMap<String, Counter> counters;
+    private Proof proof;
+    private NameRecorder nameRecorder;
+
+
     public Services() {
-        termFactory = new TermFactory();
-        termBuilder = new TermBuilder(termFactory, this);
+        tf = new TermFactory();
+        tb = new TermBuilder(tf, this);
+        counters = new LinkedHashMap<>();
+        solidityModel = new SolidityModel();
+    }
+
+    @SuppressWarnings({ "argument.type.incompatible", "assignment.type.incompatible",
+        "initialization.fields.uninitialized" })
+    public Services(Services services) {
+        this.namespaces = services.namespaces;
+        // this.ldts = services.ldts;
+        this.tf = new TermFactory();
+        this.tb = new TermBuilder(tf, this);
+        this.proof = services.proof;
+        // this.profile = services.profile;
+        this.counters = services.counters;
+        // this.caches = services.caches;
+        // this.specRepos = services.specRepos;
+        this.solidityModel = services.solidityModel;
+        // this.solidityInfo = services.solidityInfo;
+        nameRecorder = services.nameRecorder;
     }
 
     public @NonNull NamespaceSet getNamespaces() {
@@ -53,25 +86,25 @@ public class Services implements LogicServices, ProofServices {
         return null;
     }
 
-    public TermFactory getTermFactory() {
-        return termFactory;
+    public TermFactory getTf() {
+        return tf;
     }
 
-    public TermBuilder getTermBuilder() {
-        return null;
+    public TermBuilder getTb() {
+        return tb;
     }
 
     public TheoryInfo getTheoryInfo() {
         return theoryInfo;
     }
 
-    public void setTheoryInfo(TheoryInfo ldTs) {
-        this.theoryInfo = ldTs;
+    public void setTheoryInfo(TheoryInfo theoryInfo) {
+        this.theoryInfo = theoryInfo;
     }
 
     /// this functionality should be moved to an external class
     public static Term convertToLogicElement(SolidityProgramElement pe, Services services) {
-        var tb = services.getTermBuilder();
+        var tb = services.getTb();
         if (pe instanceof ProgramVariable pv) {
             return tb.var(pv);
         }
@@ -85,11 +118,11 @@ public class Services implements LogicServices, ProofServices {
     }
 
     public void addNameProposal(Name name) {
-        throw new RuntimeException("Not implemented yet");
+        nameRecorder.addProposal(name);
     }
 
     public void setProof(Proof proof) {
-        throw new RuntimeException("Not implemented yet");
+        this.proof = proof;
     }
 
     public void setNamespaces(NamespaceSet ns) {
@@ -101,18 +134,31 @@ public class Services implements LogicServices, ProofServices {
     }
 
     public void saveNameRecorder(Node n) {
-        throw new RuntimeException("Not implemented yet");
+        n.setNameRecorder(nameRecorder);
+        nameRecorder = new NameRecorder();
     }
 
     public Services getOverlay(NamespaceSet localNamespaces) {
-        throw new RuntimeException("Not implemented yet");
+        Services result = new Services(this);
+        result.setNamespaces(namespaces);
+        return result;
     }
 
     public SpecificationRepository getSpecificationRepository() {
         throw new RuntimeException("Not implemented yet");
     }
 
-    public Counter getCounter(String nodes) {
-        throw new RuntimeException("Not implemented yet");
+    public Counter getCounter(String name) {
+        Counter c = counters.get(name);
+        if (c != null) {
+            return c;
+        }
+        c = new Counter(name);
+        counters.put(name, c);
+        return c;
+    }
+
+    public NameRecorder getNameRecorder() {
+        return nameRecorder;
     }
 }

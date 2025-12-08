@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.declarations;
 
+import java.util.Objects;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
-
-import java.util.Objects;
 
 public class ArrayDeclaration extends Declaration {
     int length;
@@ -41,7 +41,7 @@ public class ArrayDeclaration extends Declaration {
         return struct + "[" + length + "]" + " memory " + name;
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnArrayDeclaration(this);
     }
 }

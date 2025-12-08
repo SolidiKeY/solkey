@@ -3,16 +3,16 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.declarations;
 
+import java.util.Objects;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.references.TypeReference;
-
-import org.jspecify.annotations.NonNull;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-import java.util.Objects;
+import org.jspecify.annotations.NonNull;
 
 public class ParameterDeclaration extends Declaration {
     private final int id;
@@ -30,8 +30,10 @@ public class ParameterDeclaration extends Declaration {
     public ParameterDeclaration(ExtList children) {
         super(Objects.requireNonNull(children.removeFirstOccurrence(Name.class)));
         this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
-        this.typeReference = Objects.requireNonNull(children.removeFirstOccurrence(TypeReference.class));
-        this.dataLocation = Objects.requireNonNull(children.removeFirstOccurrence(DataLocation.class));
+        this.typeReference =
+            Objects.requireNonNull(children.removeFirstOccurrence(TypeReference.class));
+        this.dataLocation =
+            Objects.requireNonNull(children.removeFirstOccurrence(DataLocation.class));
     }
 
     @Override
@@ -56,7 +58,7 @@ public class ParameterDeclaration extends Declaration {
         return typeReference;
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnParameterDeclaration(this);
     }
 }

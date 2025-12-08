@@ -1,15 +1,19 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.visitor;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
+import java.util.Objects;
+
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
+import org.key_project.solidity.rule.metaconstruct.ProgramTransformer;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
-import org.key_project.solidity.rule.metaconstruct.ProgramTransformer;
 
-import java.util.Objects;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class ProgramReplaceVisitor extends CreatingASTVisitor {
     private @Nullable SolidityProgramElement result = null;
@@ -22,7 +26,7 @@ public class ProgramReplaceVisitor extends CreatingASTVisitor {
     /// @param services The Services object.
     /// @param svi Schema Variable Instantiations
     public ProgramReplaceVisitor(SolidityProgramElement root, Services services,
-                                 SVInstantiations svi) {
+            SVInstantiations svi) {
         super(root, false, services);
         svinsts = svi;
     }
@@ -65,12 +69,12 @@ public class ProgramReplaceVisitor extends CreatingASTVisitor {
             // the assertion ensures the intended instanceof check from above
             addChildren(instArray);
         } /*
-         * TODO: else if (inst instanceof Term t && t.op() instanceof ProgramInLogic) {
-         * addChild(services.getTypeConverter().convertToProgramElement((Term) inst));
-         * }
-         */ else {
+           * TODO: else if (inst instanceof Term t && t.op() instanceof ProgramInLogic) {
+           * addChild(services.getTypeConverter().convertToProgramElement((Term) inst));
+           * }
+           */ else {
             throw new IllegalStateException(
-                    "program-replace-visitor: Instantiation missing " + "for schema variable " + sv);
+                "program-replace-visitor: Instantiation missing " + "for schema variable " + sv);
         }
         changed();
     }

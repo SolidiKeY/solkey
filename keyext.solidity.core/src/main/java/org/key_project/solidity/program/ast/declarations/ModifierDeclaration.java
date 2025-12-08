@@ -49,7 +49,7 @@ public class ModifierDeclaration extends Declaration {
         return name + " () " + visibility + " " + body;
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnModifierDeclaration(this);
     }
 }

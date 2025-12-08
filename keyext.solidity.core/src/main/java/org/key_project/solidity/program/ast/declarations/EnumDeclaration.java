@@ -44,7 +44,7 @@ public class EnumDeclaration extends Declaration {
         return s;
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnEnumDeclaration(this);
     }
 }

@@ -3,18 +3,18 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.abstractions;
 
+import java.util.Objects;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
-
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-import java.util.Objects;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class ArrayType implements Type, SolidityProgramElement {
 
@@ -52,7 +52,7 @@ public class ArrayType implements Type, SolidityProgramElement {
         return 0;
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnArrayType(this);
     }
 }

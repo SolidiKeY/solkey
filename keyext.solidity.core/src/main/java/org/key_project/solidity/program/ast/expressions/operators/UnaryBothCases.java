@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions.operators;
 
+import java.util.Objects;
+
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.util.ExtList;
-
-import java.util.Objects;
 
 abstract class UnaryBothCases extends UnaryOperator {
     protected boolean prefix;
@@ -19,7 +19,7 @@ abstract class UnaryBothCases extends UnaryOperator {
 
     public UnaryBothCases(ExtList children) {
         super(Objects.requireNonNull(children.removeFirstOccurrence(Expression.class)),
-                Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
+            Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
     }
 
     @Override

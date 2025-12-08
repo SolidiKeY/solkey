@@ -22,7 +22,7 @@ public class BreakStatement implements Statement {
         return "break;";
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnBreakStatement(this);
     }
 }

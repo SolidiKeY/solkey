@@ -23,7 +23,7 @@ public class PlaceholdStatement implements Statement {
         return "_;";
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnPlaceholdStatement(this);
     }
 }

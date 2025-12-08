@@ -3,14 +3,14 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.declarations;
 
+import java.util.Objects;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
-
-import org.jspecify.annotations.NonNull;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-import java.util.Objects;
+import org.jspecify.annotations.NonNull;
 
 public class MemberEnumDeclaration extends Declaration {
 
@@ -32,7 +32,7 @@ public class MemberEnumDeclaration extends Declaration {
         return 0;
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnMemberEnumDeclaration(this);
     }
 }

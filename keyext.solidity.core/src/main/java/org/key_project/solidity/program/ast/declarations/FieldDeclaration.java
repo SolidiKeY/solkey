@@ -3,17 +3,17 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.declarations;
 
+import java.util.Objects;
+
 import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.references.TypeReference;
-
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-import java.util.Objects;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class FieldDeclaration extends Declaration {
 
@@ -35,7 +35,8 @@ public class FieldDeclaration extends Declaration {
 
     public FieldDeclaration(ExtList children) {
         super(Objects.requireNonNull(children.removeFirstOccurrence(Name.class)));
-        this.typeReference = Objects.requireNonNull(children.removeFirstOccurrence(TypeReference.class));
+        this.typeReference =
+            Objects.requireNonNull(children.removeFirstOccurrence(TypeReference.class));
         this.initializer = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
     }
 
@@ -71,7 +72,7 @@ public class FieldDeclaration extends Declaration {
             + ";";
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnFieldDeclaration(this);
     }
 }

@@ -431,7 +431,7 @@ public abstract class TacletApp implements RuleApp {
 
     private TacletApp instantiationHelper(boolean force, Services services) {
         final VariableNamer varNamer = services.getVariableNamer();
-        final TermBuilder tb = services.getTermBuilder();
+        final TermBuilder tb = services.getTb();
 
         TacletApp app = this;
         ImmutableList<String> proposals = ImmutableSLList.nil();
@@ -669,7 +669,7 @@ public abstract class TacletApp implements RuleApp {
             boolean interesting, Services services) {
         final SFunction c =
             new SFunction(new Name(instantiation), sort, true);
-        return addInstantiation(sv, services.getTermBuilder().func(c), interesting, services);
+        return addInstantiation(sv, services.getTb().func(c), interesting, services);
     }
 
     /// @return p_s iff p_s is not a generic sort, the concrete sort p_s is instantiated with

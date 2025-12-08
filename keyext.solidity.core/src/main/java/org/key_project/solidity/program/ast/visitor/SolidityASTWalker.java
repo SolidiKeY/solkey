@@ -14,7 +14,7 @@ public abstract class SolidityASTWalker {
         this.root = root;
     }
 
-    public SolidityProgramElement root(){
+    public SolidityProgramElement root() {
         return root;
     }
 

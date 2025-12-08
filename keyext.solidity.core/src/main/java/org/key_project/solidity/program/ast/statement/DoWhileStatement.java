@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.statement;
 
+import java.util.Objects;
+
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
-
-import java.util.Objects;
 
 public class DoWhileStatement implements Statement {
 
@@ -45,7 +45,7 @@ public class DoWhileStatement implements Statement {
         return "do " + body + " while (" + condition + ")";
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnDoWhileStatement(this);
     }
 }

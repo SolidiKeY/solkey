@@ -50,7 +50,7 @@ public class FunctionCallExpression extends Expression {
             + arguments.stream().map(Object::toString).collect(Collectors.joining(", ")) + ")";
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnFunctionCallExpression(this);
     }
 }

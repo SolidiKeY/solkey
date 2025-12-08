@@ -9,9 +9,9 @@ import java.util.stream.Collectors;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.declarations.Declaration;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
-import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class Block implements Statement {
 
@@ -40,8 +40,7 @@ public class Block implements Statement {
     public Block(ExtList children) {
         this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
         this.statements = new ImmutableArray<Statement>(
-                Objects.requireNonNull(children.removeFirstOccurrence(List.class))
-        );
+            Objects.requireNonNull(children.removeFirstOccurrence(List.class)));
         this.errorName = Objects.requireNonNull(children.removeFirstOccurrence(String.class));
         this.arguments = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
     }
@@ -81,7 +80,7 @@ public class Block implements Statement {
 
     public ImmutableArray<Statement> getStatements() { return statements; }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnBlock(this);
     }
 }

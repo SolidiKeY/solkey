@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.statement;
 
+import java.util.Objects;
+
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
-
-import java.util.Objects;
 
 public class ExpressionStatement implements Statement {
     public final Expression expression;
@@ -38,7 +38,7 @@ public class ExpressionStatement implements Statement {
         return expression.toString() + ";";
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnExpressionStatement(this);
     }
 }

@@ -12,12 +12,12 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.key_project.solidity.program.ast.visitor.Visitor;
 
 public class ContractDeclaration extends Declaration implements Type {
 
@@ -45,7 +45,8 @@ public class ContractDeclaration extends Declaration implements Type {
         super(Objects.requireNonNull(children.removeFirstOccurrence(Name.class)));
         this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
 
-        ImmutableArray<StateVariableDeclaration> flds = Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class));
+        ImmutableArray<StateVariableDeclaration> flds =
+            Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class));
         this.fields = new ImmutableArray<>(flds.toArray(new StateVariableDeclaration[0]));
         this.structs = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
         this.modifiers = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
@@ -117,7 +118,7 @@ public class ContractDeclaration extends Declaration implements Type {
         throw new UnsupportedOperationException("TO BE IMPLEMENTED");
     }
 
-    public void visit(Visitor v){
+    public void visit(Visitor v) {
         v.performActionOnContractDeclaration(this);
     }
 }
