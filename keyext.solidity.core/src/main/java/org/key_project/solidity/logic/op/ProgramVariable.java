@@ -18,9 +18,18 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 
 import org.jspecify.annotations.NonNull;
 
+
+/**
+ * function ... {
+ * uint a; // use programvariable as child of the declaration
+ * a = 5; // a on left hand side must be a child of type ProgramVariable
+ * }
+ */
+
 public class ProgramVariable extends AbstractSortedOperator
         implements SoliditiyExpression, UpdateableOperator, IProgramVariable {
     private final KeYSolidityType type;
+    // private final DataLocation dataLocation;
 
     public ProgramVariable(Name name, Sort s, KeYSolidityType type) {
         super(name, s, Modifier.NONE);
@@ -43,7 +52,7 @@ public class ProgramVariable extends AbstractSortedOperator
 
     @Override
     public void visit(Visitor v) {
-
+        v.performActionOnProgramVariable(this);
     }
 
     public KeYSolidityType getKeYSolidityType() {

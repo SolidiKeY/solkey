@@ -66,12 +66,13 @@ public class AntecTacletBuilder extends FindTacletBuilder<@NonNull SolAntecTacle
         prefixBuilder.build();
 
         SolAntecTaclet t = new SolAntecTaclet(name,
+            (Sequent) find,
             new TacletApplPart(ifseq,
                 applicationRestriction.combine(ApplicationRestriction.ANTECEDENT_POLARITY),
                 varsNew, varsNotFreeIn, varsNewDependingOn,
                 variableConditions),
-            goals, ruleSets, attrs, (Sequent) find, prefixBuilder.getPrefixMap(),
-            choices, tacletAnnotations);
+            goals, ruleSets, attrs, prefixBuilder.getPrefixMap(),
+            choices, false, tacletAnnotations);
         // t.setOrigin(origin);
         return t;
     }

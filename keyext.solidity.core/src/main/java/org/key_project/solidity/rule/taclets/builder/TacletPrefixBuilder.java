@@ -191,19 +191,19 @@ public class TacletPrefixBuilder {
         RewriteTacletBuilder<? extends SolRewriteTaclet> rwtacletBuilder =
             (RewriteTacletBuilder<? extends SolRewriteTaclet>) tacletBuilder;
         TacletSchemaVariableCollector svc = new TacletSchemaVariableCollector();
-        svc.visit(rwtacletBuilder.ifSequent());
+        svc.visitAssumes(rwtacletBuilder.ifSequent());
         for (var tacletGoalTemplate : rwtacletBuilder.goalTemplates()) {
             TacletGoalTemplate tmpl = (TacletGoalTemplate) tacletGoalTemplate;
             // if (tmpl instanceof RewriteTacletGoalTemplate) {
             // RewriteTacletGoalTemplate
             // gt=(RewriteTacletGoalTemplate)tmpl;
-            svc.visit(tmpl.sequent());
+            svc.visitSequent(tmpl.sequent());
             for (var taclet : tmpl.rules()) { // addrules
                 svc.visit(taclet, true);
             }
         }
         // }
-        return !svc.contains(sv);
+        return !svc.getCollectedSchemaVariables().contains(sv);
     }
 
     private void considerContext() {

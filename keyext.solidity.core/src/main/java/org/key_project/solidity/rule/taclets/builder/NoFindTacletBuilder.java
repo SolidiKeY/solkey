@@ -28,7 +28,8 @@ public class NoFindTacletBuilder extends TacletBuilder<SolNoFindTaclet> {
                 new ApplicationRestriction(ApplicationRestriction.IN_SEQUENT_STATE),
                 varsNew, varsNotFreeIn, varsNewDependingOn,
                 variableConditions),
-            goals, ruleSets, attrs, prefixBuilder.getPrefixMap(), choices, tacletAnnotations);
+            goals, ruleSets, attrs, prefixBuilder.getPrefixMap(), choices, false,
+            tacletAnnotations);
         // t.setOrigin(origin);
         return t;
     }

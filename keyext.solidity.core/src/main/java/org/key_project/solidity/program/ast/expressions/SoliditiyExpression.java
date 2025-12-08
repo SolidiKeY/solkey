@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions;
 
+import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 
-public interface SoliditiyExpression {
+public interface SoliditiyExpression extends SolidityProgramElement {
     Type getType();
 }

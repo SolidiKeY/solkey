@@ -54,10 +54,11 @@ public class RewriteTacletBuilder<T extends SolRewriteTaclet> extends FindTaclet
         TacletPrefixBuilder prefixBuilder = new TacletPrefixBuilder(this);
         prefixBuilder.build();
         SolRewriteTaclet t = new SolRewriteTaclet(name,
+            (Term) find,
             new TacletApplPart(ifseq, applicationRestriction, varsNew, varsNotFreeIn,
                 varsNewDependingOn,
                 variableConditions),
-            goals, ruleSets, attrs, (Term) find, prefixBuilder.getPrefixMap(),
+            goals, ruleSets, attrs, prefixBuilder.getPrefixMap(),
             choices, surviveSmbExec, tacletAnnotations);
         // t.setOrigin(origin);
         return (T) t;

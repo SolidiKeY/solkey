@@ -10,6 +10,8 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
+
+// uint a; a = 4; // ProgramVariable
 public class IndexRangeExpression extends Expression {
 
     private final Expression baseExp;

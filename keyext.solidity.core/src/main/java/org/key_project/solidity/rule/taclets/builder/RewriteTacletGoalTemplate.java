@@ -4,6 +4,7 @@
 package org.key_project.solidity.rule.taclets.builder;
 
 import org.key_project.logic.Term;
+import org.key_project.logic.op.QuantifiableVariable;
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.prover.rules.Taclet;
 import org.key_project.prover.rules.tacletbuilder.TacletGoalTemplate;
@@ -50,6 +51,11 @@ public class RewriteTacletGoalTemplate extends TacletGoalTemplate {
     @Override
     public Term replaceWith() {
         return replacewith;
+    }
+
+    @Override
+    public ImmutableSet<QuantifiableVariable> getBoundVariables() {
+        throw new RuntimeException("Not implemented yet");
     }
 
     @Override

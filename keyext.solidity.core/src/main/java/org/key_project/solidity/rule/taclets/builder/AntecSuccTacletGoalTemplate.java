@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.rule.taclets.builder;
 
+import org.key_project.logic.op.QuantifiableVariable;
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.prover.rules.Taclet;
 import org.key_project.prover.rules.tacletbuilder.TacletGoalTemplate;
@@ -38,6 +39,11 @@ public class AntecSuccTacletGoalTemplate extends TacletGoalTemplate {
     /// @return Sequent being parameter in the rule goal replaceWith(Seq)
     public Sequent replaceWith() {
         return replaceWith;
+    }
+
+    @Override
+    public ImmutableSet<QuantifiableVariable> getBoundVariables() {
+        throw new RuntimeException("Not implemented yet");
     }
 
     /// toString

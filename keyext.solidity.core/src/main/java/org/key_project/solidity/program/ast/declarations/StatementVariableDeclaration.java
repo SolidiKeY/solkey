@@ -16,6 +16,7 @@ import org.jspecify.annotations.NonNull;
 
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Default;
 
+//
 public class StatementVariableDeclaration extends Declaration {
     private final int id;
     private final Type type;

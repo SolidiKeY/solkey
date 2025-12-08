@@ -483,4 +483,5 @@ public abstract class SolidityASTVisitor extends SolidityASTWalker implements Vi
     public void performActionOnProgramMetaConstruct(ProgramTransformer x) {
         doDefaultAction(x);
     }
+
 }
