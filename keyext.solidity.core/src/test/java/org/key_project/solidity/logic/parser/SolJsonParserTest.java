@@ -34,7 +34,7 @@ import org.junit.jupiter.api.condition.OS;
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.INT256;
 
 
-class SolJsonParserTest {
+public class SolJsonParserTest {
 
     @Test
     void parse() throws IOException {
@@ -812,7 +812,7 @@ class SolJsonParserTest {
         Assertions.assertTrue(contractS.contains("State.Begin"));
     }
 
-    private static ContractDeclaration getDeclStr(String contract) throws IOException {
+    public static ContractDeclaration getDeclStr(String contract) throws IOException {
         final Path solc = Path.of("/opt", "local", "bin", "solc");
         SolcWrapper solcWrapper = new SolcWrapper(solc);
         String contractJson = solcWrapper.readSol(contract);
