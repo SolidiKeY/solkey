@@ -6,9 +6,11 @@ package org.key_project.solidity.program.ast.declarations;
 import java.util.Objects;
 
 import org.key_project.logic.Name;
+import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
+import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.references.TypeReference;
@@ -63,7 +65,7 @@ public class StateVariableDeclaration extends Declaration {
     // Syntax Element interface
     @Override
     public int getChildCount() {
-        return initializer == null ? 1 : 2;
+        return initializer == null ? 2 : 3;
     }
 
     @Override
@@ -73,6 +75,10 @@ public class StateVariableDeclaration extends Declaration {
         }
         if (i == 0) {
             return typeReference;
+        }
+        i--;
+        if(i == 1 || initializer == null){
+            return programVariable;
         }
         return initializer;
     }

@@ -72,9 +72,7 @@ class TestProgVarReplaceVisitor {
         Map<ProgramVariable, ProgramVariable> map = new HashMap<>();
         Services services = new Services();
         // parse in statements
-        final Sort uint = new SortImpl(new Name("uint"), false);
-        KeYSolidityType uintKST = new KeYSolidityType(PrimitiveType.UINT, uint);
-        services.getNamespaces().sorts().add(uint);
+        KeYSolidityType uintKST = new KeYSolidityType(PrimitiveType.UINT256, null);
 
         // language=solidity
         String contract = """
@@ -84,8 +82,8 @@ class TestProgVarReplaceVisitor {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         StateVariableDeclaration origDecl = contractDeclaration.getFieldDeclarations().get(0);
 
-        SoliditiyExpression original = new ProgramVariable(new Name("original"), uintKST);
-        SoliditiyExpression replacement = new ProgramVariable(new Name("replacement"), uintKST);
+        SoliditiyExpression original = new ProgramVariable(new Name("original"), null, uintKST);
+        SoliditiyExpression replacement = new ProgramVariable(new Name("replacement"), null, uintKST);
 
         map.put((ProgramVariable) original, (ProgramVariable) replacement);
 

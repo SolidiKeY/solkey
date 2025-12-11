@@ -64,6 +64,11 @@ public class ProgramVariable extends AbstractSortedOperator
         return type.getSolidityType();
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        return type.equals(((ProgramVariable) obj).type);
+    }
+
     /// TODO: implement
     // @Override
     // public void visit(Visitor v) {
