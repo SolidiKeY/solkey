@@ -12,6 +12,7 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.SortImpl;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
@@ -78,18 +79,20 @@ class TestProgVarReplaceVisitor {
         // language=solidity
         String contract = """
                 contract SimpleContract {
-                   uint256 balance;
+                   uint256 original;
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
+        StateVariableDeclaration origDecl = contractDeclaration.getFieldDeclarations().get(0);
 
-        StateVariableDeclaration original = contractDeclaration.getFieldDeclarations().toList().getFirst();
-        StateVariableDeclaration replacement = new StateVariableDeclaration(new Name("replacement"),
-                null, null, null);
-//        map.put(original, replacement);
-//
-//        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(original, map, false, services);
-//        replacer.start();
-//        assertEquals(replacement, replacer.result()); // stmnt.equals(repl.result())
+        SoliditiyExpression original = new ProgramVariable(new Name("original"), uintKST);
+        SoliditiyExpression replacement = new ProgramVariable(new Name("replacement"), uintKST);
+
+        map.put((ProgramVariable) original, (ProgramVariable) replacement);
+
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(origDecl, map, false, services);
+        replacer.start();
+        ProgramVariable replaced = ((StateVariableDeclaration) replacer.result()).programVariable;
+        assertEquals(replacement, replaced); // stmnt.equals(repl.result())
     }
 
     @Test

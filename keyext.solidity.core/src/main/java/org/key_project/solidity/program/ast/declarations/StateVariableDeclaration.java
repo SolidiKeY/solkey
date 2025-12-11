@@ -6,7 +6,9 @@ package org.key_project.solidity.program.ast.declarations;
 import java.util.Objects;
 
 import org.key_project.logic.Name;
+import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.references.TypeReference;
@@ -21,6 +23,7 @@ public class StateVariableDeclaration extends Declaration {
     private final @NonNull TypeReference typeReference;
     private final @Nullable Expression initializer;
     private final Visibility visibility;
+    public ProgramVariable programVariable;
 
     public StateVariableDeclaration(@NonNull Name name, @NonNull TypeReference type,
             Visibility visibility) {
@@ -28,6 +31,7 @@ public class StateVariableDeclaration extends Declaration {
         this.typeReference = type;
         this.initializer = null;
         this.visibility = visibility;
+        this.programVariable = new ProgramVariable(name, null, new KeYSolidityType(type.getReferencedType(), null));
     }
 
     public StateVariableDeclaration(@NonNull Name name, @NonNull TypeReference typeReference,
@@ -36,6 +40,7 @@ public class StateVariableDeclaration extends Declaration {
         this.typeReference = typeReference;
         this.initializer = initializer;
         this.visibility = visibility;
+        this.programVariable = new ProgramVariable(name, null, new KeYSolidityType(typeReference.getReferencedType(), null));
     }
 
     public StateVariableDeclaration(ExtList children) {
@@ -44,6 +49,7 @@ public class StateVariableDeclaration extends Declaration {
             Objects.requireNonNull(children.removeFirstOccurrence(TypeReference.class));
         this.initializer = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
         this.visibility = Objects.requireNonNull(children.removeFirstOccurrence(Visibility.class));
+        this.programVariable = Objects.requireNonNull(children.removeFirstOccurrence(ProgramVariable.class));
     }
 
     public @NonNull TypeReference getTypeReference() {
