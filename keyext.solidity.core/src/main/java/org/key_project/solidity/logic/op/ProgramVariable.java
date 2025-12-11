@@ -65,8 +65,14 @@ public class ProgramVariable extends AbstractSortedOperator
     }
 
     @Override
+    public int hashCode() {
+        return name().hashCode();
+    }
+
+    @Override
     public boolean equals(Object obj) {
-        return type.equals(((ProgramVariable) obj).type);
+        ProgramVariable objV = (ProgramVariable) obj;
+        return name().equals(objV.name()) && type.equals(objV.type);
     }
 
     /// TODO: implement
