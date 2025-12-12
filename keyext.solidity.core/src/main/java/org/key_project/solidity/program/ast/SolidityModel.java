@@ -10,8 +10,13 @@ import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.Type;
 
+/**
+ * This class is responsible to answer queries about the solidity program model
+ * Such queries are for instance: all declared and known contracts, all functions for
+ * a contract, finding a contract by name or a function declaration by its signature,
+ * providing the type and KeYSolidityType by name etc.
+ */
 public class SolidityModel {
-
     private final Map<Name, Type> typeMap = new HashMap<>();
 
     public Type getType(Name typeName) {
