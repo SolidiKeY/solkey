@@ -87,7 +87,7 @@ public class ProgVarReplaceVisitor extends CreatingASTVisitor {
         if (t.op() instanceof ProgramVariable pv) {
             if (replaceMap.containsKey(pv)) {
                 ProgramVariable replacement = replaceMap.get(pv);
-                return services.getTf().createTerm(replacement);
+                return services.getTermFactory().createTerm(replacement);
             } else {
                 return t;
             }
@@ -106,7 +106,7 @@ public class ProgVarReplaceVisitor extends CreatingASTVisitor {
                     changed = changed || eu != op;
                 }
             }
-            return changed ? services.getTf().createTerm(op, subTerms,
+            return changed ? services.getTermFactory().createTerm(op, subTerms,
                 (ImmutableArray<QuantifiableVariable>) t.boundVars()) : t;
         }
     }

@@ -40,14 +40,15 @@ public class Services implements LogicServices, ProofServices {
     private TheoryInfo theoryInfo;
 
     /// variable namer for inner renaming
-    @SuppressWarnings({ "assignment.type.incompatible", "argument.type.incompatible" })
-    private final VariableNamer innerVarNamer = new VariableNamer(this);
+    private final VariableNamer variableNamer = new VariableNamer(this);
+    /// records name proposals
+    private NameRecorder nameRecorder;
 
     /// map of names to counters
     private final HashMap<String, Counter> counters;
-    private Proof proof;
-    private NameRecorder nameRecorder;
 
+    /// the proof to which this services belongs (might be null)
+    private Proof proof;
 
     public Services() {
         tf = new TermFactory();
@@ -86,11 +87,11 @@ public class Services implements LogicServices, ProofServices {
         return null;
     }
 
-    public TermFactory getTf() {
+    public TermFactory getTermFactory() {
         return tf;
     }
 
-    public TermBuilder getTb() {
+    public TermBuilder getTermBuilder() {
         return tb;
     }
 
@@ -104,7 +105,7 @@ public class Services implements LogicServices, ProofServices {
 
     /// this functionality should be moved to an external class
     public static Term convertToLogicElement(SolidityProgramElement pe, Services services) {
-        var tb = services.getTb();
+        var tb = services.getTermBuilder();
         if (pe instanceof ProgramVariable pv) {
             return tb.var(pv);
         }
@@ -114,7 +115,7 @@ public class Services implements LogicServices, ProofServices {
     }
 
     public VariableNamer getVariableNamer() {
-        throw new RuntimeException("Not implemented yet");
+        return variableNamer;
     }
 
     public void addNameProposal(Name name) {
@@ -126,7 +127,7 @@ public class Services implements LogicServices, ProofServices {
     }
 
     public void setNamespaces(NamespaceSet ns) {
-        throw new RuntimeException("Not implemented yet");
+        this.namespaces = ns;
     }
 
     public Profile getProfile() {

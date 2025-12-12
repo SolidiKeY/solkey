@@ -59,7 +59,7 @@ public class FunctionPredicateBuilder extends DefaultBuilder {
                     sorts.add(gs);
                 } else if (param instanceof ConstParam cp) {
                     SFunction f = new SFunction(cp.name(), cp.sort());
-                    Term term = services.getTb().func(f);
+                    Term term = services.getTermBuilder().func(f);
                     args = args.prepend(new TermArg(term));
                     consts.add(f);
                 }

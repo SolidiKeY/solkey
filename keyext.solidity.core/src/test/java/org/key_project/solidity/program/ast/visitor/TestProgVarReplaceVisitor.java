@@ -82,14 +82,16 @@ class TestProgVarReplaceVisitor {
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
 
-        StateVariableDeclaration original = contractDeclaration.getFieldDeclarations().toList().getFirst();
+        StateVariableDeclaration original =
+            contractDeclaration.getFieldDeclarations().toList().getFirst();
         StateVariableDeclaration replacement = new StateVariableDeclaration(new Name("replacement"),
-                null, null, null);
-//        map.put(original, replacement);
-//
-//        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(original, map, false, services);
-//        replacer.start();
-//        assertEquals(replacement, replacer.result()); // stmnt.equals(repl.result())
+            null, null, null);
+        // map.put(original, replacement);
+        //
+        // ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(original, map, false,
+        // services);
+        // replacer.start();
+        // assertEquals(replacement, replacer.result()); // stmnt.equals(repl.result())
     }
 
     @Test
@@ -110,14 +112,18 @@ class TestProgVarReplaceVisitor {
                     }
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
-        DeclarationStatement dstm = (DeclarationStatement) contractDeclaration.getFunctions().getFirst().getBody().getStatements().get(0);
-        StateVariableDeclaration original = (StateVariableDeclaration) dstm.getDeclarations().getFirst();
-        StateVariableDeclaration replacement = new StateVariableDeclaration(new Name("replacement"), null, null);
+        DeclarationStatement dstm = (DeclarationStatement) contractDeclaration.getFunctions()
+                .getFirst().getBody().getStatements().get(0);
+        StateVariableDeclaration original =
+            (StateVariableDeclaration) dstm.getDeclarations().getFirst();
+        StateVariableDeclaration replacement =
+            new StateVariableDeclaration(new Name("replacement"), null, null);
 
-//        map.put(original, replacement);
-//
-//        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(original, map, false, services);
-//        replacer.start();
-//        assertEquals(replacement, replacer.result()); // stmnt.equals(repl.result())
+        // map.put(original, replacement);
+        //
+        // ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(original, map, false,
+        // services);
+        // replacer.start();
+        // assertEquals(replacement, replacer.result()); // stmnt.equals(repl.result())
     }
 }

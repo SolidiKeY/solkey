@@ -41,12 +41,12 @@ public abstract class TacletExecutor extends
 
     @Override
     protected Term not(Term t, @NonNull Goal goal) {
-        return goal.getOverlayServices().getTb().not(t);
+        return goal.getOverlayServices().getTermBuilder().not(t);
     }
 
     @Override
     protected Term and(Term t1, Term t2, @NonNull Goal goal) {
-        return goal.getOverlayServices().getTb().and(t1, t2);
+        return goal.getOverlayServices().getTermBuilder().and(t1, t2);
     }
 
     /// a new term is created by replacing variables of term whose replacement is found in the given
@@ -210,7 +210,7 @@ public abstract class TacletExecutor extends
         if (svInst.getUpdateContext().isEmpty()) {
             return formula;
         } else {
-            return goal.getOverlayServices().getTb()
+            return goal.getOverlayServices().getTermBuilder()
                     .applyUpdatePairsSequential(svInst.getUpdateContext(), formula);
         }
     }

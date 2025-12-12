@@ -209,7 +209,7 @@ public class ExpressionBuilder extends DefaultBuilder {
 
 
     public TermFactory getTermFactory() {
-        return getServices().getTf();
+        return getServices().getTermFactory();
     }
 
     public Object visitTermParen(KeYSolidityDLParser.TermParenContext ctx) {
@@ -499,7 +499,7 @@ public class ExpressionBuilder extends DefaultBuilder {
         if (op instanceof ProgramVariable v && ctx.name.simple_ident().size() > 1) {
             List<KeYSolidityDLParser.Simple_identContext> otherParts =
                 ctx.name.simple_ident().subList(1, ctx.name.simple_ident().size());
-            Term tv = getServices().getTf().createTerm(v);
+            Term tv = getServices().getTermFactory().createTerm(v);
             String memberName = otherParts.get(0).getText();
             memberName = StringUtil.trim(memberName, "()");
             // Operator attr = getAttributeInPrefixSort(v.sort(), memberName);
@@ -542,7 +542,7 @@ public class ExpressionBuilder extends DefaultBuilder {
         Term a = accept(ctx.a);
         Term b = accept(ctx.b);
         if (b != null) {
-            return getServices().getTb().elementary(Objects.requireNonNull(a), b);
+            return getServices().getTermBuilder().elementary(Objects.requireNonNull(a), b);
         }
         return a;
     }
@@ -644,7 +644,7 @@ public class ExpressionBuilder extends DefaultBuilder {
         Term a2 = oneOf(ctx.atom_prefix(), ctx.unary_formula());
         try {
             Term result =
-                getServices().getTb().subst(op, (QuantifiableVariable) v, a1, a2);
+                getServices().getTermBuilder().subst(op, (QuantifiableVariable) v, a1, a2);
             return result;
         } catch (Exception e) {
             throw new BuildingException(ctx, e);

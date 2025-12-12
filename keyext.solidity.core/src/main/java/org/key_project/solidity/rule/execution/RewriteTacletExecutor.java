@@ -105,7 +105,7 @@ public class RewriteTacletExecutor extends FindTacletExecutor {
             subs[indexOfNextSubTerm] = replace(term.sub(indexOfNextSubTerm), with, posOfFind, it,
                 mc, newMaxSort, goal, services, ruleApp);
 
-            return services.getTf().createTerm(term.op(), subs,
+            return services.getTermFactory().createTerm(term.op(), subs,
                 (ImmutableArray<QuantifiableVariable>) term.boundVars());
         }
 
