@@ -12,10 +12,12 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.SortImpl;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.program.ast.declarations.StateVariableDeclaration;
+import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.SoliditiyExpression;
 import org.key_project.solidity.program.ast.statement.DeclarationStatement;
 import org.key_project.solidity.program.ast.statement.Statement;
@@ -111,13 +113,16 @@ class TestProgVarReplaceVisitor {
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         DeclarationStatement dstm = (DeclarationStatement) contractDeclaration.getFunctions().getFirst().getBody().getStatements().get(0);
-        StateVariableDeclaration original = (StateVariableDeclaration) dstm.getDeclarations().getFirst();
-        StateVariableDeclaration replacement = new StateVariableDeclaration(new Name("replacement"), null, null);
+        StatementVariableDeclaration initial = (StatementVariableDeclaration) dstm.getDeclarations().getFirst();
 
-//        map.put(original, replacement);
-//
-//        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(original, map, false, services);
-//        replacer.start();
-//        assertEquals(replacement, replacer.result()); // stmnt.equals(repl.result())
+        SoliditiyExpression original = new ProgramVariable(new Name("original"), uintKST);
+        SoliditiyExpression replacement = new ProgramVariable(new Name("replacement"), uintKST);
+
+        map.put((ProgramVariable) original, (ProgramVariable) replacement);
+
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(initial, map, false, services);
+        replacer.start();
+        SolidityProgramElement result = (StatementVariableDeclaration) replacer.result();
+//        assertEquals(end, replacer.result()); // stmnt.equals(repl.result())
     }
 }
