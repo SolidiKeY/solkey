@@ -3,7 +3,9 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.declarations.FunctionEnums;
 
-public enum Visibility {
+import org.key_project.solidity.program.ast.declarations.Modifier;
+
+public enum Visibility implements Modifier {
     internal("internal"), external("external"), Private("private"), Public("public");
 
     private final String label;

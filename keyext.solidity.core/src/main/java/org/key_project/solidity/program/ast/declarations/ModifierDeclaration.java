@@ -13,7 +13,7 @@ import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public class ModifierDeclaration extends Declaration {
+public class ModifierDeclaration extends Declaration implements Modifier {
 
     private final List<ParameterDeclaration> inputParameters;
     private final Block body;

@@ -17,6 +17,7 @@ public class DeclarationStatement implements Statement {
     private final List<Declaration> declarations;
     private final Expression initialValue;
 
+//    TODO: Check the meaning of list of declarations
     public DeclarationStatement(List<Declaration> declarations, Expression initialValue) {
         this.declarations = declarations;
         this.initialValue = initialValue;
