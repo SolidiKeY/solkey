@@ -14,27 +14,32 @@ import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.key_project.util.collection.ImmutableArray;
 
 public class FieldDeclaration extends Declaration {
 
     private final @NonNull TypeReference typeReference;
     private final @Nullable Expression initializer;
+    private final @NonNull Name name;
 
     public FieldDeclaration(@NonNull Name name, @NonNull TypeReference type) {
-        super(name);
+        super(new ImmutableArray<>());
+        this.name = name;
         this.typeReference = type;
         this.initializer = null;
     }
 
     public FieldDeclaration(@NonNull Name name, @NonNull TypeReference typeReference,
             @Nullable Expression initializer) {
-        super(name);
+        super(new ImmutableArray<>());
+        this.name = name;
         this.typeReference = typeReference;
         this.initializer = initializer;
     }
 
     public FieldDeclaration(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(Name.class)));
+        super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
+        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
         this.typeReference =
             Objects.requireNonNull(children.removeFirstOccurrence(TypeReference.class));
         this.initializer = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
@@ -57,7 +62,7 @@ public class FieldDeclaration extends Declaration {
     @Override
     public SolidityProgramElement getChild(int i) {
         if (i < 0 || i >= getChildCount()) {
-            throw new IndexOutOfBoundsException("No child at index " + i + " in " + name());
+            throw new IndexOutOfBoundsException("No child at index " + i + " in " + name);
         }
         if (i == 0) {
             return typeReference;
@@ -68,7 +73,7 @@ public class FieldDeclaration extends Declaration {
 
     // common interface
     public String toString() {
-        return typeReference + " " + name() + (initializer != null ? " = " + initializer : "")
+        return typeReference + " " + name + (initializer != null ? " = " + initializer : "")
             + ";";
     }
 

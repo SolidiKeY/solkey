@@ -9,19 +9,22 @@ import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
+import org.key_project.util.collection.ImmutableArray;
 
 public class ArrayDeclaration extends Declaration {
     int length;
     String struct;
+    Name name;
 
     public ArrayDeclaration(Name name, String struct, int length) {
-        super(name);
+        super(new ImmutableArray<>());
+        this.name = name;
         this.struct = struct;
         this.length = length;
     }
 
     public ArrayDeclaration(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(Name.class)));
+        super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
         this.struct = Objects.requireNonNull(children.removeFirstOccurrence(String.class));;
         this.length = Objects.requireNonNull(children.removeFirstOccurrence(int.class));;
     }

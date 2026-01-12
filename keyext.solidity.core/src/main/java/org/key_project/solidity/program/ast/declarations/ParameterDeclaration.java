@@ -13,22 +13,26 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.NonNull;
+import org.key_project.util.collection.ImmutableArray;
 
 public class ParameterDeclaration extends Declaration {
     private final int id;
     private final @NonNull TypeReference typeReference;
     private final DataLocation dataLocation;
+    private final @NonNull Name name;
 
     public ParameterDeclaration(int id, @NonNull Name name, @NonNull TypeReference typeReference,
             DataLocation dataLocation) {
-        super(name);
+        super(new ImmutableArray<>());
         this.id = id;
+        this.name = name;
         this.typeReference = typeReference;
         this.dataLocation = dataLocation;
     }
 
     public ParameterDeclaration(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(Name.class)));
+        super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
+        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
         this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
         this.typeReference =
             Objects.requireNonNull(children.removeFirstOccurrence(TypeReference.class));

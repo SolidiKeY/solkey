@@ -7,20 +7,12 @@ import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 
 import org.jspecify.annotations.NonNull;
+import org.key_project.util.collection.ImmutableArray;
 
 public abstract class Declaration implements SolidityProgramElement {
-    protected final @NonNull Name name;
+    private final ImmutableArray<Modifier> modifiers;
 
-    protected Declaration(@NonNull Name name) {
-        this.name = name;
-    }
-
-    public @NonNull Name name() {
-        return name;
-    }
-
-    @Override
-    public String toString() {
-        return name.toString();
+    protected Declaration(ImmutableArray<Modifier> modifiers) {
+        this.modifiers = modifiers;
     }
 }

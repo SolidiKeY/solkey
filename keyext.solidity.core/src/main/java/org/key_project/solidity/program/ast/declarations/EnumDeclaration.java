@@ -11,17 +11,21 @@ import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
+import org.key_project.util.collection.ImmutableArray;
 
 public class EnumDeclaration extends Declaration {
     private final List<MemberEnumDeclaration> members;
+    private final Name name;
 
     public EnumDeclaration(Name name, List<MemberEnumDeclaration> members) {
-        super(name);
+        super(new ImmutableArray<>());
+        this.name = name;
         this.members = members;
     }
 
     public EnumDeclaration(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(Name.class)));
+        super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
+        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
         this.members = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
     }
 

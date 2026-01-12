@@ -26,12 +26,14 @@ public class FunctionDeclaration extends Declaration {
     private final Visibility visibility;
     private final StateMutability stateMutability;
     private final List<ModifierReference> modifiers;
+    private final Name name;
 
     public FunctionDeclaration(int id, Name name, List<ParameterDeclaration> returnParameters,
             List<ParameterDeclaration> inputParameters, Block body, String kind,
             Visibility visibility, StateMutability stateMutability,
             List<ModifierReference> modifiers) {
-        super(name);
+        super(new ImmutableArray<>());
+        this.name = name;
         this.id = id;
         this.returnParameters = new ImmutableArray<>(returnParameters);
         this.inputParameters = new ImmutableArray<>(inputParameters);
@@ -43,7 +45,8 @@ public class FunctionDeclaration extends Declaration {
     }
 
     public FunctionDeclaration(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(Name.class)));
+        super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
+        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
         this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
         this.returnParameters = new ImmutableArray<>(
             Objects.requireNonNull(children.removeFirstOccurrence(List.class)));

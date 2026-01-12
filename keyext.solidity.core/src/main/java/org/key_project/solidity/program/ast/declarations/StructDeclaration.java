@@ -12,17 +12,22 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.NonNull;
+import org.key_project.util.collection.ImmutableArray;
 
 public class StructDeclaration extends Declaration {
+    public final @NonNull Name name;
     List<FieldDeclaration> fields;
+    
 
     public StructDeclaration(@NonNull Name name, List<FieldDeclaration> fields) {
-        super(name);
+        super(new ImmutableArray<>());
+        this.name = name;
         this.fields = fields;
     }
 
     public StructDeclaration(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(Name.class)));
+        super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
+        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
         this.fields = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
     }
 

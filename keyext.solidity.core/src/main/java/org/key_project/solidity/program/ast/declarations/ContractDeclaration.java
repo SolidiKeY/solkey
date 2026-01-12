@@ -27,12 +27,14 @@ public class ContractDeclaration extends Declaration implements Type {
     private final List<ModifierDeclaration> modifiers;
     private final List<FunctionDeclaration> functions;
     private final List<EnumDeclaration> enums;
+    public final Name name;
 
     public ContractDeclaration(int contractId, Name name, List<StateVariableDeclaration> fields,
             List<StructDeclaration> structs,
             List<ModifierDeclaration> modifiers, List<FunctionDeclaration> functions,
             List<EnumDeclaration> enums) {
-        super(name);
+        super(new ImmutableArray<>());
+        this.name = name;
         this.id = contractId;
         this.fields = new ImmutableArray<>(fields.toArray(new StateVariableDeclaration[0]));
         this.structs = structs;
@@ -42,9 +44,9 @@ public class ContractDeclaration extends Declaration implements Type {
     }
 
     public ContractDeclaration(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(Name.class)));
+        super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
+        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
         this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
-
         ImmutableArray<StateVariableDeclaration> flds =
             Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class));
         this.fields = new ImmutableArray<>(flds.toArray(new StateVariableDeclaration[0]));
@@ -61,8 +63,8 @@ public class ContractDeclaration extends Declaration implements Type {
     @Override
     public @NonNull String toString() {
         String contract = "contract ";
-        contract += name() + " {\n";
-        contract += structs.stream().map(it -> "struct " + it.name() + " {\n"
+        contract += name + " {\n";
+        contract += structs.stream().map(it -> "struct " + it.name + " {\n"
             + it.fields.stream().map(jt -> jt.toString() + "\n").collect(Collectors.joining())
             + "}\n").collect(Collectors.joining());
         for (int i = 0; i < fields.size(); i++) {
@@ -120,5 +122,10 @@ public class ContractDeclaration extends Declaration implements Type {
 
     public void visit(Visitor v) {
         v.performActionOnContractDeclaration(this);
+    }
+
+    @Override
+    public Name name() {
+        return name;
     }
 }

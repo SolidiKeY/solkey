@@ -11,15 +11,20 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.NonNull;
+import org.key_project.util.collection.ImmutableArray;
 
 public class MemberEnumDeclaration extends Declaration {
 
+    private final @NonNull Name name;
+
     public MemberEnumDeclaration(@NonNull Name name) {
-        super(name);
+        super(new ImmutableArray<>());
+        this.name = name;
     }
 
     public MemberEnumDeclaration(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(Name.class)));
+        super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
+        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
     }
 
     @Override
