@@ -68,34 +68,6 @@ class TestProgVarReplaceVisitor {
     }
 
     @Test
-    void testContractReplacement() throws IOException {
-        Map<ProgramVariable, ProgramVariable> map = new HashMap<>();
-        Services services = new Services();
-        // parse in statements
-        final Sort uint = new SortImpl(new Name("uint"), false);
-        KeYSolidityType uintKST = new KeYSolidityType(PrimitiveType.UINT, uint);
-        services.getNamespaces().sorts().add(uint);
-
-        // language=solidity
-        String contract = """
-                contract SimpleContract {
-                   uint256 balance;
-                }""";
-        ContractDeclaration contractDeclaration = getDeclStr(contract);
-
-        StateVariableDeclaration original =
-            contractDeclaration.getFieldDeclarations().toList().getFirst();
-        StateVariableDeclaration replacement = new StateVariableDeclaration(new Name("replacement"),
-            null, null, null);
-        // map.put(original, replacement);
-        //
-        // ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(original, map, false,
-        // services);
-        // replacer.start();
-        // assertEquals(replacement, replacer.result()); // stmnt.equals(repl.result())
-    }
-
-    @Test
     void testFunction() throws IOException {
         Map<ProgramVariable, ProgramVariable> map = new HashMap<>();
         Services services = new Services();
