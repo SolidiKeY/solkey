@@ -7,6 +7,7 @@ import java.util.Objects;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.visitor.Visitor;
@@ -19,24 +20,20 @@ import static org.key_project.solidity.program.ast.declarations.FunctionEnums.Da
 
 //
 public class StatementVariableDeclaration extends Declaration {
-    private final Type type;
-    private final @NonNull Name name;
+    private final ProgramVariable programVariable;
     private String struct;
     private final DataLocation dataLocation;
 
-    public StatementVariableDeclaration(@NonNull Name name, Type type, String struct,
-            DataLocation dataLocation) {
+    public StatementVariableDeclaration(ProgramVariable programVariable, String struct, DataLocation dataLocation) {
         super(new ImmutableArray<>());
-        this.name = name;
-        this.type = type;
+        this.programVariable = programVariable;
         this.struct = struct;
         this.dataLocation = dataLocation;
     }
 
     public StatementVariableDeclaration(ExtList children) {
         super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
-        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
-        this.type = Objects.requireNonNull(children.removeFirstOccurrence(Type.class));
+        this.programVariable = Objects.requireNonNull(children.removeFirstOccurrence(ProgramVariable.class));
         this.struct = Objects.requireNonNull(children.removeFirstOccurrence(String.class));
         this.dataLocation =
             Objects.requireNonNull(children.removeFirstOccurrence(DataLocation.class));
@@ -58,6 +55,8 @@ public class StatementVariableDeclaration extends Declaration {
 
     @Override
     public String toString() {
+        String name = programVariable.name().toString();
+        String type = programVariable.getType().toString();
         if (struct != null)
             return struct + " " + dataLocation + " " + name;
         if (dataLocation == Default)

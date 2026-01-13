@@ -12,6 +12,7 @@ import javax.swing.*;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.*;
@@ -303,8 +304,9 @@ public class SolJSONParser {
             DataLocation.fromString(declaration.findValue("storageLocation").asText());
         Type type = getType(declaration.findValue("typeName").findValue("typeDescriptions")
                 .findValue("typeIdentifier").asText());
+        ProgramVariable programVariable = null;
         StatementVariableDeclaration memDeclaration =
-            new StatementVariableDeclaration(name, type, struct, dataLocation);
+            new StatementVariableDeclaration(programVariable, struct, dataLocation);
         id2Name.put(id, memDeclaration);
         return memDeclaration;
     }
@@ -340,9 +342,9 @@ public class SolJSONParser {
             initializerExp = parseExpression(initializer);
         }
 
+        ProgramVariable programVariable = null;
         final StateVariableDeclaration field =
-            new StateVariableDeclaration(new Name(fieldName),
-                new TypeReference(expType), initializerExp, visibility);
+            new StateVariableDeclaration(programVariable, initializerExp, visibility);
         id2Name.put(id, field);
 
         return field;

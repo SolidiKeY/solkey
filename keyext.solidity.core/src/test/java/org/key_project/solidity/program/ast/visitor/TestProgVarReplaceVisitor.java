@@ -88,8 +88,8 @@ class TestProgVarReplaceVisitor {
         DeclarationStatement dstm = (DeclarationStatement) contractDeclaration.getFunctions()
                 .getFirst().getBody().getStatements().get(0);
         StatementVariableDeclaration original =  (StatementVariableDeclaration) dstm.getDeclarations().getFirst();
-        StateVariableDeclaration replacement =
-            new StateVariableDeclaration(new Name("replacement"), null, null);
+//        StateVariableDeclaration replacement =
+//            new StateVariableDeclaration(new Name("replacement"), null, null);
 
         // map.put(original, replacement);
         //

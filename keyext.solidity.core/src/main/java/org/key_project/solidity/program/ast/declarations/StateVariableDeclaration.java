@@ -6,6 +6,7 @@ package org.key_project.solidity.program.ast.declarations;
 import java.util.Objects;
 
 import org.key_project.logic.Name;
+import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.expressions.Expression;
@@ -19,40 +20,30 @@ import org.key_project.util.collection.ImmutableArray;
 
 public class StateVariableDeclaration extends Declaration {
 
-    private final @NonNull TypeReference typeReference;
     private final @Nullable Expression initializer;
     private final Visibility visibility;
-    private final @NonNull Name name;
+    private final ProgramVariable programVariable;
 
-    public StateVariableDeclaration(@NonNull Name name, @NonNull TypeReference type,
-            Visibility visibility) {
+    public StateVariableDeclaration(ProgramVariable programVariable, Visibility visibility) {
         super(new ImmutableArray<>());
-        this.name = name;
-        this.typeReference = type;
+        this.programVariable = programVariable;
         this.initializer = null;
         this.visibility = visibility;
     }
 
-    public StateVariableDeclaration(@NonNull Name name, @NonNull TypeReference typeReference,
+    public StateVariableDeclaration(ProgramVariable programVariable,
             @Nullable Expression initializer, Visibility visibility) {
         super(new ImmutableArray<>());
-        this.name = name;
-        this.typeReference = typeReference;
+        this.programVariable = programVariable;
         this.initializer = initializer;
         this.visibility = visibility;
     }
 
     public StateVariableDeclaration(ExtList children) {
         super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
-        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
-        this.typeReference =
-            Objects.requireNonNull(children.removeFirstOccurrence(TypeReference.class));
+        this.programVariable = Objects.requireNonNull(children.removeFirstOccurrence(ProgramVariable.class));
         this.initializer = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
         this.visibility = Objects.requireNonNull(children.removeFirstOccurrence(Visibility.class));
-    }
-
-    public @NonNull TypeReference getTypeReference() {
-        return typeReference;
     }
 
     public @Nullable Expression getInitializer() {
@@ -68,10 +59,10 @@ public class StateVariableDeclaration extends Declaration {
     @Override
     public SolidityProgramElement getChild(int i) {
         if (i < 0 || i >= getChildCount()) {
-            throw new IndexOutOfBoundsException("No child at index " + i + " in " + name);
+            throw new IndexOutOfBoundsException("No child at index " + i + " in " + programVariable.name());
         }
         if (i == 0) {
-            return typeReference;
+            return programVariable;
         }
         return initializer;
     }
@@ -79,6 +70,8 @@ public class StateVariableDeclaration extends Declaration {
 
     // common interface
     public String toString() {
+        String name = programVariable.name().toString();
+        String typeReference = programVariable.getType().toString();
         return typeReference + " " + visibility + " " + name
             + (initializer != null ? " = " + initializer : "") + ";";
     }
