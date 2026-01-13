@@ -37,6 +37,11 @@ public class MemberEnumDeclaration extends Declaration {
         return 0;
     }
 
+    @Override
+    public String toString() {
+        return name.toString();
+    }
+
     public void visit(Visitor v) {
         v.performActionOnMemberEnumDeclaration(this);
     }

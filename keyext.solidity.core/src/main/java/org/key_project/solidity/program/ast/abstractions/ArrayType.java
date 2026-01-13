@@ -9,6 +9,7 @@ import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
@@ -38,8 +39,7 @@ public class ArrayType implements Type, SolidityProgramElement {
 
     @Override
     public @Nullable Sort getSort(Services services) {
-        // TODO
-        throw new UnsupportedOperationException("To be implemented");
+        return new SortImpl(name(), false);
     }
 
     @Override

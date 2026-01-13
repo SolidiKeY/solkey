@@ -316,12 +316,12 @@ public class SolJSONParser {
                 .findValue("typeIdentifier").asText());
 
 
-        final Sort uint = new SortImpl(new Name("uint"), false);
-        KeYSolidityType uintKST = new KeYSolidityType(UINT, uint);
-        services.getNamespaces().sorts().add(uint);
+        final Sort sort = type.getSort(services);
+        KeYSolidityType ksType = new KeYSolidityType(type, sort);
+        services.getNamespaces().sorts().add(sort);
 
 
-        ProgramVariable programVariable = new ProgramVariable(name, uintKST);
+        ProgramVariable programVariable = new ProgramVariable(name, ksType);
         StatementVariableDeclaration memDeclaration =
             new StatementVariableDeclaration(programVariable, struct, dataLocation);
         id2Name.put(id, memDeclaration);
@@ -359,7 +359,11 @@ public class SolJSONParser {
             initializerExp = parseExpression(initializer);
         }
 
-        ProgramVariable programVariable = new ProgramVariable(new Name(fieldName), null);
+        Sort sort = expType.getSort(services);
+        KeYSolidityType ksType = new KeYSolidityType(expType, sort);
+        services.getNamespaces().sorts().add(sort);
+
+        ProgramVariable programVariable = new ProgramVariable(new Name(fieldName), ksType);
         final StateVariableDeclaration field =
             new StateVariableDeclaration(programVariable, initializerExp, visibility);
         id2Name.put(id, field);

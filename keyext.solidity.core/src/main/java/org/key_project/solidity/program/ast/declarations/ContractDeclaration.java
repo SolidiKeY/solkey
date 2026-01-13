@@ -65,7 +65,7 @@ public class ContractDeclaration extends Declaration implements Type {
             + it.fields.stream().map(jt -> jt.toString() + "\n").collect(Collectors.joining())
             + "}\n").collect(Collectors.joining());
         for (int i = 0; i < fields.size(); i++) {
-            contract += fields.get(i);
+            contract += fields.get(i).toString();
             contract += "\n";
         }
         contract +=
