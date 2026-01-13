@@ -7,41 +7,42 @@ import java.util.Objects;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
 public class ArrayDeclaration extends Declaration {
+    private final ProgramVariable programVariable;
     int length;
-    String struct;
-    Name name;
 
-    public ArrayDeclaration(Name name, String struct, int length) {
+    public ArrayDeclaration(ProgramVariable programVariable, int length) {
         super(new ImmutableArray<>());
-        this.name = name;
-        this.struct = struct;
+        this.programVariable = programVariable;
         this.length = length;
     }
 
     public ArrayDeclaration(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
-        this.struct = Objects.requireNonNull(children.removeFirstOccurrence(String.class));;
-        this.length = Objects.requireNonNull(children.removeFirstOccurrence(int.class));;
+        super(new ImmutableArray<>());
+        this.programVariable = Objects.requireNonNull(children.removeFirstOccurrence(ProgramVariable.class));;
     }
 
     @Override
     public SyntaxElement getChild(int n) {
-        return null;
+        return switch (n){
+            case 0 -> programVariable;
+            default -> throw new IndexOutOfBoundsException(n + " should be 0");
+        };
     }
 
     @Override
     public int getChildCount() {
-        return 0;
+        return 1;
     }
 
     @Override
     public String toString() {
-        return struct + "[" + length + "]" + " memory " + name;
+        return programVariable.sort() + "[" + length + "]" + " memory " + programVariable.name();
     }
 
     public void visit(Visitor v) {

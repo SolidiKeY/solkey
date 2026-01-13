@@ -302,7 +302,15 @@ public class SolJSONParser {
                 declaration.findValue("typeName").findValue("length").findValue("value").asInt();
             String struct =
                 declaration.findValue("typeName").findValue("baseType").findValue("name").asText();
-            ArrayDeclaration field = new ArrayDeclaration(name, struct, length);
+
+            Type type = getPrimitiveType(struct);
+
+            final Sort sort = type.getSort(services);
+            KeYSolidityType ksType = new KeYSolidityType(type, sort);
+            services.getNamespaces().sorts().add(sort);
+            ProgramVariable programVariable = new ProgramVariable(name, ksType);
+
+            ArrayDeclaration field = new ArrayDeclaration(programVariable, length);
             id2Name.put(id, field);
             return field;
         }
