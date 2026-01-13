@@ -7,12 +7,16 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URI;
 import java.util.*;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.swing.*;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.logic.sort.Sort;
+import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.*;
@@ -47,6 +51,12 @@ public class SolJSONParser {
     /// types etc.
     /// TODO: what if a type under declaration references itself (is that possible in Solidity?)
     private final HashMap<Integer, Declaration> id2Name = new HashMap<>();
+
+    private final Services services;
+
+    public SolJSONParser() {
+        services = new Services();
+    }
 
     /// parses the Solidity file found at the provided [URI] and converts it into a
     /// list of [SolidityProgramElement]s of declarations representing the Solidity programs
@@ -304,7 +314,14 @@ public class SolJSONParser {
             DataLocation.fromString(declaration.findValue("storageLocation").asText());
         Type type = getType(declaration.findValue("typeName").findValue("typeDescriptions")
                 .findValue("typeIdentifier").asText());
-        ProgramVariable programVariable = null;
+
+
+        final Sort uint = new SortImpl(new Name("uint"), false);
+        KeYSolidityType uintKST = new KeYSolidityType(UINT, uint);
+        services.getNamespaces().sorts().add(uint);
+
+
+        ProgramVariable programVariable = new ProgramVariable(name, uintKST);
         StatementVariableDeclaration memDeclaration =
             new StatementVariableDeclaration(programVariable, struct, dataLocation);
         id2Name.put(id, memDeclaration);
@@ -342,7 +359,7 @@ public class SolJSONParser {
             initializerExp = parseExpression(initializer);
         }
 
-        ProgramVariable programVariable = null;
+        ProgramVariable programVariable = new ProgramVariable(new Name(fieldName), null);
         final StateVariableDeclaration field =
             new StateVariableDeclaration(programVariable, initializerExp, visibility);
         id2Name.put(id, field);
@@ -518,7 +535,7 @@ public class SolJSONParser {
     }
 
     Optional<String> nextAfterT(List<String> list) {
-        return java.util.stream.IntStream.range(0, list.size() - 1)
+        return IntStream.range(0, list.size() - 1)
                 .filter(i -> list.get(i).equals("t"))
                 .mapToObj(i -> list.get(i + 1))
                 .findFirst();

@@ -87,15 +87,16 @@ class TestProgVarReplaceVisitor {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         DeclarationStatement dstm = (DeclarationStatement) contractDeclaration.getFunctions()
                 .getFirst().getBody().getStatements().get(0);
-        StatementVariableDeclaration original =  (StatementVariableDeclaration) dstm.getDeclarations().getFirst();
-//        StateVariableDeclaration replacement =
-//            new StateVariableDeclaration(new Name("replacement"), null, null);
+        StatementVariableDeclaration stm =  (StatementVariableDeclaration) dstm.getDeclarations().getFirst();
 
-        // map.put(original, replacement);
-        //
-        // ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(original, map, false,
-        // services);
-        // replacer.start();
-        // assertEquals(replacement, replacer.result()); // stmnt.equals(repl.result())
+        ProgramVariable original = stm.programVariable;
+        ProgramVariable replacement = new ProgramVariable(new Name("replacement"), uintKST);
+
+         map.put(original, replacement);
+
+         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(stm, map, false, services);
+         replacer.start();
+         ProgramVariable result = ((StatementVariableDeclaration) replacer.result()).programVariable;
+         assertEquals(replacement, result); // stmnt.equals(repl.result())
     }
 }

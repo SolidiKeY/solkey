@@ -20,7 +20,7 @@ import static org.key_project.solidity.program.ast.declarations.FunctionEnums.Da
 
 //
 public class StatementVariableDeclaration extends Declaration {
-    private final ProgramVariable programVariable;
+    public final ProgramVariable programVariable;
     private String struct;
     private final DataLocation dataLocation;
 
@@ -32,21 +32,26 @@ public class StatementVariableDeclaration extends Declaration {
     }
 
     public StatementVariableDeclaration(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
+        super(new ImmutableArray<>());
         this.programVariable = Objects.requireNonNull(children.removeFirstOccurrence(ProgramVariable.class));
-        this.struct = Objects.requireNonNull(children.removeFirstOccurrence(String.class));
-        this.dataLocation =
-            Objects.requireNonNull(children.removeFirstOccurrence(DataLocation.class));
+        this.struct = null;
+//        this.struct = Objects.requireNonNull(children.removeFirstOccurrence(String.class));
+        this.dataLocation = null;
+//        this.dataLocation =
+//            Objects.requireNonNull(children.removeFirstOccurrence(DataLocation.class));
     }
 
     @Override
     public SyntaxElement getChild(int n) {
-        return null;
+        return switch (n){
+            case 0 -> programVariable;
+            default -> throw new IndexOutOfBoundsException("children outside of bonds");
+        };
     }
 
     @Override
     public int getChildCount() {
-        return 0;
+        return 1;
     }
 
     public String getStruct() {

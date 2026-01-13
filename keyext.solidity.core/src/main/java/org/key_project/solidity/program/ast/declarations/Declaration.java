@@ -10,7 +10,7 @@ import org.jspecify.annotations.NonNull;
 import org.key_project.util.collection.ImmutableArray;
 
 public abstract class Declaration implements SolidityProgramElement {
-    private final ImmutableArray<Modifier> modifiers;
+    final ImmutableArray<Modifier> modifiers;
 
     protected Declaration(ImmutableArray<Modifier> modifiers) {
         this.modifiers = modifiers;
