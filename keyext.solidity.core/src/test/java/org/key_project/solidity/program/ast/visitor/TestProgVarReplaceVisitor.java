@@ -27,10 +27,22 @@ import static org.key_project.solidity.logic.parser.SolJsonParserTest.getDeclStr
 
 class TestProgVarReplaceVisitor {
 
+    private final Services services;
+    private final Map<ProgramVariable, ProgramVariable> map;
+    private final KeYSolidityType uintKST;
+
+    public TestProgVarReplaceVisitor(){
+        map = new HashMap<>();
+        services = new Services();
+
+        final Sort uint = new SortImpl(new Name("uint"), false);
+        uintKST = new KeYSolidityType(PrimitiveType.UINT, uint);
+        services.getNamespaces().sorts().add(uint);
+    }
+
+    // TODO: why does this test should work?
     @Test
     void testNoReplacement() {
-        Map<ProgramVariable, ProgramVariable> map = new HashMap<>();
-        Services services = new Services();
         // parse in statements
         Statement stmnt = null; // <- here actual statement needed
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(stmnt, map, false, services);
@@ -42,12 +54,6 @@ class TestProgVarReplaceVisitor {
 
     @Test
     void testReplacement() {
-        Map<ProgramVariable, ProgramVariable> map = new HashMap<>();
-        Services services = new Services();
-        // parse in statements
-        final Sort uint = new SortImpl(new Name("uint"), false);
-        KeYSolidityType uintKST = new KeYSolidityType(PrimitiveType.UINT, uint);
-        services.getNamespaces().sorts().add(uint);
         SoliditiyExpression original = new ProgramVariable(new Name("original"), uintKST); // <-
                                                                                            // here
                                                                                            // actual
@@ -68,13 +74,6 @@ class TestProgVarReplaceVisitor {
 
     @Test
     void testFunction() throws IOException {
-        Map<ProgramVariable, ProgramVariable> map = new HashMap<>();
-        Services services = new Services();
-        // parse in statements
-        final Sort uint = new SortImpl(new Name("uint"), false);
-        KeYSolidityType uintKST = new KeYSolidityType(PrimitiveType.UINT, uint);
-        services.getNamespaces().sorts().add(uint);
-
         // language=solidity
         String contract = """
                 contract SimpleContract {
