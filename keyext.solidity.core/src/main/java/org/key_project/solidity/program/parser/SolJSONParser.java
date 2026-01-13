@@ -108,7 +108,7 @@ public class SolJSONParser {
         }
 
         final ContractDeclaration cDecl =
-            new ContractDeclaration(contractId, new Name(contractName), fields, structs, modifiers,
+            new ContractDeclaration(new Name(contractName), fields, structs, modifiers,
                 functions, enums);
         id2Name.put(contractId, cDecl);
         completeReferences(cDecl);
@@ -193,7 +193,7 @@ public class SolJSONParser {
             StateMutability.valueOf(node.findValue("stateMutability").asText());
         List<ModifierReference> modifiers =
             node.findValue("modifiers").valueStream().map(this::parseModifierRefence).toList();
-        FunctionDeclaration function = new FunctionDeclaration(id, new Name(name), returnParameters,
+        FunctionDeclaration function = new FunctionDeclaration(new Name(name), returnParameters,
             inputParamenters, body, kind, visibility, stateMutability, modifiers);
         id2Name.put(id, function);
         return function;
@@ -304,7 +304,7 @@ public class SolJSONParser {
         Type type = getType(declaration.findValue("typeName").findValue("typeDescriptions")
                 .findValue("typeIdentifier").asText());
         StatementVariableDeclaration memDeclaration =
-            new StatementVariableDeclaration(id, name, type, struct, dataLocation);
+            new StatementVariableDeclaration(name, type, struct, dataLocation);
         id2Name.put(id, memDeclaration);
         return memDeclaration;
     }
@@ -318,7 +318,7 @@ public class SolJSONParser {
         final DataLocation dataLocation = DataLocation.fromString(dataLocationS);
 
         final ParameterDeclaration field =
-            new ParameterDeclaration(id, new Name(fieldName),
+            new ParameterDeclaration(new Name(fieldName),
                 new TypeReference(new Name(fieldType)), dataLocation);
         id2Name.put(id, field);
 

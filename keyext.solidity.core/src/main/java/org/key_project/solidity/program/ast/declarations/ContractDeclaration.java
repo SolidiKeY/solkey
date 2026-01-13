@@ -21,7 +21,6 @@ import org.jspecify.annotations.Nullable;
 
 public class ContractDeclaration extends Declaration implements Type {
 
-    private final int id;
     private final ImmutableArray<StateVariableDeclaration> fields;
     private final List<StructDeclaration> structs;
     private final List<ModifierDeclaration> modifiers;
@@ -29,13 +28,12 @@ public class ContractDeclaration extends Declaration implements Type {
     private final List<EnumDeclaration> enums;
     public final Name name;
 
-    public ContractDeclaration(int contractId, Name name, List<StateVariableDeclaration> fields,
+    public ContractDeclaration(Name name, List<StateVariableDeclaration> fields,
             List<StructDeclaration> structs,
             List<ModifierDeclaration> modifiers, List<FunctionDeclaration> functions,
             List<EnumDeclaration> enums) {
         super(new ImmutableArray<>());
         this.name = name;
-        this.id = contractId;
         this.fields = new ImmutableArray<>(fields.toArray(new StateVariableDeclaration[0]));
         this.structs = structs;
         this.modifiers = modifiers;
@@ -46,7 +44,6 @@ public class ContractDeclaration extends Declaration implements Type {
     public ContractDeclaration(ExtList children) {
         super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
         this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
-        this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
         ImmutableArray<StateVariableDeclaration> flds =
             Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class));
         this.fields = new ImmutableArray<>(flds.toArray(new StateVariableDeclaration[0]));

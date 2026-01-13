@@ -18,7 +18,6 @@ import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
 public class FunctionDeclaration extends Declaration {
-    private final int id;
     private final ImmutableArray<ParameterDeclaration> returnParameters;
     private final ImmutableArray<ParameterDeclaration> inputParameters;
     private final Block body;
@@ -28,13 +27,12 @@ public class FunctionDeclaration extends Declaration {
     private final List<ModifierReference> modifiers;
     private final Name name;
 
-    public FunctionDeclaration(int id, Name name, List<ParameterDeclaration> returnParameters,
+    public FunctionDeclaration(Name name, List<ParameterDeclaration> returnParameters,
             List<ParameterDeclaration> inputParameters, Block body, String kind,
             Visibility visibility, StateMutability stateMutability,
             List<ModifierReference> modifiers) {
         super(new ImmutableArray<>());
         this.name = name;
-        this.id = id;
         this.returnParameters = new ImmutableArray<>(returnParameters);
         this.inputParameters = new ImmutableArray<>(inputParameters);
         this.body = body;
@@ -47,7 +45,6 @@ public class FunctionDeclaration extends Declaration {
     public FunctionDeclaration(ExtList children) {
         super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
         this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
-        this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
         this.returnParameters = new ImmutableArray<>(
             Objects.requireNonNull(children.removeFirstOccurrence(List.class)));
         this.inputParameters = new ImmutableArray<>(

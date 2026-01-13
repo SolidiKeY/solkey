@@ -19,16 +19,14 @@ import static org.key_project.solidity.program.ast.declarations.FunctionEnums.Da
 
 //
 public class StatementVariableDeclaration extends Declaration {
-    private final int id;
     private final Type type;
     private final @NonNull Name name;
     private String struct;
     private final DataLocation dataLocation;
 
-    public StatementVariableDeclaration(int id, @NonNull Name name, Type type, String struct,
+    public StatementVariableDeclaration(@NonNull Name name, Type type, String struct,
             DataLocation dataLocation) {
         super(new ImmutableArray<>());
-        this.id = id;
         this.name = name;
         this.type = type;
         this.struct = struct;
@@ -38,7 +36,6 @@ public class StatementVariableDeclaration extends Declaration {
     public StatementVariableDeclaration(ExtList children) {
         super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
         this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
-        this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
         this.type = Objects.requireNonNull(children.removeFirstOccurrence(Type.class));
         this.struct = Objects.requireNonNull(children.removeFirstOccurrence(String.class));
         this.dataLocation =
