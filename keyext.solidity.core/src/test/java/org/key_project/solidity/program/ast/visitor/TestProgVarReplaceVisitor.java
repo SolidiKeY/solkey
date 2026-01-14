@@ -120,7 +120,9 @@ class TestProgVarReplaceVisitor {
 
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(stm, map, false, services);
         replacer.start();
-        ProgramVariable result = ((ArrayDeclaration) replacer.result()).programVariable;
-        assertEquals(replacement, result);
+        ArrayDeclaration result = ((ArrayDeclaration) replacer.result());
+        ProgramVariable resultPV = result.programVariable;
+        assertEquals(replacement, resultPV);
+        assertEquals(10, result.length);
     }
 }

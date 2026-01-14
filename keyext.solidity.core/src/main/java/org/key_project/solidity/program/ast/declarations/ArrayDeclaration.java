@@ -14,7 +14,7 @@ import org.key_project.util.collection.ImmutableArray;
 
 public class ArrayDeclaration extends Declaration {
     public final ProgramVariable programVariable;
-    int length;
+    public int length;
 
     public ArrayDeclaration(ProgramVariable programVariable, int length) {
         super(new ImmutableArray<>());
@@ -22,9 +22,10 @@ public class ArrayDeclaration extends Declaration {
         this.length = length;
     }
 
-    public ArrayDeclaration(ExtList children) {
+    public ArrayDeclaration(ExtList children, int length) {
         super(new ImmutableArray<>());
         this.programVariable = Objects.requireNonNull(children.removeFirstOccurrence(ProgramVariable.class));;
+        this.length = length;
     }
 
     @Override
