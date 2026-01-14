@@ -155,4 +155,32 @@ class TestProgVarReplaceVisitor {
         ProgramVariable resultPV = result.programVariable;
         assertEquals(replacement, resultPV);
     }
+
+    @Test
+    void testEnum() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    enum State {
+                        Begin,
+                        End
+                    }
+                    function f() public {
+                        State s = State.Begin;
+                    }
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        DeclarationStatement dstm = (DeclarationStatement) contractDeclaration.getFunctions()
+                .getFirst().getBody().getStatements().get(0);
+        StatementVariableDeclaration stm = (StatementVariableDeclaration) dstm.getDeclarations().getFirst();
+
+        ProgramVariable original = stm.programVariable;
+        addMap(original);
+
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(stm, map, false, services);
+        replacer.start();
+        StatementVariableDeclaration result = (StatementVariableDeclaration) replacer.result();
+        ProgramVariable resultPV = result.programVariable;
+        assertEquals(replacement, resultPV);
+    }
 }
