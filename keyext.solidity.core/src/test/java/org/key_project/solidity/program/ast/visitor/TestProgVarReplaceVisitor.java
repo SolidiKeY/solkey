@@ -125,4 +125,34 @@ class TestProgVarReplaceVisitor {
         assertEquals(replacement, resultPV);
         assertEquals(10, result.length);
     }
+
+    @Test
+    void testStruct() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    struct Person {
+                       int age;
+                    }
+
+                    function f() public pure {
+                        Person memory alice;
+                    }
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        DeclarationStatement dstm = (DeclarationStatement) contractDeclaration.getFunctions()
+                .getFirst().getBody().getStatements().get(0);
+        StatementVariableDeclaration stm = (StatementVariableDeclaration) dstm.getDeclarations().getFirst();
+
+        ProgramVariable original = stm.programVariable;
+        ProgramVariable replacement = new ProgramVariable(new Name("replacement"), uintKST);
+
+        map.put(original, replacement);
+
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(stm, map, false, services);
+        replacer.start();
+        StatementVariableDeclaration result = (StatementVariableDeclaration) replacer.result();
+        ProgramVariable resultPV = result.programVariable;
+        assertEquals(replacement, resultPV);
+    }
 }
