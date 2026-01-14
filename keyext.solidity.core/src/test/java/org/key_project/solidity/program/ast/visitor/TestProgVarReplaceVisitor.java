@@ -31,6 +31,7 @@ class TestProgVarReplaceVisitor {
     private final Services services;
     private final Map<ProgramVariable, ProgramVariable> map;
     private final KeYSolidityType uintKST;
+    private final ProgramVariable replacement;
 
     public TestProgVarReplaceVisitor(){
         map = new HashMap<>();
@@ -39,6 +40,11 @@ class TestProgVarReplaceVisitor {
         final Sort uint = new SortImpl(new Name("uint"), false);
         uintKST = new KeYSolidityType(PrimitiveType.UINT, uint);
         services.getNamespaces().sorts().add(uint);
+        replacement = new ProgramVariable(new Name("replacement"), uintKST);
+    }
+
+    void addMap(ProgramVariable original) {
+        map.put(original, replacement);
     }
 
     // TODO: why does this test should work?
@@ -89,9 +95,7 @@ class TestProgVarReplaceVisitor {
         StatementVariableDeclaration stm =  (StatementVariableDeclaration) dstm.getDeclarations().getFirst();
 
         ProgramVariable original = stm.programVariable;
-        ProgramVariable replacement = new ProgramVariable(new Name("replacement"), uintKST);
-
-         map.put(original, replacement);
+        addMap(original);
 
          ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(stm, map, false, services);
          replacer.start();
@@ -114,9 +118,7 @@ class TestProgVarReplaceVisitor {
         ArrayDeclaration stm = (ArrayDeclaration) dstm.getDeclarations().getFirst();
 
         ProgramVariable original = stm.programVariable;
-        ProgramVariable replacement = new ProgramVariable(new Name("replacement"), uintKST);
-
-        map.put(original, replacement);
+        addMap(original);
 
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(stm, map, false, services);
         replacer.start();
@@ -145,9 +147,7 @@ class TestProgVarReplaceVisitor {
         StatementVariableDeclaration stm = (StatementVariableDeclaration) dstm.getDeclarations().getFirst();
 
         ProgramVariable original = stm.programVariable;
-        ProgramVariable replacement = new ProgramVariable(new Name("replacement"), uintKST);
-
-        map.put(original, replacement);
+        addMap(original);
 
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(stm, map, false, services);
         replacer.start();
