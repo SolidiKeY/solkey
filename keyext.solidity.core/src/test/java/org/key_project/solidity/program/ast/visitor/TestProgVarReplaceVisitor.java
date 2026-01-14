@@ -14,6 +14,7 @@ import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
+import org.key_project.solidity.program.ast.declarations.ArrayDeclaration;
 import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.SoliditiyExpression;
@@ -69,11 +70,11 @@ class TestProgVarReplaceVisitor {
 
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(original, map, false, services);
         replacer.start();
-        assertEquals(replacement, replacer.result()); // stmnt.equals(repl.result())
+        assertEquals(replacement, replacer.result());
     }
 
     @Test
-    void testFunction() throws IOException {
+    void testSimpleInt() throws IOException {
         // language=solidity
         String contract = """
                 contract SimpleContract {
@@ -95,6 +96,31 @@ class TestProgVarReplaceVisitor {
          ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(stm, map, false, services);
          replacer.start();
          ProgramVariable result = ((StatementVariableDeclaration) replacer.result()).programVariable;
-         assertEquals(replacement, result); // stmnt.equals(repl.result())
+         assertEquals(replacement, result);
+    }
+
+    @Test
+    void testArray() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function f() public pure {
+                        int[10] memory original;
+                    }
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        DeclarationStatement dstm = (DeclarationStatement) contractDeclaration.getFunctions()
+                .getFirst().getBody().getStatements().get(0);
+        ArrayDeclaration stm = (ArrayDeclaration) dstm.getDeclarations().getFirst();
+
+        ProgramVariable original = stm.programVariable;
+        ProgramVariable replacement = new ProgramVariable(new Name("replacement"), uintKST);
+
+        map.put(original, replacement);
+
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(stm, map, false, services);
+        replacer.start();
+        ProgramVariable result = ((ArrayDeclaration) replacer.result()).programVariable;
+        assertEquals(replacement, result);
     }
 }

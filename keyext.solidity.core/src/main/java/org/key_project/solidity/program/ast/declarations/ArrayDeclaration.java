@@ -13,7 +13,7 @@ import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
 public class ArrayDeclaration extends Declaration {
-    private final ProgramVariable programVariable;
+    public final ProgramVariable programVariable;
     int length;
 
     public ArrayDeclaration(ProgramVariable programVariable, int length) {
