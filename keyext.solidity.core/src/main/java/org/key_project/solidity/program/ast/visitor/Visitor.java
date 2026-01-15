@@ -7,6 +7,7 @@ import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.abstractions.*;
 import org.key_project.solidity.program.ast.declarations.*;
+import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.expressions.*;
 import org.key_project.solidity.program.ast.expressions.literals.*;
 import org.key_project.solidity.program.ast.expressions.operators.*;
@@ -192,4 +193,6 @@ public interface Visitor {
     void performActionOnTryStatement(TryStatement x);
 
     void performActionOnWhileStatement(WhileStatement x);
+
+    void performActionOnDataLocation(DataLocation x);
 }

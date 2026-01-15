@@ -18,6 +18,7 @@ import org.key_project.solidity.program.ast.declarations.ArrayDeclaration;
 import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.SoliditiyExpression;
+import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.program.ast.statement.DeclarationStatement;
 import org.key_project.solidity.program.ast.statement.Statement;
 
@@ -92,15 +93,16 @@ class TestProgVarReplaceVisitor {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         DeclarationStatement dstm = (DeclarationStatement) contractDeclaration.getFunctions()
                 .getFirst().getBody().getStatements().get(0);
-        StatementVariableDeclaration stm =  (StatementVariableDeclaration) dstm.getDeclarations().getFirst();
+        StatementVariableDeclaration stm =  (StatementVariableDeclaration) dstm.getDeclarations().get(0);
 
         ProgramVariable original = stm.programVariable;
         addMap(original);
 
-         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(stm, map, false, services);
-         replacer.start();
-         ProgramVariable result = ((StatementVariableDeclaration) replacer.result()).programVariable;
-         assertEquals(replacement, result);
+        Block body = contractDeclaration.getFunctions().getFirst().getBody();
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
+        replacer.start();
+        ProgramVariable result = ((StatementVariableDeclaration) replacer.result()).programVariable;
+        assertSame(replacement, result);
     }
 
     @Test
@@ -115,7 +117,7 @@ class TestProgVarReplaceVisitor {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         DeclarationStatement dstm = (DeclarationStatement) contractDeclaration.getFunctions()
                 .getFirst().getBody().getStatements().get(0);
-        ArrayDeclaration stm = (ArrayDeclaration) dstm.getDeclarations().getFirst();
+        ArrayDeclaration stm = (ArrayDeclaration) dstm.getDeclarations().get(0);
 
         ProgramVariable original = stm.programVariable;
         addMap(original);
@@ -144,7 +146,7 @@ class TestProgVarReplaceVisitor {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         DeclarationStatement dstm = (DeclarationStatement) contractDeclaration.getFunctions()
                 .getFirst().getBody().getStatements().get(0);
-        StatementVariableDeclaration stm = (StatementVariableDeclaration) dstm.getDeclarations().getFirst();
+        StatementVariableDeclaration stm = (StatementVariableDeclaration) dstm.getDeclarations().get(0);
 
         ProgramVariable original = stm.programVariable;
         addMap(original);
@@ -172,7 +174,7 @@ class TestProgVarReplaceVisitor {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         DeclarationStatement dstm = (DeclarationStatement) contractDeclaration.getFunctions()
                 .getFirst().getBody().getStatements().get(0);
-        StatementVariableDeclaration stm = (StatementVariableDeclaration) dstm.getDeclarations().getFirst();
+        StatementVariableDeclaration stm = (StatementVariableDeclaration) dstm.getDeclarations().get(0);
 
         ProgramVariable original = stm.programVariable;
         addMap(original);

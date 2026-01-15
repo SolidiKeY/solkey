@@ -12,33 +12,40 @@ import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
+import org.key_project.util.collection.ImmutableArray;
 
 public class DeclarationStatement implements Statement {
-    private final List<Declaration> declarations;
+    private final ImmutableArray<Declaration> declarations;
     private final Expression initialValue;
 
     public DeclarationStatement(List<Declaration> declarations, Expression initialValue) {
-        this.declarations = declarations;
+        this.declarations = new ImmutableArray<>(declarations);
         this.initialValue = initialValue;
     }
 
     public DeclarationStatement(ExtList children) {
-        this.declarations = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
-        this.initialValue =
-            Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.declarations = new ImmutableArray<>(children.collect(Declaration.class));
+        this.initialValue = children.removeFirstOccurrence(Expression.class);
     }
 
     @Override
     public SyntaxElement getChild(int n) {
-        return null;
+        if(n < 0 || n >= getChildCount()){
+            throw new IndexOutOfBoundsException(n + " out of bonds");
+        }
+
+        if(n < declarations.size()){
+            return declarations.get(n);
+        }
+        return initialValue;
     }
 
     @Override
     public int getChildCount() {
-        return 0;
+        return declarations.size()+(initialValue == null ? 0 : 1);
     }
 
-    public List<Declaration> getDeclarations() {
+    public ImmutableArray<Declaration> getDeclarations() {
         return declarations;
     }
 

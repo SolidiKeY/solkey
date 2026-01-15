@@ -38,11 +38,12 @@ public class Block implements Statement {
     }
 
     public Block(ExtList children) {
-        this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
-        this.statements = new ImmutableArray<Statement>(
-            Objects.requireNonNull(children.removeFirstOccurrence(List.class)));
-        this.errorName = Objects.requireNonNull(children.removeFirstOccurrence(String.class));
-        this.arguments = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
+        this.id = 0;
+        this.statements = new ImmutableArray<>(children.collect(Statement.class));
+        this.errorName = null;
+        this.arguments = null;
+//        this.errorName = Objects.requireNonNull(children.removeFirstOccurrence(String.class));
+//        this.arguments = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
     }
 
     @Override

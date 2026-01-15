@@ -532,8 +532,8 @@ public class SolJSONParser {
                 new ArrayReference(idDecl, name, arrayDeclaration, type);
             case FunctionDeclaration functionDeclaration ->
                 new FunctionReference(idDecl, name, functionDeclaration, type);
-            case StatementVariableDeclaration stmVarDeclaration ->
-                new StatementVariableReference(idDecl, name, stmVarDeclaration, type);
+            case StatementVariableDeclaration stmVarDeclaration -> stmVarDeclaration.getProgramVariable();
+//                new StatementVariableReference(idDecl, name, stmVarDeclaration, type);
             case EnumDeclaration enumDeclaration ->
                 new EnumReference(idDecl, name, enumDeclaration, type);
             case null -> switch (expType.toString()) {

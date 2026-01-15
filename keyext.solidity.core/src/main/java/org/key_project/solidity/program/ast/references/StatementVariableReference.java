@@ -17,6 +17,7 @@ public class StatementVariableReference extends VariableReference {
     private final Name name;
     private final StatementVariableDeclaration stmVarDecl;
 
+    // TODO: remove this class
     public StatementVariableReference(int id, Name name,
             StatementVariableDeclaration stmVarDeclaration, Type type) {
         super(type);

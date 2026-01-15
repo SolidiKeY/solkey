@@ -11,6 +11,7 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.*;
 import org.key_project.solidity.program.ast.declarations.*;
+import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.expressions.*;
 import org.key_project.solidity.program.ast.expressions.literals.*;
 import org.key_project.solidity.program.ast.expressions.operators.*;
@@ -108,6 +109,17 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
             addChild(createNewElement(changeList));
             changed();
         }
+    }
+
+    @Override
+    public void performActionOnDataLocation(DataLocation x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return x;
+            }
+        };
+        def.doAction(x);
     }
 
     @Override

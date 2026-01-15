@@ -13,55 +13,55 @@ import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.util.ExtList;
 
-public abstract class VariableReference extends Expression {
-    protected Type type;
-    protected final Name typeName;
-
-    protected VariableReference(Type type) {
-        super(type);
-        this.type = type;
-        this.typeName = type.name();
-    }
-
-    protected VariableReference(Name typeName, Type type) {
-        super(type);
-        this.typeName = typeName;
-    }
-
-    protected VariableReference(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
-        this.type = Objects.requireNonNull(children.removeFirstOccurrence(Type.class));
-        this.typeName = type.name();
-    }
-
-    public boolean isResolved() {
-        return type != null;
-    }
-
-    public void resolve(TypeResolver resolver) {
-        if (!isResolved()) {
-            type = resolver.resolveTypeByName(typeName);
-        }
-    }
-
-    public abstract Name name();
-
-    public abstract Declaration getDeclaration();
-
-    @Override
-    public SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException("A variable reference has no children");
-    }
-
-    @Override
-    public int getChildCount() {
-        return 0;
-    }
-
-    @Override
-    public Type getType() {
-        return type;
-    }
+public interface VariableReference {
+//    protected Type type;
+//    protected final Name typeName;
+//
+//    protected VariableReference(Type type) {
+//        super(type);
+//        this.type = type;
+//        this.typeName = type.name();
+//    }
+//
+//    protected VariableReference(Name typeName, Type type) {
+//        super(type);
+//        this.typeName = typeName;
+//    }
+//
+//    protected VariableReference(ExtList children) {
+//        super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
+//        this.type = Objects.requireNonNull(children.removeFirstOccurrence(Type.class));
+//        this.typeName = type.name();
+//    }
+//
+//    public boolean isResolved() {
+//        return type != null;
+//    }
+//
+//    public void resolve(TypeResolver resolver) {
+//        if (!isResolved()) {
+//            type = resolver.resolveTypeByName(typeName);
+//        }
+//    }
+//
+//    public abstract Name name();
+//
+//    public abstract Declaration getDeclaration();
+//
+//    @Override
+//    public SyntaxElement getChild(int n) {
+//        throw new IndexOutOfBoundsException("A variable reference has no children");
+//    }
+//
+//    @Override
+//    public int getChildCount() {
+//        return 0;
+//    }
+//
+//    @Override
+//    public Type getType() {
+//        return type;
+//    }
 
 
 }

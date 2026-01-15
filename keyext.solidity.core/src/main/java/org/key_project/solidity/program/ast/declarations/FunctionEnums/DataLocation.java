@@ -3,7 +3,12 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.declarations.FunctionEnums;
 
-public enum DataLocation {
+
+import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.declarations.Modifier;
+import org.key_project.solidity.program.ast.visitor.Visitor;
+
+public enum DataLocation implements Modifier {
     Memory("memory"), Storage("storage"), Calldata("calldata"), Default("default");
 
     private final String label;
@@ -24,5 +29,20 @@ public enum DataLocation {
     @Override
     public String toString() {
         return label;
+    }
+
+    @Override
+    public SyntaxElement getChild(int n) {
+        throw new IndexOutOfBoundsException("Data Location has no children");
+    }
+
+    @Override
+    public int getChildCount() {
+        return 0;
+    }
+
+    @Override
+    public void visit(Visitor v) {
+        v.performActionOnDataLocation(this);
     }
 }

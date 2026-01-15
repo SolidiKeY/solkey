@@ -7,9 +7,11 @@ import java.util.Objects;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.logic.op.IProgramVariable;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
+import org.key_project.solidity.program.ast.references.VariableReference;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
@@ -22,36 +24,34 @@ import static org.key_project.solidity.program.ast.declarations.FunctionEnums.Da
 public class StatementVariableDeclaration extends Declaration {
     public final ProgramVariable programVariable;
     private String struct;
-    private final DataLocation dataLocation;
 
     public StatementVariableDeclaration(ProgramVariable programVariable, String struct, DataLocation dataLocation) {
-        super(new ImmutableArray<>());
+        super(new ImmutableArray<>(dataLocation));
         this.programVariable = programVariable;
         this.struct = struct;
-        this.dataLocation = dataLocation;
     }
 
     public StatementVariableDeclaration(ExtList children) {
-        super(new ImmutableArray<>());
+        super(children);
         this.programVariable = Objects.requireNonNull(children.removeFirstOccurrence(ProgramVariable.class));
         this.struct = null;
 //        this.struct = Objects.requireNonNull(children.removeFirstOccurrence(String.class));
-        this.dataLocation = null;
 //        this.dataLocation =
 //            Objects.requireNonNull(children.removeFirstOccurrence(DataLocation.class));
     }
 
     @Override
     public SyntaxElement getChild(int n) {
-        return switch (n){
-            case 0 -> programVariable;
-            default -> throw new IndexOutOfBoundsException("children outside of bonds");
-        };
+        if(n < 0 || n >= getChildCount())
+            throw new IndexOutOfBoundsException(n + " out of bonds");
+        if(n < modifiers.size())
+            return modifiers.get(n);
+        return programVariable;
     }
 
     @Override
     public int getChildCount() {
-        return 1;
+        return 2;
     }
 
     public String getStruct() {
@@ -60,16 +60,21 @@ public class StatementVariableDeclaration extends Declaration {
 
     @Override
     public String toString() {
-        String name = programVariable.name().toString();
-        String type = programVariable.getType().toString();
-        if (struct != null)
-            return struct + " " + dataLocation + " " + name;
-        if (dataLocation == Default)
-            return type + " " + name;
-        return type + " " + dataLocation + " " + name;
+        return "";
+//        String name = programVariable.name().toString();
+//        String type = programVariable.getType().toString();
+//        if (struct != null)
+//            return struct + " " + dataLocation + " " + name;
+//        if (dataLocation == Default)
+//            return type + " " + name;
+//        return type + " " + dataLocation + " " + name;
     }
 
     public void visit(Visitor v) {
         v.performActionOnStatementVariableDeclaration(this);
+    }
+
+    public IProgramVariable getProgramVariable() {
+        return programVariable;
     }
 }

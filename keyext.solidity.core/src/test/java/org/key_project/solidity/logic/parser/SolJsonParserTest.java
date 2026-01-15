@@ -396,7 +396,7 @@ public class SolJsonParserTest {
         Assertions.assertInstanceOf(DeclarationStatement.class, declStmS);
         DeclarationStatement declStms = (DeclarationStatement) declStmS;
         StatementVariableDeclaration decl =
-            (StatementVariableDeclaration) declStms.getDeclarations().getFirst();
+            (StatementVariableDeclaration) declStms.getDeclarations().get(0);
         Assertions.assertNotNull(decl);
         String contractStr = contractDeclaration.toString();
         Assertions.assertTrue(contractStr.contains("Person memory alice"));
