@@ -1,6 +1,0 @@
-TODO:
-- Every class that extends Variable Reference should be changed to extends Expression and implements VariableReference
-- Each of these modified classes should implement getChild{Count}
-- Everything should be compiled
-- Find out that AST node arrayReference for what it stands. If they are only used to represent of local variable of array types then this class is not needed and should be replaced by program variable
-- Go to AST classes and removed unnecessary/redudant fields such as id

@@ -98,6 +98,30 @@ class TestProgVarReplaceVisitor {
         ProgramVariable original = stm.programVariable;
         addMap(original);
 
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(stm, map, false, services);
+        replacer.start();
+        ProgramVariable result = ((StatementVariableDeclaration) replacer.result()).programVariable;
+        assertSame(replacement, result);
+    }
+
+    @Test
+    void testWholeBody() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function f() public pure {
+                        int original;
+                        original = 5;
+                    }
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        DeclarationStatement dstm = (DeclarationStatement) contractDeclaration.getFunctions()
+                .getFirst().getBody().getStatements().get(0);
+        StatementVariableDeclaration stm =  (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+
+        ProgramVariable original = stm.programVariable;
+        addMap(original);
+
         Block body = contractDeclaration.getFunctions().getFirst().getBody();
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
         replacer.start();

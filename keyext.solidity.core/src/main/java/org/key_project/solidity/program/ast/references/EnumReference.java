@@ -6,13 +6,15 @@ package org.key_project.solidity.program.ast.references;
 import java.util.Objects;
 
 import org.key_project.logic.Name;
+import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.declarations.EnumDeclaration;
+import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public class EnumReference extends VariableReference {
+public class EnumReference extends Expression implements VariableReference {
     private final int id;
     private final Name name;
     private final EnumDeclaration enumDeclaration;
@@ -45,6 +47,16 @@ public class EnumReference extends VariableReference {
     @Override
     public String toString() {
         return name.toString();
+    }
+
+    @Override
+    public SyntaxElement getChild(int n) {
+        return null;
+    }
+
+    @Override
+    public int getChildCount() {
+        return 0;
     }
 
     public void visit(Visitor v) {

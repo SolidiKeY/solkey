@@ -7,14 +7,16 @@ import java.util.HashMap;
 import java.util.Objects;
 
 import org.key_project.logic.Name;
+import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
+import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public class FunctionReference extends VariableReference implements Resolver {
+public class FunctionReference extends Expression implements Resolver, VariableReference {
 
     private final int id;
     private final Name name;
@@ -61,6 +63,16 @@ public class FunctionReference extends VariableReference implements Resolver {
     @Override
     public void resolve(HashMap<Integer, Declaration> id2Name) {
         this.referencedDeclaration = (FunctionDeclaration) id2Name.get(id);
+    }
+
+    @Override
+    public SyntaxElement getChild(int n) {
+        return null;
+    }
+
+    @Override
+    public int getChildCount() {
+        return 0;
     }
 
     public void visit(Visitor v) {

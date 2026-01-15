@@ -12,10 +12,11 @@ import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.program.ast.declarations.Declaration;
+import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public class ContractReference extends VariableReference implements Resolver {
+public class ContractReference extends Expression implements Resolver, VariableReference {
 
     private int id;
     private final Name name;
@@ -30,13 +31,11 @@ public class ContractReference extends VariableReference implements Resolver {
     }
 
     public ContractReference(int id, Name name, Type type) {
-        super(type);
         this.id = id;
         this.name = name;
     }
 
     public ContractReference(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
         this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
         this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
         this.contractDeclaration =

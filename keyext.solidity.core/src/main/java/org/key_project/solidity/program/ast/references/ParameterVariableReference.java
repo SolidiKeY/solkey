@@ -6,12 +6,14 @@ package org.key_project.solidity.program.ast.references;
 import java.util.Objects;
 
 import org.key_project.logic.Name;
+import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.ParameterDeclaration;
+import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public class ParameterVariableReference extends VariableReference {
+public class ParameterVariableReference extends Expression implements VariableReference {
     private int id;
     private final Name name;
     private final ParameterDeclaration referencedDeclaration;
@@ -52,6 +54,16 @@ public class ParameterVariableReference extends VariableReference {
     @Override
     public String toString() {
         return name.toString();
+    }
+
+    @Override
+    public SyntaxElement getChild(int n) {
+        return null;
+    }
+
+    @Override
+    public int getChildCount() {
+        return 0;
     }
 
     public void visit(Visitor v) {
