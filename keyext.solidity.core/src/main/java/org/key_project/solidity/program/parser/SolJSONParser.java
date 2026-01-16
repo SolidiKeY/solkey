@@ -216,7 +216,6 @@ public class SolJSONParser {
     }
 
     private Block parseBlock(JsonNode jsonBody) {
-        final int id = jsonBody.findValue("id").asInt();
         List<Statement> blockStatements =
             jsonBody.findValue("statements").valueStream().map(this::parseStatement).toList();
         if (jsonBody.has("errorName")) {
@@ -225,10 +224,10 @@ public class SolJSONParser {
                 List<Declaration> arguments =
                     jsonBody.findValue("parameters").findValue("parameters").valueStream()
                             .map(this::parseDeclaration).toList();
-                return new Block(id, blockStatements, errorName, arguments);
+                return new Block(blockStatements, errorName, arguments);
             }
         }
-        return new Block(id, blockStatements);
+        return new Block(blockStatements);
     }
 
     private @NonNull Statement parseStatement(JsonNode statement) {

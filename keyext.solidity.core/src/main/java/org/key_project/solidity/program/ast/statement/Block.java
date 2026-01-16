@@ -15,7 +15,6 @@ import org.key_project.util.collection.ImmutableArray;
 
 public class Block implements Statement {
 
-    private int id;
     private final ImmutableArray<Statement> statements;
     private String errorName;
     private List<Declaration> arguments;
@@ -24,21 +23,18 @@ public class Block implements Statement {
         this.statements = statements;
     }
 
-    public Block(int id, List<Statement> statements, String errorName,
+    public Block(List<Statement> statements, String errorName,
             List<Declaration> arguments) {
-        this.id = id;
         this.statements = new ImmutableArray<>(statements);
         this.errorName = errorName;
         this.arguments = arguments;
     }
 
-    public Block(int id, List<Statement> statements) {
-        this.id = id;
+    public Block(List<Statement> statements) {
         this.statements = new ImmutableArray<>(statements);
     }
 
     public Block(ExtList children) {
-        this.id = 0;
         this.statements = new ImmutableArray<>(children.collect(Statement.class));
         this.errorName = null;
         this.arguments = null;
