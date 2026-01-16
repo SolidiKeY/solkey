@@ -46,16 +46,6 @@ public class FunctionReference extends Expression implements Resolver, VariableR
     }
 
     @Override
-    public Name name() {
-        return name;
-    }
-
-    @Override
-    public Declaration getDeclaration() {
-        return referencedDeclaration;
-    }
-
-    @Override
     public String toString() {
         return name.toString();
     }

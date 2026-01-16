@@ -6,6 +6,7 @@ package org.key_project.solidity.program.ast.references;
 import java.util.Objects;
 
 import org.key_project.logic.Name;
+import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.ArrayDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
@@ -41,18 +42,18 @@ public class ArrayReference extends Expression implements VariableReference {
     }
 
     @Override
-    public ArrayDeclaration getDeclaration() {
-        return referencedDeclaration;
-    }
-
-    @Override
-    public Name name() {
-        return name;
-    }
-
-    @Override
     public String toString() {
         return name.toString();
+    }
+
+    @Override
+    public SyntaxElement getChild(int n) {
+        return null;
+    }
+
+    @Override
+    public int getChildCount() {
+        return 0;
     }
 
     public void visit(Visitor v) {

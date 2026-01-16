@@ -31,25 +31,17 @@ public class ContractReference extends Expression implements Resolver, VariableR
     }
 
     public ContractReference(int id, Name name, Type type) {
+        super(type);
         this.id = id;
         this.name = name;
     }
 
     public ContractReference(ExtList children) {
+        super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
         this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
         this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
         this.contractDeclaration =
             Objects.requireNonNull(children.removeFirstOccurrence(ContractDeclaration.class));
-    }
-
-    @Override
-    public Name name() {
-        return name;
-    }
-
-    @Override
-    public Declaration getDeclaration() {
-        return contractDeclaration;
     }
 
     @Override

@@ -387,7 +387,7 @@ public class SolJSONParser {
             case "Literal" -> parseLiteral(expType, initializer);
             case "BinaryOperation" -> parseBinaryOperation(expType, initializer);
             case "UnaryOperation" -> parseUnaryOperation(expType, initializer);
-            case "Identifier" -> parseIdentifier(expType, initializer);
+//            case "Identifier" -> parseIdentifier(expType, initializer);
             case "Assignment" -> parseAssignment(expType, initializer);
             case "MemberAccess" -> parseMemberAccess(expType, initializer);
             case "IndexAccess" -> parseIndexAccess(expType, initializer);
@@ -524,8 +524,8 @@ public class SolJSONParser {
 
         final Declaration declaration = id2Name.get(idDecl);
         return switch (declaration) {
-            case StateVariableDeclaration stateVarDeclaration ->
-                new StateVariableReference(idDecl, name, stateVarDeclaration, type);
+//            case StateVariableDeclaration stateVarDeclaration ->
+//                new StateVariableReference(idDecl, name, stateVarDeclaration, type);
             case ParameterDeclaration parameterDeclaration ->
                 new ParameterVariableReference(idDecl, name, parameterDeclaration, type);
             case ArrayDeclaration arrayDeclaration ->

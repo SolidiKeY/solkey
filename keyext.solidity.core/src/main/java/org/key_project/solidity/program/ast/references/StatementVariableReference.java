@@ -37,16 +37,6 @@ public class StatementVariableReference extends Expression implements VariableRe
     }
 
     @Override
-    public Name name() {
-        return name;
-    }
-
-    @Override
-    public Declaration getDeclaration() {
-        return stmVarDecl;
-    }
-
-    @Override
     public String toString() {
         return name.toString();
     }

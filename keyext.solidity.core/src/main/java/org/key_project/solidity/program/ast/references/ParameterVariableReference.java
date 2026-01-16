@@ -41,14 +41,8 @@ public class ParameterVariableReference extends Expression implements VariableRe
             Objects.requireNonNull(children.removeFirstOccurrence(ParameterDeclaration.class));
     }
 
-    @Override
     public ParameterDeclaration getDeclaration() {
         return referencedDeclaration;
-    }
-
-    @Override
-    public Name name() {
-        return name;
     }
 
     @Override

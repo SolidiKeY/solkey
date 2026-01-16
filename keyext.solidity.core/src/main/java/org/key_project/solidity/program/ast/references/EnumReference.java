@@ -35,16 +35,6 @@ public class EnumReference extends Expression implements VariableReference {
     }
 
     @Override
-    public Name name() {
-        return null;
-    }
-
-    @Override
-    public Declaration getDeclaration() {
-        return null;
-    }
-
-    @Override
     public String toString() {
         return name.toString();
     }

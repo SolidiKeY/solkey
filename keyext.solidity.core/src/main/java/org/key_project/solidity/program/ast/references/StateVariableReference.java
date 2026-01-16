@@ -6,12 +6,14 @@ package org.key_project.solidity.program.ast.references;
 import java.util.Objects;
 
 import org.key_project.logic.Name;
+import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.StateVariableDeclaration;
+import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public class StateVariableReference extends VariableReference {
+public class StateVariableReference extends Expression implements VariableReference {
 
     private int id;
     // private ReferencePrefix prefix; // a reference prefix for account.person.age here
@@ -51,15 +53,20 @@ public class StateVariableReference extends VariableReference {
     }
 
     @Override
-    public Type getType() {
-        return type;
-    }
-
-    @Override
     public String toString() {
         return name.toString();
     }
 
+
+    @Override
+    public SyntaxElement getChild(int n) {
+        return null;
+    }
+
+    @Override
+    public int getChildCount() {
+        return 0;
+    }
 
     public void visit(Visitor v) {
         v.performActionOnStateVariableReference(this);
