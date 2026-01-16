@@ -387,7 +387,7 @@ public class SolJSONParser {
             case "Literal" -> parseLiteral(expType, initializer);
             case "BinaryOperation" -> parseBinaryOperation(expType, initializer);
             case "UnaryOperation" -> parseUnaryOperation(expType, initializer);
-//            case "Identifier" -> parseIdentifier(expType, initializer);
+            case "Identifier" -> parseIdentifier(expType, initializer);
             case "Assignment" -> parseAssignment(expType, initializer);
             case "MemberAccess" -> parseMemberAccess(expType, initializer);
             case "IndexAccess" -> parseIndexAccess(expType, initializer);
@@ -514,7 +514,7 @@ public class SolJSONParser {
         };
     }
 
-    private VariableReference parseIdentifier(Type expType, JsonNode literal) {
+    private Expression parseIdentifier(Type expType, JsonNode literal) {
         final int idDecl = literal.findValue("referencedDeclaration").asInt();
         final String nameS = literal.findValue("name").asText();
         final Name name = new Name(nameS);
@@ -524,16 +524,16 @@ public class SolJSONParser {
 
         final Declaration declaration = id2Name.get(idDecl);
         return switch (declaration) {
-//            case StateVariableDeclaration stateVarDeclaration ->
-//                new StateVariableReference(idDecl, name, stateVarDeclaration, type);
+            case StateVariableDeclaration stateVarDeclaration ->
+                new StateVariableReference(idDecl, name, stateVarDeclaration, type);
             case ParameterDeclaration parameterDeclaration ->
                 new ParameterVariableReference(idDecl, name, parameterDeclaration, type);
             case ArrayDeclaration arrayDeclaration ->
                 new ArrayReference(idDecl, name, arrayDeclaration, type);
             case FunctionDeclaration functionDeclaration ->
                 new FunctionReference(idDecl, name, functionDeclaration, type);
-            case StatementVariableDeclaration stmVarDeclaration -> stmVarDeclaration.getProgramVariable();
-//                new StatementVariableReference(idDecl, name, stmVarDeclaration, type);
+            case StatementVariableDeclaration stmVarDeclaration -> // stmVarDeclaration.getProgramVariable();
+                new StatementVariableReference(idDecl, name, stmVarDeclaration, type);
             case EnumDeclaration enumDeclaration ->
                 new EnumReference(idDecl, name, enumDeclaration, type);
             case null -> switch (expType.toString()) {

@@ -60,14 +60,14 @@ public class StatementVariableDeclaration extends Declaration {
 
     @Override
     public String toString() {
-        return "";
-//        String name = programVariable.name().toString();
-//        String type = programVariable.getType().toString();
-//        if (struct != null)
-//            return struct + " " + dataLocation + " " + name;
-//        if (dataLocation == Default)
-//            return type + " " + name;
-//        return type + " " + dataLocation + " " + name;
+        DataLocation dataLocation = (DataLocation) modifiers.get(0);
+        String name = programVariable.name().toString();
+        String type = programVariable.getType().toString();
+        if (struct != null)
+            return struct + " " + dataLocation + " " + name;
+        if (dataLocation == Default)
+            return type + " " + name;
+        return type + " " + dataLocation + " " + name;
     }
 
     public void visit(Visitor v) {
