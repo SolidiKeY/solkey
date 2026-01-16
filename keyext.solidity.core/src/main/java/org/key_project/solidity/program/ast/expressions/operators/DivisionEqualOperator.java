@@ -14,14 +14,14 @@ public final class DivisionEqualOperator extends BinaryOperator {
         super(left, right, type);
     }
 
+    public DivisionEqualOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() { return "/="; }
 
     public void visit(Visitor v) {
         v.performActionOnDivisionEqualOperator(this);
-    }
-
-    public DivisionEqualOperator(ExtList changeList) {
-        super(changeList);
     }
 }

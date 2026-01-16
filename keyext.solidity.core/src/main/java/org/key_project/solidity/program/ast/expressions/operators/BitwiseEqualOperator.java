@@ -14,14 +14,14 @@ public final class BitwiseEqualOperator extends BinaryOperator {
         super(left, right, type);
     }
 
+    public BitwiseEqualOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() { return "|="; }
 
     public void visit(Visitor v) {
         v.performActionOnBitwiseEqualOperator(this);
-    }
-
-    public BitwiseEqualOperator(ExtList changeList) {
-        super(changeList);
     }
 }

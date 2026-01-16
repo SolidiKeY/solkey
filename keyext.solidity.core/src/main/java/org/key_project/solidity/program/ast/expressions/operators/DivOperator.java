@@ -14,14 +14,14 @@ public final class DivOperator extends BinaryOperator {
         super(left, right, type);
     }
 
+    public DivOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() { return "/"; }
 
     public void visit(Visitor v) {
         v.performActionOnDivOperator(this);
-    }
-
-    public DivOperator(ExtList changeList) {
-        super(changeList);
     }
 }

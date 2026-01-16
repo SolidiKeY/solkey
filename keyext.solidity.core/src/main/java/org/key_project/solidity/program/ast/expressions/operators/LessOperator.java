@@ -14,14 +14,14 @@ public final class LessOperator extends BinaryOperator {
         super(left, right, type);
     }
 
+    public LessOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() { return "<"; }
 
     public void visit(Visitor v) {
         v.performActionOnLessOperator(this);
-    }
-
-    public LessOperator(ExtList changeList) {
-        super(changeList);
     }
 }

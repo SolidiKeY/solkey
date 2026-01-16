@@ -14,14 +14,14 @@ public final class LogicalRightShiftEqualOperator extends BinaryOperator {
         super(left, right, type);
     }
 
+    public LogicalRightShiftEqualOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() { return ">>>="; }
 
     public void visit(Visitor v) {
         v.performActionOnLogicalRightShiftEqualOperator(this);
-    }
-
-    public LogicalRightShiftEqualOperator(ExtList changeList) {
-        super(changeList);
     }
 }

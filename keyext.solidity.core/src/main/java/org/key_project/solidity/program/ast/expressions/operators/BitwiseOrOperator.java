@@ -14,14 +14,14 @@ public final class BitwiseOrOperator extends BinaryOperator {
         super(left, right, type);
     }
 
+    public BitwiseOrOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() { return "|"; }
 
     public void visit(Visitor v) {
         v.performActionOnBitwiseOrOperator(this);
-    }
-
-    public BitwiseOrOperator(ExtList changeList) {
-        super(changeList);
     }
 }

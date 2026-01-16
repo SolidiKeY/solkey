@@ -14,6 +14,10 @@ public class BitwiseNotOperator extends UnaryOperator {
         super(exp, type);
     }
 
+    public BitwiseNotOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() {
         return "~";
@@ -26,9 +30,5 @@ public class BitwiseNotOperator extends UnaryOperator {
 
     public void visit(Visitor v) {
         v.performActionOnBitwiseNotOperator(this);
-    }
-
-    public BitwiseNotOperator(ExtList changeList) {
-        super(changeList);
     }
 }

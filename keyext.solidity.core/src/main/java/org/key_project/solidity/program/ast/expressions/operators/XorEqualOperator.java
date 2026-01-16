@@ -14,14 +14,14 @@ public final class XorEqualOperator extends BinaryOperator {
         super(left, right, type);
     }
 
+    public XorEqualOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() { return "^="; }
 
     public void visit(Visitor v) {
         v.performActionOnXorEqualOperator(this);
-    }
-
-    public XorEqualOperator(ExtList changeList) {
-        super(changeList);
     }
 }

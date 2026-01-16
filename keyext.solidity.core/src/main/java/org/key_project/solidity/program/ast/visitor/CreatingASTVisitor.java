@@ -402,7 +402,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new AddOperator(changeList);
+                return new AddOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -413,7 +413,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new AndEqualOperator(changeList);
+                return new AndEqualOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -424,7 +424,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new AndOperator(changeList);
+                return new AndOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -435,7 +435,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new AssignmentExpression(changeList);
+                return new AssignmentExpression(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -446,7 +446,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new BitwiseAndOperator(changeList);
+                return new BitwiseAndOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -457,7 +457,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new BitwiseEqualOperator(changeList);
+                return new BitwiseEqualOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -468,7 +468,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new BitwiseNotOperator(changeList);
+                return new BitwiseNotOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -479,7 +479,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new BitwiseOrOperator(changeList);
+                return new BitwiseOrOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -490,7 +490,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new DeleteOperator(changeList);
+                return new DeleteOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -501,7 +501,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new DivOperator(changeList);
+                return new DivOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -512,7 +512,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new DivisionEqualOperator(changeList);
+                return new DivisionEqualOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -523,7 +523,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new EqualOperator(changeList);
+                return new EqualOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -534,7 +534,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ExponentialOperator(changeList);
+                return new ExponentialOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -545,7 +545,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new GreaterEqualOperator(changeList);
+                return new GreaterEqualOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -556,7 +556,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new GreaterOperator(changeList);
+                return new GreaterOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -567,7 +567,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new LeftShiftEqualOperator(changeList);
+                return new LeftShiftEqualOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -578,7 +578,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new LeftShiftOperator(changeList);
+                return new LeftShiftOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -589,7 +589,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new LessEqualOperator(changeList);
+                return new LessEqualOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -600,7 +600,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new LessOperator(changeList);
+                return new LessOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -611,7 +611,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new LogicalRightShiftEqualOperator(changeList);
+                return new LogicalRightShiftEqualOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -622,7 +622,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new LogicalRightShiftOperator(changeList);
+                return new LogicalRightShiftOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -633,7 +633,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new MinusEqualOperator(changeList);
+                return new MinusEqualOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -644,7 +644,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new MinusMinusOperator(changeList);
+                return new MinusMinusOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -655,7 +655,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ModEqualOperator(changeList);
+                return new ModEqualOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -666,7 +666,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ModOperator(changeList);
+                return new ModOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -677,7 +677,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new MultiplicationEqualOperator(changeList);
+                return new MultiplicationEqualOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -688,7 +688,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new MultiplicationOperator(changeList);
+                return new MultiplicationOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -699,7 +699,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new NegateOperator(changeList);
+                return new NegateOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -710,7 +710,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new NotOperator(changeList);
+                return new NotOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -721,7 +721,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new OrEqualOperator(changeList);
+                return new OrEqualOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -732,7 +732,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new OrOperator(changeList);
+                return new OrOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -743,7 +743,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new PlusEqualOperator(changeList);
+                return new PlusEqualOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -754,7 +754,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new PlusPlusOperator(changeList);
+                return new PlusPlusOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -765,7 +765,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new RightShiftEqualOperator(changeList);
+                return new RightShiftEqualOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -776,7 +776,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new RightShiftOperator(changeList);
+                return new RightShiftOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -787,7 +787,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new SubtractionOperator(changeList);
+                return new SubtractionOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -798,7 +798,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new TernaryOperator(changeList);
+                return new TernaryOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -809,7 +809,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new UnequalOperator(changeList);
+                return new UnequalOperator(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -820,7 +820,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new XorEqualOperator(changeList);
+                return new XorEqualOperator(changeList, x.getType());
             }
         };
         def.doAction(x);

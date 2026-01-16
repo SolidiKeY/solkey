@@ -14,6 +14,10 @@ public class PlusPlusOperator extends UnaryBothCases {
         super(exp, type, prefix);
     }
 
+    public PlusPlusOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() {
         return "++";
@@ -21,9 +25,5 @@ public class PlusPlusOperator extends UnaryBothCases {
 
     public void visit(Visitor v) {
         v.performActionOnPlusPlusOperator(this);
-    }
-
-    public PlusPlusOperator(ExtList changeList) {
-        super(changeList);
     }
 }

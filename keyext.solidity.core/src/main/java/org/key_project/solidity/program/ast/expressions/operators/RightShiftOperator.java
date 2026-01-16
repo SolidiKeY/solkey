@@ -14,6 +14,10 @@ public class RightShiftOperator extends BinaryOperator {
         super(left, right, type);
     }
 
+    public RightShiftOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() {
         return ">>";
@@ -21,9 +25,5 @@ public class RightShiftOperator extends BinaryOperator {
 
     public void visit(Visitor v) {
         v.performActionOnRightShiftOperator(this);
-    }
-
-    public RightShiftOperator(ExtList changeList) {
-        super(changeList);
     }
 }

@@ -22,6 +22,10 @@ abstract class UnaryBothCases extends UnaryOperator {
             Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
     }
 
+    public UnaryBothCases(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public boolean isPrefix() {
         return prefix;

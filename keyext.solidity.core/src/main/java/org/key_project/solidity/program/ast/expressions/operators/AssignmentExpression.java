@@ -14,6 +14,10 @@ public class AssignmentExpression extends BinaryOperator {
         super(left, right, type);
     }
 
+    public AssignmentExpression(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() {
         return "=";
@@ -22,9 +26,5 @@ public class AssignmentExpression extends BinaryOperator {
 
     public void visit(Visitor v) {
         v.performActionOnAssignmentExpression(this);
-    }
-
-    public AssignmentExpression(ExtList changeList) {
-        super(changeList);
     }
 }

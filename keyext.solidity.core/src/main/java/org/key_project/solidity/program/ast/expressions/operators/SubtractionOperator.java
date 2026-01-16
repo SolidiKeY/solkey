@@ -14,14 +14,14 @@ public final class SubtractionOperator extends BinaryOperator {
         super(left, right, type);
     }
 
+    public SubtractionOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() { return "-"; }
 
     public void visit(Visitor v) {
         v.performActionOnSubtractionOperator(this);
-    }
-
-    public SubtractionOperator(ExtList changeList) {
-        super(changeList);
     }
 }

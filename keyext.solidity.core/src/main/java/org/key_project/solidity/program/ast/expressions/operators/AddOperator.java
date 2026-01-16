@@ -13,14 +13,14 @@ public final class AddOperator extends BinaryOperator {
         super(left, right, type);
     }
 
+    public AddOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() { return "+"; }
 
     public void visit(Visitor v) {
         v.performActionOnAddOperator(this);
-    }
-
-    public AddOperator(ExtList changeList) {
-        super(changeList);
     }
 }

@@ -14,6 +14,10 @@ public final class AndOperator extends BinaryOperator {
         super(left, right, type);
     }
 
+    public AndOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() { return "&&"; }
 
@@ -21,7 +25,4 @@ public final class AndOperator extends BinaryOperator {
         v.performActionOnAndOperator(this);
     }
 
-    public AndOperator(ExtList changeList) {
-        super(changeList);
-    }
 }

@@ -14,14 +14,14 @@ public final class ModOperator extends BinaryOperator {
         super(left, right, type);
     }
 
+    public ModOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() { return "%"; }
 
     public void visit(Visitor v) {
         v.performActionOnModOperator(this);
-    }
-
-    public ModOperator(ExtList changeList) {
-        super(changeList);
     }
 }

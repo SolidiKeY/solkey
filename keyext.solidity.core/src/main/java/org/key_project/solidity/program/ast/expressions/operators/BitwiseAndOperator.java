@@ -14,6 +14,10 @@ public final class BitwiseAndOperator extends BinaryOperator {
         super(left, right, type);
     }
 
+    public BitwiseAndOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() { return "&"; }
 
@@ -21,7 +25,4 @@ public final class BitwiseAndOperator extends BinaryOperator {
         v.performActionOnBitwiseAndOperator(this);
     }
 
-    public BitwiseAndOperator(ExtList changeList) {
-        super(changeList);
-    }
 }

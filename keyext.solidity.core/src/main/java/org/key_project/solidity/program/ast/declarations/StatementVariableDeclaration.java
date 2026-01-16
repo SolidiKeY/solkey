@@ -54,10 +54,6 @@ public class StatementVariableDeclaration extends Declaration {
         return 2;
     }
 
-    public String getStruct() {
-        return struct;
-    }
-
     @Override
     public String toString() {
         DataLocation dataLocation = (DataLocation) modifiers.get(0);

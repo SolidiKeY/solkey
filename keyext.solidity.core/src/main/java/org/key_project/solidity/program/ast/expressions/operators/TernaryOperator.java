@@ -51,7 +51,7 @@ public class TernaryOperator extends Expression {
         v.performActionOnTernaryOperator(this);
     }
 
-    public TernaryOperator(ExtList children) {
+    public TernaryOperator(ExtList children, Type type) {
         super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
         this.condition = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
         this.falseExpression =

@@ -14,14 +14,14 @@ public final class MultiplicationOperator extends BinaryOperator {
         super(left, right, type);
     }
 
+    public MultiplicationOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() { return "*"; }
 
     public void visit(Visitor v) {
         v.performActionOnMultiplicationOperator(this);
-    }
-
-    public MultiplicationOperator(ExtList changeList) {
-        super(changeList);
     }
 }

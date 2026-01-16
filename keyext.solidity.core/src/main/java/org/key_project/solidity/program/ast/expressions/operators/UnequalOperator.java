@@ -14,14 +14,14 @@ public final class UnequalOperator extends BinaryOperator {
         super(left, right, type);
     }
 
+    public UnequalOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() { return "!="; }
 
     public void visit(Visitor v) {
         v.performActionOnUnequalOperator(this);
-    }
-
-    public UnequalOperator(ExtList changeList) {
-        super(changeList);
     }
 }

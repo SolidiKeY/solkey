@@ -14,14 +14,14 @@ public final class ExponentialOperator extends BinaryOperator {
         super(left, right, type);
     }
 
+    public ExponentialOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() { return "^"; }
 
     public void visit(Visitor v) {
         v.performActionOnExponentialOperator(this);
-    }
-
-    public ExponentialOperator(ExtList changeList) {
-        super(changeList);
     }
 }

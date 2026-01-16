@@ -14,14 +14,14 @@ public final class GreaterOperator extends BinaryOperator {
         super(left, right, type);
     }
 
+    public GreaterOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() { return ">"; }
 
     public void visit(Visitor v) {
         v.performActionOnGreaterOperator(this);
-    }
-
-    public GreaterOperator(ExtList changeList) {
-        super(changeList);
     }
 }

@@ -13,6 +13,10 @@ public class NotOperator extends UnaryOperator {
         super(exp, type);
     }
 
+    public NotOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() {
         return "!";
@@ -25,9 +29,5 @@ public class NotOperator extends UnaryOperator {
 
     public void visit(Visitor v) {
         v.performActionOnNotOperator(this);
-    }
-
-    public NotOperator(ExtList changeList) {
-        super(changeList);
     }
 }

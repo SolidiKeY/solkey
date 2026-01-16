@@ -22,8 +22,8 @@ public abstract class UnaryOperator extends Expression {
         this.exp = exp;
     }
 
-    public UnaryOperator(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
+    public UnaryOperator(ExtList children, Type type) {
+        super(type);
         this.exp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
     }
 

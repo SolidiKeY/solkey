@@ -14,14 +14,14 @@ public final class LessEqualOperator extends BinaryOperator {
         super(left, right, type);
     }
 
+    public LessEqualOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() { return "<="; }
 
     public void visit(Visitor v) {
         v.performActionOnLessEqualOperator(this);
-    }
-
-    public LessEqualOperator(ExtList changeList) {
-        super(changeList);
     }
 }

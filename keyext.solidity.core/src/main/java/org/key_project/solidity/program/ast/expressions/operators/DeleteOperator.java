@@ -13,6 +13,10 @@ public class DeleteOperator extends UnaryOperator {
         super(exp, type);
     }
 
+    public DeleteOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() {
         return "delete";
@@ -25,9 +29,5 @@ public class DeleteOperator extends UnaryOperator {
 
     public void visit(Visitor v) {
         v.performActionOnDeleteOperator(this);
-    }
-
-    public DeleteOperator(ExtList changeList) {
-        super(changeList);
     }
 }

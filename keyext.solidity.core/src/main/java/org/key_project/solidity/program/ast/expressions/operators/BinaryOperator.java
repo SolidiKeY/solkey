@@ -22,8 +22,8 @@ public abstract class BinaryOperator extends Expression {
         this.right = right;
     }
 
-    public BinaryOperator(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
+    public BinaryOperator(ExtList children, Type type) {
+        super(type);
         this.left = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
         this.right = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
     }

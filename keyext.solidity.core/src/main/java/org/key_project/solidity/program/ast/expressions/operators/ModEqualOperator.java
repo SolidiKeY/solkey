@@ -14,14 +14,14 @@ public final class ModEqualOperator extends BinaryOperator {
         super(left, right, type);
     }
 
+    public ModEqualOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() { return "%="; }
 
     public void visit(Visitor v) {
         v.performActionOnModEqualOperator(this);
-    }
-
-    public ModEqualOperator(ExtList changeList) {
-        super(changeList);
     }
 }

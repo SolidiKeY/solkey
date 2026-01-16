@@ -13,6 +13,10 @@ public class MinusMinusOperator extends UnaryBothCases {
         super(exp, type, prefix);
     }
 
+    public MinusMinusOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() {
         return "--";
@@ -20,9 +24,5 @@ public class MinusMinusOperator extends UnaryBothCases {
 
     public void visit(Visitor v) {
         v.performActionOnMinusMinusOperator(this);
-    }
-
-    public MinusMinusOperator(ExtList changeList) {
-        super(changeList);
     }
 }

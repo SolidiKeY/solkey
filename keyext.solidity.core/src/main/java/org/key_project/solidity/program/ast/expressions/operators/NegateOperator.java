@@ -13,6 +13,10 @@ public class NegateOperator extends UnaryOperator {
         super(exp, type);
     }
 
+    public NegateOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() {
         return "-";
@@ -25,9 +29,5 @@ public class NegateOperator extends UnaryOperator {
 
     public void visit(Visitor v) {
         v.performActionOnNegateOperator(this);
-    }
-
-    public NegateOperator(ExtList changeList) {
-        super(changeList);
     }
 }

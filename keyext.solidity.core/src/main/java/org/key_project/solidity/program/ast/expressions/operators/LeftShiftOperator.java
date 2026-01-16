@@ -13,6 +13,10 @@ public class LeftShiftOperator extends BinaryOperator {
         super(left, right, type);
     }
 
+    public LeftShiftOperator(ExtList changeList, Type type) {
+        super(changeList, type);
+    }
+
     @Override
     public String getOperator() {
         return "<<";
@@ -20,9 +24,5 @@ public class LeftShiftOperator extends BinaryOperator {
 
     public void visit(Visitor v) {
         v.performActionOnLeftShiftOperator(this);
-    }
-
-    public LeftShiftOperator(ExtList changeList) {
-        super(changeList);
     }
 }
