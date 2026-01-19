@@ -5,7 +5,6 @@ package org.key_project.solidity.program.ast.references;
 
 import java.util.Objects;
 
-import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.ArrayDeclaration;
@@ -14,26 +13,23 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 public class ArrayReference extends Expression implements VariableReference {
-    private final Name name;
     private final ArrayDeclaration referencedDeclaration;
 
-    public ArrayReference(Name name, ArrayDeclaration referencedDeclaration,
+    public ArrayReference(ArrayDeclaration referencedDeclaration,
             Type type) {
         super(type);
-        this.name = name;
         this.referencedDeclaration = referencedDeclaration;
     }
 
     public ArrayReference(ExtList children) {
         super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
-        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
         this.referencedDeclaration =
             Objects.requireNonNull(children.removeFirstOccurrence(ArrayDeclaration.class));
     }
 
     @Override
     public String toString() {
-        return name.toString();
+        return referencedDeclaration.programVariable.toString();
     }
 
     @Override

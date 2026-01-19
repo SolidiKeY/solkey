@@ -528,7 +528,7 @@ public class SolJSONParser {
             case ParameterDeclaration parameterDeclaration ->
                 new ParameterVariableReference(name, parameterDeclaration, type);
             case ArrayDeclaration arrayDeclaration ->
-                new ArrayReference(name, arrayDeclaration, type);
+                new ArrayReference(arrayDeclaration, type);
             case FunctionDeclaration functionDeclaration ->
                 new FunctionReference(idDecl, name, functionDeclaration, type);
             case StatementVariableDeclaration stmVarDeclaration -> // stmVarDeclaration.getProgramVariable();
