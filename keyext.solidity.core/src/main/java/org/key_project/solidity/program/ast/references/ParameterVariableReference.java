@@ -24,13 +24,6 @@ public class ParameterVariableReference extends Expression implements VariableRe
         this.referencedDeclaration = referencedDeclaration;
     }
 
-    public ParameterVariableReference(Name name, ParameterDeclaration referencedDeclaration,
-            Name typeName, Type type) {
-        super(type);
-        this.name = name;
-        this.referencedDeclaration = referencedDeclaration;
-    }
-
     public ParameterVariableReference(ExtList children) {
         super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
         this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));

@@ -24,13 +24,6 @@ public class ArrayReference extends Expression implements VariableReference {
         this.referencedDeclaration = referencedDeclaration;
     }
 
-    public ArrayReference(Name name, ArrayDeclaration referencedDeclaration,
-            Name typeName, Type type) {
-        super(type);
-        this.name = name;
-        this.referencedDeclaration = referencedDeclaration;
-    }
-
     public ArrayReference(ExtList children) {
         super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
         this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));

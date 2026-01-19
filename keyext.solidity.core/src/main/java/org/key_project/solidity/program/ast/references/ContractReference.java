@@ -22,14 +22,6 @@ public class ContractReference extends Expression implements Resolver, VariableR
     private final Name name;
     private ContractDeclaration contractDeclaration;
 
-    public ContractReference(int id, Name name, Type type,
-            ContractDeclaration contractDeclaration) {
-        super(type);
-        this.id = id;
-        this.name = name;
-        this.contractDeclaration = contractDeclaration;
-    }
-
     public ContractReference(int id, Name name, Type type) {
         super(type);
         this.id = id;
