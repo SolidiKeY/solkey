@@ -5,14 +5,19 @@ package org.key_project.solidity.program.ast.references;
 
 import java.util.Objects;
 
+import org.jspecify.annotations.Nullable;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.logic.sort.Sort;
+import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
+
+import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.INT;
 
 public class StatementVariableReference extends Expression implements VariableReference {
     private final int id;
@@ -29,11 +34,10 @@ public class StatementVariableReference extends Expression implements VariableRe
     }
 
     public StatementVariableReference(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
-        this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
-        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
-        this.stmVarDecl = Objects
-                .requireNonNull(children.removeFirstOccurrence(StatementVariableDeclaration.class));
+        super(INT);
+        this.id = 0;
+        this.name = new Name("");
+        this.stmVarDecl = Objects .requireNonNull(children.removeFirstOccurrence(StatementVariableDeclaration.class));
     }
 
     @Override
@@ -43,12 +47,12 @@ public class StatementVariableReference extends Expression implements VariableRe
 
     @Override
     public SyntaxElement getChild(int n) {
-        return null;
+        return stmVarDecl;
     }
 
     @Override
     public int getChildCount() {
-        return 0;
+        return 1;
     }
 
     public void visit(Visitor v) {

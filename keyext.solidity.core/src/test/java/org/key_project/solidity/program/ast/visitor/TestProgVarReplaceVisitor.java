@@ -127,8 +127,9 @@ class TestProgVarReplaceVisitor {
         Block body = contractDeclaration.getFunctions().getFirst().getBody();
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
         replacer.start();
-        ProgramVariable result = ((StatementVariableDeclaration) replacer.result()).programVariable;
-        assertSame(replacement, result);
+        Block result = ((Block) replacer.result());
+        ProgramVariable progRes = (ProgramVariable) result.getChild(1).getChild(0).getChild(0).getChild(0).getChild(1);
+        assertSame(replacement, progRes);
     }
 
     @Test
