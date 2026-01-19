@@ -15,16 +15,14 @@ import org.key_project.util.ExtList;
 
 public class StateVariableReference extends Expression implements VariableReference {
 
-    private int id;
     // private ReferencePrefix prefix; // a reference prefix for account.person.age here
     // account.person is the prefix
     private final Name name;
     private final StateVariableDeclaration referencedDeclaration;
 
-    public StateVariableReference(int id, Name name, StateVariableDeclaration referencedDeclaration,
+    public StateVariableReference(Name name, StateVariableDeclaration referencedDeclaration,
             Type type) {
         super(type);
-        this.id = id;
         this.name = name;
         this.referencedDeclaration = referencedDeclaration;
     }
@@ -38,7 +36,6 @@ public class StateVariableReference extends Expression implements VariableRefere
 
     public StateVariableReference(ExtList children) {
         super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
-        this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
         this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
         this.referencedDeclaration =
             Objects.requireNonNull(children.removeFirstOccurrence(StateVariableDeclaration.class));

@@ -524,17 +524,17 @@ public class SolJSONParser {
         final Declaration declaration = id2Name.get(idDecl);
         return switch (declaration) {
             case StateVariableDeclaration stateVarDeclaration ->
-                new StateVariableReference(idDecl, name, stateVarDeclaration, type);
+                new StateVariableReference(name, stateVarDeclaration, type);
             case ParameterDeclaration parameterDeclaration ->
-                new ParameterVariableReference(idDecl, name, parameterDeclaration, type);
+                new ParameterVariableReference(name, parameterDeclaration, type);
             case ArrayDeclaration arrayDeclaration ->
-                new ArrayReference(idDecl, name, arrayDeclaration, type);
+                new ArrayReference(name, arrayDeclaration, type);
             case FunctionDeclaration functionDeclaration ->
                 new FunctionReference(idDecl, name, functionDeclaration, type);
             case StatementVariableDeclaration stmVarDeclaration -> // stmVarDeclaration.getProgramVariable();
-                new StatementVariableReference(idDecl, name, stmVarDeclaration, type);
+                new StatementVariableReference(name, stmVarDeclaration, type);
             case EnumDeclaration enumDeclaration ->
-                new EnumReference(idDecl, name, enumDeclaration, type);
+                new EnumReference(name, enumDeclaration, type);
             case null -> switch (expType.toString()) {
                 case "function" -> new FunctionReference(idDecl, name, type);
                 case "contract" -> new ContractReference(idDecl, name, type);

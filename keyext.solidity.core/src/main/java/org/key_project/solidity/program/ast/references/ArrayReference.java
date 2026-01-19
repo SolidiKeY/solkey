@@ -14,14 +14,12 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 public class ArrayReference extends Expression implements VariableReference {
-    private int id;
     private final Name name;
     private final ArrayDeclaration referencedDeclaration;
 
-    public ArrayReference(int id, Name name, ArrayDeclaration referencedDeclaration,
+    public ArrayReference(Name name, ArrayDeclaration referencedDeclaration,
             Type type) {
         super(type);
-        this.id = id;
         this.name = name;
         this.referencedDeclaration = referencedDeclaration;
     }
@@ -35,7 +33,6 @@ public class ArrayReference extends Expression implements VariableReference {
 
     public ArrayReference(ExtList children) {
         super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
-        this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
         this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
         this.referencedDeclaration =
             Objects.requireNonNull(children.removeFirstOccurrence(ArrayDeclaration.class));

@@ -20,22 +20,19 @@ import org.key_project.util.ExtList;
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.INT;
 
 public class StatementVariableReference extends Expression implements VariableReference {
-    private final int id;
     private final Name name;
     private final StatementVariableDeclaration stmVarDecl;
 
     // TODO: remove this class
-    public StatementVariableReference(int id, Name name,
+    public StatementVariableReference(Name name,
             StatementVariableDeclaration stmVarDeclaration, Type type) {
         super(type);
-        this.id = id;
         this.name = name;
         this.stmVarDecl = stmVarDeclaration;
     }
 
     public StatementVariableReference(ExtList children) {
         super(INT);
-        this.id = 0;
         this.name = new Name("");
         this.stmVarDecl = Objects .requireNonNull(children.removeFirstOccurrence(StatementVariableDeclaration.class));
     }

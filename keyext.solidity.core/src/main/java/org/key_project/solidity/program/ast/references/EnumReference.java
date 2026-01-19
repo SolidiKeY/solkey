@@ -15,20 +15,17 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 public class EnumReference extends Expression implements VariableReference {
-    private final int id;
     private final Name name;
     private final EnumDeclaration enumDeclaration;
 
-    public EnumReference(int id, Name name, EnumDeclaration enumDeclaration, Type type) {
+    public EnumReference(Name name, EnumDeclaration enumDeclaration, Type type) {
         super(type);
-        this.id = id;
         this.name = name;
         this.enumDeclaration = enumDeclaration;
     }
 
     public EnumReference(ExtList children) {
         super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
-        this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
         this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
         this.enumDeclaration =
             Objects.requireNonNull(children.removeFirstOccurrence(EnumDeclaration.class));
