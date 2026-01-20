@@ -44,7 +44,9 @@ public class StatementVariableReference extends Expression implements VariableRe
 
     @Override
     public SyntaxElement getChild(int n) {
-        return stmVarDecl;
+        if(n == 0)
+            return stmVarDecl;
+        throw new IndexOutOfBoundsException();
     }
 
     @Override

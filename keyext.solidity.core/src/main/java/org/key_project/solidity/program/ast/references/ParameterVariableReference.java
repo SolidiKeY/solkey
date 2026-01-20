@@ -42,12 +42,14 @@ public class ParameterVariableReference extends Expression implements VariableRe
 
     @Override
     public SyntaxElement getChild(int n) {
-        return null;
+        if(n == 0)
+            return referencedDeclaration;
+        throw new IndexOutOfBoundsException();
     }
 
     @Override
     public int getChildCount() {
-        return 0;
+        return 1;
     }
 
     public void visit(Visitor v) {

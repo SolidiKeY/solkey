@@ -57,12 +57,14 @@ public class FunctionReference extends Expression implements Resolver, VariableR
 
     @Override
     public SyntaxElement getChild(int n) {
-        return null;
+        if(n == 0 && getChildCount() == 1)
+            return referencedDeclaration;
+        throw new IndexOutOfBoundsException();
     }
 
     @Override
     public int getChildCount() {
-        return 0;
+        return referencedDeclaration == null ? 0 : 1;
     }
 
     public void visit(Visitor v) {

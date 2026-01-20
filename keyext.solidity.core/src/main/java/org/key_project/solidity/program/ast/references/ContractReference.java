@@ -39,10 +39,10 @@ public class ContractReference extends Expression implements Resolver, VariableR
     @Override
     public SyntaxElement getChild(int n) {
         if (contractDeclaration == null)
-            throw new RuntimeException("There is no contract to reference");
+            throw new IndexOutOfBoundsException("There is no contract to reference");
         if (n == 0)
             return contractDeclaration;
-        throw new RuntimeException("Element " + n + " is different than 0");
+        throw new IndexOutOfBoundsException("Element " + n + " is different than 0");
     }
 
     @Override

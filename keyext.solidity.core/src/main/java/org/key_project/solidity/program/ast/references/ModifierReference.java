@@ -24,7 +24,7 @@ public class ModifierReference implements SolidityProgramElement {
 
     @Override
     public SyntaxElement getChild(int n) {
-        return null;
+        throw new IndexOutOfBoundsException();
     }
 
     @Override

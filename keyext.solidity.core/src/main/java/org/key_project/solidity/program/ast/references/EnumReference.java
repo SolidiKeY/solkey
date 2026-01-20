@@ -38,12 +38,14 @@ public class EnumReference extends Expression implements VariableReference {
 
     @Override
     public SyntaxElement getChild(int n) {
-        return null;
+        if(n == 0)
+            return enumDeclaration;
+        throw new IndexOutOfBoundsException();
     }
 
     @Override
     public int getChildCount() {
-        return 0;
+        return 1;
     }
 
     public void visit(Visitor v) {
