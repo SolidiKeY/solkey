@@ -17,7 +17,7 @@ public class StateVariableReference extends Expression implements VariableRefere
 
     // private ReferencePrefix prefix; // a reference prefix for account.person.age here
     // account.person is the prefix
-    private final Name name;
+    public final Name name;
     private final StateVariableDeclaration referencedDeclaration;
 
     public StateVariableReference(Name name, StateVariableDeclaration referencedDeclaration,
@@ -27,9 +27,9 @@ public class StateVariableReference extends Expression implements VariableRefere
         this.referencedDeclaration = referencedDeclaration;
     }
 
-    public StateVariableReference(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
-        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
+    public StateVariableReference(ExtList children, Type type, Name name) {
+        super(type);
+        this.name = name;
         this.referencedDeclaration =
             Objects.requireNonNull(children.removeFirstOccurrence(StateVariableDeclaration.class));
     }
@@ -50,12 +50,14 @@ public class StateVariableReference extends Expression implements VariableRefere
 
     @Override
     public SyntaxElement getChild(int n) {
-        return null;
+        if(n == 0)
+            return referencedDeclaration;
+        throw new IndexOutOfBoundsException();
     }
 
     @Override
     public int getChildCount() {
-        return 0;
+        return 1;
     }
 
     public void visit(Visitor v) {

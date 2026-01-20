@@ -18,8 +18,8 @@ import org.key_project.util.ExtList;
 
 public class ContractReference extends Expression implements Resolver, VariableReference {
 
-    private int id;
-    private final Name name;
+    public int id;
+    public final Name name;
     private ContractDeclaration contractDeclaration;
 
     public ContractReference(int id, Name name, Type type) {
@@ -28,10 +28,10 @@ public class ContractReference extends Expression implements Resolver, VariableR
         this.name = name;
     }
 
-    public ContractReference(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
-        this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
-        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
+    public ContractReference(ExtList children, Type type, int id, Name name) {
+        super(type);
+        this.id = id;
+        this.name = name;
         this.contractDeclaration =
             Objects.requireNonNull(children.removeFirstOccurrence(ContractDeclaration.class));
     }

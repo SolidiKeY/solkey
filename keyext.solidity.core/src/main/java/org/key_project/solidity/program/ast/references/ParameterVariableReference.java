@@ -14,7 +14,7 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 public class ParameterVariableReference extends Expression implements VariableReference {
-    private final Name name;
+    public final Name name;
     private final ParameterDeclaration referencedDeclaration;
 
     public ParameterVariableReference(Name name, ParameterDeclaration referencedDeclaration,
@@ -24,9 +24,9 @@ public class ParameterVariableReference extends Expression implements VariableRe
         this.referencedDeclaration = referencedDeclaration;
     }
 
-    public ParameterVariableReference(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
-        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
+    public ParameterVariableReference(ExtList children, Type type, Name name) {
+        super(type);
+        this.name = name;
         this.referencedDeclaration =
             Objects.requireNonNull(children.removeFirstOccurrence(ParameterDeclaration.class));
     }

@@ -5,13 +5,9 @@ package org.key_project.solidity.program.ast.references;
 
 import java.util.Objects;
 
-import org.jspecify.annotations.Nullable;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
-import org.key_project.logic.sort.Sort;
-import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.abstractions.Type;
-import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
@@ -20,7 +16,7 @@ import org.key_project.util.ExtList;
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.INT;
 
 public class StatementVariableReference extends Expression implements VariableReference {
-    private final Name name;
+    public final Name name;
     private final StatementVariableDeclaration stmVarDecl;
 
     // TODO: remove this class
@@ -31,9 +27,9 @@ public class StatementVariableReference extends Expression implements VariableRe
         this.stmVarDecl = stmVarDeclaration;
     }
 
-    public StatementVariableReference(ExtList children) {
-        super(INT);
-        this.name = new Name("");
+    public StatementVariableReference(ExtList children, Type type, Name name) {
+        super(type);
+        this.name = name;
         this.stmVarDecl = Objects .requireNonNull(children.removeFirstOccurrence(StatementVariableDeclaration.class));
     }
 

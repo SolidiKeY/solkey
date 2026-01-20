@@ -14,16 +14,16 @@ import org.key_project.util.ExtList;
 
 public class TypeReference implements SolidityProgramElement {
 
-    private Type referencedType;
-    private final Name typeName;
+    public Type referencedType;
+    public final Name typeName;
 
     public TypeReference(Name typeName) {
         this.typeName = typeName;
         this.referencedType = null;
     }
 
-    public TypeReference(ExtList children) {
-        this.referencedType = Objects.requireNonNull(children.removeFirstOccurrence(Type.class));
+    public TypeReference(Type referencedType) {
+        this.referencedType = referencedType;
         this.typeName = referencedType.name();
     }
 

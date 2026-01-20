@@ -831,7 +831,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ArrayReference(changeList);
+                return new ArrayReference(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -842,7 +842,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ContractReference(changeList);
+                return new ContractReference(changeList, x.getType(), x.id, x.name);
             }
         };
         def.doAction(x);
@@ -853,7 +853,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new EnumReference(changeList);
+                return new EnumReference(changeList, x.getType(), x.name);
             }
         };
         def.doAction(x);
@@ -864,7 +864,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new FunctionReference(changeList);
+                return new FunctionReference(changeList, x.getType(), x.id, x.name);
             }
         };
         def.doAction(x);
@@ -875,7 +875,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ModifierReference(changeList);
+                return new ModifierReference(x.name);
             }
         };
         def.doAction(x);
@@ -886,7 +886,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ParameterVariableReference(changeList);
+                return new ParameterVariableReference(changeList, x.getType(), x.name);
             }
         };
         def.doAction(x);
@@ -897,7 +897,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new StateVariableReference(changeList);
+                return new StateVariableReference(changeList, x.getType(), x.name);
             }
         };
         def.doAction(x);
@@ -908,7 +908,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new StatementVariableReference(changeList);
+                return new StatementVariableReference(changeList, x.getType(), x.name);
             }
         };
         def.doAction(x);
@@ -919,7 +919,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new TypeReference(changeList);
+                return new TypeReference(x.referencedType);
             }
         };
         def.doAction(x);

@@ -18,8 +18,8 @@ import org.key_project.util.ExtList;
 
 public class FunctionReference extends Expression implements Resolver, VariableReference {
 
-    private final int id;
-    private final Name name;
+    public final int id;
+    public final Name name;
     public FunctionDeclaration referencedDeclaration;
 
     public FunctionReference(int id, Name name, FunctionDeclaration referencedDeclaration,
@@ -37,10 +37,10 @@ public class FunctionReference extends Expression implements Resolver, VariableR
         this.referencedDeclaration = null;
     }
 
-    public FunctionReference(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
-        this.id = Objects.requireNonNull(children.removeFirstOccurrence(int.class));
-        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
+    public FunctionReference(ExtList children, Type type, int id, Name name) {
+        super(type);
+        this.id = id;
+        this.name = name;
         this.referencedDeclaration =
             Objects.requireNonNull(children.removeFirstOccurrence(FunctionDeclaration.class));
     }

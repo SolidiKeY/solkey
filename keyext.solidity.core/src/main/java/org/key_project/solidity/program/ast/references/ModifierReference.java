@@ -12,14 +12,10 @@ import org.key_project.util.ExtList;
 
 public class ModifierReference implements SolidityProgramElement {
 
-    private final String name;
+    public final String name;
 
     public ModifierReference(String name) {
         this.name = name;
-    }
-
-    public ModifierReference(ExtList children) {
-        this.name = Objects.requireNonNull(children.removeFirstOccurrence(String.class));
     }
 
     @Override
