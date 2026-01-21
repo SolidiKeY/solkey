@@ -5,6 +5,7 @@ package org.key_project.solidity.theory;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.op.Function;
+import org.key_project.logic.op.Operator;
 import org.key_project.solidity.common.Services;
 
 /// should not be abstract
@@ -14,6 +15,14 @@ public abstract class IntLDT extends LDT {
     }
 
     public Function getNegativeNumberSign() {
+        throw new UnsupportedOperationException();
+    }
+
+    public Operator getNumberSymbol() {
+        throw new UnsupportedOperationException();
+    }
+
+    public Operator getNumberTerminator() {
         throw new UnsupportedOperationException();
     }
 }

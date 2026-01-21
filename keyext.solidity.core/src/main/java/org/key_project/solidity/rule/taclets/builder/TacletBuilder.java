@@ -23,6 +23,7 @@ import org.key_project.prover.rules.conditions.NewDependingOn;
 import org.key_project.prover.rules.conditions.NotFreeIn;
 import org.key_project.prover.rules.tacletbuilder.TacletGoalTemplate;
 import org.key_project.prover.sequent.Sequent;
+import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.proof.calculus.SoliditySequentKit;
 import org.key_project.solidity.rule.SolTaclet;
@@ -34,6 +35,8 @@ import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
 import org.key_project.util.collection.ImmutableSet;
 
+import org.jspecify.annotations.NonNull;
+
 public abstract class TacletBuilder<T extends SolTaclet> {
     protected final static Name NONAME = new Name("unnamed");
 
@@ -43,6 +46,7 @@ public abstract class TacletBuilder<T extends SolTaclet> {
     protected Sequent ifseq = SoliditySequentKit.getInstance().getEmptySequent();
     protected ImmutableList<NewVarcond> varsNew = ImmutableSLList.nil();
     protected ImmutableList<NotFreeIn> varsNotFreeIn = ImmutableSLList.nil();
+    protected ImmutableList<@NonNull SchemaVariable> noFreeVarIns = ImmutableSLList.nil();
     protected ImmutableList<NewDependingOn> varsNewDependingOn =
         ImmutableSLList.nil();
     protected ImmutableList<TacletGoalTemplate> goals =
@@ -183,6 +187,9 @@ public abstract class TacletBuilder<T extends SolTaclet> {
         varsNewDependingOn = varsNewDependingOn.prepend(new NewDependingOn(v0, v1));
     }
 
+    public void addNoFreeVarIn(SchemaVariable sv) {
+        noFreeVarIns = noFreeVarIns.prepend(sv);
+    }
 
     /// Add a generic condition on the instantiation of schema variables.
     public void addVariableCondition(VariableCondition vc) {
@@ -216,7 +223,7 @@ public abstract class TacletBuilder<T extends SolTaclet> {
     /// semisequences. No specification for the interactive or recursive flags imply that the flags
     /// are not set. No specified find part for Taclets that require a find part causes an
     /// IllegalStateException.
-    public abstract T getTaclet();
+    public abstract T getTaclet(Services services);
 
     public ChoiceExpr getChoices() {
         return choices;
@@ -238,9 +245,9 @@ public abstract class TacletBuilder<T extends SolTaclet> {
         return goal2Choices;
     }
 
-    public T getTacletWithoutInactiveGoalTemplates(Set<Choice> active) {
+    public T getTacletWithoutInactiveGoalTemplates(Set<Choice> active, Services services) {
         if (goal2Choices == null || goals.isEmpty()) {
-            return getTaclet();
+            return getTaclet(services);
         }
         ImmutableList<TacletGoalTemplate> oldGoals =
             goals;
@@ -255,7 +262,7 @@ public abstract class TacletBuilder<T extends SolTaclet> {
         if (goals.isEmpty()) {
             result = null;
         } else {
-            result = getTaclet();
+            result = getTaclet(services);
         }
         goals = oldGoals;
         return result;
@@ -267,6 +274,10 @@ public abstract class TacletBuilder<T extends SolTaclet> {
 
     public void setRuleSets(ImmutableList<RuleSet> rs) {
         ruleSets = rs;
+    }
+
+    public Iterator<@NonNull SchemaVariable> noFreeVarIns() {
+        return noFreeVarIns.iterator();
     }
 
     public static class TacletBuilderException extends IllegalArgumentException {

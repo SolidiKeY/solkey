@@ -34,7 +34,7 @@ public class ArrayReference extends Expression implements VariableReference {
 
     @Override
     public SyntaxElement getChild(int n) {
-        if(n == 0)
+        if (n == 0)
             return referencedDeclaration;
         throw new IndexOutOfBoundsException();
     }

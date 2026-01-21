@@ -9,11 +9,14 @@ import java.util.Iterator;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.Term;
 import org.key_project.logic.op.sv.SchemaVariable;
-import org.key_project.prover.rules.conditions.NotFreeIn;
 import org.key_project.prover.rules.tacletbuilder.TacletGoalTemplate;
 import org.key_project.prover.sequent.Sequent;
+import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.op.ParametricFunctionInstance;
 import org.key_project.solidity.logic.op.SModality;
+import org.key_project.solidity.logic.sort.TermArg;
 import org.key_project.solidity.rule.SolTaclet;
+import org.key_project.solidity.rule.metaconstruct.ShiftTransformer;
 import org.key_project.solidity.rule.sv.FormulaSV;
 import org.key_project.solidity.rule.sv.ModalOperatorSV;
 import org.key_project.solidity.rule.sv.TermSV;
@@ -29,58 +32,70 @@ import org.jspecify.annotations.NonNull;
 
 public class TacletPrefixBuilder {
     /// set of all schema variables that are only allowed to be matched with quantifiable variables.
-    private int numberOfCurrentlyBoundVars =
-        0;
+    private int numberOfCurrentlyBoundVars = 0;
     private final TacletBuilder<? extends SolTaclet> tacletBuilder;
 
     protected ImmutableMap<@NonNull SchemaVariable, org.key_project.prover.rules.TacletPrefix> prefixMap =
         DefaultImmutableMap.nilMap();
 
-    public TacletPrefixBuilder(TacletBuilder<? extends SolTaclet> tacletBuilder) {
+    private Services services;
+
+    public TacletPrefixBuilder(TacletBuilder<? extends SolTaclet> tacletBuilder,
+            Services services) {
         this.tacletBuilder = tacletBuilder;
+        this.services = services;
     }
 
     private void addVarsBoundHere(Term visited, int subTerm) {
+        if (visited.op() instanceof ShiftTransformer shift) {
+            numberOfCurrentlyBoundVars -= shift.getDistance(visited, services);
+        }
         numberOfCurrentlyBoundVars += visited.varsBoundHere(subTerm).size();
     }
 
-    private void setPrefixOfOccurrence(SchemaVariable sv,
-            int numberOfBoundVars) {
+    private void setPrefixOfOccurrence(SchemaVariable sv, int numberOfBoundVars) {
         prefixMap = prefixMap.put(sv, new TacletPrefix(numberOfBoundVars, false));
     }
 
-    /// removes all variables x that are declared as x not free in sv from the currently bound vars
-    /// set.
-    private int removeNotFreeIn(SchemaVariable sv) {
+    /// removes all variables x that are declared as x not free in sv from the
+    /// currently bound vars set.
+    private int removeNoFreeVarIn(SchemaVariable sv) {
         int result = numberOfCurrentlyBoundVars;
-        Iterator<NotFreeIn> it = tacletBuilder.varsNotFreeIn();
+        Iterator<@NonNull SchemaVariable> it = tacletBuilder.noFreeVarIns();
         while (it.hasNext()) {
-            NotFreeIn notFreeIn = it.next();
-            if (notFreeIn.second() == sv) {
-                // TODO: result = result.remove(notFreeIn.first());
+            SchemaVariable v = it.next();
+            if (v == sv) {
+                result -= 1;
+                break;
             }
         }
-        return result;
+        return Math.max(0, result);
     }
 
     private void visit(Term t) {
         if (t.op() instanceof SModality mod && mod.kind() instanceof ModalOperatorSV msv) {
             // TODO: Is false correct?
-            prefixMap.put(msv, new TacletPrefix(0, false));
+            prefixMap = prefixMap.put(msv, new TacletPrefix(0, false));
         }
         if (t.op() instanceof SchemaVariable sv && t.arity() == 0) {
             if (sv instanceof TermSV || sv instanceof FormulaSV || sv instanceof UpdateSV) {
-                int numberOfBoundVars = removeNotFreeIn(sv);
+                int numberOfBoundVars = removeNoFreeVarIn(sv);
                 TacletPrefix prefix = (TacletPrefix) prefixMap.get(sv);
                 if (prefix == null || prefix.prefixLength() == numberOfBoundVars) {
                     setPrefixOfOccurrence(sv, numberOfBoundVars);
                 } else {
-                    // TODO: For now, don't report an error. It's likely not needed
-                    /*
-                     * throw new TacletPrefixBuilder.InvalidPrefixException(
-                     * tacletBuilder.getName().toString(), sv, prefix,
-                     * numberOfBoundVars);
-                     */
+                    throw new TacletPrefixBuilder.InvalidPrefixException(
+                        tacletBuilder.getName().toString(), sv, prefix,
+                        numberOfBoundVars);
+                }
+            }
+        }
+        if (t.op() instanceof ParametricFunctionInstance pfi) {
+            // We also generate a prefix for SVs in generic arguments, but bound variables should
+            // never appear there
+            for (var a : pfi.getArgs()) {
+                if (a instanceof TermArg(Term term)) {
+                    visit(term);
                 }
             }
         }
@@ -154,7 +169,7 @@ public class TacletPrefixBuilder {
             var prefix = (TacletPrefix) entry.value();
             if (addRulePrefix != null
                     && addRulePrefix.prefixLength() != prefix.prefixLength()) {
-                throw new InvalidPrefixException(
+                throw new TacletPrefixBuilder.InvalidPrefixException(
                     tacletBuilder.getName().toString(), entry.key(),
                     prefix, addRulePrefix.prefixLength());
             }

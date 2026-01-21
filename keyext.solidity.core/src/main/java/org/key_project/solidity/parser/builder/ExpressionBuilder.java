@@ -201,7 +201,7 @@ public class ExpressionBuilder extends DefaultBuilder {
         }
         if (idx != -1) {
             var deBruijn = boundVars.size() - idx;
-            return new LogicVariable(deBruijn, boundVars.get(idx).sort());
+            return LogicVariable.create(deBruijn, boundVars.get(idx).sort());
         }
 
         return super.lookupVarfuncId(ctx, varfuncName, genericArgsCtxt);

@@ -34,20 +34,18 @@ public class SolSuccTaclet extends SolFindTaclet {
     /// @param goalTemplates a list of goal descriptions.
     /// @param ruleSets a list of rule sets for the Taclet
     /// @param attrs attributes for the Taclet; these are boolean values indicating a
-    /// non-interactive
-    /// or recursive use of the Taclet.
+    /// non-interactive or recursive use of the Taclet.
     /// @param prefixMap an ImmutableMap from [SchemaVariable] to [TacletPrefix] that
-    /// contains
-    /// the prefix for each SchemaVariable in the taclet
+    /// contains the prefix for each SchemaVariable in the taclet
     public SolSuccTaclet(Name name, Sequent find, TacletApplPart applPart,
             ImmutableList<TacletGoalTemplate> goalTemplates, ImmutableList<RuleSet> ruleSets,
             TacletAttributes attrs,
             ImmutableMap<@NonNull SchemaVariable, TacletPrefix> prefixMap,
             ChoiceExpr choices,
-            boolean surviveSymbExec, ImmutableSet<TacletAnnotation> tacletAnnotations) {
+            boolean surviveSymbExec, ImmutableSet<TacletAnnotation> tacletAnnotations,
+            ImmutableList<@NonNull SchemaVariable> noFreeVarIns) {
         super(name, find, applPart, goalTemplates, ruleSets, attrs, prefixMap, choices,
-            surviveSymbExec,
-            tacletAnnotations);
+            surviveSymbExec, tacletAnnotations, noFreeVarIns);
     }
 
     @Override
@@ -74,7 +72,7 @@ public class SolSuccTaclet extends SolFindTaclet {
         final TacletAttributes attrs = new TacletAttributes(displayName(), trigger);
         return new SolSuccTaclet(new Name(s), (Sequent) find, applPart, goalTemplates(),
             getRuleSets(), attrs,
-            prefixMap, choices, getSurviveSymbExec(), tacletAnnotations);
+            prefixMap, choices, getSurviveSymbExec(), tacletAnnotations, noFreeVarIns);
     }
 
 }

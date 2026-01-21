@@ -30,8 +30,7 @@ import org.key_project.util.collection.ImmutableSLList;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-/// TODO remove abstract and implement
-public abstract class Proof implements ProofObject<Goal>, Named {
+public class Proof implements ProofObject<Goal>, Named {
 
     /// name of the proof
     private final Name name;

@@ -11,9 +11,9 @@ import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocat
 import org.key_project.solidity.program.ast.references.TypeReference;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
+import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
-import org.key_project.util.collection.ImmutableArray;
 
 public class ParameterDeclaration extends Declaration {
     private final @NonNull TypeReference typeReference;

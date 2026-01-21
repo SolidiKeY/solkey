@@ -4,7 +4,6 @@
 package org.key_project.solidity.program.ast.statement;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.key_project.logic.SyntaxElement;
@@ -30,11 +29,11 @@ public class DeclarationStatement implements Statement {
 
     @Override
     public SyntaxElement getChild(int n) {
-        if(n < 0 || n >= getChildCount()){
+        if (n < 0 || n >= getChildCount()) {
             throw new IndexOutOfBoundsException(n + " out of bonds");
         }
 
-        if(n < declarations.size()){
+        if (n < declarations.size()) {
             return declarations.get(n);
         }
         return initialValue;
@@ -42,7 +41,7 @@ public class DeclarationStatement implements Statement {
 
     @Override
     public int getChildCount() {
-        return declarations.size()+(initialValue == null ? 0 : 1);
+        return declarations.size() + (initialValue == null ? 0 : 1);
     }
 
     public ImmutableArray<Declaration> getDeclarations() {

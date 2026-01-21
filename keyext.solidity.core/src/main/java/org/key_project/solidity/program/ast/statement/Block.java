@@ -4,7 +4,6 @@
 package org.key_project.solidity.program.ast.statement;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.key_project.logic.SyntaxElement;
@@ -38,8 +37,8 @@ public class Block implements Statement {
         this.statements = new ImmutableArray<>(children.collect(Statement.class));
         this.errorName = null;
         this.arguments = null;
-//        this.errorName = Objects.requireNonNull(children.removeFirstOccurrence(String.class));
-//        this.arguments = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
+        // this.errorName = Objects.requireNonNull(children.removeFirstOccurrence(String.class));
+        // this.arguments = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
     }
 
     @Override
