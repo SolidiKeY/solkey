@@ -12,6 +12,7 @@ import org.key_project.logic.op.QuantifiableVariable;
 import org.key_project.logic.op.UpdateableOperator;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.*;
+import org.key_project.solidity.theory.IntLDT;
 import org.key_project.util.collection.ImmutableArray;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
@@ -409,106 +410,109 @@ public class TermBuilder {
     // -------------------------------------------------------------------------
     // integer operators
     // -------------------------------------------------------------------------
-    /*
-     * public Term geq(Term t1, Term t2) {
-     * final IntLDT integerLDT = services.getLDTs().getIntLDT();
-     * return func(integerLDT.getGreaterOrEquals(), t1, t2);
-     * }
-     *
-     * public Term gt(Term t1, Term t2) {
-     * final IntLDT integerLDT = services.getLDTs().getIntLDT();
-     * return func(integerLDT.getGreaterThan(), t1, t2);
-     * }
-     *
-     * public Term lt(Term t1, Term t2) {
-     * final IntLDT integerLDT = services.getLDTs().getIntLDT();
-     * return func(integerLDT.getLessThan(), t1, t2);
-     * }
-     *
-     * public Term leq(Term t1, Term t2) {
-     * final IntLDT integerLDT = services.getLDTs().getIntLDT();
-     * return func(integerLDT.getLessOrEquals(), t1, t2);
-     * }
-     *
-     * public Term zero() {
-     * return services.getLDTs().getIntLDT().zero();
-     * }
-     *
-     * public Term one() {
-     * return services.getLDTs().getIntLDT().one();
-     * }
-     *
-     * /// Creates terms to be used in Z/C/FP/DFP/R notations. The result does not have such a
-     * /// constructor applied yet.
-     * ///
-     * /// @param numberString a string containing the number in a decimal representation
-     * /// @return Term in "number" notation representing the given number
-     * /// @throws NumberFormatException if <code>numberString</code> is not a number
-     * private Term numberTerm(String numberString) {
-     * if (numberString == null || numberString.isEmpty()) {
-     * throw new NumberFormatException(numberString + " is not a number.");
-     * }
-     *
-     * Term numberLiteralTerm;
-     * boolean negate = false;
-     * int j = 0;
-     *
-     * final IntLDT intLDT = services.getLDTs().getIntLDT();
-     *
-     * if (numberString.charAt(0) == '-') {
-     * negate = true;
-     * j = 1;
-     * }
-     * numberLiteralTerm = func(intLDT.getNumberTerminator());
-     *
-     * int digit;
-     * for (int i = j, sz = numberString.length(); i < sz; i++) {
-     * char c = numberString.charAt(i);
-     * if ('0' <= c && c <= '9') {
-     * digit = c - '0';
-     * } else {
-     * throw new NumberFormatException(numberString + " is not a number.");
-     * }
-     * numberLiteralTerm = func(intLDT.getNumberLiteralFor(digit), numberLiteralTerm);
-     * }
-     * if (negate) {
-     * numberLiteralTerm = func(intLDT.getNegativeNumberSign(), numberLiteralTerm);
-     * }
-     *
-     * // return the raw number literal term ('C', 'Z' or 'R' must still be added)
-     * return numberLiteralTerm;
-     * }
-     *
-     * /// Get term for an integer literal.
-     * ///
-     * /// @param numberString String representing an integer with radix 10, may be negative
-     * /// @return Term in Z-Notation representing the given number
-     * /// @throws NumberFormatException if <code>numberString</code> is not a number
-     * public Term zTerm(String numberString) {
-     * return func(services.getLDTs().getIntLDT().getNumberSymbol(),
-     * numberTerm(numberString));
-     * }
-     *
-     * /// Get term for an integer literal.
-     * ///
-     * /// @param number an integer
-     * /// @return Term in Z-Notation representing the given number
-     * public Term zTerm(long number) {
-     * return zTerm(Long.toString(number));
-     * }
-     *
-     * public Term add(Term t1, Term t2) {
-     * final IntLDT integerLDT = services.getLDTs().getIntLDT();
-     * final Term zero = integerLDT.zero();
-     * if (t1.equals(zero)) {
-     * return t2;
-     * } else if (t2.equals(zero)) {
-     * return t1;
-     * } else {
-     * return func(integerLDT.getAdd(), t1, t2);
-     * }
-     * }
-     */
+
+    public Term geq(Term t1, Term t2) {
+        final IntLDT integerLDT = services.getTheoryInfo().getIntLDT();
+        return func(integerLDT.getGreaterOrEquals(), t1, t2);
+    }
+
+    public Term gt(Term t1, Term t2) {
+        final IntLDT integerLDT = services.getTheoryInfo().getIntLDT();
+        return func(integerLDT.getGreaterThan(), t1, t2);
+    }
+
+    public Term lt(Term t1, Term t2) {
+        final IntLDT integerLDT = services.getTheoryInfo().getIntLDT();
+        return func(integerLDT.getLessThan(), t1, t2);
+    }
+
+    public Term leq(Term t1, Term t2) {
+        final IntLDT integerLDT = services.getTheoryInfo().getIntLDT();
+        return func(integerLDT.getLessOrEquals(), t1, t2);
+    }
+
+    public Term zero() {
+        return services.getTheoryInfo().getIntLDT().zero();
+    }
+
+
+    public Term one() {
+        return services.getTheoryInfo().getIntLDT().one();
+    }
+
+    public Term add(Term t1, Term t2) {
+        final IntLDT integerLDT = services.getTheoryInfo().getIntLDT();
+        final Term zero = integerLDT.zero();
+        if (t1.equals(zero)) {
+            return t2;
+        } else if (t2.equals(zero)) {
+            return t1;
+        } else {
+            return func(integerLDT.getAdd(), t1, t2);
+        }
+    }
+
+
+    /// Creates terms to be used in Z/C/FP/DFP/R notations. The result does not have such a
+    /// constructor applied yet.
+    ///
+    /// @param numberString a string containing the number in a decimal representation
+    /// @return Term in "number" notation representing the given number
+    /// @throws NumberFormatException if <code>numberString</code> is not a number
+    private Term numberTerm(String numberString) {
+        if (numberString == null || numberString.isEmpty()) {
+            throw new NumberFormatException(numberString + " is not a number.");
+        }
+
+        Term numberLiteralTerm;
+        boolean negate = false;
+        int j = 0;
+
+        final IntLDT intLDT = services.getTheoryInfo().getIntLDT();
+
+        if (numberString.charAt(0) == '-') {
+            negate = true;
+            j = 1;
+        }
+        numberLiteralTerm = func(intLDT.getNumberTerminator());
+
+        int digit;
+        for (int i = j, sz = numberString.length(); i < sz; i++) {
+            char c = numberString.charAt(i);
+            if ('0' <= c && c <= '9') {
+                digit = c - '0';
+            } else {
+                throw new NumberFormatException(numberString + " is not a number.");
+            }
+            numberLiteralTerm = func(intLDT.getNumberLiteralFor(digit), numberLiteralTerm);
+        }
+        if (negate) {
+            numberLiteralTerm = func(intLDT.getNegativeNumberSign(), numberLiteralTerm);
+        }
+
+        // return the raw number literal term ('C', 'Z' or 'R' must still be added)
+        return numberLiteralTerm;
+    }
+
+    /// Get term for an integer literal.
+    ///
+    /// @param numberString String representing an integer with radix 10, may be negative
+    /// @return Term in Z-Notation representing the given number
+    /// @throws NumberFormatException if <code>numberString</code> is not a number
+    public Term zTerm(String numberString) {
+        return func(services.getTheoryInfo().getIntLDT().getNumberSymbol(),
+            numberTerm(numberString));
+    }
+
+    /// Get term for an integer literal.
+    ///
+    /// @param number an integer
+    /// @return Term in Z-Notation representing the given number
+    public Term zTerm(long number) {
+        return zTerm(Long.toString(number));
+    }
+
+
     public Term applyUpdatePairsSequential(ImmutableList<Term> updates, Term target) {
         if (updates.isEmpty()) {
             return target;
