@@ -13,7 +13,7 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ParametricFunctionDecl;
 import org.key_project.solidity.logic.sort.ParametricSortDecl;
-import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.expressions.literals.Literal;
 import org.key_project.solidity.program.ast.expressions.operators.BinaryOperator;
 
 import org.checkerframework.checker.initialization.qual.UnknownInitialization;
@@ -118,7 +118,7 @@ public abstract class LDT implements Named {
         return addParametricFunction(f);
     }
 
-    public abstract @Nullable Term translateLiteral(Expression lit, Services services);
+    public abstract @Nullable Term translateLiteral(Literal lit, Services services);
 
     public abstract @Nullable Function getFunctionFor(BinaryOperator op,
             Services services);

@@ -7,6 +7,7 @@ package org.key_project.solidity.rule.taclets.builder;
 import org.key_project.prover.rules.ApplicationRestriction;
 import org.key_project.prover.rules.TacletApplPart;
 import org.key_project.prover.rules.tacletbuilder.TacletGoalTemplate;
+import org.key_project.solidity.common.Services;
 import org.key_project.solidity.rule.taclets.BoundUniquenessChecker;
 import org.key_project.solidity.rule.taclets.SolNoFindTaclet;
 
@@ -20,8 +21,8 @@ public class NoFindTacletBuilder extends TacletBuilder<SolNoFindTaclet> {
     /// empty. No specification for the if-sequent is represented as a sequent with two empty
     /// semisequences. No specification for the interactive or recursive flags imply that the flags
     /// are not set.
-    public SolNoFindTaclet getNoFindTaclet() {
-        TacletPrefixBuilder prefixBuilder = new TacletPrefixBuilder(this);
+    public SolNoFindTaclet getNoFindTaclet(Services services) {
+        TacletPrefixBuilder prefixBuilder = new TacletPrefixBuilder(this, services);
         prefixBuilder.build();
         SolNoFindTaclet t = new SolNoFindTaclet(this.name,
             new TacletApplPart(ifseq,
@@ -29,7 +30,7 @@ public class NoFindTacletBuilder extends TacletBuilder<SolNoFindTaclet> {
                 varsNew, varsNotFreeIn, varsNewDependingOn,
                 variableConditions),
             goals, ruleSets, attrs, prefixBuilder.getPrefixMap(), choices, false,
-            tacletAnnotations);
+            tacletAnnotations, noFreeVarIns);
         // t.setOrigin(origin);
         return t;
     }
@@ -66,8 +67,8 @@ public class NoFindTacletBuilder extends TacletBuilder<SolNoFindTaclet> {
     /// semisequences. No specification for the interactive or recursive flags imply that the flags
     /// are not set. May throw an TacletBuilderException if a bound SchemaVariable occurs more than
     /// once in if and find.
-    public SolNoFindTaclet getTaclet() {
+    public SolNoFindTaclet getTaclet(Services services) {
         checkBoundInIfAndFind();
-        return getNoFindTaclet();
+        return getNoFindTaclet(services);
     }
 }

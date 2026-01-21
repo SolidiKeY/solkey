@@ -8,6 +8,7 @@ import org.key_project.prover.rules.ApplicationRestriction;
 import org.key_project.prover.rules.TacletApplPart;
 import org.key_project.prover.rules.tacletbuilder.TacletGoalTemplate;
 import org.key_project.prover.sequent.Sequent;
+import org.key_project.solidity.common.Services;
 import org.key_project.solidity.rule.taclets.SolSuccTaclet;
 
 public class SuccTacletBuilder extends FindTacletBuilder<SolSuccTaclet> {
@@ -41,13 +42,13 @@ public class SuccTacletBuilder extends FindTacletBuilder<SolSuccTaclet> {
     /// are not set. No specified find part causes an IllegalStateException. Throws an
     /// TacletBuilderException if a bound SchemaVariable occurs more than once in if and find or an
     /// InvalidPrefixException if the building of the Taclet Prefix fails.
-    public SolSuccTaclet getSuccTaclet() {
+    public SolSuccTaclet getSuccTaclet(Services services) {
         if (find == null) {
             throw new TacletBuilder.TacletBuilderException(this, "No find part specified");
 
         }
         checkBoundInIfAndFind();
-        final TacletPrefixBuilder prefixBuilder = new TacletPrefixBuilder(this);
+        final TacletPrefixBuilder prefixBuilder = new TacletPrefixBuilder(this, services);
         prefixBuilder.build();
         SolSuccTaclet t = new SolSuccTaclet(name,
             (Sequent) find,
@@ -56,7 +57,7 @@ public class SuccTacletBuilder extends FindTacletBuilder<SolSuccTaclet> {
                 varsNew, varsNotFreeIn, varsNewDependingOn,
                 variableConditions),
             goals, ruleSets, attrs, prefixBuilder.getPrefixMap(),
-            choices, false, tacletAnnotations);
+            choices, false, tacletAnnotations, noFreeVarIns);
         // t.setOrigin(origin);
         return t;
     }
@@ -69,7 +70,7 @@ public class SuccTacletBuilder extends FindTacletBuilder<SolSuccTaclet> {
     /// empty. No specification for the if-sequence is represented as a sequent with two empty
     /// semisequences. No specification for the interactive or recursive flags imply that the flags
     /// are not set. No specified find part causes an IllegalStateException.
-    public SolSuccTaclet getTaclet() {
-        return getSuccTaclet();
+    public SolSuccTaclet getTaclet(Services services) {
+        return getSuccTaclet(services);
     }
 }

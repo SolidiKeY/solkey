@@ -8,6 +8,7 @@ import org.key_project.logic.Term;
 import org.key_project.prover.rules.ApplicationRestriction;
 import org.key_project.prover.rules.TacletApplPart;
 import org.key_project.prover.rules.tacletbuilder.TacletGoalTemplate;
+import org.key_project.solidity.common.Services;
 import org.key_project.solidity.rule.taclets.SolRewriteTaclet;
 
 public class RewriteTacletBuilder<T extends SolRewriteTaclet> extends FindTacletBuilder<T> {
@@ -46,20 +47,19 @@ public class RewriteTacletBuilder<T extends SolRewriteTaclet> extends FindTaclet
     /// TacletBuilderException if a bound SchemaVariable occurs more than once in if and find or an
     /// InvalidPrefixException if the building of the Taclet Prefix fails.
     @SuppressWarnings("unchecked")
-    public T getRewriteTaclet() {
+    public T getRewriteTaclet(Services services) {
         if (find == null) {
             throw new TacletBuilder.TacletBuilderException(this, "No find part specified");
         }
         checkBoundInIfAndFind();
-        TacletPrefixBuilder prefixBuilder = new TacletPrefixBuilder(this);
+        TacletPrefixBuilder prefixBuilder = new TacletPrefixBuilder(this, services);
         prefixBuilder.build();
         SolRewriteTaclet t = new SolRewriteTaclet(name,
             (Term) find,
             new TacletApplPart(ifseq, applicationRestriction, varsNew, varsNotFreeIn,
-                varsNewDependingOn,
-                variableConditions),
+                varsNewDependingOn, variableConditions),
             goals, ruleSets, attrs, prefixBuilder.getPrefixMap(),
-            choices, surviveSmbExec, tacletAnnotations);
+            choices, surviveSmbExec, tacletAnnotations, noFreeVarIns);
         // t.setOrigin(origin);
         return (T) t;
     }
@@ -93,7 +93,7 @@ public class RewriteTacletBuilder<T extends SolRewriteTaclet> extends FindTaclet
     /// semisequences. No specification for the interactive or recursive flags imply that the flags
     /// are not set. No specified find part causes an IllegalStateException.
     @Override
-    public T getTaclet() {
-        return getRewriteTaclet();
+    public T getTaclet(Services services) {
+        return getRewriteTaclet(services);
     }
 }

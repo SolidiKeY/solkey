@@ -13,6 +13,7 @@ import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
+
 public class StatementVariableReference extends SolidityExpression implements VariableReference {
     public final Name name;
     private final StatementVariableDeclaration stmVarDecl;

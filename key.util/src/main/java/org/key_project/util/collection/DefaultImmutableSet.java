@@ -63,7 +63,7 @@ public class DefaultImmutableSet<T extends @Nullable Object> implements Immutabl
     }
 
     public static <T> ImmutableSet<T> fromCollection(Collection<T> seq) {
-        return new DefaultImmutableSet<>(ImmutableList.fromList(seq));
+        return fromSet(new HashSet<T>(seq));
     }
 
     public static <T> ImmutableSet<T> fromSet(Set<T> seq) {

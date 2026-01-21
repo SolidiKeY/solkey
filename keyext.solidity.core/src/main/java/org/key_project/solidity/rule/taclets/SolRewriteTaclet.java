@@ -57,9 +57,22 @@ public class SolRewriteTaclet extends SolFindTaclet {
             ImmutableMap<@NonNull SchemaVariable, TacletPrefix> prefixMap,
             ChoiceExpr choices,
             boolean surviveSymbExec,
-            ImmutableSet<TacletAnnotation> tacletAnnotations) {
+            ImmutableSet<TacletAnnotation> tacletAnnotations,
+            ImmutableList<@NonNull SchemaVariable> noFreeVarIns) {
         super(name, find, applPart, goalTemplates, ruleSets, attrs, prefixMap, choices,
-            surviveSymbExec, tacletAnnotations);
+            surviveSymbExec, tacletAnnotations, noFreeVarIns);
+    }
+
+    public SolRewriteTaclet(Name name, Term find, TacletApplPart applPart,
+            ImmutableList<TacletGoalTemplate> goalTemplates,
+            ImmutableList<RuleSet> ruleSets,
+            TacletAttributes attrs,
+            ImmutableMap<@NonNull SchemaVariable, TacletPrefix> prefixMap,
+            ChoiceExpr choices,
+            ImmutableSet<TacletAnnotation> tacletAnnotations,
+            ImmutableList<@NonNull SchemaVariable> noFreeVarIns) {
+        super(name, find, applPart, goalTemplates, ruleSets, attrs, prefixMap, choices,
+            false, tacletAnnotations, noFreeVarIns);
     }
 
     @Override
@@ -172,6 +185,6 @@ public class SolRewriteTaclet extends SolFindTaclet {
 
         return new SolRewriteTaclet(new Name(s), (Term) find, applPart, goalTemplates(),
             getRuleSets(), attrs,
-            prefixMap, choices, getSurviveSymbExec(), tacletAnnotations);
+            prefixMap, choices, getSurviveSymbExec(), tacletAnnotations, noFreeVarIns);
     }
 }

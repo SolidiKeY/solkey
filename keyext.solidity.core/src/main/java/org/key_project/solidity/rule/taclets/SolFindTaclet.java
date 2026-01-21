@@ -46,12 +46,37 @@ public abstract class SolFindTaclet extends SolTaclet {
             TacletAttributes attrs,
             ImmutableMap<@NonNull SchemaVariable, TacletPrefix> prefixMap, ChoiceExpr choices,
             boolean surviveSymExec,
-            ImmutableSet<TacletAnnotation> tacletAnnotations) {
+            ImmutableSet<TacletAnnotation> tacletAnnotations,
+            ImmutableList<@NonNull SchemaVariable> noFreeVarIns) {
         super(name, find, applPart, goalTemplates, ruleSets, attrs, prefixMap, choices,
-            surviveSymExec,
-            tacletAnnotations);
+            surviveSymExec, tacletAnnotations, noFreeVarIns);
     }
 
+    /// creates a FindTaclet
+    ///
+    /// @param name the Name of the taclet
+    /// @param applPart the TacletApplPart that contains the if-sequent, the not-free and new-vars
+    /// conditions
+    /// @param goalTemplates an ImmutableList that contains all goaltemplates of the
+    /// taclet (these are the instructions used to create new goals when applying the Taclet)
+    /// @param ruleSets an ImmutableList that contains all rule sets the Taclet is attached to
+    /// @param attrs the TacletAttributes encoding if the Taclet is non-interactive, recursive or
+    /// something like that
+    /// @param find the Term that is the pattern that has to be found in a sequent and the places
+    /// where it matches the Taclet can be applied
+    /// @param prefixMap an ImmutableMap that contains the prefix for each
+    /// SchemaVariable in the Taclet
+    protected SolFindTaclet(Name name, SyntaxElement find,
+            TacletApplPart applPart,
+            ImmutableList<TacletGoalTemplate> goalTemplates,
+            ImmutableList<RuleSet> ruleSets,
+            TacletAttributes attrs,
+            ImmutableMap<@NonNull SchemaVariable, org.key_project.prover.rules.TacletPrefix> prefixMap,
+            ChoiceExpr choices, ImmutableSet<TacletAnnotation> tacletAnnotations,
+            ImmutableList<@NonNull SchemaVariable> noFreeVarIns) {
+        this(name, find, applPart, goalTemplates, ruleSets, attrs, prefixMap, choices, false,
+            tacletAnnotations, noFreeVarIns);
+    }
 
     /// the term against which a concrete term occuring in the current goal is matched
     /// @return the top level [Term] in the find-part of the taclet
