@@ -12,7 +12,7 @@ import org.key_project.util.ExtList;
 
 
 // uint a; a = 4; // ProgramVariable
-public class IndexRangeExpression extends Expression {
+public class IndexRangeExpression extends SolidityExpression {
 
     private final Expression baseExp;
     private final Expression startExp;

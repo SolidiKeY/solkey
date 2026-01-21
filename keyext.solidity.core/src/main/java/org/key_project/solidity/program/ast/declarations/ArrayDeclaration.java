@@ -5,7 +5,6 @@ package org.key_project.solidity.program.ast.declarations;
 
 import java.util.Objects;
 
-import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.visitor.Visitor;
@@ -24,13 +23,14 @@ public class ArrayDeclaration extends Declaration {
 
     public ArrayDeclaration(ExtList children, int length) {
         super(new ImmutableArray<>());
-        this.programVariable = Objects.requireNonNull(children.removeFirstOccurrence(ProgramVariable.class));;
+        this.programVariable =
+            Objects.requireNonNull(children.removeFirstOccurrence(ProgramVariable.class));;
         this.length = length;
     }
 
     @Override
     public SyntaxElement getChild(int n) {
-        return switch (n){
+        return switch (n) {
             case 0 -> programVariable;
             default -> throw new IndexOutOfBoundsException(n + " should be 0");
         };

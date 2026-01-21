@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.jupiter.api.Disabled;
 import org.key_project.logic.Name;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
@@ -18,11 +17,12 @@ import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.declarations.ArrayDeclaration;
 import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
-import org.key_project.solidity.program.ast.expressions.SoliditiyExpression;
+import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.program.ast.statement.DeclarationStatement;
 import org.key_project.solidity.program.ast.statement.Statement;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -35,7 +35,7 @@ class TestProgVarReplaceVisitor {
     private final KeYSolidityType uintKST;
     private final ProgramVariable replacement;
 
-    public TestProgVarReplaceVisitor(){
+    public TestProgVarReplaceVisitor() {
         map = new HashMap<>();
         services = new Services();
 
@@ -64,16 +64,16 @@ class TestProgVarReplaceVisitor {
 
     @Test
     void testReplacement() {
-        SoliditiyExpression original = new ProgramVariable(new Name("original"), uintKST); // <-
-                                                                                           // here
-                                                                                           // actual
-                                                                                           // statement
-                                                                                           // needed
-        SoliditiyExpression replacement = new ProgramVariable(new Name("replacement"), uintKST); // <-
-                                                                                                 // here
-                                                                                                 // actual
-                                                                                                 // statement
-                                                                                                 // needed
+        Expression original = new ProgramVariable(new Name("original"), uintKST); // <-
+                                                                                  // here
+                                                                                  // actual
+                                                                                  // statement
+                                                                                  // needed
+        Expression replacement = new ProgramVariable(new Name("replacement"), uintKST); // <-
+                                                                                        // here
+                                                                                        // actual
+                                                                                        // statement
+                                                                                        // needed
 
         map.put((ProgramVariable) original, (ProgramVariable) replacement);
 
@@ -95,7 +95,8 @@ class TestProgVarReplaceVisitor {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         DeclarationStatement dstm = (DeclarationStatement) contractDeclaration.getFunctions()
                 .getFirst().getBody().getStatements().get(0);
-        StatementVariableDeclaration stm =  (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+        StatementVariableDeclaration stm =
+            (StatementVariableDeclaration) dstm.getDeclarations().get(0);
 
         ProgramVariable original = stm.programVariable;
         addMap(original);
@@ -119,7 +120,8 @@ class TestProgVarReplaceVisitor {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         DeclarationStatement dstm = (DeclarationStatement) contractDeclaration.getFunctions()
                 .getFirst().getBody().getStatements().get(0);
-        StatementVariableDeclaration stm =  (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+        StatementVariableDeclaration stm =
+            (StatementVariableDeclaration) dstm.getDeclarations().get(0);
 
         ProgramVariable original = stm.programVariable;
         addMap(original);
@@ -128,7 +130,8 @@ class TestProgVarReplaceVisitor {
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
         replacer.start();
         Block result = ((Block) replacer.result());
-        ProgramVariable progRes = (ProgramVariable) result.getChild(1).getChild(0).getChild(0).getChild(0).getChild(1);
+        ProgramVariable progRes =
+            (ProgramVariable) result.getChild(1).getChild(0).getChild(0).getChild(0).getChild(1);
         assertSame(replacement, progRes);
     }
 
@@ -173,7 +176,8 @@ class TestProgVarReplaceVisitor {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         DeclarationStatement dstm = (DeclarationStatement) contractDeclaration.getFunctions()
                 .getFirst().getBody().getStatements().get(0);
-        StatementVariableDeclaration stm = (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+        StatementVariableDeclaration stm =
+            (StatementVariableDeclaration) dstm.getDeclarations().get(0);
 
         ProgramVariable original = stm.programVariable;
         addMap(original);
@@ -201,7 +205,8 @@ class TestProgVarReplaceVisitor {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         DeclarationStatement dstm = (DeclarationStatement) contractDeclaration.getFunctions()
                 .getFirst().getBody().getStatements().get(0);
-        StatementVariableDeclaration stm = (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+        StatementVariableDeclaration stm =
+            (StatementVariableDeclaration) dstm.getDeclarations().get(0);
 
         ProgramVariable original = stm.programVariable;
         addMap(original);

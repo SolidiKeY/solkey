@@ -9,13 +9,11 @@ import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
-import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.INT;
-
-public class StatementVariableReference extends Expression implements VariableReference {
+public class StatementVariableReference extends SolidityExpression implements VariableReference {
     public final Name name;
     private final StatementVariableDeclaration stmVarDecl;
 
@@ -30,7 +28,8 @@ public class StatementVariableReference extends Expression implements VariableRe
     public StatementVariableReference(ExtList children, Type type, Name name) {
         super(type);
         this.name = name;
-        this.stmVarDecl = Objects .requireNonNull(children.removeFirstOccurrence(StatementVariableDeclaration.class));
+        this.stmVarDecl = Objects
+                .requireNonNull(children.removeFirstOccurrence(StatementVariableDeclaration.class));
     }
 
     @Override
@@ -40,7 +39,7 @@ public class StatementVariableReference extends Expression implements VariableRe
 
     @Override
     public SyntaxElement getChild(int n) {
-        if(n == 0)
+        if (n == 0)
             return stmVarDecl;
         throw new IndexOutOfBoundsException();
     }

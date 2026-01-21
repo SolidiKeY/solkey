@@ -9,11 +9,11 @@ import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.StateVariableDeclaration;
-import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public class StateVariableReference extends Expression implements VariableReference {
+public class StateVariableReference extends SolidityExpression implements VariableReference {
 
     // private ReferencePrefix prefix; // a reference prefix for account.person.age here
     // account.person is the prefix
@@ -50,7 +50,7 @@ public class StateVariableReference extends Expression implements VariableRefere
 
     @Override
     public SyntaxElement getChild(int n) {
-        if(n == 0)
+        if (n == 0)
             return referencedDeclaration;
         throw new IndexOutOfBoundsException();
     }

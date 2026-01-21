@@ -12,7 +12,7 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public class TupleExpression extends Expression {
+public class TupleExpression extends SolidityExpression {
     List<Expression> expressions;
 
     public TupleExpression(Type type, List<Expression> expressions) {

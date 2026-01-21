@@ -8,10 +8,11 @@ import java.util.Objects;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.expressions.UnresolvedTypeException;
 import org.key_project.util.ExtList;
 
-public abstract class BinaryOperator extends Expression {
+public abstract class BinaryOperator extends SolidityExpression {
 
     protected final Expression left;
     protected final Expression right;

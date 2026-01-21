@@ -10,7 +10,7 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public class MemberExp extends Expression {
+public class MemberExp extends SolidityExpression {
     final Expression leftExp;
     final String rightName;
 

@@ -5,18 +5,15 @@ package org.key_project.solidity.program.ast.declarations;
 
 import java.util.Objects;
 
-import org.key_project.logic.Name;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.expressions.Expression;
-import org.key_project.solidity.program.ast.references.TypeReference;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
-
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.key_project.util.collection.ImmutableArray;
+
+import org.jspecify.annotations.Nullable;
 
 public class StateVariableDeclaration extends Declaration {
 
@@ -41,7 +38,8 @@ public class StateVariableDeclaration extends Declaration {
 
     public StateVariableDeclaration(ExtList children) {
         super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
-        this.programVariable = Objects.requireNonNull(children.removeFirstOccurrence(ProgramVariable.class));
+        this.programVariable =
+            Objects.requireNonNull(children.removeFirstOccurrence(ProgramVariable.class));
         this.initializer = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
         this.visibility = Objects.requireNonNull(children.removeFirstOccurrence(Visibility.class));
     }
@@ -59,7 +57,8 @@ public class StateVariableDeclaration extends Declaration {
     @Override
     public SolidityProgramElement getChild(int i) {
         if (i < 0 || i >= getChildCount()) {
-            throw new IndexOutOfBoundsException("No child at index " + i + " in " + programVariable.name());
+            throw new IndexOutOfBoundsException(
+                "No child at index " + i + " in " + programVariable.name());
         }
         if (i == 0) {
             return programVariable;

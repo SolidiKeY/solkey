@@ -12,11 +12,11 @@ import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
-import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public class FunctionReference extends Expression implements Resolver, VariableReference {
+public class FunctionReference extends SolidityExpression implements Resolver, VariableReference {
 
     public final int id;
     public final Name name;
@@ -57,7 +57,7 @@ public class FunctionReference extends Expression implements Resolver, VariableR
 
     @Override
     public SyntaxElement getChild(int n) {
-        if(n == 0 && getChildCount() == 1)
+        if (n == 0 && getChildCount() == 1)
             return referencedDeclaration;
         throw new IndexOutOfBoundsException();
     }

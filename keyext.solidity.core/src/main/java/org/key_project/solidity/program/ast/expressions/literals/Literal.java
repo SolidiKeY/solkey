@@ -5,9 +5,9 @@ package org.key_project.solidity.program.ast.expressions.literals;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
-import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 
-public abstract class Literal extends Expression {
+public abstract class Literal extends SolidityExpression {
     protected Literal(Type type) {
         super(type);
     }

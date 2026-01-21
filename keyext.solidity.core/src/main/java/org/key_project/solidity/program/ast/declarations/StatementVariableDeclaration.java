@@ -5,17 +5,12 @@ package org.key_project.solidity.program.ast.declarations;
 
 import java.util.Objects;
 
-import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.op.IProgramVariable;
 import org.key_project.solidity.logic.op.ProgramVariable;
-import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
-import org.key_project.solidity.program.ast.references.VariableReference;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
-
-import org.jspecify.annotations.NonNull;
 import org.key_project.util.collection.ImmutableArray;
 
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Default;
@@ -25,7 +20,8 @@ public class StatementVariableDeclaration extends Declaration {
     public final ProgramVariable programVariable;
     private String struct;
 
-    public StatementVariableDeclaration(ProgramVariable programVariable, String struct, DataLocation dataLocation) {
+    public StatementVariableDeclaration(ProgramVariable programVariable, String struct,
+            DataLocation dataLocation) {
         super(new ImmutableArray<>(dataLocation));
         this.programVariable = programVariable;
         this.struct = struct;
@@ -33,18 +29,19 @@ public class StatementVariableDeclaration extends Declaration {
 
     public StatementVariableDeclaration(ExtList children) {
         super(children);
-        this.programVariable = Objects.requireNonNull(children.removeFirstOccurrence(ProgramVariable.class));
+        this.programVariable =
+            Objects.requireNonNull(children.removeFirstOccurrence(ProgramVariable.class));
         this.struct = null;
-//        this.struct = Objects.requireNonNull(children.removeFirstOccurrence(String.class));
-//        this.dataLocation =
-//            Objects.requireNonNull(children.removeFirstOccurrence(DataLocation.class));
+        // this.struct = Objects.requireNonNull(children.removeFirstOccurrence(String.class));
+        // this.dataLocation =
+        // Objects.requireNonNull(children.removeFirstOccurrence(DataLocation.class));
     }
 
     @Override
     public SyntaxElement getChild(int n) {
-        if(n < 0 || n >= getChildCount())
+        if (n < 0 || n >= getChildCount())
             throw new IndexOutOfBoundsException(n + " out of bonds");
-        if(n < modifiers.size())
+        if (n < modifiers.size())
             return modifiers.get(n);
         return programVariable;
     }

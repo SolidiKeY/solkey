@@ -8,11 +8,11 @@ import java.util.Objects;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.ArrayDeclaration;
-import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public class ArrayReference extends Expression implements VariableReference {
+public class ArrayReference extends SolidityExpression implements VariableReference {
     private final ArrayDeclaration referencedDeclaration;
 
     public ArrayReference(ArrayDeclaration referencedDeclaration,
@@ -34,7 +34,7 @@ public class ArrayReference extends Expression implements VariableReference {
 
     @Override
     public SyntaxElement getChild(int n) {
-        if(n == 0)
+        if (n == 0)
             return referencedDeclaration;
         throw new IndexOutOfBoundsException();
     }

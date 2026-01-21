@@ -11,10 +11,10 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.references.TypeReference;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
+import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.key_project.util.collection.ImmutableArray;
 
 public class FieldDeclaration extends Declaration {
 

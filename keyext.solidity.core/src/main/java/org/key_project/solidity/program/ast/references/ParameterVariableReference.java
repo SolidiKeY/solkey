@@ -9,11 +9,11 @@ import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.ParameterDeclaration;
-import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public class ParameterVariableReference extends Expression implements VariableReference {
+public class ParameterVariableReference extends SolidityExpression implements VariableReference {
     public final Name name;
     private final ParameterDeclaration referencedDeclaration;
 
@@ -42,7 +42,7 @@ public class ParameterVariableReference extends Expression implements VariableRe
 
     @Override
     public SyntaxElement getChild(int n) {
-        if(n == 0)
+        if (n == 0)
             return referencedDeclaration;
         throw new IndexOutOfBoundsException();
     }

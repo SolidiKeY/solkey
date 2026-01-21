@@ -10,14 +10,14 @@ import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
+import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
-import org.key_project.util.collection.ImmutableArray;
 
 public class StructDeclaration extends Declaration {
     public final @NonNull Name name;
     List<FieldDeclaration> fields;
-    
+
 
     public StructDeclaration(@NonNull Name name, List<FieldDeclaration> fields) {
         super(new ImmutableArray<>());

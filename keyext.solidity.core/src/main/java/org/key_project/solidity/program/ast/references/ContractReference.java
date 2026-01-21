@@ -12,11 +12,11 @@ import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.program.ast.declarations.Declaration;
-import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public class ContractReference extends Expression implements Resolver, VariableReference {
+public class ContractReference extends SolidityExpression implements Resolver, VariableReference {
 
     public int id;
     public final Name name;

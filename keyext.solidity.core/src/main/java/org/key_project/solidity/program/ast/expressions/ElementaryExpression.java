@@ -10,7 +10,7 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public class ElementaryExpression extends Expression {
+public class ElementaryExpression extends SolidityExpression {
 
     public ElementaryExpression(Type type) {
         super(type);

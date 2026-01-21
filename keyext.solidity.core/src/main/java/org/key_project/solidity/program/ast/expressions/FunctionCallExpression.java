@@ -12,7 +12,7 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public class FunctionCallExpression extends Expression {
+public class FunctionCallExpression extends SolidityExpression {
 
     private final List<Expression> arguments;
     public final Expression functionExp;
