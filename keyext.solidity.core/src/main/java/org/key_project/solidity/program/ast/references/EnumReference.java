@@ -5,7 +5,6 @@ package org.key_project.solidity.program.ast.references;
 
 import java.util.Objects;
 
-import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.EnumDeclaration;
@@ -14,26 +13,22 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 public class EnumReference extends SolidityExpression implements VariableReference {
-    // TODO: change name to MemberEnumDeclaration
-    public final Name name;
     private final EnumDeclaration enumDeclaration;
 
-    public EnumReference(Name name, EnumDeclaration enumDeclaration, Type type) {
+    public EnumReference(EnumDeclaration enumDeclaration, Type type) {
         super(type);
-        this.name = name;
         this.enumDeclaration = enumDeclaration;
     }
 
-    public EnumReference(ExtList children, Type type, Name name) {
+    public EnumReference(ExtList children, Type type) {
         super(type);
-        this.name = name;
         this.enumDeclaration =
             Objects.requireNonNull(children.removeFirstOccurrence(EnumDeclaration.class));
     }
 
     @Override
     public String toString() {
-        return name.toString();
+        return enumDeclaration.getName().toString();
     }
 
     @Override

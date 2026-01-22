@@ -15,6 +15,11 @@ import org.key_project.util.collection.ImmutableArray;
 
 public class EnumDeclaration extends Declaration {
     private final List<MemberEnumDeclaration> members;
+
+    public Name getName() {
+        return name;
+    }
+
     private final Name name;
 
     public EnumDeclaration(Name name, List<MemberEnumDeclaration> members) {
@@ -27,6 +32,12 @@ public class EnumDeclaration extends Declaration {
         super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
         this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
         this.members = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
+    }
+
+    public MemberEnumDeclaration findMember(Name name) {
+        return members.stream()
+                .filter(x -> x.getName().equals(name))
+                .findFirst().orElseThrow();
     }
 
     @Override

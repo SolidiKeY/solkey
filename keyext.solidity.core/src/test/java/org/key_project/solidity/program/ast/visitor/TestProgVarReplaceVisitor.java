@@ -103,7 +103,8 @@ class TestProgVarReplaceVisitor {
 
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(stm, map, false, services);
         replacer.start();
-        ProgramVariable result = ((StatementVariableDeclaration) replacer.result()).getProgramVariable();
+        ProgramVariable result =
+            ((StatementVariableDeclaration) replacer.result()).getProgramVariable();
         assertSame(replacement, result);
     }
 

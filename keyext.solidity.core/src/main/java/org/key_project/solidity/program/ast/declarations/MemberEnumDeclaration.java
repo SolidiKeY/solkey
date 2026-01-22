@@ -15,6 +15,10 @@ import org.jspecify.annotations.NonNull;
 
 public class MemberEnumDeclaration extends Declaration {
 
+    public @NonNull Name getName() {
+        return name;
+    }
+
     private final @NonNull Name name;
 
     public MemberEnumDeclaration(@NonNull Name name) {

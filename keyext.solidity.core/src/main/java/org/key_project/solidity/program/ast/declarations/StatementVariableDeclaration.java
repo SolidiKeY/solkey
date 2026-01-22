@@ -6,7 +6,6 @@ package org.key_project.solidity.program.ast.declarations;
 import java.util.Objects;
 
 import org.key_project.logic.SyntaxElement;
-import org.key_project.solidity.logic.op.IProgramVariable;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.visitor.Visitor;
