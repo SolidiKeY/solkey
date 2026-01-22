@@ -12,9 +12,9 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.SortImpl;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
-import org.key_project.solidity.program.ast.declarations.ArrayDeclaration;
 import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
@@ -132,7 +132,7 @@ class TestProgVarReplaceVisitor {
         replacer.start();
         Block result = ((Block) replacer.result());
         ProgramVariable progRes =
-            (ProgramVariable) result.getChild(1).getChild(0).getChild(0).getChild(0).getChild(1);
+            (ProgramVariable) result.getChild(1).getChild(0).getChild(0);
         assertSame(replacement, progRes);
     }
 
@@ -142,23 +142,21 @@ class TestProgVarReplaceVisitor {
         String contract = """
                 contract SimpleContract {
                     function f() public pure {
-                        int[10] memory original;
+                        int256[10] memory original;
+                        original[1] = 1;
                     }
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
-        DeclarationStatement dstm = (DeclarationStatement) contractDeclaration.getFunctions()
-                .getFirst().getBody().getStatements().get(0);
-        ArrayDeclaration stm = (ArrayDeclaration) dstm.getDeclarations().get(0);
+        Block body = (Block) contractDeclaration.getFunctions().getFirst().getBody();
 
-        ProgramVariable original = stm.getProgramVariable();
+        ProgramVariable original = (ProgramVariable) body.getStatements().get(0).getChild(0).getChild(0);
         addMap(original);
-
-        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(stm, map, false, services);
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
         replacer.start();
-        ArrayDeclaration result = ((ArrayDeclaration) replacer.result());
-        ProgramVariable resultPV = result.getProgramVariable();
-        assertEquals(replacement, resultPV);
-        assertEquals(10, result.getLength());
+        SolidityProgramElement result = replacer.result();
+
+        assertEquals(replacement, result.getChild(0).getChild(0).getChild(0));
+        assertEquals(replacement, result.getChild(1).getChild(0).getChild(0).getChild(0));
     }
 
     @Test
@@ -169,7 +167,7 @@ class TestProgVarReplaceVisitor {
                     struct Person {
                        int age;
                     }
-
+                
                     function f() public pure {
                         Person memory alice;
                     }

@@ -6,35 +6,40 @@ package org.key_project.solidity.program.ast.expressions;
 import java.util.Objects;
 
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 public class IndexExpression extends SolidityExpression {
 
-    String leftExp;
+    ProgramVariable leftExp;
     Expression indexExp;
 
-    public IndexExpression(String leftExp, Expression indexExp, Type expType) {
+    public IndexExpression(ProgramVariable leftExp, Expression indexExp, Type expType) {
         super(expType);
         this.leftExp = leftExp;
         this.indexExp = indexExp;
     }
 
-    public IndexExpression(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
-        this.leftExp = Objects.requireNonNull(children.removeFirstOccurrence(String.class));
+    public IndexExpression(ExtList children, Type type) {
+        super(type);
+        this.leftExp = Objects.requireNonNull(children.removeFirstOccurrence(ProgramVariable.class));
         this.indexExp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
     }
 
     @Override
     public SyntaxElement getChild(int n) {
-        return null;
+        return switch (n){
+            case 0 -> leftExp;
+            case 1 -> indexExp;
+            default -> throw new IndexOutOfBoundsException();
+        };
     }
 
     @Override
     public int getChildCount() {
-        return 0;
+        return 2;
     }
 
     public String toString() {

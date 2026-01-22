@@ -432,8 +432,14 @@ public class SolJSONParser {
     }
 
     private Expression parseIndexAccess(Type expType, JsonNode initializer) {
-        String leftExp = initializer.findValue("baseExpression").findValue("name").asText();
+        String leftExpName = initializer.findValue("baseExpression").findValue("name").asText();
         Expression indexExp = parseExpression(initializer.findValue("indexExpression"));
+
+        final Sort sort = expType.getSort(services);
+        KeYSolidityType ksType = new KeYSolidityType(expType, sort);
+        services.getNamespaces().sorts().add(sort);
+        ProgramVariable leftExp = new ProgramVariable(new Name(leftExpName), ksType);
+
         return new IndexExpression(leftExp, indexExp, expType);
     }
 
