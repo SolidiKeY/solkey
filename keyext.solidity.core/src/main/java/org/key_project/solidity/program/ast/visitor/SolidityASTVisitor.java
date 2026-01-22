@@ -371,11 +371,6 @@ public abstract class SolidityASTVisitor extends SolidityASTWalker implements Vi
     }
 
     @Override
-    public void performActionOnArrayReference(ArrayReference x) {
-        doDefaultAction(x);
-    }
-
-    @Override
     public void performActionOnContractReference(ContractReference x) {
         doDefaultAction(x);
     }
@@ -402,11 +397,6 @@ public abstract class SolidityASTVisitor extends SolidityASTWalker implements Vi
 
     @Override
     public void performActionOnStateVariableReference(StateVariableReference x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnStatementVariableReference(StatementVariableReference x) {
         doDefaultAction(x);
     }
 

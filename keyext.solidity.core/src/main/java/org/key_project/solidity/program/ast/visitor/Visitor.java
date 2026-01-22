@@ -150,8 +150,6 @@ public interface Visitor {
 
     void performActionOnXorEqualOperator(XorEqualOperator x);
 
-    void performActionOnArrayReference(ArrayReference x);
-
     void performActionOnContractReference(ContractReference x);
 
     void performActionOnEnumReference(EnumReference x);
@@ -163,8 +161,6 @@ public interface Visitor {
     void performActionOnParameterVariableReference(ParameterVariableReference x);
 
     void performActionOnStateVariableReference(StateVariableReference x);
-
-    void performActionOnStatementVariableReference(StatementVariableReference x);
 
     void performActionOnTypeReference(TypeReference x);
 

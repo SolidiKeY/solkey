@@ -827,17 +827,6 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
     }
 
     @Override
-    public void performActionOnArrayReference(ArrayReference x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ArrayReference(changeList, x.getType());
-            }
-        };
-        def.doAction(x);
-    }
-
-    @Override
     public void performActionOnContractReference(ContractReference x) {
         DefaultAction def = new DefaultAction(x) {
             @Override
@@ -898,17 +887,6 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
                 return new StateVariableReference(changeList, x.getType(), x.name);
-            }
-        };
-        def.doAction(x);
-    }
-
-    @Override
-    public void performActionOnStatementVariableReference(StatementVariableReference x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new StatementVariableReference(changeList, x.getType(), x.name);
             }
         };
         def.doAction(x);
