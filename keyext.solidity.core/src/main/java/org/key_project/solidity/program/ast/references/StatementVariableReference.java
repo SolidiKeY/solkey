@@ -18,7 +18,7 @@ public class StatementVariableReference extends SolidityExpression implements Va
     public final Name name;
     private final StatementVariableDeclaration stmVarDecl;
 
-    // TODO: remove this class
+    // TODO: remove this class and inside the visitors
     public StatementVariableReference(Name name,
             StatementVariableDeclaration stmVarDeclaration, Type type) {
         super(type);

@@ -15,6 +15,7 @@ import org.key_project.util.ExtList;
 public class ArrayReference extends SolidityExpression implements VariableReference {
     private final ArrayDeclaration referencedDeclaration;
 
+    // TODO: Remove this class with visitors
     public ArrayReference(ArrayDeclaration referencedDeclaration,
             Type type) {
         super(type);
@@ -29,7 +30,7 @@ public class ArrayReference extends SolidityExpression implements VariableRefere
 
     @Override
     public String toString() {
-        return referencedDeclaration.programVariable.toString();
+        return referencedDeclaration.getProgramVariable().toString();
     }
 
     @Override

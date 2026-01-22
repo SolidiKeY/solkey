@@ -9,7 +9,6 @@ import java.net.URI;
 import java.util.*;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import javax.swing.*;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
@@ -526,12 +525,10 @@ public class SolJSONParser {
                 new StateVariableReference(name, stateVarDeclaration, type);
             case ParameterDeclaration parameterDeclaration ->
                 new ParameterVariableReference(name, parameterDeclaration, type);
-            case ArrayDeclaration arrayDeclaration ->
-                new ArrayReference(arrayDeclaration, type);
+            case ArrayDeclaration arrayDeclaration -> arrayDeclaration.getProgramVariable();
             case FunctionDeclaration functionDeclaration ->
                 new FunctionReference(idDecl, name, functionDeclaration, type);
-            case StatementVariableDeclaration stmVarDeclaration -> // stmVarDeclaration.getProgramVariable();
-                new StatementVariableReference(name, stmVarDeclaration, type);
+            case StatementVariableDeclaration stmVarDeclaration -> stmVarDeclaration.getProgramVariable();
             case EnumDeclaration enumDeclaration ->
                 new EnumReference(name, enumDeclaration, type);
             case null -> switch (expType.toString()) {

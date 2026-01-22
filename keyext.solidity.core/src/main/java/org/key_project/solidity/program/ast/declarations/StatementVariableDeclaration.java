@@ -17,7 +17,7 @@ import static org.key_project.solidity.program.ast.declarations.FunctionEnums.Da
 
 //
 public class StatementVariableDeclaration extends Declaration {
-    public final ProgramVariable programVariable;
+    private final ProgramVariable programVariable;
     private String struct;
 
     public StatementVariableDeclaration(ProgramVariable programVariable, String struct,
@@ -67,7 +67,7 @@ public class StatementVariableDeclaration extends Declaration {
         v.performActionOnStatementVariableDeclaration(this);
     }
 
-    public IProgramVariable getProgramVariable() {
+    public ProgramVariable getProgramVariable() {
         return programVariable;
     }
 }

@@ -12,8 +12,8 @@ import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
 public class ArrayDeclaration extends Declaration {
-    public final ProgramVariable programVariable;
-    public int length;
+    private final ProgramVariable programVariable;
+    private final int length;
 
     public ArrayDeclaration(ProgramVariable programVariable, int length) {
         super(new ImmutableArray<>());
@@ -48,5 +48,13 @@ public class ArrayDeclaration extends Declaration {
 
     public void visit(Visitor v) {
         v.performActionOnArrayDeclaration(this);
+    }
+
+    public ProgramVariable getProgramVariable() {
+        return programVariable;
+    }
+
+    public int getLength() {
+        return length;
     }
 }

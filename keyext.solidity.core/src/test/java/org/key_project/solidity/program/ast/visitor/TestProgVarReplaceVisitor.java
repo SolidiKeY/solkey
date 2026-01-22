@@ -98,12 +98,12 @@ class TestProgVarReplaceVisitor {
         StatementVariableDeclaration stm =
             (StatementVariableDeclaration) dstm.getDeclarations().get(0);
 
-        ProgramVariable original = stm.programVariable;
+        ProgramVariable original = stm.getProgramVariable();
         addMap(original);
 
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(stm, map, false, services);
         replacer.start();
-        ProgramVariable result = ((StatementVariableDeclaration) replacer.result()).programVariable;
+        ProgramVariable result = ((StatementVariableDeclaration) replacer.result()).getProgramVariable();
         assertSame(replacement, result);
     }
 
@@ -123,7 +123,7 @@ class TestProgVarReplaceVisitor {
         StatementVariableDeclaration stm =
             (StatementVariableDeclaration) dstm.getDeclarations().get(0);
 
-        ProgramVariable original = stm.programVariable;
+        ProgramVariable original = stm.getProgramVariable();
         addMap(original);
 
         Block body = contractDeclaration.getFunctions().getFirst().getBody();
@@ -149,15 +149,15 @@ class TestProgVarReplaceVisitor {
                 .getFirst().getBody().getStatements().get(0);
         ArrayDeclaration stm = (ArrayDeclaration) dstm.getDeclarations().get(0);
 
-        ProgramVariable original = stm.programVariable;
+        ProgramVariable original = stm.getProgramVariable();
         addMap(original);
 
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(stm, map, false, services);
         replacer.start();
         ArrayDeclaration result = ((ArrayDeclaration) replacer.result());
-        ProgramVariable resultPV = result.programVariable;
+        ProgramVariable resultPV = result.getProgramVariable();
         assertEquals(replacement, resultPV);
-        assertEquals(10, result.length);
+        assertEquals(10, result.getLength());
     }
 
     @Test
@@ -179,13 +179,13 @@ class TestProgVarReplaceVisitor {
         StatementVariableDeclaration stm =
             (StatementVariableDeclaration) dstm.getDeclarations().get(0);
 
-        ProgramVariable original = stm.programVariable;
+        ProgramVariable original = stm.getProgramVariable();
         addMap(original);
 
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(stm, map, false, services);
         replacer.start();
         StatementVariableDeclaration result = (StatementVariableDeclaration) replacer.result();
-        ProgramVariable resultPV = result.programVariable;
+        ProgramVariable resultPV = result.getProgramVariable();
         assertEquals(replacement, resultPV);
     }
 
@@ -208,13 +208,13 @@ class TestProgVarReplaceVisitor {
         StatementVariableDeclaration stm =
             (StatementVariableDeclaration) dstm.getDeclarations().get(0);
 
-        ProgramVariable original = stm.programVariable;
+        ProgramVariable original = stm.getProgramVariable();
         addMap(original);
 
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(stm, map, false, services);
         replacer.start();
         StatementVariableDeclaration result = (StatementVariableDeclaration) replacer.result();
-        ProgramVariable resultPV = result.programVariable;
+        ProgramVariable resultPV = result.getProgramVariable();
         assertEquals(replacement, resultPV);
     }
 }

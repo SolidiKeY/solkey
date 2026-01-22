@@ -14,6 +14,7 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 public class EnumReference extends SolidityExpression implements VariableReference {
+    // TODO: change name to MemberEnumDeclaration
     public final Name name;
     private final EnumDeclaration enumDeclaration;
 
