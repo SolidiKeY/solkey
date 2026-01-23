@@ -9,7 +9,7 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 public class ContinueStatement implements Statement {
     @Override
     public SyntaxElement getChild(int n) {
-        return null;
+        throw new IndexOutOfBoundsException();
     }
 
     @Override

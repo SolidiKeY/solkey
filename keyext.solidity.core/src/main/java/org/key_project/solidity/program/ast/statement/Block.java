@@ -37,8 +37,6 @@ public class Block implements Statement {
         this.statements = new ImmutableArray<>(children.collect(Statement.class));
         this.errorName = null;
         this.arguments = null;
-        // this.errorName = Objects.requireNonNull(children.removeFirstOccurrence(String.class));
-        // this.arguments = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
     }
 
     @Override

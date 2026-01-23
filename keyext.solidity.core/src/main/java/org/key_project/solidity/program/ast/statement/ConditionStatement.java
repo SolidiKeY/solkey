@@ -34,12 +34,23 @@ public class ConditionStatement implements Statement {
 
     @Override
     public SyntaxElement getChild(int n) {
-        return null;
+        return switch (n){
+            case 0 -> condition;
+            case 1 -> trueBody;
+            default -> {
+                if(getChildCount() == 3 && n == 2){
+                    yield falseBody;
+                }
+                throw new IndexOutOfBoundsException();
+            }
+        };
     }
 
     @Override
     public int getChildCount() {
-        return 0;
+        if(falseBody == null)
+            return 2;
+        return 3;
     }
 
     @Override

@@ -23,7 +23,7 @@ public class ReturnStatment implements Statement {
 
     @Override
     public SyntaxElement getChild(int n) {
-        return null;
+        throw new IndexOutOfBoundsException();
     }
 
     @Override

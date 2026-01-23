@@ -10,7 +10,7 @@ public class PlaceholdStatement implements Statement {
 
     @Override
     public SyntaxElement getChild(int n) {
-        return null;
+        throw new IndexOutOfBoundsException();
     }
 
     @Override

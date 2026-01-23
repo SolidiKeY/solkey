@@ -360,7 +360,6 @@ public class SolJsonParserTest {
                        uint256 age;
                     }
                     Person alice;
-
                     function f() public returns (uint256) {
                         return alice.age;
                     }
@@ -385,7 +384,6 @@ public class SolJsonParserTest {
                     struct Person {
                        uint256 age;
                     }
-
                     function f() public pure {
                         Person memory alice;
                     }
@@ -408,7 +406,6 @@ public class SolJsonParserTest {
         String contract = """
                 contract SimpleContract {
                     int[] v;
-
                     function f() public returns (int) {
                         return v[1+1];
                     }

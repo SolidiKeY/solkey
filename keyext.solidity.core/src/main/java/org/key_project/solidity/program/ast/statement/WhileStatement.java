@@ -27,20 +27,21 @@ public class WhileStatement implements Statement {
 
     @Override
     public SyntaxElement getChild(int n) {
-        return null;
+        if(n == 0)
+            return condition;
+        else if (n == 1) {
+            return body;
+        }
+        throw new IndexOutOfBoundsException();
     }
 
     @Override
     public int getChildCount() {
-        return 0;
+        return 2;
     }
 
     public Expression getCondition() {
         return condition;
-    }
-
-    public Statement getBody() {
-        return body;
     }
 
     @Override

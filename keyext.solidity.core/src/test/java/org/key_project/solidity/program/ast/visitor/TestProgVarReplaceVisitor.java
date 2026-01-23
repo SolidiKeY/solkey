@@ -245,4 +245,112 @@ class TestProgVarReplaceVisitor {
         assertSame(replacement, forLoop.getChild(1).getChild(0));
         assertSame(replacement, forLoop.getChild(2).getChild(0));
     }
+
+    @Test
+    void testMultipleFeatures() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function f() public pure {
+                        int original;
+                        if(original == 2)
+                            original = 0;
+                        else
+                            original = 1;
+                        while(original == 0) original = 1;
+                        original++;
+                        original += 1;
+                        do { original++; } while (original == 0);
+                    }
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        Block body = contractDeclaration.getFunctions().getFirst().getBody();
+        DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
+        StatementVariableDeclaration stm =
+                (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+
+        ProgramVariable original = stm.getProgramVariable();
+        addMap(original);
+
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
+        replacer.start();
+        Block result = ((Block) replacer.result());
+        assertFalse(result.toString().contains("original"));
+        assertTrue(result.toString().contains("replacement"));
+    }
+
+    @Test
+    void testOtherFeatures() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    modifier mod1(){
+                        _;
+                    }
+                    modifier mod2(){
+                        _;
+                    }
+                    function f(address target) public mod1 mod2 {
+                    }
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        Block body = contractDeclaration.getFunctions().getFirst().getBody();
+
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
+        replacer.start();
+    }
+
+    @Test
+    void testSelfReference() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function f() public {
+                        f();
+                    }
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        Block body = contractDeclaration.getFunctions().getFirst().getBody();
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
+        replacer.start();
+        Block result = ((Block) replacer.result());
+    }
+
+    @Test
+    void testAddress() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function g() internal {
+                    }
+                    function f() public {
+                        address target;
+                        try g() {
+                            int i;
+                        }
+                        catch Error(string memory reason) {
+                            int j;
+                        }
+                        catch {
+                            int k;
+                        }
+                    }
+                    function g() external pure {
+                    }
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        Block body = contractDeclaration.getFunctions().getFirst().getBody();
+        DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
+        StatementVariableDeclaration stm =
+                (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+
+        ProgramVariable original = stm.getProgramVariable();
+        addMap(original);
+
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
+        replacer.start();
+        Block result = ((Block) replacer.result());
+        assertFalse(result.toString().contains("original"));
+        assertTrue(result.toString().contains("replacement"));
+    }
 }
