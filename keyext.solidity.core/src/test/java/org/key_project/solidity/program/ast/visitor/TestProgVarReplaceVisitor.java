@@ -119,15 +119,14 @@ class TestProgVarReplaceVisitor {
                     }
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
-        DeclarationStatement dstm = (DeclarationStatement) contractDeclaration.getFunctions()
-                .getFirst().getBody().getStatements().get(0);
+        Block body = contractDeclaration.getFunctions().getFirst().getBody();
+        DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
         StatementVariableDeclaration stm =
             (StatementVariableDeclaration) dstm.getDeclarations().get(0);
 
         ProgramVariable original = stm.getProgramVariable();
         addMap(original);
 
-        Block body = contractDeclaration.getFunctions().getFirst().getBody();
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
         replacer.start();
         Block result = ((Block) replacer.result());
@@ -147,7 +146,7 @@ class TestProgVarReplaceVisitor {
                     }
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
-        Block body = (Block) contractDeclaration.getFunctions().getFirst().getBody();
+        Block body = contractDeclaration.getFunctions().getFirst().getBody();
 
         ProgramVariable original = (ProgramVariable) body.getStatements().get(0).getChild(0).getChild(0);
         addMap(original);
@@ -199,21 +198,51 @@ class TestProgVarReplaceVisitor {
                     }
                     function f() public {
                         State s = State.Begin;
+                        s = State.End;
                     }
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
-        DeclarationStatement dstm = (DeclarationStatement) contractDeclaration.getFunctions()
-                .getFirst().getBody().getStatements().get(0);
+        Block body = contractDeclaration.getFunctions().getFirst().getBody();
+        DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
         StatementVariableDeclaration stm =
             (StatementVariableDeclaration) dstm.getDeclarations().get(0);
 
         ProgramVariable original = stm.getProgramVariable();
         addMap(original);
 
-        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(stm, map, false, services);
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
         replacer.start();
-        StatementVariableDeclaration result = (StatementVariableDeclaration) replacer.result();
-        ProgramVariable resultPV = result.getProgramVariable();
-        assertEquals(replacement, resultPV);
+        Block result = (Block) replacer.result();
+        assertEquals(replacement, result.getChild(0).getChild(0).getChild(1));
+        assertEquals(replacement, result.getChild(1).getChild(0).getChild(0));
+    }
+
+    @Test
+    void testFor() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function f() public pure {
+                        int original;
+                        for(original = 0; original<10; original++){}
+                    }
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        Block body = contractDeclaration.getFunctions().getFirst().getBody();
+        DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
+        StatementVariableDeclaration stm =
+                (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+
+        ProgramVariable original = stm.getProgramVariable();
+        addMap(original);
+
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
+        replacer.start();
+        Block result = ((Block) replacer.result());
+        assertSame(replacement, result.getChild(0).getChild(0).getChild(1));
+        Statement forLoop = result.getStatements().get(1);
+        assertSame(replacement, forLoop.getChild(0).getChild(0));
+        assertSame(replacement, forLoop.getChild(1).getChild(0));
+        assertSame(replacement, forLoop.getChild(2).getChild(0));
     }
 }

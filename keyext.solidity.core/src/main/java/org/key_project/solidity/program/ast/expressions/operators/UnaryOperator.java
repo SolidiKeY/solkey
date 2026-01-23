@@ -6,7 +6,6 @@ package org.key_project.solidity.program.ast.expressions.operators;
 import java.util.Objects;
 
 import org.key_project.logic.SyntaxElement;
-import org.key_project.solidity.program.ast.TypeResolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.SolidityExpression;
@@ -14,9 +13,7 @@ import org.key_project.solidity.program.ast.expressions.UnresolvedTypeException;
 import org.key_project.util.ExtList;
 
 public abstract class UnaryOperator extends SolidityExpression {
-
     protected final Expression exp;
-    protected Type type;
 
     protected UnaryOperator(Expression exp, Type type) {
         super(type);
@@ -61,15 +58,4 @@ public abstract class UnaryOperator extends SolidityExpression {
         else
             return exp + " " + getOperator();
     }
-
-    protected Type resolving(TypeResolver resolver) {
-        return resolver.resolve(this);
-    }
-
-    public void resolve(TypeResolver resolver) {
-        if (type == null) {
-            type = resolving(resolver);
-        }
-    }
-
 }
