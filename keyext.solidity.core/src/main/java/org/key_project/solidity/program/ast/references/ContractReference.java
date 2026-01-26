@@ -4,9 +4,7 @@
 package org.key_project.solidity.program.ast.references;
 
 import java.util.HashMap;
-import java.util.Objects;
 
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.Resolver;
