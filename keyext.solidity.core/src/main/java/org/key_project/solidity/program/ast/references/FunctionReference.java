@@ -6,6 +6,7 @@ package org.key_project.solidity.program.ast.references;
 import java.util.HashMap;
 import java.util.Objects;
 
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.Resolver;
@@ -14,7 +15,6 @@ import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
-import org.key_project.util.ExtList;
 
 public class FunctionReference extends SolidityExpression implements Resolver, VariableReference {
 
@@ -37,12 +37,11 @@ public class FunctionReference extends SolidityExpression implements Resolver, V
         this.referencedDeclaration = null;
     }
 
-    public FunctionReference(ExtList children, Type type, int id, Name name) {
+    public FunctionReference(FunctionDeclaration referencedDeclaration, Type type, int id, Name name) {
         super(type);
         this.id = id;
         this.name = name;
-        this.referencedDeclaration =
-            Objects.requireNonNull(children.removeFirstOccurrence(FunctionDeclaration.class));
+        this.referencedDeclaration = referencedDeclaration;
     }
 
     @Override
@@ -57,14 +56,12 @@ public class FunctionReference extends SolidityExpression implements Resolver, V
 
     @Override
     public SyntaxElement getChild(int n) {
-        if (n == 0 && getChildCount() == 1)
-            return referencedDeclaration;
         throw new IndexOutOfBoundsException();
     }
 
     @Override
     public int getChildCount() {
-        return referencedDeclaration == null ? 0 : 1;
+        return 0;
     }
 
     public void visit(Visitor v) {

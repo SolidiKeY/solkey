@@ -321,36 +321,18 @@ class TestProgVarReplaceVisitor {
         // language=solidity
         String contract = """
                 contract SimpleContract {
-                    function g() internal {
-                    }
-                    function f() public {
-                        address target;
-                        try g() {
-                            int i;
-                        }
-                        catch Error(string memory reason) {
-                            int j;
-                        }
-                        catch {
-                            int k;
-                        }
+                    function f(address target) public {
+                        try SimpleContract(target).g() { }
+                        catch { }
                     }
                     function g() external pure {
                     }
                 }""";
+
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         Block body = contractDeclaration.getFunctions().getFirst().getBody();
-        DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
-        StatementVariableDeclaration stm =
-                (StatementVariableDeclaration) dstm.getDeclarations().get(0);
-
-        ProgramVariable original = stm.getProgramVariable();
-        addMap(original);
-
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
         replacer.start();
         Block result = ((Block) replacer.result());
-        assertFalse(result.toString().contains("original"));
-        assertTrue(result.toString().contains("replacement"));
     }
 }

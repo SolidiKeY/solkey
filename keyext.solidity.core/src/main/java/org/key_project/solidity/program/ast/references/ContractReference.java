@@ -6,6 +6,7 @@ package org.key_project.solidity.program.ast.references;
 import java.util.HashMap;
 import java.util.Objects;
 
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.Resolver;
@@ -14,12 +15,16 @@ import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
-import org.key_project.util.ExtList;
 
 public class ContractReference extends SolidityExpression implements Resolver, VariableReference {
 
     public int id;
     public final Name name;
+
+    public ContractDeclaration getContractDeclaration() {
+        return contractDeclaration;
+    }
+
     private ContractDeclaration contractDeclaration;
 
     public ContractReference(int id, Name name, Type type) {
@@ -28,26 +33,21 @@ public class ContractReference extends SolidityExpression implements Resolver, V
         this.name = name;
     }
 
-    public ContractReference(ExtList children, Type type, int id, Name name) {
+    public ContractReference(ContractDeclaration contractDeclaration, Type type, int id, Name name) {
         super(type);
         this.id = id;
         this.name = name;
-        this.contractDeclaration =
-            Objects.requireNonNull(children.removeFirstOccurrence(ContractDeclaration.class));
+        this.contractDeclaration = contractDeclaration;
     }
 
     @Override
     public SyntaxElement getChild(int n) {
-        if (contractDeclaration == null)
-            throw new IndexOutOfBoundsException("There is no contract to reference");
-        if (n == 0)
-            return contractDeclaration;
-        throw new IndexOutOfBoundsException("Element " + n + " is different than 0");
+        throw new IndexOutOfBoundsException();
     }
 
     @Override
     public int getChildCount() {
-        return contractDeclaration == null ? 0 : 1;
+        return 0;
     }
 
     @Override

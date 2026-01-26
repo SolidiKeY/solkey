@@ -626,7 +626,7 @@ public class SolJsonParserTest {
             (ContractReference) ((FunctionCallExpression) contractDec.getFunctions().getFirst()
                     .getBody().getStatements().get(0)
                     .getChild(0).getChild(0)).getChild(1);
-        Assertions.assertEquals(contr.getChildCount(), 1);
+        Assertions.assertEquals(contr.getChildCount(), 0);
     }
 
     @Test
