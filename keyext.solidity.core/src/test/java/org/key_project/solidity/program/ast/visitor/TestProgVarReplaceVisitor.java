@@ -335,4 +335,6 @@ class TestProgVarReplaceVisitor {
         replacer.start();
         Block result = ((Block) replacer.result());
     }
+
+    // TODO: add test cases of different scopes
 }

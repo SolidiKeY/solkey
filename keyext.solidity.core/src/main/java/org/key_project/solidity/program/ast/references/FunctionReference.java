@@ -20,14 +20,6 @@ public class FunctionReference extends SolidityExpression implements Resolver, V
     public final Name name;
     public FunctionDeclaration referencedDeclaration;
 
-    public FunctionReference(int id, Name name, FunctionDeclaration referencedDeclaration,
-            Type type) {
-        super(type);
-        this.id = id;
-        this.name = name;
-        this.referencedDeclaration = referencedDeclaration;
-    }
-
     public FunctionReference(int id, Name name, Type type) {
         super(type);
         this.id = id;
@@ -49,7 +41,10 @@ public class FunctionReference extends SolidityExpression implements Resolver, V
 
     @Override
     public void resolve(HashMap<Integer, Declaration> id2Name) {
-        this.referencedDeclaration = (FunctionDeclaration) id2Name.get(id);
+        if(this.referencedDeclaration == null)
+            this.referencedDeclaration = (FunctionDeclaration) id2Name.get(id);
+        else
+            throw new IllegalStateException("function " + name + " has already been resolved");
     }
 
     @Override

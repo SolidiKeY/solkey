@@ -64,21 +64,6 @@ public class ProgramVariable extends AbstractSortedOperator
         return type.getSolidityType();
     }
 
-    // TODO: Verify why this is needed
-    @Override
-    public int hashCode() {
-        return Objects.hash(name().hashCode());
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true; // Same memory address
-        if (obj == null || getClass() != obj.getClass()) return false; // Null or different class
-
-        ProgramVariable prog = (ProgramVariable) obj;
-        return this.name().toString().equals(prog.name().toString());
-    }
-
     /// TODO: implement
     // @Override
     // public void visit(Visitor v) {

@@ -364,10 +364,12 @@ public class SolJSONParser {
             initializerExp = parseExpression(initializer);
         }
 
+        // TODO: The type can be got from services.solidityModel
         Sort sort = expType.getSort(services);
         KeYSolidityType ksType = new KeYSolidityType(expType, sort);
         services.getNamespaces().sorts().add(sort);
 
+        // TODO: create a dictionary using the id of the parser in this class to get the program variable
         ProgramVariable programVariable = new ProgramVariable(new Name(fieldName), ksType);
         final StateVariableDeclaration field =
             new StateVariableDeclaration(programVariable, initializerExp, visibility);
@@ -533,7 +535,7 @@ public class SolJSONParser {
                 new ParameterVariableReference(name, parameterDeclaration, type);
             case ArrayDeclaration arrayDeclaration -> arrayDeclaration.getProgramVariable();
             case FunctionDeclaration functionDeclaration ->
-                new FunctionReference(idDecl, name, functionDeclaration, type);
+                new FunctionReference(idDecl, name, type);
             case StatementVariableDeclaration stmVarDeclaration ->
                 stmVarDeclaration.getProgramVariable();
             case EnumDeclaration enumDeclaration ->
