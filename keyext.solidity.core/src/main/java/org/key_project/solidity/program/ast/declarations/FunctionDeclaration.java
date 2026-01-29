@@ -21,30 +21,10 @@ public class FunctionDeclaration extends Declaration {
     private final ImmutableArray<ParameterDeclaration> returnParameters;
     private final ImmutableArray<ParameterDeclaration> inputParameters;
     private final Block body;
-
-    public String getKind() {
-        return kind;
-    }
-
     private final String kind;
-
-    public Visibility getVisibility() {
-        return visibility;
-    }
-
     private final Visibility visibility;
-
-    public StateMutability getStateMutability() {
-        return stateMutability;
-    }
-
     private final StateMutability stateMutability;
     private final ImmutableArray<ModifierReference> modifiers;
-
-    public Name getName() {
-        return name;
-    }
-
     private final Name name;
 
     public FunctionDeclaration(Name name, List<ParameterDeclaration> returnParameters,
@@ -65,20 +45,14 @@ public class FunctionDeclaration extends Declaration {
     public FunctionDeclaration(ExtList children, Name name, String kind, Visibility visibility, StateMutability stM) {
         super(children.removeFirstOccurrence(ImmutableArray.class));
         this.name = name;
-        this.returnParameters = getFromClass(children);
-        this.inputParameters = getFromClass(children);
+        // TODO: This code should not work
+        this.returnParameters = new ImmutableArray<>(children.collect(ParameterDeclaration.class));
+        this.inputParameters = new ImmutableArray<>(children.collect(ParameterDeclaration.class));
         this.body = Objects.requireNonNull(children.removeFirstOccurrence(Block.class));
         this.kind = kind;
         this.visibility = visibility;
         this.stateMutability = stM;
-        this.modifiers = getFromClass(children);
-    }
-
-    public <T> ImmutableArray<T> getFromClass(ExtList ext) {
-        T el = (T) ext.removeFirstOccurrence(List.class);
-        if(el == null)
-            return new ImmutableArray<>();
-        return new ImmutableArray<>(el);
+        this.modifiers = new ImmutableArray<>(children.collect(ModifierReference.class));
     }
 
     public Block getBody() {
@@ -144,5 +118,21 @@ public class FunctionDeclaration extends Declaration {
 
     public void visit(Visitor v) {
         v.performActionOnFunctionDeclaration(this);
+    }
+
+    public String getKind() {
+        return kind;
+    }
+
+    public Visibility getVisibility() {
+        return visibility;
+    }
+
+    public StateMutability getStateMutability() {
+        return stateMutability;
+    }
+
+    public Name getName() {
+        return name;
     }
 }

@@ -25,11 +25,6 @@ public class ContractDeclaration extends Declaration implements Type {
     private final ImmutableArray<ModifierDeclaration> modifiers;
     private final ImmutableArray<FunctionDeclaration> functions;
     private final ImmutableArray<EnumDeclaration> enums;
-
-    public Name getName() {
-        return name;
-    }
-
     private final Name name;
 
     public ContractDeclaration(Name name, List<StateVariableDeclaration> fields,
@@ -48,18 +43,11 @@ public class ContractDeclaration extends Declaration implements Type {
     public ContractDeclaration(ExtList children, Name name) {
         super(children.removeFirstOccurrence(ImmutableArray.class));
         this.name = name;
-        this.fields = getFromClass(children);
-        this.structs = getFromClass(children);
-        this.modifiers = getFromClass(children);
+        this.fields = new ImmutableArray<>(children.collect(StateVariableDeclaration.class));
+        this.structs = new ImmutableArray<>(children.collect(StructDeclaration.class));
+        this.modifiers = new ImmutableArray<>(children.collect(ModifierDeclaration.class));
         this.functions = new ImmutableArray<>(children.collect(FunctionDeclaration.class));
-        this.enums = getFromClass(children);
-    }
-
-    public <T> ImmutableArray<T> getFromClass(ExtList ext) {
-        T el = (T) ext.removeFirstOccurrence(List.class);
-        if(el == null)
-            return new ImmutableArray<>();
-        return new ImmutableArray<>(el);
+        this.enums = new ImmutableArray<>(children.collect(EnumDeclaration.class));
     }
 
     public ImmutableArray<StateVariableDeclaration> getFieldDeclarations() {
