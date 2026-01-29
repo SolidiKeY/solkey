@@ -301,11 +301,7 @@ public class SolJSONParser {
                 declaration.findValue("typeName").findValue("baseType").findValue("name").asText();
 
             Type type = getPrimitiveType(struct);
-
-            final Sort sort = type.getSort(services);
-            KeYSolidityType ksType = new KeYSolidityType(type, sort);
-            services.getNamespaces().sorts().add(sort);
-            services.getSolidityInfo().addType(sort, ksType);
+            KeYSolidityType ksType = getUndeclaredSolidityType(type);
             ProgramVariable programVariable = new ProgramVariable(name, ksType);
 
             ArrayDeclaration field = new ArrayDeclaration(programVariable, length);
@@ -360,12 +356,7 @@ public class SolJSONParser {
             initializerExp = parseExpression(initializer);
         }
 
-        // TODO: The type can be got from services.solidityModel
-        Sort sort = expType.getSort(services);
-        KeYSolidityType ksType = new KeYSolidityType(expType, sort);
-        services.getNamespaces().sorts().add(sort);
-
-        // TODO: create a dictionary using the id of the parser in this class to get the program variable
+        KeYSolidityType ksType = getUndeclaredSolidityType(expType);
         ProgramVariable programVariable = new ProgramVariable(new Name(fieldName), ksType);
         final StateVariableDeclaration field =
             new StateVariableDeclaration(programVariable, initializerExp, visibility);
@@ -432,9 +423,22 @@ public class SolJSONParser {
     private Expression parseIndexAccess(Type expType, JsonNode initializer) {
         int idLeftRef = initializer.findValue("baseExpression").findValue("referencedDeclaration").asInt();
         Expression indexExp = parseExpression(initializer.findValue("indexExpression"));
-        ProgramVariable leftExp = ((ArrayDeclaration) id2Name.get(idLeftRef)).getProgramVariable();
+        ProgramVariable leftExp = getProgramVariable(idLeftRef);
 
         return new IndexExpression(leftExp, indexExp, expType);
+    }
+
+    private ProgramVariable getProgramVariable(int idLeftRef) {
+        Declaration declaration = id2Name.get(idLeftRef);
+
+        return switch (declaration) {
+            case StateVariableDeclaration stateVarDeclaration ->
+                stateVarDeclaration.getProgramVariable();
+            case ArrayDeclaration arrayDeclaration -> arrayDeclaration.getProgramVariable();
+            case StatementVariableDeclaration stmVarDeclaration -> stmVarDeclaration.getProgramVariable();
+            default -> throw new RuntimeException(
+                    "Declaration " + declaration + " does not have program variable");
+        };
     }
 
     private Expression parseMemberAccess(Type expType, JsonNode initializer) {

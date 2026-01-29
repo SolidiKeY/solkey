@@ -19,6 +19,11 @@ public class StateVariableDeclaration extends Declaration {
 
     private final @Nullable Expression initializer;
     private final Visibility visibility;
+
+    public ProgramVariable getProgramVariable() {
+        return programVariable;
+    }
+
     private final ProgramVariable programVariable;
 
     public StateVariableDeclaration(ProgramVariable programVariable, Visibility visibility) {
