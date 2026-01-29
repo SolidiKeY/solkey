@@ -4,9 +4,7 @@
 package org.key_project.solidity.program.ast.visitor;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.key_project.logic.Name;
@@ -441,6 +439,70 @@ class TestProgVarReplaceVisitor {
 
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         return contractDeclaration.getFunctions().getFirst().getBody();
+    }
+
+    @Test
+    void testTwoFunctions() throws IOException {
+        ContractDeclaration cDecl = getTwoFunctionsContract();
+        Block body = cDecl.getFunctions().getFirst().getBody();
+        DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
+        StatementVariableDeclaration stm =
+                (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+
+        ProgramVariable original = stm.getProgramVariable();
+        addMap(original);
+
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(cDecl, map, false, services);
+        replacer.start();
+        ContractDeclaration result = (ContractDeclaration) replacer.result();
+        Block bodyRes = result.getFunctions().getFirst().getBody();
+
+        ImmutableArray<Statement> stmRes = bodyRes.getStatements();
+        assertSame(replacement, stmRes.get(1).getChild(0).getChild(0));
+        noReplacement(stmRes.get(2));
+        noReplacement(result.getFunctions().get(1));
+    }
+
+    @Test
+    void testTwoFunctionsSecond() throws IOException {
+        ContractDeclaration cDecl = getTwoFunctionsContract();
+        Block body = cDecl.getFunctions().get(1).getBody();
+        DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
+        StatementVariableDeclaration stm =
+                (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+
+        ProgramVariable original = stm.getProgramVariable();
+        addMap(original);
+
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(cDecl, map, false, services);
+        replacer.start();
+        ContractDeclaration result = (ContractDeclaration) replacer.result();
+        Block bodyRes = result.getFunctions().get(1).getBody();
+
+        ImmutableArray<Statement> stmRes = bodyRes.getStatements();
+        assertSame(replacement, stmRes.get(1).getChild(0).getChild(0));
+        noReplacement(result.getFunctions().getFirst());
+    }
+
+    public ContractDeclaration getTwoFunctionsContract() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function f() public pure {
+                        int original;
+                        original = 1;
+                        {
+                            int original;
+                            original = 2;
+                        }
+                    }
+                    function g() public pure {
+                        int original;
+                        original = 3;
+                    }
+                }""";
+
+        return getDeclStr(contract);
     }
 
     void noReplacement(SyntaxElement st){

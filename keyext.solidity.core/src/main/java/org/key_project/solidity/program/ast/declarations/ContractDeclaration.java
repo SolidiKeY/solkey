@@ -4,7 +4,6 @@
 package org.key_project.solidity.program.ast.declarations;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.key_project.logic.Name;
@@ -22,11 +21,16 @@ import org.jspecify.annotations.Nullable;
 public class ContractDeclaration extends Declaration implements Type {
 
     private final ImmutableArray<StateVariableDeclaration> fields;
-    private final List<StructDeclaration> structs;
-    private final List<ModifierDeclaration> modifiers;
-    private final List<FunctionDeclaration> functions;
-    private final List<EnumDeclaration> enums;
-    public final Name name;
+    private final ImmutableArray<StructDeclaration> structs;
+    private final ImmutableArray<ModifierDeclaration> modifiers;
+    private final ImmutableArray<FunctionDeclaration> functions;
+    private final ImmutableArray<EnumDeclaration> enums;
+
+    public Name getName() {
+        return name;
+    }
+
+    private final Name name;
 
     public ContractDeclaration(Name name, List<StateVariableDeclaration> fields,
             List<StructDeclaration> structs,
@@ -35,22 +39,27 @@ public class ContractDeclaration extends Declaration implements Type {
         super(new ImmutableArray<>());
         this.name = name;
         this.fields = new ImmutableArray<>(fields.toArray(new StateVariableDeclaration[0]));
-        this.structs = structs;
-        this.modifiers = modifiers;
-        this.functions = functions;
-        this.enums = enums;
+        this.structs = new ImmutableArray<>(structs);
+        this.modifiers = new ImmutableArray<>(modifiers);
+        this.functions = new ImmutableArray<>(functions);
+        this.enums = new ImmutableArray<>(enums);
     }
 
-    public ContractDeclaration(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
-        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
-        ImmutableArray<StateVariableDeclaration> flds =
-            Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class));
-        this.fields = new ImmutableArray<>(flds.toArray(new StateVariableDeclaration[0]));
-        this.structs = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
-        this.modifiers = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
-        this.functions = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
-        this.enums = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
+    public ContractDeclaration(ExtList children, Name name) {
+        super(children.removeFirstOccurrence(ImmutableArray.class));
+        this.name = name;
+        this.fields = getFromClass(children);
+        this.structs = getFromClass(children);
+        this.modifiers = getFromClass(children);
+        this.functions = new ImmutableArray<>(children.collect(FunctionDeclaration.class));
+        this.enums = getFromClass(children);
+    }
+
+    public <T> ImmutableArray<T> getFromClass(ExtList ext) {
+        T el = (T) ext.removeFirstOccurrence(List.class);
+        if(el == null)
+            return new ImmutableArray<>();
+        return new ImmutableArray<>(el);
     }
 
     public ImmutableArray<StateVariableDeclaration> getFieldDeclarations() {
@@ -104,11 +113,11 @@ public class ContractDeclaration extends Declaration implements Type {
     }
 
     public List<StructDeclaration> getStructs() {
-        return structs;
+        return structs.toList();
     }
 
     public List<FunctionDeclaration> getFunctions() {
-        return functions;
+        return functions.toList();
     }
 
     @Override

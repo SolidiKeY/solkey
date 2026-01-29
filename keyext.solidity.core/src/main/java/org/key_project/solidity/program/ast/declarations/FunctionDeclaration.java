@@ -21,10 +21,30 @@ public class FunctionDeclaration extends Declaration {
     private final ImmutableArray<ParameterDeclaration> returnParameters;
     private final ImmutableArray<ParameterDeclaration> inputParameters;
     private final Block body;
+
+    public String getKind() {
+        return kind;
+    }
+
     private final String kind;
+
+    public Visibility getVisibility() {
+        return visibility;
+    }
+
     private final Visibility visibility;
+
+    public StateMutability getStateMutability() {
+        return stateMutability;
+    }
+
     private final StateMutability stateMutability;
-    private final List<ModifierReference> modifiers;
+    private final ImmutableArray<ModifierReference> modifiers;
+
+    public Name getName() {
+        return name;
+    }
+
     private final Name name;
 
     public FunctionDeclaration(Name name, List<ParameterDeclaration> returnParameters,
@@ -39,22 +59,26 @@ public class FunctionDeclaration extends Declaration {
         this.kind = kind;
         this.visibility = visibility;
         this.stateMutability = stateMutability;
-        this.modifiers = modifiers;
+        this.modifiers = new ImmutableArray<>(modifiers);
     }
 
-    public FunctionDeclaration(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
-        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
-        this.returnParameters = new ImmutableArray<>(
-            Objects.requireNonNull(children.removeFirstOccurrence(List.class)));
-        this.inputParameters = new ImmutableArray<>(
-            Objects.requireNonNull(children.removeFirstOccurrence(List.class)));
+    public FunctionDeclaration(ExtList children, Name name, String kind, Visibility visibility, StateMutability stM) {
+        super(children.removeFirstOccurrence(ImmutableArray.class));
+        this.name = name;
+        this.returnParameters = getFromClass(children);
+        this.inputParameters = getFromClass(children);
         this.body = Objects.requireNonNull(children.removeFirstOccurrence(Block.class));
-        this.kind = Objects.requireNonNull(children.removeFirstOccurrence(String.class));
-        this.visibility = Objects.requireNonNull(children.removeFirstOccurrence(Visibility.class));
-        this.stateMutability =
-            Objects.requireNonNull(children.removeFirstOccurrence(StateMutability.class));
-        this.modifiers = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
+        this.kind = kind;
+        this.visibility = visibility;
+        this.stateMutability = stM;
+        this.modifiers = getFromClass(children);
+    }
+
+    public <T> ImmutableArray<T> getFromClass(ExtList ext) {
+        T el = (T) ext.removeFirstOccurrence(List.class);
+        if(el == null)
+            return new ImmutableArray<>();
+        return new ImmutableArray<>(el);
     }
 
     public Block getBody() {
