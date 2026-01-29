@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.key_project.logic.Name;
+import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.Type;
 
@@ -24,6 +25,10 @@ public class SolidityModel {
     }
 
     public KeYSolidityType getKeYSolidityType(String type) {
-        throw new RuntimeException("Not implemented yet");
+        return (KeYSolidityType) getType(new Name(type));
+    }
+
+    public void addType(Sort sort, KeYSolidityType type){
+        typeMap.put(sort.name(), type);
     }
 }

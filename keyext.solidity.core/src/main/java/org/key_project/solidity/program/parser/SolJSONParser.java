@@ -305,6 +305,7 @@ public class SolJSONParser {
             final Sort sort = type.getSort(services);
             KeYSolidityType ksType = new KeYSolidityType(type, sort);
             services.getNamespaces().sorts().add(sort);
+            services.getSolidityInfo().addType(sort, ksType);
             ProgramVariable programVariable = new ProgramVariable(name, ksType);
 
             ArrayDeclaration field = new ArrayDeclaration(programVariable, length);
@@ -320,12 +321,7 @@ public class SolJSONParser {
         Type type = getType(declaration.findValue("typeName").findValue("typeDescriptions")
                 .findValue("typeIdentifier").asText());
 
-
-        final Sort sort = type.getSort(services);
-        KeYSolidityType ksType = new KeYSolidityType(type, sort);
-        services.getNamespaces().sorts().add(sort);
-
-
+        KeYSolidityType ksType = getUndeclaredSolidityType(type);
         ProgramVariable programVariable = new ProgramVariable(name, ksType);
         StatementVariableDeclaration memDeclaration =
             new StatementVariableDeclaration(programVariable, struct, dataLocation);
@@ -434,13 +430,9 @@ public class SolJSONParser {
     }
 
     private Expression parseIndexAccess(Type expType, JsonNode initializer) {
-        String leftExpName = initializer.findValue("baseExpression").findValue("name").asText();
+        int idLeftRef = initializer.findValue("baseExpression").findValue("referencedDeclaration").asInt();
         Expression indexExp = parseExpression(initializer.findValue("indexExpression"));
-
-        final Sort sort = expType.getSort(services);
-        KeYSolidityType ksType = new KeYSolidityType(expType, sort);
-        services.getNamespaces().sorts().add(sort);
-        ProgramVariable leftExp = new ProgramVariable(new Name(leftExpName), ksType);
+        ProgramVariable leftExp = ((ArrayDeclaration) id2Name.get(idLeftRef)).getProgramVariable();
 
         return new IndexExpression(leftExp, indexExp, expType);
     }
@@ -534,7 +526,7 @@ public class SolJSONParser {
             case ParameterDeclaration parameterDeclaration ->
                 new ParameterVariableReference(name, parameterDeclaration, type);
             case ArrayDeclaration arrayDeclaration -> arrayDeclaration.getProgramVariable();
-            case FunctionDeclaration functionDeclaration ->
+            case FunctionDeclaration ignored ->
                 new FunctionReference(idDecl, name, type);
             case StatementVariableDeclaration stmVarDeclaration ->
                 stmVarDeclaration.getProgramVariable();
@@ -729,5 +721,13 @@ public class SolJSONParser {
 
     private @Nullable Expression findOrNullExpression(JsonNode statement, String field) {
         return statement.has(field) ? parseExpression(statement.findValue(field)) : null;
+    }
+
+    private @NonNull KeYSolidityType getUndeclaredSolidityType(Type type) {
+        final Sort sort = type.getSort(services);
+        KeYSolidityType ksType = new KeYSolidityType(type, sort);
+        services.getSolidityInfo().addType(sort, ksType);
+        services.getNamespaces().sorts().add(sort);
+        return ksType;
     }
 }
