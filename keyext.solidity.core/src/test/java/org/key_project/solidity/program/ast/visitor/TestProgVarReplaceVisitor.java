@@ -4,10 +4,13 @@
 package org.key_project.solidity.program.ast.visitor;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.key_project.logic.Name;
+import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
@@ -24,6 +27,7 @@ import org.key_project.solidity.program.ast.statement.Statement;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.key_project.util.collection.ImmutableArray;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.key_project.solidity.logic.parser.SolJsonParserTest.getDeclStr;
@@ -336,5 +340,110 @@ class TestProgVarReplaceVisitor {
         Block result = ((Block) replacer.result());
     }
 
-    // TODO: add test cases of different scopes
+    @Test
+    void testNested() throws IOException {
+        Block body = getNestedBody();
+        DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
+        StatementVariableDeclaration stm =
+                (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+
+        ProgramVariable original = stm.getProgramVariable();
+        addMap(original);
+
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
+        replacer.start();
+        Block result = ((Block) replacer.result());
+
+        ImmutableArray<Statement> stmRes = result.getStatements();
+        assertSame(replacement, stmRes.get(1).getChild(0).getChild(0));
+        noReplacement(stmRes.get(2));
+        noReplacement(stmRes.get(3));
+    }
+
+    @Test
+    void testNestedSecond() throws IOException {
+        Block body = getNestedBody();
+
+        ProgramVariable original = (ProgramVariable) body.getChild(2).getChild(0).getChild(0).getChild(1);
+        addMap(original);
+
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
+        replacer.start();
+        Block result = ((Block) replacer.result());
+
+        ImmutableArray<Statement> stmRes = result.getStatements();
+        assertSame(replacement, result.getChild(2).getChild(1).getChild(0).getChild(0));
+        noReplacement(stmRes.get(0));
+        noReplacement(stmRes.get(1));
+        noReplacement(stmRes.get(2).getChild(2));
+        noReplacement(stmRes.get(3));
+    }
+
+    @Test
+    void testNestedThird() throws IOException {
+        Block body = getNestedBody();
+
+        ProgramVariable original = (ProgramVariable) body.getChild(2).getChild(2).getChild(0).getChild(0).getChild(1);
+        addMap(original);
+
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
+        replacer.start();
+        Block result = ((Block) replacer.result());
+
+        ImmutableArray<Statement> stmRes = result.getStatements();
+        assertSame(replacement, result.getChild(2).getChild(2).getChild(1).getChild(0).getChild(0));
+        noReplacement(stmRes.get(0));
+        noReplacement(stmRes.get(1));
+        noReplacement(stmRes.get(2).getChild(0));
+        noReplacement(stmRes.get(2).getChild(1));
+        noReplacement(stmRes.get(3));
+    }
+
+    @Test
+    void testNestedLast() throws IOException {
+        Block body = getNestedBody();
+
+        ProgramVariable original = (ProgramVariable) body.getChild(3).getChild(0).getChild(0).getChild(1);
+        addMap(original);
+
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
+        replacer.start();
+        Block result = ((Block) replacer.result());
+
+        ImmutableArray<Statement> stmRes = result.getStatements();
+        assertSame(replacement, stmRes.get(3).getChild(1).getChild(0).getChild(0));
+        noReplacement(stmRes.get(0));
+        noReplacement(stmRes.get(1));
+        noReplacement(stmRes.get(2));
+    }
+
+    public Block getNestedBody() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function f() public pure {
+                        int original;
+                        original = 1;
+                        {
+                            int original;
+                            original = 2;
+                            {
+                                int original;
+                                original = 3;
+                            }
+                        }
+                        {
+                            int original;
+                            original = 4;
+                        }
+                    }
+                }""";
+
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        return contractDeclaration.getFunctions().getFirst().getBody();
+    }
+
+    void noReplacement(SyntaxElement st){
+        assertFalse(st.toString().contains("replacement"));
+    }
 }
