@@ -10,7 +10,6 @@ import java.nio.file.Path;
 import java.util.List;
 
 import org.key_project.logic.SyntaxElement;
-import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.declarations.*;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
@@ -230,7 +229,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         Assertions.assertEquals(1, contractDeclaration.getFieldDeclarations().size());
-        SolidityProgramElement expOpSynt =
+        SyntaxElement expOpSynt =
             contractDeclaration.getFieldDeclarations().get(0).getChild(1);
         Assertions.assertInstanceOf(ExponentialOperator.class, expOpSynt);
         ExponentialOperator expOp = (ExponentialOperator) expOpSynt;
@@ -813,35 +812,35 @@ public class SolJsonParserTest {
         final Path solc = Path.of("/opt", "local", "bin", "solc");
         SolcWrapper solcWrapper = new SolcWrapper(solc);
         String contractJson = solcWrapper.readSol(contract);
-        SolidityProgramElement programElement = getSolidityFromStr(contractJson);
+        SyntaxElement programElement = getSolidityFromStr(contractJson);
         Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
         return (ContractDeclaration) programElement;
     }
 
     private static ContractDeclaration getDeclaration(String fileName) throws IOException {
-        SolidityProgramElement programElement = getSolidityProgramElement(fileName);
+        SyntaxElement programElement = getSyntaxElement(fileName);
         Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
         return (ContractDeclaration) programElement;
     }
 
-    private static SolidityProgramElement getSolidityFromStr(String contract)
+    private static SyntaxElement getSolidityFromStr(String contract)
             throws IOException {
         SolJSONParser jsonParser = new SolJSONParser();
-        List<SolidityProgramElement> unit = jsonParser.parse(contract);
+        List<SyntaxElement> unit = jsonParser.parse(contract);
         Assertions.assertNotNull(unit);
         Assertions.assertEquals(1, unit.size());
         return unit.getFirst();
     }
 
-    private static SolidityProgramElement getSolidityProgramElement(String solFileName)
+    private static SyntaxElement getSyntaxElement(String solFileName)
             throws IOException {
         SolJSONParser jsonParser = new SolJSONParser();
         URI fileURI = getFile(solFileName);
         Assertions.assertNotNull(fileURI);
-        List<SolidityProgramElement> unit = jsonParser.parse(fileURI);
+        List<SyntaxElement> unit = jsonParser.parse(fileURI);
         Assertions.assertNotNull(unit);
         Assertions.assertEquals(1, unit.size());
-        SolidityProgramElement programElement = unit.getFirst();
+        SyntaxElement programElement = unit.getFirst();
         return programElement;
     }
 

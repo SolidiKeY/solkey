@@ -22,10 +22,10 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.program.ast.statement.DeclarationStatement;
 import org.key_project.solidity.program.ast.statement.Statement;
+import org.key_project.util.collection.ImmutableArray;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.key_project.util.collection.ImmutableArray;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.key_project.solidity.logic.parser.SolJsonParserTest.getDeclStr;
@@ -150,7 +150,8 @@ class TestProgVarReplaceVisitor {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         Block body = contractDeclaration.getFunctions().getFirst().getBody();
 
-        ProgramVariable original = (ProgramVariable) body.getStatements().get(0).getChild(0).getChild(0);
+        ProgramVariable original =
+            (ProgramVariable) body.getStatements().get(0).getChild(0).getChild(0);
         addMap(original);
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
         replacer.start();
@@ -168,7 +169,7 @@ class TestProgVarReplaceVisitor {
                     struct Person {
                        int age;
                     }
-                
+
                     function f() public pure {
                         Person memory alice;
                     }
@@ -233,7 +234,7 @@ class TestProgVarReplaceVisitor {
         Block body = contractDeclaration.getFunctions().getFirst().getBody();
         DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
         StatementVariableDeclaration stm =
-                (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+            (StatementVariableDeclaration) dstm.getDeclarations().get(0);
 
         ProgramVariable original = stm.getProgramVariable();
         addMap(original);
@@ -269,7 +270,7 @@ class TestProgVarReplaceVisitor {
         Block body = contractDeclaration.getFunctions().getFirst().getBody();
         DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
         StatementVariableDeclaration stm =
-                (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+            (StatementVariableDeclaration) dstm.getDeclarations().get(0);
 
         ProgramVariable original = stm.getProgramVariable();
         addMap(original);
@@ -343,7 +344,7 @@ class TestProgVarReplaceVisitor {
         Block body = getNestedBody();
         DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
         StatementVariableDeclaration stm =
-                (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+            (StatementVariableDeclaration) dstm.getDeclarations().get(0);
 
         ProgramVariable original = stm.getProgramVariable();
         addMap(original);
@@ -362,7 +363,8 @@ class TestProgVarReplaceVisitor {
     void testNestedSecond() throws IOException {
         Block body = getNestedBody();
 
-        ProgramVariable original = (ProgramVariable) body.getChild(2).getChild(0).getChild(0).getChild(1);
+        ProgramVariable original =
+            (ProgramVariable) body.getChild(2).getChild(0).getChild(0).getChild(1);
         addMap(original);
 
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
@@ -381,7 +383,8 @@ class TestProgVarReplaceVisitor {
     void testNestedThird() throws IOException {
         Block body = getNestedBody();
 
-        ProgramVariable original = (ProgramVariable) body.getChild(2).getChild(2).getChild(0).getChild(0).getChild(1);
+        ProgramVariable original =
+            (ProgramVariable) body.getChild(2).getChild(2).getChild(0).getChild(0).getChild(1);
         addMap(original);
 
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
@@ -401,7 +404,8 @@ class TestProgVarReplaceVisitor {
     void testNestedLast() throws IOException {
         Block body = getNestedBody();
 
-        ProgramVariable original = (ProgramVariable) body.getChild(3).getChild(0).getChild(0).getChild(1);
+        ProgramVariable original =
+            (ProgramVariable) body.getChild(3).getChild(0).getChild(0).getChild(1);
         addMap(original);
 
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
@@ -441,71 +445,7 @@ class TestProgVarReplaceVisitor {
         return contractDeclaration.getFunctions().getFirst().getBody();
     }
 
-    @Test
-    void testTwoFunctions() throws IOException {
-        ContractDeclaration cDecl = getTwoFunctionsContract();
-        Block body = cDecl.getFunctions().getFirst().getBody();
-        DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
-        StatementVariableDeclaration stm =
-                (StatementVariableDeclaration) dstm.getDeclarations().get(0);
-
-        ProgramVariable original = stm.getProgramVariable();
-        addMap(original);
-
-        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(cDecl, map, false, services);
-        replacer.start();
-        ContractDeclaration result = (ContractDeclaration) replacer.result();
-        Block bodyRes = result.getFunctions().getFirst().getBody();
-
-        ImmutableArray<Statement> stmRes = bodyRes.getStatements();
-        assertSame(replacement, stmRes.get(1).getChild(0).getChild(0));
-        noReplacement(stmRes.get(2));
-        noReplacement(result.getFunctions().get(1));
-    }
-
-    @Test
-    void testTwoFunctionsSecond() throws IOException {
-        ContractDeclaration cDecl = getTwoFunctionsContract();
-        Block body = cDecl.getFunctions().get(1).getBody();
-        DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
-        StatementVariableDeclaration stm =
-                (StatementVariableDeclaration) dstm.getDeclarations().get(0);
-
-        ProgramVariable original = stm.getProgramVariable();
-        addMap(original);
-
-        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(cDecl, map, false, services);
-        replacer.start();
-        ContractDeclaration result = (ContractDeclaration) replacer.result();
-        Block bodyRes = result.getFunctions().get(1).getBody();
-
-        ImmutableArray<Statement> stmRes = bodyRes.getStatements();
-        assertSame(replacement, stmRes.get(1).getChild(0).getChild(0));
-        noReplacement(result.getFunctions().getFirst());
-    }
-
-    public ContractDeclaration getTwoFunctionsContract() throws IOException {
-        // language=solidity
-        String contract = """
-                contract SimpleContract {
-                    function f() public pure {
-                        int original;
-                        original = 1;
-                        {
-                            int original;
-                            original = 2;
-                        }
-                    }
-                    function g() public pure {
-                        int original;
-                        original = 3;
-                    }
-                }""";
-
-        return getDeclStr(contract);
-    }
-
-    void noReplacement(SyntaxElement st){
+    void noReplacement(SyntaxElement st) {
         assertFalse(st.toString().contains("replacement"));
     }
 }

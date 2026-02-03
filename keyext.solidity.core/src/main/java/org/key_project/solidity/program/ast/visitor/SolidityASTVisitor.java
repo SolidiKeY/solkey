@@ -51,82 +51,12 @@ public abstract class SolidityASTVisitor extends SolidityASTWalker implements Vi
     }
 
     @Override
-    public void performActionOnArrayType(ArrayType x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnEnumType(EnumType x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnKeYSolidityType(KeYSolidityType x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnMappingType(MappingType x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnPrimitiveType(PrimitiveType x) {
-        doDefaultAction(x);
-    }
-
-    @Override
     public void performActionOnArrayDeclaration(ArrayDeclaration x) {
         doDefaultAction(x);
     }
 
     @Override
-    public void performActionOnContractDeclaration(ContractDeclaration x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnEnumDeclaration(EnumDeclaration x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnFieldDeclaration(FieldDeclaration x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnFunctionDeclaration(FunctionDeclaration x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnMemberEnumDeclaration(MemberEnumDeclaration x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnModifierDeclaration(ModifierDeclaration x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnParameterDeclaration(ParameterDeclaration x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnStateVariableDeclaration(StateVariableDeclaration x) {
-        doDefaultAction(x);
-    }
-
-    @Override
     public void performActionOnStatementVariableDeclaration(StatementVariableDeclaration x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnStructDeclaration(StructDeclaration x) {
         doDefaultAction(x);
     }
 

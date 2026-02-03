@@ -16,7 +16,6 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.Resolver;
-import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.*;
 import org.key_project.solidity.program.ast.declarations.*;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
@@ -57,16 +56,16 @@ public class SolJSONParser {
     }
 
     /// parses the Solidity file found at the provided [URI] and converts it into a
-    /// list of [SolidityProgramElement]s of declarations representing the Solidity programs
+    /// list of [SyntaxElement]s of declarations representing the Solidity programs
     /// @param file the URI where to find the Solidity code
     /// @return list of top level declarations (usually contracts) representing the Solidity code
-    public List<SolidityProgramElement> parse(URI file) throws IOException {
+    public List<SyntaxElement> parse(URI file) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(file.toURL());
         return json2SolidityAST(root);
     }
 
-    public List<SolidityProgramElement> parse(String contract) throws IOException {
+    public List<SyntaxElement> parse(String contract) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
 
         JsonNode root = mapper.readTree(contract);
@@ -76,15 +75,15 @@ public class SolJSONParser {
     /// convert the JSON AST representation into a KeY for Solidity representation
     /// @param root the root node representing the JSON AST
     /// @return the KeY AST representation of {@code root}
-    private List<SolidityProgramElement> json2SolidityAST(JsonNode root) {
+    private List<SyntaxElement> json2SolidityAST(JsonNode root) {
         if ("SourceUnit".equals(root.findValue("nodeType").asText())) {
             return parseSourceUnit(root.findValues("nodes"));
         }
         return new ArrayList<>();
     }
 
-    private List<SolidityProgramElement> parseSourceUnit(List<JsonNode> nodes) {
-        List<SolidityProgramElement> elements = new ArrayList<>();
+    private List<SyntaxElement> parseSourceUnit(List<JsonNode> nodes) {
+        List<SyntaxElement> elements = new ArrayList<>();
         for (var node : nodes) {
             if (node.findValue("contractKind").asText().equals("contract")) {
                 elements.add(parseContract(node));
@@ -421,7 +420,8 @@ public class SolJSONParser {
     }
 
     private Expression parseIndexAccess(Type expType, JsonNode initializer) {
-        int idLeftRef = initializer.findValue("baseExpression").findValue("referencedDeclaration").asInt();
+        int idLeftRef =
+            initializer.findValue("baseExpression").findValue("referencedDeclaration").asInt();
         Expression indexExp = parseExpression(initializer.findValue("indexExpression"));
         ProgramVariable leftExp = getProgramVariable(idLeftRef);
 
@@ -435,9 +435,10 @@ public class SolJSONParser {
             case StateVariableDeclaration stateVarDeclaration ->
                 stateVarDeclaration.getProgramVariable();
             case ArrayDeclaration arrayDeclaration -> arrayDeclaration.getProgramVariable();
-            case StatementVariableDeclaration stmVarDeclaration -> stmVarDeclaration.getProgramVariable();
+            case StatementVariableDeclaration stmVarDeclaration ->
+                stmVarDeclaration.getProgramVariable();
             default -> throw new RuntimeException(
-                    "Declaration " + declaration + " does not have program variable");
+                "Declaration " + declaration + " does not have program variable");
         };
     }
 

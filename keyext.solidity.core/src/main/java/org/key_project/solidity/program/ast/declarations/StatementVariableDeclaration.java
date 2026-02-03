@@ -7,6 +7,7 @@ import java.util.Objects;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
@@ -15,7 +16,7 @@ import org.key_project.util.collection.ImmutableArray;
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Default;
 
 //
-public class StatementVariableDeclaration extends Declaration {
+public class StatementVariableDeclaration extends Declaration implements SolidityProgramElement {
     private final ProgramVariable programVariable;
     private String struct;
 

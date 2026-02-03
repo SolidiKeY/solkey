@@ -9,7 +9,6 @@ import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.expressions.Expression;
-import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
@@ -78,9 +77,5 @@ public class StateVariableDeclaration extends Declaration {
         String typeReference = programVariable.getType().toString();
         return typeReference + " " + visibility + " " + name
             + (initializer != null ? " = " + initializer : "") + ";";
-    }
-
-    public void visit(Visitor v) {
-        v.performActionOnStateVariableDeclaration(this);
     }
 }

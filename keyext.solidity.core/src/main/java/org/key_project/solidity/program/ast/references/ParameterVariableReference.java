@@ -42,14 +42,12 @@ public class ParameterVariableReference extends SolidityExpression implements Va
 
     @Override
     public SyntaxElement getChild(int n) {
-        if (n == 0)
-            return referencedDeclaration;
         throw new IndexOutOfBoundsException();
     }
 
     @Override
     public int getChildCount() {
-        return 1;
+        return 0;
     }
 
     public void visit(Visitor v) {

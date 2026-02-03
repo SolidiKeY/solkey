@@ -34,11 +34,11 @@ public class ConditionStatement implements Statement {
 
     @Override
     public SyntaxElement getChild(int n) {
-        return switch (n){
+        return switch (n) {
             case 0 -> condition;
             case 1 -> trueBody;
             default -> {
-                if(getChildCount() == 3 && n == 2){
+                if (getChildCount() == 3 && n == 2) {
                     yield falseBody;
                 }
                 throw new IndexOutOfBoundsException();
@@ -48,7 +48,7 @@ public class ConditionStatement implements Statement {
 
     @Override
     public int getChildCount() {
-        if(falseBody == null)
+        if (falseBody == null)
             return 2;
         return 3;
     }

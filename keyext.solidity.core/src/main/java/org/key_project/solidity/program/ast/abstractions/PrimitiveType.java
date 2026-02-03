@@ -12,14 +12,12 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.sort.SortImpl;
-import org.key_project.solidity.program.ast.SolidityProgramElement;
-import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-public class PrimitiveType implements Type, SolidityProgramElement {
+public class PrimitiveType implements Type, SyntaxElement {
 
     private static final HashMap<String, PrimitiveType> primitives = new HashMap<>();
 
@@ -205,9 +203,5 @@ public class PrimitiveType implements Type, SolidityProgramElement {
     @Override
     public int getChildCount() {
         return 0;
-    }
-
-    public void visit(Visitor v) {
-        v.performActionOnPrimitiveType(this);
     }
 }

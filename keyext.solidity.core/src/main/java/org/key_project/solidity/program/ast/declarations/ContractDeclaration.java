@@ -11,7 +11,6 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.abstractions.Type;
-import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
@@ -112,10 +111,6 @@ public class ContractDeclaration extends Declaration implements Type {
     public @Nullable Sort getSort(Services services) {
         // TODO
         throw new UnsupportedOperationException("TO BE IMPLEMENTED");
-    }
-
-    public void visit(Visitor v) {
-        v.performActionOnContractDeclaration(this);
     }
 
     @Override

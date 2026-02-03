@@ -7,7 +7,6 @@ import java.util.Objects;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
-import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
@@ -44,9 +43,5 @@ public class MemberEnumDeclaration extends Declaration {
     @Override
     public String toString() {
         return name.toString();
-    }
-
-    public void visit(Visitor v) {
-        v.performActionOnMemberEnumDeclaration(this);
     }
 }

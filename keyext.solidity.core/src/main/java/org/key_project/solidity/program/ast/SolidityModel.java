@@ -28,7 +28,7 @@ public class SolidityModel {
         return (KeYSolidityType) getType(new Name(type));
     }
 
-    public void addType(Sort sort, KeYSolidityType type){
+    public void addType(Sort sort, KeYSolidityType type) {
         typeMap.put(sort.name(), type);
     }
 }

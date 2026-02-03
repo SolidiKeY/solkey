@@ -22,37 +22,9 @@ public interface Visitor {
 
     void performActionOnProgramMetaConstruct(ProgramTransformer programTransformer);
 
-    void performActionOnArrayType(ArrayType x);
-
-    void performActionOnEnumType(EnumType x);
-
-    void performActionOnKeYSolidityType(KeYSolidityType x);
-
-    void performActionOnMappingType(MappingType x);
-
-    void performActionOnPrimitiveType(PrimitiveType x);
-
     void performActionOnArrayDeclaration(ArrayDeclaration x);
 
-    void performActionOnContractDeclaration(ContractDeclaration x);
-
-    void performActionOnEnumDeclaration(EnumDeclaration x);
-
-    void performActionOnFieldDeclaration(FieldDeclaration x);
-
-    void performActionOnFunctionDeclaration(FunctionDeclaration x);
-
-    void performActionOnMemberEnumDeclaration(MemberEnumDeclaration x);
-
-    void performActionOnModifierDeclaration(ModifierDeclaration x);
-
-    void performActionOnParameterDeclaration(ParameterDeclaration x);
-
-    void performActionOnStateVariableDeclaration(StateVariableDeclaration x);
-
     void performActionOnStatementVariableDeclaration(StatementVariableDeclaration x);
-
-    void performActionOnStructDeclaration(StructDeclaration x);
 
     void performActionOnElementaryExpression(ElementaryExpression x);
 

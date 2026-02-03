@@ -8,7 +8,6 @@ import java.util.Objects;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
-import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
@@ -45,9 +44,5 @@ public class StructDeclaration extends Declaration {
     @Override
     public int getChildCount() {
         return fields.size();
-    }
-
-    public void visit(Visitor v) {
-        v.performActionOnStructDeclaration(this);
     }
 }

@@ -24,13 +24,14 @@ public class IndexExpression extends SolidityExpression {
 
     public IndexExpression(ExtList children, Type type) {
         super(type);
-        this.leftExp = Objects.requireNonNull(children.removeFirstOccurrence(ProgramVariable.class));
+        this.leftExp =
+            Objects.requireNonNull(children.removeFirstOccurrence(ProgramVariable.class));
         this.indexExp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
     }
 
     @Override
     public SyntaxElement getChild(int n) {
-        return switch (n){
+        return switch (n) {
             case 0 -> leftExp;
             case 1 -> indexExp;
             default -> throw new IndexOutOfBoundsException();

@@ -123,61 +123,6 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
     }
 
     @Override
-    public void performActionOnArrayType(ArrayType x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ArrayType(changeList);
-            }
-        };
-        def.doAction(x);
-    }
-
-    @Override
-    public void performActionOnEnumType(EnumType x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new EnumType(changeList);
-            }
-        };
-        def.doAction(x);
-    }
-
-    @Override
-    public void performActionOnKeYSolidityType(KeYSolidityType x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new KeYSolidityType(changeList);
-            }
-        };
-        def.doAction(x);
-    }
-
-    @Override
-    public void performActionOnMappingType(MappingType x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new MappingType(changeList);
-            }
-        };
-        def.doAction(x);
-    }
-
-    @Override
-    public void performActionOnPrimitiveType(PrimitiveType x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new PrimitiveType(changeList);
-            }
-        };
-        def.doAction(x);
-    }
-
-    @Override
     public void performActionOnArrayDeclaration(ArrayDeclaration x) {
         DefaultAction def = new DefaultAction(x) {
             @Override
@@ -189,110 +134,11 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
     }
 
     @Override
-    public void performActionOnContractDeclaration(ContractDeclaration x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ContractDeclaration(changeList, x.name());
-            }
-        };
-        def.doAction(x);
-    }
-
-    @Override
-    public void performActionOnEnumDeclaration(EnumDeclaration x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new EnumDeclaration(changeList);
-            }
-        };
-        def.doAction(x);
-    }
-
-    @Override
-    public void performActionOnFieldDeclaration(FieldDeclaration x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new FieldDeclaration(changeList);
-            }
-        };
-        def.doAction(x);
-    }
-
-    @Override
-    public void performActionOnFunctionDeclaration(FunctionDeclaration x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new FunctionDeclaration(changeList, x.getName(), x.getKind(), x.getVisibility(), x.getStateMutability());
-            }
-        };
-        def.doAction(x);
-    }
-
-    @Override
-    public void performActionOnMemberEnumDeclaration(MemberEnumDeclaration x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new MemberEnumDeclaration(changeList);
-            }
-        };
-        def.doAction(x);
-    }
-
-    @Override
-    public void performActionOnModifierDeclaration(ModifierDeclaration x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ModifierDeclaration(changeList);
-            }
-        };
-        def.doAction(x);
-    }
-
-    @Override
-    public void performActionOnParameterDeclaration(ParameterDeclaration x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ParameterDeclaration(changeList);
-            }
-        };
-        def.doAction(x);
-    }
-
-    @Override
-    public void performActionOnStateVariableDeclaration(StateVariableDeclaration x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new StateVariableDeclaration(changeList);
-            }
-        };
-        def.doAction(x);
-    }
-
-    @Override
     public void performActionOnStatementVariableDeclaration(StatementVariableDeclaration x) {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
                 return new StatementVariableDeclaration(changeList);
-            }
-        };
-        def.doAction(x);
-    }
-
-    @Override
-    public void performActionOnStructDeclaration(StructDeclaration x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new StructDeclaration(changeList);
             }
         };
         def.doAction(x);

@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.declarations;
 
-import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.logic.SyntaxElement;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
-public abstract class Declaration implements SolidityProgramElement {
+public abstract class Declaration implements SyntaxElement {
     final ImmutableArray<Modifier> modifiers;
 
     protected Declaration(ImmutableArray<Modifier> modifiers) {

@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
-import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
@@ -57,9 +56,5 @@ public class EnumDeclaration extends Declaration {
                 .collect(Collectors.joining(", "));
         s += "\n}\n";
         return s;
-    }
-
-    public void visit(Visitor v) {
-        v.performActionOnEnumDeclaration(this);
     }
 }

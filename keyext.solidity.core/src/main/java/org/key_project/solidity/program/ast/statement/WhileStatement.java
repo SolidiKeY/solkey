@@ -27,7 +27,7 @@ public class WhileStatement implements Statement {
 
     @Override
     public SyntaxElement getChild(int n) {
-        if(n == 0)
+        if (n == 0)
             return condition;
         else if (n == 1) {
             return body;

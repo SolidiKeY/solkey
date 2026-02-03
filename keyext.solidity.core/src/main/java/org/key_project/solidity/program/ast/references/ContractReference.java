@@ -31,7 +31,8 @@ public class ContractReference extends SolidityExpression implements Resolver, V
         this.name = name;
     }
 
-    public ContractReference(ContractDeclaration contractDeclaration, Type type, int id, Name name) {
+    public ContractReference(ContractDeclaration contractDeclaration, Type type, int id,
+            Name name) {
         super(type);
         this.id = id;
         this.name = name;

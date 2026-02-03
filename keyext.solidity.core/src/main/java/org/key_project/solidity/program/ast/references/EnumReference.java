@@ -33,14 +33,12 @@ public class EnumReference extends SolidityExpression implements VariableReferen
 
     @Override
     public SyntaxElement getChild(int n) {
-        if (n == 0)
-            return enumDeclaration;
         throw new IndexOutOfBoundsException();
     }
 
     @Override
     public int getChildCount() {
-        return 1;
+        return 0;
     }
 
     public void visit(Visitor v) {

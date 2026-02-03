@@ -13,11 +13,11 @@ import org.key_project.solidity.program.ast.declarations.FunctionEnums.StateMuta
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.references.ModifierReference;
 import org.key_project.solidity.program.ast.statement.Block;
-import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
 public class FunctionDeclaration extends Declaration {
+    // TODO: Create another class for return type
     private final ImmutableArray<ParameterDeclaration> returnParameters;
     private final ImmutableArray<ParameterDeclaration> inputParameters;
     private final Block body;
@@ -42,7 +42,8 @@ public class FunctionDeclaration extends Declaration {
         this.modifiers = new ImmutableArray<>(modifiers);
     }
 
-    public FunctionDeclaration(ExtList children, Name name, String kind, Visibility visibility, StateMutability stM) {
+    public FunctionDeclaration(ExtList children, Name name, String kind, Visibility visibility,
+            StateMutability stM) {
         super(children.removeFirstOccurrence(ImmutableArray.class));
         this.name = name;
         // TODO: This code should not work
@@ -114,10 +115,6 @@ public class FunctionDeclaration extends Declaration {
                         .collect(Collectors.joining(" ")))
                 .append(getBody().toString());
         return strBuffer.toString();
-    }
-
-    public void visit(Visitor v) {
-        v.performActionOnFunctionDeclaration(this);
     }
 
     public String getKind() {

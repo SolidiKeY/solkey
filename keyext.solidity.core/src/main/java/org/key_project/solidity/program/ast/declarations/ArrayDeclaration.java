@@ -7,11 +7,12 @@ import java.util.Objects;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
-public class ArrayDeclaration extends Declaration {
+public class ArrayDeclaration extends Declaration implements SolidityProgramElement {
     private final ProgramVariable programVariable;
     private final int length;
 
