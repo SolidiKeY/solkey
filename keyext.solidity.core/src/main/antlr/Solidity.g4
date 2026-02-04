@@ -2,6 +2,11 @@ grammar Solidity;
 
 import SchemaLexer;
 
+@header
+{
+package org.key_project.solidity.parser;
+}
+
 returnParameters
   : 'returns' parameterList ;
 

@@ -1,0 +1,30 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
+package org.key_project.solidity.antlr;
+
+import org.key_project.solidity.parser.SolidityLexer;
+import org.key_project.solidity.parser.SolidityParser;
+import org.key_project.solidity.parser.SolidityParser.*;
+
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CodePointCharStream;
+import org.antlr.v4.runtime.CommonTokenStream;
+
+public class Parser {
+
+    static public SolidityParser parse(String s) {
+        CodePointCharStream input = CharStreams.fromString(s);
+
+        SolidityLexer lexer = new SolidityLexer(input);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+
+        return new SolidityParser(tokens);
+    }
+
+    static public BlockContext parseBlock(String s) {
+        SolidityParser parser = parse(s);
+
+        return parser.block();
+    }
+}
