@@ -12,4 +12,4 @@ IdentifierPart
   : [a-zA-Z0-9$_] ;
 
  Schema
-   : '#' Identifier ;
+   : 's#' Identifier ;

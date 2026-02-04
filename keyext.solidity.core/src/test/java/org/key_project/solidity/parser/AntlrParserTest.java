@@ -30,7 +30,7 @@ public class AntlrParserTest {
 
     @Test
     void schema() {
-        SolidityParser parser = Parser.parse("#abc");
+        SolidityParser parser = Parser.parse("s#abc");
         SolidityParser.SchemaVariableContext scm = parser.schemaVariable();
         String s = scm.toStringTree();
         assertEquals(0, parser.getNumberOfSyntaxErrors());
@@ -57,8 +57,8 @@ public class AntlrParserTest {
             "{ revert(\"error\"); }",
             "{ (a, b) = (1, 2); }",
             "{ address payable x = payable(0x123); }",
-            "{ #schemaStm; }",
-            "{ int a = #schema; }"
+            "{ s#schemaStm; }",
+            "{ int a = s#schema; }"
     })
     void correctParsing(String input) {
         SolidityParser parser = Parser.parse(input);

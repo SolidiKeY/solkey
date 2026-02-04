@@ -189,7 +189,8 @@ expression
   | primaryExpression ;
 
 primaryExpression
-  : BooleanLiteral
+  : schemaVariable
+  | BooleanLiteral
   | numberLiteral
   | hexLiteral
   | stringLiteral
@@ -228,7 +229,7 @@ numberLiteral
 // some keywords need to be added here to avoid ambiguities
 // for example, "revert" is a keyword but it can also be a function name
 identifier
-  : ('from' | 'calldata' | 'receive' | 'callback' | 'revert' | 'error' | 'address' | 'layout' | 'at' | GlobalKeyword | ConstructorKeyword | PayableKeyword | LeaveKeyword | Identifier | Schema) ;
+  : ('from' | 'calldata' | 'receive' | 'callback' | 'revert' | 'error' | 'address' | 'layout' | 'at' | GlobalKeyword | ConstructorKeyword | PayableKeyword | LeaveKeyword | Identifier) ;
 
 BooleanLiteral
   : 'true' | 'false' ;
