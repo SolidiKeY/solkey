@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser;
 
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.key_project.solidity.antlr.Parser;
 
 import org.junit.jupiter.api.Test;
@@ -26,17 +28,27 @@ public class AntlrParserTest {
         assertEquals("([] { })", block.toStringTree());
     }
 
-    @Test
-    void blockOneStm() {
-        SolidityParser parser = Parser.parse("{ int a; }");
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "{ }",
+            "{ int a; }",
+            "{ bool a = b; }",
+            "{ return true; }",
+    })
+    void correctParsing(String input) {
+        SolidityParser parser = Parser.parse(input);
         SolidityParser.BlockContext block = parser.block();
         String s = block.toStringTree();
         assertEquals(0, parser.getNumberOfSyntaxErrors());
     }
 
-    @Test
-    void missingSemiColon() {
-        SolidityParser parser = Parser.parse("{ int a }");
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "{",
+            "{ int a }",
+    })
+    void wrongParsing(String input) {
+        SolidityParser parser = Parser.parse(input);
         SolidityParser.BlockContext block = parser.block();
         assertTrue(parser.getNumberOfSyntaxErrors() > 0);
     }
