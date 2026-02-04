@@ -34,6 +34,21 @@ public class AntlrParserTest {
             "{ int a; }",
             "{ bool a = b; }",
             "{ return true; }",
+            "{ a = 5; b = 10; }",
+            "{ bool a = true; return a; }",
+            "{ int x; { int x; } }",
+            "{ uint256 x; { uint256 y; } }",
+            "{ if (true) { x = 1; } }",
+            "{ if (a > b) x = 1; else x = 2; }",
+            "{ for (uint i = 0; i < 10; i++) { } }",
+            "{ while (x < 5) { x++; } }",
+            "{ do { x--; } while (x > 0); }",
+            "{ emit Transfer(msg.sender, to, val); }",
+            "{ try externalContract.f() { } catch { } }",
+            "{ unchecked { x = x - 1; } }",
+            "{ revert(\"error\"); }",
+            "{ (a, b) = (1, 2); }",
+            "{ address payable x = payable(0x123); }",
     })
     void correctParsing(String input) {
         SolidityParser parser = Parser.parse(input);
@@ -46,6 +61,7 @@ public class AntlrParserTest {
     @ValueSource(strings = {
             "{",
             "{ int a }",
+            "{ assembly { let x := 0 } }",
     })
     void wrongParsing(String input) {
         SolidityParser parser = Parser.parse(input);
