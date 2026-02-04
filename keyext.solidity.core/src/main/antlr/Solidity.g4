@@ -1,5 +1,7 @@
 grammar Solidity;
 
+import SchemaLexer;
+
 returnParameters
   : 'returns' parameterList ;
 
@@ -54,7 +56,7 @@ block
   : '{' statement* '}' ;
 
 statement
-  : schemaVariable # SchemaVarExpression
+  : schemaVariable
   | ifStatement
   | tryStatement
   | whileStatement
@@ -349,6 +351,3 @@ LINE_COMMENT
 schemaVariable
    : SCHEMA_IDENTIFIER
    ;
-
- SCHEMA_IDENTIFIER
-   : [a-zA-Z$_] ;
