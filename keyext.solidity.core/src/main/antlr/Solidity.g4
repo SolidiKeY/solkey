@@ -160,8 +160,7 @@ NumberOfBytes
   : [1-9] | [12] [0-9] | '3' [0-2] ;
 
 expression
-  : schemaVariable
-  | expression ('++' | '--')
+  : expression ('++' | '--')
   | 'new' typeName
   | expression '[' expression ']'
   | expression '[' expression? ':' expression? ']'
@@ -229,7 +228,7 @@ numberLiteral
 // some keywords need to be added here to avoid ambiguities
 // for example, "revert" is a keyword but it can also be a function name
 identifier
-  : ('from' | 'calldata' | 'receive' | 'callback' | 'revert' | 'error' | 'address' | 'layout' | 'at' | GlobalKeyword | ConstructorKeyword | PayableKeyword | LeaveKeyword | Identifier) ;
+  : ('from' | 'calldata' | 'receive' | 'callback' | 'revert' | 'error' | 'address' | 'layout' | 'at' | GlobalKeyword | ConstructorKeyword | PayableKeyword | LeaveKeyword | Identifier | Schema) ;
 
 BooleanLiteral
   : 'true' | 'false' ;
@@ -316,17 +315,6 @@ ReceiveKeyword : 'receive' ;
 
 overrideSpecifier : 'override' ( '(' userDefinedTypeName (',' userDefinedTypeName)* ')' )? ;
 
-Identifier
-  : IdentifierStart IdentifierPart* ;
-
-fragment
-IdentifierStart
-  : [a-zA-Z$_] ;
-
-fragment
-IdentifierPart
-  : [a-zA-Z0-9$_] ;
-
 stringLiteral
   : StringLiteralFragment+ ;
 
@@ -354,5 +342,5 @@ LINE_COMMENT
   : '//' ~[\r\n]* -> channel(HIDDEN) ;
 
 schemaVariable
-   : SCHEMA_IDENTIFIER
+   : Schema
    ;

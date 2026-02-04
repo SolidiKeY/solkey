@@ -28,6 +28,14 @@ public class AntlrParserTest {
         assertEquals("([] { })", block.toStringTree());
     }
 
+    @Test
+    void schema() {
+        SolidityParser parser = Parser.parse("#abc");
+        SolidityParser.SchemaVariableContext scm = parser.schemaVariable();
+        String s = scm.toStringTree();
+        assertEquals(0, parser.getNumberOfSyntaxErrors());
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {
             "{ }",
@@ -49,6 +57,8 @@ public class AntlrParserTest {
             "{ revert(\"error\"); }",
             "{ (a, b) = (1, 2); }",
             "{ address payable x = payable(0x123); }",
+            "{ #schemaStm; }",
+            "{ int a = #schema; }"
     })
     void correctParsing(String input) {
         SolidityParser parser = Parser.parse(input);

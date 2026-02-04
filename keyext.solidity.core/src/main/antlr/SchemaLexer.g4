@@ -1,7 +1,15 @@
 lexer grammar SchemaLexer;
 
-NON_KEYWORD_IDENTIFIER
-   : [a-zA-Z$_] ;
+Identifier
+  : IdentifierStart IdentifierPart* ;
 
- SCHEMA_IDENTIFIER
-   : 's#' NON_KEYWORD_IDENTIFIER ;
+fragment
+IdentifierStart
+  : [a-zA-Z$_] ;
+
+fragment
+IdentifierPart
+  : [a-zA-Z0-9$_] ;
+
+ Schema
+   : '#' Identifier ;
