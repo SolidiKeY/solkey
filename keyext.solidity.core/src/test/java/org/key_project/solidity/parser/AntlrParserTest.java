@@ -8,6 +8,7 @@ import org.key_project.solidity.antlr.Parser;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class AntlrParserTest {
 
@@ -27,8 +28,17 @@ public class AntlrParserTest {
 
     @Test
     void blockOneStm() {
-        SolidityParser.BlockContext block = Parser.parseBlock("{ int a; }");
+        SolidityParser parser = Parser.parse("{ int a; }");
+        SolidityParser.BlockContext block = parser.block();
         String s = block.toStringTree();
+        assertEquals(0, parser.getNumberOfSyntaxErrors());
+    }
+
+    @Test
+    void missingSemiColon() {
+        SolidityParser parser = Parser.parse("{ int a }");
+        SolidityParser.BlockContext block = parser.block();
+        assertTrue(parser.getNumberOfSyntaxErrors() > 0);
     }
 
 }
