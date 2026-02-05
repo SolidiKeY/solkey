@@ -27,10 +27,16 @@ public class FunctionDeclaration extends Declaration {
     private final ImmutableArray<ModifierReference> modifiers;
     private final Name name;
 
+    public String getDocumentation() {
+        return documentation;
+    }
+
+    private final String documentation;
+
     public FunctionDeclaration(Name name, List<ParameterDeclaration> returnParameters,
             List<ParameterDeclaration> inputParameters, Block body, String kind,
             Visibility visibility, StateMutability stateMutability,
-            List<ModifierReference> modifiers) {
+            List<ModifierReference> modifiers, String documentation) {
         super(new ImmutableArray<>());
         this.name = name;
         this.returnParameters = new ImmutableArray<>(returnParameters);
@@ -40,20 +46,7 @@ public class FunctionDeclaration extends Declaration {
         this.visibility = visibility;
         this.stateMutability = stateMutability;
         this.modifiers = new ImmutableArray<>(modifiers);
-    }
-
-    public FunctionDeclaration(ExtList children, Name name, String kind, Visibility visibility,
-            StateMutability stM) {
-        super(children.removeFirstOccurrence(ImmutableArray.class));
-        this.name = name;
-        // TODO: This code should not work
-        this.returnParameters = new ImmutableArray<>(children.collect(ParameterDeclaration.class));
-        this.inputParameters = new ImmutableArray<>(children.collect(ParameterDeclaration.class));
-        this.body = Objects.requireNonNull(children.removeFirstOccurrence(Block.class));
-        this.kind = kind;
-        this.visibility = visibility;
-        this.stateMutability = stM;
-        this.modifiers = new ImmutableArray<>(children.collect(ModifierReference.class));
+        this.documentation = documentation;
     }
 
     public Block getBody() {
