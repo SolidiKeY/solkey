@@ -3,11 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.declarations;
 
-import java.util.Objects;
-
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
-import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
@@ -23,11 +20,6 @@ public class MemberEnumDeclaration extends Declaration {
     public MemberEnumDeclaration(@NonNull Name name) {
         super(new ImmutableArray<>());
         this.name = name;
-    }
-
-    public MemberEnumDeclaration(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
-        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
     }
 
     @Override

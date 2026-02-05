@@ -12,7 +12,6 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.sort.SortImpl;
-import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -45,10 +44,6 @@ public class PrimitiveType implements Type, SyntaxElement {
 
     private PrimitiveType(@NonNull Name name) {
         this.name = name;
-    }
-
-    public PrimitiveType(ExtList children) {
-        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
     }
 
 

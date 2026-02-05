@@ -7,7 +7,6 @@ import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
-import org.key_project.util.ExtList;
 
 public class UnresolvedReferenceException extends RuntimeException
         implements SolidityProgramElement {
@@ -15,7 +14,7 @@ public class UnresolvedReferenceException extends RuntimeException
         super(typeName.toString() + " cannot be resolved");
     }
 
-    public UnresolvedReferenceException(ExtList children) {
+    public UnresolvedReferenceException() {
     }
 
     @Override

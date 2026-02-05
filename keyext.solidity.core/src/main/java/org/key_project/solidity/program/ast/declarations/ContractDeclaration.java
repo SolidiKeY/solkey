@@ -11,7 +11,6 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.abstractions.Type;
-import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
@@ -37,16 +36,6 @@ public class ContractDeclaration extends Declaration implements Type {
         this.modifiers = new ImmutableArray<>(modifiers);
         this.functions = new ImmutableArray<>(functions);
         this.enums = new ImmutableArray<>(enums);
-    }
-
-    public ContractDeclaration(ExtList children, Name name) {
-        super(children.removeFirstOccurrence(ImmutableArray.class));
-        this.name = name;
-        this.fields = new ImmutableArray<>(children.collect(StateVariableDeclaration.class));
-        this.structs = new ImmutableArray<>(children.collect(StructDeclaration.class));
-        this.modifiers = new ImmutableArray<>(children.collect(ModifierDeclaration.class));
-        this.functions = new ImmutableArray<>(children.collect(FunctionDeclaration.class));
-        this.enums = new ImmutableArray<>(children.collect(EnumDeclaration.class));
     }
 
     public ImmutableArray<StateVariableDeclaration> getFieldDeclarations() {

@@ -4,15 +4,10 @@
 package org.key_project.solidity.program.ast.expressions.operators;
 
 import org.key_project.solidity.program.ast.abstractions.Type;
-import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 public final class BitwiseEqualOperator extends BinaryOperator {
-
-    public BitwiseEqualOperator(Expression left, Expression right, Type type) {
-        super(left, right, type);
-    }
 
     public BitwiseEqualOperator(ExtList changeList, Type type) {
         super(changeList, type);

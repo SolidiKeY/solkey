@@ -3,14 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.abstractions;
 
-import java.util.Objects;
-
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.sort.SortImpl;
-import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -23,11 +20,6 @@ public class ArrayType implements Type, SyntaxElement {
     public ArrayType(Type type, int length) {
         this.type = type;
         this.length = length;
-    }
-
-    public ArrayType(ExtList children) {
-        this.type = Objects.requireNonNull(children.removeFirstOccurrence(Type.class));
-        this.length = Objects.requireNonNull(children.removeFirstOccurrence(int.class));;
     }
 
     @Override

@@ -3,13 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.declarations;
 
-import java.util.Objects;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.references.TypeReference;
-import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
@@ -25,15 +23,6 @@ public class ParameterDeclaration extends Declaration {
         this.name = name;
         this.typeReference = typeReference;
         this.dataLocation = dataLocation;
-    }
-
-    public ParameterDeclaration(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
-        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
-        this.typeReference =
-            Objects.requireNonNull(children.removeFirstOccurrence(TypeReference.class));
-        this.dataLocation =
-            Objects.requireNonNull(children.removeFirstOccurrence(DataLocation.class));
     }
 
     @Override

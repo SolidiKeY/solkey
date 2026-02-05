@@ -3,13 +3,10 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.declarations;
 
-import java.util.Objects;
-
 import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.references.TypeReference;
-import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
@@ -26,22 +23,6 @@ public class FieldDeclaration extends Declaration {
         this.name = name;
         this.typeReference = type;
         this.initializer = null;
-    }
-
-    public FieldDeclaration(@NonNull Name name, @NonNull TypeReference typeReference,
-            @Nullable Expression initializer) {
-        super(new ImmutableArray<>());
-        this.name = name;
-        this.typeReference = typeReference;
-        this.initializer = initializer;
-    }
-
-    public FieldDeclaration(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
-        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
-        this.typeReference =
-            Objects.requireNonNull(children.removeFirstOccurrence(TypeReference.class));
-        this.initializer = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
     }
 
     public @NonNull TypeReference getTypeReference() {

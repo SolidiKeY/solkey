@@ -644,7 +644,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new TernaryOperator(changeList, x.getType());
+                return new TernaryOperator(changeList);
             }
         };
         def.doAction(x);
@@ -754,7 +754,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new UnresolvedReferenceException(changeList);
+                return new UnresolvedReferenceException();
             }
         };
         def.doAction(x);
