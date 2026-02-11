@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.init;
 
-import org.jspecify.annotations.NonNull;
+import java.io.IOException;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.solidity.common.Services;
@@ -20,7 +21,7 @@ import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSet;
 
-import java.io.IOException;
+import org.jspecify.annotations.NonNull;
 
 /// An abstract proof obligation implementing common functionality.
 public abstract class AbstractPO implements IPersistablePO {

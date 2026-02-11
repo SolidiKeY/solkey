@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.feature;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.prover.proof.ProofGoal;
 import org.key_project.prover.rules.RuleApp;
 import org.key_project.prover.sequent.PosInOccurrence;
@@ -11,6 +10,8 @@ import org.key_project.prover.strategy.costbased.MutableState;
 import org.key_project.prover.strategy.costbased.feature.BinaryFeature;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.rule.TacletApp;
+
+import org.jspecify.annotations.NonNull;
 
 /// Abstract superclass for features of TacletApps that have either zero or top cost.
 public abstract class BinaryTacletAppFeature extends BinaryFeature {

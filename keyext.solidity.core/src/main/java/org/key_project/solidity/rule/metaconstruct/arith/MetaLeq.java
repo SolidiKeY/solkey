@@ -3,13 +3,13 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.rule.metaconstruct.arith;
 
+import java.math.BigInteger;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.solidity.common.Services;
-import org.key_project.solidity.rule.metaconstruct.AbstractTermTransformer;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
-
-import java.math.BigInteger;
+import org.key_project.solidity.rule.metaconstruct.AbstractTermTransformer;
 
 public class MetaLeq extends AbstractTermTransformer {
     public MetaLeq() {

@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.feature;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.key_project.prover.proof.ProofGoal;
 import org.key_project.prover.rules.RuleApp;
 import org.key_project.prover.sequent.PIOPathIterator;
@@ -13,6 +12,8 @@ import org.key_project.prover.strategy.costbased.feature.BinaryFeature;
 import org.key_project.prover.strategy.costbased.feature.Feature;
 import org.key_project.solidity.logic.op.Junctor;
 import org.key_project.solidity.logic.op.Quantifier;
+
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 /// Feature that returns zero iff the application focus of a rule is a potential cut position
 /// (taclet

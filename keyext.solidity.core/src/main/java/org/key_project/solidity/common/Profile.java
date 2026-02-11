@@ -4,7 +4,6 @@
 package org.key_project.solidity.common;
 
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.Name;
 import org.key_project.prover.engine.GoalChooserFactory;
 import org.key_project.prover.proof.ProofGoal;
@@ -12,6 +11,8 @@ import org.key_project.prover.proof.ProofObject;
 import org.key_project.prover.rules.Rule;
 import org.key_project.solidity.proof.mgt.RuleJustification;
 import org.key_project.solidity.strategy.StrategyFactory;
+
+import org.jspecify.annotations.NonNull;
 
 public interface Profile {
     /// returns the rule source containg all taclets for this profile

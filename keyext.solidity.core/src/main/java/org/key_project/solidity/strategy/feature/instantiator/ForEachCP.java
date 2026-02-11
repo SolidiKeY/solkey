@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.feature.instantiator;
 
-import org.jspecify.annotations.NonNull;
+import java.util.Iterator;
+
 import org.key_project.logic.Term;
 import org.key_project.prover.proof.ProofGoal;
 import org.key_project.prover.rules.RuleApp;
@@ -19,7 +20,7 @@ import org.key_project.prover.strategy.costbased.termProjection.TermBuffer;
 import org.key_project.prover.strategy.costbased.termgenerator.TermGenerator;
 import org.key_project.solidity.proof.Goal;
 
-import java.util.Iterator;
+import org.jspecify.annotations.NonNull;
 
 /// Feature representing a <code>ChoicePoint</code> that iterates over the terms returned by a
 /// <code>TermGenerator</code>. The terms are stored in a <code>TermBuffer</code> one after the

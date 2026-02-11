@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.quantifierHeuristics;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Operator;
 import org.key_project.prover.proof.ProofGoal;
@@ -17,6 +16,8 @@ import org.key_project.solidity.logic.op.LogicVariable;
 import org.key_project.solidity.logic.op.Quantifier;
 import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableSet;
+
+import org.jspecify.annotations.NonNull;
 
 public class SplittableQuantifiedFormulaFeature extends BinaryFeature {
     private SplittableQuantifiedFormulaFeature() {}

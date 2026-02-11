@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.prover.impl;
 
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.key_project.prover.engine.GoalChooser;
 import org.key_project.prover.engine.TaskStartedInfo;
 import org.key_project.prover.engine.impl.ApplyStrategyInfo;
@@ -17,10 +17,11 @@ import org.key_project.solidity.settings.StrategySettings;
 import org.key_project.solidity.strategy.StrategyProperties;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
+
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.atomic.AtomicLong;
 
 /// Applies rules in an automated fashion. The caller should ensure that the strategy runs in its
 /// own

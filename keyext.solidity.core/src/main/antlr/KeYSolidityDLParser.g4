@@ -9,6 +9,28 @@ package org.key_project.solidity.parser;
 }
 
 
+varexpId
+ : APPLY_UPDATE_ON_RIGID
+ | DROP_EFFECTLESS_ELEMENTARIES
+ | SIMPLIFY_IF_THEN_ELSE_UPDATE
+ | EQUAL_UNIQUE
+ | NEW_TYPE_OF
+ | NEW_DEPENDING_ON
+ | NEW
+ | NEW_LOCAL_VARS
+ //| STORE_TERM_IN
+ //| STORE_EXPR_IN
+ | HAS_INVARIANT
+ | GET_INVARIANT
+ | GET_VARIANT
+ //| IS_LABELED
+ | DIFFERENT
+ | SAME
+ | ISSUBTYPE
+ | HASSORT
+ | NO_FREE_VAR_IN
+ ;
+
 
 parametric_sort_decl
 :
@@ -118,6 +140,13 @@ accessterm
   ( attribute )*
 ;
 
+varexp_argument
+:
+    TYPEOF LPAREN y=varId RPAREN
+  | SORT LPAREN sortId RPAREN
+  | DEPENDINGON LPAREN y=varId RPAREN
+  | term
+;
 
 funcpred_name
    : (name = simple_colon_dots | num = INT_LITERAL)

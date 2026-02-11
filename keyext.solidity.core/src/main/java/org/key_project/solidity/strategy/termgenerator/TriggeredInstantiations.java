@@ -3,6 +3,10 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.termgenerator;
 
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Function;
@@ -16,26 +20,21 @@ import org.key_project.prover.sequent.SequentFormula;
 import org.key_project.prover.strategy.costbased.MutableState;
 import org.key_project.prover.strategy.costbased.termgenerator.TermGenerator;
 import org.key_project.solidity.common.Services;
-import org.key_project.solidity.rule.SolTaclet;
-import org.key_project.solidity.rule.execution.SyntacticalReplaceVisitor;
-import org.key_project.solidity.theory.IntLDT;
 import org.key_project.solidity.logic.TermImpl;
 import org.key_project.solidity.logic.op.Equality;
 import org.key_project.solidity.logic.sort.GenericSort;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.calculus.SoliditySequentKit;
 import org.key_project.solidity.rule.TacletApp;
+import org.key_project.solidity.rule.execution.SyntacticalReplaceVisitor;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.solidity.strategy.quantifierHeuristics.*;
+import org.key_project.solidity.theory.IntLDT;
 import org.key_project.util.collection.DefaultImmutableMap;
 import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
 import org.key_project.util.collection.ImmutableSet;
-
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
 
 public class TriggeredInstantiations implements TermGenerator<Goal> {
     public static TermGenerator<Goal> create(boolean skipConditions) {
@@ -61,7 +60,7 @@ public class TriggeredInstantiations implements TermGenerator<Goal> {
         if (app instanceof TacletApp tapp) {
 
             final Services services = goal.proof().getServices();
-            final SolTaclet taclet = (SolTaclet) tapp.taclet();
+            final Taclet taclet = (Taclet) tapp.taclet();
 
             final Set<Term> terms;
             final Set<Term> axiomSet;
@@ -99,7 +98,7 @@ public class TriggeredInstantiations implements TermGenerator<Goal> {
                     final var sv = taclet.getTrigger().triggerVar();
                     final Sort svSort;
                     if (sv.sort() instanceof GenericSort) {
-                        svSort = svInst.getGenericSortInstantiations().getRealSort(sv, services);
+                        svSort = svInst.getGenericSortInstantiations().getRealSort(sv);
                     } else {
                         svSort = sv.sort();
                     }
@@ -107,20 +106,20 @@ public class TriggeredInstantiations implements TermGenerator<Goal> {
                     final Metavariable mv = new Metavariable(new Name("$MV$" + sv.name()), svSort);
 
                     final Term trigger =
-                        instantiateTerm((Term) taclet.getTrigger().trigger(), services,
+                        instantiateTerm(taclet.getTrigger().trigger(), services,
                             svInst.replace(sv, services.getTermFactory().createTerm(mv), services));
 
-                    final Set<Term> instances =
+                    final Set<org.key_project.logic.Term> instances =
                         computeInstances(services, mv, trigger, terms, axioms, tapp);
 
                     return instances.iterator();
                 } else {
                     // at the moment instantiations with more than one
                     // missing taclet variable not supported
-                    return ImmutableSLList.<Term>nil().iterator();
+                    return ImmutableSLList.<org.key_project.logic.Term>nil().iterator();
                 }
             } else {
-                return ImmutableSLList.<Term>nil().iterator();
+                return ImmutableSLList.<org.key_project.logic.Term>nil().iterator();
             }
 
         } else {
@@ -169,12 +168,12 @@ public class TriggeredInstantiations implements TermGenerator<Goal> {
         return cost == -1;
     }
 
-    private HashSet<Term> computeInstances(Services services,
-                                           final Metavariable mv, final Term trigger, Set<Term> terms,
-                                           ImmutableSet<Term> axioms,
-                                           TacletApp app) {
+    private HashSet<org.key_project.logic.Term> computeInstances(Services services,
+            final Metavariable mv, final Term trigger, Set<Term> terms,
+            ImmutableSet<Term> axioms,
+            TacletApp app) {
 
-        final HashSet<Term> instances = new HashSet<>();
+        final HashSet<org.key_project.logic.Term> instances = new HashSet<>();
         final HashSet<Term> alreadyChecked = new HashSet<>();
 
         for (final Term t : terms) {

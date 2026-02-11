@@ -3,10 +3,12 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.io;
 
-import org.jspecify.annotations.Nullable;
-
 import java.io.File;
 import java.util.List;
+
+import org.key_project.solidity.common.Profile;
+
+import org.jspecify.annotations.Nullable;
 
 /// This single threaded problem loader is used by the Eclipse integration of KeY.
 ///

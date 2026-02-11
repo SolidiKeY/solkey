@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser.varcond;
 
+import java.util.Set;
+
 import org.key_project.logic.LogicServices;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.Term;
@@ -14,10 +16,9 @@ import org.key_project.solidity.logic.op.ElementaryUpdate;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.op.UpdateApplication;
 import org.key_project.solidity.logic.op.UpdateJunctor;
+import org.key_project.solidity.logic.visitor.TermProgramVariableCollector;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.solidity.rule.sv.UpdateSV;
-
-import java.util.Set;
 
 public final class DropEffectlessElementariesCondition implements VariableCondition {
     private final UpdateSV u;

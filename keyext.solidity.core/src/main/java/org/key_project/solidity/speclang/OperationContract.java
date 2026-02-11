@@ -3,14 +3,15 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.speclang;
 
-import org.jspecify.annotations.Nullable;
+import java.util.function.UnaryOperator;
+
 import org.key_project.logic.Term;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramFunction;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.util.collection.ImmutableList;
 
-import java.util.function.UnaryOperator;
+import org.jspecify.annotations.Nullable;
 
 public interface OperationContract extends Contract {
     @Override
@@ -38,5 +39,5 @@ public interface OperationContract extends Contract {
 
     @Nullable
     Term getFreePre(ProgramVariable selfVar, ImmutableList<ProgramVariable> paramVars,
-                    Services services);
+            Services services);
 }

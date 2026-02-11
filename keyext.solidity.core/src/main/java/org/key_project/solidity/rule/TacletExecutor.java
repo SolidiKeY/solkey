@@ -195,9 +195,9 @@ public abstract class TacletExecutor extends
     /// schemavariables
     /// @param services the Services encapsulating all Rust information
     protected void addToAntec(Semisequent semi, SequentChangeInfo currentSequent,
-                              PosInOccurrence pos,
-                              PosInOccurrence applicationPosInOccurrence, MatchConditions matchCond, Goal goal,
-                              RuleApp tacletApp, Services services) {
+            PosInOccurrence pos,
+            PosInOccurrence applicationPosInOccurrence, MatchConditions matchCond, Goal goal,
+            RuleApp tacletApp, Services services) {
         addToPos(semi, currentSequent, pos, applicationPosInOccurrence, true,
             matchCond, goal, tacletApp, services);
     }

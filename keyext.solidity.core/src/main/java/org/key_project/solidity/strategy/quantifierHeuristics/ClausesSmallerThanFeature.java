@@ -8,11 +8,11 @@ import org.key_project.prover.sequent.PosInOccurrence;
 import org.key_project.prover.strategy.costbased.MutableState;
 import org.key_project.prover.strategy.costbased.feature.Feature;
 import org.key_project.prover.strategy.costbased.termProjection.ProjectionToTerm;
-import org.key_project.solidity.theory.IntLDT;
 import org.key_project.solidity.logic.op.Junctor;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.rule.TacletApp;
 import org.key_project.solidity.strategy.feature.SmallerThanFeature;
+import org.key_project.solidity.theory.IntLDT;
 
 /// Ordering used to sort the clauses in a quantified formula. This ordering should only be applied
 /// if at least one of the two clauses contains more than one literal (otherwise, use

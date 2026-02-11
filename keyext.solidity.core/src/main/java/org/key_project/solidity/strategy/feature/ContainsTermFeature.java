@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.feature;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.Term;
 import org.key_project.logic.Visitor;
 import org.key_project.prover.proof.ProofGoal;
@@ -16,6 +15,8 @@ import org.key_project.prover.strategy.costbased.TopRuleAppCost;
 import org.key_project.prover.strategy.costbased.feature.Feature;
 import org.key_project.prover.strategy.costbased.termProjection.ProjectionToTerm;
 import org.key_project.solidity.proof.Goal;
+
+import org.jspecify.annotations.NonNull;
 
 import static org.key_project.solidity.logic.equality.RenamingTermProperty.RENAMING_TERM_PROPERTY;
 

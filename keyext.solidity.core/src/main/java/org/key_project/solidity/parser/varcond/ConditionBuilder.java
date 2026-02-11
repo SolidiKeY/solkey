@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser.varcond;
 
+import java.util.List;
+
 import org.key_project.prover.rules.VariableCondition;
 import org.key_project.solidity.rule.taclets.builder.TacletBuilder;
-
-import java.util.List;
 
 /// A specilized [TacletBuilderCommand] for handling `\varcond`s.
 ///
@@ -26,7 +26,7 @@ public interface ConditionBuilder extends TacletBuilderCommand {
     /// @see TacletBuilderCommand#apply(TacletBuilder, Object[], List, boolean)
     @Override
     default void apply(TacletBuilder<?> tacletBuilder, Object[] arguments, List<String> parameters,
-                       boolean negated) {
+            boolean negated) {
         VariableCondition condition =
             build(arguments, parameters, negated);
         tacletBuilder.addVariableCondition(condition);

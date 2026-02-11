@@ -203,7 +203,7 @@ public class SolJSONParser {
             node.findValue("modifiers").valueStream().map(this::parseModifierRefence).toList();
         JsonNode documentationNode = node.findValue("documentation");
         String documentation = "";
-        if(documentationNode != null)
+        if (documentationNode != null)
             documentation = documentationNode.findValue("text").asText();
         FunctionDeclaration function = new FunctionDeclaration(new Name(name), returnParameters,
             inputParamenters, body, kind, visibility, stateMutability, modifiers, documentation);

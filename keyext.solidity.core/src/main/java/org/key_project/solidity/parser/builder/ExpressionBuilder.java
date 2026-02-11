@@ -33,12 +33,14 @@ import org.key_project.solidity.parser.KeYSolidityDLParser;
 import org.key_project.solidity.program.SchemaSolidityReader;
 import org.key_project.solidity.program.SolidityReader;
 import org.key_project.solidity.proof.calculus.SoliditySequentKit;
+import org.key_project.solidity.rule.sv.ModalOperatorSV;
 import org.key_project.solidity.rule.sv.VariableSV;
 import org.key_project.solidity.theory.LDT;
 import org.key_project.solidity.util.parsing.BuildingException;
 import org.key_project.util.collection.ImmutableArray;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
+import org.key_project.util.collection.ImmutableSet;
 import org.key_project.util.java.StringUtil;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -177,6 +179,31 @@ public class ExpressionBuilder extends DefaultBuilder {
             throw new BuildingException(t, "Could not parse java: '" + cleanSolidity + "'", e);
         }
         return sjb;
+    }
+
+    private ImmutableSet<SModality.SolidityModalityKind> lookupOperatorSV(String opName,
+            ImmutableSet<SModality.SolidityModalityKind> modalityKinds) {
+        SchemaVariable sv = schemaVariables().lookup(new Name(opName));
+        if (sv instanceof ModalOperatorSV osv) {
+            modalityKinds = modalityKinds.union(osv.getModalities());
+        } else {
+            semanticError(null, "Schema variable " + opName + " not defined.");
+        }
+        return modalityKinds;
+    }
+
+    protected ImmutableSet<SModality.SolidityModalityKind> opSVHelper(String opName,
+            ImmutableSet<SModality.SolidityModalityKind> modalityKinds) {
+        if (opName.charAt(0) == '#') {
+            return lookupOperatorSV(opName, modalityKinds);
+        } else {
+            SModality.SolidityModalityKind m = SModality.SolidityModalityKind.getKind(opName);
+            if (m == null) {
+                semanticError(null, "Unrecognised operator: " + opName);
+            }
+            modalityKinds = modalityKinds.add(m);
+        }
+        return modalityKinds;
     }
 
     protected Term capsulateTf(ParserRuleContext ctx, Supplier<Term> termSupplier) {

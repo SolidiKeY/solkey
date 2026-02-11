@@ -3,7 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.io;
 
-import org.jspecify.annotations.NonNull;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.Namespace;
 import org.key_project.logic.PosInTerm;
@@ -24,29 +28,29 @@ import org.key_project.solidity.logic.op.LogicVariable;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.op.SModality;
 import org.key_project.solidity.parser.KeYIO;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.io.intermediate.*;
 import org.key_project.solidity.prover.impl.PerfScope;
 import org.key_project.solidity.rule.*;
+import org.key_project.solidity.rule.sv.ModalOperatorSV;
+import org.key_project.solidity.rule.sv.ProgramSV;
+import org.key_project.solidity.rule.sv.SkolemTermSV;
 import org.key_project.solidity.rule.sv.VariableSV;
 import org.key_project.solidity.rule.taclets.SolAntecTaclet;
 import org.key_project.solidity.rule.taclets.SolSuccTaclet;
 import org.key_project.solidity.speclang.Contract;
-import org.key_project.solidity.speclang.OperationContract;
 import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
 import org.key_project.util.collection.ImmutableSet;
 import org.key_project.util.collection.Pair;
+
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 
 public class IntermediateProofReplayer {
     private static final String ERROR_LOADING_PROOF_LINE = "Error loading proof.\n";
@@ -422,39 +426,39 @@ public class IntermediateProofReplayer {
             }
         }
 
-//        if (currContract != null) {
-//            AbstractContractRuleApp contractApp = null;
-//
-//            BuiltInRule useContractRule;
-//            if (currContract instanceof OperationContract) {
-//                useContractRule = UseOperationContractRule.INSTANCE;
-//                contractApp = (UseOperationContractRule.INSTANCE.createApp(pos))
-//                        .setContract(currContract);
-//            } else {
-//                throw new UnsupportedOperationException("TODO: Dep contracts");
-//                // useContractRule = UseDependencyContractRule.INSTANCE;
-//                // contractApp = (((UseDependencyContractRule) useContractRule).createApp(pos))
-//                // .setContract(currContract);
-//                // // restore "step" if needed
-//                // var depContractApp = ((UseDependencyContractApp) contractApp);
-//                // if (depContractApp.step() == null) {
-//                // contractApp = depContractApp.setStep(builtinIfInsts.head());
-//                // }
-//            }
-//
-//            if (contractApp.check(currGoal.proof().getServices()) == null) {
-//                throw new BuiltInConstructionException("Cannot apply contract: " + currContract);
-//            } else {
-//                ourApp = contractApp;
-//            }
-//
-//            currContract = null;
-//            if (builtinIfInsts != null) {
-//                ourApp = ourApp.setAssumesInsts(builtinIfInsts);
-//                builtinIfInsts = null;
-//            }
-//            return ourApp;
-//        }
+        // if (currContract != null) {
+        // AbstractContractRuleApp contractApp = null;
+        //
+        // BuiltInRule useContractRule;
+        // if (currContract instanceof OperationContract) {
+        // useContractRule = UseOperationContractRule.INSTANCE;
+        // contractApp = (UseOperationContractRule.INSTANCE.createApp(pos))
+        // .setContract(currContract);
+        // } else {
+        // throw new UnsupportedOperationException("TODO: Dep contracts");
+        // // useContractRule = UseDependencyContractRule.INSTANCE;
+        // // contractApp = (((UseDependencyContractRule) useContractRule).createApp(pos))
+        // // .setContract(currContract);
+        // // // restore "step" if needed
+        // // var depContractApp = ((UseDependencyContractApp) contractApp);
+        // // if (depContractApp.step() == null) {
+        // // contractApp = depContractApp.setStep(builtinIfInsts.head());
+        // // }
+        // }
+        //
+        // if (contractApp.check(currGoal.proof().getServices()) == null) {
+        // throw new BuiltInConstructionException("Cannot apply contract: " + currContract);
+        // } else {
+        // ourApp = contractApp;
+        // }
+        //
+        // currContract = null;
+        // if (builtinIfInsts != null) {
+        // ourApp = ourApp.setAssumesInsts(builtinIfInsts);
+        // builtinIfInsts = null;
+        // }
+        // return ourApp;
+        // }
 
         final ImmutableSet<IBuiltInRuleApp> ruleApps = collectAppsForRule(ruleName, currGoal, pos);
         if (ruleApps.size() != 1) {
@@ -568,7 +572,8 @@ public class IntermediateProofReplayer {
             Namespace<@NonNull ProgramVariable> progVarNS, Namespace<@NonNull Function> functNS) {
         var io = new KeYIO(proof.getServices(),
             new NamespaceSet(proof.getNamespaces().sorts(), proof.getNamespaces().parametricSorts(),
-                    functNS, proof.getNamespaces().parametricFunctions(), progVarNS, varNS, new Namespace<>(),
+                functNS, proof.getNamespaces().parametricFunctions(), progVarNS, varNS,
+                new Namespace<>(),
                 new Namespace<>()));
         return io.parseExpression(value);
     }
@@ -584,7 +589,7 @@ public class IntermediateProofReplayer {
     public static TacletApp parseSV1(TacletApp app, VariableSV sv, String value,
             Services services) {
         // TODO
-        LogicVariable lv = LogicVariable.create(1, app.getRealSort(sv, services));
+        LogicVariable lv = LogicVariable.create(1, app.getRealSort(sv));
         Term instance = services.getTermFactory().createTerm(lv);
         return app.addCheckedInstantiation(sv, instance, services, true);
     }
@@ -615,7 +620,8 @@ public class IntermediateProofReplayer {
             result = app.createSkolemConstant(value, skolemSv, true, services);
         } else if (sv instanceof ModalOperatorSV msv) {
             result = app.addInstantiation(
-                app.instantiations().add(msv, SModality.SolidityModalityKind.getKind(value), services),
+                app.instantiations().add(msv, SModality.SolidityModalityKind.getKind(value),
+                    services),
                 services);
         } else {
             var varNS = p.getNamespaces().variables();

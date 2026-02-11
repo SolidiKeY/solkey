@@ -3,8 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.util;
 
-import org.jspecify.annotations.Nullable;
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -14,6 +12,8 @@ import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.util.Set;
+
+import org.jspecify.annotations.Nullable;
 
 /// KeYResourceManager controls the access to the properties and resources used in the KeY system.
 /// Use the static method getManager to get the unique instance.

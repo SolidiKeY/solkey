@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.feature.instantiator;
 
-import org.jspecify.annotations.NonNull;
+import java.util.Iterator;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.logic.op.sv.SchemaVariable;
@@ -23,7 +24,7 @@ import org.key_project.solidity.rule.TacletApp;
 import org.key_project.util.collection.ImmutableSLList;
 import org.key_project.util.collection.ImmutableSet;
 
-import java.util.Iterator;
+import org.jspecify.annotations.NonNull;
 
 /// Feature representing a <code>ChoicePoint</code> for instantiating a schema variable of a taclet
 /// with the term that is returned by a <code>ProjectionToTerm</code>. This feature is useful in

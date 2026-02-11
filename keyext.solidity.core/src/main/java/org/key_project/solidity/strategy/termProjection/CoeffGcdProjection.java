@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.termProjection;
 
+import java.math.BigInteger;
+
 import org.key_project.logic.Term;
 import org.key_project.prover.rules.RuleApp;
 import org.key_project.prover.sequent.PosInOccurrence;
@@ -12,8 +14,6 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.rule.metaconstruct.arith.Monomial;
 import org.key_project.solidity.rule.metaconstruct.arith.Polynomial;
-
-import java.math.BigInteger;
 
 /// Given a monomial and a polynomial, this projection computes the gcd of all numerical
 /// coefficients. The constant term of the polynomial is ignored. The result is guaranteed to be

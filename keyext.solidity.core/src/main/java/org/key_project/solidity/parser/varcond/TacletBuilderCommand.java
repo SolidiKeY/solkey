@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser.varcond;
 
-import org.jspecify.annotations.NonNull;
-import org.key_project.prover.rules.VariableCondition;
+import java.util.List;
+
 import org.key_project.solidity.rule.taclets.builder.TacletBuilder;
 
-import java.util.List;
+import org.jspecify.annotations.NonNull;
 
 /// This interface describes a commands that manipulate taclets during construction in the parser.
 ///
@@ -40,5 +40,5 @@ public interface TacletBuilderCommand {
     ///
     /// The given arguments are well-typed for supplied [#getArgumentTypes()].
     void apply(TacletBuilder<?> tacletBuilder, Object[] arguments, List<String> parameters,
-               boolean negated);
+            boolean negated);
 }

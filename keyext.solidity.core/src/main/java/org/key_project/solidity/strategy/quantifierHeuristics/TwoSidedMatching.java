@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.quantifierHeuristics;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.Term;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.LogicVariable;
@@ -13,6 +12,8 @@ import org.key_project.util.collection.DefaultImmutableMap;
 import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableMap;
 import org.key_project.util.collection.ImmutableSet;
+
+import org.jspecify.annotations.NonNull;
 
 /// Matching triggers within another quantifier expression. Problems with the current
 /// implementation:

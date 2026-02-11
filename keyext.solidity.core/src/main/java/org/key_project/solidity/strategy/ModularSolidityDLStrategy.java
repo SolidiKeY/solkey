@@ -3,7 +3,15 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy;
 
-import org.jspecify.annotations.NonNull;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+
 import org.key_project.logic.Name;
 import org.key_project.prover.proof.ProofGoal;
 import org.key_project.prover.rules.Rule;
@@ -26,14 +34,7 @@ import org.key_project.solidity.strategy.feature.NonDuplicateAppFeature;
 import org.key_project.solidity.strategy.feature.RuleSetDispatchFeature;
 import org.key_project.solidity.strategy.termProjection.FocusProjection;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.function.BiFunction;
-import java.util.function.Function;
+import org.jspecify.annotations.NonNull;
 
 public class ModularSolidityDLStrategy extends AbstractFeatureStrategy {
     public static final Name NAME = new Name("Modular RustyDL Strategy");
@@ -66,7 +67,7 @@ public class ModularSolidityDLStrategy extends AbstractFeatureStrategy {
     private final Map<Name, ComponentStrategy> nameToStrategyMap = new HashMap<>();
 
     public ModularSolidityDLStrategy(Proof proof, List<ComponentStrategy> componentStrategies,
-                                     StrategyProperties properties) {
+            StrategyProperties properties) {
         super(proof);
         strategies.addAll(componentStrategies);
         this.strategyProperties = (StrategyProperties) properties.clone();
@@ -148,7 +149,7 @@ public class ModularSolidityDLStrategy extends AbstractFeatureStrategy {
     private void resolveConflict(RuleSetDispatchFeature d, RuleSet rs) {
         switch (rs.name().toString()) {
             case "order_terms" -> {
-                var folStrat = nameToStrategyMap.get(RFOLStrategy.NAME);
+                var folStrat = nameToStrategyMap.get(FOLStrategy.NAME);
                 var intStrat = nameToStrategyMap.get(IntegerStrategy.NAME);
                 bindRuleSet(d, "order_terms",
                     ifZero(applyTF("commEqLeft", tf.intF),
@@ -156,7 +157,7 @@ public class ModularSolidityDLStrategy extends AbstractFeatureStrategy {
                         folStrat.getDispatcher(StrategyAspect.Cost).remove(rs)));
             }
             case "apply_equations" -> {
-                var folStrat = nameToStrategyMap.get(RFOLStrategy.NAME);
+                var folStrat = nameToStrategyMap.get(FOLStrategy.NAME);
                 var intStrat = nameToStrategyMap.get(IntegerStrategy.NAME);
                 bindRuleSet(d, "apply_equations",
                     ifZero(applyTF(FocusProjection.create(0), tf.intF),
@@ -164,7 +165,7 @@ public class ModularSolidityDLStrategy extends AbstractFeatureStrategy {
                         folStrat.getDispatcher(StrategyAspect.Cost).remove(rs)));
             }
             case "apply_equations_andOr" -> {
-                var folStrat = nameToStrategyMap.get(RFOLStrategy.NAME);
+                var folStrat = nameToStrategyMap.get(FOLStrategy.NAME);
                 var intStrat = nameToStrategyMap.get(IntegerStrategy.NAME);
                 if (quantifierInstantiatedEnabled()) {
                     bindRuleSet(d, "apply_equations_andOr",

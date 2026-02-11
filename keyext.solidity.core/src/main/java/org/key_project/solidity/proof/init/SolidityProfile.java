@@ -4,18 +4,15 @@
 package org.key_project.solidity.proof.init;
 
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.Name;
 import org.key_project.prover.engine.GoalChooserFactory;
 import org.key_project.prover.rules.Rule;
-import org.key_project.prover.rules.Taclet;
 import org.key_project.solidity.common.Profile;
 import org.key_project.solidity.common.RuleCollection;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.io.RuleSourceFactory;
 import org.key_project.solidity.proof.mgt.AxiomJustification;
-import org.key_project.solidity.proof.mgt.ComplexRuleJustificationBySpec;
 import org.key_project.solidity.proof.mgt.RuleJustification;
 import org.key_project.solidity.prover.impl.DefaultGoalChooserFactory;
 import org.key_project.solidity.prover.impl.DepthFirstGoalChooserFactory;
@@ -26,6 +23,8 @@ import org.key_project.solidity.strategy.StrategyFactory;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
 import org.key_project.util.collection.ImmutableSet;
+
+import org.jspecify.annotations.NonNull;
 
 public class SolidityProfile implements Profile {
     public static final String NAME = "Solidity Profile";
@@ -72,8 +71,8 @@ public class SolidityProfile implements Profile {
 
     @Override
     public RuleJustification getJustification(Rule r) {
-//        if (r == UseOperationContractRule.INSTANCE)
-//            return new ComplexRuleJustificationBySpec();
+        // if (r == UseOperationContractRule.INSTANCE)
+        // return new ComplexRuleJustificationBySpec();
         if (r instanceof SolTaclet t)
             return t.getRuleJustification();
         else

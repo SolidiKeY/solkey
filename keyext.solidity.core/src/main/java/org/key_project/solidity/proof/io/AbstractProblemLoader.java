@@ -3,19 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.io;
 
-import org.jspecify.annotations.Nullable;
-import org.key_project.solidity.common.Profile;
-import org.key_project.solidity.common.Services;
-import org.key_project.solidity.proof.*;
-import org.key_project.solidity.proof.init.*;
-import org.key_project.solidity.proof.init.IPersistablePO.LoadedPOContainer;
-import org.key_project.solidity.proof.init.loader.ProofObligationLoader;
-import org.key_project.solidity.proof.io.consistency.FileRepo;
-import org.key_project.solidity.proof.io.consistency.SimpleFileRepo;
-import org.key_project.solidity.settings.Configuration;
-import org.key_project.solidity.speclang.SLEnvInput;
-import org.key_project.util.java.IOUtil;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -32,6 +19,20 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
+
+import org.key_project.solidity.common.Profile;
+import org.key_project.solidity.common.Services;
+import org.key_project.solidity.proof.*;
+import org.key_project.solidity.proof.init.*;
+import org.key_project.solidity.proof.init.IPersistablePO.LoadedPOContainer;
+import org.key_project.solidity.proof.init.loader.ProofObligationLoader;
+import org.key_project.solidity.proof.io.consistency.FileRepo;
+import org.key_project.solidity.proof.io.consistency.SimpleFileRepo;
+import org.key_project.solidity.settings.Configuration;
+import org.key_project.solidity.speclang.SLEnvInput;
+import org.key_project.util.java.IOUtil;
+
+import org.jspecify.annotations.Nullable;
 
 public abstract class AbstractProblemLoader {
     /// The file or folder to load.

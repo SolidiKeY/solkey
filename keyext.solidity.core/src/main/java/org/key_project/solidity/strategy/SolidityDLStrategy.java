@@ -3,7 +3,10 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy;
 
-import org.jspecify.annotations.NonNull;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.key_project.logic.Name;
 import org.key_project.prover.proof.ProofGoal;
 import org.key_project.prover.rules.RuleApp;
@@ -22,9 +25,7 @@ import org.key_project.solidity.strategy.feature.NonDuplicateAppFeature;
 import org.key_project.solidity.strategy.feature.RuleSetDispatchFeature;
 import org.key_project.solidity.strategy.termfeature.IsInductionVariable;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
+import org.jspecify.annotations.NonNull;
 
 import static org.key_project.prover.strategy.costbased.feature.CompareCostsFeature.leq;
 

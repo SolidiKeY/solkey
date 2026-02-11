@@ -4,16 +4,18 @@
 package org.key_project.solidity.proof.io;
 
 
-import org.jspecify.annotations.NonNull;
+import java.io.File;
+import java.util.ArrayList;
+
 import org.key_project.logic.Name;
+import org.key_project.solidity.common.Profile;
 import org.key_project.solidity.proof.init.Includes;
 import org.key_project.solidity.proof.init.InitConfig;
 import org.key_project.solidity.proof.init.ProofInputException;
 import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableSet;
 
-import java.io.File;
-import java.util.ArrayList;
+import org.jspecify.annotations.NonNull;
 
 
 public class LDTInput implements EnvInput {
@@ -86,7 +88,7 @@ public class LDTInput implements EnvInput {
             warnings.addAll(w);
         }
         // create LDT objects to have them available for parsing
-        initConfig.getServices().initLDTs();
+        initConfig.getServices().initTheories();
 
         // TODO read rules once they are added
         for (KeYFile keyFile : keyFiles) {

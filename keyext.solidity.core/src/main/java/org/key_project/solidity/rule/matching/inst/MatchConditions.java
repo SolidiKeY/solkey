@@ -9,8 +9,8 @@ import org.key_project.prover.rules.instantiation.SVInstantiations;
 public class MatchConditions extends MatchResultInfo {
 
     public static final MatchConditions EMPTY_MATCHCONDITIONS =
-            new MatchConditions(
-                    org.key_project.solidity.rule.matching.inst.SVInstantiations.EMPTY_SVINSTANTIATIONS);
+        new MatchConditions(
+            org.key_project.solidity.rule.matching.inst.SVInstantiations.EMPTY_SVINSTANTIATIONS);
 
     public MatchConditions(SVInstantiations pInstantiations) {
         super(pInstantiations);

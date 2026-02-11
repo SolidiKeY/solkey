@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.termgenerator;
 
-import org.jspecify.annotations.NonNull;
+import java.util.Iterator;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.logic.TermCreationException;
@@ -24,7 +25,7 @@ import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.theory.IntLDT;
 import org.key_project.util.collection.ImmutableArray;
 
-import java.util.Iterator;
+import org.jspecify.annotations.NonNull;
 
 public abstract class SuperTermGenerator implements TermGenerator<Goal> {
     private final TermFeature cond;

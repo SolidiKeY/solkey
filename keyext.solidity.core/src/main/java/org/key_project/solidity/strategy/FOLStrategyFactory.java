@@ -3,13 +3,14 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.Name;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.strategy.definition.OneOfStrategyPropertyDefinition;
 import org.key_project.solidity.strategy.definition.StrategyPropertyValueDefinition;
 import org.key_project.solidity.strategy.definition.StrategySettingsDefinition;
+
+import org.jspecify.annotations.NonNull;
 
 public class FOLStrategyFactory implements StrategyFactory {
     public static final String TOOL_TIP_QUANTIFIER_NONE =
@@ -33,7 +34,7 @@ public class FOLStrategyFactory implements StrategyFactory {
 
     @Override
     public Strategy<@NonNull Goal> create(Proof proof, StrategyProperties strategyProperties) {
-        return new RFOLStrategy(proof, strategyProperties);
+        return new FOLStrategy(proof, strategyProperties);
     }
 
     private static OneOfStrategyPropertyDefinition getQuantifierTreatment() {

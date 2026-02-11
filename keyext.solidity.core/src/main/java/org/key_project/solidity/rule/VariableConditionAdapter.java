@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.rule;
 
-import org.jspecify.annotations.Nullable;
 import org.key_project.logic.LogicServices;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.op.sv.SchemaVariable;
@@ -11,6 +10,8 @@ import org.key_project.prover.rules.VariableCondition;
 import org.key_project.prover.rules.instantiation.MatchResultInfo;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
+
+import org.jspecify.annotations.Nullable;
 
 /// The variable condition adapter can be used by variable conditions which can either fail or be
 /// successful, but which do not create a constraint.
@@ -23,7 +24,7 @@ public abstract class VariableConditionAdapter implements VariableCondition {
     /// @param services the program information object
     /// @return true iff condition is fulfilled
     public abstract boolean check(SchemaVariable var, SyntaxElement instCandidate,
-                                  SVInstantiations instMap, Services services);
+            SVInstantiations instMap, Services services);
 
 
 

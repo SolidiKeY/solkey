@@ -4,6 +4,8 @@
 package org.key_project.solidity.proof.mgt;
 
 import org.key_project.solidity.program.ast.statement.LoopStatement;
+import org.key_project.solidity.proof.Proof;
+import org.key_project.solidity.proof.init.ProofOblInput;
 import org.key_project.solidity.speclang.Contract;
 import org.key_project.solidity.speclang.LoopSpecification;
 import org.key_project.util.collection.ImmutableSet;
@@ -18,6 +20,10 @@ public class SpecificationRepository {
     }
 
     public LoopSpecification getLoopSpec(LoopStatement loop) {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    public void registerProof(ProofOblInput proofOblInput, Proof p) {
         throw new RuntimeException("Not implemented yet");
     }
 }

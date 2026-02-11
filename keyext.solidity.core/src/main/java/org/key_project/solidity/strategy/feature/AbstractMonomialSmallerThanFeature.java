@@ -3,19 +3,20 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.feature;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Function;
 import org.key_project.logic.op.Operator;
 import org.key_project.prover.rules.RuleApp;
 import org.key_project.prover.rules.RuleSet;
-import org.key_project.solidity.theory.IntLDT;
-import org.key_project.solidity.rule.sv.SkolemTermSV;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.rule.TacletApp;
+import org.key_project.solidity.rule.sv.SkolemTermSV;
+import org.key_project.solidity.theory.IntLDT;
 import org.key_project.util.LRUCache;
 import org.key_project.util.collection.ImmutableList;
+
+import org.jspecify.annotations.NonNull;
 
 public abstract class AbstractMonomialSmallerThanFeature extends SmallerThanFeature {
     private static final Name newSymRuleSetName = new Name("polySimp_newSmallSym");

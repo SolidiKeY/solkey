@@ -20,8 +20,7 @@ public class ConstraintAwareSyntacticalReplaceVisitor extends SyntacticalReplace
     public ConstraintAwareSyntacticalReplaceVisitor(
             Services services, Constraint metavariableInst,
             PosInOccurrence applicationPosInOccurrence, Rule rule, RuleApp ruleApp) {
-        super(applicationPosInOccurrence, services, rule,
-            (org.key_project.solidity.rule.RuleApp) ruleApp);
+        super(applicationPosInOccurrence, services, rule, ruleApp);
         this.metavariableInst = metavariableInst;
     }
 

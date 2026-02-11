@@ -3,12 +3,16 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.io;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.PosInTerm;
 import org.key_project.logic.Term;
-import org.key_project.logic.op.Modality;
 import org.key_project.logic.op.sv.SchemaVariable;
-import org.key_project.prover.rules.RuleApp;
 import org.key_project.prover.rules.instantiation.AssumesFormulaInstSeq;
 import org.key_project.prover.rules.instantiation.AssumesFormulaInstantiation;
 import org.key_project.prover.sequent.PosInOccurrence;
@@ -19,24 +23,12 @@ import org.key_project.solidity.common.naming.NameRecorder;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.proof.Proof;
-import org.key_project.solidity.proof.init.IPersistablePO;
-import org.key_project.solidity.proof.init.ProofOblInput;
-import org.key_project.solidity.proof.mgt.RuleJustification;
-import org.key_project.solidity.proof.mgt.RuleJustificationBySpec;
 import org.key_project.solidity.rule.IBuiltInRuleApp;
 import org.key_project.solidity.rule.TacletApp;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.solidity.rule.matching.inst.TermInstantiation;
 import org.key_project.solidity.settings.ProofSettings;
 import org.key_project.util.collection.ImmutableList;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
 
 /// Saves a proof to a given [OutputStream].
 public class OutputStreamProofSaver {
@@ -78,52 +70,52 @@ public class OutputStreamProofSaver {
     }
 
     public void save(OutputStream out) throws IOException {
-//        try (var ps = new PrintWriter(out, true, StandardCharsets.UTF_8)) {
-//            final ProofOblInput po =
-//                proof.getServices().getSpecificationRepository().getProofOblInput(proof);
-//            LogicPrinter printer = createLogicPrinter(proof.getServices(), false);
-//
-//            // profile
-//            ps.println(writeProfile(proof.getServices().getProfile()));
-//
-//            // settings
-//            ps.println(writeSettings(proof.getSettings()));
-//
-//            // declarations of symbols, sorts
-//            String header = proof.header();
-//            // header = makePathsRelative(header);
-//            ps.print(header);
-//
-//            // \problem or \proofObligation
-//
-//            if (po instanceof IPersistablePO ppo) {
-//                var loadingConfig = ppo.createLoaderConfig();
-//                ps.println("\n\\proofObligation ");
-//                loadingConfig.save(ps, "Proof-Obligation settings");
-//                ps.println("\n");
-//            } else {
-//                final Sequent problemSeq = proof.root().sequent();
-//                ps.println("\\problem {");
-//                if (problemSeq.antecedent().isEmpty() && problemSeq.succedent().size() == 1) {
-//                    // Problem statement is a single formula ...
-//                    printer.printSemisequent(problemSeq.succedent());
-//                } else {
-//                    // Problem statement is a proper sequent ...
-//                    printer.printSequent(problemSeq);
-//                }
-//                ps.println(printer.result());
-//                ps.println("}\n");
-//            }
-//
-//            if (saveProofSteps) {
-//                // \proof
-//                ps.println("\\proof {");
-//                // ps.println(writeLog());
-//                // ps.println("(autoModeTime \"" + proof.getAutoModeTime() + "\")\n");
-//                node2Proof(proof.root(), ps);
-//                ps.println("}");
-//            }
-//        }
+        // try (var ps = new PrintWriter(out, true, StandardCharsets.UTF_8)) {
+        // final ProofOblInput po =
+        // proof.getServices().getSpecificationRepository().getProofOblInput(proof);
+        // LogicPrinter printer = createLogicPrinter(proof.getServices(), false);
+        //
+        // // profile
+        // ps.println(writeProfile(proof.getServices().getProfile()));
+        //
+        // // settings
+        // ps.println(writeSettings(proof.getSettings()));
+        //
+        // // declarations of symbols, sorts
+        // String header = proof.header();
+        // // header = makePathsRelative(header);
+        // ps.print(header);
+        //
+        // // \problem or \proofObligation
+        //
+        // if (po instanceof IPersistablePO ppo) {
+        // var loadingConfig = ppo.createLoaderConfig();
+        // ps.println("\n\\proofObligation ");
+        // loadingConfig.save(ps, "Proof-Obligation settings");
+        // ps.println("\n");
+        // } else {
+        // final Sequent problemSeq = proof.root().sequent();
+        // ps.println("\\problem {");
+        // if (problemSeq.antecedent().isEmpty() && problemSeq.succedent().size() == 1) {
+        // // Problem statement is a single formula ...
+        // printer.printSemisequent(problemSeq.succedent());
+        // } else {
+        // // Problem statement is a proper sequent ...
+        // printer.printSequent(problemSeq);
+        // }
+        // ps.println(printer.result());
+        // ps.println("}\n");
+        // }
+        //
+        // if (saveProofSteps) {
+        // // \proof
+        // ps.println("\\proof {");
+        // // ps.println(writeLog());
+        // // ps.println("(autoModeTime \"" + proof.getAutoModeTime() + "\")\n");
+        // node2Proof(proof.root(), ps);
+        // ps.println("}");
+        // }
+        // }
     }
 
     /// Print applied rule(s) for a proof node and its decendants into the passed writer such that
@@ -213,24 +205,24 @@ public class OutputStreamProofSaver {
     /// @param output the writer in which the rule(s) is /are printed
     /// @throws IOException an exception thrown when printing fails
     private void printSingleNode(Node node, String prefix, Appendable output) throws IOException {
-//        final RuleApp appliedRuleApp = node.getAppliedRuleApp();
-//        if (appliedRuleApp == null && (proof.getOpenGoal(node) != null)) {
-//            // open goal
-//            output.append(prefix);
-//            output.append(" (opengoal \"");
-//            final LogicPrinter printer = createLogicPrinter(proof.getServices(), false);
-//
-//            printer.printSequent(node.sequent());
-//            output.append(escapeCharacters(printer.result().replace('\n', ' ')));
-//            output.append("\")\n");
-//            return;
-//        }
-//
-//        if (appliedRuleApp instanceof TacletApp) {
-//            printSingleTacletApp((TacletApp) appliedRuleApp, node, prefix, output);
-//        } else if (appliedRuleApp instanceof IBuiltInRuleApp iba) {
-//            printSingleBuiltInRuleApp(iba, node, prefix, output);
-//        }
+        // final RuleApp appliedRuleApp = node.getAppliedRuleApp();
+        // if (appliedRuleApp == null && (proof.getOpenGoal(node) != null)) {
+        // // open goal
+        // output.append(prefix);
+        // output.append(" (opengoal \"");
+        // final LogicPrinter printer = createLogicPrinter(proof.getServices(), false);
+        //
+        // printer.printSequent(node.sequent());
+        // output.append(escapeCharacters(printer.result().replace('\n', ' ')));
+        // output.append("\")\n");
+        // return;
+        // }
+        //
+        // if (appliedRuleApp instanceof TacletApp) {
+        // printSingleTacletApp((TacletApp) appliedRuleApp, node, prefix, output);
+        // } else if (appliedRuleApp instanceof IBuiltInRuleApp iba) {
+        // printSingleBuiltInRuleApp(iba, node, prefix, output);
+        // }
     }
 
     /// Print applied rule(s) for a proof node and its decendants into the passed writer.
@@ -258,7 +250,7 @@ public class OutputStreamProofSaver {
         while (childrenIt.hasNext()) {
             final Node child = childrenIt.next();
             output.append(prefix);
-            final String branchLabel = "Implement thsi in OutputStramProofSaver";//child.getNodeInfo().getBranchLabel();
+            final String branchLabel = "Implement thsi in OutputStramProofSaver";// child.getNodeInfo().getBranchLabel();
 
             // The branchLabel is ignored when reading in the proof,
             // print it if we have it, ignore it otherwise. (MU)
@@ -296,10 +288,10 @@ public class OutputStreamProofSaver {
     }
 
     public static String printProgramElement(SolidityProgramElement pe) {
-//        OutputStreamProofSaver.pe = pe;
-//        PrettyPrinter printer = PrettyPrinter.purePrinter();
-//        printer.printFragment(pe);
-//        return printer.result();
+        // OutputStreamProofSaver.pe = pe;
+        // PrettyPrinter printer = PrettyPrinter.purePrinter();
+        // printer.printFragment(pe);
+        // return printer.result();
         throw new RuntimeException("Not implemented yet");
     }
 
@@ -323,9 +315,9 @@ public class OutputStreamProofSaver {
     }
 
     public static String printTerm(Term t, Services serv, boolean shortAttrNotation) {
-//        final LogicPrinter logicPrinter = createLogicPrinter(serv, shortAttrNotation);
-//        logicPrinter.printTerm(t);
-//        return logicPrinter.result();
+        // final LogicPrinter logicPrinter = createLogicPrinter(serv, shortAttrNotation);
+        // logicPrinter.printTerm(t);
+        // return logicPrinter.result();
         throw new RuntimeException("Not implemented yet");
     }
 
@@ -393,18 +385,18 @@ public class OutputStreamProofSaver {
 
     private static String printSequent(Sequent val,
             Services services) {
-//        final LogicPrinter printer = createLogicPrinter(services, services == null);
-//        printer.printSequent(val);
-//        return printer.result();
+        // final LogicPrinter printer = createLogicPrinter(services, services == null);
+        // printer.printSequent(val);
+        // return printer.result();
         throw new RuntimeException("Not implemented yet");
     }
 
-//    private static LogicPrinter createLogicPrinter(Services serv, boolean shortAttrNotation) {
-//        final NotationInfo ni = new NotationInfo();
-//
-//        return LogicPrinter.purePrinter(ni, (shortAttrNotation ? serv : null));
-//        throw new RuntimeException("Not implemented yet");
-//    }
+    // private static LogicPrinter createLogicPrinter(Services serv, boolean shortAttrNotation) {
+    // final NotationInfo ni = new NotationInfo();
+    //
+    // return LogicPrinter.purePrinter(ni, (shortAttrNotation ? serv : null));
+    // throw new RuntimeException("Not implemented yet");
+    // }
 
     /// Print applied built-in rule for a single built-in rule application into the passed writer.
     ///
@@ -414,34 +406,34 @@ public class OutputStreamProofSaver {
     /// @throws IOException an exception thrown when printing fails
     private void printSingleBuiltInRuleApp(IBuiltInRuleApp appliedRuleApp, Node node, String prefix,
             Appendable output) throws IOException {
-//        output.append(prefix);
-//        output.append(" (builtin \"");
-//        output.append(appliedRuleApp.rule().name().toString());
-//        output.append("\"");
-//        output.append(posInOccurrence2Proof(node.sequent(), appliedRuleApp.posInOccurrence()));
-//
-//        output.append(newNames2Proof(node));
-//        output.append(builtinRuleAssumesInsts(node, appliedRuleApp.assumesInsts()));
-//
-//        if (appliedRuleApp.rule() instanceof UseOperationContractRule) {
-//            printRuleJustification(appliedRuleApp, output);
-//
-//            // for operation contract rules we add the modality under which the rule was applied
-//            // -> needed for proof management tool
-//            if (appliedRuleApp.rule() instanceof UseOperationContractRule) {
-//                if (appliedRuleApp instanceof ContractRuleApp app) {
-//                    Modality modality = (Modality) app.programTerm().op();
-//                    output.append(" (modality \"");
-//                    output.append(modality.toString());
-//                    output.append("\")");
-//                }
-//            }
-//        }
-//
-//        output.append("");
-//        // userInteraction2Proof(node, output);
-//        // notes2Proof(node, output);
-//        output.append(")\n");
+        // output.append(prefix);
+        // output.append(" (builtin \"");
+        // output.append(appliedRuleApp.rule().name().toString());
+        // output.append("\"");
+        // output.append(posInOccurrence2Proof(node.sequent(), appliedRuleApp.posInOccurrence()));
+        //
+        // output.append(newNames2Proof(node));
+        // output.append(builtinRuleAssumesInsts(node, appliedRuleApp.assumesInsts()));
+        //
+        // if (appliedRuleApp.rule() instanceof UseOperationContractRule) {
+        // printRuleJustification(appliedRuleApp, output);
+        //
+        // // for operation contract rules we add the modality under which the rule was applied
+        // // -> needed for proof management tool
+        // if (appliedRuleApp.rule() instanceof UseOperationContractRule) {
+        // if (appliedRuleApp instanceof ContractRuleApp app) {
+        // Modality modality = (Modality) app.programTerm().op();
+        // output.append(" (modality \"");
+        // output.append(modality.toString());
+        // output.append("\")");
+        // }
+        // }
+        // }
+        //
+        // output.append("");
+        // // userInteraction2Proof(node, output);
+        // // notes2Proof(node, output);
+        // output.append(")\n");
     }
 
     /// Print rule justification for applied built-in rule application into the passed writer.
@@ -451,16 +443,16 @@ public class OutputStreamProofSaver {
     /// @throws IOException an exception thrown when printing fails
     private void printRuleJustification(IBuiltInRuleApp appliedRuleApp, Appendable output)
             throws IOException {
-//        final RuleJustification ruleJusti = proof.getInitConfig().getJustifInfo()
-//                .getJustification(appliedRuleApp, proof.getServices());
-//
-//        assert ruleJusti instanceof RuleJustificationBySpec
-//                : "Please consult bug #1111 if this fails.";
-//
-//        final RuleJustificationBySpec ruleJustiBySpec = (RuleJustificationBySpec) ruleJusti;
-//        output.append(" (contract \"");
-//        output.append(ruleJustiBySpec.spec().getName());
-//        output.append("\")");
+        // final RuleJustification ruleJusti = proof.getInitConfig().getJustifInfo()
+        // .getJustification(appliedRuleApp, proof.getServices());
+        //
+        // assert ruleJusti instanceof RuleJustificationBySpec
+        // : "Please consult bug #1111 if this fails.";
+        //
+        // final RuleJustificationBySpec ruleJustiBySpec = (RuleJustificationBySpec) ruleJusti;
+        // output.append(" (contract \"");
+        // output.append(ruleJustiBySpec.spec().getName());
+        // output.append("\")");
     }
 
     public String builtinRuleAssumesInsts(Node node,

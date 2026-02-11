@@ -3,7 +3,10 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.feature;
 
-import org.jspecify.annotations.NonNull;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+
 import org.key_project.prover.proof.ProofGoal;
 import org.key_project.prover.rules.RuleApp;
 import org.key_project.prover.rules.RuleSet;
@@ -17,9 +20,7 @@ import org.key_project.prover.strategy.costbased.feature.SumFeature;
 import org.key_project.solidity.rule.TacletApp;
 import org.key_project.util.collection.ImmutableList;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import org.jspecify.annotations.NonNull;
 
 /// Feature for relating rule sets with feature terms. Given a taclet application, this feature will
 /// iterate over the rule sets that the taclet belongs to, and for each rule set the corresponding

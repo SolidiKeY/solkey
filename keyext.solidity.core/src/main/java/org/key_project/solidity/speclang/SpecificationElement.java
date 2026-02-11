@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.speclang;
 
+import java.util.function.UnaryOperator;
+
 import org.key_project.logic.Term;
 import org.key_project.solidity.common.Services;
-
-import java.util.function.UnaryOperator;
 
 /// Common superinterface of all constructs created by the specification language front ends and
 /// managed by SpecificationRepository.

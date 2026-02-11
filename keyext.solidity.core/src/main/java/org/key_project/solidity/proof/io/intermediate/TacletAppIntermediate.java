@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.io.intermediate;
 
+import java.util.LinkedList;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.PosInTerm;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.Pair;
-
-import java.util.LinkedList;
 
 /// Encapsulates intermediate information for constructing a taclet application.
 ///

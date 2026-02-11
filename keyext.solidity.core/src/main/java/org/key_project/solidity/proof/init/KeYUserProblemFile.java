@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.init;
 
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.Token;
+import java.io.File;
+import java.io.IOException;
+
 import org.key_project.logic.Name;
 import org.key_project.prover.sequent.Sequent;
-
 import org.key_project.solidity.common.Profile;
 import org.key_project.solidity.parser.ChoiceInformation;
 import org.key_project.solidity.parser.KeYAst;
@@ -21,8 +21,8 @@ import org.key_project.solidity.speclang.SLEnvInput;
 import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableSet;
 
-import java.io.File;
-import java.io.IOException;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.Token;
 
 public class KeYUserProblemFile extends KeYFile implements ProofOblInput {
     private Sequent problem = null;
@@ -62,7 +62,7 @@ public class KeYUserProblemFile extends KeYFile implements ProofOblInput {
     /// @param profile the KeY profile under which to load
     /// @param compressed `true` iff the file is compressed
     public KeYUserProblemFile(String name, File file, FileRepo fileRepo, Profile profile,
-                              boolean compressed) {
+            boolean compressed) {
         super(name, file, fileRepo, profile, compressed);
     }
 
@@ -157,9 +157,9 @@ public class KeYUserProblemFile extends KeYFile implements ProofOblInput {
             CharStream stream = file.getCharStream();
             // also pass the file to be able to produce exceptions with locations
             try {
-                ///ProofReplayer.run(token, stream, prl, file.url().toURI());
-            throw new RuntimeException("Not implemented yet");
-            } catch (Exception e) { ///URISyntaxException e) {
+                /// ProofReplayer.run(token, stream, prl, file.url().toURI());
+                throw new RuntimeException("Not implemented yet");
+            } catch (Exception e) { /// URISyntaxException e) {
                 throw new RuntimeException(e);
             }
         }

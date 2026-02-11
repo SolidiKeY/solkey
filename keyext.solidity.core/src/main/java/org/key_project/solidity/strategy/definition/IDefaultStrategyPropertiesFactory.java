@@ -4,7 +4,6 @@
 package org.key_project.solidity.strategy.definition;
 
 
-import org.key_project.solidity.strategy.Strategy;
 import org.key_project.solidity.strategy.StrategyProperties;
 
 /// Instances of this factory are used to create default [StrategyProperties] used by a

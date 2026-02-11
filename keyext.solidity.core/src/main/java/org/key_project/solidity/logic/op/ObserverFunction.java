@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.logic.op;
 
+import java.util.Objects;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.util.collection.ImmutableArray;
-
-import java.util.Objects;
 
 /// Objects of this class represent "observer" function or predicate symbols. Observer symbols are
 /// used to
@@ -27,7 +27,7 @@ public class ObserverFunction extends SFunction implements IObserverFunction {
     // -------------------------------------------------------------------------
 
     public ObserverFunction(String baseName, Sort sort, KeYSolidityType type,
-                            ImmutableArray<KeYSolidityType> paramTypes) {
+            ImmutableArray<KeYSolidityType> paramTypes) {
         super(new Name(baseName), sort, getArgSorts(paramTypes));
         assert type == null || type.getSort() == sort;
         this.type = type;

@@ -4,7 +4,11 @@
 package org.key_project.solidity.proof.init;
 
 
-import org.jspecify.annotations.NonNull;
+import java.io.File;
+import java.io.IOException;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 import org.key_project.logic.Namespace;
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Function;
@@ -16,6 +20,8 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.NamespaceSet;
 import org.key_project.solidity.logic.op.ElementaryUpdate;
 import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.logic.op.SModality;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.SolidityModel;
@@ -23,16 +29,14 @@ import org.key_project.solidity.proof.io.*;
 import org.key_project.solidity.proof.io.consistency.FileRepo;
 import org.key_project.solidity.proof.mgt.AxiomJustification;
 import org.key_project.solidity.rule.BuiltInRule;
+import org.key_project.solidity.util.MiscTools;
 import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSet;
+
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 
 public final class ProblemInitializer {
@@ -111,7 +115,7 @@ public final class ProblemInitializer {
             initConfig.getServices().getNamespaces().functions();
         if (solidityInfo != null) {
             // TODO: Declare fields (how?)
-            for (var fn : solidityInfo.getAllFunctions()) {
+            for (var fn : solidityInfo.getAllSolidityFunctions()) {
                 functions.add(fn);
             }
         } else {
@@ -154,8 +158,8 @@ public final class ProblemInitializer {
                 var beforeConversion = System.nanoTime();
                 // TODO: read in solidity code and convert to KeY structures
                 throw new RuntimeException("Not implemented yet");
-//                LOGGER.debug("Solidity conversion took {}",
-//                    PerfScope.formatTime(System.nanoTime() - beforeConversion));
+                // LOGGER.debug("Solidity conversion took {}",
+                // PerfScope.formatTime(System.nanoTime() - beforeConversion));
             } catch (Exception e) {
                 throw new ProofInputException("Failed to convert Solidity code", e);
             }

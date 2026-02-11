@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.feature;
 
-import org.jspecify.annotations.NonNull;
+import java.util.Iterator;
+
 import org.key_project.prover.proof.ProofGoal;
 import org.key_project.prover.rules.RuleApp;
 import org.key_project.prover.sequent.PosInOccurrence;
@@ -16,7 +17,7 @@ import org.key_project.prover.strategy.costbased.termfeature.TermFeature;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.strategy.termfeature.ContainsExecutableCodeTermFeature;
 
-import java.util.Iterator;
+import org.jspecify.annotations.NonNull;
 
 public class SeqContainsExecutableCodeFeature extends BinaryFeature {
     private final TermFeature tf;

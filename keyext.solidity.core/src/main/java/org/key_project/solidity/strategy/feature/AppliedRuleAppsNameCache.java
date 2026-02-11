@@ -3,18 +3,19 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.feature;
 
-import org.jspecify.annotations.NonNull;
-import org.key_project.logic.Name;
-import org.key_project.prover.rules.RuleApp;
-import org.key_project.solidity.proof.Node;
-import org.key_project.util.LRUCache;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import org.key_project.logic.Name;
+import org.key_project.prover.rules.RuleApp;
+import org.key_project.solidity.proof.Node;
+import org.key_project.util.LRUCache;
+
+import org.jspecify.annotations.NonNull;
 
 /// Establishes a cache for the applied rule apps to query them by name.
 /// See the get method for additional required constraints for correctness.

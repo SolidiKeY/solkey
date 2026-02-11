@@ -13,7 +13,6 @@ import org.key_project.logic.op.UpdateableOperator;
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.*;
-import org.key_project.solidity.rule.sv.OperatorSV;
 import org.key_project.solidity.strategy.quantifierHeuristics.Metavariable;
 import org.key_project.solidity.theory.IntLDT;
 import org.key_project.util.collection.ImmutableArray;

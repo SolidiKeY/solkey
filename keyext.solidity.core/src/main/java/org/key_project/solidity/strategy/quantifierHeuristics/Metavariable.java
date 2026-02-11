@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.quantifierHeuristics;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.Name;
 import org.key_project.logic.Named;
 import org.key_project.logic.TerminalSyntaxElement;
@@ -11,6 +10,8 @@ import org.key_project.logic.op.AbstractSortedOperator;
 import org.key_project.logic.op.Modifier;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.logic.SolidityDLTheory;
+
+import org.jspecify.annotations.NonNull;
 
 public final class Metavariable extends AbstractSortedOperator
         implements Comparable<Metavariable>, TerminalSyntaxElement, Named {

@@ -68,7 +68,7 @@ public class ProblemInformation {
         return soliditySource;
     }
 
-    public void setRustSource(@Nullable String soliditySource) {
+    public void setSoliditySource(@Nullable String soliditySource) {
         this.soliditySource = soliditySource;
     }
 

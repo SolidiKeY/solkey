@@ -40,6 +40,9 @@ public class Node implements Iterable<Node> {
 
     private boolean closed = false;
 
+    /// contains non-logical content, used for user feedback
+    private NodeInfo nodeInfo;
+
     private RuleApp appliedRuleApp;
 
     /// Serial number of this proof node.
@@ -332,5 +335,9 @@ public class Node implements Iterable<Node> {
     /// @return true iff this node is the root, i.e., has no parents.
     public boolean root() {
         return parent == null;
+    }
+
+    public NodeInfo getNodeInfo() {
+        return nodeInfo;
     }
 }

@@ -3,12 +3,13 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy;
 
-import org.key_project.solidity.settings.Configuration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Map;
 import java.util.Properties;
+
+import org.key_project.solidity.settings.Configuration;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class StrategyProperties extends Properties {
     public static final String STOPMODE_OPTIONS_KEY = "STOPMODE_OPTIONS_KEY";

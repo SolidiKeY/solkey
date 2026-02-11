@@ -3,12 +3,13 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.Name;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.strategy.definition.OneOfStrategyPropertyDefinition;
 import org.key_project.solidity.strategy.definition.StrategyPropertyValueDefinition;
 import org.key_project.solidity.strategy.definition.StrategySettingsDefinition;
+
+import org.jspecify.annotations.NonNull;
 
 public class SolidityDLStrategyFactory implements StrategyFactory {
     /// The unique [Name] of this [StrategyFactory].

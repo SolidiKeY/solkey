@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.quantifierHeuristics;
 
-import org.jspecify.annotations.Nullable;
+import java.util.*;
+
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Operator;
 import org.key_project.logic.op.QuantifiableVariable;
@@ -14,7 +15,7 @@ import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableArray;
 import org.key_project.util.collection.ImmutableSet;
 
-import java.util.*;
+import org.jspecify.annotations.Nullable;
 
 /// This class is used to select and store <code>Trigger</code>s for a quantified formula in Prenex
 /// CNF(PCNF).

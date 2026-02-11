@@ -12,8 +12,8 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.SolidityBlock;
 import org.key_project.solidity.logic.op.SModality;
 import org.key_project.solidity.program.ast.statement.LoopStatement;
-import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
+import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.solidity.speclang.LoopSpecification;
 
 /// Checks whether a loop has an invariant.

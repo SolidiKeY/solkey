@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.init.loader;
 
-import org.jspecify.annotations.NullMarked;
 import org.key_project.solidity.proof.init.IPersistablePO;
 import org.key_project.solidity.proof.init.InitConfig;
 import org.key_project.solidity.settings.Configuration;
+
+import org.jspecify.annotations.NullMarked;
 
 /// Interface for writing the handling of the creation of proof obligations.
 ///

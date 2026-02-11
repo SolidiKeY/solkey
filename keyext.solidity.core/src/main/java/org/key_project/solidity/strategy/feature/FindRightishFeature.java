@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.feature;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.op.Operator;
 import org.key_project.prover.proof.ProofGoal;
 import org.key_project.prover.rules.RuleApp;
@@ -13,8 +12,10 @@ import org.key_project.prover.strategy.costbased.MutableState;
 import org.key_project.prover.strategy.costbased.NumberRuleAppCost;
 import org.key_project.prover.strategy.costbased.RuleAppCost;
 import org.key_project.prover.strategy.costbased.feature.Feature;
-import org.key_project.solidity.theory.IntLDT;
 import org.key_project.solidity.logic.op.Equality;
+import org.key_project.solidity.theory.IntLDT;
+
+import org.jspecify.annotations.NonNull;
 
 /// Walking from the root of a formula down to the focus of a rule application, count how often we
 /// choose the left branch (subterm) and how the right branches. This is used to identify the

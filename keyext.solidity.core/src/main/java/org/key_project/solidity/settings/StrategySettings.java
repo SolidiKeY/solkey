@@ -3,18 +3,20 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.settings;
 
-import org.jspecify.annotations.NonNull;
+import java.util.Objects;
+
 import org.key_project.logic.Name;
 import org.key_project.prover.engine.GoalChooser;
 import org.key_project.prover.engine.StopCondition;
 import org.key_project.prover.engine.impl.AppliedRuleStopCondition;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Proof;
+import org.key_project.solidity.strategy.ModularSolidityDLStrategy;
 import org.key_project.solidity.strategy.StrategyProperties;
+
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Objects;
 
 public class StrategySettings extends AbstractSettings {
     public static final Logger LOGGER = LoggerFactory.getLogger(StrategySettings.class);
@@ -118,7 +120,7 @@ public class StrategySettings extends AbstractSettings {
     public void writeSettings(@NonNull Configuration props) {
         props = props.getOrCreateSection(CATEGORY);
         if (getStrategy() == null) {
-            setStrategy(ModularRustyDLStrategy.NAME);
+            setStrategy(ModularSolidityDLStrategy.NAME);
         }
         if (maxSteps < 0) {
             setMaxSteps(10000);

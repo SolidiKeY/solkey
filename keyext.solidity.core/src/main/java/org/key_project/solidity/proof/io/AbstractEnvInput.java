@@ -3,15 +3,16 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.io;
 
-import org.jspecify.annotations.NonNull;
+import java.io.File;
+import java.util.List;
+
 import org.key_project.logic.Name;
 import org.key_project.solidity.common.Profile;
 import org.key_project.solidity.proof.init.Includes;
 import org.key_project.solidity.proof.init.InitConfig;
 import org.key_project.solidity.proof.init.ProofInputException;
 
-import java.io.File;
-import java.util.List;
+import org.jspecify.annotations.NonNull;
 
 public abstract class AbstractEnvInput implements EnvInput {
     protected final Name name;
@@ -27,7 +28,7 @@ public abstract class AbstractEnvInput implements EnvInput {
     // -------------------------------------------------------------------------
 
     protected AbstractEnvInput(String name, String rustPath,
-                               Profile profile, List<File> includes) {
+            Profile profile, List<File> includes) {
         assert profile != null;
         this.name = new Name(name);
         this.rustPath = rustPath;

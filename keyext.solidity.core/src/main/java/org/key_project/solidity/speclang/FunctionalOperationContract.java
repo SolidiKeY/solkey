@@ -4,14 +4,15 @@
 package org.key_project.solidity.speclang;
 
 
-import org.jspecify.annotations.Nullable;
+import java.util.function.UnaryOperator;
+
 import org.key_project.logic.Term;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.op.SModality;
 import org.key_project.util.collection.ImmutableList;
 
-import java.util.function.UnaryOperator;
+import org.jspecify.annotations.Nullable;
 
 /// A contract about an operation (i.e., a method or a constructor), consisting of a precondition, a
 /// postcondition, a modifiable clause, a measured-by clause, and a modality.
@@ -42,8 +43,8 @@ public interface FunctionalOperationContract extends OperationContract {
     Term getPost(Term selfTerm, ImmutableList<Term> paramTerms, Term resultTerm, Services services);
 
     Term getPost(ProgramVariable selfVar,
-                 ImmutableList<ProgramVariable> paramVars, ProgramVariable resultVar,
-                 Services services);
+            ImmutableList<ProgramVariable> paramVars, ProgramVariable resultVar,
+            Services services);
 
     String getBaseName();
 

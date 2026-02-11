@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.io;
 
-import org.jspecify.annotations.Nullable;
+import java.io.File;
+
 import org.key_project.logic.Named;
 import org.key_project.solidity.common.Profile;
 import org.key_project.solidity.proof.init.Includes;
@@ -11,7 +12,7 @@ import org.key_project.solidity.proof.init.InitConfig;
 import org.key_project.solidity.proof.init.ProofInputException;
 import org.key_project.util.collection.ImmutableSet;
 
-import java.io.File;
+import org.jspecify.annotations.Nullable;
 
 public interface EnvInput extends Named {
     /// Returns the total numbers of chars that can be read in this input.

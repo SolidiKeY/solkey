@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.feature;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.prover.proof.ProofGoal;
 import org.key_project.prover.rules.RuleApp;
 import org.key_project.prover.sequent.PIOPathIterator;
@@ -13,6 +12,8 @@ import org.key_project.prover.strategy.costbased.feature.BinaryFeature;
 import org.key_project.prover.strategy.costbased.feature.Feature;
 import org.key_project.solidity.logic.op.SModality;
 import org.key_project.solidity.logic.op.UpdateApplication;
+
+import org.jspecify.annotations.NonNull;
 
 /// Returns zero iff the position of a rule application is not in the scope of a modal operator (a
 /// program block or an update). Note that terms and formulas within (but not behind) updates are

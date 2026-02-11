@@ -7,7 +7,6 @@ import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
-import org.key_project.solidity.program.ast.abstractions.*;
 import org.key_project.solidity.program.ast.declarations.*;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.expressions.*;
@@ -15,6 +14,7 @@ import org.key_project.solidity.program.ast.expressions.literals.*;
 import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.references.*;
 import org.key_project.solidity.program.ast.statement.*;
+import org.key_project.solidity.program.ext.ContextStatementBlock;
 import org.key_project.solidity.rule.metaconstruct.ProgramTransformer;
 
 public abstract class SolidityASTVisitor extends SolidityASTWalker implements Visitor {
@@ -346,6 +346,11 @@ public abstract class SolidityASTVisitor extends SolidityASTWalker implements Vi
     }
 
     @Override
+    public void performActionOnContextStatementBlock(ContextStatementBlock x) {
+        doDefaultAction(x);
+    }
+
+    @Override
     public void performActionOnBreakStatement(BreakStatement x) {
         doDefaultAction(x);
     }
@@ -409,5 +414,6 @@ public abstract class SolidityASTVisitor extends SolidityASTWalker implements Vi
     public void performActionOnProgramMetaConstruct(ProgramTransformer x) {
         doDefaultAction(x);
     }
+
 
 }

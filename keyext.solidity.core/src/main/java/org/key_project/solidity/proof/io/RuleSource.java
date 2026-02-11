@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.io;
 
-import org.antlr.v4.runtime.CharStream;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+
+import org.antlr.v4.runtime.CharStream;
 
 public abstract class RuleSource {
     // key-file containing ldt declarations

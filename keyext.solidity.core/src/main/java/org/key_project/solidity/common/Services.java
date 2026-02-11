@@ -11,7 +11,6 @@ import org.key_project.logic.LogicServices;
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.prover.proof.ProofServices;
-import org.key_project.prover.proof.SessionCaches;
 import org.key_project.solidity.common.naming.NameRecorder;
 import org.key_project.solidity.common.naming.VariableNamer;
 import org.key_project.solidity.logic.NamespaceSet;
@@ -24,7 +23,6 @@ import org.key_project.solidity.proof.Counter;
 import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.SolidityModel;
-import org.key_project.solidity.proof.io.LDTInput;
 import org.key_project.solidity.proof.mgt.SpecificationRepository;
 import org.key_project.solidity.theory.TheoryInfo;
 
@@ -65,8 +63,8 @@ public class Services implements LogicServices, ProofServices {
         this.caches = new ServiceCaches();
     }
 
-    @SuppressWarnings({"argument.type.incompatible", "assignment.type.incompatible",
-            "initialization.fields.uninitialized"})
+    @SuppressWarnings({ "argument.type.incompatible", "assignment.type.incompatible",
+        "initialization.fields.uninitialized" })
     public Services(Services services) {
         this.namespaces = services.namespaces;
         this.theoryInfo = services.theoryInfo;
@@ -132,8 +130,8 @@ public class Services implements LogicServices, ProofServices {
             return tb.var(pv);
         }
         throw new IllegalArgumentException(
-                "Unknown or not convertible ProgramElement " + pe + " of type "
-                        + pe.getClass());
+            "Unknown or not convertible ProgramElement " + pe + " of type "
+                + pe.getClass());
     }
 
     public VariableNamer getVariableNamer() {
@@ -194,6 +192,10 @@ public class Services implements LogicServices, ProofServices {
     }
 
     public Services copyPreservesLDTInformation() {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    public void initTheories() {
         throw new RuntimeException("Not implemented yet");
     }
 }

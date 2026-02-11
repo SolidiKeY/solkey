@@ -11,8 +11,8 @@ import org.key_project.prover.rules.VariableCondition;
 import org.key_project.prover.rules.instantiation.MatchResultInfo;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.statement.LoopStatement;
-import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
+import org.key_project.solidity.rule.sv.ProgramSV;
 
 /// Extracts the variant for a loop term.
 ///

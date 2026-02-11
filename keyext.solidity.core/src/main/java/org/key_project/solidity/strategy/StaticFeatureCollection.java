@@ -8,11 +8,9 @@ import org.key_project.logic.PosInTerm;
 import org.key_project.logic.op.Function;
 import org.key_project.logic.op.Operator;
 import org.key_project.logic.sort.Sort;
-import org.key_project.prover.proof.rulefilter.SetRuleFilter;
 import org.key_project.prover.strategy.costbased.NumberRuleAppCost;
 import org.key_project.prover.strategy.costbased.RuleAppCost;
 import org.key_project.prover.strategy.costbased.TopRuleAppCost;
-import org.key_project.prover.strategy.costbased.feature.ConditionalFeature;
 import org.key_project.prover.strategy.costbased.feature.ConstFeature;
 import org.key_project.prover.strategy.costbased.feature.Feature;
 import org.key_project.prover.strategy.costbased.feature.LetFeature;
@@ -218,9 +216,9 @@ public class StaticFeatureCollection {
     }
 
     protected static Feature functionSpecFeature(Feature cost) {
-//        SetRuleFilter filter = new SetRuleFilter();
-//        filter.addRuleToSet(UseOperationContractRule.INSTANCE);
-//        return ConditionalFeature.createConditional(filter, cost);
+        // SetRuleFilter filter = new SetRuleFilter();
+        // filter.addRuleToSet(UseOperationContractRule.INSTANCE);
+        // return ConditionalFeature.createConditional(filter, cost);
         throw new RuntimeException("Not yet implemented");
     }
 

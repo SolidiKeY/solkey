@@ -3,17 +3,18 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.rule.metaconstruct.arith;
 
+import java.math.BigInteger;
+import java.util.Iterator;
+
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Operator;
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.LexPathOrdering;
 import org.key_project.solidity.rule.metaconstruct.AbstractTermTransformer;
 import org.key_project.solidity.theory.IntLDT;
 import org.key_project.util.LRUCache;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
-
-import java.math.BigInteger;
-import java.util.Iterator;
 
 /// Class for analysing and modifying monomial expressions over the integers
 public class Monomial {

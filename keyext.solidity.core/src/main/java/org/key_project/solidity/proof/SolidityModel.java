@@ -3,14 +3,15 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof;
 
-import org.key_project.solidity.proof.init.Includes;
-
 import java.io.File;
 import java.text.DateFormat;
 import java.util.Date;
 
+import org.key_project.solidity.proof.init.Includes;
+
 public final class SolidityModel {
-    /// Directory of Solidity source files. May be null if the proof doesn't refer to any Solidity code.
+    /// Directory of Solidity source files. May be null if the proof doesn't refer to any Solidity
+    /// code.
     private final String modelDir;
     private final String modelTag;
     private final String descr;

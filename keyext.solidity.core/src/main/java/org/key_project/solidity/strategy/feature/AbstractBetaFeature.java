@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.feature;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.Term;
 import org.key_project.prover.proof.ProofGoal;
 import org.key_project.prover.rules.RuleApp;
@@ -17,6 +16,8 @@ import org.key_project.solidity.logic.op.Equality;
 import org.key_project.solidity.logic.op.Junctor;
 import org.key_project.solidity.logic.op.Quantifier;
 import org.key_project.solidity.logic.op.SModality;
+
+import org.jspecify.annotations.NonNull;
 
 /// This abstract class contains some auxiliary methods for the selection of beta rules that are
 /// supposed to be applied. Used terminology is defined in Diss. by Martin Giese.
@@ -302,7 +303,8 @@ public abstract class AbstractBetaFeature implements Feature {
 
         final Term findTerm = pos.sequentFormula().formula();
 
-        return doComputation(pos, findTerm, (ServiceCaches) ((Services) goal.proof().getServices()).getCaches());
+        return doComputation(pos, findTerm,
+            (ServiceCaches) ((Services) goal.proof().getServices()).getCaches());
     }
 
     protected abstract RuleAppCost doComputation(PosInOccurrence pos,

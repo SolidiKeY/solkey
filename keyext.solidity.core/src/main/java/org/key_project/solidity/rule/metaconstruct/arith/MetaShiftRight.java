@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.rule.metaconstruct.arith;
 
-import org.key_project.logic.Name;
-
 import java.math.BigInteger;
+
+import org.key_project.logic.Name;
 
 public final class MetaShiftRight extends MetaShift {
     /// creates the transformer for performing a shift to the right

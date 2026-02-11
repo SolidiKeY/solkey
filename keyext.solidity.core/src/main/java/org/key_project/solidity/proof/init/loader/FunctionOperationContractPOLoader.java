@@ -4,7 +4,8 @@
 package org.key_project.solidity.proof.init.loader;
 
 
-import org.jspecify.annotations.NullMarked;
+import java.io.IOException;
+
 import org.key_project.solidity.proof.init.FunctionalOperationContractPO;
 import org.key_project.solidity.proof.init.IPersistablePO;
 import org.key_project.solidity.proof.init.InitConfig;
@@ -12,7 +13,7 @@ import org.key_project.solidity.proof.init.ProofOblInput;
 import org.key_project.solidity.settings.Configuration;
 import org.key_project.solidity.speclang.Contract;
 
-import java.io.IOException;
+import org.jspecify.annotations.NullMarked;
 
 
 /// Loader for proof obligation arises by function operation contract.

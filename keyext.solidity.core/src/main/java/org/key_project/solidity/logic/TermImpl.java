@@ -6,7 +6,6 @@ package org.key_project.solidity.logic;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.key_project.logic.Term;
-import org.key_project.logic.TermCreationException;
 import org.key_project.logic.Visitor;
 import org.key_project.logic.op.Modality;
 import org.key_project.logic.op.Operator;

@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.termProjection;
 
+import java.math.BigInteger;
+
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Function;
 import org.key_project.prover.rules.RuleApp;
@@ -10,11 +12,9 @@ import org.key_project.prover.sequent.PosInOccurrence;
 import org.key_project.prover.strategy.costbased.MutableState;
 import org.key_project.prover.strategy.costbased.termProjection.ProjectionToTerm;
 import org.key_project.solidity.common.Services;
-import org.key_project.solidity.rule.metaconstruct.AbstractTermTransformer;
 import org.key_project.solidity.proof.Goal;
+import org.key_project.solidity.rule.metaconstruct.AbstractTermTransformer;
 import org.key_project.solidity.rule.metaconstruct.arith.Monomial;
-
-import java.math.BigInteger;
 
 public abstract class AbstractDividePolynomialsProjection implements ProjectionToTerm<Goal> {
     private final ProjectionToTerm<Goal> leftCoefficient, polynomial;

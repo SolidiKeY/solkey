@@ -3,17 +3,18 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.settings;
 
-import org.antlr.v4.runtime.CharStreams;
-import org.checkerframework.checker.initialization.qual.UnknownInitialization;
-import org.jspecify.annotations.Nullable;
-import org.key_project.solidity.util.KeYResourceManager;
-
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
+
+import org.key_project.solidity.util.KeYResourceManager;
+
+import org.antlr.v4.runtime.CharStreams;
+import org.checkerframework.checker.initialization.qual.UnknownInitialization;
+import org.jspecify.annotations.Nullable;
 
 public class ProofSettings {
     public static final File PROVER_CONFIG_FILE_NEW =

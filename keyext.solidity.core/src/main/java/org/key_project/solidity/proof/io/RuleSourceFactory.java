@@ -4,10 +4,10 @@
 package org.key_project.solidity.proof.io;
 
 
-import org.key_project.solidity.proof.Proof;
-
 import java.io.File;
 import java.net.URL;
+
+import org.key_project.solidity.proof.Proof;
 
 public class RuleSourceFactory {
 

@@ -5,12 +5,10 @@ package org.key_project.solidity.parser.varcond;
 
 import org.key_project.logic.LogicServices;
 import org.key_project.logic.SyntaxElement;
-import org.key_project.logic.Term;
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.prover.rules.VariableCondition;
 import org.key_project.prover.rules.instantiation.MatchResultInfo;
 import org.key_project.solidity.common.Services;
-import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 
@@ -56,27 +54,27 @@ public class NewLocalVarsCondition implements VariableCondition {
         if (body == null) {
             return matchCond;
         }
-            throw new RuntimeException("Not implemented yet");
-//        var vars = MiscTools.getLocalOuts(body, services);
-//        List<LetStatement> decls = new ArrayList<>(vars.size());
-//        ImmutableList<Term> updatesBefore = ImmutableSLList.nil();
-//        ImmutableList<Term> updateFrames = ImmutableSLList.nil();
-//        var tb = services.getTermBuilder();
-//
-//        for (var v : vars) {
-//            final var newName =
-//                services.getVariableNamer().getTemporaryNameProposal(v.name() + "_before");
-//            var type = v.getKeYRustyType();
-//            var pv = new ProgramVariable(newName, type);
-//            decls.add(
-//                new LetStatement(new BindingPattern(false, false, false, pv, null), null, null));
-//            updatesBefore = updatesBefore.append(tb.elementary(tb.var(pv), tb.var(v)));
-//            updateFrames = updateFrames.append(tb.elementary(tb.var(v), tb.var(pv)));
-//        }
-//        return matchCond.setInstantiations(
-//            svInst.add(varDeclsSV, new ProgramList(new ImmutableArray<>(decls)), services)
-//                    .add(updateBeforeSV, tb.parallel(updatesBefore), services)
-//                    .add(updateFrameSV, tb.parallel(updateFrames), services));
+        throw new RuntimeException("Not implemented yet");
+        // var vars = MiscTools.getLocalOuts(body, services);
+        // List<LetStatement> decls = new ArrayList<>(vars.size());
+        // ImmutableList<Term> updatesBefore = ImmutableSLList.nil();
+        // ImmutableList<Term> updateFrames = ImmutableSLList.nil();
+        // var tb = services.getTermBuilder();
+        //
+        // for (var v : vars) {
+        // final var newName =
+        // services.getVariableNamer().getTemporaryNameProposal(v.name() + "_before");
+        // var type = v.getKeYRustyType();
+        // var pv = new ProgramVariable(newName, type);
+        // decls.add(
+        // new LetStatement(new BindingPattern(false, false, false, pv, null), null, null));
+        // updatesBefore = updatesBefore.append(tb.elementary(tb.var(pv), tb.var(v)));
+        // updateFrames = updateFrames.append(tb.elementary(tb.var(v), tb.var(pv)));
+        // }
+        // return matchCond.setInstantiations(
+        // svInst.add(varDeclsSV, new ProgramList(new ImmutableArray<>(decls)), services)
+        // .add(updateBeforeSV, tb.parallel(updatesBefore), services)
+        // .add(updateFrameSV, tb.parallel(updateFrames), services));
     }
 
     @Override

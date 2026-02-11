@@ -7,12 +7,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.PosInProgram;
+import org.key_project.solidity.program.PossibleProgramPrefix;
 import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
-public class Block implements Statement {
+public class Block implements Statement, PossibleProgramPrefix {
 
     private final ImmutableArray<Statement> statements;
     private String errorName;
@@ -73,6 +75,41 @@ public class Block implements Statement {
     }
 
     public ImmutableArray<Statement> getStatements() { return statements; }
+
+    @Override
+    public boolean isPrefix() {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    @Override
+    public boolean hasNextPrefixElement() {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    @Override
+    public PossibleProgramPrefix getNextPrefixElement() {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    @Override
+    public PossibleProgramPrefix getLastPrefixElement() {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    @Override
+    public ImmutableArray<PossibleProgramPrefix> getPrefixElements() {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    @Override
+    public PosInProgram getFirstActiveChildPos() {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    @Override
+    public int getPrefixLength() {
+        throw new RuntimeException("Not implemented yet");
+    }
 
     public void visit(Visitor v) {
         v.performActionOnBlock(this);

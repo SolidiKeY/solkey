@@ -3,11 +3,12 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.prover.impl;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.prover.engine.GoalChooser;
 import org.key_project.prover.engine.GoalChooserFactory;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Proof;
+
+import org.jspecify.annotations.NonNull;
 
 /// creates the default goal chooser used in KeY
 public class DefaultGoalChooserFactory

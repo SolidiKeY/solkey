@@ -3,19 +3,31 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.settings;
 
-import org.antlr.v4.runtime.CharStream;
-import org.checkerframework.checker.nullness.qual.KeyFor;
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
-import org.key_project.solidity.parser.ParsingFacade;
-import org.key_project.solidity.util.Position;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.*;
 
+import org.key_project.solidity.parser.ParsingFacade;
+import org.key_project.solidity.util.Position;
+
+import org.antlr.v4.runtime.CharStream;
+import org.checkerframework.checker.nullness.qual.KeyFor;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
+/**
+ * A container to hold parsed configurations. Configurations are a mapping between property names
+ * and values plus additional meta-information (line number, documentation, etc.).
+ * <p>
+ * Helper functions allow to access the values in a type-safe fashion.
+ * Note that configurations may also be nested, use {@link #getTable(String)} to receive a sub
+ * configuration.
+ *
+ * @author Alexander Weigl
+ * @version 1 (03.04.23)
+ */
 public class Configuration {
     private final Map<String, Object> data;
     private final Map<String, ConfigurationMeta> meta = new HashMap<>();

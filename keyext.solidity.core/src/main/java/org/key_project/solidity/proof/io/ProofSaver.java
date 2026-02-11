@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.io;
 
-import org.key_project.solidity.proof.Proof;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+
+import org.key_project.solidity.proof.Proof;
 
 public class ProofSaver extends OutputStreamProofSaver {
     /// Save this proof to a file

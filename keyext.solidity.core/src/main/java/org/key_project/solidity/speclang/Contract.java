@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.speclang;
 
-import org.jspecify.annotations.Nullable;
+import java.util.function.UnaryOperator;
+
 import org.key_project.logic.Term;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.IObserverFunction;
@@ -13,7 +14,7 @@ import org.key_project.solidity.proof.init.InitConfig;
 import org.key_project.solidity.proof.init.ProofOblInput;
 import org.key_project.util.collection.ImmutableList;
 
-import java.util.function.UnaryOperator;
+import org.jspecify.annotations.Nullable;
 
 /// A contractual agreement about an ObserverFunction.
 public interface Contract extends SpecificationElement {
@@ -37,8 +38,8 @@ public interface Contract extends SpecificationElement {
     /// @param services services object
     /// @return precondition
     Term getPre(ProgramVariable selfVar,
-                ImmutableList<ProgramVariable> paramVars,
-                Services services);
+            ImmutableList<ProgramVariable> paramVars,
+            Services services);
 
     /// Returns the contracted function symbol.
     IObserverFunction getTarget();

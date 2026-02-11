@@ -13,8 +13,8 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.SolidityBlock;
 import org.key_project.solidity.logic.op.SModality;
 import org.key_project.solidity.program.ast.statement.LoopStatement;
-import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
+import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.solidity.speclang.LoopSpecification;
 
 /// Extracts the loop invariants for a loop term (for all applicable heap contexts).
@@ -51,7 +51,8 @@ public class LoopInvariantCondition implements VariableCondition {
             loopSpec = loopSpec.withInRangePredicates(services);
         }
 
-        final var solidityBlock = new SolidityBlock(svInst.getContextInstantiation().contextProgram());
+        final var solidityBlock =
+            new SolidityBlock(svInst.getContextInstantiation().contextProgram());
 
         var modKind = (SModality.SolidityModalityKind) svInst.getInstantiation(modalitySV);
 

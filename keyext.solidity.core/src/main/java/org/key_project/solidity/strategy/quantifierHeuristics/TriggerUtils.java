@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.quantifierHeuristics;
 
+import java.util.Iterator;
+
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Operator;
 import org.key_project.solidity.logic.op.Junctor;
@@ -10,8 +12,6 @@ import org.key_project.solidity.logic.op.LogicVariable;
 import org.key_project.solidity.logic.op.Quantifier;
 import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableSet;
-
-import java.util.Iterator;
 
 public class TriggerUtils {
     /// remove all the quantifiable variable bounded in the top level of a given formula.

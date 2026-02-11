@@ -3,21 +3,16 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.init;
 
-import org.jspecify.annotations.Nullable;
-import org.key_project.logic.Name;
-import org.key_project.logic.Term;
-import org.key_project.solidity.common.Services;
-import org.key_project.solidity.logic.op.ProgramFunction;
-import org.key_project.solidity.logic.op.ProgramVariable;
-import org.key_project.solidity.logic.op.SModality;
-import org.key_project.solidity.program.ast.statement.Block;
-import org.key_project.solidity.settings.Configuration;
-import org.key_project.solidity.speclang.FunctionalOperationContract;
-import org.key_project.util.collection.ImmutableList;
-
 import java.io.IOException;
 
-///  TODO: This class is just a rough template; NEEDS TO BE IMPLEMENTED FROM SCRATCH
+import org.key_project.logic.Name;
+import org.key_project.logic.Term;
+import org.key_project.solidity.logic.op.ProgramFunction;
+import org.key_project.solidity.logic.op.SModality;
+import org.key_project.solidity.settings.Configuration;
+import org.key_project.solidity.speclang.FunctionalOperationContract;
+
+/// TODO: This class is just a rough template; NEEDS TO BE IMPLEMENTED FROM SCRATCH
 ///
 /// The proof obligation for operation contracts.
 ///

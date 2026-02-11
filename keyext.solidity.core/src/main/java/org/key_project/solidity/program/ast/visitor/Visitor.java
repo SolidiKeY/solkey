@@ -5,7 +5,6 @@ package org.key_project.solidity.program.ast.visitor;
 
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.solidity.logic.op.ProgramVariable;
-import org.key_project.solidity.program.ast.abstractions.*;
 import org.key_project.solidity.program.ast.declarations.*;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.expressions.*;
@@ -13,6 +12,7 @@ import org.key_project.solidity.program.ast.expressions.literals.*;
 import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.references.*;
 import org.key_project.solidity.program.ast.statement.*;
+import org.key_project.solidity.program.ext.ContextStatementBlock;
 import org.key_project.solidity.rule.metaconstruct.ProgramTransformer;
 
 public interface Visitor {
@@ -139,6 +139,8 @@ public interface Visitor {
     void performActionOnUnresolvedReferenceException(UnresolvedReferenceException x);
 
     void performActionOnBlock(Block x);
+
+    void performActionOnContextStatementBlock(ContextStatementBlock x);
 
     void performActionOnBreakStatement(BreakStatement x);
 

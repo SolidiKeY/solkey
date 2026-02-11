@@ -3,14 +3,14 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.termProjection;
 
+import java.math.BigInteger;
+
 import org.key_project.logic.Term;
 import org.key_project.prover.strategy.costbased.termProjection.ProjectionToTerm;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.LexPathOrdering;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.rule.metaconstruct.arith.Monomial;
-
-import java.math.BigInteger;
 
 public class MonomialColumnOp extends AbstractDividePolynomialsProjection {
     private MonomialColumnOp(ProjectionToTerm<Goal> leftCoefficient,

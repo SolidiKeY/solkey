@@ -3,14 +3,14 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.rule.metaconstruct.arith;
 
+import java.math.BigInteger;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.TermBuilder;
-import org.key_project.solidity.rule.metaconstruct.AbstractTermTransformer;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
-
-import java.math.BigInteger;
+import org.key_project.solidity.rule.metaconstruct.AbstractTermTransformer;
 
 /// Computes the pow function for literals. Computation fails if second argument is negative or
 /// exceeds Integer.MAX_VALUE (the latter due to restrictions of class BigInteger).

@@ -38,4 +38,5 @@ public class SolidityInfo {
         // not Set<Function> but Set<ProgramFunction> should be returned
         return null;
     }
+
 }

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.init;
 
-import org.key_project.solidity.proof.Proof;
-
 import java.util.List;
+
+import org.key_project.solidity.proof.Proof;
 
 public abstract class ProofAggregate {
     private final String name;

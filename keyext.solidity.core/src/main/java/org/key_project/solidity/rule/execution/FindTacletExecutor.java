@@ -11,13 +11,12 @@ import org.key_project.prover.rules.tacletbuilder.TacletGoalTemplate;
 import org.key_project.prover.sequent.FormulaChangeInfo;
 import org.key_project.prover.sequent.PosInOccurrence;
 import org.key_project.prover.sequent.SequentChangeInfo;
-import org.key_project.prover.sequent.SequentFormula;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.proof.Goal;
-import org.key_project.solidity.rule.matching.inst.MatchConditions;
 import org.key_project.solidity.rule.SolTaclet;
 import org.key_project.solidity.rule.TacletApp;
 import org.key_project.solidity.rule.TacletExecutor;
+import org.key_project.solidity.rule.matching.inst.MatchConditions;
 import org.key_project.util.collection.ImmutableList;
 
 public abstract class FindTacletExecutor

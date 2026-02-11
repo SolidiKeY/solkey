@@ -3,13 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.definition;
 
-import org.key_project.solidity.settings.StrategySettings;
-import org.key_project.solidity.strategy.Strategy;
+import java.util.ArrayList;
+
 import org.key_project.solidity.strategy.StrategyFactory;
 import org.key_project.solidity.strategy.StrategyProperties;
 import org.key_project.util.collection.ImmutableArray;
-
-import java.util.ArrayList;
 
 ///
 /// Instances of this class defines how a user interfaces has to look like which edits

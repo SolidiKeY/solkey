@@ -3,7 +3,12 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy;
 
-import org.jspecify.annotations.NonNull;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.key_project.logic.Name;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Proof;
@@ -12,11 +17,7 @@ import org.key_project.solidity.strategy.definition.OneOfStrategyPropertyDefinit
 import org.key_project.solidity.strategy.definition.StrategyPropertyValueDefinition;
 import org.key_project.solidity.strategy.definition.StrategySettingsDefinition;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Collectors;
+import org.jspecify.annotations.NonNull;
 
 public class ModularSolidityDLStrategyFactory implements StrategyFactory {
     private final List<StrategyFactory> componentFactories = Arrays.asList(new FOLStrategyFactory(),

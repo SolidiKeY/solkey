@@ -4,9 +4,9 @@
 package org.key_project.solidity.proof.io;
 
 
-import org.key_project.solidity.proof.ProofAggregate;
 import org.key_project.solidity.proof.init.IPersistablePO;
 import org.key_project.solidity.proof.init.InitConfig;
+import org.key_project.solidity.proof.init.ProofAggregate;
 import org.key_project.solidity.proof.io.AbstractProblemLoader.ReplayResult;
 import org.key_project.util.collection.ImmutableSet;
 
@@ -22,14 +22,14 @@ public interface ProblemLoaderControl {
     /// The loading has stopped.
     ///
     /// @param loader The source [AbstractProblemLoader].
-    /// @param poContainer The loaded [LoadedPOContainer].
+    /// @param poContainer The loaded [IPersistablePO.LoadedPOContainer].
     /// @param proofList The created [ProofAggregate].
     /// @param result The occurred [ReplayResult].
     /// @throws ProblemLoaderException Occurred Exception.
     void loadingFinished(AbstractProblemLoader loader, IPersistablePO.LoadedPOContainer poContainer,
             ProofAggregate proofList, ReplayResult result) throws ProblemLoaderException;
 
-    /// This method is called if no [LoadedPOContainer] was created via
+    /// This method is called if no [IPersistablePO.LoadedPOContainer] was created via
     /// [#createProofObligationContainer()] and can be overwritten for
     /// instance to open the proof management dialog as done by [AbstractProblemLoader].
     ///

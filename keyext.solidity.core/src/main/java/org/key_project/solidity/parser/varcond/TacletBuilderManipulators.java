@@ -3,22 +3,22 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser.varcond;
 
-import org.jspecify.annotations.NonNull;
-import org.key_project.logic.op.sv.SchemaVariable;
-import org.key_project.logic.sort.Sort;
-import org.key_project.prover.rules.VariableCondition;
-import org.key_project.solidity.parser.builder.TacletPBuilder;
-import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
-import org.key_project.solidity.rule.sv.OperatorSV;
-import org.key_project.solidity.rule.sv.ProgramSV;
-import org.key_project.solidity.logic.sort.GenericSort;
-import org.key_project.solidity.logic.sort.ParametricSortInstance;
-import org.key_project.solidity.parser.varcond.TypeComparisonCondition.Mode;
-import org.key_project.solidity.rule.taclets.builder.TacletBuilder;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.key_project.logic.op.sv.SchemaVariable;
+import org.key_project.logic.sort.Sort;
+import org.key_project.prover.rules.VariableCondition;
+import org.key_project.solidity.logic.sort.GenericSort;
+import org.key_project.solidity.logic.sort.ParametricSortInstance;
+import org.key_project.solidity.parser.varcond.TypeComparisonCondition.Mode;
+import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
+import org.key_project.solidity.rule.sv.OperatorSV;
+import org.key_project.solidity.rule.sv.ProgramSV;
+import org.key_project.solidity.rule.taclets.builder.TacletBuilder;
+
+import org.jspecify.annotations.NonNull;
 
 import static org.key_project.solidity.parser.varcond.ArgumentType.SORT;
 
@@ -32,7 +32,7 @@ public class TacletBuilderManipulators {
     // region Factories
     // Shortcut for argument types
     private static final ArgumentType TR = ArgumentType.TYPE_RESOLVER;
-    private static final ArgumentType KRT = ArgumentType.RUST_TYPE;
+    private static final ArgumentType KST = ArgumentType.SOLIDITY_TYPE;
     private static final ArgumentType PV = ArgumentType.VARIABLE;
     private static final ArgumentType USV = ArgumentType.VARIABLE;
     private static final ArgumentType TSV = ArgumentType.VARIABLE;
@@ -69,7 +69,7 @@ public class TacletBuilderManipulators {
 
         @Override
         public void apply(TacletBuilder<?> tacletBuilder, Object[] arguments,
-                          List<String> parameters, boolean negated) {
+                List<String> parameters, boolean negated) {
             for (Object argument : arguments) {
                 tacletBuilder.addNoFreeVarIn((SchemaVariable) argument);
             }
@@ -124,7 +124,7 @@ public class TacletBuilderManipulators {
             }
         };
     public static final AbstractTacletBuilderCommand NEW_RUSTY_TYPE =
-        new AbstractTacletBuilderCommand("new", SV, KRT) {
+        new AbstractTacletBuilderCommand("new", SV, KST) {
             @Override
             public void apply(TacletBuilder<?> tacletBuilder, Object[] arguments,
                     List<String> parameters, boolean negated) {

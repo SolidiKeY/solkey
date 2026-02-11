@@ -3,6 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser.varcond;
 
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.TreeMap;
+import java.util.TreeSet;
+
 import org.key_project.logic.LogicServices;
 import org.key_project.logic.Named;
 import org.key_project.logic.SyntaxElement;
@@ -14,14 +19,9 @@ import org.key_project.prover.rules.instantiation.MatchResultInfo;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ElementaryUpdate;
 import org.key_project.solidity.logic.op.UpdateJunctor;
+import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.solidity.rule.sv.FormulaSV;
 import org.key_project.solidity.rule.sv.UpdateSV;
-import org.key_project.solidity.rule.matching.inst.SVInstantiations;
-
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 public class SimplifyIfThenElseUpdateCondition implements VariableCondition {
     private final FormulaSV phi;

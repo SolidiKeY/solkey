@@ -3,17 +3,15 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.rule.sv.sort;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
-import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
-import org.key_project.solidity.logic.op.ParametricFunctionInstance;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.util.collection.DefaultImmutableSet;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 public abstract class ProgramSVSort extends SortImpl {
     private static final Map<Name, ProgramSVSort> NAME2SORT = new LinkedHashMap<>(60);

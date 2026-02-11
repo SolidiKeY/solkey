@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.quantifierHeuristics;
 
-import org.jspecify.annotations.NonNull;
+import java.util.Iterator;
+
 import org.key_project.logic.Term;
 import org.key_project.logic.TermCreationException;
 import org.key_project.logic.op.QuantifiableVariable;
@@ -14,10 +15,10 @@ import org.key_project.solidity.logic.TermBuilder;
 import org.key_project.solidity.logic.op.LogicVariable;
 import org.key_project.util.collection.ImmutableMap;
 import org.key_project.util.collection.ImmutableSet;
+
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Iterator;
 
 /// This class decribes a substitution,which store a map(varMap) from quantifiable variable to a
 /// term(instance).
@@ -81,9 +82,7 @@ public class Substitution {
     }
 
     private Term applySubst(Term instance, Term t, TermBuilder tb) {
-        final var subst =
-            new Subst(
-                instance, tb);
+        final var subst = new Subst(instance, tb);
         return subst.apply(t);
     }
 

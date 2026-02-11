@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.indices;
 
+import java.util.Map;
+
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Function;
 import org.key_project.logic.op.Modality;
@@ -20,8 +22,6 @@ import org.key_project.solidity.rule.taclets.SolFindTaclet;
 import org.key_project.util.LRUCache;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
-
-import java.util.Map;
 
 /// Cache that is used for accelerating <code>TermTacletAppIndex</code>. Basically, this is a
 /// mapping

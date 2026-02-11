@@ -6,8 +6,8 @@ package org.key_project.solidity.rule.metaconstruct.arith;
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.solidity.common.Services;
-import org.key_project.solidity.rule.metaconstruct.AbstractTermTransformer;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
+import org.key_project.solidity.rule.metaconstruct.AbstractTermTransformer;
 
 /// Metaoperator for computing the result of dividing one monomial by another
 public final class DivideMonomials extends AbstractTermTransformer {

@@ -3,8 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.logic.op;
 
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import java.util.Objects;
 
 import org.key_project.logic.op.Function;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
@@ -17,7 +16,8 @@ import org.key_project.solidity.rule.matching.inst.MatchConditions;
 import org.key_project.util.collection.ImmutableArray;
 import org.key_project.util.collection.ImmutableList;
 
-import java.util.Objects;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class ProgramFunction extends ObserverFunction implements SolidityProgramElement {
     /// The referenced function.
@@ -26,7 +26,8 @@ public class ProgramFunction extends ObserverFunction implements SolidityProgram
     private final @NonNull KeYSolidityType returnType;
 
     public ProgramFunction(FunctionDeclaration function, KeYSolidityType returnType) {
-        super(function.getName().toString(), Objects.requireNonNull(returnType.getSort()), returnType,
+        super(function.getName().toString(), Objects.requireNonNull(returnType.getSort()),
+            returnType,
             getParamTypes(function));
         this.function = function;
         this.returnType = returnType;
@@ -68,6 +69,6 @@ public class ProgramFunction extends ObserverFunction implements SolidityProgram
     }
 
     public static ImmutableList<ProgramVariable> collectParameters(Function function) {
-       throw new RuntimeException("Not implemented yet");
+        throw new RuntimeException("Not implemented yet");
     }
 }

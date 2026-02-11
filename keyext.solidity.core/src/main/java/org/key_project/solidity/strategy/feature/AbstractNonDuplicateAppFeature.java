@@ -3,25 +3,26 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.feature;
 
-import org.jspecify.annotations.NonNull;
+import java.util.Iterator;
+import java.util.List;
+
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.prover.rules.RuleApp;
 import org.key_project.prover.rules.instantiation.AssumesFormulaInstantiation;
 import org.key_project.prover.rules.instantiation.InstantiationEntry;
 import org.key_project.prover.sequent.PosInOccurrence;
-import org.key_project.solidity.rule.sv.SkolemTermSV;
-import org.key_project.solidity.rule.sv.VariableSV;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.rule.PosTacletApp;
 import org.key_project.solidity.rule.TacletApp;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
+import org.key_project.solidity.rule.sv.SkolemTermSV;
+import org.key_project.solidity.rule.sv.VariableSV;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableMap;
 import org.key_project.util.collection.ImmutableMapEntry;
 
-import java.util.Iterator;
-import java.util.List;
+import org.jspecify.annotations.NonNull;
 
 public abstract class AbstractNonDuplicateAppFeature extends BinaryTacletAppFeature {
     protected AbstractNonDuplicateAppFeature() {}

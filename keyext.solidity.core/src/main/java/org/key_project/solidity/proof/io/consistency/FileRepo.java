@@ -3,14 +3,14 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.io.consistency;
 
-import org.key_project.solidity.proof.io.RuleSource;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.nio.file.Path;
+
+import org.key_project.solidity.proof.io.RuleSource;
 
 public interface FileRepo {
     /// Provides access to a file on disk.

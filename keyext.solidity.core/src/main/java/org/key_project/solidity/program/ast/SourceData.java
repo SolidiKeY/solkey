@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast;
 
-import org.jspecify.annotations.Nullable;
 import org.key_project.solidity.common.Services;
+
+import org.jspecify.annotations.Nullable;
 
 /// This class keeps track of the next element to match, which is provided by calling method
 /// [#getSource()]. The rough idea is to store the parent ast node and the index of the child

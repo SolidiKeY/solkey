@@ -3,13 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.init;
 
-import org.key_project.prover.sequent.Sequent;
+import java.io.IOException;
+
 import org.key_project.solidity.proof.io.AbstractProblemLoader;
 import org.key_project.solidity.proof.io.ProofSaver;
 import org.key_project.solidity.settings.Configuration;
-
-import java.io.IOException;
-import java.util.Properties;
 
 ///
 /// This interface extends the standard proof obligation

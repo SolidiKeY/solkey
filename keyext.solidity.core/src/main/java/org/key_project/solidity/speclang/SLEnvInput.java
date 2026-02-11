@@ -3,14 +3,15 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.speclang;
 
-import org.jspecify.annotations.Nullable;
+import java.io.File;
+import java.util.List;
+
 import org.key_project.solidity.common.Profile;
 import org.key_project.solidity.proof.init.ProofInputException;
 import org.key_project.solidity.proof.io.AbstractEnvInput;
 import org.key_project.util.collection.ImmutableSet;
 
-import java.io.File;
-import java.util.List;
+import org.jspecify.annotations.Nullable;
 
 public final class SLEnvInput extends AbstractEnvInput {
 

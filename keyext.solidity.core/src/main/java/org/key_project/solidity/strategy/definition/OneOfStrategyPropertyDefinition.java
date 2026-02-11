@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.definition;
 
-import org.key_project.solidity.strategy.StrategyProperties;
 import org.key_project.util.collection.ImmutableArray;
 
 /// Defines that a user interface control which edits a single key-value-pair of the

@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.settings;
 
-import org.jspecify.annotations.Nullable;
+import java.io.File;
+
 import org.key_project.util.java.IOUtil;
 
-import java.io.File;
+import org.jspecify.annotations.Nullable;
 
 /// Keeps some central paths to files and directories.
 ///

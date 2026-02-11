@@ -3,6 +3,10 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.io;
 
+import java.util.ArrayDeque;
+import java.util.LinkedList;
+import java.util.List;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.PosInTerm;
 import org.key_project.solidity.proof.Proof;
@@ -10,10 +14,6 @@ import org.key_project.solidity.proof.io.intermediate.*;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
 import org.key_project.util.collection.Pair;
-
-import java.util.ArrayDeque;
-import java.util.LinkedList;
-import java.util.List;
 
 public class IntermediatePresentationProofFileParser implements IProofFileParser {
     /* + The proof object for storing meta information */

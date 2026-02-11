@@ -3,7 +3,16 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.io;
 
-import org.jspecify.annotations.NonNull;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 import org.key_project.logic.Name;
 import org.key_project.prover.rules.Taclet;
 import org.key_project.solidity.common.Profile;
@@ -20,15 +29,7 @@ import org.key_project.solidity.util.parsing.BuildingIssue;
 import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableSet;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import org.jspecify.annotations.NonNull;
 
 /// Represents an input from a .key file producing an environment.
 public class KeYFile implements EnvInput {

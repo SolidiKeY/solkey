@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser.varcond;
 
-import org.jspecify.annotations.Nullable;
 import org.key_project.logic.LogicServices;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.Term;
@@ -12,21 +11,24 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.prover.rules.VariableCondition;
 import org.key_project.prover.rules.instantiation.MatchResultInfo;
 import org.key_project.solidity.common.Services;
-import org.key_project.solidity.program.ast.abstractions.Type;
-import org.key_project.solidity.program.ast.expressions.Expression;
-import org.key_project.solidity.rule.sv.OperatorSV;
 import org.key_project.solidity.logic.sort.GenericSort;
 import org.key_project.solidity.logic.sort.ParametricSortInstance;
 import org.key_project.solidity.logic.sort.SortArg;
 import org.key_project.solidity.logic.sort.TermArg;
+import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.rule.matching.inst.GenericSortCondition;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
+import org.key_project.solidity.rule.sv.OperatorSV;
+
+import org.jspecify.annotations.Nullable;
 
 public class SolidityTypeToParametricSortCondition implements VariableCondition {
     private final OperatorSV exprOrTypeSV;
     private final ParametricSortInstance psi;
 
-    public SolidityTypeToParametricSortCondition(OperatorSV exprOrTypeSV, ParametricSortInstance psi) {
+    public SolidityTypeToParametricSortCondition(OperatorSV exprOrTypeSV,
+            ParametricSortInstance psi) {
         this.exprOrTypeSV = exprOrTypeSV;
         this.psi = psi;
     }
@@ -54,7 +56,8 @@ public class SolidityTypeToParametricSortCondition implements VariableCondition 
             sort = services.getSolidityInfo().getKeYSolidityType(rt.name().toString()).getSort();
         } else {
             final var expr = (Expression) svSubst;
-            sort = services.getSolidityInfo().getKeYSolidityType(expr.getType().toString()).getSort();
+            sort =
+                services.getSolidityInfo().getKeYSolidityType(expr.getType().toString()).getSort();
         }
 
         if (!(sort instanceof ParametricSortInstance psi) || psi.getBase() != this.psi.getBase()) {

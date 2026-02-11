@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser.builder;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.solidity.parser.KeYSolidityDLParser;
 import org.key_project.solidity.parser.ProblemInformation;
 import org.key_project.util.java.StringUtil;
+
+import org.jspecify.annotations.NonNull;
 
 public class FindProblemInformation extends AbstractBuilder<Object> {
     private final @NonNull ProblemInformation information = new ProblemInformation();

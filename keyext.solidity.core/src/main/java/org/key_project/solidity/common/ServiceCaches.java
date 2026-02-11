@@ -4,15 +4,13 @@
 package org.key_project.solidity.common;
 
 
-import org.jspecify.annotations.NonNull;
+import java.util.Map;
+
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Operator;
 import org.key_project.prover.proof.SessionCaches;
 import org.key_project.prover.rules.instantiation.caches.AssumesFormulaInstantiationCache;
-import org.key_project.solidity.proof.Node;
-import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.TermTacletAppIndex;
-import org.key_project.solidity.proof.indices.TermTacletAppIndexCacheSet;
 import org.key_project.solidity.rule.metaconstruct.arith.Monomial;
 import org.key_project.solidity.rule.metaconstruct.arith.Polynomial;
 import org.key_project.solidity.strategy.feature.AbstractBetaFeature.TermInfo;
@@ -23,7 +21,7 @@ import org.key_project.util.LRUCache;
 import org.key_project.util.collection.ImmutableSet;
 import org.key_project.util.collection.Pair;
 
-import java.util.Map;
+import org.jspecify.annotations.NonNull;
 
 import static org.key_project.solidity.proof.indices.PrefixTermTacletAppIndexCacheImpl.*;
 
@@ -89,8 +87,9 @@ public class ServiceCaches implements SessionCaches {
         new LRUCache<>(2000);
     private LRUCache<@NonNull Term, @NonNull ImmutableSet<@NonNull Metavariable>> mvCache =
         new LRUCache<>(2000);
-    private final AssumesInstantiationCachePool<Node> assumesInstantiationCache =
-        new AssumesInstantiationCachePool<>();
+
+    // private final AssumesInstantiationCachePool<Node> assumesInstantiationCache =
+    // new AssumesInstantiationCachePool<>();
 
     // private final LRUCache<Term, Polynomial> polynomialCache = new LRUCache<>(2000);
 
@@ -151,9 +150,9 @@ public class ServiceCaches implements SessionCaches {
         return mvCache;
     }
 
-    public AssumesInstantiationCachePool<Node> getAssumesInstantiationCache() {
-        return assumesInstantiationCache;
-    }
+    // public AssumesInstantiationCachePool<Node> getAssumesInstantiationCache() {
+    // return assumesInstantiationCache;
+    // }
 
     /// Returns the cache used by [TermTacletAppIndexCacheSet] instances.
     ///

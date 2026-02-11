@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.Name;
 import org.key_project.logic.Namespace;
 import org.key_project.prover.proof.rulefilter.IHTacletFilter;
@@ -31,6 +30,8 @@ import org.key_project.solidity.strategy.termProjection.TermBuffer;
 import org.key_project.solidity.strategy.termgenerator.SuperTermGenerator;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
+
+import org.jspecify.annotations.NonNull;
 
 public abstract class AbstractFeatureStrategy extends StaticFeatureCollection
         implements Strategy<Goal> {

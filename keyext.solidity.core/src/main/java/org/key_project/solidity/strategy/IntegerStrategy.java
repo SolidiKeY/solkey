@@ -3,7 +3,9 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy;
 
-import org.jspecify.annotations.NonNull;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.PosInTerm;
 import org.key_project.logic.Term;
@@ -21,7 +23,6 @@ import org.key_project.prover.strategy.costbased.feature.SumFeature;
 import org.key_project.prover.strategy.costbased.termfeature.TermFeature;
 import org.key_project.prover.strategy.costbased.termgenerator.SequentFormulasGenerator;
 import org.key_project.prover.strategy.costbased.termgenerator.SubtermGenerator;
-import org.key_project.solidity.theory.IntLDT;
 import org.key_project.solidity.logic.op.Equality;
 import org.key_project.solidity.logic.op.Junctor;
 import org.key_project.solidity.proof.Goal;
@@ -33,9 +34,9 @@ import org.key_project.solidity.strategy.termgenerator.DividePolynomialsProjecti
 import org.key_project.solidity.strategy.termgenerator.MultiplesModEquationsGenerator;
 import org.key_project.solidity.strategy.termgenerator.RootsGenerator;
 import org.key_project.solidity.strategy.termgenerator.SuperTermGenerator;
+import org.key_project.solidity.theory.IntLDT;
 
-import java.util.HashSet;
-import java.util.Set;
+import org.jspecify.annotations.NonNull;
 
 public class IntegerStrategy extends AbstractFeatureStrategy implements ComponentStrategy {
     public static final Name NAME = new Name("Integer Strategy");

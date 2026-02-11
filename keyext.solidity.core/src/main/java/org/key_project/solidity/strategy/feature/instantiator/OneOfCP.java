@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.feature.instantiator;
 
-import org.jspecify.annotations.NonNull;
+import java.util.Iterator;
+
 import org.key_project.prover.proof.ProofGoal;
 import org.key_project.prover.rules.RuleApp;
 import org.key_project.prover.sequent.PosInOccurrence;
@@ -14,7 +15,7 @@ import org.key_project.prover.strategy.costbased.feature.instantiator.BackTracki
 import org.key_project.prover.strategy.costbased.feature.instantiator.CPBranch;
 import org.key_project.prover.strategy.costbased.feature.instantiator.ChoicePoint;
 
-import java.util.Iterator;
+import org.jspecify.annotations.NonNull;
 
 public class OneOfCP implements Feature {
     private final Feature[] features;

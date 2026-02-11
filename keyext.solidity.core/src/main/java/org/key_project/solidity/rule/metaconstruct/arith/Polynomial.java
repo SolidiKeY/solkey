@@ -3,7 +3,9 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.rule.metaconstruct.arith;
 
-import org.jspecify.annotations.NonNull;
+import java.math.BigInteger;
+import java.util.Iterator;
+
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Operator;
 import org.key_project.solidity.common.Services;
@@ -12,8 +14,7 @@ import org.key_project.util.LRUCache;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
 
-import java.math.BigInteger;
-import java.util.Iterator;
+import org.jspecify.annotations.NonNull;
 
 /// Class for analysing and modifying polynomial expressions over the integers
 public class Polynomial {

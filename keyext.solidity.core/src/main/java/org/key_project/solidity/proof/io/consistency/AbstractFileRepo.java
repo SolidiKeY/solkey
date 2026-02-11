@@ -3,8 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.io.consistency;
 
-import org.key_project.solidity.proof.io.RuleSource;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,6 +16,8 @@ import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.key_project.solidity.proof.io.RuleSource;
 
 public abstract class AbstractFileRepo implements FileRepo {
 

@@ -3,15 +3,16 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.speclang;
 
-import org.jspecify.annotations.Nullable;
+import java.util.Map;
+import java.util.function.UnaryOperator;
+
 import org.key_project.logic.Term;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramFunction;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.statement.LoopStatement;
 
-import java.util.Map;
-import java.util.function.UnaryOperator;
+import org.jspecify.annotations.Nullable;
 
 /// A loop invariant, consisting of an invariant formula, a set of loop predicates, a modifiable
 /// clause, and a variant term.

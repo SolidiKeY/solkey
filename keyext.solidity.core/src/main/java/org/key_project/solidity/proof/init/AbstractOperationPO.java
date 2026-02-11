@@ -5,7 +5,6 @@ package org.key_project.solidity.proof.init;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
-
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramFunction;
 import org.key_project.solidity.logic.op.ProgramVariable;
@@ -55,8 +54,8 @@ public abstract class AbstractOperationPO extends AbstractPO {
 
         // prepare variables, program method
         boolean makeNamesUnique = isMakeNamesUnique();
-        final ImmutableList<ProgramVariable> paramVars = null; //tb.paramVars(fn, makeNamesUnique);
-        final ProgramVariable resultVar = null;//  tb.resultVar(fn, makeNamesUnique);
+        final ImmutableList<ProgramVariable> paramVars = null; // tb.paramVars(fn, makeNamesUnique);
+        final ProgramVariable resultVar = null;// tb.resultVar(fn, makeNamesUnique);
 
         register(paramVars, new ProgramVariable[] { resultVar }, proofServices);
 

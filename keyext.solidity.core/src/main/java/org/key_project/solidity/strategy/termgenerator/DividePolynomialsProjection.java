@@ -3,14 +3,14 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.termgenerator;
 
+import java.math.BigInteger;
+
 import org.key_project.logic.Term;
 import org.key_project.prover.strategy.costbased.termProjection.ProjectionToTerm;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.rule.metaconstruct.arith.Monomial;
 import org.key_project.solidity.strategy.termProjection.AbstractDividePolynomialsProjection;
-
-import java.math.BigInteger;
 
 public abstract class DividePolynomialsProjection extends AbstractDividePolynomialsProjection {
     private DividePolynomialsProjection(ProjectionToTerm<Goal> leftCoefficient,

@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser.varcond;
 
-import org.jspecify.annotations.NonNull;
+import java.util.Stack;
+
 import org.key_project.logic.LogicServices;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.Term;
@@ -16,11 +17,11 @@ import org.key_project.prover.rules.instantiation.MatchResultInfo;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.TermBuilder;
 import org.key_project.solidity.logic.op.LogicVariable;
-import org.key_project.solidity.rule.sv.UpdateSV;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
+import org.key_project.solidity.rule.sv.UpdateSV;
 import org.key_project.util.collection.ImmutableArray;
 
-import java.util.Stack;
+import org.jspecify.annotations.NonNull;
 
 import static org.key_project.solidity.logic.equality.RenamingTermProperty.RENAMING_TERM_PROPERTY;
 

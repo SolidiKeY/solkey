@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast;
 
-import org.jspecify.annotations.Nullable;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.solidity.rule.matching.inst.MatchConditions;
+
+import org.jspecify.annotations.Nullable;
 
 public interface SolidityProgramElement extends SyntaxElement {
 
@@ -50,8 +51,8 @@ public interface SolidityProgramElement extends SyntaxElement {
     /// @param offset the int denoting the index of the child to start with
     /// @return the resulting match conditions or <tt>null</tt> if matching failed
     default @Nullable MatchConditions matchChildren(SourceData source,
-                                                    @Nullable MatchConditions matchCond,
-                                                    int offset) {
+            @Nullable MatchConditions matchCond,
+            int offset) {
         for (int i = offset, sz = getChildCount(); i < sz; i++) {
             var child = (SolidityProgramElement) getChild(i);
             matchCond = child.match(source, matchCond);

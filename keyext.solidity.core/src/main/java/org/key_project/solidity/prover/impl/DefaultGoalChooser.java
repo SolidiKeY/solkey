@@ -3,14 +3,15 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.prover.impl;
 
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
+import java.util.Iterator;
+
 import org.key_project.prover.engine.GoalChooser;
 import org.key_project.solidity.proof.*;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
 
-import java.util.Iterator;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /// Helper class for managing a list of goals on which rules are applied. The class provides methods
 /// for removing a goal, and for updating the internal data structures after a rule has been

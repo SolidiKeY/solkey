@@ -3,19 +3,20 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.quantifierHeuristics;
 
-import org.jspecify.annotations.NonNull;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.LogicVariable;
 import org.key_project.solidity.logic.op.Quantifier;
-import org.key_project.solidity.logic.op.RFunction;
+import org.key_project.solidity.logic.op.SFunction;
 import org.key_project.util.collection.DefaultImmutableMap;
 import org.key_project.util.collection.ImmutableMap;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.jspecify.annotations.NonNull;
 
 /// This class is used to create metavariables for every universal variables in quantified formula
 /// <code>allTerm</code> and create constant functions for all existential variables. The variables
@@ -44,7 +45,7 @@ class ReplacerOfQuanVariablesWithMetavariables {
                 var mv = new Metavariable(ARBITRARY_NAME, sort);
                 m = services.getTermBuilder().var(mv);
             } else {
-                var f = new RFunction(ARBITRARY_NAME, sort, new Sort[0]);
+                var f = new SFunction(ARBITRARY_NAME, sort, new Sort[0]);
                 m = services.getTermBuilder().func(f);
             }
             var lv = LogicVariable.create(size - i, sort);

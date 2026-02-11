@@ -4,7 +4,12 @@
 package org.key_project.solidity.proof.init;
 
 
-import org.jspecify.annotations.NonNull;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.key_project.logic.Choice;
 import org.key_project.logic.Name;
 import org.key_project.logic.Namespace;
@@ -34,11 +39,7 @@ import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
 import org.key_project.util.collection.ImmutableSet;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import org.jspecify.annotations.NonNull;
 
 public class InitConfig {
     /// the services class allowing to access information about the underlying program model

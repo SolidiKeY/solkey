@@ -3,19 +3,20 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.quantifierHeuristics;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Function;
 import org.key_project.logic.op.Operator;
 import org.key_project.solidity.common.ServiceCaches;
 import org.key_project.solidity.common.Services;
-import org.key_project.solidity.theory.IntLDT;
 import org.key_project.solidity.logic.TermBuilder;
 import org.key_project.solidity.logic.op.Equality;
 import org.key_project.solidity.logic.op.Junctor;
 import org.key_project.solidity.rule.metaconstruct.arith.Polynomial;
+import org.key_project.solidity.theory.IntLDT;
 import org.key_project.util.LRUCache;
 import org.key_project.util.collection.Pair;
+
+import org.jspecify.annotations.NonNull;
 
 /// This class is used to prove some simple arithmetic problem which are `a==b`, `a>=b`,
 /// `a<=b`; Besides it can be used to prove that `a>=b` or `a<=b` by

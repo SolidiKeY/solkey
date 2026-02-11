@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.termgenerator;
 
+import java.math.BigInteger;
+import java.util.Iterator;
+
 import org.key_project.logic.Term;
 import org.key_project.prover.rules.RuleApp;
 import org.key_project.prover.sequent.PosInOccurrence;
@@ -10,16 +13,13 @@ import org.key_project.prover.strategy.costbased.MutableState;
 import org.key_project.prover.strategy.costbased.termProjection.ProjectionToTerm;
 import org.key_project.prover.strategy.costbased.termgenerator.TermGenerator;
 import org.key_project.solidity.common.Services;
-import org.key_project.solidity.theory.IntLDT;
 import org.key_project.solidity.logic.TermBuilder;
-import org.key_project.solidity.rule.metaconstruct.AbstractTermTransformer;
 import org.key_project.solidity.logic.op.Equality;
 import org.key_project.solidity.proof.Goal;
+import org.key_project.solidity.rule.metaconstruct.AbstractTermTransformer;
 import org.key_project.solidity.rule.metaconstruct.arith.Monomial;
+import org.key_project.solidity.theory.IntLDT;
 import org.key_project.util.collection.ImmutableSLList;
-
-import java.math.BigInteger;
-import java.util.Iterator;
 
 /// Term generator for inferring the range of values that a variable can have from a given
 /// non-linear

@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.Named;
 import org.key_project.prover.proof.ProofGoal;
 import org.key_project.prover.rules.RuleApp;
@@ -13,6 +12,9 @@ import org.key_project.prover.strategy.costbased.MutableState;
 import org.key_project.prover.strategy.costbased.RuleAppCost;
 import org.key_project.prover.strategy.costbased.feature.Feature;
 import org.key_project.solidity.proof.Proof;
+import org.key_project.solidity.settings.ProofSettings;
+
+import org.jspecify.annotations.NonNull;
 
 /// Generic interface for evaluating the cost of a RuleApp with regard to a specific strategy
 public interface Strategy<Goal extends ProofGoal<@NonNull Goal>> extends Named, Feature {

@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser.varcond;
 
-import org.jspecify.annotations.Nullable;
 import org.key_project.logic.LogicServices;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.Term;
@@ -20,6 +19,8 @@ import org.key_project.solidity.rule.matching.inst.GenericSortCondition;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.solidity.rule.matching.inst.SortException;
 import org.key_project.solidity.rule.sv.sort.ProgramSVSort;
+
+import org.jspecify.annotations.Nullable;
 
 /// Variable condition that enforces a given generic sort to be instantiated with the sort of a
 /// program expression a schema variable is instantiated with
@@ -61,7 +62,8 @@ public final class SolidityTypeToSortCondition implements VariableCondition {
             type = services.getSolidityInfo().getKeYSolidityType(st.name().toString()).getSort();
         } else {
             final var expr = (Expression) svSubst;
-            type = services.getSolidityInfo().getKeYSolidityType(expr.getType().name().toString()).getSort();
+            type = services.getSolidityInfo().getKeYSolidityType(expr.getType().name().toString())
+                    .getSort();
         }
         try {
             return matchCond.setInstantiations(

@@ -3,6 +3,10 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.quantifierHeuristics;
 
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+
 import org.key_project.logic.Term;
 import org.key_project.logic.Visitor;
 import org.key_project.logic.op.QuantifiableVariable;
@@ -14,10 +18,6 @@ import org.key_project.prover.strategy.costbased.MutableState;
 import org.key_project.prover.strategy.costbased.termgenerator.TermGenerator;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.proof.Goal;
-
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
 
 public class HeuristicInstantiation implements TermGenerator<Goal> {
     public final static TermGenerator<Goal> INSTANCE = new HeuristicInstantiation();

@@ -3,8 +3,10 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser.builder;
 
-import org.checkerframework.checker.nullness.qual.KeyFor;
-import org.jspecify.annotations.Nullable;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.Properties;
+
 import org.key_project.logic.Term;
 import org.key_project.prover.sequent.Sequent;
 import org.key_project.prover.sequent.SequentFormula;
@@ -17,10 +19,8 @@ import org.key_project.solidity.settings.Configuration;
 import org.key_project.solidity.util.parsing.BuildingException;
 import org.key_project.util.collection.ImmutableSLList;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.math.BigDecimal;
-import java.util.Properties;
+import org.checkerframework.checker.nullness.qual.KeyFor;
+import org.jspecify.annotations.Nullable;
 
 public class ProblemFinder extends ExpressionBuilder {
     private @Nullable Sequent problem;
