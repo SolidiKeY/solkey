@@ -37,12 +37,12 @@ public class Services implements LogicServices, ProofServices {
     private final VariableNamer variableNamer = new VariableNamer(this);
     /// map of names to counters
     private final HashMap<String, Counter> counters;
+    private final SolidityInfo solidityInfo;
     /**
      * proof specific namespaces (functions, predicates, sorts, variables)
      */
     private NamespaceSet namespaces = new NamespaceSet();
     private TheoryInfo theoryInfo;
-    private final SolidityInfo solidityInfo;
     /// the Solidity model
     private SolidityModel model;
     /// records name proposals
@@ -54,15 +54,15 @@ public class Services implements LogicServices, ProofServices {
     public Services() {
         tf = new TermFactory();
         tb = new TermBuilder(tf, this);
-        //specRepo = new SpecificationRepository(this);
+        // specRepo = new SpecificationRepository(this);
         counters = new LinkedHashMap<>();
         caches = new ServiceCaches();
         solidityInfo = new SolidityInfo();
         nameRecorder = new NameRecorder();
     }
 
-    @SuppressWarnings({"argument.type.incompatible", "assignment.type.incompatible",
-            "initialization.fields.uninitialized"})
+    @SuppressWarnings({ "argument.type.incompatible", "assignment.type.incompatible",
+        "initialization.fields.uninitialized" })
     public Services(Services services) {
         this.namespaces = services.namespaces;
         this.theoryInfo = services.theoryInfo;
@@ -91,8 +91,8 @@ public class Services implements LogicServices, ProofServices {
             return tb.var(pv);
         }
         throw new IllegalArgumentException(
-                "Unknown or not convertible ProgramElement " + pe + " of type "
-                        + pe.getClass());
+            "Unknown or not convertible ProgramElement " + pe + " of type "
+                + pe.getClass());
     }
 
     public @NonNull NamespaceSet getNamespaces() {
@@ -192,6 +192,20 @@ public class Services implements LogicServices, ProofServices {
 
     public void setProof(Proof proof) {
         this.proof = proof;
+    }
+
+    public Services copy() {
+        return copy(getProfile());
+    }
+
+    public Services copy(Profile profile) {
+        var s = new Services(profile);
+        // s.specRepos = specRepos;
+        s.setTheoryInfo(getTheoryInfo());
+        s.setNamespaces(namespaces.copy());
+        s.setSolidityModel(getSolidityModel());
+        nameRecorder = nameRecorder.copy();
+        return s;
     }
 
     /// creates a new service object with the same ldt information as the actual one
