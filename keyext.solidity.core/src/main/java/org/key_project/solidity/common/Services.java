@@ -38,6 +38,8 @@ public class Services implements LogicServices, ProofServices {
     /// map of names to counters
     private final HashMap<String, Counter> counters;
     private final SolidityInfo solidityInfo;
+
+    private final SpecificationRepository specificationRepository;
     /**
      * proof specific namespaces (functions, predicates, sorts, variables)
      */
@@ -54,7 +56,7 @@ public class Services implements LogicServices, ProofServices {
     public Services() {
         tf = new TermFactory();
         tb = new TermBuilder(tf, this);
-        // specRepo = new SpecificationRepository(this);
+        specificationRepository = new SpecificationRepository(this);
         counters = new LinkedHashMap<>();
         caches = new ServiceCaches();
         solidityInfo = new SolidityInfo();
@@ -72,7 +74,7 @@ public class Services implements LogicServices, ProofServices {
         this.profile = services.profile;
         this.counters = services.counters;
         this.caches = services.caches;
-        // this.specRepos = services.specRepos;
+        this.specificationRepository = services.specificationRepository;
         this.solidityInfo = services.solidityInfo;
         this.model = services.model;
         nameRecorder = services.nameRecorder;
@@ -145,7 +147,7 @@ public class Services implements LogicServices, ProofServices {
     }
 
     public Profile getProfile() {
-        throw new RuntimeException("Not implemented yet");
+        return profile;
     }
 
     public void saveNameRecorder(Node n) {
@@ -160,7 +162,7 @@ public class Services implements LogicServices, ProofServices {
     }
 
     public SpecificationRepository getSpecificationRepository() {
-        throw new RuntimeException("Not implemented yet");
+        return specificationRepository;
     }
 
     public Counter getCounter(String name) {

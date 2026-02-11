@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.mgt;
 
+import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.statement.LoopStatement;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.init.ProofOblInput;
@@ -11,6 +12,12 @@ import org.key_project.solidity.speclang.LoopSpecification;
 import org.key_project.util.collection.ImmutableSet;
 
 public class SpecificationRepository {
+    private final Services services;
+
+    public SpecificationRepository(Services services) {
+        this.services = services;
+    }
+
     public Contract getContractByName(String baseContractName) {
         throw new RuntimeException("Not implemented yet");
     }
