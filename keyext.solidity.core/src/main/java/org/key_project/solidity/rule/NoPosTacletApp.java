@@ -13,6 +13,7 @@ import org.key_project.prover.rules.instantiation.MatchResultInfo;
 import org.key_project.prover.sequent.PosInOccurrence;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.proof.Goal;
+import org.key_project.solidity.rule.matching.inst.MatchConditions;
 import org.key_project.solidity.rule.taclets.*;
 import org.key_project.solidity.strategy.FindTacletAppContainer;
 import org.key_project.solidity.strategy.NoFindTacletAppContainer;

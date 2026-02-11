@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.rule.execution;
 
+import java.math.BigInteger;
 import java.util.Iterator;
 
 import org.key_project.prover.rules.RuleApp;
@@ -11,7 +12,7 @@ import org.key_project.prover.sequent.Sequent;
 import org.key_project.prover.sequent.SequentChangeInfo;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.proof.Goal;
-import org.key_project.solidity.rule.MatchConditions;
+import org.key_project.solidity.rule.matching.inst.MatchConditions;
 import org.key_project.solidity.rule.TacletApp;
 import org.key_project.solidity.rule.TacletExecutor;
 import org.key_project.solidity.rule.taclets.SolNoFindTaclet;

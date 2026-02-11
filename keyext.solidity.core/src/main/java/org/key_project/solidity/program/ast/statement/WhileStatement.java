@@ -3,45 +3,18 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.statement;
 
-import java.util.Objects;
-
-import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public class WhileStatement implements Statement {
-
-    private final Expression condition;
-    private final Statement body;
+public class WhileStatement extends LoopStatement {
 
     public WhileStatement(Expression condition, Statement body) {
-        this.condition = condition;
-        this.body = body;
+        super(condition, body);
     }
 
     public WhileStatement(ExtList children) {
-        this.condition = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
-        this.body = Objects.requireNonNull(children.removeFirstOccurrence(Statement.class));
-    }
-
-    @Override
-    public SyntaxElement getChild(int n) {
-        if (n == 0)
-            return condition;
-        else if (n == 1) {
-            return body;
-        }
-        throw new IndexOutOfBoundsException();
-    }
-
-    @Override
-    public int getChildCount() {
-        return 2;
-    }
-
-    public Expression getCondition() {
-        return condition;
+        super(children);
     }
 
     @Override

@@ -662,7 +662,7 @@ public class ExpressionBuilder extends DefaultBuilder {
             Operator Z = functions().lookup("Z");
             if (result.op() == Z) {
                 // weigl: rewrite neg(Z(1(#)) to Z(neglit(1(#))
-                // This mimics the old KeYRustyParser behaviour. Unknown if necessary.
+                // This mimics the old KeYSolidityDLParser behaviour. Unknown if necessary.
                 final Function neglit =
                     services.getTheoryInfo().getIntLDT().getNegativeNumberSign();
                 final Term num = result.sub(0);

@@ -3,13 +3,27 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy;
 
+import org.jspecify.annotations.NonNull;
+import org.key_project.logic.Named;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Proof;
+import org.key_project.solidity.settings.StrategySettings;
+import org.key_project.solidity.strategy.definition.StrategySettingsDefinition;
 
-import org.jspecify.annotations.NonNull;
+/// Interface for creating Strategy instances. The strategy name and the name of the strategy
+/// factory
+/// are assumed to be the same (you have to refactor if you want to change this).
+public interface StrategyFactory extends Named {
+    /// Create strategy for a proof.
+    ///
+    /// @param proof the Proof a strategy is created for
+    /// @param strategyProperties the StrategyProperties to customize the strategy
+    /// @return the newly created strategy
+    Strategy<@NonNull Goal> create(Proof proof, StrategyProperties strategyProperties);
 
-public class StrategyFactory {
-    public Strategy<@NonNull Goal> create(Proof proof, StrategyProperties strategyProperties) {
-        throw new RuntimeException("Not implemented yet");
-    }
+    /// Returns the [StrategySettingsDefinition] which describes how a user interface has to
+    /// look like to edit [StrategySettings] supported by created [Strategy] instances.
+    ///
+    /// @return The [StrategySettingsDefinition] which describes the user interface.
+    StrategySettingsDefinition getSettingsDefinition();
 }

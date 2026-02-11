@@ -3,12 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
@@ -68,7 +63,7 @@ public class TacletIndex {
     }
 
 
-    public TacletIndex(ImmutableList<Taclet> taclets) {
+    public TacletIndex(Collection<Taclet> taclets) {
         rwList = new LinkedHashMap<>();
         antecList = new LinkedHashMap<>();
         succList = new LinkedHashMap<>();

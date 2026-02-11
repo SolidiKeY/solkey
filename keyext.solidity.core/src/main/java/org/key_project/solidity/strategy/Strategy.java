@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy;
 
+import org.jspecify.annotations.NonNull;
 import org.key_project.logic.Named;
 import org.key_project.prover.proof.ProofGoal;
 import org.key_project.prover.rules.RuleApp;
@@ -12,10 +13,6 @@ import org.key_project.prover.strategy.costbased.MutableState;
 import org.key_project.prover.strategy.costbased.RuleAppCost;
 import org.key_project.prover.strategy.costbased.feature.Feature;
 import org.key_project.solidity.proof.Proof;
-import org.key_project.solidity.proof.ProofSettings;
-
-import org.jspecify.annotations.NonNull;
-
 
 /// Generic interface for evaluating the cost of a RuleApp with regard to a specific strategy
 public interface Strategy<Goal extends ProofGoal<@NonNull Goal>> extends Named, Feature {
@@ -58,8 +55,7 @@ public interface Strategy<Goal extends ProofGoal<@NonNull Goal>> extends Named, 
     /// @param proof The [Proof] the strategy of which should be updated.
     /// @param p The new [StrategyProperties]
     static void updateStrategySettings(Proof proof, StrategyProperties p) {
-        final Strategy<org.key_project.solidity.proof.Goal> strategy =
-            proof.getActiveStrategy();
+        final Strategy<org.key_project.solidity.proof.Goal> strategy = proof.getActiveStrategy();
         ProofSettings.DEFAULT_SETTINGS.getStrategySettings().setStrategy(strategy.name());
         ProofSettings.DEFAULT_SETTINGS.getStrategySettings().setActiveStrategyProperties(p);
 
@@ -70,4 +66,10 @@ public interface Strategy<Goal extends ProofGoal<@NonNull Goal>> extends Named, 
     }
 
     default boolean isResponsibleFor(RuleSet rs) { return false; }
+
+    default RuleAppCost instantiateApp(RuleApp app, PosInOccurrence pio,
+            org.key_project.solidity.proof.Goal goal,
+            MutableState mState) {
+        return null;
+    }
 }

@@ -12,7 +12,6 @@ import org.key_project.solidity.parser.builder.ChoiceFinder;
 import org.key_project.solidity.parser.builder.ConfigurationBuilder;
 import org.key_project.solidity.parser.builder.FindProblemInformation;
 import org.key_project.solidity.parser.builder.IncludeFinder;
-import org.key_project.solidity.proof.ProofSettings;
 import org.key_project.solidity.proof.init.Includes;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -21,6 +20,8 @@ import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.key_project.solidity.settings.Configuration;
+import org.key_project.solidity.settings.ProofSettings;
 
 import static org.key_project.solidity.parser.KeYSolidityDLParser.*;
 

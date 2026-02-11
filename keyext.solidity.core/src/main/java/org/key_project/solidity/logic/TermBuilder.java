@@ -10,8 +10,11 @@ import org.key_project.logic.TermCreationException;
 import org.key_project.logic.op.Function;
 import org.key_project.logic.op.QuantifiableVariable;
 import org.key_project.logic.op.UpdateableOperator;
+import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.*;
+import org.key_project.solidity.rule.sv.OperatorSV;
+import org.key_project.solidity.strategy.quantifierHeuristics.Metavariable;
 import org.key_project.solidity.theory.IntLDT;
 import org.key_project.util.collection.ImmutableArray;
 import org.key_project.util.collection.ImmutableList;
@@ -399,11 +402,11 @@ public class TermBuilder {
 
     /*
      * public Term TRUE() {
-     * return services.getLDTs().getBoolLDT().getTrueTerm();
+     * return services.getTheoryInfo().getBoolLDT().getTrueTerm();
      * }
      *
      * public Term FALSE() {
-     * return services.getLDTs().getBoolLDT().getFalseTerm();
+     * return services.getTheoryInfo().getBoolLDT().getFalseTerm();
      * }
      */
 
@@ -536,6 +539,14 @@ public class TermBuilder {
         return tf.createTerm(pv);
     }
 
+    public Term var(Metavariable mv) {
+        return tf.createTerm(mv);
+    }
+
+    public Term var(SchemaVariable sv) {
+        return tf.createTerm(sv);
+    }
+
     /*
      * /// Creates a program variable for the result. Take care to register it in the namespaces.
      * public ProgramVariable resultVar(ProgramFunction fn, boolean makeNameUnique) {
@@ -626,7 +637,7 @@ public class TermBuilder {
      * assert krtSort != null;
      * assert t.sort().extendsTrans(krtSort) || t.sort() instanceof ProgramSVSort;
      * final Sort s = t.sort() instanceof ProgramSVSort ? krtSort : t.sort();
-     * final var intLDT = services.getLDTs().getIntLDT();
+     * final var intLDT = services.getTheoryInfo().getIntLDT();
      * if (s.extendsTrans(intLDT.targetSort())) {
      * return func(intLDT.getInBounds(Objects.requireNonNull(krt.getRustyType())), t);
      * } else {

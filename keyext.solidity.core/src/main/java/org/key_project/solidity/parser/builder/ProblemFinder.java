@@ -3,11 +3,115 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser.builder;
 
+import org.checkerframework.checker.nullness.qual.KeyFor;
+import org.jspecify.annotations.Nullable;
+import org.key_project.logic.Term;
+import org.key_project.prover.sequent.Sequent;
+import org.key_project.prover.sequent.SequentFormula;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.NamespaceSet;
+import org.key_project.solidity.parser.KeYSolidityDLParser;
+import org.key_project.solidity.parser.ParsingFacade;
+import org.key_project.solidity.proof.calculus.SoliditySequentKit;
+import org.key_project.solidity.settings.Configuration;
+import org.key_project.solidity.util.parsing.BuildingException;
+import org.key_project.util.collection.ImmutableSLList;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.math.BigDecimal;
+import java.util.Properties;
 
 public class ProblemFinder extends ExpressionBuilder {
+    private @Nullable Sequent problem;
+    private @Nullable String chooseContract;
+    private @Nullable Configuration proofObligation;
+
     public ProblemFinder(Services services, NamespaceSet nss) {
         super(services, nss);
+    }
+
+    @Override
+    public @Nullable Object visitFile(KeYSolidityDLParser.FileContext ctx) {
+        each(ctx.problem());
+        return null;
+    }
+
+    /// Try to find a problem defined in the [KeYUserProblemFile]
+    /// located in the
+    /// given AST.
+    ///
+    /// After this method is called, you can retrieve the chosen contract via
+    /// [#getChooseContract()] or the
+    /// proof obligation information via [#getProofObligation()].
+    ///
+    /// @param ctx the parse tree
+    /// @return a term if `\problem` entry exists.
+    /// @throws BuildingException if the
+    @Override
+    public @Nullable Term visitProblem(KeYSolidityDLParser.ProblemContext ctx) {
+        if (ctx.CHOOSECONTRACT() != null) {
+            if (ctx.chooseContract != null) {
+                // TODO
+                chooseContract = ""; // ParsingFacade.getValueDocumentation(ctx.chooseContract);
+            }
+            // .replace("\\\\:", ":");
+            else {
+                chooseContract = "";
+            }
+        }
+        if (ctx.PROOFOBLIGATION() != null) {
+            var obl = ctx.proofObligation;
+            if (obl instanceof KeYSolidityDLParser.CstringContext stringContext) {
+                try {
+                    Properties p = new Properties();
+                    var value = stringContext.STRING_LITERAL().getText();
+                    value = value.substring(1, value.length() - 1).replace("\\\\", "\\");
+                    p.load(new StringReader(value));
+                    proofObligation = new Configuration();
+                    p.forEach((@KeyFor("p") Object k, Object v) -> {
+                        assert proofObligation != null;
+                        proofObligation.set(k.toString(), v.toString());
+                    });
+                } catch (IOException e) {
+                    throw new BuildingException(ctx,
+                        "Could not load the proof obligation given " +
+                            "as a property file due to an error in the properties format",
+                        e);
+                }
+            } else if (obl instanceof KeYSolidityDLParser.TableContext tbl) {
+                proofObligation = ParsingFacade.getConfiguration(tbl);
+            } else {
+                throw new BuildingException(ctx,
+                    "Found a proof obligation entry, but the value is not a string or a JSON object");
+            }
+        }
+        if (ctx.PROBLEM() != null) {
+            problem = accept(ctx.termorseq());
+        }
+        return null;
+    }
+
+    @Override
+    public @Nullable Sequent visitTermorseq(KeYSolidityDLParser.TermorseqContext ctx) {
+        var obj = super.visitTermorseq(ctx);
+        if (obj instanceof Sequent s)
+            return s;
+        if (obj instanceof Term t)
+            return SoliditySequentKit
+                    .createSuccSequent(ImmutableSLList.singleton(new SequentFormula(t)));
+        return null;
+    }
+
+    public @Nullable String getChooseContract() {
+        return chooseContract;
+    }
+
+    public @Nullable Configuration getProofObligation() {
+        return proofObligation;
+    }
+
+    public @Nullable Sequent getProblem() {
+        return problem;
     }
 }

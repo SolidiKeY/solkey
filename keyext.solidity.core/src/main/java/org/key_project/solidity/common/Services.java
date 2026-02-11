@@ -18,11 +18,13 @@ import org.key_project.solidity.logic.NamespaceSet;
 import org.key_project.solidity.logic.TermBuilder;
 import org.key_project.solidity.logic.TermFactory;
 import org.key_project.solidity.logic.op.ProgramVariable;
-import org.key_project.solidity.program.ast.SolidityModel;
+import org.key_project.solidity.program.ast.SolidityInfo;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.proof.Counter;
 import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.proof.Proof;
+import org.key_project.solidity.proof.SolidityModel;
+import org.key_project.solidity.proof.io.LDTInput;
 import org.key_project.solidity.proof.mgt.SpecificationRepository;
 import org.key_project.solidity.theory.TheoryInfo;
 
@@ -34,57 +36,73 @@ public class Services implements LogicServices, ProofServices {
      * proof specific namespaces (functions, predicates, sorts, variables)
      */
     private NamespaceSet namespaces = new NamespaceSet();
-    private SolidityModel solidityModel;
     private final TermFactory tf;
     private final TermBuilder tb;
     private TheoryInfo theoryInfo;
+    private SolidityInfo solidityInfo;
+    /// the Solidity model
+    private SolidityModel model;
 
     /// variable namer for inner renaming
     private final VariableNamer variableNamer = new VariableNamer(this);
     /// records name proposals
     private NameRecorder nameRecorder;
+    private final ServiceCaches caches;
 
     /// map of names to counters
     private final HashMap<String, Counter> counters;
 
     /// the proof to which this services belongs (might be null)
     private Proof proof;
+    private Profile profile;
 
     public Services() {
         tf = new TermFactory();
         tb = new TermBuilder(tf, this);
         counters = new LinkedHashMap<>();
-        solidityModel = new SolidityModel();
+        solidityInfo = new SolidityInfo();
+        nameRecorder = new NameRecorder();
+        this.caches = new ServiceCaches();
     }
 
-    @SuppressWarnings({ "argument.type.incompatible", "assignment.type.incompatible",
-        "initialization.fields.uninitialized" })
+    @SuppressWarnings({"argument.type.incompatible", "assignment.type.incompatible",
+            "initialization.fields.uninitialized"})
     public Services(Services services) {
         this.namespaces = services.namespaces;
-        // this.ldts = services.ldts;
+        this.theoryInfo = services.theoryInfo;
         this.tf = new TermFactory();
         this.tb = new TermBuilder(tf, this);
         this.proof = services.proof;
-        // this.profile = services.profile;
+        this.profile = services.profile;
         this.counters = services.counters;
-        // this.caches = services.caches;
+        this.caches = services.caches;
         // this.specRepos = services.specRepos;
-        this.solidityModel = services.solidityModel;
-        // this.solidityInfo = services.solidityInfo;
+        this.solidityInfo = services.solidityInfo;
+        this.model = services.model;
         nameRecorder = services.nameRecorder;
+    }
+
+    public Services(Profile profile) {
+        this();
+        assert profile != null;
+        this.profile = profile;
     }
 
     public @NonNull NamespaceSet getNamespaces() {
         return namespaces;
     }
 
-    public SolidityModel getSolidityInfo() {
-        return solidityModel;
+    public SolidityInfo getSolidityInfo() {
+        return solidityInfo;
+    }
+
+    public void setSolidityModel(SolidityModel model) {
+        this.model = model;
     }
 
     @Override
-    public SessionCaches getCaches() {
-        return null;
+    public ServiceCaches getCaches() {
+        return caches;
     }
 
     public TermFactory getTermFactory() {
@@ -103,6 +121,10 @@ public class Services implements LogicServices, ProofServices {
         this.theoryInfo = theoryInfo;
     }
 
+    public SolidityModel getSolidityModel() {
+        return model;
+    }
+
     /// this functionality should be moved to an external class
     public static Term convertToLogicElement(SolidityProgramElement pe, Services services) {
         var tb = services.getTermBuilder();
@@ -110,8 +132,8 @@ public class Services implements LogicServices, ProofServices {
             return tb.var(pv);
         }
         throw new IllegalArgumentException(
-            "Unknown or not convertible ProgramElement " + pe + " of type "
-                + pe.getClass());
+                "Unknown or not convertible ProgramElement " + pe + " of type "
+                        + pe.getClass());
     }
 
     public VariableNamer getVariableNamer() {
@@ -161,5 +183,17 @@ public class Services implements LogicServices, ProofServices {
 
     public NameRecorder getNameRecorder() {
         return nameRecorder;
+    }
+
+    public Proof getProof() {
+        return proof;
+    }
+
+    public Services copy() {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    public Services copyPreservesLDTInformation() {
+        throw new RuntimeException("Not implemented yet");
     }
 }

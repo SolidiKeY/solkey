@@ -10,7 +10,7 @@ import org.key_project.prover.sequent.Sequent;
 import org.key_project.prover.sequent.SequentChangeInfo;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.proof.Goal;
-import org.key_project.solidity.rule.MatchConditions;
+import org.key_project.solidity.rule.matching.inst.MatchConditions;
 import org.key_project.solidity.rule.SolTaclet;
 import org.key_project.solidity.rule.taclets.AntecSuccTacletGoalTemplate;
 

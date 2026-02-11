@@ -12,6 +12,8 @@ import org.key_project.prover.rules.*;
 import org.key_project.prover.rules.tacletbuilder.TacletGoalTemplate;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.visitor.BoundVarsVisitor;
+import org.key_project.solidity.proof.RuleAppIndex;
+import org.key_project.solidity.proof.TacletAppIndex;
 import org.key_project.solidity.proof.mgt.AxiomJustification;
 import org.key_project.solidity.proof.mgt.LemmaJustification;
 import org.key_project.solidity.proof.mgt.RuleJustification;

@@ -185,12 +185,12 @@ public final class ParsingFacade {
      * return readConfigurationFile(file.toPath());
      * }
      *
-     * public static Configuration getConfiguration(KeYRustyParser.TableContext ctx) {
+     * public static Configuration getConfiguration(KeYSolidityDLParser.TableContext ctx) {
      * final var cfg = new ConfigurationBuilder();
      * return cfg.visitTable(ctx);
      * }
      *
-     * public static @NonNull String getValueDocumentation(KeYRustyParser.String_valueContext ctx) {
+     * public static @NonNull String getValueDocumentation(KeYSolidityDLParser.String_valueContext ctx) {
      * return ctx.getText().substring(1, ctx.getText().length() - 1).replace("\\\"", "\"")
      * .replace("\\\\", "\\");
      * }

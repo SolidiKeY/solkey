@@ -11,9 +11,9 @@ import org.key_project.solidity.program.ast.expressions.operators.*;
 /** This class resolves the type of a reference or expression */
 public class TypeResolver {
 
-    private final SolidityModel solidityModel;
+    private final SolidityInfo solidityModel;
 
-    public TypeResolver(SolidityModel solidityModel) {
+    public TypeResolver(SolidityInfo solidityModel) {
         this.solidityModel = solidityModel;
     }
 

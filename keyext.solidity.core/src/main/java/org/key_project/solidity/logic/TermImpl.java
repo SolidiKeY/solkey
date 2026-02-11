@@ -6,11 +6,13 @@ package org.key_project.solidity.logic;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.key_project.logic.Term;
+import org.key_project.logic.TermCreationException;
 import org.key_project.logic.Visitor;
 import org.key_project.logic.op.Modality;
 import org.key_project.logic.op.Operator;
 import org.key_project.logic.op.QuantifiableVariable;
 import org.key_project.logic.sort.Sort;
+import org.key_project.solidity.logic.op.LogicVariable;
 import org.key_project.solidity.logic.op.SModality;
 import org.key_project.util.Strings;
 import org.key_project.util.collection.DefaultImmutableSet;
@@ -40,6 +42,7 @@ public class TermImpl implements Term {
 
     private @MonotonicNonNull Sort sort;
     private int depth = -1;
+    private int maxDebruijnIndex = -1;
 
     private enum ThreeValuedTruth {
         TRUE, FALSE, UNKNOWN
@@ -306,5 +309,46 @@ public class TermImpl implements Term {
         }
         this.hashcode = hash;
         return hash;
+    }
+
+    // TODO(DD): Rework this into an interface
+    public int getMaxDebruijnIndex() {
+        if (maxDebruijnIndex == -1) {
+            maxDebruijnIndex = 0;
+            if (op instanceof LogicVariable lv) {
+                maxDebruijnIndex = lv.getIndex();
+            } else {
+                for (int i = 0; i < subs.size(); i++) {
+                    var ti = (TermImpl) sub(i);
+                    int m = ti.getMaxDebruijnIndex();
+                    if (op.bindVarsAt(i)) {
+                        m -= boundVars.size();
+                    }
+                    if (m > maxDebruijnIndex) {
+                        maxDebruijnIndex = m;
+                    }
+                }
+            }
+        }
+        return maxDebruijnIndex;
+    }
+
+    // TODO(DD): Rework this into an interface
+    /// Whether this term contains a logic variable for the Debruijn index `idx` (it is adjusted for
+    // nested bound vars).
+    public boolean containsLogicVariable(int idx) {
+        if (op instanceof LogicVariable lv && lv.getIndex() == idx) {
+            return true;
+        }
+        for (int i = 0, arity = subs.size(); i < arity; i++) {
+            int subIdx = idx;
+            if (op.bindVarsAt(i)) {
+                subIdx += boundVars.size();
+            }
+            if (((TermImpl) sub(i)).containsLogicVariable(subIdx)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

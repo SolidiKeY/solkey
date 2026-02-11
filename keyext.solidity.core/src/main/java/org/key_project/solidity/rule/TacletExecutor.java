@@ -25,6 +25,7 @@ import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.rule.execution.ProgVarReplacer;
 import org.key_project.solidity.rule.execution.SyntacticalReplaceVisitor;
 import org.key_project.solidity.rule.matching.inst.GenericSortCondition;
+import org.key_project.solidity.rule.matching.inst.MatchConditions;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.solidity.rule.taclets.TacletSchemaVariableCollector;
 import org.key_project.util.collection.ImmutableList;
@@ -194,9 +195,9 @@ public abstract class TacletExecutor extends
     /// schemavariables
     /// @param services the Services encapsulating all Rust information
     protected void addToAntec(Semisequent semi, SequentChangeInfo currentSequent,
-            PosInOccurrence pos,
-            PosInOccurrence applicationPosInOccurrence, MatchConditions matchCond, Goal goal,
-            RuleApp tacletApp, Services services) {
+                              PosInOccurrence pos,
+                              PosInOccurrence applicationPosInOccurrence, MatchConditions matchCond, Goal goal,
+                              RuleApp tacletApp, Services services) {
         addToPos(semi, currentSequent, pos, applicationPosInOccurrence, true,
             matchCond, goal, tacletApp, services);
     }

@@ -43,6 +43,7 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.proof.naming.VariableNameProposer;
 import org.key_project.solidity.rule.matching.inst.GenericSortCondition;
 import org.key_project.solidity.rule.matching.inst.GenericSortException;
+import org.key_project.solidity.rule.matching.inst.MatchConditions;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.solidity.rule.sv.*;
 import org.key_project.solidity.rule.sv.sort.ProgramSVSort;
