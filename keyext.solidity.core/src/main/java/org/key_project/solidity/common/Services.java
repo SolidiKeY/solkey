@@ -30,26 +30,23 @@ import org.jspecify.annotations.NonNull;
 
 public class Services implements LogicServices, ProofServices {
 
+    private final TermFactory tf;
+    private final TermBuilder tb;
+    private final ServiceCaches caches;
+    /// variable namer for inner renaming
+    private final VariableNamer variableNamer = new VariableNamer(this);
+    /// map of names to counters
+    private final HashMap<String, Counter> counters;
     /**
      * proof specific namespaces (functions, predicates, sorts, variables)
      */
     private NamespaceSet namespaces = new NamespaceSet();
-    private final TermFactory tf;
-    private final TermBuilder tb;
     private TheoryInfo theoryInfo;
-    private SolidityInfo solidityInfo;
+    private final SolidityInfo solidityInfo;
     /// the Solidity model
     private SolidityModel model;
-
-    /// variable namer for inner renaming
-    private final VariableNamer variableNamer = new VariableNamer(this);
     /// records name proposals
     private NameRecorder nameRecorder;
-    private final ServiceCaches caches;
-
-    /// map of names to counters
-    private final HashMap<String, Counter> counters;
-
     /// the proof to which this services belongs (might be null)
     private Proof proof;
     private Profile profile;
@@ -57,14 +54,15 @@ public class Services implements LogicServices, ProofServices {
     public Services() {
         tf = new TermFactory();
         tb = new TermBuilder(tf, this);
+        //specRepo = new SpecificationRepository(this);
         counters = new LinkedHashMap<>();
+        caches = new ServiceCaches();
         solidityInfo = new SolidityInfo();
         nameRecorder = new NameRecorder();
-        this.caches = new ServiceCaches();
     }
 
-    @SuppressWarnings({ "argument.type.incompatible", "assignment.type.incompatible",
-        "initialization.fields.uninitialized" })
+    @SuppressWarnings({"argument.type.incompatible", "assignment.type.incompatible",
+            "initialization.fields.uninitialized"})
     public Services(Services services) {
         this.namespaces = services.namespaces;
         this.theoryInfo = services.theoryInfo;
@@ -86,16 +84,27 @@ public class Services implements LogicServices, ProofServices {
         this.profile = profile;
     }
 
+    /// this functionality should be moved to an external class
+    public static Term convertToLogicElement(SolidityProgramElement pe, Services services) {
+        var tb = services.getTermBuilder();
+        if (pe instanceof ProgramVariable pv) {
+            return tb.var(pv);
+        }
+        throw new IllegalArgumentException(
+                "Unknown or not convertible ProgramElement " + pe + " of type "
+                        + pe.getClass());
+    }
+
     public @NonNull NamespaceSet getNamespaces() {
         return namespaces;
     }
 
-    public SolidityInfo getSolidityInfo() {
-        return solidityInfo;
+    public void setNamespaces(NamespaceSet ns) {
+        this.namespaces = ns;
     }
 
-    public void setSolidityModel(SolidityModel model) {
-        this.model = model;
+    public SolidityInfo getSolidityInfo() {
+        return solidityInfo;
     }
 
     @Override
@@ -123,15 +132,8 @@ public class Services implements LogicServices, ProofServices {
         return model;
     }
 
-    /// this functionality should be moved to an external class
-    public static Term convertToLogicElement(SolidityProgramElement pe, Services services) {
-        var tb = services.getTermBuilder();
-        if (pe instanceof ProgramVariable pv) {
-            return tb.var(pv);
-        }
-        throw new IllegalArgumentException(
-            "Unknown or not convertible ProgramElement " + pe + " of type "
-                + pe.getClass());
+    public void setSolidityModel(SolidityModel model) {
+        this.model = model;
     }
 
     public VariableNamer getVariableNamer() {
@@ -140,14 +142,6 @@ public class Services implements LogicServices, ProofServices {
 
     public void addNameProposal(Name name) {
         nameRecorder.addProposal(name);
-    }
-
-    public void setProof(Proof proof) {
-        this.proof = proof;
-    }
-
-    public void setNamespaces(NamespaceSet ns) {
-        this.namespaces = ns;
     }
 
     public Profile getProfile() {
@@ -179,6 +173,15 @@ public class Services implements LogicServices, ProofServices {
         return c;
     }
 
+    /// Reset all counters associated with this service.
+    /// Only use this method if the proof is empty!
+    public void resetCounters() {
+        if (proof.root().childrenCount() > 0) {
+            throw new IllegalStateException("tried to reset counters on non-empty proof");
+        }
+        counters.clear();
+    }
+
     public NameRecorder getNameRecorder() {
         return nameRecorder;
     }
@@ -187,15 +190,19 @@ public class Services implements LogicServices, ProofServices {
         return proof;
     }
 
-    public Services copy() {
-        throw new RuntimeException("Not implemented yet");
+    public void setProof(Proof proof) {
+        this.proof = proof;
     }
 
+    /// creates a new service object with the same ldt information as the actual one
     public Services copyPreservesLDTInformation() {
-        throw new RuntimeException("Not implemented yet");
+        Services s = new Services(getProfile());
+        s.setTheoryInfo(getTheoryInfo());
+        s.setNamespaces(namespaces.copy());
+        return s;
     }
 
     public void initTheories() {
-        throw new RuntimeException("Not implemented yet");
+        theoryInfo = new TheoryInfo(this);
     }
 }
