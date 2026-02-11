@@ -201,7 +201,10 @@ public class SolJSONParser {
             StateMutability.valueOf(node.findValue("stateMutability").asText());
         List<ModifierReference> modifiers =
             node.findValue("modifiers").valueStream().map(this::parseModifierRefence).toList();
-        String documentation = node.findValue("documentation").findValue("text").asText();
+        JsonNode documentationNode = node.findValue("documentation");
+        String documentation = "";
+        if(documentationNode != null)
+            documentation = documentationNode.findValue("text").asText();
         FunctionDeclaration function = new FunctionDeclaration(new Name(name), returnParameters,
             inputParamenters, body, kind, visibility, stateMutability, modifiers, documentation);
         id2Name.put(id, function);
