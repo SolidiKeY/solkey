@@ -16,7 +16,7 @@ public class BoolLiteral extends Literal {
 
     private final boolean value;
 
-    private BoolLiteral(boolean value) {
+    public BoolLiteral(boolean value) {
         super(PrimitiveType.BOOL);
         this.value = value;
     }

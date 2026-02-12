@@ -10,6 +10,7 @@ import org.key_project.solidity.parser.SolidityParser.*;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.statement.Block;
 
 public class Parser {
@@ -33,5 +34,12 @@ public class Parser {
         SolidityToKey stk = new SolidityToKey();
         BlockContext bc = Parser.parseBlockContext(s);
         return (Block) stk.visitBlock(bc);
+    }
+
+    static public Expression parseExpression(String s) {
+        SolidityParser parser = parse(s);
+        ExpressionContext expCtx = parser.expression();
+        SolidityToKey stk = new SolidityToKey();
+        return (Expression) stk.visitExpression(expCtx);
     }
 }
