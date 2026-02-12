@@ -5,6 +5,7 @@ import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.expressions.TupleExpression;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
+import org.key_project.solidity.program.ast.expressions.operators.AddOperator;
 import org.key_project.solidity.program.ast.statement.Block;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -34,5 +35,11 @@ public class SolidityToKeyTest {
     void tupleExpression(){
         TupleExpression exp = (TupleExpression) parseExpression("(false, true)");
         assertEquals(false, ((BoolLiteral) exp.getChild(0)).getValue());
+    }
+
+    @Test
+    void addiction() {
+        AddOperator exp = (AddOperator) parseExpression("1 + 2");
+        assertEquals(1, ((Uint256Literal) exp.getChild(0)).getValue().intValue());
     }
 }

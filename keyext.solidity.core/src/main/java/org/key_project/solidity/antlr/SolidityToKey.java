@@ -1,5 +1,6 @@
 package org.key_project.solidity.antlr;
 
+import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.parser.SolidityBaseVisitor;
 import org.key_project.solidity.parser.SolidityParser.*;
@@ -7,6 +8,7 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.TupleExpression;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
+import org.key_project.solidity.program.ast.expressions.operators.AddOperator;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.program.ast.statement.Statement;
 
@@ -14,6 +16,7 @@ import java.math.BigInteger;
 import java.util.List;
 
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.BOOL;
+import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.UINT256;
 
 public class SolidityToKey extends SolidityBaseVisitor<SyntaxElement> {
 
@@ -43,6 +46,24 @@ public class SolidityToKey extends SolidityBaseVisitor<SyntaxElement> {
                     .toList();
             return new TupleExpression(BOOL, exps);
         }
+        return visitChildren(ctx);
+    }
+
+    @Override
+    public SyntaxElement visitExpression(ExpressionContext ctx) {
+        List<Expression> exps = ctx.expression().stream().map(exp -> (Expression) visitExpression(exp)).toList();
+        if(ctx.children.size() == 3){
+            if(ctx.children.get(1) instanceof TerminalNodeImpl){
+                String opStr = ctx.children.get(1).toString();
+                Expression expL = exps.get(0);
+                Expression expR = exps.get(1);
+                return switch (opStr){
+                    case "+" -> new AddOperator(expL, expR, UINT256);
+                    default -> throw new IllegalStateException("Unexpected value: " + opStr);
+                };
+            }
+        }
+
         return visitChildren(ctx);
     }
 
