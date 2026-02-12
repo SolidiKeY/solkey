@@ -23,7 +23,7 @@ public class SolidityToKey extends SolidityBaseVisitor<SyntaxElement> {
     @Override
     public SyntaxElement visitBlock(BlockContext ctx) {
         List<Statement> stms = ctx.statement().stream()
-                .map(stm -> (Statement) visitStatement(stm)).toList();
+                .map(this::visitStatement).map(Statement.class::cast).toList();
         return new Block(stms);
     }
 
@@ -42,8 +42,7 @@ public class SolidityToKey extends SolidityBaseVisitor<SyntaxElement> {
             return new BoolLiteral(b);
         } else if (ctx.tupleExpression() != null) {
             List<Expression> exps = ctx.tupleExpression().expression().stream()
-                    .map(exp -> (Expression) visitExpression(exp))
-                    .toList();
+                    .map(this::visitExpression).map(Expression.class::cast).toList();
             return new TupleExpression(BOOL, exps);
         }
         return visitChildren(ctx);
@@ -51,7 +50,8 @@ public class SolidityToKey extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitExpression(ExpressionContext ctx) {
-        List<Expression> exps = ctx.expression().stream().map(exp -> (Expression) visitExpression(exp)).toList();
+        List<Expression> exps = ctx.expression().stream()
+                    .map(this::visitExpression).map(Expression.class::cast).toList();
         if(ctx.children.size() == 3){
             if(ctx.children.get(1) instanceof TerminalNodeImpl){
                 String opStr = ctx.children.get(1).toString();
