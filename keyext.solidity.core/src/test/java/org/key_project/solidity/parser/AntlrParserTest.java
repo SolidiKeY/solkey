@@ -24,7 +24,7 @@ public class AntlrParserTest {
 
     @Test
     void simpleBlock() {
-        SolidityParser.BlockContext block = Parser.parseBlock("{}");
+        SolidityParser.BlockContext block = Parser.parseBlockContext("{}");
         assertEquals("([] { })", block.toStringTree());
     }
 
