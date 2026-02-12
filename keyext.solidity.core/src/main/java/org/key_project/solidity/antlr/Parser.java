@@ -10,13 +10,14 @@ import org.key_project.solidity.parser.SolidityParser.*;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.key_project.solidity.parser.SolidityToKeyConverter;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.program.ast.statement.Statement;
 
 public class Parser {
 
-    static SolidityToKey stk = new SolidityToKey();
+    static SolidityToKeyConverter stk = new SolidityToKeyConverter();
 
     static public SolidityParser parse(String s) {
         CodePointCharStream input = CharStreams.fromString(s);

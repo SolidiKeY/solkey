@@ -1,10 +1,9 @@
-package org.key_project.solidity.antlr;
+package org.key_project.solidity.parser;
 
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.op.ProgramVariable;
-import org.key_project.solidity.parser.SolidityBaseVisitor;
 import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
@@ -24,7 +23,7 @@ import java.util.List;
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.BOOL;
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.UINT256;
 
-public class SolidityToKey extends SolidityBaseVisitor<SyntaxElement> {
+public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitBlock(BlockContext ctx) {

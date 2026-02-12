@@ -15,7 +15,7 @@ import org.key_project.solidity.program.ast.statement.ExpressionStatement;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.key_project.solidity.antlr.Parser.*;
 
-public class SolidityToKeyTest {
+public class SolidityToKeyConverterTest {
 
     @Test
     void emptyBlock(){
