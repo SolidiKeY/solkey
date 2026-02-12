@@ -12,8 +12,11 @@ import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.statement.Block;
+import org.key_project.solidity.program.ast.statement.Statement;
 
 public class Parser {
+
+    static SolidityToKey stk = new SolidityToKey();
 
     static public SolidityParser parse(String s) {
         CodePointCharStream input = CharStreams.fromString(s);
@@ -26,12 +29,10 @@ public class Parser {
 
     static public BlockContext parseBlockContext(String s) {
         SolidityParser parser = parse(s);
-
         return parser.block();
     }
 
     static public Block parseBlock(String s) {
-        SolidityToKey stk = new SolidityToKey();
         BlockContext bc = Parser.parseBlockContext(s);
         return (Block) stk.visitBlock(bc);
     }
@@ -39,7 +40,12 @@ public class Parser {
     static public Expression parseExpression(String s) {
         SolidityParser parser = parse(s);
         ExpressionContext expCtx = parser.expression();
-        SolidityToKey stk = new SolidityToKey();
         return (Expression) stk.visitExpression(expCtx);
+    }
+
+    static public Statement parseStatement(String s){
+        SolidityParser parser = parse(s);
+        StatementContext stmCtx = parser.statement();
+        return (Statement) stk.visitStatement(stmCtx);
     }
 }

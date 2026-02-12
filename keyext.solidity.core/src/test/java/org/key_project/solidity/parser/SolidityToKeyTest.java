@@ -2,15 +2,17 @@ package org.key_project.solidity.parser;
 
 import org.junit.jupiter.api.Test;
 import org.key_project.solidity.parser.SolidityParser.*;
+import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.TupleExpression;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.AddOperator;
 import org.key_project.solidity.program.ast.expressions.operators.PlusPlusOperator;
 import org.key_project.solidity.program.ast.statement.Block;
+import org.key_project.solidity.program.ast.statement.DeclarationStatement;
+import org.key_project.solidity.program.ast.statement.ExpressionStatement;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.key_project.solidity.antlr.Parser.*;
 
 public class SolidityToKeyTest {
@@ -50,5 +52,17 @@ public class SolidityToKeyTest {
         PlusPlusOperator exp = (PlusPlusOperator) parseExpression("++1");
         assertEquals(1, ((Uint256Literal) exp.getChild(0)).getValue().intValue());
         assertTrue(exp.isPrefix());
+    }
+
+    @Test
+    void expStm() {
+        ExpressionStatement stm = (ExpressionStatement) parseStatement("false;");
+        assertFalse(((BoolLiteral) stm.expression).getValue());
+    }
+
+    @Test
+    void variableDeclaration() {
+        DeclarationStatement stm = (DeclarationStatement) parseStatement("var x;");
+        assertEquals("x", ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable().toString());
     }
 }

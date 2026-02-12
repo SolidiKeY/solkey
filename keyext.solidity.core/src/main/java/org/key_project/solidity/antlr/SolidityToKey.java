@@ -1,9 +1,12 @@
 package org.key_project.solidity.antlr;
 
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
+import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.parser.SolidityBaseVisitor;
 import org.key_project.solidity.parser.SolidityParser.*;
+import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.TupleExpression;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
@@ -11,6 +14,8 @@ import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.AddOperator;
 import org.key_project.solidity.program.ast.expressions.operators.PlusPlusOperator;
 import org.key_project.solidity.program.ast.statement.Block;
+import org.key_project.solidity.program.ast.statement.DeclarationStatement;
+import org.key_project.solidity.program.ast.statement.ExpressionStatement;
 import org.key_project.solidity.program.ast.statement.Statement;
 
 import java.math.BigInteger;
@@ -75,9 +80,20 @@ public class SolidityToKey extends SolidityBaseVisitor<SyntaxElement> {
                     };
                 }
         }
-
         return visitChildren(ctx);
     }
 
+    @Override
+    public SyntaxElement visitExpressionStatement(ExpressionStatementContext ctx) {
+        return new ExpressionStatement((Expression) visitExpression(ctx.expression()));
+    }
+
+    @Override
+    public SyntaxElement visitVariableDeclarationStatement(VariableDeclarationStatementContext ctx) {
+        String variableName = ctx.variableDeclaration().identifier().Identifier().getText();
+        ProgramVariable programVariable = new ProgramVariable(new Name(variableName), null, null);
+        StatementVariableDeclaration stmDecl = new StatementVariableDeclaration(programVariable,"", null);
+        return new DeclarationStatement(List.of(stmDecl), null);
+    }
 
 }
