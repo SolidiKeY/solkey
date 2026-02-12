@@ -9,6 +9,7 @@ import org.key_project.solidity.program.ast.expressions.TupleExpression;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.AddOperator;
+import org.key_project.solidity.program.ast.expressions.operators.PlusPlusOperator;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.program.ast.statement.Statement;
 
@@ -52,16 +53,27 @@ public class SolidityToKey extends SolidityBaseVisitor<SyntaxElement> {
     public SyntaxElement visitExpression(ExpressionContext ctx) {
         List<Expression> exps = ctx.expression().stream()
                     .map(this::visitExpression).map(Expression.class::cast).toList();
-        if(ctx.children.size() == 3){
-            if(ctx.children.get(1) instanceof TerminalNodeImpl){
-                String opStr = ctx.children.get(1).toString();
-                Expression expL = exps.get(0);
-                Expression expR = exps.get(1);
-                return switch (opStr){
-                    case "+" -> new AddOperator(expL, expR, UINT256);
-                    default -> throw new IllegalStateException("Unexpected value: " + opStr);
-                };
-            }
+        switch (ctx.children.size()){
+            case 2:
+                if(ctx.children.get(0) instanceof TerminalNodeImpl){
+                    String opStr = ctx.children.get(0).toString();
+                    Expression exp = exps.get(0);
+                    return switch (opStr){
+                        case "++" -> new PlusPlusOperator(exp, UINT256, true);
+                        default -> throw new IllegalStateException("Unexpected value: " + opStr);
+                    };
+
+                }
+            case 3:
+                if(ctx.children.get(1) instanceof TerminalNodeImpl){
+                    String opStr = ctx.children.get(1).toString();
+                    Expression expL = exps.get(0);
+                    Expression expR = exps.get(1);
+                    return switch (opStr){
+                        case "+" -> new AddOperator(expL, expR, UINT256);
+                        default -> throw new IllegalStateException("Unexpected value: " + opStr);
+                    };
+                }
         }
 
         return visitChildren(ctx);
