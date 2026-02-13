@@ -54,4 +54,12 @@ public class TryStatement implements Statement {
     public void visit(Visitor v) {
         v.performActionOnTryStatement(this);
     }
+
+    public Expression getExpression() {
+        return expression;
+    }
+
+    public List<Block> getBlocks() {
+        return blocks;
+    }
 }

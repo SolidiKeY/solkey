@@ -17,6 +17,7 @@ import org.key_project.solidity.program.ast.statement.*;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.BOOL;
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.UINT256;
@@ -136,6 +137,13 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     }
 
     @Override
+    public SyntaxElement visitDoWhileStatement(DoWhileStatementContext ctx) {
+        Expression exp = (Expression) visitExpression(ctx.expression());
+        Statement stm = (Statement) visitStatement(ctx.statement());
+        return new DoWhileStatement(exp, stm);
+    }
+
+    @Override
     public SyntaxElement visitForStatement(ForStatementContext ctx) {
         Expression initial = ctx.simpleStatement() == null ? null :
                 ((ExpressionStatement) visitSimpleStatement(ctx.simpleStatement())).getExpression();
@@ -146,5 +154,21 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         return new ForStatement(initial, condition, loopExp, body);
 
     }
+
+    @Override
+    public SyntaxElement visitCatchClause(CatchClauseContext ctx) {
+        return visitBlock(ctx.block());
+    }
+
+    @Override
+    public SyntaxElement visitTryStatement(TryStatementContext ctx) {
+        Expression exp = (Expression) visitExpression(ctx.expression());
+        List<Block> blocks = Stream.concat(
+                Stream.of((Block) visitBlock(ctx.block())),
+                ctx.catchClause().stream().map(this::visitCatchClause).map(Block.class::cast)
+        ).toList();
+        return new TryStatement(exp, blocks);
+    }
+
 
 }
