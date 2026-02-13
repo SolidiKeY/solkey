@@ -104,7 +104,27 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     @Override
     public SyntaxElement visitIfStatement(IfStatementContext ctx) {
         Expression condition = (Expression) visitExpression(ctx.expression());
-        Statement trueBody = (Statement) visitStatement(ctx.statement().getFirst());
-        return new ConditionStatement(condition, trueBody);
+        var stms = ctx.statement();
+        Statement trueBody = (Statement) visitStatement(stms.getFirst());
+        Statement elseBody = stms.size() <= 1 ? null : (Statement) visitStatement(stms.get(1));
+        return new ConditionStatement(condition, trueBody, elseBody);
+    }
+
+    @Override
+    public SyntaxElement visitReturnStatement(ReturnStatementContext ctx) {
+        if(ctx.expression() == null)
+            return new ReturnStatment();
+        Expression exp = (Expression) visitExpression(ctx.expression());
+        return new ReturnStatment(exp);
+    }
+
+    @Override
+    public SyntaxElement visitContinueStatement(ContinueStatementContext ctx) {
+        return new ContinueStatement();
+    }
+
+    @Override
+    public SyntaxElement visitBreakStatement(BreakStatementContext ctx) {
+        return new BreakStatement();
     }
 }

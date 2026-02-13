@@ -72,4 +72,8 @@ public class ConditionStatement implements Statement {
     public Statement getTrueBody() {
         return trueBody;
     }
+
+    public Statement getFalseBody() {
+        return falseBody;
+    }
 }
