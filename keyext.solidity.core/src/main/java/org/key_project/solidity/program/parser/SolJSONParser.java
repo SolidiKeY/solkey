@@ -457,37 +457,14 @@ public class SolJSONParser {
         Expression left = parseExpression(assign.findValue("leftHandSide"));
         Expression right = parseExpression(assign.findValue("rightHandSide"));
 
-        return switch (op) {
-            case "=" -> new AssignmentExpression(left, right, expType);
-            case "|=" -> new OrEqualOperator(left, right, expType);
-            case "^=" -> new XorEqualOperator(left, right, expType);
-            case "&=" -> new AndEqualOperator(left, right, expType);
-            case "<<=" -> new LeftShiftEqualOperator(left, right, expType);
-            case ">>=" -> new RightShiftEqualOperator(left, right, expType);
-            case ">>>=" -> new LogicalRightShiftEqualOperator(left, right, expType);
-            case "+=" -> new PlusEqualOperator(left, right, expType);
-            case "-=" -> new MinusEqualOperator(left, right, expType);
-            case "*=" -> new MultiplicationEqualOperator(left, right, expType);
-            case "/=" -> new DivisionEqualOperator(left, right, expType);
-            case "%=" -> new ModEqualOperator(left, right, expType);
-            default -> throw new RuntimeException("Assignment: " + op + " not supported");
-        };
+        return ParserUtils.parseAssignment(left, right, op, expType);
     }
 
     private Expression parseUnaryOperation(Type expType, JsonNode initializer) {
         Expression uExp = parseExpression(initializer.findValue("subExpression"));
         final String operator = initializer.findValue("operator").asText();
         boolean prefix = initializer.findValue("prefix").asBoolean();
-        return switch (operator) {
-            case "++" -> new PlusPlusOperator(uExp, expType, prefix);
-            case "--" -> new MinusMinusOperator(uExp, expType, prefix);
-            case "~" -> new BitwiseNotOperator(uExp, expType);
-            case "!" -> new NotOperator(uExp, expType);
-            case "-" -> new NegateOperator(uExp, expType);
-            case "delete" -> new DeleteOperator(uExp, expType);
-            default ->
-                throw new RuntimeException("Not yet supported binary operation: " + operator);
-        };
+        return ParserUtils.parseUnaryOperation(uExp, operator, expType, prefix);
     }
 
     private Expression parseBinaryOperation(Type expType, JsonNode initializer) {
@@ -495,29 +472,7 @@ public class SolJSONParser {
         Expression rightExpression = parseExpression(initializer.findValue("rightExpression"));
 
         final String operator = initializer.findValue("operator").asText();
-        return switch (operator) {
-            case "+" -> new AddOperator(leftExpression, rightExpression, expType);
-            case "-" -> new SubtractionOperator(leftExpression, rightExpression, expType);
-            case "*" -> new MultiplicationOperator(leftExpression, rightExpression, expType);
-            case "/" -> new DivOperator(leftExpression, rightExpression, expType);
-            case "%" -> new ModOperator(leftExpression, rightExpression, expType);
-            case "^" -> new ExponentialOperator(leftExpression, rightExpression, expType);
-            case "&&" -> new AndOperator(leftExpression, rightExpression, expType);
-            case "&" -> new BitwiseAndOperator(leftExpression, rightExpression, expType);
-            case "||" -> new OrOperator(leftExpression, rightExpression, expType);
-            case "|" -> new BitwiseOrOperator(leftExpression, rightExpression, expType);
-            case "!=" -> new UnequalOperator(leftExpression, rightExpression, expType);
-            case "==" -> new EqualOperator(leftExpression, rightExpression, expType);
-            case ">=" -> new GreaterEqualOperator(leftExpression, rightExpression, expType);
-            case ">" -> new GreaterOperator(leftExpression, rightExpression, expType);
-            case "<=" -> new LessEqualOperator(leftExpression, rightExpression, expType);
-            case "<" -> new LessOperator(leftExpression, rightExpression, expType);
-            case "<<" -> new LeftShiftOperator(leftExpression, rightExpression, expType);
-            case ">>" -> new RightShiftOperator(leftExpression, rightExpression, expType);
-            case ">>>" -> new LogicalRightShiftOperator(leftExpression, rightExpression, expType);
-            default ->
-                throw new RuntimeException("Not yet supported binary operation: " + operator);
-        };
+        return ParserUtils.parseBinaryOperation(leftExpression, rightExpression, operator, expType);
     }
 
     private Expression parseIdentifier(Type expType, JsonNode literal) {
