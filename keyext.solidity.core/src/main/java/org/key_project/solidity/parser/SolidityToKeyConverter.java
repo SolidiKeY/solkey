@@ -5,14 +5,13 @@ import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.parser.SolidityParser.*;
+import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.TupleExpression;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
-import org.key_project.solidity.program.ast.expressions.operators.AddOperator;
-import org.key_project.solidity.program.ast.expressions.operators.AssignmentExpression;
-import org.key_project.solidity.program.ast.expressions.operators.PlusPlusOperator;
+import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.statement.*;
 
 import java.math.BigInteger;
@@ -59,26 +58,50 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     public SyntaxElement visitExpression(ExpressionContext ctx) {
         List<Expression> exps = ctx.expression().stream()
                     .map(this::visitExpression).map(Expression.class::cast).toList();
+        Type expType = UINT256;
         switch (ctx.children.size()){
             case 2:
-                if(ctx.children.get(0) instanceof TerminalNodeImpl){
-                    String opStr = ctx.children.get(0).toString();
-                    Expression exp = exps.get(0);
-                    return switch (opStr){
-                        case "++" -> new PlusPlusOperator(exp, UINT256, true);
-                        default -> throw new IllegalStateException("Unexpected value: " + opStr);
-                    };
-
-                }
+                boolean prefix = ctx.children.get(0) instanceof TerminalNodeImpl;
+                String operator = ctx.children.get(prefix ? 0 : 1).toString();
+                Expression uExp = exps.getFirst();
+                return switch (operator){
+                    case "++" -> new PlusPlusOperator(uExp, expType, prefix);
+                    case "--" -> new MinusMinusOperator(uExp, expType, prefix);
+                    case "~" -> new BitwiseNotOperator(uExp, expType);
+                    case "!" -> new NotOperator(uExp, expType);
+                    case "-" -> new NegateOperator(uExp, expType);
+                    case "delete" -> new DeleteOperator(uExp, expType);
+                    default ->
+                            throw new RuntimeException("Not yet supported binary operation: " + operator);
+                };
             case 3:
                 if(ctx.children.get(1) instanceof TerminalNodeImpl){
-                    String opStr = ctx.children.get(1).toString();
-                    Expression expL = exps.get(0);
-                    Expression expR = exps.get(1);
-                    return switch (opStr){
-                        case "+" -> new AddOperator(expL, expR, UINT256);
-                        case "=" -> new AssignmentExpression(expL, expR, UINT256);
-                        default -> throw new IllegalStateException("Unexpected value: " + opStr);
+                    operator = ctx.children.get(1).toString();
+                    Expression leftExpression = exps.get(0);
+                    Expression rightExpression = exps.get(1);
+                    return switch (operator){
+                        case "+" -> new AddOperator(leftExpression, rightExpression, expType);
+                        case "-" -> new SubtractionOperator(leftExpression, rightExpression, expType);
+                        case "*" -> new MultiplicationOperator(leftExpression, rightExpression, expType);
+                        case "/" -> new DivOperator(leftExpression, rightExpression, expType);
+                        case "%" -> new ModOperator(leftExpression, rightExpression, expType);
+                        case "^" -> new ExponentialOperator(leftExpression, rightExpression, expType);
+                        case "&&" -> new AndOperator(leftExpression, rightExpression, expType);
+                        case "&" -> new BitwiseAndOperator(leftExpression, rightExpression, expType);
+                        case "||" -> new OrOperator(leftExpression, rightExpression, expType);
+                        case "|" -> new BitwiseOrOperator(leftExpression, rightExpression, expType);
+                        case "!=" -> new UnequalOperator(leftExpression, rightExpression, expType);
+                        case "==" -> new EqualOperator(leftExpression, rightExpression, expType);
+                        case ">=" -> new GreaterEqualOperator(leftExpression, rightExpression, expType);
+                        case ">" -> new GreaterOperator(leftExpression, rightExpression, expType);
+                        case "<=" -> new LessEqualOperator(leftExpression, rightExpression, expType);
+                        case "<" -> new LessOperator(leftExpression, rightExpression, expType);
+                        case "<<" -> new LeftShiftOperator(leftExpression, rightExpression, expType);
+                        case ">>" -> new RightShiftOperator(leftExpression, rightExpression, expType);
+                        case ">>>" -> new LogicalRightShiftOperator(leftExpression, rightExpression, expType);
+                        case "=" -> new AssignmentExpression(leftExpression, rightExpression, expType);
+                        default ->
+                                throw new RuntimeException("Not yet supported binary operation: " + operator);
                     };
                 }
         }

@@ -2,7 +2,6 @@ package org.key_project.solidity.parser;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.TupleExpression;
@@ -48,10 +47,23 @@ public class SolidityToKeyConverterTest {
     }
 
     @Test
+    void complexOperations() {
+        Expression exp = parseExpression("1 = 2 + 3 - 5 < 6");
+        assertEquals("1 = 2 + 3 - 5 < 6", exp.toString());
+    }
+
+    @Test
     void plusPlusLeft() {
         PlusPlusOperator exp = (PlusPlusOperator) parseExpression("++1");
         assertEquals(1, ((Uint256Literal) exp.getChild(0)).getValue().intValue());
         assertTrue(exp.isPrefix());
+    }
+
+    @Test
+    void plusPlusRight() {
+        PlusPlusOperator exp = (PlusPlusOperator) parseExpression("1++");
+        assertEquals(1, ((Uint256Literal) exp.getChild(0)).getValue().intValue());
+        assertFalse(exp.isPrefix());
     }
 
     @Test
