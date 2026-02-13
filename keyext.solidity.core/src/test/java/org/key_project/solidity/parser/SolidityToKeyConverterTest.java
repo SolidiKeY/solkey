@@ -57,7 +57,7 @@ public class SolidityToKeyConverterTest {
     @Test
     void expStm() {
         ExpressionStatement stm = (ExpressionStatement) parseStatement("false;");
-        assertFalse(((BoolLiteral) stm.expression).getValue());
+        assertFalse(((BoolLiteral) stm.getExpression()).getValue());
     }
 
     @Test
@@ -110,6 +110,25 @@ public class SolidityToKeyConverterTest {
         Block block = parseBlock("{ continue; break; }");
         block.getStatements().stream().forEach(Assertions::assertNotNull);
         Assertions.assertEquals(2, block.getStatements().size());
+    }
+
+    @Test
+    void whileStatement() {
+        WhileStatement stm = (WhileStatement) parseStatement("while(true) false;");
+        assertTrue(((BoolLiteral) stm.getCondition()).getValue());
+        assertFalse(((BoolLiteral) stm.getBody().getChild(0)).getValue());
+    }
+
+    @Test
+    void forLoop() {
+        ForStatement stm = (ForStatement) parseStatement("for(false; true; false) true;");
+        assertEquals("for(false; true; false)\ntrue;", stm.toString());
+    }
+
+    @Test
+    void forLoopEmptyInitial() {
+        ForStatement stm = (ForStatement) parseStatement("for(; ;) true;");
+        assertEquals("for(; ; )\ntrue;", stm.toString());
     }
 
 }

@@ -771,7 +771,7 @@ public class SolJsonParserTest {
         FunctionDeclaration refDecl =
             ((FunctionReference) ((FunctionCallExpression) ((ExpressionStatement) contractDec
                     .getFunctions().getFirst().getBody().getStatements()
-                    .get(0)).expression).functionExp).referencedDeclaration;
+                    .get(0)).getExpression()).functionExp).referencedDeclaration;
         Assertions.assertNotNull(refDecl);
     }
 

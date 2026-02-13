@@ -11,7 +11,7 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 public class ExpressionStatement implements Statement {
-    public final Expression expression;
+    final Expression expression;
 
     public ExpressionStatement(Expression expression) {
         this.expression = expression;
@@ -40,5 +40,9 @@ public class ExpressionStatement implements Statement {
 
     public void visit(Visitor v) {
         v.performActionOnExpressionStatement(this);
+    }
+
+    public Expression getExpression() {
+        return expression;
     }
 }

@@ -41,4 +41,8 @@ public abstract class LoopStatement implements Statement {
     public Expression getCondition() {
         return condition;
     }
+
+    public Statement getBody() {
+        return body;
+    }
 }
