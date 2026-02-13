@@ -3,6 +3,7 @@ package org.key_project.solidity.parser;
 import org.junit.jupiter.api.Test;
 import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
+import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.TupleExpression;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
@@ -61,8 +62,21 @@ public class SolidityToKeyConverterTest {
     }
 
     @Test
+    void variableAssignment() {
+        Expression exp = parseExpression("x = 1");
+        assertEquals("x", exp.getChild(0).toString());
+    }
+
+    @Test
     void variableDeclaration() {
         DeclarationStatement stm = (DeclarationStatement) parseStatement("var x;");
         assertEquals("x", ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable().toString());
     }
+
+    @Test
+    void variableDeclarationWithType() {
+        DeclarationStatement stm = (DeclarationStatement) parseStatement("int x;");
+        assertEquals("x", ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable().toString());
+    }
+
 }

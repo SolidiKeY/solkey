@@ -11,6 +11,7 @@ import org.key_project.solidity.program.ast.expressions.TupleExpression;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.AddOperator;
+import org.key_project.solidity.program.ast.expressions.operators.AssignmentExpression;
 import org.key_project.solidity.program.ast.expressions.operators.PlusPlusOperator;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.program.ast.statement.DeclarationStatement;
@@ -42,7 +43,10 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitPrimaryExpression(PrimaryExpressionContext ctx) {
-        if(ctx.BooleanLiteral() != null){
+        if(ctx.identifier() != null){
+            return visitIdentifier(ctx.identifier());
+        }
+        else if(ctx.BooleanLiteral() != null){
             boolean b = Boolean.parseBoolean(ctx.BooleanLiteral().getText());
             return new BoolLiteral(b);
         } else if (ctx.tupleExpression() != null) {
@@ -75,6 +79,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
                     Expression expR = exps.get(1);
                     return switch (opStr){
                         case "+" -> new AddOperator(expL, expR, UINT256);
+                        case "=" -> new AssignmentExpression(expL, expR, UINT256);
                         default -> throw new IllegalStateException("Unexpected value: " + opStr);
                     };
                 }
@@ -87,10 +92,14 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         return new ExpressionStatement((Expression) visitExpression(ctx.expression()));
     }
 
+    @Override public SyntaxElement visitIdentifier(IdentifierContext ctx) {
+        String variableName = ctx.Identifier().getText();
+        return new ProgramVariable(new Name(variableName), null, null);
+    }
+
     @Override
     public SyntaxElement visitVariableDeclarationStatement(VariableDeclarationStatementContext ctx) {
-        String variableName = ctx.variableDeclaration().identifier().Identifier().getText();
-        ProgramVariable programVariable = new ProgramVariable(new Name(variableName), null, null);
+        ProgramVariable programVariable = (ProgramVariable) visitIdentifier(ctx.variableDeclaration().identifier());
         StatementVariableDeclaration stmDecl = new StatementVariableDeclaration(programVariable,"", null);
         return new DeclarationStatement(List.of(stmDecl), null);
     }
