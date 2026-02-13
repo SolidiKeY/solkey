@@ -10,6 +10,7 @@ import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.AddOperator;
 import org.key_project.solidity.program.ast.expressions.operators.PlusPlusOperator;
 import org.key_project.solidity.program.ast.statement.Block;
+import org.key_project.solidity.program.ast.statement.ConditionStatement;
 import org.key_project.solidity.program.ast.statement.DeclarationStatement;
 import org.key_project.solidity.program.ast.statement.ExpressionStatement;
 
@@ -77,6 +78,13 @@ public class SolidityToKeyConverterTest {
     void variableDeclarationWithType() {
         DeclarationStatement stm = (DeclarationStatement) parseStatement("int x;");
         assertEquals("x", ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable().toString());
+    }
+
+    @Test
+    void ifStatement() {
+        ConditionStatement stm = (ConditionStatement) parseStatement("if(false) true;");
+        assertFalse(((BoolLiteral) stm.getCondition()).getValue());
+        assertTrue(((BoolLiteral) stm.getTrueBody().getChild(0)).getValue());
     }
 
 }

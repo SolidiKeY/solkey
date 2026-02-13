@@ -13,10 +13,7 @@ import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.AddOperator;
 import org.key_project.solidity.program.ast.expressions.operators.AssignmentExpression;
 import org.key_project.solidity.program.ast.expressions.operators.PlusPlusOperator;
-import org.key_project.solidity.program.ast.statement.Block;
-import org.key_project.solidity.program.ast.statement.DeclarationStatement;
-import org.key_project.solidity.program.ast.statement.ExpressionStatement;
-import org.key_project.solidity.program.ast.statement.Statement;
+import org.key_project.solidity.program.ast.statement.*;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -104,4 +101,10 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         return new DeclarationStatement(List.of(stmDecl), null);
     }
 
+    @Override
+    public SyntaxElement visitIfStatement(IfStatementContext ctx) {
+        Expression condition = (Expression) visitExpression(ctx.expression());
+        Statement trueBody = (Statement) visitStatement(ctx.statement().getFirst());
+        return new ConditionStatement(condition, trueBody);
+    }
 }

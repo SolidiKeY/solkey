@@ -64,4 +64,12 @@ public class ConditionStatement implements Statement {
     public void visit(Visitor v) {
         v.performActionOnConditionStatement(this);
     }
+
+    public Expression getCondition() {
+        return condition;
+    }
+
+    public Statement getTrueBody() {
+        return trueBody;
+    }
 }
