@@ -77,29 +77,41 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
             case 3:
                 if(ctx.children.get(1) instanceof TerminalNodeImpl){
                     operator = ctx.children.get(1).toString();
-                    Expression leftExpression = exps.get(0);
-                    Expression rightExpression = exps.get(1);
+                    Expression left = exps.get(0);
+                    Expression right = exps.get(1);
                     return switch (operator){
-                        case "+" -> new AddOperator(leftExpression, rightExpression, expType);
-                        case "-" -> new SubtractionOperator(leftExpression, rightExpression, expType);
-                        case "*" -> new MultiplicationOperator(leftExpression, rightExpression, expType);
-                        case "/" -> new DivOperator(leftExpression, rightExpression, expType);
-                        case "%" -> new ModOperator(leftExpression, rightExpression, expType);
-                        case "^" -> new ExponentialOperator(leftExpression, rightExpression, expType);
-                        case "&&" -> new AndOperator(leftExpression, rightExpression, expType);
-                        case "&" -> new BitwiseAndOperator(leftExpression, rightExpression, expType);
-                        case "||" -> new OrOperator(leftExpression, rightExpression, expType);
-                        case "|" -> new BitwiseOrOperator(leftExpression, rightExpression, expType);
-                        case "!=" -> new UnequalOperator(leftExpression, rightExpression, expType);
-                        case "==" -> new EqualOperator(leftExpression, rightExpression, expType);
-                        case ">=" -> new GreaterEqualOperator(leftExpression, rightExpression, expType);
-                        case ">" -> new GreaterOperator(leftExpression, rightExpression, expType);
-                        case "<=" -> new LessEqualOperator(leftExpression, rightExpression, expType);
-                        case "<" -> new LessOperator(leftExpression, rightExpression, expType);
-                        case "<<" -> new LeftShiftOperator(leftExpression, rightExpression, expType);
-                        case ">>" -> new RightShiftOperator(leftExpression, rightExpression, expType);
-                        case ">>>" -> new LogicalRightShiftOperator(leftExpression, rightExpression, expType);
-                        case "=" -> new AssignmentExpression(leftExpression, rightExpression, expType);
+                        case "+" -> new AddOperator(left, right, expType);
+                        case "-" -> new SubtractionOperator(left, right, expType);
+                        case "*" -> new MultiplicationOperator(left, right, expType);
+                        case "/" -> new DivOperator(left, right, expType);
+                        case "%" -> new ModOperator(left, right, expType);
+                        case "^" -> new ExponentialOperator(left, right, expType);
+                        case "&&" -> new AndOperator(left, right, expType);
+                        case "&" -> new BitwiseAndOperator(left, right, expType);
+                        case "||" -> new OrOperator(left, right, expType);
+                        case "|" -> new BitwiseOrOperator(left, right, expType);
+                        case "!=" -> new UnequalOperator(left, right, expType);
+                        case "==" -> new EqualOperator(left, right, expType);
+                        case ">=" -> new GreaterEqualOperator(left, right, expType);
+                        case ">" -> new GreaterOperator(left, right, expType);
+                        case "<=" -> new LessEqualOperator(left, right, expType);
+                        case "<" -> new LessOperator(left, right, expType);
+                        case "<<" -> new LeftShiftOperator(left, right, expType);
+                        case ">>" -> new RightShiftOperator(left, right, expType);
+                        case ">>>" -> new LogicalRightShiftOperator(left, right, expType);
+                        // Assign expressions
+                        case "=" -> new AssignmentExpression(left, right, expType);
+                        case "|=" -> new OrEqualOperator(left, right, expType);
+                        case "^=" -> new XorEqualOperator(left, right, expType);
+                        case "&=" -> new AndEqualOperator(left, right, expType);
+                        case "<<=" -> new LeftShiftEqualOperator(left, right, expType);
+                        case ">>=" -> new RightShiftEqualOperator(left, right, expType);
+                        case ">>>=" -> new LogicalRightShiftEqualOperator(left, right, expType);
+                        case "+=" -> new PlusEqualOperator(left, right, expType);
+                        case "-=" -> new MinusEqualOperator(left, right, expType);
+                        case "*=" -> new MultiplicationEqualOperator(left, right, expType);
+                        case "/=" -> new DivisionEqualOperator(left, right, expType);
+                        case "%=" -> new ModEqualOperator(left, right, expType);
                         default ->
                                 throw new RuntimeException("Not yet supported binary operation: " + operator);
                     };
