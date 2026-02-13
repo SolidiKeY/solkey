@@ -62,6 +62,16 @@ public class ParserUtils {
                 .orElseThrow(() -> new RuntimeException("Assignment: " + operator + " not supported"));
     }
 
+    static public Optional<Expression> parseAllBinaryMaybe(Expression left, Expression right, String operator, Type expType) {
+        return parseBinaryOperationMaybe(left, right, operator, expType)
+                .or(() -> parseAssignmentMaybe(left, right, operator, expType));
+    }
+
+    static public Expression parseAllBinary(Expression left, Expression right, String operator, Type expType) {
+        return parseAllBinaryMaybe(left, right, operator, expType)
+                .orElseThrow(() -> new RuntimeException("Not yet supported binary operation: " + operator));
+    }
+
     static public Optional<Expression> parseUnaryOperationMaybe(Expression uExp, String operator, Type expType, boolean prefix) {
         Expression exp = switch (operator) {
             case "++" -> new PlusPlusOperator(uExp, expType, prefix);
