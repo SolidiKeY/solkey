@@ -12,6 +12,8 @@ import org.key_project.solidity.program.ast.expressions.TupleExpression;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.*;
+import org.key_project.solidity.program.ast.ghost.ExpressionList;
+import org.key_project.solidity.program.ast.ghost.FunctionCallArguments;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.program.parser.ParserUtils;
 
@@ -162,5 +164,15 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         return new TryStatement(exp, blocks);
     }
 
+    @Override
+    public SyntaxElement visitExpressionList(ExpressionListContext ctx) {
+        List<Expression> expressions = ctx.expression().stream().map(this::visitExpression).map(Expression.class::cast).toList();
+        return new ExpressionList(expressions);
+    }
+
+    @Override
+    public SyntaxElement visitFunctionCallArguments(FunctionCallArgumentsContext ctx) {
+        return new FunctionCallArguments((ExpressionList) visitExpressionList(ctx.expressionList()));
+    }
 
 }
