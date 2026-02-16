@@ -9,10 +9,10 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
+import org.key_project.solidity.program.ast.expressions.IndexExpression;
 import org.key_project.solidity.program.ast.expressions.TupleExpression;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
-import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.ghost.ExpressionList;
 import org.key_project.solidity.program.ast.ghost.FunctionCallArguments;
 import org.key_project.solidity.program.ast.references.FunctionReference;
@@ -79,12 +79,17 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
                 }
             case 4:
                 if(ctx.children.get(1) instanceof TerminalNodeImpl){
+                    String nameS = exps.getFirst().toString();
+                    Name name = new Name(nameS);
                     return switch (ctx.children.get(1).toString()) {
                         case "(" -> {
-                            String functionName = exps.getFirst().toString();
-                            FunctionReference functionRef = new FunctionReference(0, new Name(functionName), UINT256);
+                            FunctionReference functionRef = new FunctionReference(0, name, UINT256);
                             FunctionCallArguments args = (FunctionCallArguments) visitFunctionCallArguments(ctx.functionCallArguments());
                             yield new FunctionCallExpression(UINT256, functionRef, args.getArgs());
+                        }
+                        case "[" -> {
+                            ProgramVariable p = new ProgramVariable(name, null, null);
+                            yield new IndexExpression(p, exps.get(1), UINT256);
                         }
                         default ->
                                 throw new IllegalStateException("Unexpected value: " + ctx.children.get(1).toString());

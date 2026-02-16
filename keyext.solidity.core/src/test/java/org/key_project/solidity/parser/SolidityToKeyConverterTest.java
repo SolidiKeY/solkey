@@ -2,9 +2,11 @@ package org.key_project.solidity.parser;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
+import org.key_project.solidity.program.ast.expressions.IndexExpression;
 import org.key_project.solidity.program.ast.expressions.TupleExpression;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
@@ -176,6 +178,13 @@ public class SolidityToKeyConverterTest {
         FunctionCallExpression exp = (FunctionCallExpression) parseExpression("f(false)");
         assertEquals("f", exp.functionExp.toString());
         assertFalse(((BoolLiteral) exp.getArgument(0)).getValue());
+    }
+
+    @Test
+    void array(){
+        IndexExpression exp = (IndexExpression) parseExpression("v[false]");
+        assertEquals("v", ((ProgramVariable) exp.getChild(0)).toString());
+        assertFalse(((BoolLiteral) exp.getChild(1)).getValue());
     }
 
 }
