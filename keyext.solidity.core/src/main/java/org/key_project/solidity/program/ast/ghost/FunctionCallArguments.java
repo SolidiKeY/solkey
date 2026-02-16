@@ -8,24 +8,27 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import java.util.List;
 
 public class FunctionCallArguments implements SolidityProgramElement {
-    List<Expression> expressions;
+    List<Expression> args;
 
     public FunctionCallArguments(ExpressionList expList){
-        this.expressions = expList.getExpressions();
+        this.args = expList.getExpressions();
     }
 
     @Override
     public SyntaxElement getChild(int n) {
-        return expressions.get(n);
+        return args.get(n);
     }
 
     @Override
     public int getChildCount() {
-        return expressions.size();
+        return args.size();
     }
 
     @Override
     public void visit(Visitor v) {
 
+    }
+    public List<Expression> getArgs() {
+        return args;
     }
 }

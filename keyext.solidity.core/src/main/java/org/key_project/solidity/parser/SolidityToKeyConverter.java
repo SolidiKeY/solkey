@@ -8,12 +8,14 @@ import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
 import org.key_project.solidity.program.ast.expressions.TupleExpression;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.ghost.ExpressionList;
 import org.key_project.solidity.program.ast.ghost.FunctionCallArguments;
+import org.key_project.solidity.program.ast.references.FunctionReference;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.program.parser.ParserUtils;
 
@@ -74,6 +76,19 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
                     Expression left = exps.get(0);
                     Expression right = exps.get(1);
                     return ParserUtils.parseAllBinary(left, right, operator, expType);
+                }
+            case 4:
+                if(ctx.children.get(1) instanceof TerminalNodeImpl){
+                    return switch (ctx.children.get(1).toString()) {
+                        case "(" -> {
+                            String functionName = exps.getFirst().toString();
+                            FunctionReference functionRef = new FunctionReference(0, new Name(functionName), UINT256);
+                            FunctionCallArguments args = (FunctionCallArguments) visitFunctionCallArguments(ctx.functionCallArguments());
+                            yield new FunctionCallExpression(UINT256, functionRef, args.getArgs());
+                        }
+                        default ->
+                                throw new IllegalStateException("Unexpected value: " + ctx.children.get(1).toString());
+                    };
                 }
         }
         return visitChildren(ctx);

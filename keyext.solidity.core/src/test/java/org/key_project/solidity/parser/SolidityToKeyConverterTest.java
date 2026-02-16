@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
 import org.key_project.solidity.program.ast.expressions.TupleExpression;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
@@ -162,6 +163,19 @@ public class SolidityToKeyConverterTest {
         TryStatement stm = (TryStatement) parseStatement("try false catch {}");
         assertFalse(((BoolLiteral) stm.getExpression()).getValue());
         assertEquals(1, stm.getBlocks().size());
+    }
+
+    @Test
+    void functionCall(){
+        FunctionCallExpression exp = (FunctionCallExpression) parseExpression("f()");
+        assertEquals("f", exp.functionExp.toString());
+    }
+
+    @Test
+    void functionCallArguments(){
+        FunctionCallExpression exp = (FunctionCallExpression) parseExpression("f(false)");
+        assertEquals("f", exp.functionExp.toString());
+        assertFalse(((BoolLiteral) exp.getArgument(0)).getValue());
     }
 
 }

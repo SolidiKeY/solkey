@@ -53,4 +53,12 @@ public class FunctionCallExpression extends SolidityExpression {
     public void visit(Visitor v) {
         v.performActionOnFunctionCallExpression(this);
     }
+
+    public List<Expression> getArguments() {
+        return arguments;
+    }
+
+    public Expression getArgument(int i) {
+        return arguments.get(i);
+    }
 }
