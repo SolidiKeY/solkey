@@ -9,6 +9,7 @@ import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.AddOperator;
 import org.key_project.solidity.program.ast.expressions.operators.PlusPlusOperator;
+import org.key_project.solidity.program.ast.expressions.operators.TernaryOperator;
 import org.key_project.solidity.program.ast.statement.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -197,6 +198,14 @@ public class SolidityToKeyConverterTest {
         IndexRangeExpression exp = (IndexRangeExpression) parseExpression("v[:]");
         assertEquals("v", ((ProgramVariable) exp.getChild(0)).toString());
         assertEquals(1, exp.getChildCount());
+    }
+
+    @Test
+    void ternary(){
+        TernaryOperator exp = (TernaryOperator) parseExpression("true ? true : false");
+        assertTrue(((BoolLiteral) exp.getCondition()).getValue());
+        assertTrue(((BoolLiteral) exp.getTrueExpression()).getValue());
+        assertFalse(((BoolLiteral) exp.getFalseExpression()).getValue());
     }
 
 }

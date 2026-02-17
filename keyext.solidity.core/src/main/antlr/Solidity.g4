@@ -81,7 +81,7 @@ expressionStatement
   : expression ';' ;
 
 ifStatement
-  : 'if' '(' expression ')' statement ( 'else' statement )? ;
+  : 'if' '(' expression ')' ifStm=statement ( 'else' elseStm=statement )? ;
 
 tryStatement : 'try' expression returnParameters? block catchClause+ ;
 
@@ -185,7 +185,7 @@ expression
   | <assoc=right> expression
     ('=' | '|=' | '^=' | '&=' | '<<=' | '>>=' | '+=' | '-=' | '*=' | '/=' | '%=')
     expression                                        # BinaryOp
-  | <assoc=right> expression '?' expression ':' expression # Ternary
+  | <assoc=right> condition=expression '?' true=expression ':' false=expression # Ternary
   ;
 
 primaryExpression
