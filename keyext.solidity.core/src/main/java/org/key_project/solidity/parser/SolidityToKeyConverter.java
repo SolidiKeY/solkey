@@ -6,10 +6,7 @@ import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
-import org.key_project.solidity.program.ast.expressions.Expression;
-import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
-import org.key_project.solidity.program.ast.expressions.IndexExpression;
-import org.key_project.solidity.program.ast.expressions.TupleExpression;
+import org.key_project.solidity.program.ast.expressions.*;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.ghost.ExpressionList;
@@ -121,6 +118,15 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         Name name = new Name(nameS);
         ProgramVariable p = new ProgramVariable(name, null, null);
         return new IndexExpression(p, exps.get(1), UINT256);
+    }
+
+    @Override
+    public SyntaxElement visitSliceAccess(SliceAccessContext ctx) {
+        Expression base = (Expression) visitExpression(ctx.base);
+        Expression start = ctx.start == null ? null : (Expression) visitExpression(ctx.start);
+        Expression end = ctx.start == null ? null : (Expression) visitExpression(ctx.end);
+
+        return new IndexRangeExpression(base, start, end, UINT256);
     }
 
     @Override

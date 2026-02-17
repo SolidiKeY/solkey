@@ -4,10 +4,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
-import org.key_project.solidity.program.ast.expressions.Expression;
-import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
-import org.key_project.solidity.program.ast.expressions.IndexExpression;
-import org.key_project.solidity.program.ast.expressions.TupleExpression;
+import org.key_project.solidity.program.ast.expressions.*;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.AddOperator;
@@ -185,6 +182,21 @@ public class SolidityToKeyConverterTest {
         IndexExpression exp = (IndexExpression) parseExpression("v[false]");
         assertEquals("v", ((ProgramVariable) exp.getChild(0)).toString());
         assertFalse(((BoolLiteral) exp.getChild(1)).getValue());
+    }
+
+    @Test
+    void sliceArray(){
+        IndexRangeExpression exp = (IndexRangeExpression) parseExpression("v[false:true]");
+        assertEquals("v", ((ProgramVariable) exp.getChild(0)).toString());
+        assertFalse(((BoolLiteral) exp.getChild(1)).getValue());
+        assertTrue(((BoolLiteral) exp.getChild(2)).getValue());
+    }
+
+    @Test
+    void sliceEmpty(){
+        IndexRangeExpression exp = (IndexRangeExpression) parseExpression("v[:]");
+        assertEquals("v", ((ProgramVariable) exp.getChild(0)).toString());
+        assertEquals(1, exp.getChildCount());
     }
 
 }

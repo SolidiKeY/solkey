@@ -164,7 +164,7 @@ expression
   | '(' expression ')'                                # Grouping
   | expression ('++' | '--')                          # Postfix
   | expression '[' expression ']'                     # IndexAccess
-  | expression '[' expression? ':' expression? ']'    # SliceAccess
+  | base=expression '[' start=expression? ':' end=expression? ']'    # SliceAccess
   | expression '.' identifier                         # MemberAccess
   | expression '{' nameValueList '}'                  # ObjectInit
   | expression '(' functionCallArguments ')'          # FunctionCallExp
