@@ -41,7 +41,7 @@ public class Parser {
     static public Expression parseExpression(String s) {
         SolidityParser parser = parse(s);
         ExpressionContext expCtx = parser.expression();
-        return (Expression) stk.visitExpression(expCtx);
+        return stk.visitExpression(expCtx);
     }
 
     static public Statement parseStatement(String s){

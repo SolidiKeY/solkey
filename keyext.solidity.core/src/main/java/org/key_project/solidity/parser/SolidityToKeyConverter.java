@@ -19,7 +19,6 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.BOOL;
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.UINT256;
 
 public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
@@ -41,17 +40,16 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitPrimaryExpression(PrimaryExpressionContext ctx) {
-        if(ctx.identifier() != null){
-            return visitIdentifier(ctx.identifier());
-        }
-        else if(ctx.BooleanLiteral() != null){
+        if(ctx.BooleanLiteral() != null){
             boolean b = Boolean.parseBoolean(ctx.BooleanLiteral().getText());
             return new BoolLiteral(b);
-        } else if (ctx.tupleExpression() != null) {
-            List<Expression> exps = parseExps(ctx.tupleExpression().expression());
-            return new TupleExpression(BOOL, exps);
         }
         return visitChildren(ctx);
+    }
+
+    @Override
+    public SyntaxElement visitTupleExpression(TupleExpressionContext ctx) {
+        return new TupleExpression(UINT256, parseExps(ctx.expression()));
     }
 
     List<Expression> parseExps(List<ExpressionContext> exps){
