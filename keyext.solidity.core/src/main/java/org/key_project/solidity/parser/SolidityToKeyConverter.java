@@ -1,6 +1,5 @@
 package org.key_project.solidity.parser;
 
-import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.op.ProgramVariable;
@@ -59,44 +58,69 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         return visitChildren(ctx);
     }
 
+    List<Expression> parseExps(List<ExpressionContext> exps){
+        return exps.stream() .map(this::visitExpression).map(Expression.class::cast).toList();
+    }
+
     @Override
-    public SyntaxElement visitExpression(ExpressionContext ctx) {
-        List<Expression> exps = ctx.expression().stream()
-                    .map(this::visitExpression).map(Expression.class::cast).toList();
+    public SyntaxElement visitBinaryOp(BinaryOpContext ctx) {
         Type expType = UINT256;
-        switch (ctx.children.size()){
-            case 2:
-                boolean prefix = ctx.children.get(0) instanceof TerminalNodeImpl;
-                String operator = ctx.children.get(prefix ? 0 : 1).toString();
-                Expression uExp = exps.getFirst();
-                return ParserUtils.parseUnaryOperation(uExp, operator, expType, prefix);
-            case 3:
-                if(ctx.children.get(1) instanceof TerminalNodeImpl){
-                    operator = ctx.children.get(1).toString();
-                    Expression left = exps.get(0);
-                    Expression right = exps.get(1);
-                    return ParserUtils.parseAllBinary(left, right, operator, expType);
-                }
-            case 4:
-                if(ctx.children.get(1) instanceof TerminalNodeImpl){
-                    String nameS = exps.getFirst().toString();
-                    Name name = new Name(nameS);
-                    return switch (ctx.children.get(1).toString()) {
-                        case "(" -> {
-                            FunctionReference functionRef = new FunctionReference(0, name, UINT256);
-                            FunctionCallArguments args = (FunctionCallArguments) visitFunctionCallArguments(ctx.functionCallArguments());
-                            yield new FunctionCallExpression(UINT256, functionRef, args.getArgs());
-                        }
-                        case "[" -> {
-                            ProgramVariable p = new ProgramVariable(name, null, null);
-                            yield new IndexExpression(p, exps.get(1), UINT256);
-                        }
-                        default ->
-                                throw new IllegalStateException("Unexpected value: " + ctx.children.get(1).toString());
-                    };
-                }
-        }
-        return visitChildren(ctx);
+        List<Expression> exps = parseExps(ctx.expression());
+        String operator = ctx.children.get(1).toString();
+        Expression left = exps.get(0);
+        Expression right = exps.get(1);
+        return ParserUtils.parseAllBinary(left, right, operator, expType);
+    }
+
+    public SyntaxElement visitExpression(ExpressionContext ctx) {
+        return switch (ctx) {
+            case PrimaryContext c         -> visitPrimary(c);
+            case GroupingContext c        -> visitGrouping(c);
+            case PostfixContext c         -> visitPostfix(c);
+            case IndexAccessContext c     -> visitIndexAccess(c);
+            case SliceAccessContext c     -> visitSliceAccess(c);
+            case MemberAccessContext c    -> visitMemberAccess(c);
+            case ObjectInitContext c      -> visitObjectInit(c);
+            case FunctionCallExpContext c -> visitFunctionCallExp(c);
+            case NewInstanceContext c     -> visitNewInstance(c);
+            case UnaryPrefixContext c     -> visitUnaryPrefix(c);
+            case DeleteContext c          -> visitDelete(c);
+            case BinaryOpContext c        -> visitBinaryOp(c);
+            case TernaryContext c         -> visitTernary(c);
+            default -> throw new IllegalStateException("Unknown expression: " + ctx.getClass().getName());
+        };
+    }
+
+    @Override
+    public SyntaxElement visitUnaryPrefix(UnaryPrefixContext ctx) {
+        String operator = ctx.children.getFirst().toString();
+        Expression uExp = (Expression) visitExpression(ctx.expression());
+        return ParserUtils.parseUnaryOperation(uExp, operator, UINT256, true);
+    }
+
+    @Override
+    public SyntaxElement visitPostfix(PostfixContext ctx) {
+        String operator = ctx.children.get(1).toString();
+        Expression uExp = (Expression) visitExpression(ctx.expression());
+        return ParserUtils.parseUnaryOperation(uExp, operator, UINT256, false);
+    }
+
+    @Override
+    public SyntaxElement visitFunctionCallExp(FunctionCallExpContext ctx) {
+        String nameS = visitExpression(ctx.expression()).toString();
+        Name name = new Name(nameS);
+        FunctionReference functionRef = new FunctionReference(0, name, UINT256);
+        FunctionCallArguments args = (FunctionCallArguments) visitFunctionCallArguments(ctx.functionCallArguments());
+        return new FunctionCallExpression(UINT256, functionRef, args.getArgs());
+    }
+
+    @Override
+    public SyntaxElement visitIndexAccess(IndexAccessContext ctx) {
+        List<Expression> exps = parseExps(ctx.expression());
+        String nameS = exps.getFirst().toString();
+        Name name = new Name(nameS);
+        ProgramVariable p = new ProgramVariable(name, null, null);
+        return new IndexExpression(p, exps.get(1), UINT256);
     }
 
     @Override
@@ -186,6 +210,9 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitExpressionList(ExpressionListContext ctx) {
+        if (ctx == null) {
+            return new ExpressionList(List.of());
+        }
         List<Expression> expressions = ctx.expression().stream().map(this::visitExpression).map(Expression.class::cast).toList();
         return new ExpressionList(expressions);
     }

@@ -160,33 +160,33 @@ NumberOfBytes
   : [1-9] | [12] [0-9] | '3' [0-2] ;
 
 expression
-  : expression ('++' | '--')
-  | 'new' typeName
-  | expression '[' expression ']'
-  | expression '[' expression? ':' expression? ']'
-  | expression '.' identifier
-  | expression '{' nameValueList '}'
-  | expression '(' functionCallArguments ')'
-  | '(' expression ')'
-  | ('++' | '--') expression
-  | ('+' | '-') expression
-  | 'delete' expression
-  | '!' expression
-  | '~' expression
-  | <assoc=right> expression '**' expression
-  | expression ('*' | '/' | '%') expression
-  | expression ('+' | '-') expression
-  | expression ('<<' | '>>') expression
-  | expression '&' expression
-  | expression '^' expression
-  | expression '|' expression
-  | expression ('<' | '>' | '<=' | '>=') expression
-  | expression ('==' | '!=') expression
-  | expression '&&' expression
-  | expression '||' expression
-  | <assoc=right> expression '?' expression ':' expression
-  | expression ('=' | '|=' | '^=' | '&=' | '<<=' | '>>=' | '+=' | '-=' | '*=' | '/=' | '%=') expression
-  | primaryExpression ;
+  : primaryExpression                                 # Primary
+  | '(' expression ')'                                # Grouping
+  | expression ('++' | '--')                          # Postfix
+  | expression '[' expression ']'                     # IndexAccess
+  | expression '[' expression? ':' expression? ']'    # SliceAccess
+  | expression '.' identifier                         # MemberAccess
+  | expression '{' nameValueList '}'                  # ObjectInit
+  | expression '(' functionCallArguments ')'          # FunctionCallExp
+  | 'new' typeName                                    # NewInstance
+  | ('++' | '--' | '+' | '-' | '!' | '~') expression  # UnaryPrefix
+  | 'delete' expression                               # Delete
+  | <assoc=right> expression '**' expression          # BinaryOp
+  | expression ('*' | '/' | '%') expression           # BinaryOp
+  | expression ('+' | '-') expression                 # BinaryOp
+  | expression ('<<' | '>>') expression               # BinaryOp
+  | expression ('<' | '>' | '<=' | '>=') expression   # BinaryOp
+  | expression ('==' | '!=') expression               # BinaryOp
+  | expression '&' expression                         # BinaryOp
+  | expression '^' expression                         # BinaryOp
+  | expression '|' expression                         # BinaryOp
+  | expression '&&' expression                        # BinaryOp
+  | expression '||' expression                        # BinaryOp
+  | <assoc=right> expression
+    ('=' | '|=' | '^=' | '&=' | '<<=' | '>>=' | '+=' | '-=' | '*=' | '/=' | '%=')
+    expression                                        # BinaryOp
+  | <assoc=right> expression '?' expression ':' expression # Ternary
+  ;
 
 primaryExpression
   : schemaVariable
