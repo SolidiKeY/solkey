@@ -9,7 +9,7 @@ import java.util.Objects;
 import org.key_project.logic.IntIterator;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.PosInProgram;
-import org.key_project.solidity.program.PossibleProgramPrefix;
+import org.key_project.solidity.program.ProgramPrefix;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.SourceData;
 import org.key_project.solidity.program.ast.statement.Block;
@@ -69,11 +69,11 @@ public class ContextStatementBlock extends Block {
         final SolidityProgramElement src = newSource.getSource();
         final Services services = source.getServices();
 
-        final PossibleProgramPrefix prefix;
+        final ProgramPrefix prefix;
         int pos = -1;
         PosInProgram relPos = PosInProgram.TOP;
 
-        if (src instanceof PossibleProgramPrefix pre) {
+        if (src instanceof ProgramPrefix pre) {
             prefix = pre;
             final int srcPrefixLength = prefix.getPrefixLength();
 
@@ -82,7 +82,7 @@ public class ContextStatementBlock extends Block {
             }
 
             pos = srcPrefixLength - patternPrefixLength;
-            PossibleProgramPrefix firstActiveStatement = getPrefixElementAt(prefix, pos);
+            ProgramPrefix firstActiveStatement = getPrefixElementAt(prefix, pos);
 
             relPos = firstActiveStatement.getFirstActiveChildPos();
 
@@ -97,7 +97,7 @@ public class ContextStatementBlock extends Block {
                 start = relPos.get(relPos.depth() - 1);
                 if (relPos.depth() > 1) {
                     firstActiveStatement =
-                        (PossibleProgramPrefix) PosInProgram.getProgramAt(relPos.up(),
+                        (ProgramPrefix) PosInProgram.getProgramAt(relPos.up(),
                             firstActiveStatement);
                 }
             }
@@ -123,7 +123,7 @@ public class ContextStatementBlock extends Block {
     /// completes match of context block by adding the prefix end position and the suffix start
     /// position
     private MatchConditions makeContextInfoComplete(MatchConditions matchCond, SourceData newSource,
-            @Nullable PossibleProgramPrefix prefix, int pos, PosInProgram relPos,
+            @Nullable ProgramPrefix prefix, int pos, PosInProgram relPos,
             SolidityProgramElement src,
             Services services) {
         final SVInstantiations instantiations = matchCond.getInstantiations();
@@ -147,11 +147,11 @@ public class ContextStatementBlock extends Block {
     /// @param relPos the position of the first active statement of element
     /// prefix.getPrefixElementAt(pos);
     /// @return the PosInProgram of the first element, which is not part of the prefix
-    private PosInProgram matchPrefixEnd(final @Nullable PossibleProgramPrefix prefix, int pos,
+    private PosInProgram matchPrefixEnd(final @Nullable ProgramPrefix prefix, int pos,
             PosInProgram relPos) {
         PosInProgram prefixEnd = PosInProgram.TOP;
         if (prefix != null) {
-            PossibleProgramPrefix currentPrefix = prefix;
+            ProgramPrefix currentPrefix = prefix;
             int i = 0;
             while (i <= pos) {
                 final IntIterator it = currentPrefix.getFirstActiveChildPos().iterator();
@@ -174,8 +174,8 @@ public class ContextStatementBlock extends Block {
         return prefixEnd;
     }
 
-    private static PossibleProgramPrefix getPrefixElementAt(PossibleProgramPrefix prefix, int i) {
-        PossibleProgramPrefix current = prefix;
+    private static ProgramPrefix getPrefixElementAt(ProgramPrefix prefix, int i) {
+        ProgramPrefix current = prefix;
         for (int pos = 0; pos < i; pos++) {
             current = current.getNextPrefixElement();
         }

@@ -19,7 +19,7 @@ import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.op.SModality;
 import org.key_project.solidity.logic.op.UpdateApplication;
 import org.key_project.solidity.logic.sort.GenericSort;
-import org.key_project.solidity.program.PossibleProgramPrefix;
+import org.key_project.solidity.program.ProgramPrefix;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.rule.NoPosTacletApp;
@@ -349,7 +349,7 @@ public class TacletIndex {
             HashMap<Object, ImmutableList<NoPosTacletApp>> map, SolidityProgramElement pe,
             PrefixOccurrences prefixOccurrences) {
         ImmutableList<NoPosTacletApp> res = ImmutableSLList.nil();
-        if (pe instanceof PossibleProgramPrefix pre && pre.isPrefix()) {
+        if (pe instanceof ProgramPrefix pre && pre.isPrefix()) {
             int next = prefixOccurrences.occurred(pe);
             if (next < pe.getChildCount()) {
                 return getProgramTacletList(map, (SolidityProgramElement) pe.getChild(next),

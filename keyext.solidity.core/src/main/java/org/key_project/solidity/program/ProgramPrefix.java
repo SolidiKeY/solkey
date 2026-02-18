@@ -10,21 +10,21 @@ import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 
 /// this interface is implemented by program elements that may be matched by the inactive program
 /// prefix
-public interface PossibleProgramPrefix extends SolidityProgramElement {
-    boolean isPrefix(@UnknownInitialization PossibleProgramPrefix this);
+public interface ProgramPrefix extends SolidityProgramElement {
+    boolean isPrefix(@UnknownInitialization ProgramPrefix this);
 
     /// return true if there is a next prefix element
-    boolean hasNextPrefixElement(@UnknownInitialization PossibleProgramPrefix this);
+    boolean hasNextPrefixElement(@UnknownInitialization ProgramPrefix this);
 
     /// return the next prefix element if no next prefix element is available an
     /// IndexOutOfBoundsException is thrown
-    PossibleProgramPrefix getNextPrefixElement(@UnknownInitialization PossibleProgramPrefix this);
+    ProgramPrefix getNextPrefixElement(@UnknownInitialization ProgramPrefix this);
 
     /// return the last prefix element
-    PossibleProgramPrefix getLastPrefixElement();
+    ProgramPrefix getLastPrefixElement();
 
     /// returns an array with all prefix elements starting at this element
-    ImmutableArray<PossibleProgramPrefix> getPrefixElements();
+    ImmutableArray<ProgramPrefix> getPrefixElements();
 
     /// returns the position of the first active child
     PosInProgram getFirstActiveChildPos();

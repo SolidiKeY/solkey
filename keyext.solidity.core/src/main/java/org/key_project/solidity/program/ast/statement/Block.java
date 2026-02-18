@@ -8,13 +8,13 @@ import java.util.stream.Collectors;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.PosInProgram;
-import org.key_project.solidity.program.PossibleProgramPrefix;
+import org.key_project.solidity.program.ProgramPrefix;
 import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
-public class Block implements Statement, PossibleProgramPrefix {
+public class Block implements Statement, ProgramPrefix {
 
     private final ImmutableArray<Statement> statements;
     private String errorName;
@@ -87,17 +87,17 @@ public class Block implements Statement, PossibleProgramPrefix {
     }
 
     @Override
-    public PossibleProgramPrefix getNextPrefixElement() {
+    public ProgramPrefix getNextPrefixElement() {
         throw new RuntimeException("Not implemented yet");
     }
 
     @Override
-    public PossibleProgramPrefix getLastPrefixElement() {
+    public ProgramPrefix getLastPrefixElement() {
         throw new RuntimeException("Not implemented yet");
     }
 
     @Override
-    public ImmutableArray<PossibleProgramPrefix> getPrefixElements() {
+    public ImmutableArray<ProgramPrefix> getPrefixElements() {
         throw new RuntimeException("Not implemented yet");
     }
 

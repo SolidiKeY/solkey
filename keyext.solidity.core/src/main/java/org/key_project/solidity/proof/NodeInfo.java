@@ -12,7 +12,7 @@ import org.key_project.prover.rules.RuleApp;
 import org.key_project.prover.rules.Taclet;
 import org.key_project.solidity.logic.TermBuilder;
 import org.key_project.solidity.logic.op.SModality;
-import org.key_project.solidity.program.PossibleProgramPrefix;
+import org.key_project.solidity.program.ProgramPrefix;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.proof.io.ProofSaver;
 import org.key_project.solidity.rule.PosTacletApp;
@@ -207,7 +207,7 @@ public class NodeInfo {
         SolidityProgramElement activeStatement = null;
         if (firstExpr != null) {
             activeStatement = firstExpr;
-            while (activeStatement instanceof PossibleProgramPrefix pp && pp.isPrefix()) {
+            while (activeStatement instanceof ProgramPrefix pp && pp.isPrefix()) {
                 activeStatement = (SolidityProgramElement) activeStatement.getChild(0);
             }
         }
