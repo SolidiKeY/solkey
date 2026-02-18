@@ -33,6 +33,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.key_project.util.collection.ImmutableArray;
 
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.*;
 
@@ -218,16 +219,16 @@ public class SolJSONParser {
     private Block parseBlock(JsonNode jsonBody) {
         List<Statement> blockStatements =
             jsonBody.findValue("statements").valueStream().map(this::parseStatement).toList();
-        if (jsonBody.has("errorName")) {
-            String errorName = jsonBody.findValue("errorName").asText();
-            if (!errorName.isEmpty()) {
-                List<Declaration> arguments =
-                    jsonBody.findValue("parameters").findValue("parameters").valueStream()
-                            .map(this::parseDeclaration).toList();
-                throw new RuntimeException("Return CatchClause here");
-                // return new Block(blockStatements, errorName, arguments);
-            }
-        }
+//        if (jsonBody.has("errorName")) {
+//            String errorName = jsonBody.findValue("errorName").asText();
+//            if (!errorName.isEmpty()) {
+//                List<Declaration> arguments =
+//                    jsonBody.findValue("parameters").findValue("parameters").valueStream()
+//                            .map(this::parseDeclaration).toList();
+////                throw new RuntimeException("Return CatchClause here");
+//                 return new Block(blockStatements, errorName, arguments);
+//            }
+//        }
         return new Block(blockStatements);
     }
 
@@ -285,8 +286,12 @@ public class SolJSONParser {
                     parseExpression(statement.findValue("externalCall").findValue("expression"));
                 List<Block> blocks =
                     statement.findValue("clauses").valueStream().map(this::parseBlock).toList();
-                throw new RuntimeException("TODO: Fix creation of try statement");
-                // yield new TryStatement(expression, blocks);
+                Block body = blocks.getFirst();
+                List<CatchClause> clauses = blocks.stream()
+                        .skip(1)
+                        .map(CatchClause::new)
+                        .toList();
+                yield new TryStatement(expression, new ImmutableArray<>(List.of()), body, new ImmutableArray<>(clauses));
             }
             case "PlaceholderStatement" -> new PlaceholdStatement();
             default -> throw new IllegalStateException("Statement does not have type " + type);

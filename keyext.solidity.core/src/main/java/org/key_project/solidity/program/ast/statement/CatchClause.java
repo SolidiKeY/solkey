@@ -80,10 +80,10 @@ public class CatchClause implements SolidityProgramElement {
 
     @Override
     public SolidityProgramElement getChild(int index) {
-        if (declaration != null && index == 0) {
+        if(declaration != null)
+            index -= 1;
+        if (index == -1)
             return declaration;
-        }
-        index -= 1;
         return body.getStatements().get(index);
     }
 
