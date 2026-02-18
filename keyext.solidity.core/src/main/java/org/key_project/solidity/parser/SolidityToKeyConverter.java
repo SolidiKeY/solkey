@@ -7,9 +7,14 @@ import java.math.BigInteger;
 import java.util.List;
 
 import org.key_project.logic.Name;
+import org.key_project.logic.Namespace;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.parser.SolidityParser.*;
+import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
+import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.*;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
@@ -25,11 +30,17 @@ import org.key_project.util.collection.ImmutableArray;
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.UINT256;
 
 public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
+    // ProgramSV for schema variable and it is declared outside of the program
+    private Namespace<ProgramVariable> localVars = new Namespace<>();
+    // TODO: Add constructor to the service
+    private Services services;
 
     @Override
     public SyntaxElement visitBlock(BlockContext ctx) {
+        localVars = new Namespace<>(localVars);
         List<Statement> stms = ctx.statement().stream()
                 .map(this::visitStatement).map(Statement.class::cast).toList();
+        localVars = localVars.parent();
         return new Block(stms);
     }
 
@@ -100,9 +111,10 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     @Override
     public SyntaxElement visitIndexAccess(IndexAccessContext ctx) {
         List<Expression> exps = parseExps(ctx.expression());
+        // TODO: this.a.b would not work
         String nameS = exps.getFirst().toString();
         Name name = new Name(nameS);
-        ProgramVariable p = new ProgramVariable(name, null, null);
+        ProgramVariable p = localVars.lookup(name);
         return new IndexExpression(p, exps.get(1), UINT256);
     }
 
@@ -132,14 +144,16 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     @Override
     public SyntaxElement visitIdentifier(IdentifierContext ctx) {
         String variableName = ctx.Identifier().getText();
-        return new ProgramVariable(new Name(variableName), null, null);
+        return localVars.lookup(variableName);
     }
 
     @Override
     public SyntaxElement visitVariableDeclarationStatement(
             VariableDeclarationStatementContext ctx) {
-        ProgramVariable programVariable =
-            (ProgramVariable) visitIdentifier(ctx.variableDeclaration().identifier());
+        // TODO: fix the type
+        KeYSolidityType ksType = new KeYSolidityType(PrimitiveType.UINT, new SortImpl(new Name("UINT"))) ;//null; // services.getSolidityInfo().getKeYSolidityType("");
+        ProgramVariable programVariable = new ProgramVariable(new Name(ctx.variableDeclaration().identifier().Identifier().getText()), ksType);
+        localVars.add(programVariable);
         StatementVariableDeclaration stmDecl =
             new StatementVariableDeclaration(programVariable, "", null);
         return new DeclarationStatement(List.of(stmDecl), null);
@@ -199,7 +213,6 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitCatchClause(CatchClauseContext ctx) {
-//        catchClause : 'catch' ( identifier? parameterList )? block ;
         return new CatchClause(null, (Block) visitBlock(ctx.block()));
     }
 
@@ -208,6 +221,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         Expression exp = visitExpression(ctx.expression());
         Block body = (Block) visitBlock(ctx.block());
         List<CatchClause> clauses = ctx.catchClause().stream().map(this::visitCatchClause).map(CatchClause.class::cast).toList();
+        // TODO: add paramater declaration
         return new TryStatement(exp, new ImmutableArray<>(), body, new ImmutableArray<>(clauses));
     }
 

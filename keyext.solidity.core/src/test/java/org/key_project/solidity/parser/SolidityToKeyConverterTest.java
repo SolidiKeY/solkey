@@ -28,6 +28,11 @@ public class SolidityToKeyConverterTest {
     }
 
     @Test
+    void creatingProgramVariables() {
+        Block block = parseBlock("{ int x; x = 1; }");
+    }
+
+    @Test
     void literalInt() {
         Uint256Literal exp = (Uint256Literal) parseExpression("1");
         assertEquals(1, exp.getValue().intValue());

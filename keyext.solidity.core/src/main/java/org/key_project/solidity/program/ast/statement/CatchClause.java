@@ -22,6 +22,7 @@ public class CatchClause implements SolidityProgramElement {
     }
 
     private final Kind kind;
+    // TODO: test multiple catches
     private final ImmutableArray<StatementVariableDeclaration> declarations;
     private final Block body;
 
@@ -53,7 +54,7 @@ public class CatchClause implements SolidityProgramElement {
     }
 
     public CatchClause(ExtList children) {
-        this(children.get(ImmutableArray.class), children.get(Block.class));
+        this(new ImmutableArray<>(children.collect(StatementVariableDeclaration.class)), children.get(Block.class));
     }
 
     public Kind getKind() {
@@ -68,6 +69,7 @@ public class CatchClause implements SolidityProgramElement {
         return body;
     }
 
+    // TODO: body should be just one child
     @Override
     public int getChildCount() {
         int count = declarations == null ? 0 : 1;
@@ -80,6 +82,7 @@ public class CatchClause implements SolidityProgramElement {
         v.performActionOnCatchClause(this);
     }
 
+    // TODO: body should be just one child
     @Override
     public SolidityProgramElement getChild(int index) {
         if(declarations != null)
