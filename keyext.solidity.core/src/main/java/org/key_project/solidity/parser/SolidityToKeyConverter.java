@@ -5,7 +5,6 @@ package org.key_project.solidity.parser;
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.stream.Stream;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
@@ -21,6 +20,7 @@ import org.key_project.solidity.program.ast.ghost.FunctionCallArguments;
 import org.key_project.solidity.program.ast.references.FunctionReference;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.program.parser.ParserUtils;
+import org.key_project.util.collection.ImmutableArray;
 
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.UINT256;
 
@@ -199,17 +199,21 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitCatchClause(CatchClauseContext ctx) {
-        return visitBlock(ctx.block());
+//        catchClause : 'catch' ( identifier? parameterList )? block ;
+        return new CatchClause(null, (Block) visitBlock(ctx.block()));
     }
 
     @Override
     public SyntaxElement visitTryStatement(TryStatementContext ctx) {
         Expression exp = visitExpression(ctx.expression());
-        List<Block> blocks = Stream.concat(
-            Stream.of((Block) visitBlock(ctx.block())),
-            ctx.catchClause().stream().map(this::visitCatchClause).map(Block.class::cast)).toList();
-        throw new RuntimeException("TODO: Fix creation of try statement");
-        // return new TryStatement(exp, blocks);
+        Block body = (Block) visitBlock(ctx.block());
+        List<CatchClause> clauses = ctx.catchClause().stream().map(this::visitCatchClause).map(CatchClause.class::cast).toList();
+//        List<Block> catchClauses = ctx.catchClause().stream().map(this::visitCatchClause).map(Block.class::cast)).toList();
+//                Stream.concat(
+//            Stream.of((Block) visitBlock(ctx.block())),
+//            ctx.catchClause().stream().map(this::visitCatchClause).map(Block.class::cast)).toList();
+//        throw new RuntimeException("TODO: Fix creation of try statement");
+        return new TryStatement(exp, new ImmutableArray<>(), body, new ImmutableArray<>(clauses));
     }
 
     @Override

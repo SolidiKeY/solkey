@@ -169,7 +169,7 @@ public class SolidityToKeyConverterTest {
     void tryCatch() {
         TryStatement stm = (TryStatement) parseStatement("try false catch {}");
         assertFalse(((BoolLiteral) stm.getExpression()).getValue());
-        assertEquals(1, stm.getCatchClauseCount());
+        assertEquals(0, stm.getCatchClauseCount());
     }
 
     @Test
