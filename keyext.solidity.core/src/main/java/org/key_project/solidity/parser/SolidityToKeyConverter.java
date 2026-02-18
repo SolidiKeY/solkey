@@ -170,7 +170,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     @Override
     public SyntaxElement visitReturnStatement(ReturnStatementContext ctx) {
         Expression exp = visitExpression(ctx.expression());
-        return new ReturnStatment(exp);
+        return new ReturnStatement(exp);
     }
 
     @Override
@@ -199,13 +199,13 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitForStatement(ForStatementContext ctx) {
-        Expression initial = ctx.simpleStatement() == null ? null
-                : ((ExpressionStatement) visitSimpleStatement(ctx.simpleStatement()))
-                        .getExpression();
+        ForInit initial = ctx.simpleStatement() == null ? null
+                : new ForInit(((ExpressionStatement) visitSimpleStatement(ctx.simpleStatement()))
+                        .getExpression());
         Expression condition = ctx.expressionStatement() == null ? null
                 : ((ExpressionStatement) visitExpressionStatement(ctx.expressionStatement()))
                         .getExpression();
-        Expression loopExp = visitExpression(ctx.expression());
+        ForUpdate loopExp = new ForUpdate(visitExpression(ctx.expression()));
         Statement body = (Statement) visitStatement(ctx.statement());
         return new ForStatement(initial, condition, loopExp, body);
 

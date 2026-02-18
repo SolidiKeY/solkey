@@ -9,7 +9,6 @@ import java.util.Objects;
 
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
-import org.key_project.solidity.program.ast.abstractions.*;
 import org.key_project.solidity.program.ast.declarations.*;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.expressions.*;
@@ -861,6 +860,28 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
     }
 
     @Override
+    public void performActionOnForInit(ForInit x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new ForInit(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnForUpdate(ForUpdate x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new ForUpdate(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
     public void performActionOnPlaceholdStatement(PlaceholdStatement x) {
         DefaultAction def = new DefaultAction(x) {
             @Override
@@ -872,11 +893,11 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
     }
 
     @Override
-    public void performActionOnReturnStatment(ReturnStatment x) {
+    public void performActionOnReturnStatment(ReturnStatement x) {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ReturnStatment(changeList);
+                return new ReturnStatement(changeList);
             }
         };
         def.doAction(x);

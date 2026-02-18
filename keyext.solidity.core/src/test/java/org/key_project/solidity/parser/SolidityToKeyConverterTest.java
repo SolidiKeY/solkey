@@ -120,12 +120,12 @@ public class SolidityToKeyConverterTest {
     @Test
     void returnStatement() {
         Statement stm = parseStatement("return;");
-        assertInstanceOf(ReturnStatment.class, stm);
+        assertInstanceOf(ReturnStatement.class, stm);
     }
 
     @Test
     void returnFalse() {
-        ReturnStatment stm = (ReturnStatment) parseStatement("return false;");
+        ReturnStatement stm = (ReturnStatement) parseStatement("return false;");
         assertFalse(((BoolLiteral) stm.getReturnExp()).getValue());
     }
 

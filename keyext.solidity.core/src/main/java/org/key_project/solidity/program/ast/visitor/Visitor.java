@@ -158,9 +158,13 @@ public interface Visitor {
 
     void performActionOnForStatement(ForStatement x);
 
+    void performActionOnForInit(ForInit x);
+
+    void performActionOnForUpdate(ForUpdate x);
+
     void performActionOnPlaceholdStatement(PlaceholdStatement x);
 
-    void performActionOnReturnStatment(ReturnStatment x);
+    void performActionOnReturnStatment(ReturnStatement x);
 
     void performActionOnTryStatement(TryStatement x);
 
