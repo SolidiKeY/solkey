@@ -242,7 +242,7 @@ public class SolJSONParser {
             Expression expression = parseExpression(statement.findValue("expression"));
             return switch (type) {
                 case "ExpressionStatement" -> new ExpressionStatement(expression);
-                case "Return" -> new ReturnStatment(expression);
+                case "Return" -> new ReturnStatement(expression);
                 default ->
                     throw new RuntimeException("Statement type " + type + " is not supported");
             };
@@ -273,12 +273,13 @@ public class SolJSONParser {
             case "Continue" -> new ContinueStatement();
             case "Break" -> new BreakStatement();
             case "ForStatement" -> {
-                Expression initializationExpression =
-                    findOrNullExpression(statement, "initializationExpression");
+                ForInit init =
+                    new ForInit(findOrNullExpression(statement, "initializationExpression"));
                 Expression condition = findOrNullExpression(statement, "condition");
-                Expression loopExpression = findOrNullExpression(statement, "loopExpression");
+                ForUpdate forUpdate =
+                    new ForUpdate(findOrNullExpression(statement, "loopExpression"));
                 Statement body = parseStatement(statement.findValue("body"));
-                yield new ForStatement(initializationExpression, condition, loopExpression, body);
+                yield new ForStatement(init, condition, forUpdate, body);
             }
             case "DoWhileStatement" -> {
                 Expression condition = parseExpression(statement.findValue("condition"));

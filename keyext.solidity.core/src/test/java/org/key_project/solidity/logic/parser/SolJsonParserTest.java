@@ -370,8 +370,8 @@ public class SolJsonParserTest {
         assertEquals(1, structs.getFirst().getFields().size());
         FunctionDeclaration function = contractDeclaration.getFunctions().getFirst();
         var retStmSynt = function.getBody().getStatements().get(0);
-        Assertions.assertInstanceOf(ReturnStatment.class, retStmSynt);
-        ReturnStatment retStm = (ReturnStatment) retStmSynt;
+        Assertions.assertInstanceOf(ReturnStatement.class, retStmSynt);
+        ReturnStatement retStm = (ReturnStatement) retStmSynt;
         Expression retExp = retStm.getReturnExp();
         Assertions.assertInstanceOf(MemberExp.class, retExp);
     }

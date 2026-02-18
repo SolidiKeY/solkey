@@ -391,12 +391,22 @@ public abstract class SolidityASTVisitor extends SolidityASTWalker implements Vi
     }
 
     @Override
+    public void performActionOnForInit(ForInit x) {
+        doDefaultAction(x);
+    }
+
+    @Override
+    public void performActionOnForUpdate(ForUpdate x) {
+        doDefaultAction(x);
+    }
+
+    @Override
     public void performActionOnPlaceholdStatement(PlaceholdStatement x) {
         doDefaultAction(x);
     }
 
     @Override
-    public void performActionOnReturnStatment(ReturnStatment x) {
+    public void performActionOnReturnStatment(ReturnStatement x) {
         doDefaultAction(x);
     }
 

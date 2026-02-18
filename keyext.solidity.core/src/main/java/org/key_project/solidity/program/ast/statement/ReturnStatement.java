@@ -10,16 +10,16 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public class ReturnStatment implements Statement {
+public class ReturnStatement implements Statement {
     private Expression returnExp;
 
-    public ReturnStatment() {}
+    public ReturnStatement() {}
 
-    public ReturnStatment(Expression returnExp) {
+    public ReturnStatement(Expression returnExp) {
         this.returnExp = returnExp;
     }
 
-    public ReturnStatment(ExtList children) {
+    public ReturnStatement(ExtList children) {
         this.returnExp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
     }
 

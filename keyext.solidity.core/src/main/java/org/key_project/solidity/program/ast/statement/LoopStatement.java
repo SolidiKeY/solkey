@@ -19,8 +19,8 @@ public abstract class LoopStatement implements Statement {
     }
 
     public LoopStatement(ExtList children) {
-        this.condition = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
-        this.body = Objects.requireNonNull(children.removeFirstOccurrence(Statement.class));
+        this.condition = Objects.requireNonNull(children.get(Expression.class));
+        this.body = Objects.requireNonNull(children.get(Statement.class));
     }
 
     @Override

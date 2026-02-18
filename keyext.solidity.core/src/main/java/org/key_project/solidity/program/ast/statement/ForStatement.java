@@ -5,43 +5,37 @@ package org.key_project.solidity.program.ast.statement;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public class ForStatement implements Statement {
-    private final Expression initializationExpression;
-    private final Expression condition;
-    private final Expression loopExpression;
-    private final Statement body;
+public class ForStatement extends LoopStatement {
+    private final ForInit init;
+    private final ForUpdate update;
 
-    public ForStatement(Expression initializationExpression, Expression condition,
-            Expression loopExpression, Statement body) {
-        this.initializationExpression = initializationExpression;
-        this.condition = condition;
-        this.loopExpression = loopExpression;
-        this.body = body;
+    public ForStatement(ForInit init, Expression condition,
+            ForUpdate updateExpression, Statement body) {
+        super(condition, body);
+        this.init = init;
+        this.update = updateExpression;
     }
 
     public ForStatement(ExtList children) {
-        this.initializationExpression =
-            Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
-        this.condition = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
-        this.loopExpression =
-            Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
-        this.body = Objects.requireNonNull(children.removeFirstOccurrence(Statement.class));
+        super(children);
+        this.init = children.get(ForInit.class);
+        this.update = children.get(ForUpdate.class);
     }
 
     @Override
     public SyntaxElement getChild(int n) {
-        List<Expression> exps = new ArrayList<>();
-        exps.add(initializationExpression);
+        List<SolidityProgramElement> exps = new ArrayList<>();
+        exps.add(init);
         exps.add(condition);
-        exps.add(loopExpression);
-        for (Expression exp : exps) {
+        exps.add(update);
+        for (var exp : exps) {
             if (exp == null)
                 continue;
             if (n == 0)
@@ -56,23 +50,23 @@ public class ForStatement implements Statement {
     @Override
     public int getChildCount() {
         int n = 4;
-        if (initializationExpression == null)
+        if (init == null)
             n -= 1;
         if (condition == null)
             n -= 1;
-        if (loopExpression == null)
+        if (update == null)
             n -= 1;
         return n;
     }
 
-    public String nullOrEmpty(Expression e) {
+    public String nullOrEmpty(SolidityProgramElement e) {
         return e == null ? "" : e.toString();
     }
 
     @Override
     public String toString() {
-        return "for(" + nullOrEmpty(initializationExpression)
-            + "; " + nullOrEmpty(condition) + "; " + nullOrEmpty(loopExpression) + ")\n" + body;
+        return "for(" + nullOrEmpty(init)
+            + "; " + nullOrEmpty(condition) + "; " + nullOrEmpty(update) + ")\n" + body;
     }
 
     public void visit(Visitor v) {
