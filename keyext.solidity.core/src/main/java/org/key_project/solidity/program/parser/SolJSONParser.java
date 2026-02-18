@@ -219,17 +219,21 @@ public class SolJSONParser {
     private Block parseBlock(JsonNode jsonBody) {
         List<Statement> blockStatements =
             jsonBody.findValue("statements").valueStream().map(this::parseStatement).toList();
-//        if (jsonBody.has("errorName")) {
-//            String errorName = jsonBody.findValue("errorName").asText();
-//            if (!errorName.isEmpty()) {
-//                List<Declaration> arguments =
-//                    jsonBody.findValue("parameters").findValue("parameters").valueStream()
-//                            .map(this::parseDeclaration).toList();
-////                throw new RuntimeException("Return CatchClause here");
-//                 return new Block(blockStatements, errorName, arguments);
-//            }
-//        }
         return new Block(blockStatements);
+    }
+
+    private CatchClause parseCatchClause(JsonNode jsonBody){
+        Block block = parseBlock(jsonBody);
+        if (jsonBody.has("errorName")) {
+            String errorName = jsonBody.findValue("errorName").asText();
+            if (!errorName.isEmpty()) {
+                List<Declaration> arguments =
+                    jsonBody.findValue("parameters").findValue("parameters").valueStream()
+                            .map(this::parseDeclaration).toList();
+                return new CatchClause((StatementVariableDeclaration) arguments.getFirst(), block);
+            }
+        }
+        return new CatchClause(block);
     }
 
     private @NonNull Statement parseStatement(JsonNode statement) {
@@ -284,12 +288,10 @@ public class SolJSONParser {
             case "TryStatement" -> {
                 Expression expression =
                     parseExpression(statement.findValue("externalCall").findValue("expression"));
-                List<Block> blocks =
-                    statement.findValue("clauses").valueStream().map(this::parseBlock).toList();
-                Block body = blocks.getFirst();
-                List<CatchClause> clauses = blocks.stream()
-                        .skip(1)
-                        .map(CatchClause::new)
+                List<JsonNode> clausesList = statement.findValue("clauses").valueStream().toList();
+                Block body = clausesList.stream().map(this::parseBlock).findFirst().orElse(null);
+                List<CatchClause> clauses = clausesList.stream().skip(1)
+                        .map(this::parseCatchClause)
                         .toList();
                 yield new TryStatement(expression, new ImmutableArray<>(List.of()), body, new ImmutableArray<>(clauses));
             }
