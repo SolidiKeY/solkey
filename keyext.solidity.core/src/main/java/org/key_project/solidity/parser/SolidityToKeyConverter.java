@@ -208,11 +208,6 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         Expression exp = visitExpression(ctx.expression());
         Block body = (Block) visitBlock(ctx.block());
         List<CatchClause> clauses = ctx.catchClause().stream().map(this::visitCatchClause).map(CatchClause.class::cast).toList();
-//        List<Block> catchClauses = ctx.catchClause().stream().map(this::visitCatchClause).map(Block.class::cast)).toList();
-//                Stream.concat(
-//            Stream.of((Block) visitBlock(ctx.block())),
-//            ctx.catchClause().stream().map(this::visitCatchClause).map(Block.class::cast)).toList();
-//        throw new RuntimeException("TODO: Fix creation of try statement");
         return new TryStatement(exp, new ImmutableArray<>(), body, new ImmutableArray<>(clauses));
     }
 

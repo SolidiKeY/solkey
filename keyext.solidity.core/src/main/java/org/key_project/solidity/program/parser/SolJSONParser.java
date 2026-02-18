@@ -227,10 +227,10 @@ public class SolJSONParser {
         if (jsonBody.has("errorName")) {
             String errorName = jsonBody.findValue("errorName").asText();
             if (!errorName.isEmpty()) {
-                List<Declaration> arguments =
+                List<StatementVariableDeclaration> arguments =
                     jsonBody.findValue("parameters").findValue("parameters").valueStream()
-                            .map(this::parseDeclaration).toList();
-                return new CatchClause((StatementVariableDeclaration) arguments.getFirst(), block);
+                            .map(this::parseDeclaration).map(StatementVariableDeclaration.class::cast).toList() ;
+                return new CatchClause(new ImmutableArray<>(arguments), block);
             }
         }
         return new CatchClause(block);

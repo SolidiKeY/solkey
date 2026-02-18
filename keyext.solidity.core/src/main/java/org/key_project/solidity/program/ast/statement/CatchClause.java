@@ -4,6 +4,7 @@
 package org.key_project.solidity.program.ast.statement;
 
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
@@ -13,6 +14,7 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.key_project.util.collection.ImmutableArray;
 
 public class CatchClause implements SolidityProgramElement {
     enum Kind {
@@ -20,19 +22,19 @@ public class CatchClause implements SolidityProgramElement {
     }
 
     private final Kind kind;
-    private final StatementVariableDeclaration declaration;
+    private final ImmutableArray<StatementVariableDeclaration> declarations;
     private final Block body;
 
     // cache for hashcode
     private int hashCode = -1;
 
-    public CatchClause(StatementVariableDeclaration declaration, Block body) {
-        this.declaration = declaration;
+    public CatchClause(ImmutableArray<StatementVariableDeclaration> declarations, Block body) {
+        this.declarations = declarations;
         this.body = body;
-        if (declaration == null) {
+        if (declarations == null) {
             this.kind = Kind.ALL;
         } else {
-            Type type = declaration.getProgramVariable().getType();
+            Type type = declarations.get(0).getProgramVariable().getType();
             if (type == PrimitiveType.UINT) {
                 this.kind = Kind.Panic;
             } else if (type == PrimitiveType.STRING) {
@@ -41,7 +43,7 @@ public class CatchClause implements SolidityProgramElement {
                 this.kind = Kind.LowLevel;
             } else {
                 throw new IllegalArgumentException(
-                    "Unknown catch clause kind for declared catch variable " + declaration);
+                    "Unknown catch clause kind for declared catch variable " + declarations);
             }
         }
     }
@@ -51,7 +53,7 @@ public class CatchClause implements SolidityProgramElement {
     }
 
     public CatchClause(ExtList children) {
-        this(children.get(StatementVariableDeclaration.class), children.get(Block.class));
+        this(children.get(ImmutableArray.class), children.get(Block.class));
     }
 
     public Kind getKind() {
@@ -59,7 +61,7 @@ public class CatchClause implements SolidityProgramElement {
     }
 
     public StatementVariableDeclaration getCatchDeclaration() {
-        return declaration;
+        return declarations.get(0);
     }
 
     public Block getBody() {
@@ -68,7 +70,7 @@ public class CatchClause implements SolidityProgramElement {
 
     @Override
     public int getChildCount() {
-        int count = declaration == null ? 0 : 1;
+        int count = declarations == null ? 0 : 1;
         count += body.getChildCount();
         return count;
     }
@@ -80,10 +82,10 @@ public class CatchClause implements SolidityProgramElement {
 
     @Override
     public SolidityProgramElement getChild(int index) {
-        if(declaration != null)
+        if(declarations != null)
             index -= 1;
         if (index == -1)
-            return declaration;
+            return declarations.get(0);
         return body.getStatements().get(index);
     }
 
@@ -105,7 +107,7 @@ public class CatchClause implements SolidityProgramElement {
             return false;
         }
         final CatchClause other = (CatchClause) obj;
-        return Objects.equals(declaration, other.declaration) && Objects.equals(body, other.body);
+        return Objects.equals(declarations, other.declarations) && Objects.equals(body, other.body);
     }
 
     @Override
@@ -118,8 +120,8 @@ public class CatchClause implements SolidityProgramElement {
                 break;
         }
 
-        if (declaration != null) {
-            catchString += "(" + declaration + ")";
+        if (declarations != null) {
+            catchString += "(" + declarations.stream().map(StatementVariableDeclaration::toString).collect(Collectors.joining(", ")) + ")";
         }
 
         catchString += " " + body.toString();
