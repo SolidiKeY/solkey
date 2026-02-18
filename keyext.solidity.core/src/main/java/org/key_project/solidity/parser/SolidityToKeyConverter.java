@@ -70,24 +70,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     }
 
     public Expression visitExpression(ExpressionContext ctx) {
-        return (Expression) switch (ctx) {
-            case PrimaryContext c -> visitPrimary(c);
-            case GroupingContext c -> visitGrouping(c);
-            case PostfixContext c -> visitPostfix(c);
-            case IndexAccessContext c -> visitIndexAccess(c);
-            case SliceAccessContext c -> visitSliceAccess(c);
-            case MemberAccessContext c -> visitMemberAccess(c);
-            case ObjectInitContext c -> visitObjectInit(c);
-            case FunctionCallExpContext c -> visitFunctionCallExp(c);
-            case NewInstanceContext c -> visitNewInstance(c);
-            case UnaryPrefixContext c -> visitUnaryPrefix(c);
-            case DeleteContext c -> visitDelete(c);
-            case BinaryOpContext c -> visitBinaryOp(c);
-            case TernaryContext c -> visitTernary(c);
-            case null -> null;
-            default ->
-                throw new IllegalStateException("Unknown expression: " + ctx.getClass().getName());
-        };
+        return ctx == null ? null : (Expression) ctx.accept(this);
     }
 
     @Override
