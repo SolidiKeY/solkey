@@ -26,7 +26,6 @@ import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Literal;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.*;
-import org.key_project.solidity.program.ast.expressions.operators.AssignmentExpression;
 import org.key_project.solidity.program.ast.references.*;
 import org.key_project.solidity.program.ast.statement.*;
 
@@ -225,7 +224,8 @@ public class SolJSONParser {
                 List<Declaration> arguments =
                     jsonBody.findValue("parameters").findValue("parameters").valueStream()
                             .map(this::parseDeclaration).toList();
-                return new Block(blockStatements, errorName, arguments);
+                throw new RuntimeException("Return CatchClause here");
+                // return new Block(blockStatements, errorName, arguments);
             }
         }
         return new Block(blockStatements);
@@ -285,7 +285,8 @@ public class SolJSONParser {
                     parseExpression(statement.findValue("externalCall").findValue("expression"));
                 List<Block> blocks =
                     statement.findValue("clauses").valueStream().map(this::parseBlock).toList();
-                yield new TryStatement(expression, blocks);
+                throw new RuntimeException("TODO: Fix creation of try statement");
+                // yield new TryStatement(expression, blocks);
             }
             case "PlaceholderStatement" -> new PlaceholdStatement();
             default -> throw new IllegalStateException("Statement does not have type " + type);

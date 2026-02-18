@@ -3,28 +3,45 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.statement;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.PosInProgram;
+import org.key_project.solidity.program.ProgramPrefix;
+import org.key_project.solidity.program.ast.declarations.ParameterDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
+import org.key_project.util.collection.ImmutableArray;
 
-public class TryStatement implements Statement {
+import org.jspecify.annotations.NonNull;
 
-    private final Expression expression;
-    private final List<Block> blocks;
+public class TryStatement implements Statement, ProgramPrefix {
 
-    public TryStatement(Expression expression, List<Block> blocks) {
+    private final @NonNull Expression expression;
+    private final @NonNull ImmutableArray<@NonNull ParameterDeclaration> returnDeclaration;
+    private final @NonNull Block body;
+    private final @NonNull ImmutableArray<@NonNull CatchClause> catchClauses;
+
+    // cache hash
+    private int hashcode = -1;
+
+    public TryStatement(@NonNull Expression expression,
+            @NonNull ImmutableArray<@NonNull ParameterDeclaration> returnDeclaration,
+            @NonNull Block body,
+            @NonNull ImmutableArray<@NonNull CatchClause> clauses) {
         this.expression = expression;
-        this.blocks = blocks;
+        this.returnDeclaration = returnDeclaration;
+        this.body = body;
+        this.catchClauses = clauses;
     }
 
     public TryStatement(ExtList children) {
-        this.expression = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
-        this.blocks = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
+        this.expression = Objects.requireNonNull(children.get(Expression.class));
+        this.returnDeclaration = new ImmutableArray<>(children.collect(ParameterDeclaration.class));
+        this.body = Objects.requireNonNull(children.get(Block.class));
+        this.catchClauses = new ImmutableArray<>(children.collect(CatchClause.class));
     }
 
     @Override
@@ -32,23 +49,24 @@ public class TryStatement implements Statement {
         if (n == 0)
             return expression;
         n -= 1;
-        if (n >= 0 && n < getChildCount()) {
-            return blocks.get(n);
+        if (n >= 0 && n < returnDeclaration.size()) {
+            return returnDeclaration.get(n);
         }
-        return null;
+        n -= returnDeclaration.size();
+        if (n == 0) {
+            return body;
+        }
+        n -= 1;
+        return catchClauses.get(n);
     }
 
     @Override
     public int getChildCount() {
-        return blocks.size() + 1;
-    }
-
-    @Override
-    public String toString() {
-        Block tryBlock = blocks.getFirst();
-        List<Block> catchBlocks = blocks.subList(1, blocks.size());
-        return "try " + expression + " " + tryBlock + " " +
-            catchBlocks.stream().map(Block::toStringCatch).collect(Collectors.joining());
+        int count = 1; // expression
+        count += 1; // body
+        count += returnDeclaration.size();
+        count += catchClauses.size();
+        return count;
     }
 
     public void visit(Visitor v) {
@@ -59,7 +77,96 @@ public class TryStatement implements Statement {
         return expression;
     }
 
-    public List<Block> getBlocks() {
-        return blocks;
+    public Block getBody() {
+        return body;
+    }
+
+    public ImmutableArray<ParameterDeclaration> getReturnDeclaration() {
+        return returnDeclaration;
+    }
+
+    public int getReturnCount() {
+        return returnDeclaration.size();
+    }
+
+    public ParameterDeclaration getReturnParameter(int i) {
+        return returnDeclaration.get(i);
+    }
+
+    public ImmutableArray<CatchClause> getCatchClauses() {
+        return catchClauses;
+    }
+
+    public int getCatchClauseCount() {
+        return catchClauses.size();
+    }
+
+    public CatchClause getCatchClause(int i) {
+        return catchClauses.get(i);
+    }
+
+    @Override
+    public int hashCode() {
+        if (hashcode == -1) {
+            int hash = Objects.hash(expression, returnDeclaration, body, catchClauses);
+            hashcode = hash == -1 ? 0 : hash;
+        }
+        return hashcode;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        final TryStatement other = (TryStatement) obj;
+        return Objects.equals(this.expression, other.expression) &&
+                Objects.equals(this.returnDeclaration, other.returnDeclaration) &&
+                Objects.equals(this.body, other.body) &&
+                Objects.equals(this.catchClauses, other.catchClauses);
+    }
+
+    @Override
+    public String toString() {
+        return "try " + expression + " " + body + " " +
+            catchClauses.stream().map(CatchClause::toString).collect(Collectors.joining());
+    }
+
+    @Override
+    public boolean isPrefix() {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    @Override
+    public boolean hasNextPrefixElement() {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    @Override
+    public ProgramPrefix getNextPrefixElement() {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    @Override
+    public ProgramPrefix getLastPrefixElement() {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    @Override
+    public ImmutableArray<ProgramPrefix> getPrefixElements() {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    @Override
+    public PosInProgram getFirstActiveChildPos() {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    @Override
+    public int getPrefixLength() {
+        throw new RuntimeException("Not implemented yet");
     }
 }

@@ -346,6 +346,11 @@ public abstract class SolidityASTVisitor extends SolidityASTWalker implements Vi
     }
 
     @Override
+    public void performActionOnCatchClause(CatchClause x) {
+        doDefaultAction(x);
+    }
+
+    @Override
     public void performActionOnContextStatementBlock(ContextStatementBlock x) {
         doDefaultAction(x);
     }

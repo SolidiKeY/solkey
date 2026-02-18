@@ -140,6 +140,8 @@ public interface Visitor {
 
     void performActionOnBlock(Block x);
 
+    void performActionOnCatchClause(CatchClause catchClause);
+
     void performActionOnContextStatementBlock(ContextStatementBlock x);
 
     void performActionOnBreakStatement(BreakStatement x);
@@ -165,4 +167,5 @@ public interface Visitor {
     void performActionOnWhileStatement(WhileStatement x);
 
     void performActionOnDataLocation(DataLocation x);
+
 }

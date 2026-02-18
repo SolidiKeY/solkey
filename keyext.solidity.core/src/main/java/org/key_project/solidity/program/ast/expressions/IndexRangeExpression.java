@@ -36,14 +36,14 @@ public class IndexRangeExpression extends SolidityExpression {
     @Override
     public SyntaxElement getChild(int n) {
         int i = n;
-        if(i == 0){
+        if (i == 0) {
             return baseExp;
         }
-        if(startExp == null)
+        if (startExp == null)
             i++;
-        if(endExp == null)
+        if (endExp == null)
             i++;
-        return switch (i){
+        return switch (i) {
             case 1 -> startExp;
             case 2 -> endExp;
             default -> throw new IndexOutOfBoundsException(n + " is out of bound");
@@ -53,9 +53,9 @@ public class IndexRangeExpression extends SolidityExpression {
     @Override
     public int getChildCount() {
         int size = 3;
-        if(startExp == null)
+        if (startExp == null)
             size--;
-        if(endExp == null)
+        if (endExp == null)
             size--;
         return size;
     }

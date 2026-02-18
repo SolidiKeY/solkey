@@ -4,12 +4,10 @@
 package org.key_project.solidity.program.ast.statement;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.PosInProgram;
 import org.key_project.solidity.program.ProgramPrefix;
-import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
@@ -17,18 +15,9 @@ import org.key_project.util.collection.ImmutableArray;
 public class Block implements Statement, ProgramPrefix {
 
     private final ImmutableArray<Statement> statements;
-    private String errorName;
-    private List<Declaration> arguments;
 
     public Block(ImmutableArray<Statement> statements) {
         this.statements = statements;
-    }
-
-    public Block(List<Statement> statements, String errorName,
-            List<Declaration> arguments) {
-        this.statements = new ImmutableArray<>(statements);
-        this.errorName = errorName;
-        this.arguments = arguments;
     }
 
     public Block(List<Statement> statements) {
@@ -37,8 +26,6 @@ public class Block implements Statement, ProgramPrefix {
 
     public Block(ExtList children) {
         this.statements = new ImmutableArray<>(children.collect(Statement.class));
-        this.errorName = null;
-        this.arguments = null;
     }
 
     @Override
@@ -62,16 +49,6 @@ public class Block implements Statement, ProgramPrefix {
             body += statement.toString() + "\n";
         }
         return body + "}\n";
-    }
-
-    public String toStringCatch() {
-        String body = "catch ";
-        if (errorName != null && !errorName.isEmpty()) {
-            body += errorName + " ("
-                + arguments.stream().map(Object::toString).collect(Collectors.joining(", ")) + ")";
-        }
-        body += " " + this;
-        return body;
     }
 
     public ImmutableArray<Statement> getStatements() { return statements; }

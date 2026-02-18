@@ -772,6 +772,18 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
     }
 
     @Override
+    public void performActionOnCatchClause(CatchClause x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new CatchClause(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+
+    @Override
     public void performActionOnBreakStatement(BreakStatement x) {
         DefaultAction def = new DefaultAction(x) {
             @Override

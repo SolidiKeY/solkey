@@ -6,14 +6,14 @@ package org.key_project.solidity.antlr;
 import org.key_project.solidity.parser.SolidityLexer;
 import org.key_project.solidity.parser.SolidityParser;
 import org.key_project.solidity.parser.SolidityParser.*;
-
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CodePointCharStream;
-import org.antlr.v4.runtime.CommonTokenStream;
 import org.key_project.solidity.parser.SolidityToKeyConverter;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.program.ast.statement.Statement;
+
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CodePointCharStream;
+import org.antlr.v4.runtime.CommonTokenStream;
 
 public class Parser {
 
@@ -44,7 +44,7 @@ public class Parser {
         return stk.visitExpression(expCtx);
     }
 
-    static public Statement parseStatement(String s){
+    static public Statement parseStatement(String s) {
         SolidityParser parser = parse(s);
         StatementContext stmCtx = parser.statement();
         return (Statement) stk.visitStatement(stmCtx);

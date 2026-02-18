@@ -13,7 +13,7 @@ import org.key_project.util.ExtList;
 public class ReturnStatment implements Statement {
     private Expression returnExp;
 
-    public ReturnStatment() { }
+    public ReturnStatment() {}
 
     public ReturnStatment(Expression returnExp) {
         this.returnExp = returnExp;

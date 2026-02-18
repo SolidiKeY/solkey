@@ -19,7 +19,6 @@ import org.key_project.solidity.speclang.LoopSpecification;
 import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableSet;
 
-
 public class SpecificationRepository {
     private final Services services;
     private final TermBuilder tb;

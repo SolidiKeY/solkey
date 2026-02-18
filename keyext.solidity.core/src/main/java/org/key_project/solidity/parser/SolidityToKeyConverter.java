@@ -1,4 +1,11 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser;
+
+import java.math.BigInteger;
+import java.util.List;
+import java.util.stream.Stream;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
@@ -15,10 +22,6 @@ import org.key_project.solidity.program.ast.references.FunctionReference;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.program.parser.ParserUtils;
 
-import java.math.BigInteger;
-import java.util.List;
-import java.util.stream.Stream;
-
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.UINT256;
 
 public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
@@ -30,8 +33,9 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         return new Block(stms);
     }
 
-    @Override public SyntaxElement visitNumberLiteral(NumberLiteralContext ctx) {
-        if(ctx.DecimalNumber() != null){
+    @Override
+    public SyntaxElement visitNumberLiteral(NumberLiteralContext ctx) {
+        if (ctx.DecimalNumber() != null) {
             BigInteger number = new BigInteger(ctx.DecimalNumber().getText());
             return new Uint256Literal(number);
         }
@@ -40,7 +44,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitPrimaryExpression(PrimaryExpressionContext ctx) {
-        if(ctx.BooleanLiteral() != null){
+        if (ctx.BooleanLiteral() != null) {
             boolean b = Boolean.parseBoolean(ctx.BooleanLiteral().getText());
             return new BoolLiteral(b);
         }
@@ -52,7 +56,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         return new TupleExpression(UINT256, parseExps(ctx.expression()));
     }
 
-    List<Expression> parseExps(List<ExpressionContext> exps){
+    List<Expression> parseExps(List<ExpressionContext> exps) {
         return exps.stream().map(this::visitExpression).toList();
     }
 
@@ -67,21 +71,22 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     public Expression visitExpression(ExpressionContext ctx) {
         return (Expression) switch (ctx) {
-            case PrimaryContext c         -> visitPrimary(c);
-            case GroupingContext c        -> visitGrouping(c);
-            case PostfixContext c         -> visitPostfix(c);
-            case IndexAccessContext c     -> visitIndexAccess(c);
-            case SliceAccessContext c     -> visitSliceAccess(c);
-            case MemberAccessContext c    -> visitMemberAccess(c);
-            case ObjectInitContext c      -> visitObjectInit(c);
+            case PrimaryContext c -> visitPrimary(c);
+            case GroupingContext c -> visitGrouping(c);
+            case PostfixContext c -> visitPostfix(c);
+            case IndexAccessContext c -> visitIndexAccess(c);
+            case SliceAccessContext c -> visitSliceAccess(c);
+            case MemberAccessContext c -> visitMemberAccess(c);
+            case ObjectInitContext c -> visitObjectInit(c);
             case FunctionCallExpContext c -> visitFunctionCallExp(c);
-            case NewInstanceContext c     -> visitNewInstance(c);
-            case UnaryPrefixContext c     -> visitUnaryPrefix(c);
-            case DeleteContext c          -> visitDelete(c);
-            case BinaryOpContext c        -> visitBinaryOp(c);
-            case TernaryContext c         -> visitTernary(c);
+            case NewInstanceContext c -> visitNewInstance(c);
+            case UnaryPrefixContext c -> visitUnaryPrefix(c);
+            case DeleteContext c -> visitDelete(c);
+            case BinaryOpContext c -> visitBinaryOp(c);
+            case TernaryContext c -> visitTernary(c);
             case null -> null;
-            default -> throw new IllegalStateException("Unknown expression: " + ctx.getClass().getName());
+            default ->
+                throw new IllegalStateException("Unknown expression: " + ctx.getClass().getName());
         };
     }
 
@@ -104,7 +109,8 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         String nameS = visitExpression(ctx.expression()).toString();
         Name name = new Name(nameS);
         FunctionReference functionRef = new FunctionReference(0, name, UINT256);
-        FunctionCallArguments args = (FunctionCallArguments) visitFunctionCallArguments(ctx.functionCallArguments());
+        FunctionCallArguments args =
+            (FunctionCallArguments) visitFunctionCallArguments(ctx.functionCallArguments());
         return new FunctionCallExpression(UINT256, functionRef, args.getArgs());
     }
 
@@ -140,15 +146,19 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         return new ExpressionStatement(visitExpression(ctx.expression()));
     }
 
-    @Override public SyntaxElement visitIdentifier(IdentifierContext ctx) {
+    @Override
+    public SyntaxElement visitIdentifier(IdentifierContext ctx) {
         String variableName = ctx.Identifier().getText();
         return new ProgramVariable(new Name(variableName), null, null);
     }
 
     @Override
-    public SyntaxElement visitVariableDeclarationStatement(VariableDeclarationStatementContext ctx) {
-        ProgramVariable programVariable = (ProgramVariable) visitIdentifier(ctx.variableDeclaration().identifier());
-        StatementVariableDeclaration stmDecl = new StatementVariableDeclaration(programVariable,"", null);
+    public SyntaxElement visitVariableDeclarationStatement(
+            VariableDeclarationStatementContext ctx) {
+        ProgramVariable programVariable =
+            (ProgramVariable) visitIdentifier(ctx.variableDeclaration().identifier());
+        StatementVariableDeclaration stmDecl =
+            new StatementVariableDeclaration(programVariable, "", null);
         return new DeclarationStatement(List.of(stmDecl), null);
     }
 
@@ -192,10 +202,12 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitForStatement(ForStatementContext ctx) {
-        Expression initial = ctx.simpleStatement() == null ? null :
-                ((ExpressionStatement) visitSimpleStatement(ctx.simpleStatement())).getExpression();
-        Expression condition = ctx.expressionStatement() == null ? null :
-                ((ExpressionStatement) visitExpressionStatement(ctx.expressionStatement())).getExpression();
+        Expression initial = ctx.simpleStatement() == null ? null
+                : ((ExpressionStatement) visitSimpleStatement(ctx.simpleStatement()))
+                        .getExpression();
+        Expression condition = ctx.expressionStatement() == null ? null
+                : ((ExpressionStatement) visitExpressionStatement(ctx.expressionStatement()))
+                        .getExpression();
         Expression loopExp = visitExpression(ctx.expression());
         Statement body = (Statement) visitStatement(ctx.statement());
         return new ForStatement(initial, condition, loopExp, body);
@@ -211,10 +223,10 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     public SyntaxElement visitTryStatement(TryStatementContext ctx) {
         Expression exp = visitExpression(ctx.expression());
         List<Block> blocks = Stream.concat(
-                Stream.of((Block) visitBlock(ctx.block())),
-                ctx.catchClause().stream().map(this::visitCatchClause).map(Block.class::cast)
-        ).toList();
-        return new TryStatement(exp, blocks);
+            Stream.of((Block) visitBlock(ctx.block())),
+            ctx.catchClause().stream().map(this::visitCatchClause).map(Block.class::cast)).toList();
+        throw new RuntimeException("TODO: Fix creation of try statement");
+        // return new TryStatement(exp, blocks);
     }
 
     @Override
@@ -225,12 +237,14 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitFunctionCallArguments(FunctionCallArgumentsContext ctx) {
-        return new FunctionCallArguments((ExpressionList) visitExpressionList(ctx.expressionList()));
+        return new FunctionCallArguments(
+            (ExpressionList) visitExpressionList(ctx.expressionList()));
     }
 
     @Override
     public SyntaxElement visitStatement(StatementContext ctx) {
-        if(ctx == null) return null;
+        if (ctx == null)
+            return null;
         return visitChildren(ctx);
     }
 }
