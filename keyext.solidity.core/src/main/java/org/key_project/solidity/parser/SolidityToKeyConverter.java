@@ -35,6 +35,14 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     // TODO: Add constructor to the service
     private Services services;
 
+    public SolidityToKeyConverter(){
+        this.services = new Services();
+    }
+
+    public SolidityToKeyConverter(Services services){
+        this.services = services;
+    }
+
     @Override
     public SyntaxElement visitBlock(BlockContext ctx) {
         localVars = new Namespace<>(localVars);
