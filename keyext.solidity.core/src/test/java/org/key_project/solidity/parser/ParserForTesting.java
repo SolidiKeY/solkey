@@ -1,0 +1,71 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
+package org.key_project.solidity.parser;
+
+import com.sun.jdi.LocalVariable;
+import org.key_project.logic.Name;
+import org.key_project.logic.Namespace;import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.logic.sort.SortImpl;
+import org.key_project.solidity.parser.SolidityParser.*;
+import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
+import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
+import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.statement.Block;
+import org.key_project.solidity.program.ast.statement.Statement;
+
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CodePointCharStream;
+import org.antlr.v4.runtime.CommonTokenStream;
+
+public class ParserForTesting {
+
+    static SolidityToKeyConverter stk;
+
+    public ParserForTesting() {
+        Services services = new Services();
+        KeYSolidityType ksType = new KeYSolidityType(PrimitiveType.UINT, new SortImpl(new Name("UINT")));
+        ProgramVariable px = new ProgramVariable(new Name("x"), ksType);
+        ProgramVariable pf = new ProgramVariable(new Name("f"), ksType);
+        ProgramVariable pv = new ProgramVariable(new Name("v"), ksType);
+
+        Namespace<ProgramVariable> localVars = new Namespace<>();
+        localVars.add(px);
+        localVars.add(pf);
+        localVars.add(pv);
+
+        this.stk = new SolidityToKeyConverter(services, localVars);
+    }
+
+    public SolidityParser parse(String s) {
+        CodePointCharStream input = CharStreams.fromString(s);
+
+        SolidityLexer lexer = new SolidityLexer(input);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+
+        return new SolidityParser(tokens);
+    }
+
+    public BlockContext parseBlockContext(String s) {
+        SolidityParser parser = parse(s);
+        return parser.block();
+    }
+
+    public Block parseBlock(String s) {
+        BlockContext bc = parseBlockContext(s);
+        return (Block) stk.visitBlock(bc);
+    }
+
+    public Expression parseExpression(String s) {
+        SolidityParser parser = parse(s);
+        ExpressionContext expCtx = parser.expression();
+        return stk.visitExpression(expCtx);
+    }
+
+    public Statement parseStatement(String s) {
+        SolidityParser parser = parse(s);
+        StatementContext stmCtx = parser.statement();
+        return (Statement) stk.visitStatement(stmCtx);
+    }
+}

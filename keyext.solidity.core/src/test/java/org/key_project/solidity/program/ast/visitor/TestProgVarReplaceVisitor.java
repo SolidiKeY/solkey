@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.key_project.solidity.logic.parser.SolJsonParserTest.getDeclStr;
+import static org.key_project.solidity.logic.parser.SolJsonParserForTestingTest.getDeclStr;
 
 class TestProgVarReplaceVisitor {
 

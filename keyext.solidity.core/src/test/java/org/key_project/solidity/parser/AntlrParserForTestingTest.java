@@ -3,8 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser;
 
-import org.key_project.solidity.antlr.Parser;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -12,11 +10,13 @@ import org.junit.jupiter.params.provider.ValueSource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class AntlrParserTest {
+public class AntlrParserForTestingTest {
+
+    ParserForTesting parser = new ParserForTesting();
 
     @Test
     void testParseBool() {
-        SolidityParser parser = Parser.parse("true");
+        SolidityParser parser = this.parser.parse("true");
 
         SolidityParser.PrimaryExpressionContext exp = parser.primaryExpression();
         assertEquals("([] true)", exp.toStringTree());
@@ -24,13 +24,13 @@ public class AntlrParserTest {
 
     @Test
     void simpleBlock() {
-        SolidityParser.BlockContext block = Parser.parseBlockContext("{}");
+        SolidityParser.BlockContext block = parser.parseBlockContext("{}");
         assertEquals("([] { })", block.toStringTree());
     }
 
     @Test
     void schema() {
-        SolidityParser parser = Parser.parse("s#abc");
+        SolidityParser parser = this.parser.parse("s#abc");
         SolidityParser.SchemaVariableContext scm = parser.schemaVariable();
         String s = scm.toStringTree();
         assertEquals(0, parser.getNumberOfSyntaxErrors());
@@ -61,7 +61,7 @@ public class AntlrParserTest {
         "{ int a = s#schema; }"
     })
     void correctParsing(String input) {
-        SolidityParser parser = Parser.parse(input);
+        SolidityParser parser = this.parser.parse(input);
         SolidityParser.BlockContext block = parser.block();
         String s = block.toStringTree();
         assertEquals(0, parser.getNumberOfSyntaxErrors());
@@ -74,7 +74,7 @@ public class AntlrParserTest {
         "{ assembly { let x := 0 } }",
     })
     void wrongParsing(String input) {
-        SolidityParser parser = Parser.parse(input);
+        SolidityParser parser = this.parser.parse(input);
         SolidityParser.BlockContext block = parser.block();
         assertTrue(parser.getNumberOfSyntaxErrors() > 0);
     }

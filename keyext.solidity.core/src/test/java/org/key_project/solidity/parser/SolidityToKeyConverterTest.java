@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.key_project.solidity.antlr.Parser.*;
+import static org.key_project.solidity.parser.ParserForTesting.*;
 
 public class SolidityToKeyConverterTest {
 
@@ -231,4 +231,18 @@ public class SolidityToKeyConverterTest {
         assertFalse(((BoolLiteral) exp.getFalseExpression()).getValue());
     }
 
+
+    ParserForTesting parser = new ParserForTesting();
+
+    Block parseBlock(String s){
+        return parser.parseBlock(s);
+    }
+
+    Expression parseExpression(String s){
+        return parser.parseExpression(s);
+    }
+
+    Statement parseStatement(String s){
+        return parser.parseStatement(s);
+    }
 }
