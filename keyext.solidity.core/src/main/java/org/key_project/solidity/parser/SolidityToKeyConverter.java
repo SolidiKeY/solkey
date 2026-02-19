@@ -15,6 +15,7 @@ import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
+import org.key_project.solidity.program.ast.declarations.ParameterDeclaration;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.*;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
@@ -22,6 +23,7 @@ import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.TernaryOperator;
 import org.key_project.solidity.program.ast.ghost.ExpressionList;
 import org.key_project.solidity.program.ast.ghost.FunctionCallArguments;
+import org.key_project.solidity.program.ast.ghost.SyntaxElementList;
 import org.key_project.solidity.program.ast.references.FunctionReference;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.program.parser.ParserUtils;
@@ -31,16 +33,17 @@ import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.UI
 
 public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     // ProgramSV for schema variable and it is declared outside of the program
-    private Namespace<ProgramVariable> localVars = new Namespace<>();
-    // TODO: Add constructor to the service
+    private Namespace<ProgramVariable> localVars;
     private Services services;
 
     public SolidityToKeyConverter(){
         this.services = new Services();
+        this.localVars = new Namespace<>();
     }
 
-    public SolidityToKeyConverter(Services services){
+    public SolidityToKeyConverter(Services services, Namespace<ProgramVariable> localVars){
         this.services = services;
+        this.localVars = localVars;
     }
 
     @Override
@@ -229,8 +232,9 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         Expression exp = visitExpression(ctx.expression());
         Block body = (Block) visitBlock(ctx.block());
         List<CatchClause> clauses = ctx.catchClause().stream().map(this::visitCatchClause).map(CatchClause.class::cast).toList();
-        // TODO: add paramater declaration
-        return new TryStatement(exp, new ImmutableArray<>(), body, new ImmutableArray<>(clauses));
+        List<ParameterDeclaration> parameters = ((SyntaxElementList) visitReturnParameters(ctx.returnParameters()))
+                .getElements().stream().map(ParameterDeclaration.class::cast).toList();
+        return new TryStatement(exp, new ImmutableArray<>(parameters), body, new ImmutableArray<>(clauses));
     }
 
     @Override
@@ -250,5 +254,15 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         if (ctx == null)
             return null;
         return visitChildren(ctx);
+    }
+
+    @Override
+    public SyntaxElement visitParameter(ParameterContext ctx) {
+        return new ParameterDeclaration(null, null, null);
+    }
+
+    @Override
+    public SyntaxElement visitParameterList(ParameterListContext ctx) {
+        return new SyntaxElementList(ctx.parameter().stream().map(this::visitParameter).toList());
     }
 }

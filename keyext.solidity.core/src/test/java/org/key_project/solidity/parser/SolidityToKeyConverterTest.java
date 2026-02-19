@@ -175,6 +175,13 @@ public class SolidityToKeyConverterTest {
     }
 
     @Test
+    void tryWithReturn() {
+        TryStatement stm = (TryStatement) parseStatement("try false returns (address) {}");
+        assertFalse(((BoolLiteral) stm.getExpression()).getValue());
+        assertEquals(1, stm.getReturnCount());
+    }
+
+    @Test
     void tryCatch() {
         TryStatement stm = (TryStatement) parseStatement("try false catch {}");
         assertFalse(((BoolLiteral) stm.getExpression()).getValue());
