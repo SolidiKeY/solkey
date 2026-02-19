@@ -13,10 +13,10 @@ import org.key_project.util.ExtList;
 
 public class IndexExpression extends SolidityExpression {
 
-    ProgramVariable leftExp;
+    Expression leftExp;
     Expression indexExp;
 
-    public IndexExpression(ProgramVariable leftExp, Expression indexExp, Type expType) {
+    public IndexExpression(Expression leftExp, Expression indexExp, Type expType) {
         super(expType);
         this.leftExp = leftExp;
         this.indexExp = indexExp;

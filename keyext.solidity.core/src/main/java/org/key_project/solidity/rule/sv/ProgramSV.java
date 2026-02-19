@@ -6,13 +6,16 @@ package org.key_project.solidity.rule.sv;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.solidity.rule.matching.inst.ProgramList;
 import org.key_project.solidity.rule.sv.sort.ProgramSVSort;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
 
-public class ProgramSV extends OperatorSV {
+public class ProgramSV extends OperatorSV implements Expression {
     private final boolean isListSV;
 
     private static final ProgramList EMPTY_LIST_INSTANTIATION =
@@ -38,5 +41,14 @@ public class ProgramSV extends OperatorSV {
     @Override
     public int getChildCount() {
         return 0;
+    }
+
+    @Override
+    public void visit(Visitor v) {
+    }
+
+    @Override
+    public Type getType() {
+        return null;
     }
 }

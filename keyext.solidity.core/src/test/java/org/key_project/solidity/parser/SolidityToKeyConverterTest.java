@@ -15,6 +15,7 @@ import org.key_project.solidity.program.ast.statement.*;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.key_project.solidity.rule.sv.ProgramSV;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.key_project.solidity.parser.ParserForTesting.*;
@@ -46,6 +47,12 @@ public class SolidityToKeyConverterTest {
     void literalBool() {
         BoolLiteral exp = (BoolLiteral) parseExpression("false");
         assertEquals(false, exp.getValue());
+    }
+
+    @Test
+    void schemaVariable() {
+        ProgramSV exp = (ProgramSV) parseExpression("s#v");
+        assertEquals("s#v", exp.toString());
     }
 
     @Test

@@ -27,6 +27,7 @@ import org.key_project.solidity.program.ast.ghost.SyntaxElementList;
 import org.key_project.solidity.program.ast.references.FunctionReference;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.program.parser.ParserUtils;
+import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.util.collection.ImmutableArray;
 
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.UINT256;
@@ -34,16 +35,20 @@ import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.UI
 public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     // ProgramSV for schema variable and it is declared outside of the program
     private Namespace<ProgramVariable> localVars;
-    private Services services;
+    final private Namespace<ProgramSV> schemaVariables;
+    final private Services services;
 
     public SolidityToKeyConverter(){
         this.services = new Services();
         this.localVars = new Namespace<>();
+        this.schemaVariables = new Namespace<>();
     }
 
-    public SolidityToKeyConverter(Services services, Namespace<ProgramVariable> localVars){
+    public SolidityToKeyConverter(Services services, Namespace<ProgramVariable> localVars,
+                                  Namespace<ProgramSV> schemaVariables){
         this.services = services;
         this.localVars = localVars;
+        this.schemaVariables = schemaVariables;
     }
 
     @Override
@@ -62,6 +67,12 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
             return new Uint256Literal(number);
         }
         return visitChildren(ctx);
+    }
+
+    @Override
+    public SyntaxElement visitSchemaVariable(SchemaVariableContext ctx) {
+        String variableName = ctx.getText();
+        return schemaVariables.lookup(variableName);
     }
 
     @Override
@@ -121,12 +132,9 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitIndexAccess(IndexAccessContext ctx) {
-        List<Expression> exps = parseExps(ctx.expression());
-        // TODO: this.a.b would not work
-        String nameS = exps.getFirst().toString();
-        Name name = new Name(nameS);
-        ProgramVariable p = localVars.lookup(name);
-        return new IndexExpression(p, exps.get(1), UINT256);
+        Expression left = visitExpression(ctx.left);
+        Expression index = visitExpression(ctx.index);
+        return new IndexExpression(left, index, UINT256);
     }
 
     @Override

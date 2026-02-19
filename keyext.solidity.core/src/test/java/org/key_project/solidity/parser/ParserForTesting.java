@@ -4,7 +4,8 @@
 package org.key_project.solidity.parser;
 
 import org.key_project.logic.Name;
-import org.key_project.logic.Namespace;import org.key_project.solidity.common.Services;
+import org.key_project.logic.Namespace;
+import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.parser.SolidityParser.*;
@@ -17,6 +18,9 @@ import org.key_project.solidity.program.ast.statement.Statement;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.key_project.solidity.rule.sv.ProgramSV;
+
+import static org.key_project.solidity.rule.sv.SchemaVariableFactory.createProgramSV;
 
 public class ParserForTesting {
 
@@ -33,7 +37,12 @@ public class ParserForTesting {
         localVars.add(px);
         localVars.add(pf);
         localVars.add(pv);
-        return new SolidityToKeyConverter(services, localVars);
+
+        Namespace<ProgramSV> schemaVariables = new Namespace<>();
+        ProgramSV sv = createProgramSV(new Name("s#v"), null, false);
+        schemaVariables.add(sv);
+
+        return new SolidityToKeyConverter(services, localVars, schemaVariables);
     }
 
     static public SolidityParser parse(String s) {

@@ -163,7 +163,7 @@ expression
   : primaryExpression                                 # Primary
   | '(' expression ')'                                # Grouping
   | expression ('++' | '--')                          # Postfix
-  | expression '[' expression ']'                     # IndexAccess
+  | left=expression '[' index=expression ']'                     # IndexAccess
   | base=expression '[' start=expression? ':' end=expression? ']'    # SliceAccess
   | expression '.' identifier                         # MemberAccess
   | expression '{' nameValueList '}'                  # ObjectInit
