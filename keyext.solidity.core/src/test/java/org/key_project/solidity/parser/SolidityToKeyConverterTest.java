@@ -230,19 +230,4 @@ public class SolidityToKeyConverterTest {
         assertTrue(((BoolLiteral) exp.getTrueExpression()).getValue());
         assertFalse(((BoolLiteral) exp.getFalseExpression()).getValue());
     }
-
-
-    ParserForTesting parser = new ParserForTesting();
-
-    Block parseBlock(String s){
-        return parser.parseBlock(s);
-    }
-
-    Expression parseExpression(String s){
-        return parser.parseExpression(s);
-    }
-
-    Statement parseStatement(String s){
-        return parser.parseStatement(s);
-    }
 }

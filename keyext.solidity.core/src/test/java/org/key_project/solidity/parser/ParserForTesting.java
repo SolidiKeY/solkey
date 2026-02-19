@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser;
 
-import com.sun.jdi.LocalVariable;
 import org.key_project.logic.Name;
 import org.key_project.logic.Namespace;import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
@@ -21,9 +20,9 @@ import org.antlr.v4.runtime.CommonTokenStream;
 
 public class ParserForTesting {
 
-    static SolidityToKeyConverter stk;
+    static SolidityToKeyConverter stk = solConverter();
 
-    public ParserForTesting() {
+    private static SolidityToKeyConverter solConverter(){
         Services services = new Services();
         KeYSolidityType ksType = new KeYSolidityType(PrimitiveType.UINT, new SortImpl(new Name("UINT")));
         ProgramVariable px = new ProgramVariable(new Name("x"), ksType);
@@ -34,11 +33,10 @@ public class ParserForTesting {
         localVars.add(px);
         localVars.add(pf);
         localVars.add(pv);
-
-        this.stk = new SolidityToKeyConverter(services, localVars);
+        return new SolidityToKeyConverter(services, localVars);
     }
 
-    public SolidityParser parse(String s) {
+    static public SolidityParser parse(String s) {
         CodePointCharStream input = CharStreams.fromString(s);
 
         SolidityLexer lexer = new SolidityLexer(input);
@@ -47,23 +45,23 @@ public class ParserForTesting {
         return new SolidityParser(tokens);
     }
 
-    public BlockContext parseBlockContext(String s) {
+    static public BlockContext parseBlockContext(String s) {
         SolidityParser parser = parse(s);
         return parser.block();
     }
 
-    public Block parseBlock(String s) {
+    static public Block parseBlock(String s) {
         BlockContext bc = parseBlockContext(s);
         return (Block) stk.visitBlock(bc);
     }
 
-    public Expression parseExpression(String s) {
+    static public Expression parseExpression(String s) {
         SolidityParser parser = parse(s);
         ExpressionContext expCtx = parser.expression();
         return stk.visitExpression(expCtx);
     }
 
-    public Statement parseStatement(String s) {
+    static public Statement parseStatement(String s) {
         SolidityParser parser = parse(s);
         StatementContext stmCtx = parser.statement();
         return (Statement) stk.visitStatement(stmCtx);

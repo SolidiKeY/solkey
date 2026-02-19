@@ -9,14 +9,13 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.key_project.solidity.parser.ParserForTesting.*;
 
 public class AntlrParserForTestingTest {
 
-    ParserForTesting parser = new ParserForTesting();
-
     @Test
     void testParseBool() {
-        SolidityParser parser = this.parser.parse("true");
+        SolidityParser parser = parse("true");
 
         SolidityParser.PrimaryExpressionContext exp = parser.primaryExpression();
         assertEquals("([] true)", exp.toStringTree());
@@ -24,13 +23,13 @@ public class AntlrParserForTestingTest {
 
     @Test
     void simpleBlock() {
-        SolidityParser.BlockContext block = parser.parseBlockContext("{}");
+        SolidityParser.BlockContext block = parseBlockContext("{}");
         assertEquals("([] { })", block.toStringTree());
     }
 
     @Test
     void schema() {
-        SolidityParser parser = this.parser.parse("s#abc");
+        SolidityParser parser = parse("s#abc");
         SolidityParser.SchemaVariableContext scm = parser.schemaVariable();
         String s = scm.toStringTree();
         assertEquals(0, parser.getNumberOfSyntaxErrors());
@@ -61,7 +60,7 @@ public class AntlrParserForTestingTest {
         "{ int a = s#schema; }"
     })
     void correctParsing(String input) {
-        SolidityParser parser = this.parser.parse(input);
+        SolidityParser parser = parse(input);
         SolidityParser.BlockContext block = parser.block();
         String s = block.toStringTree();
         assertEquals(0, parser.getNumberOfSyntaxErrors());
@@ -74,7 +73,7 @@ public class AntlrParserForTestingTest {
         "{ assembly { let x := 0 } }",
     })
     void wrongParsing(String input) {
-        SolidityParser parser = this.parser.parse(input);
+        SolidityParser parser = parse(input);
         SolidityParser.BlockContext block = parser.block();
         assertTrue(parser.getNumberOfSyntaxErrors() > 0);
     }
