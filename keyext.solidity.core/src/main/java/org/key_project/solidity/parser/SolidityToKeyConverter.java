@@ -216,7 +216,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         Expression condition = ctx.expressionStatement() == null ? null
                 : ((ExpressionStatement) visitExpressionStatement(ctx.expressionStatement()))
                         .getExpression();
-        ForUpdate loopExp = new ForUpdate(visitExpression(ctx.expression()));
+        ForUpdate loopExp = ctx.expression() == null ? null : new ForUpdate(visitExpression(ctx.expression()));
         Statement body = (Statement) visitStatement(ctx.statement());
         return new ForStatement(initial, condition, loopExp, body);
 
@@ -232,7 +232,8 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         Expression exp = visitExpression(ctx.expression());
         Block body = (Block) visitBlock(ctx.block());
         List<CatchClause> clauses = ctx.catchClause().stream().map(this::visitCatchClause).map(CatchClause.class::cast).toList();
-        List<ParameterDeclaration> parameters = ((SyntaxElementList) visitReturnParameters(ctx.returnParameters()))
+        List<ParameterDeclaration> parameters = ctx.returnParameters() == null ? List.of() :
+                ((SyntaxElementList) visitReturnParameters(ctx.returnParameters()))
                 .getElements().stream().map(ParameterDeclaration.class::cast).toList();
         return new TryStatement(exp, new ImmutableArray<>(parameters), body, new ImmutableArray<>(clauses));
     }
