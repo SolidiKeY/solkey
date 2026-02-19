@@ -522,7 +522,7 @@ public class SolJSONParser {
                 .findFirst();
     }
 
-    PrimitiveType getPrimitiveType(String typeS) {
+    public static PrimitiveType getPrimitiveType(String typeS) {
         return switch (typeS) {
             case "int" -> INT;
             case "int8" -> INT8;

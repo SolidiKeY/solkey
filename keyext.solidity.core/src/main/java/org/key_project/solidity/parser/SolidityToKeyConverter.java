@@ -11,10 +11,8 @@ import org.key_project.logic.Namespace;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
-import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
-import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.declarations.ParameterDeclaration;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.*;
@@ -33,7 +31,6 @@ import org.key_project.util.collection.ImmutableArray;
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.UINT256;
 
 public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
-    // ProgramSV for schema variable and it is declared outside of the program
     private Namespace<ProgramVariable> localVars;
     final private Namespace<ProgramSV> schemaVariables;
     final private Services services;
@@ -170,7 +167,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     public SyntaxElement visitVariableDeclarationStatement(
             VariableDeclarationStatementContext ctx) {
         // TODO: fix the type
-        KeYSolidityType ksType = new KeYSolidityType(PrimitiveType.UINT, new SortImpl(new Name("UINT"))) ;//null; // services.getSolidityInfo().getKeYSolidityType("");
+        KeYSolidityType ksType = (KeYSolidityType) visitTypeName(ctx.variableDeclaration().typeName());
         ProgramVariable programVariable = new ProgramVariable(new Name(ctx.variableDeclaration().identifier().Identifier().getText()), ksType);
         localVars.add(programVariable);
         StatementVariableDeclaration stmDecl =
@@ -273,5 +270,10 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     @Override
     public SyntaxElement visitParameterList(ParameterListContext ctx) {
         return new SyntaxElementList(ctx.parameter().stream().map(this::visitParameter).toList());
+    }
+
+    @Override
+    public SyntaxElement visitElementaryTypeName(ElementaryTypeNameContext ctx) {
+        return (SyntaxElement) services.getSolidityInfo().getKeYSolidityType(ctx.getText());
     }
 }
