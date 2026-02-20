@@ -164,15 +164,24 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     }
 
     @Override
-    public SyntaxElement visitVariableDeclarationStatement(
-            VariableDeclarationStatementContext ctx) {
-        // TODO: fix the type
-        KeYSolidityType ksType = (KeYSolidityType) visitTypeName(ctx.variableDeclaration().typeName());
-        ProgramVariable programVariable = new ProgramVariable(new Name(ctx.variableDeclaration().identifier().Identifier().getText()), ksType);
+    public SyntaxElement visitTypeName(TypeNameContext ctx) {
+        throw new RuntimeException("Type not implemented " + ctx.getText());
+    }
+
+    @Override
+    public SyntaxElement visitVariableDeclaration(VariableDeclarationContext ctx) {
+        KeYSolidityType ksType = (KeYSolidityType) visitTypeName(ctx.typeName());
+        ProgramVariable programVariable = new ProgramVariable(new Name(ctx.identifier().Identifier().getText()), ksType);
         localVars.add(programVariable);
         StatementVariableDeclaration stmDecl =
-            new StatementVariableDeclaration(programVariable, "", null);
+                new StatementVariableDeclaration(programVariable, "", null);
         return new DeclarationStatement(List.of(stmDecl), null);
+    }
+
+    @Override
+    public SyntaxElement visitVariableDeclarationStatement(
+            VariableDeclarationStatementContext ctx) {
+        return visitVariableDeclaration(ctx.variableDeclaration());
     }
 
     @Override
