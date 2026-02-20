@@ -6,6 +6,7 @@ package org.key_project.solidity.program.ast.abstractions;
 import java.util.Objects;
 
 import org.key_project.logic.Name;
+import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.util.ExtList;
@@ -82,4 +83,13 @@ public class KeYSolidityType implements Type {
         }
     }
 
+    @Override
+    public SyntaxElement getChild(int n) {
+        return null;
+    }
+
+    @Override
+    public int getChildCount() {
+        return 0;
+    }
 }

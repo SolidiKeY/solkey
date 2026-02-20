@@ -9,10 +9,12 @@ import java.util.List;
 import org.key_project.logic.Name;
 import org.key_project.logic.Namespace;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
+import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.ParameterDeclaration;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.*;
@@ -165,7 +167,9 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitTypeName(TypeNameContext ctx) {
-        throw new RuntimeException("Type not implemented " + ctx.getText());
+        Type type = services.getSolidityInfo().getType(new Name(ctx.getText()));
+        final Sort sort = type.getSort(services);
+        return new KeYSolidityType(type, sort);
     }
 
     @Override
