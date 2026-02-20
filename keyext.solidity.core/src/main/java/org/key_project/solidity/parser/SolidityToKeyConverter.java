@@ -181,7 +181,8 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     @Override
     public SyntaxElement visitVariableDeclarationStatement(
             VariableDeclarationStatementContext ctx) {
-        return visitVariableDeclaration(ctx.variableDeclaration());
+        // it removes `;`
+        return ctx.getChild(0).accept(this);
     }
 
     @Override
