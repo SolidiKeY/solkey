@@ -24,7 +24,6 @@ import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.program.parser.SolJSONParser;
 import org.key_project.solidity.program.parser.SolcWrapper;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;

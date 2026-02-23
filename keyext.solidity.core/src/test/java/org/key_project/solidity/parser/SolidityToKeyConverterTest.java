@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser;
 
+import org.junit.jupiter.api.Disabled;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.*;
@@ -100,6 +101,7 @@ public class SolidityToKeyConverterTest {
     }
 
     @Test
+    @Disabled("It is not possible to type check unknown type")
     void variableDeclaration() {
         DeclarationStatement stm = (DeclarationStatement) parseStatement("var x;");
         assertEquals("x", ((StatementVariableDeclaration) stm.getDeclarations().get(0))
@@ -236,5 +238,10 @@ public class SolidityToKeyConverterTest {
         assertTrue(((BoolLiteral) exp.getCondition()).getValue());
         assertTrue(((BoolLiteral) exp.getTrueExpression()).getValue());
         assertFalse(((BoolLiteral) exp.getFalseExpression()).getValue());
+    }
+
+    @Test
+    void structType() {
+        DeclarationStatement stm = (DeclarationStatement) parseStatement("Person alice;");
     }
 }

@@ -5,12 +5,14 @@ package org.key_project.solidity.parser;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.Namespace;
+import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
+import org.key_project.solidity.program.ast.abstractions.StructType;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.program.ast.statement.Statement;
@@ -42,6 +44,15 @@ public class ParserForTesting {
         Namespace<ProgramSV> schemaVariables = new Namespace<>();
         ProgramSV sv = createProgramSV(new Name("s#v"), null, false);
         schemaVariables.add(sv);
+
+        Name contractName = new Name("Contract");
+        Name structName = new Name("Person");
+        StructType structType = new StructType(contractName, structName);
+        final Sort sort = structType.getSort(services);
+        KeYSolidityType ksStructType = new KeYSolidityType(structType, sort);
+        services.getSolidityInfo().addType(sort, ksStructType);
+        services.getNamespaces().sorts().add(sort);
+
 
         return new SolidityToKeyConverter(services, localVars, schemaVariables);
     }

@@ -26,6 +26,8 @@ public class SolidityInfo {
 
     public Type getType(Name typeName) {
 //        return typeMap.get(typeName);
+        if(typeMap.containsKey(typeName))
+            return typeMap.get(typeName);
         return getPrimitiveType(typeName.toString());
     }
 
