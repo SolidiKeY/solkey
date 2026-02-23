@@ -274,11 +274,11 @@ public class SolJSONParser {
             case "Continue" -> new ContinueStatement();
             case "Break" -> new BreakStatement();
             case "ForStatement" -> {
-                ForInit init =
-                    new ForInit(findOrNullExpression(statement, "initializationExpression"));
+                ForInit init = statement.has("initializationExpression") ?
+                        new ForInit(parseExpression(statement.findValue("initializationExpression")))  : null ;
                 Expression condition = findOrNullExpression(statement, "condition");
-                ForUpdate forUpdate =
-                    new ForUpdate(findOrNullExpression(statement, "loopExpression"));
+                ForUpdate forUpdate = statement.has( "loopExpression") ?
+                        new ForUpdate(parseExpression(statement.findValue( "loopExpression")))  : null ;
                 Statement body = parseStatement(statement.findValue("body"));
                 yield new ForStatement(init, condition, forUpdate, body);
             }
