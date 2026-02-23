@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.INT256;
 
 
-public class SolJsonParserForTestingTest {
+public class SolJsonParserTest {
 
     @Test
     void parse() throws IOException {
