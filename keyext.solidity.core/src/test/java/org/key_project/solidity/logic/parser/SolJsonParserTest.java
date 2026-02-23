@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.INT256;
 
 
@@ -70,12 +70,12 @@ public class SolJsonParserTest {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         assertEquals(2, contractDeclaration.getFieldDeclarations().size());
         StateVariableDeclaration firstField = contractDeclaration.getFieldDeclarations().get(0);
-        Assertions.assertInstanceOf(Uint256Literal.class, firstField.getInitializer());
+        assertInstanceOf(Uint256Literal.class, firstField.getInitializer());
         assertEquals(1000,
             ((Uint256Literal) firstField.getInitializer()).getValue().longValue());
         StateVariableDeclaration secondField = contractDeclaration.getFieldDeclarations().get(1);
-        Assertions.assertInstanceOf(BoolLiteral.class, secondField.getInitializer());
-        Assertions.assertSame(BoolLiteral.TRUE, secondField.getInitializer());
+        assertInstanceOf(BoolLiteral.class, secondField.getInitializer());
+        assertSame(BoolLiteral.TRUE, secondField.getInitializer());
     }
 
     @Test
@@ -101,10 +101,10 @@ public class SolJsonParserTest {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         assertEquals(2, contractDeclaration.getFieldDeclarations().size());
         Expression initializer = contractDeclaration.getFieldDeclarations().get(1).getInitializer();
-        Assertions.assertNotNull(initializer);
-        Assertions.assertInstanceOf(AddOperator.class, initializer);
-        Assertions.assertInstanceOf(StateVariableReference.class, initializer.getChild(0));
-        Assertions.assertInstanceOf(Uint256Literal.class, initializer.getChild(1));
+        assertNotNull(initializer);
+        assertInstanceOf(AddOperator.class, initializer);
+        assertInstanceOf(StateVariableReference.class, initializer.getChild(0));
+        assertInstanceOf(Uint256Literal.class, initializer.getChild(1));
     }
 
     @Test
@@ -131,9 +131,9 @@ public class SolJsonParserTest {
         assertEquals(1, contractDeclaration.getFunctions().size());
         FunctionDeclaration functionDeclaration = contractDeclaration.getFunctions().getFirst();
         Block block = functionDeclaration.getBody();
-        Assertions.assertNotNull(block);
+        assertNotNull(block);
         assertEquals(0, block.getChildCount());
-        Assertions.assertTrue(
+        assertTrue(
             functionDeclaration.toString().contains("function func () public pure"));
     }
 
@@ -152,7 +152,7 @@ public class SolJsonParserTest {
         assertEquals(1, function.getInputParameters().size());
         assertEquals(1, function.getReturnParameters().size());
         Block block = function.getBody();
-        Assertions.assertNotNull(block);
+        assertNotNull(block);
         assertEquals(1, block.getChildCount());
     }
 
@@ -169,12 +169,12 @@ public class SolJsonParserTest {
         assertEquals(1, contractDeclaration.getFunctions().size());
         FunctionDeclaration function = contractDeclaration.getFunctions().getFirst();
         Block block = function.getBody();
-        Assertions.assertNotNull(block);
+        assertNotNull(block);
         assertEquals(1, block.getChildCount());
         assertEquals(1, block.getStatements().size());
         Statement exprStmnt = block.getStatements().get(0);
-        Assertions.assertInstanceOf(ExpressionStatement.class, exprStmnt);
-        Assertions.assertInstanceOf(AssignmentExpression.class, exprStmnt.getChild(0));
+        assertInstanceOf(ExpressionStatement.class, exprStmnt);
+        assertInstanceOf(AssignmentExpression.class, exprStmnt.getChild(0));
     }
 
     @Test
@@ -187,7 +187,7 @@ public class SolJsonParserTest {
                    }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
-        Assertions.assertTrue(contractDec.toString().contains("int256 v"));
+        assertTrue(contractDec.toString().contains("int256 v"));
     }
 
     @Test
@@ -201,7 +201,7 @@ public class SolJsonParserTest {
                    }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
-        Assertions.assertTrue(contractDec.toString().contains("b = true"));
+        assertTrue(contractDec.toString().contains("b = true"));
     }
 
     @Test
@@ -216,8 +216,8 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String s = contractDec.toString();
-        Assertions.assertTrue(s.contains("bool b = true"));
-        Assertions.assertTrue(s.contains("bool c = true || false"));
+        assertTrue(s.contains("bool b = true"));
+        assertTrue(s.contains("bool c = true || false"));
     }
 
     @Test
@@ -232,7 +232,7 @@ public class SolJsonParserTest {
         assertEquals(1, contractDeclaration.getFieldDeclarations().size());
         SyntaxElement expOpSynt =
             contractDeclaration.getFieldDeclarations().get(0).getChild(1);
-        Assertions.assertInstanceOf(ExponentialOperator.class, expOpSynt);
+        assertInstanceOf(ExponentialOperator.class, expOpSynt);
         ExponentialOperator expOp = (ExponentialOperator) expOpSynt;
         assertEquals(INT256, expOp.getType());
     }
@@ -247,7 +247,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         assertEquals(2, contractDeclaration.getFieldDeclarations().size());
-        Assertions.assertInstanceOf(OrOperator.class,
+        assertInstanceOf(OrOperator.class,
             contractDeclaration.getFieldDeclarations().get(0).getInitializer());
     }
 
@@ -260,7 +260,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         assertEquals(1, contractDeclaration.getFieldDeclarations().size());
-        Assertions.assertInstanceOf(TernaryOperator.class,
+        assertInstanceOf(TernaryOperator.class,
             contractDeclaration.getFieldDeclarations().get(0).getInitializer());
     }
 
@@ -274,7 +274,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         assertEquals(1, contractDeclaration.getFieldDeclarations().size());
-        Assertions.assertInstanceOf(AndOperator.class,
+        assertInstanceOf(AndOperator.class,
             contractDeclaration.getFieldDeclarations().get(0).getInitializer());
     }
 
@@ -290,7 +290,7 @@ public class SolJsonParserTest {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         assertEquals(3, contractDeclaration.getFieldDeclarations().size());
         SyntaxElement exp = contractDeclaration.getChild(2).getChild(1).getChild(0);
-        Assertions.assertInstanceOf(PlusPlusOperator.class, exp);
+        assertInstanceOf(PlusPlusOperator.class, exp);
     }
 
     @Test
@@ -304,7 +304,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         assertEquals(1, contractDeclaration.getFunctions().size());
-        Assertions.assertInstanceOf(PlusEqualOperator.class, contractDeclaration.getFunctions()
+        assertInstanceOf(PlusEqualOperator.class, contractDeclaration.getFunctions()
                 .getFirst().getBody().getStatements().get(0).getChild(0));
     }
 
@@ -370,10 +370,10 @@ public class SolJsonParserTest {
         assertEquals(1, structs.getFirst().getFields().size());
         FunctionDeclaration function = contractDeclaration.getFunctions().getFirst();
         var retStmSynt = function.getBody().getStatements().get(0);
-        Assertions.assertInstanceOf(ReturnStatement.class, retStmSynt);
+        assertInstanceOf(ReturnStatement.class, retStmSynt);
         ReturnStatement retStm = (ReturnStatement) retStmSynt;
         Expression retExp = retStm.getReturnExp();
-        Assertions.assertInstanceOf(MemberExp.class, retExp);
+        assertInstanceOf(MemberExp.class, retExp);
     }
 
     @Test
@@ -391,13 +391,13 @@ public class SolJsonParserTest {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         var declStmS =
             contractDeclaration.getFunctions().getFirst().getBody().getStatements().get(0);
-        Assertions.assertInstanceOf(DeclarationStatement.class, declStmS);
+        assertInstanceOf(DeclarationStatement.class, declStmS);
         DeclarationStatement declStms = (DeclarationStatement) declStmS;
         StatementVariableDeclaration decl =
             (StatementVariableDeclaration) declStms.getDeclarations().get(0);
-        Assertions.assertNotNull(decl);
+        assertNotNull(decl);
         String contractStr = contractDeclaration.toString();
-        Assertions.assertTrue(contractStr.contains("Person memory alice"));
+        assertTrue(contractStr.contains("Person memory alice"));
     }
 
     @Test
@@ -411,7 +411,7 @@ public class SolJsonParserTest {
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
-        Assertions.assertTrue(contractDec.toString().contains("v[1 + 1]"));
+        assertTrue(contractDec.toString().contains("v[1 + 1]"));
     }
 
     @Test
@@ -426,8 +426,8 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
-        Assertions.assertTrue(contractS.contains("bool[3] memory foo;"));
-        Assertions.assertTrue(contractS.contains("foo = [false, true, false];"));
+        assertTrue(contractS.contains("bool[3] memory foo;"));
+        assertTrue(contractS.contains("foo = [false, true, false];"));
 
     }
 
@@ -441,7 +441,7 @@ public class SolJsonParserTest {
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
-        Assertions.assertTrue(contractDec.toString().contains("v[0:1];"));
+        assertTrue(contractDec.toString().contains("v[0:1];"));
     }
 
     @Test
@@ -454,7 +454,7 @@ public class SolJsonParserTest {
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
-        Assertions.assertTrue(contractDec.toString().contains("bool(true);"));
+        assertTrue(contractDec.toString().contains("bool(true);"));
     }
 
     @Test
@@ -470,7 +470,7 @@ public class SolJsonParserTest {
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
-        Assertions.assertTrue(contractDec.toString().contains("f(v);"));
+        assertTrue(contractDec.toString().contains("f(v);"));
     }
 
     @Test
@@ -485,8 +485,8 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
-        Assertions.assertTrue(contractS.contains("if"));
-        Assertions.assertTrue(contractS.contains("i = 0;"));
+        assertTrue(contractS.contains("if"));
+        assertTrue(contractS.contains("i = 0;"));
     }
 
     @Test
@@ -504,11 +504,11 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
-        Assertions.assertTrue(contractS.contains("i == 2"));
-        Assertions.assertTrue(contractS.contains("if"));
-        Assertions.assertTrue(contractS.contains("i = 0;"));
-        Assertions.assertTrue(contractS.contains("else"));
-        Assertions.assertTrue(contractS.contains("i = 1;"));
+        assertTrue(contractS.contains("i == 2"));
+        assertTrue(contractS.contains("if"));
+        assertTrue(contractS.contains("i = 0;"));
+        assertTrue(contractS.contains("else"));
+        assertTrue(contractS.contains("i = 1;"));
     }
 
     @Test
@@ -523,9 +523,9 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
-        Assertions.assertTrue(contractS.contains("while"));
-        Assertions.assertTrue(contractS.contains("i == 0"));
-        Assertions.assertTrue(contractS.contains("i = 1;"));
+        assertTrue(contractS.contains("while"));
+        assertTrue(contractS.contains("i == 0"));
+        assertTrue(contractS.contains("i = 1;"));
     }
 
     @Test
@@ -542,9 +542,9 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
-        Assertions.assertTrue(contractS.contains("while"));
-        Assertions.assertTrue(contractS.contains("continue;"));
-        Assertions.assertTrue(contractS.contains("break;"));
+        assertTrue(contractS.contains("while"));
+        assertTrue(contractS.contains("continue;"));
+        assertTrue(contractS.contains("break;"));
     }
 
     @Test
@@ -559,7 +559,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
-        Assertions.assertTrue(contractS.contains("for(i = 0; i < 10; i ++)"));
+        assertTrue(contractS.contains("for(i = 0; i < 10; i ++)"));
     }
 
     @Test
@@ -573,7 +573,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
-        Assertions.assertTrue(contractS.contains("for(; ; )"));
+        assertTrue(contractS.contains("for(; ; )"));
     }
 
     @Test
@@ -587,8 +587,8 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
-        Assertions.assertTrue(contractS.contains("do"));
-        Assertions.assertTrue(contractS.contains("while (true)"));
+        assertTrue(contractS.contains("do"));
+        assertTrue(contractS.contains("while (true)"));
     }
 
     @Test
@@ -604,7 +604,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
-        Assertions.assertTrue(contractS.contains("SimpleContract(target).f()"));
+        assertTrue(contractS.contains("SimpleContract(target).f()"));
     }
 
     @Test
@@ -621,7 +621,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
-        Assertions.assertTrue(contractS.contains("SimpleContract(target).g()"));
+        assertTrue(contractS.contains("SimpleContract(target).g()"));
         ContractReference contr =
             (ContractReference) ((FunctionCallExpression) contractDec.getFunctions().getFirst()
                     .getBody().getStatements().get(0)
@@ -651,7 +651,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
-        Assertions.assertTrue(contractS.contains("catch Error(string memory reason)"));
+        assertTrue(contractS.contains("catch Error(string memory reason)"));
     }
 
     @Disabled("Revert and require should be implemented as a regular function")
@@ -667,7 +667,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
-        Assertions.assertTrue(contractS.contains(""));
+        assertTrue(contractS.contains(""));
     }
 
     @Test
@@ -681,7 +681,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
-        Assertions.assertTrue(contractS.contains("false, true"));
+        assertTrue(contractS.contains("false, true"));
     }
 
     @Test
@@ -693,7 +693,7 @@ public class SolJsonParserTest {
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
-        Assertions.assertNotNull(contractDec);
+        assertNotNull(contractDec);
     }
 
     @Test
@@ -705,7 +705,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
-        Assertions.assertTrue(contractS.contains("mapping(bool => int256) public b;"));
+        assertTrue(contractS.contains("mapping(bool => int256) public b;"));
     }
 
     @Test
@@ -717,7 +717,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
-        Assertions.assertTrue(contractS.contains("mapping(bool => mapping(bool => int256))"));
+        assertTrue(contractS.contains("mapping(bool => mapping(bool => int256))"));
     }
 
     @Test
@@ -736,8 +736,8 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
-        Assertions.assertTrue(contractS.contains("_;"));
-        Assertions.assertTrue(contractS.contains("mod1 mod2"));
+        assertTrue(contractS.contains("_;"));
+        assertTrue(contractS.contains("mod1 mod2"));
     }
 
     @Test
@@ -753,7 +753,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
-        Assertions.assertTrue(contractS.contains("memory bob"));
+        assertTrue(contractS.contains("memory bob"));
     }
 
     @Test
@@ -767,12 +767,12 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
-        Assertions.assertTrue(contractS.contains("f();"));
+        assertTrue(contractS.contains("f();"));
         FunctionDeclaration refDecl =
             ((FunctionReference) ((FunctionCallExpression) ((ExpressionStatement) contractDec
                     .getFunctions().getFirst().getBody().getStatements()
                     .get(0)).getExpression()).functionExp).referencedDeclaration;
-        Assertions.assertNotNull(refDecl);
+        assertNotNull(refDecl);
     }
 
     @Test
@@ -787,8 +787,8 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
-        Assertions.assertTrue(contractS.contains("enum State"));
-        Assertions.assertTrue(contractS.contains("Begin, End"));
+        assertTrue(contractS.contains("enum State"));
+        assertTrue(contractS.contains("Begin, End"));
     }
 
     @Test
@@ -806,7 +806,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
-        Assertions.assertTrue(contractS.contains("State.Begin"));
+        assertTrue(contractS.contains("State.Begin"));
     }
 
     @Test
@@ -829,13 +829,13 @@ public class SolJsonParserTest {
         SolcWrapper solcWrapper = new SolcWrapper(solc);
         String contractJson = solcWrapper.readSol(contract);
         SyntaxElement programElement = getSolidityFromStr(contractJson);
-        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
+        assertInstanceOf(ContractDeclaration.class, programElement);
         return (ContractDeclaration) programElement;
     }
 
     private static ContractDeclaration getDeclaration(String fileName) throws IOException {
         SyntaxElement programElement = getSyntaxElement(fileName);
-        Assertions.assertInstanceOf(ContractDeclaration.class, programElement);
+        assertInstanceOf(ContractDeclaration.class, programElement);
         return (ContractDeclaration) programElement;
     }
 
@@ -843,7 +843,7 @@ public class SolJsonParserTest {
             throws IOException {
         SolJSONParser jsonParser = new SolJSONParser();
         List<SyntaxElement> unit = jsonParser.parse(contract);
-        Assertions.assertNotNull(unit);
+        assertNotNull(unit);
         assertEquals(1, unit.size());
         return unit.getFirst();
     }
@@ -852,9 +852,9 @@ public class SolJsonParserTest {
             throws IOException {
         SolJSONParser jsonParser = new SolJSONParser();
         URI fileURI = getFile(solFileName);
-        Assertions.assertNotNull(fileURI);
+        assertNotNull(fileURI);
         List<SyntaxElement> unit = jsonParser.parse(fileURI);
-        Assertions.assertNotNull(unit);
+        assertNotNull(unit);
         assertEquals(1, unit.size());
         SyntaxElement programElement = unit.getFirst();
         return programElement;
