@@ -361,10 +361,10 @@ public class SolJSONParser {
         final String fieldName = fieldNode.findValue("name").asText();
         JsonNode typeName = fieldNode.findValue("typeName");
         Type expType;
+        int idRef = -1;
         if(typeName.has("referencedDeclaration")){
-            int idRef = typeName.findValue("referencedDeclaration").asInt();
-            expType = id2Name.containsKey(idRef) ? (Type) id2Name.get(idRef) :
-                    getType(fieldNode.findValue("typeDescriptions").findValue("typeIdentifier").textValue());
+            idRef = typeName.findValue("referencedDeclaration").asInt();
+            expType = id2Name.containsKey(idRef) ? (Type) id2Name.get(idRef) : null;
         }
         else
             expType =  getType(fieldNode.findValue("typeDescriptions").findValue("typeIdentifier").textValue());
@@ -378,8 +378,9 @@ public class SolJSONParser {
             initializerExp = parseExpression(initializer);
         }
 
-        KeYSolidityType ksType = getUndeclaredSolidityType(expType);
-        ProgramVariable programVariable = new ProgramVariable(new Name(fieldName), ksType);
+        ProgramVariable programVariable = expType == null ?
+                new ProgramVariable(new Name(fieldName), idRef)
+                : new ProgramVariable(new Name(fieldName), getUndeclaredSolidityType(expType));
         final StateVariableDeclaration field =
             new StateVariableDeclaration(programVariable, initializerExp, visibility);
         id2Name.put(id, field);

@@ -12,7 +12,7 @@ import org.jspecify.annotations.Nullable;
 /// Abstract sorted operator class offering some common functionality.
 public abstract class AbstractSortedOperator extends AbstractOperator
         implements SortedOperator {
-    private final Sort sort;
+    protected Sort sort;
     private final ImmutableArray<Sort> argSorts;
 
     protected AbstractSortedOperator(Name name, ImmutableArray<Sort> argSorts, Sort sort,
