@@ -308,12 +308,13 @@ public class SolJSONParser {
         final int id = declaration.findValue("id").asInt();
         String nameS = declaration.findValue("name").asText();
         Name name = new Name(nameS);
-        String typeName = declaration.findValue("typeName").findValue("nodeType").asText();
+        JsonNode typeNameNode = declaration.findValue("typeName");
+        String typeName = typeNameNode.findValue("nodeType").asText();
         if (typeName.equals("ArrayTypeName")) {
             int length =
-                declaration.findValue("typeName").findValue("length").findValue("value").asInt();
+                typeNameNode.findValue("length").findValue("value").asInt();
             String struct =
-                declaration.findValue("typeName").findValue("baseType").findValue("name").asText();
+                typeNameNode.findValue("baseType").findValue("name").asText();
 
             Type type = SolidityInfo.getPrimitiveType(struct);
             KeYSolidityType ksType = getUndeclaredSolidityType(type);
@@ -324,18 +325,20 @@ public class SolJSONParser {
             return field;
         }
         String struct = null;
-        if (declaration.findValue("typeName").has("pathNode"))
+        if (typeNameNode.has("pathNode"))
             struct =
-                declaration.findValue("typeName").findValue("pathNode").findValue("name").asText();
+                typeNameNode.findValue("pathNode").findValue("name").asText();
         DataLocation dataLocation =
             DataLocation.fromString(declaration.findValue("storageLocation").asText());
-        Type type = getType(declaration.findValue("typeName").findValue("typeDescriptions")
-                .findValue("typeIdentifier").asText());
 
+        Type type = typeNameNode.has("referencedDeclaration") ?
+                (Type) id2Name.get(typeNameNode.findValue("referencedDeclaration").asInt()) :
+                getType(typeNameNode.findValue("typeDescriptions")
+                        .findValue("typeIdentifier").asText());
         KeYSolidityType ksType = getUndeclaredSolidityType(type);
         ProgramVariable programVariable = new ProgramVariable(name, ksType);
         StatementVariableDeclaration memDeclaration =
-            new StatementVariableDeclaration(programVariable, struct, dataLocation);
+            new StatementVariableDeclaration(programVariable, dataLocation);
         id2Name.put(id, memDeclaration);
         return memDeclaration;
     }

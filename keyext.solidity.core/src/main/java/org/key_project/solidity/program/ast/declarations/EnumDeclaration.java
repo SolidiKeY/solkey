@@ -7,12 +7,17 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.logic.sort.Sort;
+import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.sort.SortImpl;
+import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
-public class EnumDeclaration extends Declaration {
+public class EnumDeclaration extends Declaration implements Type {
     private final List<MemberEnumDeclaration> members;
 
     public Name getName() {
@@ -56,5 +61,15 @@ public class EnumDeclaration extends Declaration {
                 .collect(Collectors.joining(", "));
         s += "\n}\n";
         return s;
+    }
+
+    @Override
+    public @Nullable Sort getSort(Services services) {
+        return new SortImpl(name(), false);
+    }
+
+    @Override
+    public Name name() {
+        return name;
     }
 }

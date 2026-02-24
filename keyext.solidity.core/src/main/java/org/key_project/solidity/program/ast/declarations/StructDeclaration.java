@@ -68,6 +68,11 @@ public class StructDeclaration extends Declaration implements Type, Resolver {
     }
 
     @Override
+    public String toString() {
+        return name.toString();
+    }
+
+    @Override
     public void resolve(HashMap<Integer, Declaration> id2Name) {
         contract = (ContractDeclaration) id2Name.get(contractId);
     }

@@ -18,20 +18,16 @@ import static org.key_project.solidity.program.ast.declarations.FunctionEnums.Da
 //
 public class StatementVariableDeclaration extends Declaration implements SolidityProgramElement {
     private final ProgramVariable programVariable;
-    private String struct;
 
-    public StatementVariableDeclaration(ProgramVariable programVariable, String struct,
-            DataLocation dataLocation) {
+    public StatementVariableDeclaration(ProgramVariable programVariable, DataLocation dataLocation) {
         super(new ImmutableArray<>(dataLocation));
         this.programVariable = programVariable;
-        this.struct = struct;
     }
 
     public StatementVariableDeclaration(ExtList children) {
         super(children);
         this.programVariable =
             Objects.requireNonNull(children.removeFirstOccurrence(ProgramVariable.class));
-        this.struct = null;
         // this.struct = Objects.requireNonNull(children.removeFirstOccurrence(String.class));
         // this.dataLocation =
         // Objects.requireNonNull(children.removeFirstOccurrence(DataLocation.class));
@@ -56,8 +52,6 @@ public class StatementVariableDeclaration extends Declaration implements Solidit
         DataLocation dataLocation = (DataLocation) modifiers.get(0);
         String name = programVariable.name().toString();
         String type = programVariable.getType().toString();
-        if (struct != null)
-            return struct + " " + dataLocation + " " + name;
         if (dataLocation == Default)
             return type + " " + name;
         return type + " " + dataLocation + " " + name;
