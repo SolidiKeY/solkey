@@ -175,7 +175,9 @@ public class SolJSONParser {
         List<FieldDeclaration> fields =
             structNode.findValue("members").valueStream().map(this::parseField).toList();
 
-        return new StructDeclaration(new Name(name), fields, contractId);
+        StructDeclaration stDecl = new StructDeclaration(new Name(name), fields, contractId);
+        id2Name.put(structNode.findValue("id").asInt(), stDecl);
+        return stDecl;
     }
 
     private FieldDeclaration parseField(JsonNode fieldNode) {
@@ -357,8 +359,15 @@ public class SolJSONParser {
     private StateVariableDeclaration parseVariableField(JsonNode fieldNode) {
         final int id = fieldNode.findValue("id").asInt();
         final String fieldName = fieldNode.findValue("name").asText();
-        Type expType = getType(
-            fieldNode.findValue("typeDescriptions").findValue("typeIdentifier").textValue());
+        JsonNode typeName = fieldNode.findValue("typeName");
+        Type expType;
+        if(typeName.has("referencedDeclaration")){
+            int idRef = typeName.findValue("referencedDeclaration").asInt();
+            expType = id2Name.containsKey(idRef) ? (Type) id2Name.get(idRef) :
+                    getType(fieldNode.findValue("typeDescriptions").findValue("typeIdentifier").textValue());
+        }
+        else
+            expType =  getType(fieldNode.findValue("typeDescriptions").findValue("typeIdentifier").textValue());
         final String fieldType = fieldNode.findValue("typeName").findValue("name").asText();
 
         Visibility visibility = Visibility.fromString(fieldNode.findValue("visibility").asText());
