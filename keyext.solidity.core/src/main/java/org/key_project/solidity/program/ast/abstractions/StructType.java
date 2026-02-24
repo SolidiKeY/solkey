@@ -6,8 +6,12 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.sort.SortImpl;
+import org.key_project.solidity.program.ast.Resolver;
+import org.key_project.solidity.program.ast.declarations.Declaration;
 
-public class StructType implements Type {
+import java.util.HashMap;
+
+public class StructType implements Type, Resolver {
     private final @NonNull Name contractName;
     private final @NonNull Name name;
 
@@ -39,5 +43,10 @@ public class StructType implements Type {
     @Override
     public String toString() {
         return contractName + "." + name;
+    }
+
+    @Override
+    public void resolve(HashMap<Integer, Declaration> id2Name) {
+        return;
     }
 }

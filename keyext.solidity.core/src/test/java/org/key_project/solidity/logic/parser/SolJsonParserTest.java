@@ -332,6 +332,8 @@ public class SolJsonParserTest {
                     }
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
+        String structName = contractDeclaration.getStructs().get(0).name().toString();
+        assertEquals("SimpleContract.Person", structName);
     }
 
     @Test

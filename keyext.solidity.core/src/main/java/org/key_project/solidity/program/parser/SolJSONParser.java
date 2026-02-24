@@ -109,7 +109,7 @@ public class SolJSONParser {
             switch (nodeType) {
                 case "VariableDeclaration" -> fields.add(parseVariableField(node));
                 case "FunctionDefinition" -> functions.add(parseFunction(node));
-                case "StructDefinition" -> structs.add(parseStruct(node));
+                case "StructDefinition" -> structs.add(parseStruct(node, contractId));
                 case "ModifierDefinition" -> modifiers.add(parseModifier(node));
                 case "EnumDefinition" -> enums.add(parseEnum(node));
                 default -> throw new RuntimeException("Unknown node type " + nodeType);
@@ -170,12 +170,12 @@ public class SolJSONParser {
         return modifier;
     }
 
-    private StructDeclaration parseStruct(JsonNode structNode) {
+    private StructDeclaration parseStruct(JsonNode structNode, int contractId) {
         String name = structNode.findValue("name").asText();
         List<FieldDeclaration> fields =
             structNode.findValue("members").valueStream().map(this::parseField).toList();
 
-        return new StructDeclaration(new Name(name), fields);
+        return new StructDeclaration(new Name(name), fields, contractId);
     }
 
     private FieldDeclaration parseField(JsonNode fieldNode) {
