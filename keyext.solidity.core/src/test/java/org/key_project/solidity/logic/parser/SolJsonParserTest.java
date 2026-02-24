@@ -825,13 +825,17 @@ public class SolJsonParserTest {
         assertEquals("@return BoolTrue", functionDeclaration.getDocumentation());
     }
 
-    public static ContractDeclaration getDeclStr(String contract) throws IOException {
+    public static ContractDeclaration getDeclStrJsonParser(SolJSONParser jsonParser, String contract) throws IOException {
         final Path solc = Path.of("/opt", "local", "bin", "solc");
         SolcWrapper solcWrapper = new SolcWrapper(solc);
         String contractJson = solcWrapper.readSol(contract);
-        SyntaxElement programElement = getSolidityFromStr(contractJson);
+        SyntaxElement programElement = getSolidityFromStrJsonParser(jsonParser, contractJson);
         assertInstanceOf(ContractDeclaration.class, programElement);
         return (ContractDeclaration) programElement;
+    }
+
+    public static ContractDeclaration getDeclStr(String contract) throws IOException {
+        return getDeclStrJsonParser(new SolJSONParser(), contract);
     }
 
     private static ContractDeclaration getDeclaration(String fileName) throws IOException {
@@ -840,9 +844,8 @@ public class SolJsonParserTest {
         return (ContractDeclaration) programElement;
     }
 
-    private static SyntaxElement getSolidityFromStr(String contract)
+    private static SyntaxElement getSolidityFromStrJsonParser(SolJSONParser jsonParser, String contract)
             throws IOException {
-        SolJSONParser jsonParser = new SolJSONParser();
         List<SyntaxElement> unit = jsonParser.parse(contract);
         assertNotNull(unit);
         assertEquals(1, unit.size());

@@ -56,6 +56,10 @@ public class SolJSONParser {
         services = new Services();
     }
 
+    public SolJSONParser(Services services) {
+        this.services = services;
+    }
+
     /// parses the Solidity file found at the provided [URI] and converts it into a
     /// list of [SyntaxElement]s of declarations representing the Solidity programs
     /// @param file the URI where to find the Solidity code
@@ -119,6 +123,7 @@ public class SolJSONParser {
         final ContractDeclaration cDecl =
             new ContractDeclaration(new Name(contractName), fields, structs, modifiers,
                 functions, enums);
+        addTypeToServices(cDecl);
         id2Name.put(contractId, cDecl);
         completeReferences(cDecl);
         return cDecl;
@@ -148,6 +153,7 @@ public class SolJSONParser {
         List<MemberEnumDeclaration> members =
             node.findValue("members").valueStream().map(this::parseMemberEnum).toList();
         EnumDeclaration enumDeclaration = new EnumDeclaration(new Name(name), members);
+        addTypeToServices(enumDeclaration);
         id2Name.put(id, enumDeclaration);
         return enumDeclaration;
     }
@@ -176,7 +182,9 @@ public class SolJSONParser {
             structNode.findValue("members").valueStream().map(this::parseField).toList();
 
         StructDeclaration stDecl = new StructDeclaration(new Name(name), fields, contractId);
+        addTypeToServices(stDecl);
         id2Name.put(structNode.findValue("id").asInt(), stDecl);
+
         return stDecl;
     }
 
@@ -324,10 +332,6 @@ public class SolJSONParser {
             id2Name.put(id, field);
             return field;
         }
-        String struct = null;
-        if (typeNameNode.has("pathNode"))
-            struct =
-                typeNameNode.findValue("pathNode").findValue("name").asText();
         DataLocation dataLocation =
             DataLocation.fromString(declaration.findValue("storageLocation").asText());
 
@@ -589,6 +593,13 @@ public class SolJSONParser {
 
     private @Nullable Expression findOrNullExpression(JsonNode statement, String field) {
         return statement.has(field) ? parseExpression(statement.findValue(field)) : null;
+    }
+
+    private void addTypeToServices(Type type){
+        final Sort sort = type.getSort(services);
+        KeYSolidityType ksType = new KeYSolidityType(type, sort);
+        services.getSolidityInfo().addType(sort, ksType);
+        services.getNamespaces().sorts().add(sort);
     }
 
     private @NonNull KeYSolidityType getUndeclaredSolidityType(Type type) {

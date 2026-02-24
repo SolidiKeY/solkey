@@ -15,6 +15,7 @@ import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.declarations.ParameterDeclaration;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.*;
@@ -178,7 +179,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         ProgramVariable programVariable = new ProgramVariable(new Name(ctx.identifier().Identifier().getText()), ksType);
         localVars.add(programVariable);
         StatementVariableDeclaration stmDecl =
-                new StatementVariableDeclaration(programVariable, null);
+                new StatementVariableDeclaration(programVariable, DataLocation.Storage);
         return new DeclarationStatement(List.of(stmDecl), null);
     }
 
