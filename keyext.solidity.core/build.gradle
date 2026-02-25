@@ -54,10 +54,6 @@ tasks.register('runAntlr4Key', JavaExec) {
 }
 compileJava.dependsOn runAntlr4Key
 
-tasks.register('AntlrParserTest', Test) {
-    dependsOn 'runAntlr4Key'
-}
-
 tasks.withType(Test) {
     enableAssertions = true
 }
