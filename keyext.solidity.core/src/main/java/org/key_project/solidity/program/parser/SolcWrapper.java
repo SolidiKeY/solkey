@@ -5,7 +5,10 @@ package org.key_project.solidity.program.parser;
 
 import java.io.*;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -13,6 +16,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class SolcWrapper {
 
     private final Path solc;
+    private static final String SOLC_NAME = "solc-0.8.20";
 
     public SolcWrapper(Path solc) {
         this.solc = solc;
@@ -26,19 +30,19 @@ public class SolcWrapper {
         return new BufferedOutputStream(p.getOutputStream());
     }
 
-    public BufferedReader readSolBuff(byte[] contract) throws IOException {
+    private void exportSolc(Path targetPath) throws IOException {
         InputStream is = getClass().getResourceAsStream("/solc");
-        File solcFile = File.createTempFile("solc", null);
-        solcFile.deleteOnExit();
-        // Copy
-        try (OutputStream os = new FileOutputStream(solcFile)) {
-            is.transferTo(os);
-        }
-        // **Make executable!**
-        if (!solcFile.setExecutable(true)) {
-            throw new RuntimeException("Failed to make solc executable");
-        }
-        ProcessBuilder pb = new ProcessBuilder(solcFile.getAbsolutePath(), "--ast-compact-json", "-");
+        Files.copy(is, targetPath, StandardCopyOption.REPLACE_EXISTING);
+        targetPath.toFile().setExecutable(true);
+    }
+
+    public BufferedReader readSolBuff(byte[] contract) throws IOException {
+        Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"));
+        Path targetPath = tempDir.resolve(SOLC_NAME);
+
+        if (!Files.exists(targetPath))
+            exportSolc(targetPath);
+        ProcessBuilder pb = new ProcessBuilder(targetPath.toAbsolutePath().toString(), "--ast-compact-json", "-");
 
         Process proc = pb.start();
         OutputStream out = proc.getOutputStream();
