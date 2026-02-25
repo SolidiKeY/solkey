@@ -27,7 +27,7 @@ public class SolcWrapper {
     }
 
     public BufferedReader readSolBuff(byte[] contract) throws IOException {
-        InputStream is = getClass().getResourceAsStream("/solc-static-linux");
+        InputStream is = getClass().getResourceAsStream("/solc");
         File solcFile = File.createTempFile("solc", null);
         solcFile.deleteOnExit();
         // Copy

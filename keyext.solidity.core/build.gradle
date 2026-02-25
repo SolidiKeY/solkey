@@ -75,7 +75,7 @@ checkerFramework {
     }
 }
 
-def downloadedFile = layout.buildDirectory.file("resources/main/solc-static-linux")
+def downloadedFile = layout.buildDirectory.file("resources/main/solc")
 
 tasks.register("downloadBinary") {
     outputs.file(downloadedFile)
