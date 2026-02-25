@@ -35,13 +35,31 @@ public class SolcWrapper {
         targetPath.toFile().setExecutable(true);
     }
 
-    public BufferedReader readSolBuff(byte[] contract) throws IOException {
-        Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"));
-        Path targetPath = tempDir.resolve("solc");
+    private static boolean canRunCommand(String cmd) {
+        try {
+            // We run a simple version check to see if it exists
+            Process process = new ProcessBuilder(cmd, "--version").start();
+            process.waitFor();
+            return true;
+        } catch (IOException | InterruptedException e) {
+            // IOException happens if the command isn't found in PATH
+            return false;
+        }
+    }
 
-        if (!Files.exists(targetPath))
-            exportSolc(targetPath);
-        ProcessBuilder pb = new ProcessBuilder(targetPath.toAbsolutePath().toString(), "--ast-compact-json", "-");
+    public BufferedReader readSolBuff(byte[] contract) throws IOException {
+        ProcessBuilder pb;
+        String restCommand = "--ast-compact-json";
+        if(canRunCommand("solc"))
+            pb = new ProcessBuilder("solc", restCommand, "-");
+        else {
+            Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"));
+            Path targetPath = tempDir.resolve("solc");
+
+            if (!Files.exists(targetPath))
+                exportSolc(targetPath);
+            pb = new ProcessBuilder(targetPath.toAbsolutePath().toString(), restCommand, "-");
+        }
 
         Process proc = pb.start();
         OutputStream out = proc.getOutputStream();
