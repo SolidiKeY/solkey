@@ -78,3 +78,26 @@ checkerFramework {
         ]
     }
 }
+
+def downloadedFile = layout.buildDirectory.file("resources/main/solc-static-linux")
+
+tasks.register("downloadBinary") {
+    outputs.file(downloadedFile)
+
+    doLast {
+        def file = downloadedFile.get().asFile
+        file.parentFile.mkdirs()
+
+        new URL("https://github.com/argotorg/solidity/releases/download/v0.8.34/solc-static-linux")
+                .withInputStream { input ->
+                    file.withOutputStream { it << input }
+                }
+
+        // Make executable (Linux/macOS)
+        if (!file.setExecutable(true)) {
+            throw new GradleException("Failed to make solc executable")
+        }
+    }
+}
+
+processResources.dependsOn("downloadBinary")

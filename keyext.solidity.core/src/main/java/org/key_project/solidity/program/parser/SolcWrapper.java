@@ -27,7 +27,18 @@ public class SolcWrapper {
     }
 
     public BufferedReader readSolBuff(byte[] contract) throws IOException {
-        ProcessBuilder pb = new ProcessBuilder("solc", "--ast-compact-json", "-");
+        InputStream is = getClass().getResourceAsStream("/solc-static-linux");
+        File solcFile = File.createTempFile("solc", null);
+        solcFile.deleteOnExit();
+        // Copy
+        try (OutputStream os = new FileOutputStream(solcFile)) {
+            is.transferTo(os);
+        }
+        // **Make executable!**
+        if (!solcFile.setExecutable(true)) {
+            throw new RuntimeException("Failed to make solc executable");
+        }
+        ProcessBuilder pb = new ProcessBuilder(solcFile.getAbsolutePath(), "--ast-compact-json", "-");
 
         Process proc = pb.start();
         OutputStream out = proc.getOutputStream();
