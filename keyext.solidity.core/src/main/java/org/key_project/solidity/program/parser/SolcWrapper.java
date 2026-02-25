@@ -16,7 +16,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class SolcWrapper {
 
     private final Path solc;
-    private static final String SOLC_NAME = "solc-0.8.20";
 
     public SolcWrapper(Path solc) {
         this.solc = solc;
@@ -38,7 +37,7 @@ public class SolcWrapper {
 
     public BufferedReader readSolBuff(byte[] contract) throws IOException {
         Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"));
-        Path targetPath = tempDir.resolve(SOLC_NAME);
+        Path targetPath = tempDir.resolve("solc");
 
         if (!Files.exists(targetPath))
             exportSolc(targetPath);
