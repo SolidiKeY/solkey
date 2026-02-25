@@ -244,9 +244,9 @@ class TestProgVarReplaceVisitor {
         Block result = ((Block) replacer.result());
         assertSame(replacement, result.getChild(0).getChild(0).getChild(1));
         Statement forLoop = result.getStatements().get(1);
-        assertSame(replacement, forLoop.getChild(0).getChild(0));
+        assertSame(replacement, forLoop.getChild(0).getChild(0).getChild(0));
         assertSame(replacement, forLoop.getChild(1).getChild(0));
-        assertSame(replacement, forLoop.getChild(2).getChild(0));
+        assertSame(replacement, forLoop.getChild(2).getChild(0).getChild(0));
     }
 
     @Test
