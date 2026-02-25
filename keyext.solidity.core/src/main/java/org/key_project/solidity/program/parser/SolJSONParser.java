@@ -375,7 +375,6 @@ public class SolJSONParser {
         }
         else
             expType =  getType(fieldNode.findValue("typeDescriptions").findValue("typeIdentifier").textValue());
-        final String fieldType = fieldNode.findValue("typeName").findValue("name").asText();
 
         Visibility visibility = Visibility.fromString(fieldNode.findValue("visibility").asText());
 
@@ -397,8 +396,19 @@ public class SolJSONParser {
 
     private Expression parseExpression(JsonNode initializer) {
         final String nodeType = initializer.findValue("nodeType").asText();
-        Type expType = getType(
-            initializer.findValue("typeDescriptions").findValue("typeIdentifier").textValue());
+        JsonNode expNode = initializer.findValue("expression");
+        Type expType = null;
+        String type_str = initializer.findValue("typeDescriptions").findValue("typeIdentifier").textValue();
+        if(expNode != null && expNode.has("referencedDeclaration")){
+            Declaration decl = id2Name.get(initializer.findValue("expression")
+                    .findValue("referencedDeclaration").asInt());
+            if(decl instanceof Type)
+                expType = (Type) decl;
+            else
+                expType = getType(type_str);
+        }
+        else
+            expType = getType(type_str);
         Expression exp = switch (nodeType) {
             case "Literal" -> parseLiteral(expType, initializer);
             case "BinaryOperation" -> parseBinaryOperation(expType, initializer);
