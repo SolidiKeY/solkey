@@ -5,7 +5,6 @@ package org.key_project.solidity.strategy.definition;
 
 import java.util.ArrayList;
 
-import org.key_project.solidity.strategy.StrategyFactory;
 import org.key_project.solidity.strategy.StrategyProperties;
 import org.key_project.util.collection.ImmutableArray;
 

@@ -38,14 +38,14 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     final private Namespace<ProgramSV> schemaVariables;
     final private Services services;
 
-    public SolidityToKeyConverter(){
+    public SolidityToKeyConverter() {
         this.services = new Services();
         this.localVars = new Namespace<>();
         this.schemaVariables = new Namespace<>();
     }
 
     public SolidityToKeyConverter(Services services, Namespace<ProgramVariable> localVars,
-                                  Namespace<ProgramSV> schemaVariables){
+            Namespace<ProgramSV> schemaVariables) {
         this.services = services;
         this.localVars = localVars;
         this.schemaVariables = schemaVariables;
@@ -176,10 +176,11 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     @Override
     public SyntaxElement visitVariableDeclaration(VariableDeclarationContext ctx) {
         KeYSolidityType ksType = (KeYSolidityType) visitTypeName(ctx.typeName());
-        ProgramVariable programVariable = new ProgramVariable(new Name(ctx.identifier().Identifier().getText()), ksType);
+        ProgramVariable programVariable =
+            new ProgramVariable(new Name(ctx.identifier().Identifier().getText()), ksType);
         localVars.add(programVariable);
         StatementVariableDeclaration stmDecl =
-                new StatementVariableDeclaration(programVariable, DataLocation.Storage);
+            new StatementVariableDeclaration(programVariable, DataLocation.Storage);
         return new DeclarationStatement(List.of(stmDecl), null);
     }
 
@@ -236,7 +237,8 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         Expression condition = ctx.expressionStatement() == null ? null
                 : ((ExpressionStatement) visitExpressionStatement(ctx.expressionStatement()))
                         .getExpression();
-        ForUpdate loopExp = ctx.expression() == null ? null : new ForUpdate(visitExpression(ctx.expression()));
+        ForUpdate loopExp =
+            ctx.expression() == null ? null : new ForUpdate(visitExpression(ctx.expression()));
         Statement body = (Statement) visitStatement(ctx.statement());
         return new ForStatement(initial, condition, loopExp, body);
 
@@ -251,11 +253,13 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     public SyntaxElement visitTryStatement(TryStatementContext ctx) {
         Expression exp = visitExpression(ctx.expression());
         Block body = (Block) visitBlock(ctx.block());
-        List<CatchClause> clauses = ctx.catchClause().stream().map(this::visitCatchClause).map(CatchClause.class::cast).toList();
-        List<ParameterDeclaration> parameters = ctx.returnParameters() == null ? List.of() :
-                ((SyntaxElementList) visitReturnParameters(ctx.returnParameters()))
-                .getElements().stream().map(ParameterDeclaration.class::cast).toList();
-        return new TryStatement(exp, new ImmutableArray<>(parameters), body, new ImmutableArray<>(clauses));
+        List<CatchClause> clauses = ctx.catchClause().stream().map(this::visitCatchClause)
+                .map(CatchClause.class::cast).toList();
+        List<ParameterDeclaration> parameters = ctx.returnParameters() == null ? List.of()
+                : ((SyntaxElementList) visitReturnParameters(ctx.returnParameters()))
+                        .getElements().stream().map(ParameterDeclaration.class::cast).toList();
+        return new TryStatement(exp, new ImmutableArray<>(parameters), body,
+            new ImmutableArray<>(clauses));
     }
 
     @Override

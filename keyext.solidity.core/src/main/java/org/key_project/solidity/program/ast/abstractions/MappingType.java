@@ -39,7 +39,7 @@ public class MappingType implements Type, SyntaxElement {
 
     @Override
     public SyntaxElement getChild(int n) {
-        return null;
+        throw new IndexOutOfBoundsException("Mapping type has 0 children");
     }
 
     @Override

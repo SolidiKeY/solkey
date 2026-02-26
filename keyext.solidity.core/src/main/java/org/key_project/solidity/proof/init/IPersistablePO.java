@@ -5,8 +5,6 @@ package org.key_project.solidity.proof.init;
 
 import java.io.IOException;
 
-import org.key_project.solidity.proof.io.AbstractProblemLoader;
-import org.key_project.solidity.proof.io.ProofSaver;
 import org.key_project.solidity.settings.Configuration;
 
 ///

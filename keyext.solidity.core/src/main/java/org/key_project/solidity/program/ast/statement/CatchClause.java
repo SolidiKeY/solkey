@@ -12,9 +12,9 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
+import org.key_project.util.collection.ImmutableArray;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.key_project.util.collection.ImmutableArray;
 
 public class CatchClause implements SolidityProgramElement {
     enum Kind {
@@ -54,7 +54,8 @@ public class CatchClause implements SolidityProgramElement {
     }
 
     public CatchClause(ExtList children) {
-        this(new ImmutableArray<>(children.collect(StatementVariableDeclaration.class)), children.get(Block.class));
+        this(new ImmutableArray<>(children.collect(StatementVariableDeclaration.class)),
+            children.get(Block.class));
     }
 
     public Kind getKind() {
@@ -85,7 +86,7 @@ public class CatchClause implements SolidityProgramElement {
     // TODO: body should be just one child
     @Override
     public SolidityProgramElement getChild(int index) {
-        if(declarations != null)
+        if (declarations != null)
             index -= 1;
         if (index == -1)
             return declarations.get(0);
@@ -124,7 +125,9 @@ public class CatchClause implements SolidityProgramElement {
         }
 
         if (declarations != null) {
-            catchString += "(" + declarations.stream().map(StatementVariableDeclaration::toString).collect(Collectors.joining(", ")) + ")";
+            catchString += "(" + declarations.stream().map(StatementVariableDeclaration::toString)
+                    .collect(Collectors.joining(", "))
+                + ")";
         }
 
         catchString += " " + body.toString();

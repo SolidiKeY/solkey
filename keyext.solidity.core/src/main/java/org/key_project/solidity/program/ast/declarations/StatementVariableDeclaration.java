@@ -19,7 +19,8 @@ import static org.key_project.solidity.program.ast.declarations.FunctionEnums.Da
 public class StatementVariableDeclaration extends Declaration implements SolidityProgramElement {
     private final ProgramVariable programVariable;
 
-    public StatementVariableDeclaration(ProgramVariable programVariable, DataLocation dataLocation) {
+    public StatementVariableDeclaration(ProgramVariable programVariable,
+            DataLocation dataLocation) {
         super(new ImmutableArray<>(dataLocation));
         this.programVariable = programVariable;
     }

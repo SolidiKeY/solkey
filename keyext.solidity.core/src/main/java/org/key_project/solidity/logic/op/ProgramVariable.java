@@ -77,7 +77,7 @@ public class ProgramVariable extends AbstractSortedOperator
 
     @Override
     public void resolve(HashMap<Integer, Declaration> id2Name) {
-        if(contractId != -1){
+        if (contractId != -1) {
             Type type = (Type) id2Name.get(contractId);
             Sort sort = new SortImpl(type.name(), false);
             this.sort = sort;

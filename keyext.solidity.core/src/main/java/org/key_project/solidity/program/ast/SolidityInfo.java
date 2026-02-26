@@ -25,8 +25,7 @@ public class SolidityInfo {
     private final Map<Name, Type> typeMap = new HashMap<>();
 
     public Type getType(Name typeName) {
-//        return typeMap.get(typeName);
-        if(typeMap.containsKey(typeName))
+        if (typeMap.containsKey(typeName))
             return typeMap.get(typeName);
         return getPrimitiveType(typeName.toString());
     }
@@ -44,7 +43,7 @@ public class SolidityInfo {
         return null;
     }
 
-    public static Type getPrimitiveType(String typeS){
+    public static Type getPrimitiveType(String typeS) {
         return switch (typeS) {
             case "int" -> INT;
             case "int8" -> INT8;

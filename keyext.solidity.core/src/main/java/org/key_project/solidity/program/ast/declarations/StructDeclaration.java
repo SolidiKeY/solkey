@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
-import org.jspecify.annotations.Nullable;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
@@ -19,6 +18,7 @@ import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class StructDeclaration extends Declaration implements Type, Resolver {
     public final @NonNull Name name;
@@ -31,14 +31,14 @@ public class StructDeclaration extends Declaration implements Type, Resolver {
         super(new ImmutableArray<>());
         this.name = name;
         this.fields = fields;
-        this.contractId  = contractId;
+        this.contractId = contractId;
     }
 
     public StructDeclaration(ExtList children) {
         super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
         this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
         this.fields = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
-        this.contractId  = 0;
+        this.contractId = 0;
     }
 
     public List<FieldDeclaration> getFields() {

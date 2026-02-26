@@ -52,7 +52,7 @@ public class DeclarationStatement implements Statement {
     public String toString() {
         String s = declarations.stream().map(Declaration::toString).collect(Collectors.joining(""));
         if (initialValue != null)
-            s += " = " + initialValue.toString();
+            s += " = " + initialValue;
         return s + ";";
     }
 

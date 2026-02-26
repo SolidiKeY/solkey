@@ -4,11 +4,11 @@
 package org.key_project.solidity.program.ast.ghost;
 
 
+import java.util.List;
+
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
-
-import java.util.List;
 
 public class SyntaxElementList implements SolidityProgramElement {
     public List<SyntaxElement> getElements() {

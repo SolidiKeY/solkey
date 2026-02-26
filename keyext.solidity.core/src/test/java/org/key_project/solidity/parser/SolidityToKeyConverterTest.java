@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser;
 
-import org.junit.jupiter.api.Disabled;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.*;
@@ -13,10 +12,11 @@ import org.key_project.solidity.program.ast.expressions.operators.AddOperator;
 import org.key_project.solidity.program.ast.expressions.operators.PlusPlusOperator;
 import org.key_project.solidity.program.ast.expressions.operators.TernaryOperator;
 import org.key_project.solidity.program.ast.statement.*;
+import org.key_project.solidity.rule.sv.ProgramSV;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.key_project.solidity.rule.sv.ProgramSV;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.key_project.solidity.parser.ParserForTesting.*;

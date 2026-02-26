@@ -1,18 +1,22 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import java.io.IOException;
+
 import org.key_project.logic.Namespace;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.statement.DeclarationStatement;
 import org.key_project.solidity.program.ast.statement.Statement;
 import org.key_project.solidity.program.parser.SolJSONParser;
 
-import java.io.IOException;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-import org.key_project.solidity.parser.SolidityParser.*;
 import static org.key_project.solidity.logic.parser.SolJsonParserTest.getDeclStrJsonParser;
 import static org.key_project.solidity.parser.ParserForTesting.parse;
 
@@ -48,7 +52,7 @@ public class BothParsersTest {
     }
 
     @Test
-    void usingVariable(){
+    void usingVariable() {
         DeclarationStatement stm = (DeclarationStatement) parseStatement("Person alice;");
         ProgramVariable programVariable = (ProgramVariable) stm.getChild(0).getChild(1);
         Sort sort = programVariable.getType().getSort(services);

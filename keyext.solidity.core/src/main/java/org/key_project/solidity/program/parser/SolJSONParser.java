@@ -29,12 +29,12 @@ import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.references.*;
 import org.key_project.solidity.program.ast.statement.*;
+import org.key_project.util.collection.ImmutableArray;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.key_project.util.collection.ImmutableArray;
 
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.*;
 
@@ -233,14 +233,15 @@ public class SolJSONParser {
         return new Block(blockStatements);
     }
 
-    private CatchClause parseCatchClause(JsonNode jsonBody){
+    private CatchClause parseCatchClause(JsonNode jsonBody) {
         Block block = parseBlock(jsonBody);
         if (jsonBody.has("errorName")) {
             String errorName = jsonBody.findValue("errorName").asText();
             if (!errorName.isEmpty()) {
                 List<StatementVariableDeclaration> arguments =
                     jsonBody.findValue("parameters").findValue("parameters").valueStream()
-                            .map(this::parseDeclaration).map(StatementVariableDeclaration.class::cast).toList() ;
+                            .map(this::parseDeclaration)
+                            .map(StatementVariableDeclaration.class::cast).toList();
                 return new CatchClause(new ImmutableArray<>(arguments), block);
             }
         }
@@ -284,11 +285,14 @@ public class SolJSONParser {
             case "Continue" -> new ContinueStatement();
             case "Break" -> new BreakStatement();
             case "ForStatement" -> {
-                ForInit init = statement.has("initializationExpression") ?
-                        new ForInit(parseExpression(statement.findValue("initializationExpression")))  : null ;
+                ForInit init = statement.has("initializationExpression")
+                        ? new ForInit(
+                            parseExpression(statement.findValue("initializationExpression")))
+                        : null;
                 Expression condition = findOrNullExpression(statement, "condition");
-                ForUpdate forUpdate = statement.has( "loopExpression") ?
-                        new ForUpdate(parseExpression(statement.findValue( "loopExpression")))  : null ;
+                ForUpdate forUpdate = statement.has("loopExpression")
+                        ? new ForUpdate(parseExpression(statement.findValue("loopExpression")))
+                        : null;
                 Statement body = parseStatement(statement.findValue("body"));
                 yield new ForStatement(init, condition, forUpdate, body);
             }
@@ -305,7 +309,8 @@ public class SolJSONParser {
                 List<CatchClause> clauses = clausesList.stream().skip(1)
                         .map(this::parseCatchClause)
                         .toList();
-                yield new TryStatement(expression, new ImmutableArray<>(List.of()), body, new ImmutableArray<>(clauses));
+                yield new TryStatement(expression, new ImmutableArray<>(List.of()), body,
+                    new ImmutableArray<>(clauses));
             }
             case "PlaceholderStatement" -> new PlaceholdStatement();
             default -> throw new IllegalStateException("Statement does not have type " + type);
@@ -335,9 +340,9 @@ public class SolJSONParser {
         DataLocation dataLocation =
             DataLocation.fromString(declaration.findValue("storageLocation").asText());
 
-        Type type = typeNameNode.has("referencedDeclaration") ?
-                (Type) id2Name.get(typeNameNode.findValue("referencedDeclaration").asInt()) :
-                getType(typeNameNode.findValue("typeDescriptions")
+        Type type = typeNameNode.has("referencedDeclaration")
+                ? (Type) id2Name.get(typeNameNode.findValue("referencedDeclaration").asInt())
+                : getType(typeNameNode.findValue("typeDescriptions")
                         .findValue("typeIdentifier").asText());
         KeYSolidityType ksType = getUndeclaredSolidityType(type);
         ProgramVariable programVariable = new ProgramVariable(name, ksType);
@@ -369,12 +374,12 @@ public class SolJSONParser {
         JsonNode typeName = fieldNode.findValue("typeName");
         Type expType;
         int idRef = -1;
-        if(typeName.has("referencedDeclaration")){
+        if (typeName.has("referencedDeclaration")) {
             idRef = typeName.findValue("referencedDeclaration").asInt();
             expType = id2Name.containsKey(idRef) ? (Type) id2Name.get(idRef) : null;
-        }
-        else
-            expType =  getType(fieldNode.findValue("typeDescriptions").findValue("typeIdentifier").textValue());
+        } else
+            expType = getType(
+                fieldNode.findValue("typeDescriptions").findValue("typeIdentifier").textValue());
 
         Visibility visibility = Visibility.fromString(fieldNode.findValue("visibility").asText());
 
@@ -384,9 +389,9 @@ public class SolJSONParser {
             initializerExp = parseExpression(initializer);
         }
 
-        ProgramVariable programVariable = expType == null ?
-                new ProgramVariable(new Name(fieldName), idRef)
-                : new ProgramVariable(new Name(fieldName), getUndeclaredSolidityType(expType));
+        ProgramVariable programVariable =
+            expType == null ? new ProgramVariable(new Name(fieldName), idRef)
+                    : new ProgramVariable(new Name(fieldName), getUndeclaredSolidityType(expType));
         final StateVariableDeclaration field =
             new StateVariableDeclaration(programVariable, initializerExp, visibility);
         id2Name.put(id, field);
@@ -398,16 +403,16 @@ public class SolJSONParser {
         final String nodeType = initializer.findValue("nodeType").asText();
         JsonNode expNode = initializer.findValue("expression");
         Type expType = null;
-        String type_str = initializer.findValue("typeDescriptions").findValue("typeIdentifier").textValue();
-        if(expNode != null && expNode.has("referencedDeclaration")){
+        String type_str =
+            initializer.findValue("typeDescriptions").findValue("typeIdentifier").textValue();
+        if (expNode != null && expNode.has("referencedDeclaration")) {
             Declaration decl = id2Name.get(initializer.findValue("expression")
                     .findValue("referencedDeclaration").asInt());
-            if(decl instanceof Type)
+            if (decl instanceof Type)
                 expType = (Type) decl;
             else
                 expType = getType(type_str);
-        }
-        else
+        } else
             expType = getType(type_str);
         Expression exp = switch (nodeType) {
             case "Literal" -> parseLiteral(expType, initializer);
@@ -605,7 +610,7 @@ public class SolJSONParser {
         return statement.has(field) ? parseExpression(statement.findValue(field)) : null;
     }
 
-    private void addTypeToServices(Type type){
+    private void addTypeToServices(Type type) {
         final Sort sort = type.getSort(services);
         KeYSolidityType ksType = new KeYSolidityType(type, sort);
         services.getSolidityInfo().addType(sort, ksType);

@@ -81,7 +81,7 @@ public class ContractDeclaration extends Declaration implements Type {
         n -= functions.size();;
         if (n < enums.size())
             return enums.get(n);
-        return null;
+        throw new IndexOutOfBoundsException("Index " + n + " is out of the bonds");
     }
 
     @Override

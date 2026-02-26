@@ -4,7 +4,6 @@
 package org.key_project.solidity.proof.init.loader;
 
 
-import java.io.IOException;
 
 import org.key_project.solidity.proof.init.FunctionalOperationContractPO;
 import org.key_project.solidity.proof.init.IPersistablePO;

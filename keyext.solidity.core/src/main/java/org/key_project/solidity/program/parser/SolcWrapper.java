@@ -50,7 +50,7 @@ public class SolcWrapper {
     public BufferedReader readSolBuff(byte[] contract) throws IOException {
         ProcessBuilder pb;
         String restCommand = "--ast-compact-json";
-        if(canRunCommand("solc"))
+        if (canRunCommand("solc"))
             pb = new ProcessBuilder("solc", restCommand, "-");
         else {
             Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"));

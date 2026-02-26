@@ -16,11 +16,11 @@ import org.key_project.solidity.program.ast.abstractions.StructType;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.program.ast.statement.Statement;
+import org.key_project.solidity.rule.sv.ProgramSV;
 
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.key_project.solidity.rule.sv.ProgramSV;
 
 import static org.key_project.solidity.rule.sv.SchemaVariableFactory.createProgramSV;
 
@@ -28,9 +28,10 @@ public class ParserForTesting {
 
     static SolidityToKeyConverter stk = solConverter();
 
-    private static SolidityToKeyConverter solConverter(){
+    private static SolidityToKeyConverter solConverter() {
         Services services = new Services();
-        KeYSolidityType ksType = new KeYSolidityType(PrimitiveType.UINT, new SortImpl(new Name("UINT")));
+        KeYSolidityType ksType =
+            new KeYSolidityType(PrimitiveType.UINT, new SortImpl(new Name("UINT")));
 
         ProgramVariable px = new ProgramVariable(new Name("x"), ksType);
         ProgramVariable pf = new ProgramVariable(new Name("f"), ksType);

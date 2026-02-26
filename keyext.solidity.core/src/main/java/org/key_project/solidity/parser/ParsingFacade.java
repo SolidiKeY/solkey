@@ -23,7 +23,6 @@ import org.key_project.solidity.parser.builder.ChoiceFinder;
 import org.key_project.solidity.parser.builder.ConfigurationBuilder;
 import org.key_project.solidity.proof.io.RuleSource;
 import org.key_project.solidity.settings.Configuration;
-import org.key_project.solidity.util.parsing.BuildingException;
 
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;

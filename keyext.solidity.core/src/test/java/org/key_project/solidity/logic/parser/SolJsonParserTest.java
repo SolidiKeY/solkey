@@ -825,7 +825,8 @@ public class SolJsonParserTest {
         assertEquals("@return BoolTrue", functionDeclaration.getDocumentation());
     }
 
-    public static ContractDeclaration getDeclStrJsonParser(SolJSONParser jsonParser, String contract) throws IOException {
+    public static ContractDeclaration getDeclStrJsonParser(SolJSONParser jsonParser,
+            String contract) throws IOException {
         final Path solc = Path.of("/opt", "local", "bin", "solc");
         SolcWrapper solcWrapper = new SolcWrapper(solc);
         String contractJson = solcWrapper.readSol(contract);
@@ -844,7 +845,8 @@ public class SolJsonParserTest {
         return (ContractDeclaration) programElement;
     }
 
-    private static SyntaxElement getSolidityFromStrJsonParser(SolJSONParser jsonParser, String contract)
+    private static SyntaxElement getSolidityFromStrJsonParser(SolJSONParser jsonParser,
+            String contract)
             throws IOException {
         List<SyntaxElement> unit = jsonParser.parse(contract);
         assertNotNull(unit);
