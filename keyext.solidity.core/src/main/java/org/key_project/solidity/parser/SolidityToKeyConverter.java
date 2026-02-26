@@ -164,7 +164,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     public SyntaxElement visitIdentifier(IdentifierContext ctx) {
         String variableName = ctx.Identifier().getText();
         ProgramVariable res = localVars.lookup(variableName);
-        if(res == null)
+        if (res == null)
             throw new RuntimeException("Variable " + variableName + " out of the scope");
         return res;
     }

@@ -3,20 +3,20 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program;
 
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CodePointCharStream;
-import org.antlr.v4.runtime.CommonTokenStream;
 import org.key_project.logic.Namespace;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.NamespaceSet;
 import org.key_project.solidity.logic.SolidityBlock;
 import org.key_project.solidity.logic.op.ProgramVariable;
-
-import org.jspecify.annotations.NonNull;
 import org.key_project.solidity.parser.SolidityLexer;
 import org.key_project.solidity.parser.SolidityParser;
 import org.key_project.solidity.parser.SolidityToKeyConverter;
 import org.key_project.solidity.program.ast.statement.Block;
+
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CodePointCharStream;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.jspecify.annotations.NonNull;
 
 public class SolidityReader {
     protected final Services services;
@@ -48,12 +48,14 @@ public class SolidityReader {
 
     public SolidityBlock readBlockWithProgramVariables(
             Namespace<@NonNull ProgramVariable> programVariableNamespace, String solidity) {
-        SolidityToKeyConverter stk = new SolidityToKeyConverter(services, programVariableNamespace, new Namespace<>());
+        SolidityToKeyConverter stk =
+            new SolidityToKeyConverter(services, programVariableNamespace, new Namespace<>());
         return new SolidityBlock(parseBlock(stk, solidity));
     }
 
     public SolidityBlock readBlockWithEmptyContext(String solidity) {
-        SolidityToKeyConverter stk = new SolidityToKeyConverter(services, nss.programVariables(), new Namespace<>());
+        SolidityToKeyConverter stk =
+            new SolidityToKeyConverter(services, nss.programVariables(), new Namespace<>());
         return new SolidityBlock(parseBlock(stk, solidity));
     }
 }

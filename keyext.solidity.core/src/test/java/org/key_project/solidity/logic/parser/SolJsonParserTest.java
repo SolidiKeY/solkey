@@ -838,7 +838,8 @@ public class SolJsonParserTest {
         assertEquals(2, elements.size());
         ContractDeclaration ctrl = (ContractDeclaration) elements.get(1);
         assertEquals("function () returns (contract A)",
-                ((NewExpression) ((FunctionCallExpression) ctrl.getFieldDeclarations().get(0).getInitializer()).getFunctionExp()).getFunction());
+            ((NewExpression) ((FunctionCallExpression) ctrl.getFieldDeclarations().get(0)
+                    .getInitializer()).getFunctionExp()).getFunction());
     }
 
     @Test
@@ -853,7 +854,7 @@ public class SolJsonParserTest {
     }
 
     public static List<SyntaxElement> getDeclsJsonParser(SolJSONParser jsonParser,
-                                                           String contract) throws IOException {
+            String contract) throws IOException {
         final Path solc = Path.of("/opt", "local", "bin", "solc");
         SolcWrapper solcWrapper = new SolcWrapper(solc);
         String contractJson = solcWrapper.readSol(contract);

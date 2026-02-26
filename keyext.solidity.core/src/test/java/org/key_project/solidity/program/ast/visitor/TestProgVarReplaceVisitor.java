@@ -169,7 +169,6 @@ class TestProgVarReplaceVisitor {
                     struct Person {
                        int age;
                     }
-
                     function f() public pure {
                         Person memory alice;
                     }

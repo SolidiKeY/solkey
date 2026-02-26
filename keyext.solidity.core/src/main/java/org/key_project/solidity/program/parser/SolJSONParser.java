@@ -412,16 +412,15 @@ public class SolJSONParser {
                 expType = (Type) decl;
             else
                 expType = getType(type_str);
-        }
-        else if(expNode != null && expNode.has("typeName")) {
+        } else if (expNode != null && expNode.has("typeName")) {
             try {
-                int referenceId = expNode.findValue("typeName").findValue("referencedDeclaration").asInt();
+                int referenceId =
+                    expNode.findValue("typeName").findValue("referencedDeclaration").asInt();
                 expType = (Type) id2Name.get(referenceId);
-            } catch (Exception e){
+            } catch (Exception e) {
                 expType = getType(type_str);
             }
-        }
-        else
+        } else
             expType = getType(type_str);
         Expression exp = switch (nodeType) {
             case "Literal" -> parseLiteral(expType, initializer);
@@ -444,7 +443,8 @@ public class SolJSONParser {
     }
 
     private Expression parseNewExpression(Type expType, JsonNode initializer) {
-        String functionDef = initializer.findValue("typeDescriptions").findValue("typeString").asText();
+        String functionDef =
+            initializer.findValue("typeDescriptions").findValue("typeString").asText();
         return new NewExpression(functionDef, expType);
     }
 
