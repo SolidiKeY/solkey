@@ -53,7 +53,7 @@ public class SolidityReader {
     }
 
     public SolidityBlock readBlockWithEmptyContext(String solidity) {
-        SolidityToKeyConverter stk = new SolidityToKeyConverter(services, new Namespace<>(), new Namespace<>());
+        SolidityToKeyConverter stk = new SolidityToKeyConverter(services, nss.programVariables(), new Namespace<>());
         return new SolidityBlock(parseBlock(stk, solidity));
     }
 }

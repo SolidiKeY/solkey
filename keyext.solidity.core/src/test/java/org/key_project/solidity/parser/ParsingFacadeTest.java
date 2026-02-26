@@ -11,13 +11,12 @@ import org.key_project.logic.op.Function;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.SolidityDLTheory;
-import org.key_project.solidity.logic.op.Junctor;
-import org.key_project.solidity.logic.op.LogicVariable;
-import org.key_project.solidity.logic.op.Quantifier;
-import org.key_project.solidity.logic.op.SFunction;
-import org.key_project.solidity.logic.op.SModality;
+import org.key_project.solidity.logic.op.*;
 import org.key_project.solidity.logic.sort.SortImpl;
+import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
+import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.statement.Block;
+import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -27,12 +26,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.key_project.solidity.rule.sv.SchemaVariableFactory.createProgramSV;
 
 class ParsingFacadeTest {
 
     private Services services;
 
     private HashMap<String, Function> predicates;
+
+    private KeYSolidityType ksType;
 
 
     @BeforeEach
@@ -52,7 +54,7 @@ class ParsingFacadeTest {
         }
 
         services.getNamespaces().functions().addSafely(predicates.values());
-
+        ksType = new KeYSolidityType(PrimitiveType.UINT, new SortImpl(new Name("UINT")));
     }
 
     private Function delcareAtom(String name, Sort... argumentSorts) {
@@ -142,6 +144,22 @@ class ParsingFacadeTest {
         assert (((SModality) term.op()).programBlock().program() instanceof Block);
         Block block = (Block) ((SModality) term.op()).programBlock().program();
         assertTrue(block.getChildCount() == 1);
+    }
+
+    @Test
+    void parseProgramVariable() {
+        ProgramVariable px = new ProgramVariable(new Name("x"), ksType);
+        services.getNamespaces().programVariables().add(px);
+
+        KeYIO io = new KeYIO(services);
+        final Term term = io.parseExpression("\\<{ x = 1; }\\>true");
+        assertInstanceOf(SModality.class, term.op());
+        assertSame(SModality.SolidityModalityKind.DIA, ((SModality) term.op()).kind());
+        assert (((SModality) term.op()).programBlock().program() instanceof Block);
+        Block block = (Block) ((SModality) term.op()).programBlock().program();
+        assertEquals(1, block.getChildCount());
+
+        assertEquals(px, block.getChild(0).getChild(0).getChild(0));
     }
 
     @Test

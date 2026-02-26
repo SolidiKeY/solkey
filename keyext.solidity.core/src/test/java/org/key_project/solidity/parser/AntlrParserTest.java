@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.key_project.solidity.parser.ParserForTesting.*;
 
-public class AntlrParserForTestingTest {
+public class AntlrParserTest {
 
     @Test
     void testParseBool() {
