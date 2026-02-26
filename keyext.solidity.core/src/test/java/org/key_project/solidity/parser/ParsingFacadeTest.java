@@ -16,7 +16,6 @@ import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.statement.Block;
-import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -26,7 +25,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.key_project.solidity.rule.sv.SchemaVariableFactory.createProgramSV;
 
 class ParsingFacadeTest {
 
@@ -45,9 +43,9 @@ class ParsingFacadeTest {
         services.getNamespaces().sorts().addSafely(mySort);
 
         predicates = new HashMap<>();
-        final Function[] atoms = { delcareAtom("A"), delcareAtom("B"),
-            delcareAtom("C"), delcareAtom("D"), delcareAtom("p", mySort),
-            delcareAtom("q", mySort, mySort) };
+        final Function[] atoms = { declareAtom("A"), declareAtom("B"),
+            declareAtom("C"), declareAtom("D"), declareAtom("p", mySort),
+            declareAtom("q", mySort, mySort) };
 
         for (Function atom : atoms) {
             predicates.put(atom.name().toString(), atom);
@@ -57,12 +55,12 @@ class ParsingFacadeTest {
         ksType = new KeYSolidityType(PrimitiveType.UINT, new SortImpl(new Name("UINT")));
     }
 
-    private Function delcareAtom(String name, Sort... argumentSorts) {
+    private Function declareAtom(String name, Sort... argumentSorts) {
         return new SFunction(new Name(name), SolidityDLTheory.FORMULA,
             new ImmutableArray<>(argumentSorts), true);
     }
 
-    private SFunction delcareAtom(String name) {
+    private SFunction declareAtom(String name) {
         return new SFunction(new Name(name), SolidityDLTheory.FORMULA, new ImmutableArray<>(),
             true);
     }
