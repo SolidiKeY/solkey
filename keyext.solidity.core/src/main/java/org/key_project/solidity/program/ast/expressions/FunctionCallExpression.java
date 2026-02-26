@@ -15,6 +15,11 @@ import org.key_project.util.ExtList;
 public class FunctionCallExpression extends SolidityExpression {
 
     private final List<Expression> arguments;
+
+    public Expression getFunctionExp() {
+        return functionExp;
+    }
+
     public final Expression functionExp;
 
     public FunctionCallExpression(Type type, Expression functionExp, List<Expression> arguments) {

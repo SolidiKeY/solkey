@@ -82,7 +82,7 @@ public class SolJSONParser {
     /// @return the KeY AST representation of {@code root}
     private List<SyntaxElement> json2SolidityAST(JsonNode root) {
         if ("SourceUnit".equals(root.findValue("nodeType").asText())) {
-            return parseSourceUnit(root.findValues("nodes"));
+            return parseSourceUnit(root.findValue("nodes").valueStream().toList());
         }
         return new ArrayList<>();
     }
@@ -402,7 +402,7 @@ public class SolJSONParser {
     private Expression parseExpression(JsonNode initializer) {
         final String nodeType = initializer.findValue("nodeType").asText();
         JsonNode expNode = initializer.findValue("expression");
-        Type expType = null;
+        Type expType;
         String type_str =
             initializer.findValue("typeDescriptions").findValue("typeIdentifier").textValue();
         if (expNode != null && expNode.has("referencedDeclaration")) {
@@ -412,7 +412,16 @@ public class SolJSONParser {
                 expType = (Type) decl;
             else
                 expType = getType(type_str);
-        } else
+        }
+        else if(expNode != null && expNode.has("typeName")) {
+            try {
+                int referenceId = expNode.findValue("typeName").findValue("referencedDeclaration").asInt();
+                expType = (Type) id2Name.get(referenceId);
+            } catch (Exception e){
+                expType = getType(type_str);
+            }
+        }
+        else
             expType = getType(type_str);
         Expression exp = switch (nodeType) {
             case "Literal" -> parseLiteral(expType, initializer);
@@ -428,9 +437,15 @@ public class SolJSONParser {
             case "FunctionCall" -> parseFunctionCall(expType, initializer);
             case "ElementaryTypeNameExpression" -> parseElementaryExpression(expType, initializer);
             case "ExpressionStatement" -> parseExpression(initializer.findValue("expression"));
+            case "NewExpression" -> parseNewExpression(expType, initializer);
             default -> throw new RuntimeException("Not yet supported expression type: " + nodeType);
         };
         return exp;
+    }
+
+    private Expression parseNewExpression(Type expType, JsonNode initializer) {
+        String functionDef = initializer.findValue("typeDescriptions").findValue("typeString").asText();
+        return new NewExpression(functionDef, expType);
     }
 
     private Expression parseElementaryExpression(Type expType, JsonNode initializer) {

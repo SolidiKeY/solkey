@@ -14,6 +14,7 @@ import org.key_project.solidity.program.ast.declarations.*;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
 import org.key_project.solidity.program.ast.expressions.MemberExp;
+import org.key_project.solidity.program.ast.expressions.NewExpression;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.*;
@@ -828,13 +829,16 @@ public class SolJsonParserTest {
     @Test
     void twoContracts() throws IOException {
         // language=solidity
-        String contract = """
+        String contracts = """
                 contract A {}
                 contract SimpleContract {
                     A a = new A();
                 }""";
-        ContractDeclaration contractDec = getDeclStr(contract);
-        String contractS = contractDec.toString();
+        List<SyntaxElement> elements = getDeclsJsonParser(new SolJSONParser(), contracts);
+        assertEquals(2, elements.size());
+        ContractDeclaration ctrl = (ContractDeclaration) elements.get(1);
+        assertEquals("function () returns (contract A)",
+                ((NewExpression) ((FunctionCallExpression) ctrl.getFieldDeclarations().get(0).getInitializer()).getFunctionExp()).getFunction());
     }
 
     @Test
@@ -846,6 +850,14 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
+    }
+
+    public static List<SyntaxElement> getDeclsJsonParser(SolJSONParser jsonParser,
+                                                           String contract) throws IOException {
+        final Path solc = Path.of("/opt", "local", "bin", "solc");
+        SolcWrapper solcWrapper = new SolcWrapper(solc);
+        String contractJson = solcWrapper.readSol(contract);
+        return jsonParser.parse(contractJson);
     }
 
     public static ContractDeclaration getDeclStrJsonParser(SolJSONParser jsonParser,
