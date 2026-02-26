@@ -758,7 +758,7 @@ public class SolJsonParserTest {
     }
 
     @Test
-    void selfReference() throws IOException {
+    void selfReferenceFunction() throws IOException {
         // language=solidity
         String contract = """
                 contract SimpleContract {
@@ -823,6 +823,29 @@ public class SolJsonParserTest {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         FunctionDeclaration functionDeclaration = contractDeclaration.getFunctions().getFirst();
         assertEquals("@return BoolTrue", functionDeclaration.getDocumentation());
+    }
+
+    @Test
+    void twoContracts() throws IOException {
+        // language=solidity
+        String contract = """
+                contract A {}
+                contract SimpleContract {
+                    A a = new A();
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        String contractS = contractDec.toString();
+    }
+
+    @Test
+    void selfReferenceContract() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    SimpleContract sc;
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        String contractS = contractDec.toString();
     }
 
     public static ContractDeclaration getDeclStrJsonParser(SolJSONParser jsonParser,
