@@ -3,7 +3,9 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.declarations;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
@@ -75,7 +77,10 @@ public class StateVariableDeclaration extends Declaration {
     public String toString() {
         String name = programVariable.name().toString();
         String typeReference = programVariable.getType() == null ? "" : programVariable.getType().toString();
-        return typeReference + " " + visibility + " " + name
-            + (initializer != null ? " = " + initializer : "") + ";";
+        return List.of(typeReference, visibility.toString(), name,
+            initializer != null ? " = " + initializer : "").stream()
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.joining(" "))
+            + ";";
     }
 }

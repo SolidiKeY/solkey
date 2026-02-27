@@ -39,6 +39,11 @@ public class ContractType extends Declaration implements Type {
     }
 
     @Override
+    public String toString() {
+        return contract.name().toString();
+    }
+
+    @Override
     public SyntaxElementCursor getCursor() {
         return super.getCursor();
     }

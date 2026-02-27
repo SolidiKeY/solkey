@@ -843,6 +843,27 @@ public class SolJsonParserTest {
     }
 
     @Test
+    void twoContractsConstructor() throws IOException {
+        // language=solidity
+        String contracts = """
+                contract A {
+                    constructor(int a) {
+                    }
+                }
+                contract SimpleContract {
+                    A a = new A(0);
+                }""";
+        List<SyntaxElement> elements = getDeclsJsonParser(new SolJSONParser(), contracts);
+        assertEquals(2, elements.size());
+        ContractDeclaration ctrl = (ContractDeclaration) elements.get(1);
+        String ctrlStr = ctrl.toString();
+        assertEquals("function (int256) returns (contract A)",
+                ((NewExpression) ((FunctionCallExpression) ctrl.getFieldDeclarations().get(0)
+                        .getInitializer()).getFunctionExp()).getFunction());
+        assertTrue(ctrlStr.contains("A a"));
+    }
+
+    @Test
     void selfReferenceContract() throws IOException {
         // language=solidity
         String contract = """

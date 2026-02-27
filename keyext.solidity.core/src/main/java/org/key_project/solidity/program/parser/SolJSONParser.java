@@ -372,11 +372,15 @@ public class SolJSONParser {
         final int id = fieldNode.findValue("id").asInt();
         final String fieldName = fieldNode.findValue("name").asText();
         JsonNode typeName = fieldNode.findValue("typeName");
-        Type expType;
+        Type expType = null;
         int idRef = -1;
         if (typeName.has("referencedDeclaration")) {
             idRef = typeName.findValue("referencedDeclaration").asInt();
-            expType = id2Name.containsKey(idRef) ? (Type) id2Name.get(idRef) : null;
+            if(id2Name.containsKey(idRef)){
+                expType = (Type) id2Name.get(idRef);
+                if(expType instanceof ContractDeclaration)
+                    expType = new ContractType((ContractDeclaration) expType);
+            }
         } else
             expType = getType(
                 fieldNode.findValue("typeDescriptions").findValue("typeIdentifier").textValue());

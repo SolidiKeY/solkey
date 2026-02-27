@@ -24,7 +24,7 @@ public enum Visibility {
 
     @Override
     public String toString() {
-        return label;
+        return label.equals("internal") ? "" : label;
     }
 
 }

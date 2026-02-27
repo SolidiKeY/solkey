@@ -30,6 +30,11 @@ public class NewExpression extends SolidityExpression {
 
     }
 
+    @Override
+    public String toString() {
+        return function;
+    }
+
     public static String getFunction() {
         return function;
     }
