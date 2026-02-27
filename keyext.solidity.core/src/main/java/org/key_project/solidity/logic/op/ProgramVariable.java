@@ -14,8 +14,10 @@ import org.key_project.logic.op.UpdateableOperator;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.Resolver;
+import org.key_project.solidity.program.ast.abstractions.ContractType;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
@@ -72,13 +74,13 @@ public class ProgramVariable extends AbstractSortedOperator
 
     @Override
     public Type getType() {
-        return type.getSolidityType();
+        return type == null ? null : type.getSolidityType();
     }
 
     @Override
     public void resolve(HashMap<Integer, Declaration> id2Name) {
         if (contractId != -1) {
-            Type type = (Type) id2Name.get(contractId);
+            Type type = new ContractType((ContractDeclaration) id2Name.get(contractId));
             Sort sort = new SortImpl(type.name(), false);
             this.sort = sort;
             this.type = new KeYSolidityType(type, sort);

@@ -74,7 +74,7 @@ public class StateVariableDeclaration extends Declaration {
     // common interface
     public String toString() {
         String name = programVariable.name().toString();
-        String typeReference = programVariable.getType().toString();
+        String typeReference = programVariable.getType() == null ? "" : programVariable.getType().toString();
         return typeReference + " " + visibility + " " + name
             + (initializer != null ? " = " + initializer : "") + ";";
     }
