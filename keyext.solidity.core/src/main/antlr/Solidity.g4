@@ -125,7 +125,10 @@ revertStatement
   : 'revert' functionCall ';' ;
 
 variableDeclarationStatement
-  : ( 'var' identifierList | variableDeclaration | '(' variableDeclarationList ')' ) ( '=' expression )? ';';
+  : 'var' identifierList ( '=' expression )? ';'            # VarDeclStatement
+  | variableDeclaration ( '=' expression )? ';'             # SingleVarDeclStatement
+  | '(' variableDeclarationList ')' ( '=' expression )? ';' # MultiVarDeclStatement
+  ;
 
 variableDeclarationList
   : variableDeclaration? (',' variableDeclaration? )* ;

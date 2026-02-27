@@ -178,20 +178,22 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitVariableDeclaration(VariableDeclarationContext ctx) {
+        return visitVariableDeclarationWithInitialValue(ctx, null);
+    }
+
+    public SyntaxElement visitVariableDeclarationWithInitialValue(VariableDeclarationContext ctx, Expression initial) {
         KeYSolidityType ksType = (KeYSolidityType) visitTypeName(ctx.typeName());
         ProgramVariable programVariable =
-            new ProgramVariable(new Name(ctx.identifier().Identifier().getText()), ksType);
+                new ProgramVariable(new Name(ctx.identifier().Identifier().getText()), ksType);
         localVars.add(programVariable);
         StatementVariableDeclaration stmDecl =
-            new StatementVariableDeclaration(programVariable, DataLocation.Storage);
-        return new DeclarationStatement(List.of(stmDecl), null);
+                new StatementVariableDeclaration(programVariable, DataLocation.Storage);
+        return new DeclarationStatement(List.of(stmDecl), initial);
     }
 
     @Override
-    public SyntaxElement visitVariableDeclarationStatement(
-            VariableDeclarationStatementContext ctx) {
-        // it removes `;`
-        return ctx.getChild(0).accept(this);
+    public SyntaxElement visitSingleVarDeclStatement(SingleVarDeclStatementContext ctx) {
+        return visitVariableDeclarationWithInitialValue(ctx.variableDeclaration(), visitExpression(ctx.expression()));
     }
 
     @Override
