@@ -241,6 +241,12 @@ public class SolidityToKeyConverterTest {
     }
 
     @Test
+    void newExp() {
+        NewExpression exp = (NewExpression) parseExpression("new bool");
+        assertEquals("bool", exp.getFunction());
+    }
+
+    @Test
     void structType() {
         DeclarationStatement stm = (DeclarationStatement) parseStatement("Person alice;");
     }

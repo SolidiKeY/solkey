@@ -35,7 +35,7 @@ public class NewExpression extends SolidityExpression {
         return function;
     }
 
-    public static String getFunction() {
+    public String getFunction() {
         return function;
     }
 }
