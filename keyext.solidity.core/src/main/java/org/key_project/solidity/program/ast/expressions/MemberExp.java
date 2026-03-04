@@ -10,23 +10,33 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.Declaration;
+import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public class MemberExp extends SolidityExpression {
+public class MemberExp extends SolidityExpression implements Resolver {
     final Expression leftExp;
     SyntaxElement rightExp;
+    final int id;
 
     public MemberExp(Expression leftExp, SyntaxElement rightExp, Type type) {
         super(type);
         this.leftExp = leftExp;
         this.rightExp = rightExp;
+        this.id = -1;
+    }
+
+    public MemberExp(Expression leftExp, int id, Type type) {
+        super(type);
+        this.leftExp = leftExp;
+        this.id = id;
     }
 
     public MemberExp(ExtList children) {
         super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
         this.leftExp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
         this.rightExp = Objects.requireNonNull(children.removeFirstOccurrence(SyntaxElement.class));
+        this.id = -1;
     }
 
     @Override
@@ -43,10 +53,19 @@ public class MemberExp extends SolidityExpression {
 
     @Override
     public String toString() {
-        return leftExp + "." + rightExp + "()";
+        if(rightExp instanceof FunctionDeclaration)
+            return leftExp + "." + ((FunctionDeclaration) rightExp).getName() + "()";
+        return leftExp + "." + rightExp;
     }
 
     public void visit(Visitor v) {
         v.performActionOnMemberExp(this);
+    }
+
+    @Override
+    public void resolve(HashMap<Integer, Declaration> id2Name) {
+        if(id != -1)
+            rightExp = id2Name.get(id);
+
     }
 }
