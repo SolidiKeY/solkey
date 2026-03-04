@@ -44,7 +44,9 @@ public class ParserForTesting {
 
         Namespace<ProgramSV> schemaVariables = new Namespace<>();
         ProgramSV sv = createProgramSV(new Name("s#v"), null, false);
+        ProgramSV svv = createProgramSV(new Name("s#vv"), null, false);
         schemaVariables.add(sv);
+        schemaVariables.add(svv);
 
         Name contractName = new Name("Contract");
         Name structName = new Name("Person");

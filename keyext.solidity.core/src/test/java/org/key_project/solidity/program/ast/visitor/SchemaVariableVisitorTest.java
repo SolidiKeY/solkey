@@ -5,7 +5,6 @@ package org.key_project.solidity.program.ast.visitor;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.op.sv.SchemaVariable;
-import org.key_project.solidity.program.ast.statement.ConditionStatement;
 import org.key_project.solidity.program.ast.statement.Statement;
 import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.util.collection.ImmutableList;
@@ -52,6 +51,18 @@ class SchemaVariableVisitorTest {
         ImmutableList<SchemaVariable> schemaVars = visitor.getSchemaVariables();
         assertEquals(1, schemaVars.size());
         assertEquals("s#v", schemaVars.get(0).toString());
+    }
+
+    @Test
+    void statementTwoSchemas(){
+        Statement stm = parseStatement("int a = s#v + s#vv;");
+        ProgramSVCollector visitor =
+                new ProgramSVCollector(stm, ImmutableSLList.nil(), EMPTY_SVINSTANTIATIONS);
+        visitor.start();
+        ImmutableList<SchemaVariable> schemaVars = visitor.getSchemaVariables();
+        assertEquals(2, schemaVars.size());
+        assertEquals("s#vv", schemaVars.get(0).toString());
+        assertEquals("s#v", schemaVars.get(1).toString());
     }
 
 }
