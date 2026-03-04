@@ -858,8 +858,8 @@ public class SolJsonParserTest {
         ContractDeclaration ctrl = (ContractDeclaration) elements.get(1);
         String ctrlStr = ctrl.toString();
         assertEquals("function (int256) returns (contract A)",
-                ((NewExpression) ((FunctionCallExpression) ctrl.getFieldDeclarations().get(0)
-                        .getInitializer()).getFunctionExp()).getFunction());
+            ((NewExpression) ((FunctionCallExpression) ctrl.getFieldDeclarations().get(0)
+                    .getInitializer()).getFunctionExp()).getFunction());
         assertTrue(ctrlStr.contains("A a"));
     }
 

@@ -195,7 +195,8 @@ public class SolJSONParser {
         final String fieldName = fieldNode.findValue("name").asText();
         final String fieldType = fieldNode.findValue("typeName").findValue("name").asText();
 
-        FieldDeclaration field = new FieldDeclaration(new Name(fieldName), new TypeReference(new Name(fieldType)));
+        FieldDeclaration field =
+            new FieldDeclaration(new Name(fieldName), new TypeReference(new Name(fieldType)));
         id2Name.put(fieldNode.findValue("id").asInt(), field);
         return field;
     }
@@ -381,9 +382,9 @@ public class SolJSONParser {
         int idRef = -1;
         if (typeName.has("referencedDeclaration")) {
             idRef = typeName.findValue("referencedDeclaration").asInt();
-            if(id2Name.containsKey(idRef)){
+            if (id2Name.containsKey(idRef)) {
                 expType = (Type) id2Name.get(idRef);
-                if(expType instanceof ContractDeclaration)
+                if (expType instanceof ContractDeclaration)
                     expType = new ContractType((ContractDeclaration) expType);
             }
         } else
@@ -515,8 +516,8 @@ public class SolJSONParser {
     private Expression parseMemberAccess(Type expType, JsonNode initializer) {
         Expression leftExp = parseExpression(initializer.findValue("expression"));
         int rightId = initializer.findValue("referencedDeclaration").asInt();
-        if(id2Name.containsKey(rightId))
-            return new MemberExp(leftExp, id2Name.get(rightId) , expType);
+        if (id2Name.containsKey(rightId))
+            return new MemberExp(leftExp, id2Name.get(rightId), expType);
         return new MemberExp(leftExp, rightId, expType);
     }
 

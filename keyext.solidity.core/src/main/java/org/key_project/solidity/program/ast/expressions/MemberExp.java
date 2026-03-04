@@ -41,7 +41,7 @@ public class MemberExp extends SolidityExpression implements Resolver {
 
     @Override
     public SyntaxElement getChild(int n) {
-        if(n == 0)
+        if (n == 0)
             return leftExp;
         throw new IndexOutOfBoundsException(n + " is out of bonds");
     }
@@ -53,7 +53,7 @@ public class MemberExp extends SolidityExpression implements Resolver {
 
     @Override
     public String toString() {
-        if(rightExp instanceof FunctionDeclaration)
+        if (rightExp instanceof FunctionDeclaration)
             return leftExp + "." + ((FunctionDeclaration) rightExp).getName() + "()";
         return leftExp + "." + rightExp;
     }
@@ -64,7 +64,7 @@ public class MemberExp extends SolidityExpression implements Resolver {
 
     @Override
     public void resolve(HashMap<Integer, Declaration> id2Name) {
-        if(id != -1)
+        if (id != -1)
             rightExp = id2Name.get(id);
 
     }

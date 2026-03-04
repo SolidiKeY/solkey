@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.visitor;
 
-import org.junit.jupiter.api.Test;
+import java.util.LinkedHashSet;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
@@ -14,7 +15,7 @@ import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.statement.Statement;
 
-import java.util.LinkedHashSet;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.key_project.solidity.parser.ParserForTesting.parseStatement;
@@ -38,7 +39,7 @@ class ProgramVariableVisitorTest {
     }
 
     @Test
-    void statementComplex(){
+    void statementComplex() {
         Statement stm = parseStatement("int a = x;");
         ProgramVariableCollector visitor = new ProgramVariableCollector(stm, services);
 

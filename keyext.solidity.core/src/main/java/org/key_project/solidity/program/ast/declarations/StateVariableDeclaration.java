@@ -76,7 +76,8 @@ public class StateVariableDeclaration extends Declaration {
     // common interface
     public String toString() {
         String name = programVariable.name().toString();
-        String typeReference = programVariable.getType() == null ? "" : programVariable.getType().toString();
+        String typeReference =
+            programVariable.getType() == null ? "" : programVariable.getType().toString();
         return List.of(typeReference, visibility.toString(), name,
             initializer != null ? " = " + initializer : "").stream()
                 .filter(s -> !s.isEmpty())

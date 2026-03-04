@@ -32,10 +32,10 @@ class SchemaVariableVisitorTest {
     }
 
     @Test
-    void statement(){
+    void statement() {
         Statement stm = parseStatement("s#v;");
         ProgramSVCollector visitor =
-                new ProgramSVCollector(stm, ImmutableSLList.nil(), EMPTY_SVINSTANTIATIONS);
+            new ProgramSVCollector(stm, ImmutableSLList.nil(), EMPTY_SVINSTANTIATIONS);
         visitor.start();
         ImmutableList<SchemaVariable> schemaVars = visitor.getSchemaVariables();
         assertEquals(1, schemaVars.size());
@@ -43,10 +43,10 @@ class SchemaVariableVisitorTest {
     }
 
     @Test
-    void statementComplex(){
+    void statementComplex() {
         Statement stm = parseStatement("int a = s#v;");
         ProgramSVCollector visitor =
-                new ProgramSVCollector(stm, ImmutableSLList.nil(), EMPTY_SVINSTANTIATIONS);
+            new ProgramSVCollector(stm, ImmutableSLList.nil(), EMPTY_SVINSTANTIATIONS);
         visitor.start();
         ImmutableList<SchemaVariable> schemaVars = visitor.getSchemaVariables();
         assertEquals(1, schemaVars.size());
@@ -54,10 +54,10 @@ class SchemaVariableVisitorTest {
     }
 
     @Test
-    void statementTwoSchemas(){
+    void statementTwoSchemas() {
         Statement stm = parseStatement("int a = s#v + s#vv;");
         ProgramSVCollector visitor =
-                new ProgramSVCollector(stm, ImmutableSLList.nil(), EMPTY_SVINSTANTIATIONS);
+            new ProgramSVCollector(stm, ImmutableSLList.nil(), EMPTY_SVINSTANTIATIONS);
         visitor.start();
         ImmutableList<SchemaVariable> schemaVars = visitor.getSchemaVariables();
         assertEquals(2, schemaVars.size());
