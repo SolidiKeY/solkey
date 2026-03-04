@@ -34,6 +34,12 @@ public class ProgramVariableCollector extends SolidityASTVisitor {
 
     @Override
     protected void doDefaultAction(SolidityProgramElement x) {
+        int a;
+    }
+
+    @Override
+    protected void doAction(SolidityProgramElement node) {
+        node.visit(this);
     }
 
     @Override
