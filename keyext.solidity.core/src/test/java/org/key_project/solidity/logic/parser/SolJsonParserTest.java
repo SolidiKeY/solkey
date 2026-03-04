@@ -625,7 +625,7 @@ public class SolJsonParserTest {
         String contractS = contractDec.toString();
         assertTrue(contractS.contains("SimpleContract(target).g()"));
         ContractReference contr =
-            (ContractReference) ((FunctionCallExpression) contractDec.getFunctions().getFirst()
+            (ContractReference) (contractDec.getFunctions().getFirst()
                     .getBody().getStatements().get(0)
                     .getChild(0).getChild(0)).getChild(1);
         assertEquals(contr.getChildCount(), 0);

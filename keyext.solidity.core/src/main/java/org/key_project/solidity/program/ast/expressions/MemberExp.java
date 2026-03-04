@@ -13,29 +13,20 @@ import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public class MemberExp extends SolidityExpression implements Resolver {
+public class MemberExp extends SolidityExpression {
     final Expression leftExp;
     SyntaxElement rightExp;
-    final int rightId;
 
     public MemberExp(Expression leftExp, SyntaxElement rightExp, Type type) {
         super(type);
         this.leftExp = leftExp;
         this.rightExp = rightExp;
-        this.rightId = -1;
-    }
-
-    public MemberExp(Expression leftExp, int rightId, Type type) {
-        super(type);
-        this.leftExp = leftExp;
-        this.rightId = rightId;
     }
 
     public MemberExp(ExtList children) {
         super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
         this.leftExp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
         this.rightExp = Objects.requireNonNull(children.removeFirstOccurrence(SyntaxElement.class));
-        this.rightId = -1;
     }
 
     @Override
@@ -57,11 +48,5 @@ public class MemberExp extends SolidityExpression implements Resolver {
 
     public void visit(Visitor v) {
         v.performActionOnMemberExp(this);
-    }
-
-    @Override
-    public void resolve(HashMap<Integer, Declaration> id2Name) {
-        if(rightId != -1)
-            this.rightExp = id2Name.get(rightId);
     }
 }

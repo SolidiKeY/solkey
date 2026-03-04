@@ -515,9 +515,7 @@ public class SolJSONParser {
     private Expression parseMemberAccess(Type expType, JsonNode initializer) {
         Expression leftExp = parseExpression(initializer.findValue("expression"));
         int rightId = initializer.findValue("referencedDeclaration").asInt();
-        return id2Name.containsKey(rightId) ?
-                  new MemberExp(leftExp, id2Name.get(rightId) , expType)
-                : new MemberExp(leftExp, rightId, expType);
+        return new MemberExp(leftExp, id2Name.get(rightId) , expType);
     }
 
     private Expression parseAssignment(Type expType, JsonNode assign) {
