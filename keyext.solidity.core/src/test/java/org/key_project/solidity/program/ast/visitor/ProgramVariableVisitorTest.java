@@ -12,10 +12,12 @@ import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.statement.Statement;
 
 import java.util.LinkedHashSet;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.key_project.solidity.parser.ParserForTesting.parseStatement;
 
 class ProgramVariableVisitorTest {
 
@@ -33,5 +35,18 @@ class ProgramVariableVisitorTest {
         LinkedHashSet<ProgramVariable> variables = visitor.result();
         assertEquals(1, variables.size());
         assertEquals(x, variables.getFirst());
+    }
+
+    @Test
+    void statementComplex(){
+        Statement stm = parseStatement("int a = x;");
+        ProgramVariableCollector visitor = new ProgramVariableCollector(stm, services);
+
+        visitor.start();
+
+        LinkedHashSet<ProgramVariable> variables = visitor.result();
+        assertEquals(2, variables.size());
+        assertEquals("a", variables.getFirst().toString());
+        assertEquals("x", variables.getLast().toString());
     }
 }
