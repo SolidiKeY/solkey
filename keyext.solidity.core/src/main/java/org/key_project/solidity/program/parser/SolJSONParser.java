@@ -160,7 +160,10 @@ public class SolJSONParser {
 
     private MemberEnumDeclaration parseMemberEnum(JsonNode node) {
         String name = node.findValue("name").asText();
-        return new MemberEnumDeclaration(new Name(name));
+        int id = node.findValue("id").asInt();
+        MemberEnumDeclaration member = new MemberEnumDeclaration(new Name(name));
+        id2Name.put(id, member);
+        return member;
     }
 
     private ModifierDeclaration parseModifier(JsonNode node) {
@@ -192,7 +195,9 @@ public class SolJSONParser {
         final String fieldName = fieldNode.findValue("name").asText();
         final String fieldType = fieldNode.findValue("typeName").findValue("name").asText();
 
-        return new FieldDeclaration(new Name(fieldName), new TypeReference(new Name(fieldType)));
+        FieldDeclaration field = new FieldDeclaration(new Name(fieldName), new TypeReference(new Name(fieldType)));
+        id2Name.put(fieldNode.findValue("id").asInt(), field);
+        return field;
     }
 
     private FunctionDeclaration parseFunction(JsonNode node) {
@@ -509,8 +514,10 @@ public class SolJSONParser {
 
     private Expression parseMemberAccess(Type expType, JsonNode initializer) {
         Expression leftExp = parseExpression(initializer.findValue("expression"));
-        String rightName = initializer.findValue("memberName").asText();
-        return new MemberExp(leftExp, rightName, expType);
+        int rightId = initializer.findValue("referencedDeclaration").asInt();
+        return id2Name.containsKey(rightId) ?
+                  new MemberExp(leftExp, id2Name.get(rightId) , expType)
+                : new MemberExp(leftExp, rightId, expType);
     }
 
     private Expression parseAssignment(Type expType, JsonNode assign) {
