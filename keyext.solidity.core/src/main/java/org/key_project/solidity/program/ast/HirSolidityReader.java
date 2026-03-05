@@ -35,7 +35,8 @@ public class HirSolidityReader {
 
     public Block readBlock(String block, Context context) throws IOException {
         SolJSONParser jsonParser = new SolJSONParser(services);
-        getDeclStrJsonParser(jsonParser, context.getSolidityPath());
+        if(context.getSolidityPath() != null)
+            getDeclStrJsonParser(jsonParser, context.getSolidityPath());
         Namespace<ProgramSV> schemaVariables = new Namespace<>();
         SolidityToKeyConverter stk = new SolidityToKeyConverter(services, context.getVarNS(), schemaVariables);
 
