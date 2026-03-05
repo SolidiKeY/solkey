@@ -3,30 +3,56 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.parser;
 
+import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
+
 import java.io.*;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class SolcWrapper {
 
-    private final Path solc;
-
-    public SolcWrapper(Path solc) {
-        this.solc = solc;
+    public SolcWrapper() {
     }
 
-    public BufferedOutputStream readSolBuff(Path filename) throws IOException {
-        ProcessBuilder pb =
-            new ProcessBuilder(solc.toAbsolutePath().toString(), "----ast-compact-json",
-                filename.toAbsolutePath().toString());
-        Process p = pb.start();
-        return new BufferedOutputStream(p.getOutputStream());
+    public BufferedReader readSolBuff(Path filename) throws IOException {
+        return readSolBuff(filename.toFile().toString().getBytes(UTF_8));
+    }
+
+    public static List<SyntaxElement> getDeclsJsonParser(SolJSONParser jsonParser,
+                                                         String contract) throws IOException {
+        SolcWrapper solcWrapper = new SolcWrapper();
+        String contractJson = solcWrapper.readSol(contract);
+        return jsonParser.parse(contractJson);
+    }
+
+    public static ContractDeclaration getDeclStrJsonParser(SolJSONParser jsonParser,
+                                                           String contract) throws IOException {
+        SolcWrapper solcWrapper = new SolcWrapper();
+        String contractJson = solcWrapper.readSol(contract);
+        SyntaxElement programElement = getSolidityFromStrJsonParser(jsonParser, contractJson);
+        return (ContractDeclaration) programElement;
+    }
+
+    public static ContractDeclaration getDeclStrJsonParser(SolJSONParser jsonParser,
+                                                           Path contractPath) throws IOException {
+        String contract = contractPath.toFile().toString();
+        return getDeclStrJsonParser(jsonParser, contract);
+    }
+
+    private static SyntaxElement getSolidityFromStrJsonParser(SolJSONParser jsonParser,
+                                                              String contract)
+            throws IOException {
+        List<SyntaxElement> unit = jsonParser.parse(contract);
+        return unit.getFirst();
     }
 
     private void exportSolc(Path targetPath) throws IOException {
@@ -108,6 +134,32 @@ public class SolcWrapper {
     public String readSol(String s) throws IOException {
         BufferedReader reader = readSolString(s);
         return extract4lines(reader);
+    }
+
+    public static ContractDeclaration getDeclStr(String contract) throws IOException {
+        return getDeclStrJsonParser(new SolJSONParser(), contract);
+    }
+
+    private static ContractDeclaration getDeclaration(String fileName) throws IOException {
+        SyntaxElement programElement = getSyntaxElement(fileName);
+        return (ContractDeclaration) programElement;
+    }
+
+    private static SyntaxElement getSyntaxElement(String solFileName)
+            throws IOException {
+        SolJSONParser jsonParser = new SolJSONParser();
+        URI fileURI = getFile(solFileName);
+        List<SyntaxElement> unit = jsonParser.parse(fileURI);
+        SyntaxElement programElement = unit.getFirst();
+        return programElement;
+    }
+
+    private static URI getFile(String solFileName) {
+        try {
+            return SolJSONParser.class.getResource(solFileName).toURI();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

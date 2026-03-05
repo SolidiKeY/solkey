@@ -17,8 +17,8 @@ import org.key_project.solidity.program.parser.SolJSONParser;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import static org.key_project.solidity.logic.parser.SolJsonParserTest.getDeclStrJsonParser;
 import static org.key_project.solidity.parser.ParserForTesting.parse;
+import static org.key_project.solidity.program.parser.SolcWrapper.getDeclStrJsonParser;
 
 public class BothParsersTest {
 

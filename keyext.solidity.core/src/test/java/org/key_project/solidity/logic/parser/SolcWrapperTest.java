@@ -4,9 +4,6 @@
 package org.key_project.solidity.logic.parser;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
 
 import org.key_project.solidity.program.parser.SolcWrapper;
 
@@ -15,11 +12,9 @@ import org.junit.jupiter.api.Test;
 
 class SolcWrapperTest {
 
-    private final Path solc = Path.of("/opt", "local", "bin", "solc");
-
     @Test
     void readStringSol() throws IOException {
-        SolcWrapper wrapper = new SolcWrapper(solc);
+        SolcWrapper wrapper = new SolcWrapper();
         // language=solidity
         String contract = """
                 contract SimpleContract {
@@ -31,7 +26,8 @@ class SolcWrapperTest {
 
     @Test
     void compilationFail() throws IOException {
-        SolcWrapper wrapper = new SolcWrapper(solc);
+        SolcWrapper wrapper = new SolcWrapper();
+        // language=solidity
         String contract = """
                 contract SimpleContract {
                     uint256 balance
@@ -41,13 +37,5 @@ class SolcWrapperTest {
             Assertions.fail();
         } catch (RuntimeException exception) {
         } ;
-    }
-
-    private static URI getFile(String solFileName) {
-        try {
-            return SolcWrapper.class.getResource(solFileName).toURI();
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

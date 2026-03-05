@@ -306,6 +306,6 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitElementaryTypeName(ElementaryTypeNameContext ctx) {
-        return (SyntaxElement) services.getSolidityInfo().getKeYSolidityType(ctx.getText());
+        return services.getSolidityInfo().getKeYSolidityType(ctx.getText());
     }
 }
