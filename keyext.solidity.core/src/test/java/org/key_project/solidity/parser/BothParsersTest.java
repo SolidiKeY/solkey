@@ -12,24 +12,23 @@ import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.statement.DeclarationStatement;
 import org.key_project.solidity.program.ast.statement.Statement;
-import org.key_project.solidity.program.parser.SolJSONParser;
+import org.key_project.solidity.program.parser.SolcParser;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.key_project.solidity.parser.ParserForTesting.parse;
-import static org.key_project.solidity.program.parser.SolcWrapper.getDeclStrJsonParser;
 
 public class BothParsersTest {
 
     Services services;
     static SolidityToKeyConverter stk;;
-    SolJSONParser jsonParser;
+    SolcParser solcParser;
 
     public BothParsersTest() throws IOException {
         services = new Services();
         stk = new SolidityToKeyConverter(services, new Namespace<>(), new Namespace<>());
-        jsonParser = new SolJSONParser(services);
+        solcParser = new SolcParser(services);
         addContractToService();
     }
 
@@ -42,7 +41,7 @@ public class BothParsersTest {
                     }
                     Person alice;
                 }""";
-        getDeclStrJsonParser(jsonParser, contract);
+        solcParser.getDeclStrJsonParser(contract);
     }
 
     static public Statement parseStatement(String s) {

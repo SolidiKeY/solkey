@@ -1,9 +1,10 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast;
 
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CodePointCharStream;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.jspecify.annotations.NonNull;
+import java.io.IOException;
+
 import org.key_project.logic.Namespace;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
@@ -11,14 +12,16 @@ import org.key_project.solidity.parser.SolidityLexer;
 import org.key_project.solidity.parser.SolidityParser;
 import org.key_project.solidity.parser.SolidityToKeyConverter;
 import org.key_project.solidity.program.ast.statement.Block;
-import org.key_project.solidity.program.parser.SolJSONParser;
+import org.key_project.solidity.program.parser.SolcParser;
 import org.key_project.solidity.rule.sv.ProgramSV;
+
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CodePointCharStream;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-
-import static org.key_project.solidity.program.parser.SolcWrapper.getDeclStrJsonParser;
 
 public class HirSolidityReader {
 
@@ -34,11 +37,12 @@ public class HirSolidityReader {
     }
 
     public Block readBlock(String block, Context context) throws IOException {
-        SolJSONParser jsonParser = new SolJSONParser(services);
-        if(context.getSolidityPath() != null)
-            getDeclStrJsonParser(jsonParser, context.getSolidityPath());
+        SolcParser solcParser = new SolcParser(services);
+        if (context.getSolidityPath() != null)
+            solcParser.getDeclStrJsonParser(context.getSolidityPath());
         Namespace<ProgramSV> schemaVariables = new Namespace<>();
-        SolidityToKeyConverter stk = new SolidityToKeyConverter(services, context.getVarNS(), schemaVariables);
+        SolidityToKeyConverter stk =
+            new SolidityToKeyConverter(services, context.getVarNS(), schemaVariables);
 
         CodePointCharStream input = CharStreams.fromString(block);
         SolidityLexer lexer = new SolidityLexer(input);
@@ -53,7 +57,7 @@ public class HirSolidityReader {
     }
 
     public Block readBlockWithProgramVariables(Namespace<@NonNull ProgramVariable> varNS,
-                                                    String s) throws IOException {
+            String s) throws IOException {
         return readBlock(s, new Context(varNS));
     }
 

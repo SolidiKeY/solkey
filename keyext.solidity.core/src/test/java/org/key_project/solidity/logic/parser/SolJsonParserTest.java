@@ -19,7 +19,6 @@ import org.key_project.solidity.program.ast.references.ContractReference;
 import org.key_project.solidity.program.ast.references.FunctionReference;
 import org.key_project.solidity.program.ast.references.StateVariableReference;
 import org.key_project.solidity.program.ast.statement.*;
-import org.key_project.solidity.program.parser.SolJSONParser;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -28,8 +27,8 @@ import org.junit.jupiter.api.condition.OS;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.INT256;
-import static org.key_project.solidity.program.parser.SolcWrapper.getDeclStr;
-import static org.key_project.solidity.program.parser.SolcWrapper.getDeclsJsonParser;
+import static org.key_project.solidity.program.parser.SolcParser.getDeclStr;
+import static org.key_project.solidity.program.parser.SolcParser.getDeclsJsonParser;
 
 
 public class SolJsonParserTest {
@@ -832,7 +831,7 @@ public class SolJsonParserTest {
                 contract SimpleContract {
                     A a = new A();
                 }""";
-        List<SyntaxElement> elements = getDeclsJsonParser(new SolJSONParser(), contracts);
+        List<SyntaxElement> elements = getDeclsJsonParser(contracts);
         assertEquals(2, elements.size());
         ContractDeclaration ctrl = (ContractDeclaration) elements.get(1);
         assertEquals("function () returns (contract A)",
@@ -851,7 +850,7 @@ public class SolJsonParserTest {
                 contract SimpleContract {
                     A a = new A(0);
                 }""";
-        List<SyntaxElement> elements = getDeclsJsonParser(new SolJSONParser(), contracts);
+        List<SyntaxElement> elements = getDeclsJsonParser(contracts);
         assertEquals(2, elements.size());
         ContractDeclaration ctrl = (ContractDeclaration) elements.get(1);
         String ctrlStr = ctrl.toString();
@@ -872,58 +871,58 @@ public class SolJsonParserTest {
         String contractS = contractDec.toString();
     }
 
-//    public static List<SyntaxElement> getDeclsJsonParser(SolJSONParser jsonParser,
-//            String contract) throws IOException {
-//        SolcWrapper solcWrapper = new SolcWrapper();
-//        String contractJson = solcWrapper.readSol(contract);
-//        return jsonParser.parse(contractJson);
-//    }
-//
-//    public static ContractDeclaration getDeclStrJsonParser(SolJSONParser jsonParser,
-//            String contract) throws IOException {
-//        SolcWrapper solcWrapper = new SolcWrapper();
-//        String contractJson = solcWrapper.readSol(contract);
-//        SyntaxElement programElement = getSolidityFromStrJsonParser(jsonParser, contractJson);
-//        assertInstanceOf(ContractDeclaration.class, programElement);
-//        return (ContractDeclaration) programElement;
-//    }
+    // public static List<SyntaxElement> getDeclsJsonParser(SolJSONParser jsonParser,
+    // String contract) throws IOException {
+    // SolcWrapper solcWrapper = new SolcWrapper();
+    // String contractJson = solcWrapper.readSol(contract);
+    // return jsonParser.parse(contractJson);
+    // }
+    //
+    // public static ContractDeclaration getDeclStrJsonParser(SolJSONParser jsonParser,
+    // String contract) throws IOException {
+    // SolcWrapper solcWrapper = new SolcWrapper();
+    // String contractJson = solcWrapper.readSol(contract);
+    // SyntaxElement programElement = getSolidityFromStrJsonParser(jsonParser, contractJson);
+    // assertInstanceOf(ContractDeclaration.class, programElement);
+    // return (ContractDeclaration) programElement;
+    // }
 
-//    public static ContractDeclaration getDeclStr(String contract) throws IOException {
-//        return getDeclStrJsonParser(new SolJSONParser(), contract);
-//    }
-//
-//    private static ContractDeclaration getDeclaration(String fileName) throws IOException {
-//        SyntaxElement programElement = getSyntaxElement(fileName);
-//        assertInstanceOf(ContractDeclaration.class, programElement);
-//        return (ContractDeclaration) programElement;
-//    }
-//
-//    private static SyntaxElement getSolidityFromStrJsonParser(SolJSONParser jsonParser,
-//            String contract)
-//            throws IOException {
-//        List<SyntaxElement> unit = jsonParser.parse(contract);
-//        assertNotNull(unit);
-//        assertEquals(1, unit.size());
-//        return unit.getFirst();
-//    }
-//
-//    private static SyntaxElement getSyntaxElement(String solFileName)
-//            throws IOException {
-//        SolJSONParser jsonParser = new SolJSONParser();
-//        URI fileURI = getFile(solFileName);
-//        assertNotNull(fileURI);
-//        List<SyntaxElement> unit = jsonParser.parse(fileURI);
-//        assertNotNull(unit);
-//        assertEquals(1, unit.size());
-//        SyntaxElement programElement = unit.getFirst();
-//        return programElement;
-//    }
-//
-//    private static URI getFile(String solFileName) {
-//        try {
-//            return SolJSONParser.class.getResource(solFileName).toURI();
-//        } catch (URISyntaxException e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
+    // public static ContractDeclaration getDeclStr(String contract) throws IOException {
+    // return getDeclStrJsonParser(new SolJSONParser(), contract);
+    // }
+    //
+    // private static ContractDeclaration getDeclaration(String fileName) throws IOException {
+    // SyntaxElement programElement = getSyntaxElement(fileName);
+    // assertInstanceOf(ContractDeclaration.class, programElement);
+    // return (ContractDeclaration) programElement;
+    // }
+    //
+    // private static SyntaxElement getSolidityFromStrJsonParser(SolJSONParser jsonParser,
+    // String contract)
+    // throws IOException {
+    // List<SyntaxElement> unit = jsonParser.parse(contract);
+    // assertNotNull(unit);
+    // assertEquals(1, unit.size());
+    // return unit.getFirst();
+    // }
+    //
+    // private static SyntaxElement getSyntaxElement(String solFileName)
+    // throws IOException {
+    // SolJSONParser jsonParser = new SolJSONParser();
+    // URI fileURI = getFile(solFileName);
+    // assertNotNull(fileURI);
+    // List<SyntaxElement> unit = jsonParser.parse(fileURI);
+    // assertNotNull(unit);
+    // assertEquals(1, unit.size());
+    // SyntaxElement programElement = unit.getFirst();
+    // return programElement;
+    // }
+    //
+    // private static URI getFile(String solFileName) {
+    // try {
+    // return SolJSONParser.class.getResource(solFileName).toURI();
+    // } catch (URISyntaxException e) {
+    // throw new RuntimeException(e);
+    // }
+    // }
 }

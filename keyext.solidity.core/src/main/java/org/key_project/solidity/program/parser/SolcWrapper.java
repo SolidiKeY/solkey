@@ -3,49 +3,19 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.parser;
 
-import org.key_project.logic.SyntaxElement;
-import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
 
 import java.io.*;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class SolcWrapper {
 
-    public SolcWrapper() {
-    }
-
-    public static List<SyntaxElement> getDeclsJsonParser(SolJSONParser jsonParser,
-                                                         String contract) throws IOException {
-        SolcWrapper solcWrapper = new SolcWrapper();
-        String contractJson = solcWrapper.readSol(contract);
-        return jsonParser.parse(contractJson);
-    }
-
-    public static ContractDeclaration getDeclStrJsonParser(SolJSONParser jsonParser,
-                                                           String contract) throws IOException {
-        SolcWrapper solcWrapper = new SolcWrapper();
-        String contractJson = solcWrapper.readSol(contract);
-        SyntaxElement programElement = getSolidityFromStrJsonParser(jsonParser, contractJson);
-        return (ContractDeclaration) programElement;
-    }
-
-    public static ContractDeclaration getDeclStrJsonParser(SolJSONParser jsonParser,
-                                                           Path contract) throws IOException {
-        SolcWrapper solcWrapper = new SolcWrapper();
-        SyntaxElement programElement = solcWrapper.getSolidityFromStrJsonParser(jsonParser, contract);
-        return (ContractDeclaration) programElement;
-    }
-
-    public String getJsonSolidity(Path contractPath) throws IOException {
+    public static String getJsonSolidity(Path contractPath) throws IOException {
         String fileName = contractPath.toAbsolutePath().toString();
         ProcessBuilder pb = new ProcessBuilder(getSolcCommand(), "--ast-compact-json", fileName);
         Process proc = pb.start();
@@ -54,22 +24,8 @@ public class SolcWrapper {
         return finishesSolcCommand(proc);
     }
 
-    public SyntaxElement getSolidityFromStrJsonParser(SolJSONParser jsonParser,
-                                                           Path contractPath) throws IOException {
-        String jsonSolidity = getJsonSolidity(contractPath);
-        List<SyntaxElement> unit = jsonParser.parse(jsonSolidity);
-        return unit.getFirst();
-    }
-
-    private static SyntaxElement getSolidityFromStrJsonParser(SolJSONParser jsonParser,
-                                                              String contract)
-            throws IOException {
-        List<SyntaxElement> unit = jsonParser.parse(contract);
-        return unit.getFirst();
-    }
-
-    private void exportSolc(Path targetPath) throws IOException {
-        InputStream is = getClass().getResourceAsStream("/solc");
+    private static void exportSolc(Path targetPath) throws IOException {
+        InputStream is = SolcWrapper.class.getResourceAsStream("/solc");
         Files.copy(is, targetPath, StandardCopyOption.REPLACE_EXISTING);
         targetPath.toFile().setExecutable(true);
     }
@@ -86,7 +42,7 @@ public class SolcWrapper {
         }
     }
 
-    String getSolcCommand() throws IOException {
+    static String getSolcCommand() throws IOException {
         if (canRunCommand("solc"))
             return "solc";
         Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"));
@@ -97,7 +53,7 @@ public class SolcWrapper {
         return targetPath.toAbsolutePath().toString();
     }
 
-    String finishesSolcCommand(Process proc) throws IOException {
+    static String finishesSolcCommand(Process proc) throws IOException {
         BufferedReader procInput = proc.inputReader();
         int exitCode;
         try {
@@ -113,7 +69,7 @@ public class SolcWrapper {
         return extract4lines(procInput);
     }
 
-    public String readSolBuff(byte[] contract) throws IOException {
+    public static String readSolBuff(byte[] contract) throws IOException {
         ProcessBuilder pb = new ProcessBuilder(getSolcCommand(), "--ast-compact-json", "-");
         Process proc = pb.start();
         OutputStream out = proc.getOutputStream();
@@ -122,7 +78,7 @@ public class SolcWrapper {
         return finishesSolcCommand(proc);
     }
 
-    public String readSolString(String contract) throws IOException {
+    public static String readSolString(String contract) throws IOException {
         return readSolBuff(contract.getBytes(UTF_8));
     }
 
@@ -130,11 +86,7 @@ public class SolcWrapper {
         return reader.lines().skip(4).collect(Collectors.joining());
     }
 
-    public String readSol(String s) throws IOException {
-         return readSolString(s);
-    }
-
-    public static ContractDeclaration getDeclStr(String contract) throws IOException {
-        return getDeclStrJsonParser(new SolJSONParser(), contract);
+    public static String readSol(String s) throws IOException {
+        return readSolString(s);
     }
 }

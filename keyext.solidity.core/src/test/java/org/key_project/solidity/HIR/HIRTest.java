@@ -1,7 +1,12 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.HIR;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.Namespace;
 import org.key_project.solidity.common.Services;
@@ -10,12 +15,10 @@ import org.key_project.solidity.program.ast.Context;
 import org.key_project.solidity.program.ast.HirSolidityReader;
 import org.key_project.solidity.program.ast.statement.Block;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class HIRTest {
     @TempDir
@@ -39,7 +42,7 @@ public class HIRTest {
         Files.writeString(file, contract);
         Context ctx = new Context(new Namespace<>(), file);
 
-        Block block = hir. readBlock("{}", ctx);
+        Block block = hir.readBlock("{}", ctx);
         assertEquals(0, block.getStatements().size());
     }
 
@@ -49,7 +52,8 @@ public class HIRTest {
         ProgramVariable x = new ProgramVariable(new Name("x"), null, null);
         varNS.add(x);
         Block block = hir.readBlockWithProgramVariables(varNS, "{ x = 1; }");
-        ProgramVariable xTest = (ProgramVariable) block.getStatements().get(0).getChild(0).getChild(0);
+        ProgramVariable xTest =
+            (ProgramVariable) block.getStatements().get(0).getChild(0).getChild(0);
         assertEquals(x, xTest);
     }
 }
