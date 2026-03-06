@@ -22,7 +22,7 @@ public class TypeReference implements SolidityProgramElement {
 
     public TypeReference(Type referencedType) {
         this.referencedType = referencedType;
-        this.typeName = referencedType.name();
+        this.typeName = null;
     }
 
     public Name getTypeName() {
@@ -30,7 +30,7 @@ public class TypeReference implements SolidityProgramElement {
     }
 
     public String toString() {
-        return typeName.toString();
+        return typeName == null ? referencedType.name().toString() : typeName.toString();
     }
 
     @Override

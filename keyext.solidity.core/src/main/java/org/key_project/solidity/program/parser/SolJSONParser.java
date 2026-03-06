@@ -366,9 +366,15 @@ public class SolJSONParser {
         final String dataLocationS = node.findValue("storageLocation").asText();
         final DataLocation dataLocation = DataLocation.fromString(dataLocationS);
 
-        final ParameterDeclaration field =
-            new ParameterDeclaration(new Name(fieldName),
-                new TypeReference(new Name(fieldType)), dataLocation);
+        ParameterDeclaration field;
+        if(node.findValue("typeName").has("referencedDeclaration")){
+            int typeId = node.findValue("typeName").findValue("referencedDeclaration").asInt();
+            Type typeRef = (Type) id2Name.get(typeId);
+            field = new ParameterDeclaration(new Name(fieldName), new TypeReference(typeRef), dataLocation);
+        }
+        else
+            field = new ParameterDeclaration(new Name(fieldName), new TypeReference(new Name(fieldType)), dataLocation);
+
         id2Name.put(id, field);
 
         return field;
