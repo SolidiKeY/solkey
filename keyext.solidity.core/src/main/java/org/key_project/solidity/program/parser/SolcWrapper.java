@@ -43,9 +43,48 @@ public class SolcWrapper {
     }
 
     public static ContractDeclaration getDeclStrJsonParser(SolJSONParser jsonParser,
+                                                           Path contract) throws IOException {
+        SolcWrapper solcWrapper = new SolcWrapper();
+        SyntaxElement programElement = solcWrapper.getSolidityFromStrJsonParser(jsonParser, contract);
+        return (ContractDeclaration) programElement;
+    }
+
+    public SyntaxElement getSolidityFromStrJsonParser(SolJSONParser jsonParser,
                                                            Path contractPath) throws IOException {
-        String contract = contractPath.toFile().toString();
-        return getDeclStrJsonParser(jsonParser, contract);
+        ProcessBuilder pb;
+        String astCommand = "--ast-compact-json";
+        String fileName = contractPath.toAbsolutePath().toString();
+        if (canRunCommand("solc"))
+            pb = new ProcessBuilder("solc", astCommand, fileName);
+        else {
+            Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"));
+            Path targetPath = tempDir.resolve("solc");
+
+            if (!Files.exists(targetPath))
+                exportSolc(targetPath);
+            pb = new ProcessBuilder(targetPath.toAbsolutePath().toString(), astCommand, fileName);
+        }
+
+        Process proc = pb.start();
+        OutputStream out = proc.getOutputStream();
+        out.close();
+        BufferedReader procInput = proc.inputReader();
+        int exitCode;
+        try {
+            exitCode = proc.waitFor();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        if (exitCode == 1) {
+            InputStream errorStream = proc.getErrorStream();
+            String errorStr = new String(errorStream.readAllBytes(), UTF_8);
+            throw new RuntimeException("Not possible to compile solidity code:\n" + errorStr);
+        }
+
+        BufferedReader bf = new BufferedReader(procInput);
+        String str = extract4lines(bf);
+        List<SyntaxElement> unit = jsonParser.parse(str);
+        return unit.getFirst();
     }
 
     private static SyntaxElement getSolidityFromStrJsonParser(SolJSONParser jsonParser,
@@ -122,7 +161,7 @@ public class SolcWrapper {
         return readSolBuff(contract.getBytes(UTF_8));
     }
 
-    public String readSol(URI file) throws IOException {
+    public String readSol(Path file) throws IOException {
         BufferedReader reader = readSolBuff(file);
         return extract4lines(reader);
     }

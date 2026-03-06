@@ -18,19 +18,17 @@ public class HIRTest {
     @TempDir
     Path tempDir;
 
+    Services services = new Services();
+    HirSolidityReader hir = new HirSolidityReader(services);
+
     @Test
     void emptyBlock() throws IOException {
-        Services services = new Services();
-        HirSolidityReader hir = new HirSolidityReader(services);
-        Block block = hir. readBlockWithEmptyContext("{}");
+        Block block = hir.readBlockWithEmptyContext("{}");
         assertEquals(0, block.getStatements().size());
     }
 
     @Test
     void emptyBlockWithContextFile() throws IOException {
-        Services services = new Services();
-        HirSolidityReader hir = new HirSolidityReader(services);
-
         Path file = tempDir.resolve("contract.sol");
         // language=solidity
         String contract = """
@@ -38,7 +36,7 @@ public class HIRTest {
         Files.writeString(file, contract);
         Context ctx = new Context(new Namespace<>(), file);
 
-        Block block = hir. readBlockWithEmptyContext("{}");
+        Block block = hir. readBlock("{}", ctx);
         assertEquals(0, block.getStatements().size());
     }
 }
