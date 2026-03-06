@@ -23,10 +23,6 @@ public class SolcWrapper {
     public SolcWrapper() {
     }
 
-    public BufferedReader readSolBuff(Path filename) throws IOException {
-        return readSolBuff(filename.toFile().toString().getBytes(UTF_8));
-    }
-
     public static List<SyntaxElement> getDeclsJsonParser(SolJSONParser jsonParser,
                                                          String contract) throws IOException {
         SolcWrapper solcWrapper = new SolcWrapper();
@@ -50,38 +46,12 @@ public class SolcWrapper {
     }
 
     public String getJsonSolidity(Path contractPath) throws IOException {
-        ProcessBuilder pb;
-        String astCommand = "--ast-compact-json";
         String fileName = contractPath.toAbsolutePath().toString();
-        if (canRunCommand("solc"))
-            pb = new ProcessBuilder("solc", astCommand, fileName);
-        else {
-            Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"));
-            Path targetPath = tempDir.resolve("solc");
-
-            if (!Files.exists(targetPath))
-                exportSolc(targetPath);
-            pb = new ProcessBuilder(targetPath.toAbsolutePath().toString(), astCommand, fileName);
-        }
-
+        ProcessBuilder pb = new ProcessBuilder(getSolcCommand(), "--ast-compact-json", fileName);
         Process proc = pb.start();
         OutputStream out = proc.getOutputStream();
         out.close();
-        BufferedReader procInput = proc.inputReader();
-        int exitCode;
-        try {
-            exitCode = proc.waitFor();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        if (exitCode == 1) {
-            InputStream errorStream = proc.getErrorStream();
-            String errorStr = new String(errorStream.readAllBytes(), UTF_8);
-            throw new RuntimeException("Not possible to compile solidity code:\n" + errorStr);
-        }
-
-        BufferedReader bf = new BufferedReader(procInput);
-        return extract4lines(bf);
+        return finishesSolcCommand(proc);
     }
 
     public SyntaxElement getSolidityFromStrJsonParser(SolJSONParser jsonParser,
@@ -116,24 +86,18 @@ public class SolcWrapper {
         }
     }
 
-    public BufferedReader readSolBuff(byte[] contract) throws IOException {
-        ProcessBuilder pb;
-        String restCommand = "--ast-compact-json";
+    String getSolcCommand() throws IOException {
         if (canRunCommand("solc"))
-            pb = new ProcessBuilder("solc", restCommand, "-");
-        else {
-            Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"));
-            Path targetPath = tempDir.resolve("solc");
+            return "solc";
+        Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"));
+        Path targetPath = tempDir.resolve("solc");
 
-            if (!Files.exists(targetPath))
-                exportSolc(targetPath);
-            pb = new ProcessBuilder(targetPath.toAbsolutePath().toString(), restCommand, "-");
-        }
+        if (!Files.exists(targetPath))
+            exportSolc(targetPath);
+        return targetPath.toAbsolutePath().toString();
+    }
 
-        Process proc = pb.start();
-        OutputStream out = proc.getOutputStream();
-        out.write(contract);
-        out.close();
+    String finishesSolcCommand(Process proc) throws IOException {
         BufferedReader procInput = proc.inputReader();
         int exitCode;
         try {
@@ -146,17 +110,20 @@ public class SolcWrapper {
             String errorStr = new String(errorStream.readAllBytes(), UTF_8);
             throw new RuntimeException("Not possible to compile solidity code:\n" + errorStr);
         }
-
-        return new BufferedReader(procInput);
+        return extract4lines(procInput);
     }
 
-    public BufferedReader readSolString(String contract) throws IOException {
+    public String readSolBuff(byte[] contract) throws IOException {
+        ProcessBuilder pb = new ProcessBuilder(getSolcCommand(), "--ast-compact-json", "-");
+        Process proc = pb.start();
+        OutputStream out = proc.getOutputStream();
+        out.write(contract);
+        out.close();
+        return finishesSolcCommand(proc);
+    }
+
+    public String readSolString(String contract) throws IOException {
         return readSolBuff(contract.getBytes(UTF_8));
-    }
-
-    public String readSol(Path file) throws IOException {
-        BufferedReader reader = readSolBuff(file);
-        return extract4lines(reader);
     }
 
     private static String extract4lines(BufferedReader reader) {
@@ -164,8 +131,7 @@ public class SolcWrapper {
     }
 
     public String readSol(String s) throws IOException {
-        BufferedReader reader = readSolString(s);
-        return extract4lines(reader);
+         return readSolString(s);
     }
 
     public static ContractDeclaration getDeclStr(String contract) throws IOException {
