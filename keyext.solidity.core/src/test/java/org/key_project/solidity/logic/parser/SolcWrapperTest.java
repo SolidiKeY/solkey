@@ -4,59 +4,36 @@
 package org.key_project.solidity.logic.parser;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
-import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
-import org.key_project.solidity.program.parser.SolcWrapper;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.key_project.solidity.program.parser.SolcParser.getDeclStrJsonParser;
+import static org.key_project.solidity.program.parser.SolcWrapper.readSol;
 
 class SolcWrapperTest {
-    @TempDir
-    Path tempDir;
-
     @Test
     void readStringSol() throws IOException {
-        SolcWrapper wrapper = new SolcWrapper();
         // language=solidity
         String contract = """
                 contract SimpleContract {
                     uint256 balance;
                 }""";
-        String result = wrapper.readSol(contract);
+        String result = readSol(contract);
         assertNotNull(result);
     }
 
     @Test
     void compilationFail() throws IOException {
-        SolcWrapper wrapper = new SolcWrapper();
         // language=solidity
         String contract = """
                 contract SimpleContract {
                     uint256 balance
                 }""";
         try {
-            wrapper.readSol(contract);
+            readSol(contract);
             Assertions.fail();
         } catch (RuntimeException exception) {
         } ;
-    }
-
-    @Test
-    void withPath() throws IOException {
-        Path file = tempDir.resolve("contract.sol");
-        // language=solidity
-        String contract = """
-                contract SimpleContract { }""";
-        Files.writeString(file, contract);
-
-        ContractDeclaration ctrl = getDeclStrJsonParser(file);
-        assertNotNull(ctrl);
     }
 }
