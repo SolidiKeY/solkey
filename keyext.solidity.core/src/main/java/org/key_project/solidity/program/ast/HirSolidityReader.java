@@ -7,6 +7,7 @@ import java.io.IOException;
 
 import org.key_project.logic.Namespace;
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.NamespaceSet;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.parser.SolidityLexer;
 import org.key_project.solidity.parser.SolidityParser;
@@ -28,6 +29,10 @@ public class HirSolidityReader {
     private final Services services;
     private static final Logger LOGGER = LoggerFactory.getLogger(HirSolidityReader.class);
 
+    public HirSolidityReader(Services services, NamespaceSet nss) {
+        this(services);
+    }
+
     public HirSolidityReader(Services services) {
         this.services = services;
     }
@@ -37,12 +42,15 @@ public class HirSolidityReader {
     }
 
     public Block readBlock(String block, Context context) throws IOException {
+        return readBlock(block, context, new Namespace<>());
+    }
+
+    public Block readBlock(String block, Context context, Namespace<ProgramSV> schemaVariables) throws IOException {
         SolcParser solcParser = new SolcParser(services);
         if (context.getSolidityPath() != null)
             solcParser.getDeclStrJsonParser(context.getSolidityPath());
-        Namespace<ProgramSV> schemaVariables = new Namespace<>();
         SolidityToKeyConverter stk =
-            new SolidityToKeyConverter(services, context.getVarNS(), schemaVariables);
+                new SolidityToKeyConverter(services, context.getVarNS(), schemaVariables);
 
         CodePointCharStream input = CharStreams.fromString(block);
         SolidityLexer lexer = new SolidityLexer(input);
