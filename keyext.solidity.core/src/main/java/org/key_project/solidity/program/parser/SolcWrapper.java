@@ -49,8 +49,7 @@ public class SolcWrapper {
         return (ContractDeclaration) programElement;
     }
 
-    public SyntaxElement getSolidityFromStrJsonParser(SolJSONParser jsonParser,
-                                                           Path contractPath) throws IOException {
+    public String getJsonSolidity(Path contractPath) throws IOException {
         ProcessBuilder pb;
         String astCommand = "--ast-compact-json";
         String fileName = contractPath.toAbsolutePath().toString();
@@ -82,8 +81,13 @@ public class SolcWrapper {
         }
 
         BufferedReader bf = new BufferedReader(procInput);
-        String str = extract4lines(bf);
-        List<SyntaxElement> unit = jsonParser.parse(str);
+        return extract4lines(bf);
+    }
+
+    public SyntaxElement getSolidityFromStrJsonParser(SolJSONParser jsonParser,
+                                                           Path contractPath) throws IOException {
+        String jsonSolidity = getJsonSolidity(contractPath);
+        List<SyntaxElement> unit = jsonParser.parse(jsonSolidity);
         return unit.getFirst();
     }
 
@@ -144,17 +148,6 @@ public class SolcWrapper {
         }
 
         return new BufferedReader(procInput);
-    }
-
-    public BufferedReader readSolBuff(URI file) throws IOException {
-        final InputStream solidityInputStream = new BufferedInputStream(file.toURL().openStream());
-        byte[] contractContent;
-        try (solidityInputStream) {
-            contractContent = solidityInputStream.readAllBytes();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return readSolBuff(contractContent);
     }
 
     public BufferedReader readSolString(String contract) throws IOException {
