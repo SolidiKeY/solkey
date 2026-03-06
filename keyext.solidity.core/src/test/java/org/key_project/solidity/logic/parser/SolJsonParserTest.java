@@ -19,6 +19,7 @@ import org.key_project.solidity.program.ast.references.ContractReference;
 import org.key_project.solidity.program.ast.references.FunctionReference;
 import org.key_project.solidity.program.ast.references.StateVariableReference;
 import org.key_project.solidity.program.ast.statement.*;
+import org.key_project.solidity.program.parser.SolcParser;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -27,8 +28,7 @@ import org.junit.jupiter.api.condition.OS;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.INT256;
-import static org.key_project.solidity.program.parser.SolcParser.getDeclStr;
-import static org.key_project.solidity.program.parser.SolcParser.getDeclsJsonParser;
+import static org.key_project.solidity.program.parser.SolcParserNoServices.getDeclStr;
 
 
 public class SolJsonParserTest {
@@ -831,7 +831,8 @@ public class SolJsonParserTest {
                 contract SimpleContract {
                     A a = new A();
                 }""";
-        List<SyntaxElement> elements = getDeclsJsonParser(contracts);
+        SolcParser solcParser = new SolcParser();
+        List<SyntaxElement> elements = solcParser.getDeclsJsonParser(contracts);
         assertEquals(2, elements.size());
         ContractDeclaration ctrl = (ContractDeclaration) elements.get(1);
         assertEquals("function () returns (contract A)",
@@ -850,7 +851,8 @@ public class SolJsonParserTest {
                 contract SimpleContract {
                     A a = new A(0);
                 }""";
-        List<SyntaxElement> elements = getDeclsJsonParser(contracts);
+        SolcParser solcParser = new SolcParser();
+        List<SyntaxElement> elements = solcParser.getDeclsJsonParser(contracts);
         assertEquals(2, elements.size());
         ContractDeclaration ctrl = (ContractDeclaration) elements.get(1);
         String ctrlStr = ctrl.toString();

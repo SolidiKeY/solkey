@@ -15,53 +15,44 @@ import static org.key_project.solidity.program.parser.SolcWrapper.getJsonSolidit
 
 public class SolcParser {
 
-    static Services services = new Services();
-    static SolJSONParser jsonParser = new SolJSONParser(services);
+    static Services services;
+    static SolJSONParser jsonParser;
+
+    public SolcParser() {
+        this(new Services());
+    }
 
     public SolcParser(Services services) {
         this.services = services;
         jsonParser = new SolJSONParser(services);
     }
 
-    public static List<SyntaxElement> getDeclsJsonParser(String contract) throws IOException {
+    public List<SyntaxElement> getDeclsJsonParser(String contract) throws IOException {
         String contractJson = SolcWrapper.readSol(contract);
         return jsonParser.parse(contractJson);
     }
 
-    public static ContractDeclaration getDeclStrJsonParser(String contract) throws IOException {
+    public ContractDeclaration getDeclStrJsonParser(String contract) throws IOException {
         SolcWrapper solcWrapper = new SolcWrapper();
         String contractJson = solcWrapper.readSol(contract);
         SyntaxElement programElement = getSolidityFromStrJsonParser(contractJson);
         return (ContractDeclaration) programElement;
     }
 
-    public static ContractDeclaration getDeclStrJsonParser(Path contract) throws IOException {
+    public ContractDeclaration getDeclStrJsonParser(Path contract) throws IOException {
         SyntaxElement programElement = getSolidityFromStrJsonParser(contract);
         return (ContractDeclaration) programElement;
     }
 
-    public static SyntaxElement getSolidityFromStrJsonParser(Path contractPath) throws IOException {
+    public SyntaxElement getSolidityFromStrJsonParser(Path contractPath) throws IOException {
         String jsonSolidity = getJsonSolidity(contractPath);
         List<SyntaxElement> unit = jsonParser.parse(jsonSolidity);
         return unit.getFirst();
     }
 
-    public static SyntaxElement getSolidityFromStrJsonParser(String contract)
+    public SyntaxElement getSolidityFromStrJsonParser(String contract)
             throws IOException {
         List<SyntaxElement> unit = jsonParser.parse(contract);
         return unit.getFirst();
     }
-
-    public static ContractDeclaration getDeclStrJson(Path contract) throws IOException {
-        services = new Services();
-        jsonParser = new SolJSONParser(services);
-        return getDeclStrJsonParser(contract);
-    }
-
-    public static ContractDeclaration getDeclStr(String contract) throws IOException {
-        services = new Services();
-        jsonParser = new SolJSONParser(services);
-        return getDeclStrJsonParser(contract);
-    }
-
 }
