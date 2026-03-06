@@ -137,27 +137,4 @@ public class SolcWrapper {
     public static ContractDeclaration getDeclStr(String contract) throws IOException {
         return getDeclStrJsonParser(new SolJSONParser(), contract);
     }
-
-    private static ContractDeclaration getDeclaration(String fileName) throws IOException {
-        SyntaxElement programElement = getSyntaxElement(fileName);
-        return (ContractDeclaration) programElement;
-    }
-
-    private static SyntaxElement getSyntaxElement(String solFileName)
-            throws IOException {
-        SolJSONParser jsonParser = new SolJSONParser();
-        URI fileURI = getFile(solFileName);
-        List<SyntaxElement> unit = jsonParser.parse(fileURI);
-        SyntaxElement programElement = unit.getFirst();
-        return programElement;
-    }
-
-    private static URI getFile(String solFileName) {
-        try {
-            return SolJSONParser.class.getResource(solFileName).toURI();
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
 }
