@@ -384,8 +384,6 @@ public class SolJSONParser {
             idRef = typeName.findValue("referencedDeclaration").asInt();
             if (id2Name.containsKey(idRef)) {
                 expType = (Type) id2Name.get(idRef);
-                if (expType instanceof ContractDeclaration)
-                    expType = new ContractType((ContractDeclaration) expType);
             }
         } else
             expType = getType(
