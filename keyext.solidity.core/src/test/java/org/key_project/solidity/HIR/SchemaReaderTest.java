@@ -28,7 +28,7 @@ public class SchemaReaderTest {
         scr.setSVNamespace(ns);
         Context ctx = new Context(new Namespace<>());
 
-        Block block = scr.readBlock("{ s#v; }", ctx);
+        Block block = (Block) scr.readBlock("{ s#v; }", ctx).program();
         assertEquals(sv, block.getStatements().get(0).getChild(0));
     }
 }

@@ -8,6 +8,7 @@ import java.io.IOException;
 import org.key_project.logic.Namespace;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.NamespaceSet;
+import org.key_project.solidity.logic.SolidityBlock;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.parser.SolidityLexer;
 import org.key_project.solidity.parser.SolidityParser;
@@ -41,11 +42,11 @@ public class HirSolidityReader {
         return services;
     }
 
-    public Block readBlock(String block, Context context) throws IOException {
+    public SolidityBlock readBlock(String block, Context context) throws IOException {
         return readBlock(block, context, new Namespace<>());
     }
 
-    public Block readBlock(String block, Context context, Namespace<ProgramSV> schemaVariables) throws IOException {
+    public SolidityBlock readBlock(String block, Context context, Namespace<ProgramSV> schemaVariables) throws IOException {
         SolcParser solcParser = new SolcParser(services);
         if (context.getSolidityPath() != null)
             solcParser.getDeclStrJsonParser(context.getSolidityPath());
@@ -56,15 +57,16 @@ public class HirSolidityReader {
         SolidityLexer lexer = new SolidityLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         SolidityParser parser = new SolidityParser(tokens);
-        return (Block) stk.visitBlock(parser.block());
+        Block bc = (Block) stk.visitBlock(parser.block());
+        return new SolidityBlock(bc);
     }
 
 
-    public Block readBlockWithEmptyContext(String s) throws IOException {
+    public SolidityBlock readBlockWithEmptyContext(String s) throws IOException {
         return readBlock(s, createEmptyContext());
     }
 
-    public Block readBlockWithProgramVariables(Namespace<@NonNull ProgramVariable> varNS,
+    public SolidityBlock readBlockWithProgramVariables(Namespace<@NonNull ProgramVariable> varNS,
             String s) throws IOException {
         return readBlock(s, new Context(varNS));
     }

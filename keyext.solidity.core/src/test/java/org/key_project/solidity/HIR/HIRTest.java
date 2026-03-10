@@ -29,7 +29,7 @@ public class HIRTest {
 
     @Test
     void emptyBlock() throws IOException {
-        Block block = hir.readBlockWithEmptyContext("{}");
+        Block block = (Block) hir.readBlockWithEmptyContext("{}").program();
         assertEquals(0, block.getStatements().size());
     }
 
@@ -42,7 +42,7 @@ public class HIRTest {
         Files.writeString(file, contract);
         Context ctx = new Context(new Namespace<>(), file);
 
-        Block block = hir.readBlock("{}", ctx);
+        Block block = (Block) hir.readBlock("{}", ctx).program();
         assertEquals(0, block.getStatements().size());
     }
 
@@ -51,7 +51,7 @@ public class HIRTest {
         Namespace<ProgramVariable> varNS = new Namespace<>();
         ProgramVariable x = new ProgramVariable(new Name("x"), null, null);
         varNS.add(x);
-        Block block = hir.readBlockWithProgramVariables(varNS, "{ x = 1; }");
+        Block block = (Block) hir.readBlockWithProgramVariables(varNS, "{ x = 1; }").program();
         ProgramVariable xTest =
             (ProgramVariable) block.getStatements().get(0).getChild(0).getChild(0);
         assertEquals(x, xTest);
