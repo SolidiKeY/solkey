@@ -85,10 +85,10 @@ public class DeclarationBuilder extends DefaultBuilder {
                     // TODO question: throw warning?
                     if (!(name instanceof ProgramVariable pv)
                             || !pv.getKeYSolidityType().equals(kst)) {
-                        programVariables().add(new ProgramVariable(pvName, kst));
+                        programVariables().add(new ProgramVariable(pvName, kst, null));
                     }
                 } else {
-                    programVariables().add(new ProgramVariable(pvName, kst));
+                    programVariables().add(new ProgramVariable(pvName, kst, null));
                 }
             }
         }

@@ -146,7 +146,7 @@ class ParsingFacadeTest {
 
     @Test
     void parseProgramVariable() {
-        ProgramVariable px = new ProgramVariable(new Name("x"), ksType);
+        ProgramVariable px = new ProgramVariable(new Name("x"), ksType, null);
         services.getNamespaces().programVariables().add(px);
 
         KeYIO io = new KeYIO(services);

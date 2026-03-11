@@ -11,8 +11,11 @@ import org.key_project.logic.Name;
 import org.key_project.logic.Namespace;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.Context;
 import org.key_project.solidity.program.ast.HirSolidityReader;
+import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
+import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.statement.Block;
 
 import org.junit.jupiter.api.Test;
@@ -49,7 +52,8 @@ public class HIRTest {
     @Test
     void referenceSameProgVar() throws IOException {
         Namespace<ProgramVariable> varNS = new Namespace<>();
-        ProgramVariable x = new ProgramVariable(new Name("x"), null, null);
+        KeYSolidityType ksType = new KeYSolidityType(PrimitiveType.UINT, new SortImpl(new Name("UINT")));
+        ProgramVariable x = new ProgramVariable(new Name("x"), ksType, null);
         varNS.add(x);
         Block block = (Block) hir.readBlockWithProgramVariables(varNS, "{ x = 1; }").program();
         ProgramVariable xTest =

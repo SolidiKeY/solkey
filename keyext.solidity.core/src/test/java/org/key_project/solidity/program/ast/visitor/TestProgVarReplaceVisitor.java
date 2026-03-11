@@ -44,7 +44,7 @@ class TestProgVarReplaceVisitor {
         final Sort uint = new SortImpl(new Name("uint"), false);
         uintKST = new KeYSolidityType(PrimitiveType.UINT, uint);
         services.getNamespaces().sorts().add(uint);
-        replacement = new ProgramVariable(new Name("replacement"), uintKST);
+        replacement = new ProgramVariable(new Name("replacement"), uintKST, null);
     }
 
     void addMap(ProgramVariable original) {
@@ -66,12 +66,12 @@ class TestProgVarReplaceVisitor {
 
     @Test
     void testReplacement() {
-        Expression original = new ProgramVariable(new Name("original"), uintKST); // <-
+        Expression original = new ProgramVariable(new Name("original"), uintKST, null); // <-
                                                                                   // here
                                                                                   // actual
                                                                                   // statement
                                                                                   // needed
-        Expression replacement = new ProgramVariable(new Name("replacement"), uintKST); // <-
+        Expression replacement = new ProgramVariable(new Name("replacement"), uintKST, null); // <-
                                                                                         // here
                                                                                         // actual
                                                                                         // statement

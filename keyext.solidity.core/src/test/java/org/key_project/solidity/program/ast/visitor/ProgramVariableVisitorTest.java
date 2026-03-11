@@ -28,7 +28,7 @@ class ProgramVariableVisitorTest {
 
     @Test
     void onlyProgVar() {
-        Expression x = new ProgramVariable(new Name("x"), uintKST);
+        Expression x = new ProgramVariable(new Name("x"), uintKST, null);
         ProgramVariableCollector visitor = new ProgramVariableCollector(x, services);
 
         visitor.start();

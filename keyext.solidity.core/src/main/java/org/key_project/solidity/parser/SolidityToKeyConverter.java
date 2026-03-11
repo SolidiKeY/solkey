@@ -191,7 +191,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
             Expression initial) {
         KeYSolidityType ksType = (KeYSolidityType) visitTypeName(ctx.typeName());
         ProgramVariable programVariable =
-            new ProgramVariable(new Name(ctx.identifier().Identifier().getText()), ksType);
+            new ProgramVariable(new Name(ctx.identifier().Identifier().getText()), ksType, null);
         localVars.add(programVariable);
         StatementVariableDeclaration stmDecl =
             new StatementVariableDeclaration(programVariable, DataLocation.Storage);

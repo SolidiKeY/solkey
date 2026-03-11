@@ -17,6 +17,7 @@ import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.Declaration;
+import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 
@@ -34,21 +35,23 @@ public class ProgramVariable extends AbstractSortedOperator
         implements Expression, UpdateableOperator, IProgramVariable, Resolver {
     private KeYSolidityType type;
     private int contractId = -1;
-    // private final DataLocation dataLocation;
+    private DataLocation location;
 
-    public ProgramVariable(Name name, Sort s, KeYSolidityType type) {
+    public ProgramVariable(Name name, Sort s, KeYSolidityType type, DataLocation location) {
         super(name, s, Modifier.NONE);
         this.type = type;
+        this.location = location;
     }
 
-    public ProgramVariable(Name name, int contractId) {
+    public ProgramVariable(Name name, DataLocation location, int contractId) {
         super(name, null, Modifier.NONE);
         this.type = null;
+        this.location = location;
         this.contractId = contractId;
     }
 
-    public ProgramVariable(Name name, KeYSolidityType type) {
-        this(name, Objects.requireNonNull(type.getSort(), name.toString()), type);
+    public ProgramVariable(Name name, KeYSolidityType type, DataLocation location) {
+        this(name, Objects.requireNonNull(type.getSort(), name.toString()), type, location);
     }
 
     @Override

@@ -831,7 +831,7 @@ public abstract class TacletApp implements RuleApp {
                     krt = (KeYSolidityType) o;
                 }
                 assert krt != null : "could not find krt for: " + o;
-                return new ProgramVariable(new Name(instantiation), krt);
+                return new ProgramVariable(new Name(instantiation), krt, null);
             }
         }
         return null;
