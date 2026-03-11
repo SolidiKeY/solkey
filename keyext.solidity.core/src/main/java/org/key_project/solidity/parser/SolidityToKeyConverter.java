@@ -296,7 +296,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitParameter(ParameterContext ctx) {
-        return new ParameterDeclaration(null, null, null);
+        return new ParameterDeclaration(null);
     }
 
     @Override

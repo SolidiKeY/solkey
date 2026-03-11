@@ -35,7 +35,7 @@ public class ProgramVariable extends AbstractSortedOperator
         implements Expression, UpdateableOperator, IProgramVariable, Resolver {
     private KeYSolidityType type;
     private int contractId = -1;
-    private DataLocation location;
+    final private DataLocation location;
 
     public ProgramVariable(Name name, Sort s, KeYSolidityType type, DataLocation location) {
         super(name, s, Modifier.NONE);
@@ -86,6 +86,10 @@ public class ProgramVariable extends AbstractSortedOperator
             this.sort = sort;
             this.type = new KeYSolidityType(type, sort);
         }
+    }
+
+    public DataLocation getLocation() {
+        return location;
     }
 
     /// TODO: implement

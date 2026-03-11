@@ -15,6 +15,7 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.SolidityInfo;
 import org.key_project.solidity.program.ast.abstractions.*;
@@ -370,10 +371,17 @@ public class SolJSONParser {
         if(node.findValue("typeName").has("referencedDeclaration")){
             int typeId = node.findValue("typeName").findValue("referencedDeclaration").asInt();
             Type typeRef = (Type) id2Name.get(typeId);
-            field = new ParameterDeclaration(new Name(fieldName), new TypeReference(typeRef), dataLocation);
+
+            ProgramVariable programVariable = new ProgramVariable(new Name(fieldName), new KeYSolidityType(typeRef, new SortImpl(new Name("UINT"))), dataLocation);
+//            field = new ParameterDeclaration(new Name(fieldName), new TypeReference(typeRef), dataLocation);
+            field = new ParameterDeclaration(programVariable);
         }
-        else
-            field = new ParameterDeclaration(new Name(fieldName), new TypeReference(new Name(fieldType)), dataLocation);
+        else {
+            KeYSolidityType ksType = new KeYSolidityType(UINT, new SortImpl(new Name("UINT")));
+            ProgramVariable programVariable = new ProgramVariable(new Name(fieldName), ksType, dataLocation);
+            field = new ParameterDeclaration(programVariable);
+//            field = new ParameterDeclaration(new Name(fieldName), new TypeReference(new Name(fieldType)), dataLocation);
+        }
 
         id2Name.put(id, field);
 

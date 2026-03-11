@@ -4,46 +4,30 @@
 package org.key_project.solidity.program.ast.declarations;
 
 
-import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
-import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
-import org.key_project.solidity.program.ast.references.TypeReference;
+import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.util.collection.ImmutableArray;
 
-import org.jspecify.annotations.NonNull;
-
 public class ParameterDeclaration extends Declaration {
-    private final @NonNull TypeReference typeReference;
-    private final DataLocation dataLocation;
-    private final @NonNull Name name;
+    private final ProgramVariable programVariable;
 
-    public ParameterDeclaration(@NonNull Name name, @NonNull TypeReference typeReference,
-            DataLocation dataLocation) {
+    public ParameterDeclaration(ProgramVariable programVariable) {
         super(new ImmutableArray<>());
-        this.name = name;
-        this.typeReference = typeReference;
-        this.dataLocation = dataLocation;
+        this.programVariable = programVariable;
     }
 
     @Override
     public SyntaxElement getChild(int n) {
-        if (n == 0) {
-            return typeReference;
-        }
-        throw new IndexOutOfBoundsException("Parameter declarations have only one child");
+        return programVariable.getChild(n);
     }
 
     @Override
     public int getChildCount() {
-        return 1;
+        return programVariable.getChildCount();
     }
 
     @Override
     public String toString() {
-        return typeReference + " " + dataLocation + " " + name;
-    }
-
-    public @NonNull TypeReference getTypeReference() {
-        return typeReference;
+        return programVariable.toString();
     }
 }
