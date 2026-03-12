@@ -372,20 +372,28 @@ public class SolJSONParser {
             int typeId = node.findValue("typeName").findValue("referencedDeclaration").asInt();
             Type typeRef = (Type) id2Name.get(typeId);
 
-            ProgramVariable programVariable = new ProgramVariable(new Name(fieldName), new KeYSolidityType(typeRef, new SortImpl(new Name("UINT"))), dataLocation);
+            ProgramVariable programVariable = new ProgramVariable(new Name(fieldName), getUndeclaredSolidityType(typeRef), dataLocation);
 //            field = new ParameterDeclaration(new Name(fieldName), new TypeReference(typeRef), dataLocation);
             field = new ParameterDeclaration(programVariable);
         }
         else {
-            KeYSolidityType ksType = new KeYSolidityType(UINT, new SortImpl(new Name("UINT")));
-            ProgramVariable programVariable = new ProgramVariable(new Name(fieldName), ksType, dataLocation);
+            Type type = parseType(node.findValue("typeName"));
+            ProgramVariable programVariable = new ProgramVariable(new Name(fieldName), getUndeclaredSolidityType(type) , dataLocation);
             field = new ParameterDeclaration(programVariable);
-//            field = new ParameterDeclaration(new Name(fieldName), new TypeReference(new Name(fieldType)), dataLocation);
         }
 
         id2Name.put(id, field);
 
         return field;
+    }
+
+    private Type parseType(JsonNode node) {
+        String typeName = node.findValue("nodeType").asText();
+        return switch (typeName) {
+            case "ElementaryTypeName" -> getPrimitiveType(node.findValue("name").asText());
+            case "ArrayTypeName" -> new ArrayType(parseType(node.findValue("baseType")), 0);
+            default -> throw new RuntimeException("Type " + typeName + " not covered");
+        };
     }
 
     private StateVariableDeclaration parseVariableField(JsonNode fieldNode) {
