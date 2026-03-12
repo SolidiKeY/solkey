@@ -15,7 +15,6 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
-import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.SolidityInfo;
 import org.key_project.solidity.program.ast.abstractions.*;
@@ -391,7 +390,8 @@ public class SolJSONParser {
         String typeName = node.findValue("nodeType").asText();
         return switch (typeName) {
             case "ElementaryTypeName" -> getPrimitiveType(node.findValue("name").asText());
-            case "ArrayTypeName" -> new ArrayType(parseType(node.findValue("baseType")), 0);
+            case "ArrayTypeName" -> new ArrayType(parseType(node.findValue("baseType")), -1);
+            case "Mapping" -> new MappingType(parseType(node.findValue("keyType")), parseType(node.findValue("valueType")));
             default -> throw new RuntimeException("Type " + typeName + " not covered");
         };
     }
@@ -408,8 +408,9 @@ public class SolJSONParser {
                 expType = (Type) id2Name.get(idRef);
             }
         } else
-            expType = getType(
-                fieldNode.findValue("typeDescriptions").findValue("typeIdentifier").textValue());
+            expType = parseType(fieldNode.findValue("typeName"));
+//            expType = getType(
+//                fieldNode.findValue("typeDescriptions").findValue("typeIdentifier").textValue());
 
         Visibility visibility = Visibility.fromString(fieldNode.findValue("visibility").asText());
 
