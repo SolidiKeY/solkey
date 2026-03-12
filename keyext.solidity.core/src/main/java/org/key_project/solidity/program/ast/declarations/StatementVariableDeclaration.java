@@ -19,6 +19,11 @@ import static org.key_project.solidity.program.ast.declarations.FunctionEnums.Da
 public class StatementVariableDeclaration extends Declaration implements SolidityProgramElement {
     private final ProgramVariable programVariable;
 
+    public StatementVariableDeclaration(ProgramVariable programVariable) {
+        super(new ImmutableArray<>());
+        this.programVariable = programVariable;
+    }
+
     public StatementVariableDeclaration(ProgramVariable programVariable,
             DataLocation dataLocation) {
         super(new ImmutableArray<>(dataLocation));
@@ -50,7 +55,7 @@ public class StatementVariableDeclaration extends Declaration implements Solidit
 
     @Override
     public String toString() {
-        DataLocation dataLocation = (DataLocation) modifiers.get(0);
+        DataLocation dataLocation = programVariable.getLocation();
         String name = programVariable.name().toString();
         String type = programVariable.getType().toString();
         if (dataLocation == Default)

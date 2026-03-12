@@ -337,7 +337,7 @@ public class SolJSONParser {
 
             Type type = SolidityInfo.getPrimitiveType(struct);
             KeYSolidityType ksType = getUndeclaredSolidityType(type);
-            ProgramVariable programVariable = new ProgramVariable(name, ksType, null);
+            ProgramVariable programVariable = new ProgramVariable(name, ksType, DataLocation.fromString(declaration.findValue("storageLocation").asText()));
 
             ArrayDeclaration field = new ArrayDeclaration(programVariable, length);
             id2Name.put(id, field);
@@ -351,9 +351,8 @@ public class SolJSONParser {
                 : getType(typeNameNode.findValue("typeDescriptions")
                         .findValue("typeIdentifier").asText());
         KeYSolidityType ksType = getUndeclaredSolidityType(type);
-        ProgramVariable programVariable = new ProgramVariable(name, ksType, null);
-        StatementVariableDeclaration memDeclaration =
-            new StatementVariableDeclaration(programVariable, dataLocation);
+        ProgramVariable programVariable = new ProgramVariable(name, ksType, dataLocation);
+        StatementVariableDeclaration memDeclaration = new StatementVariableDeclaration(programVariable);
         id2Name.put(id, memDeclaration);
         return memDeclaration;
     }
