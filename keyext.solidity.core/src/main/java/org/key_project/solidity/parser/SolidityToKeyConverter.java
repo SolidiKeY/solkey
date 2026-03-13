@@ -31,6 +31,7 @@ import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.util.collection.ImmutableArray;
 
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.UINT256;
+import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Default;
 
 public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     private Namespace<ProgramVariable> localVars;
@@ -186,11 +187,12 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         return visitVariableDeclarationWithInitialValue(ctx, null);
     }
 
+
     public SyntaxElement visitVariableDeclarationWithInitialValue(VariableDeclarationContext ctx,
             Expression initial) {
         KeYSolidityType ksType = (KeYSolidityType) visitTypeName(ctx.typeName());
         ProgramVariable programVariable =
-            new ProgramVariable(new Name(ctx.identifier().Identifier().getText()), ksType, null);
+            new ProgramVariable(new Name(ctx.identifier().Identifier().getText()), ksType, (DataLocation) visitStorageLocation(ctx.storageLocation()));
         localVars.add(programVariable);
         StatementVariableDeclaration stmDecl =
             new StatementVariableDeclaration(programVariable);
@@ -306,5 +308,13 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     @Override
     public SyntaxElement visitElementaryTypeName(ElementaryTypeNameContext ctx) {
         return services.getSolidityInfo().getKeYSolidityType(ctx.getText());
+    }
+
+    @Override
+    public SyntaxElement visitStorageLocation(StorageLocationContext ctx) {
+        if(ctx == null)
+            return Default;
+        String location = ctx.getText();
+        return DataLocation.fromString(location);
     }
 }

@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.key_project.solidity.parser.ParserForTesting.*;
+import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Memory;
 
 public class SolidityToKeyConverterTest {
 
@@ -248,6 +249,9 @@ public class SolidityToKeyConverterTest {
 
     @Test
     void structType() {
-        DeclarationStatement stm = (DeclarationStatement) parseStatement("Person alice;");
+        DeclarationStatement stm = (DeclarationStatement) parseStatement("Person memory alice;");
+        ProgramVariable alice = ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable();
+        assertEquals("alice", alice.name().toString());
+        assertEquals(Memory, alice.getLocation());
     }
 }
