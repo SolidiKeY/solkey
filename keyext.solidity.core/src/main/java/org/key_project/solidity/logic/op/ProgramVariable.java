@@ -88,6 +88,10 @@ public class ProgramVariable extends AbstractSortedOperator
         }
     }
 
+    public String parameterString() {
+        return type.name() + " " + getLocation() + " " + name();
+    }
+
     public DataLocation getLocation() {
         return location;
     }

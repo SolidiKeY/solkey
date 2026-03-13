@@ -30,4 +30,8 @@ public class ParameterDeclaration extends Declaration {
     public String toString() {
         return programVariable.toString();
     }
+
+    public String parameterString(){
+        return programVariable.parameterString();
+    }
 }

@@ -95,7 +95,7 @@ public class FunctionDeclaration extends Declaration {
         strBuffer.append("function ");
         strBuffer.append(name)
                 .append(" (")
-                .append(inputParameters.stream().map(ParameterDeclaration::toString)
+                .append(inputParameters.stream().map(ParameterDeclaration::parameterString)
                         .collect(Collectors.joining(", ")))
                 .append(") ")
                 .append(visibility)
