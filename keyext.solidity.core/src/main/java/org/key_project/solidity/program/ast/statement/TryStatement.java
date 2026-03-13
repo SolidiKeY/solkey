@@ -7,9 +7,9 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.PosInProgram;
 import org.key_project.solidity.program.ProgramPrefix;
-import org.key_project.solidity.program.ast.declarations.ParameterDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
@@ -20,7 +20,7 @@ import org.jspecify.annotations.NonNull;
 public class TryStatement implements Statement, ProgramPrefix {
 
     private final @NonNull Expression expression;
-    private final @NonNull ImmutableArray<@NonNull ParameterDeclaration> returnDeclaration;
+    private final @NonNull ImmutableArray<@NonNull ProgramVariable> returnDeclaration;
     private final @NonNull Block body;
     private final @NonNull ImmutableArray<@NonNull CatchClause> catchClauses;
 
@@ -28,7 +28,7 @@ public class TryStatement implements Statement, ProgramPrefix {
     private int hashcode = -1;
 
     public TryStatement(@NonNull Expression expression,
-            @NonNull ImmutableArray<@NonNull ParameterDeclaration> returnDeclaration,
+            @NonNull ImmutableArray<@NonNull ProgramVariable> returnDeclaration,
             @NonNull Block body,
             @NonNull ImmutableArray<@NonNull CatchClause> clauses) {
         this.expression = expression;
@@ -39,7 +39,7 @@ public class TryStatement implements Statement, ProgramPrefix {
 
     public TryStatement(ExtList children) {
         this.expression = Objects.requireNonNull(children.get(Expression.class));
-        this.returnDeclaration = new ImmutableArray<>(children.collect(ParameterDeclaration.class));
+        this.returnDeclaration = new ImmutableArray<>(children.collect(ProgramVariable.class));
         this.body = Objects.requireNonNull(children.get(Block.class));
         this.catchClauses = new ImmutableArray<>(children.collect(CatchClause.class));
     }
@@ -81,7 +81,7 @@ public class TryStatement implements Statement, ProgramPrefix {
         return body;
     }
 
-    public ImmutableArray<ParameterDeclaration> getReturnDeclaration() {
+    public ImmutableArray<ProgramVariable> getReturnDeclaration() {
         return returnDeclaration;
     }
 
@@ -89,7 +89,7 @@ public class TryStatement implements Statement, ProgramPrefix {
         return returnDeclaration.size();
     }
 
-    public ParameterDeclaration getReturnParameter(int i) {
+    public ProgramVariable getReturnParameter(int i) {
         return returnDeclaration.get(i);
     }
 

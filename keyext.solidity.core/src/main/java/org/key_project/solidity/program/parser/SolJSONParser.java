@@ -573,8 +573,6 @@ public class SolJSONParser {
         return switch (declaration) {
             case StateVariableDeclaration stateVarDeclaration ->
                 new StateVariableReference(name, stateVarDeclaration, type);
-            case ParameterDeclaration parameterDeclaration ->
-                new ParameterVariableReference(name, parameterDeclaration, type);
             case ArrayDeclaration arrayDeclaration -> arrayDeclaration.getProgramVariable();
             case FunctionDeclaration ignored ->
                 new FunctionReference(idDecl, name, type);

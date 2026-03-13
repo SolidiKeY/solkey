@@ -16,7 +16,6 @@ import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
-import org.key_project.solidity.program.ast.declarations.ParameterDeclaration;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.*;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
@@ -268,9 +267,9 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         Block body = (Block) visitBlock(ctx.block());
         List<CatchClause> clauses = ctx.catchClause().stream().map(this::visitCatchClause)
                 .map(CatchClause.class::cast).toList();
-        List<ParameterDeclaration> parameters = ctx.returnParameters() == null ? List.of()
+        List<ProgramVariable> parameters = ctx.returnParameters() == null ? List.of()
                 : ((SyntaxElementList) visitReturnParameters(ctx.returnParameters()))
-                        .getElements().stream().map(ParameterDeclaration.class::cast).toList();
+                        .getElements().stream().map(ProgramVariable.class::cast).toList();
         return new TryStatement(exp, new ImmutableArray<>(parameters), body,
             new ImmutableArray<>(clauses));
     }
@@ -296,7 +295,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitParameter(ParameterContext ctx) {
-        return new ParameterDeclaration(null);
+        return null;
     }
 
     @Override

@@ -7,17 +7,17 @@ import java.util.Objects;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.abstractions.Type;
-import org.key_project.solidity.program.ast.declarations.ParameterDeclaration;
 import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 public class ParameterVariableReference extends SolidityExpression implements VariableReference {
     public final Name name;
-    private final ParameterDeclaration referencedDeclaration;
+    private final ProgramVariable referencedDeclaration;
 
-    public ParameterVariableReference(Name name, ParameterDeclaration referencedDeclaration,
+    public ParameterVariableReference(Name name, ProgramVariable referencedDeclaration,
             Type type) {
         super(type);
         this.name = name;
@@ -28,10 +28,10 @@ public class ParameterVariableReference extends SolidityExpression implements Va
         super(type);
         this.name = name;
         this.referencedDeclaration =
-            Objects.requireNonNull(children.removeFirstOccurrence(ParameterDeclaration.class));
+            Objects.requireNonNull(children.removeFirstOccurrence(ProgramVariable.class));
     }
 
-    public ParameterDeclaration getDeclaration() {
+    public ProgramVariable getDeclaration() {
         return referencedDeclaration;
     }
 
