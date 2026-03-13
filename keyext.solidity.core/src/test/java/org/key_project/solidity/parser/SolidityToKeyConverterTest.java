@@ -32,7 +32,7 @@ public class SolidityToKeyConverterTest {
     @Test
     void creatingProgramVariables() {
         Block block = parseBlock("{ int x; x = 1; }");
-        ProgramVariable p1 = (ProgramVariable) block.getChild(0).getChild(0).getChild(1);
+        ProgramVariable p1 = (ProgramVariable) block.getChild(0).getChild(0).getChild(0);
         ProgramVariable p2 = (ProgramVariable) block.getChild(1).getChild(0).getChild(0);
         assertEquals("x", p1.toString());
         assertSame(p1, p2);

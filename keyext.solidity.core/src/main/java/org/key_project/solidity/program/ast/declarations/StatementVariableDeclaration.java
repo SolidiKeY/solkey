@@ -24,12 +24,6 @@ public class StatementVariableDeclaration extends DeclarationClass implements So
         this.programVariable = programVariable;
     }
 
-    public StatementVariableDeclaration(ProgramVariable programVariable,
-            DataLocation dataLocation) {
-        super(new ImmutableArray<>(dataLocation));
-        this.programVariable = programVariable;
-    }
-
     public StatementVariableDeclaration(ExtList children) {
         super(children);
         this.programVariable =

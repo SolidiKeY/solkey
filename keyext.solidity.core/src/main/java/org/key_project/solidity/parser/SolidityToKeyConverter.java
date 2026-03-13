@@ -193,7 +193,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
             new ProgramVariable(new Name(ctx.identifier().Identifier().getText()), ksType, null);
         localVars.add(programVariable);
         StatementVariableDeclaration stmDecl =
-            new StatementVariableDeclaration(programVariable, DataLocation.Storage);
+            new StatementVariableDeclaration(programVariable);
         return new DeclarationStatement(List.of(stmDecl), initial);
     }
 
