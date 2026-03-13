@@ -16,7 +16,7 @@ import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.Nullable;
 
-public class StateVariableDeclaration extends Declaration {
+public class StateVariableDeclaration extends DeclarationClass {
 
     private final @Nullable Expression initializer;
     private final Visibility visibility;

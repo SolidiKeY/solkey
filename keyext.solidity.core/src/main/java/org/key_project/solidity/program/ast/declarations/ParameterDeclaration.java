@@ -8,7 +8,7 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.util.collection.ImmutableArray;
 
-public class ParameterDeclaration extends Declaration {
+public class ParameterDeclaration extends DeclarationClass {
     private final ProgramVariable programVariable;
 
     public ParameterDeclaration(ProgramVariable programVariable) {

@@ -17,7 +17,7 @@ import org.key_project.util.collection.ImmutableArray;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-public class ContractDeclaration extends Declaration implements Type {
+public class ContractDeclaration extends DeclarationClass implements Type {
 
     private final ImmutableArray<StateVariableDeclaration> fields;
     private final ImmutableArray<StructDeclaration> structs;

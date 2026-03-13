@@ -20,7 +20,7 @@ import org.key_project.util.collection.ImmutableArray;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-public class StructDeclaration extends Declaration implements Type, Resolver {
+public class StructDeclaration extends DeclarationClass implements Type, Resolver {
     public final @NonNull Name name;
     List<FieldDeclaration> fields;
     private final int contractId;

@@ -9,7 +9,7 @@ import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
 
-public class MemberEnumDeclaration extends Declaration {
+public class MemberEnumDeclaration extends DeclarationClass {
 
     public @NonNull Name getName() {
         return name;

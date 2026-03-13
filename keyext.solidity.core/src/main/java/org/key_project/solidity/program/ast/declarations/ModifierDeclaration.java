@@ -13,7 +13,7 @@ import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
-public class ModifierDeclaration extends Declaration {
+public class ModifierDeclaration extends DeclarationClass {
 
     private final List<ParameterDeclaration> inputParameters;
     private final Block body;

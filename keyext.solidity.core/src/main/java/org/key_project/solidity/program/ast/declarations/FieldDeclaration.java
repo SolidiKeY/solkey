@@ -12,7 +12,7 @@ import org.key_project.util.collection.ImmutableArray;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-public class FieldDeclaration extends Declaration {
+public class FieldDeclaration extends DeclarationClass {
 
     private final @NonNull TypeReference typeReference;
     private final @Nullable Expression initializer;

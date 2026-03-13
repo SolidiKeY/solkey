@@ -8,13 +8,14 @@ import java.util.stream.Collectors;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.StateMutability;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.references.ModifierReference;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.util.collection.ImmutableArray;
 
-public class FunctionDeclaration extends Declaration {
+public class FunctionDeclaration extends DeclarationClass {
     // TODO: Create another class for return type
     private final ImmutableArray<ParameterDeclaration> returnParameters;
     private final ImmutableArray<ParameterDeclaration> inputParameters;

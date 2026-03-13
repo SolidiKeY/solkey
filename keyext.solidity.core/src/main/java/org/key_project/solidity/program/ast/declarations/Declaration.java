@@ -4,17 +4,10 @@
 package org.key_project.solidity.program.ast.declarations;
 
 import org.key_project.logic.SyntaxElement;
-import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
-public abstract class Declaration implements SyntaxElement {
-    final ImmutableArray<Modifier> modifiers;
+import java.util.List;
 
-    protected Declaration(ImmutableArray<Modifier> modifiers) {
-        this.modifiers = modifiers;
-    }
-
-    public Declaration(ExtList children) {
-        modifiers = new ImmutableArray<>(children.collect(Modifier.class));
-    }
+public interface Declaration extends SyntaxElement {
+    ImmutableArray<Modifier> modifiers = new ImmutableArray<>(List.of());
 }

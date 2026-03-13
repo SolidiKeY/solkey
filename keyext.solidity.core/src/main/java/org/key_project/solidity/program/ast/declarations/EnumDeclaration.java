@@ -18,7 +18,7 @@ import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.Nullable;
 
-public class EnumDeclaration extends Declaration implements Type {
+public class EnumDeclaration extends DeclarationClass implements Type {
     private final List<MemberEnumDeclaration> members;
 
     public Name getName() {
