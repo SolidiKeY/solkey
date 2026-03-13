@@ -32,7 +32,7 @@ import org.jspecify.annotations.NonNull;
  */
 
 public class ProgramVariable extends AbstractSortedOperator
-        implements Expression, UpdateableOperator, IProgramVariable, Resolver {
+        implements Expression, UpdateableOperator, IProgramVariable, Resolver, Declaration {
     private KeYSolidityType type;
     private int contractId = -1;
     final private DataLocation location;

@@ -168,7 +168,7 @@ public class SolJSONParser {
 
     private ModifierDeclaration parseModifier(JsonNode node) {
         final String name = node.findValue("name").asText();
-        List<ParameterDeclaration> inputParameters =
+        List<ProgramVariable> inputParameters =
             node.findValue("parameters").findValue("parameters").valueStream()
                     .map(this::parseParam).toList();
         Block body = parseBlock(node.findValue("body"));
@@ -206,8 +206,8 @@ public class SolJSONParser {
         final String name = node.findValue("name").asText();
         Stream<JsonNode> parameters =
             node.findValue("returnParameters").findValue("parameters").valueStream();
-        List<ParameterDeclaration> returnParameters = parameters.map(this::parseParam).toList();
-        List<ParameterDeclaration> inputParamenters =
+        List<ProgramVariable> returnParameters = parameters.map(this::parseParam).toList();
+        List<ProgramVariable> inputParamenters =
             node.findValue("parameters").findValue("parameters").valueStream()
                     .map(this::parseParam).toList();
 
@@ -357,7 +357,7 @@ public class SolJSONParser {
         return memDeclaration;
     }
 
-    private ParameterDeclaration parseParam(JsonNode node) {
+    private ProgramVariable parseParam(JsonNode node) {
         final int id = node.findValue("id").asInt();
         final String fieldName = node.findValue("name").asText();
         final String fieldType =
@@ -365,24 +365,21 @@ public class SolJSONParser {
         final String dataLocationS = node.findValue("storageLocation").asText();
         final DataLocation dataLocation = DataLocation.fromString(dataLocationS);
 
-        ParameterDeclaration field;
+        ProgramVariable programVariable;
         if(node.findValue("typeName").has("referencedDeclaration")){
             int typeId = node.findValue("typeName").findValue("referencedDeclaration").asInt();
             Type typeRef = (Type) id2Name.get(typeId);
 
-            ProgramVariable programVariable = new ProgramVariable(new Name(fieldName), getUndeclaredSolidityType(typeRef), dataLocation);
-//            field = new ParameterDeclaration(new Name(fieldName), new TypeReference(typeRef), dataLocation);
-            field = new ParameterDeclaration(programVariable);
+            programVariable = new ProgramVariable(new Name(fieldName), getUndeclaredSolidityType(typeRef), dataLocation);
         }
         else {
             Type type = parseType(node.findValue("typeName"));
-            ProgramVariable programVariable = new ProgramVariable(new Name(fieldName), getUndeclaredSolidityType(type) , dataLocation);
-            field = new ParameterDeclaration(programVariable);
+            programVariable = new ProgramVariable(new Name(fieldName), getUndeclaredSolidityType(type) , dataLocation);
         }
 
-        id2Name.put(id, field);
+        id2Name.put(id, programVariable);
 
-        return field;
+        return programVariable;
     }
 
     private Type parseType(JsonNode node) {
@@ -590,6 +587,7 @@ public class SolJSONParser {
                 case "contract" -> new ContractReference(idDecl, name, type);
                 default -> throw new RuntimeException("Unknown type " + expType);
             };
+            case ProgramVariable programVariable -> programVariable;
             default -> throw new RuntimeException(
                 "Unexpected reference declaration " + declaration + " expected a state variable.");
         };

@@ -8,6 +8,7 @@ import java.util.Objects;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.util.ExtList;
@@ -15,12 +16,12 @@ import org.key_project.util.collection.ImmutableArray;
 
 public class ModifierDeclaration extends DeclarationClass {
 
-    private final List<ParameterDeclaration> inputParameters;
+    private final List<ProgramVariable> inputParameters;
     private final Block body;
     private final Visibility visibility;
     private final Name name;
 
-    public ModifierDeclaration(Name name, List<ParameterDeclaration> inputParameters, Block body,
+    public ModifierDeclaration(Name name, List<ProgramVariable> inputParameters, Block body,
             Visibility visibility) {
         super(new ImmutableArray<>());
         this.name = name;

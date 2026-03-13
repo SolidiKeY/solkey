@@ -17,8 +17,8 @@ import org.key_project.util.collection.ImmutableArray;
 
 public class FunctionDeclaration extends DeclarationClass {
     // TODO: Create another class for return type
-    private final ImmutableArray<ParameterDeclaration> returnParameters;
-    private final ImmutableArray<ParameterDeclaration> inputParameters;
+    private final ImmutableArray<ProgramVariable> returnParameters;
+    private final ImmutableArray<ProgramVariable> inputParameters;
     private final Block body;
     private final String kind;
     private final Visibility visibility;
@@ -32,8 +32,8 @@ public class FunctionDeclaration extends DeclarationClass {
 
     private final String documentation;
 
-    public FunctionDeclaration(Name name, List<ParameterDeclaration> returnParameters,
-            List<ParameterDeclaration> inputParameters, Block body, String kind,
+    public FunctionDeclaration(Name name, List<ProgramVariable> returnParameters,
+            List<ProgramVariable> inputParameters, Block body, String kind,
             Visibility visibility, StateMutability stateMutability,
             List<ModifierReference> modifiers, String documentation) {
         super(new ImmutableArray<>());
@@ -52,11 +52,11 @@ public class FunctionDeclaration extends DeclarationClass {
         return body;
     }
 
-    public ImmutableArray<ParameterDeclaration> getReturnParameters() {
+    public ImmutableArray<ProgramVariable> getReturnParameters() {
         return returnParameters;
     }
 
-    public ImmutableArray<ParameterDeclaration> getInputParameters() {
+    public ImmutableArray<ProgramVariable> getInputParameters() {
         return inputParameters;
     }
 
@@ -96,7 +96,7 @@ public class FunctionDeclaration extends DeclarationClass {
         strBuffer.append("function ");
         strBuffer.append(name)
                 .append(" (")
-                .append(inputParameters.stream().map(ParameterDeclaration::parameterString)
+                .append(inputParameters.stream().map(ProgramVariable::parameterString)
                         .collect(Collectors.joining(", ")))
                 .append(") ")
                 .append(visibility)
