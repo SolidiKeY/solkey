@@ -215,7 +215,7 @@ class TestProgVarReplaceVisitor {
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
         replacer.start();
         Block result = (Block) replacer.result();
-        assertEquals(replacement, result.getChild(0).getChild(0).getChild(1));
+        assertEquals(replacement, result.getChild(0).getChild(0).getChild(0));
         assertEquals(replacement, result.getChild(1).getChild(0).getChild(0));
     }
 
@@ -241,7 +241,7 @@ class TestProgVarReplaceVisitor {
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
         replacer.start();
         Block result = ((Block) replacer.result());
-        assertSame(replacement, result.getChild(0).getChild(0).getChild(1));
+        assertSame(replacement, result.getChild(0).getChild(0).getChild(0));
         Statement forLoop = result.getStatements().get(1);
         assertSame(replacement, forLoop.getChild(0).getChild(0).getChild(0));
         assertSame(replacement, forLoop.getChild(1).getChild(0));
@@ -363,7 +363,7 @@ class TestProgVarReplaceVisitor {
         Block body = getNestedBody();
 
         ProgramVariable original =
-            (ProgramVariable) body.getChild(2).getChild(0).getChild(0).getChild(1);
+            (ProgramVariable) body.getChild(2).getChild(0).getChild(0).getChild(0);
         addMap(original);
 
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
@@ -383,7 +383,7 @@ class TestProgVarReplaceVisitor {
         Block body = getNestedBody();
 
         ProgramVariable original =
-            (ProgramVariable) body.getChild(2).getChild(2).getChild(0).getChild(0).getChild(1);
+            (ProgramVariable) body.getChild(2).getChild(2).getChild(0).getChild(0).getChild(0);
         addMap(original);
 
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
@@ -404,7 +404,7 @@ class TestProgVarReplaceVisitor {
         Block body = getNestedBody();
 
         ProgramVariable original =
-            (ProgramVariable) body.getChild(3).getChild(0).getChild(0).getChild(1);
+            (ProgramVariable) body.getChild(3).getChild(0).getChild(0).getChild(0);
         addMap(original);
 
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);

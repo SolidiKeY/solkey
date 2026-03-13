@@ -7,8 +7,8 @@ import java.io.IOException;
 import java.util.List;
 
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.declarations.*;
-import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
 import org.key_project.solidity.program.ast.expressions.MemberExp;
@@ -29,6 +29,7 @@ import org.junit.jupiter.api.condition.OS;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.INT256;
+import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.*;
 import static org.key_project.solidity.program.parser.SolcParserNoServices.getDeclStr;
 
 
@@ -43,7 +44,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         assertEquals(1, contractDeclaration.getFieldDeclarations().size());
-        assertEquals(DataLocation.Storage, contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getLocation());
+        assertEquals(Storage, contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getLocation());
     }
 
     @Test
@@ -153,6 +154,7 @@ public class SolJsonParserTest {
         Block block = function.getBody();
         assertNotNull(block);
         assertEquals(1, block.getChildCount());
+        assertEquals(Default, function.getInputParameters().get(0).getLocation());
     }
 
     @Test
@@ -187,6 +189,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         assertTrue(contractDec.toString().contains("int256 v"));
+        assertEquals(Default, ((ProgramVariable) contractDec.getChild(0).getChild(0).getChild(0).getChild(0).getChild(0)).getLocation());
     }
 
     @Test
@@ -334,6 +337,7 @@ public class SolJsonParserTest {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         String structName = contractDeclaration.getStructs().get(0).name().toString();
         assertEquals("SimpleContract.Person", structName);
+        assertEquals(Memory, contractDeclaration.getFunctions().get(0).getInputParameters().get(0).getLocation());
     }
 
     @Test
@@ -350,6 +354,7 @@ public class SolJsonParserTest {
         List<StructDeclaration> structs = contractDeclaration.getStructs();
         assertEquals(1, structs.size());
         assertEquals(1, structs.getFirst().getFields().size());
+        assertEquals(Storage, contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getLocation());
     }
 
     @Test
@@ -399,6 +404,26 @@ public class SolJsonParserTest {
         assertNotNull(decl);
         String contractStr = contractDeclaration.toString();
         assertTrue(contractStr.contains("Person memory alice"));
+        assertEquals(Memory, decl.getProgramVariable().getLocation());
+    }
+
+    @Test
+    void parseStoragePointer() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    struct Person {
+                       uint256 age;
+                    }
+                    Person alice;
+                    function f() public {
+                        Person storage bob = alice;
+                    }
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        ProgramVariable bob = (ProgramVariable) contractDeclaration.getFunctions().get(0).getBody().getStatements().get(0).getChild(0).getChild(0);
+        assertEquals("bob", bob.name().toString());
+        assertEquals(Storage, bob.getLocation());
     }
 
     @Test

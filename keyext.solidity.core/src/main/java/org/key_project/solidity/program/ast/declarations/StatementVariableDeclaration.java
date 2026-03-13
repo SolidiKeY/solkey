@@ -50,7 +50,7 @@ public class StatementVariableDeclaration extends DeclarationClass implements So
 
     @Override
     public int getChildCount() {
-        return 2;
+        return 1 + modifiers.size();
     }
 
     @Override
