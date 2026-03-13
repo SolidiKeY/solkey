@@ -405,8 +405,6 @@ public class SolJSONParser {
             }
         } else
             expType = parseType(fieldNode.findValue("typeName"));
-//            expType = getType(
-//                fieldNode.findValue("typeDescriptions").findValue("typeIdentifier").textValue());
 
         Visibility visibility = Visibility.fromString(fieldNode.findValue("visibility").asText());
 
@@ -418,7 +416,7 @@ public class SolJSONParser {
 
         ProgramVariable programVariable =
             expType == null ? new ProgramVariable(new Name(fieldName), null, idRef)
-                    : new ProgramVariable(new Name(fieldName), getUndeclaredSolidityType(expType), null);
+                    : new ProgramVariable(new Name(fieldName), getUndeclaredSolidityType(expType), DataLocation.Storage);
         final StateVariableDeclaration field =
             new StateVariableDeclaration(programVariable, initializerExp, visibility);
         id2Name.put(id, field);

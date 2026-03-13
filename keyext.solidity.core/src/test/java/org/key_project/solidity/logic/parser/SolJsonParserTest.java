@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.declarations.*;
+import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
 import org.key_project.solidity.program.ast.expressions.MemberExp;
@@ -42,6 +43,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         assertEquals(1, contractDeclaration.getFieldDeclarations().size());
+        assertEquals(DataLocation.Storage, contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getLocation());
     }
 
     @Test
