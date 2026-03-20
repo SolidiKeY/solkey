@@ -167,6 +167,7 @@ public class SolJsonParserTest {
                    }
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
+        String s = contractDeclaration.toString();
         assertEquals(1, contractDeclaration.getFunctions().size());
         FunctionDeclaration function = contractDeclaration.getFunctions().getFirst();
         Block block = function.getBody();
@@ -672,7 +673,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
-        assertTrue(contractS.contains("SimpleContract(target).g() returns (int default a)"));
+        assertTrue(contractS.contains("SimpleContract(target).g() returns (int a)"));
     }
 
     @Test

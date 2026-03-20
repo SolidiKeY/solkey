@@ -89,7 +89,8 @@ public class ProgramVariable extends AbstractSortedOperator
     }
 
     public String parameterString() {
-        return type.name() + " " + getLocation() + " " + name();
+        DataLocation loc = getLocation();
+        return type.name() + (loc.equals(DataLocation.Default) ? "" : " " + loc) + " " + name();
     }
 
     public DataLocation getLocation() {
