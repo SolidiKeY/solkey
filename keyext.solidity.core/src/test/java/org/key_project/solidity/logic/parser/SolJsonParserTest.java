@@ -455,7 +455,20 @@ public class SolJsonParserTest {
         String contractS = contractDec.toString();
         assertTrue(contractS.contains("bool[3] memory foo;"));
         assertTrue(contractS.contains("foo = [false, true, false];"));
+    }
 
+    @Test
+    void parseTempArray() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function f() public {
+                        bool[] memory foo = new bool[](3);
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        String contractS = contractDec.toString();
+        assertTrue(contractS.contains("bool[] memory foo"));
     }
 
     @Test

@@ -8,25 +8,24 @@ import java.util.Objects;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.abstractions.ArrayType;
+import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
 public class ArrayDeclaration extends DeclarationClass implements SolidityProgramElement {
     private final ProgramVariable programVariable;
-    private final int length;
 
-    public ArrayDeclaration(ProgramVariable programVariable, int length) {
+    public ArrayDeclaration(ProgramVariable programVariable) {
         super(new ImmutableArray<>());
         this.programVariable = programVariable;
-        this.length = length;
     }
 
-    public ArrayDeclaration(ExtList children, int length) {
+    public ArrayDeclaration(ExtList children) {
         super(new ImmutableArray<>());
         this.programVariable =
             Objects.requireNonNull(children.removeFirstOccurrence(ProgramVariable.class));;
-        this.length = length;
     }
 
     @Override
@@ -44,7 +43,11 @@ public class ArrayDeclaration extends DeclarationClass implements SolidityProgra
 
     @Override
     public String toString() {
-        return programVariable.sort() + "[" + length + "]" + " memory " + programVariable.name();
+        Type type = programVariable.getType();
+        String size = "";
+        if(type instanceof ArrayType)
+            size = String.valueOf(((ArrayType) type).getLength());
+        return programVariable.sort() + "[" + size + "]" + " memory " + programVariable.name();
     }
 
     public void visit(Visitor v) {
@@ -55,7 +58,4 @@ public class ArrayDeclaration extends DeclarationClass implements SolidityProgra
         return programVariable;
     }
 
-    public int getLength() {
-        return length;
-    }
 }

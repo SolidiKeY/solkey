@@ -3,23 +3,20 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.abstractions;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.sort.SortImpl;
 
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
-
-public class ArrayType implements Type, SyntaxElement {
+public class DynamicArrayType implements Type, SyntaxElement {
 
     Type type;
-    int length;
 
-    public ArrayType(Type type, int length) {
+    public DynamicArrayType(Type type) {
         this.type = type;
-        this.length = length;
     }
 
     @Override
@@ -34,13 +31,8 @@ public class ArrayType implements Type, SyntaxElement {
 
     @Override
     public SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException("Array Type has no children");
+        return null;
     }
-
-    public int getLength() {
-        return length;
-    }
-
 
     @Override
     public int getChildCount() {

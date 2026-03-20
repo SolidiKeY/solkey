@@ -126,7 +126,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ArrayDeclaration(changeList, x.getLength());
+                return new ArrayDeclaration(changeList);
             }
         };
         def.doAction(x);

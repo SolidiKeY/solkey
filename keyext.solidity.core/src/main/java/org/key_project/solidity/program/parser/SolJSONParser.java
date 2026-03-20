@@ -333,18 +333,24 @@ public class SolJSONParser {
         JsonNode typeNameNode = declaration.findValue("typeName");
         String typeName = typeNameNode.findValue("nodeType").asText();
         if (typeName.equals("ArrayTypeName")) {
-            int length =
-                typeNameNode.findValue("length").findValue("value").asInt();
-            String struct =
-                typeNameNode.findValue("baseType").findValue("name").asText();
+            String struct = typeNameNode.findValue("baseType").findValue("name").asText();
+            Type primitiveType = SolidityInfo.getPrimitiveType(struct);
+            Type type;
+            if(typeNameNode.has("length")){
+                int size = typeNameNode.findValue("length").findValue("value").asInt();
+                type = new ArrayType(primitiveType, size);
+            }
+            else {
+                type = new DynamicArrayType(primitiveType);
+            }
 
-            Type type = SolidityInfo.getPrimitiveType(struct);
+
             KeYSolidityType ksType = getUndeclaredSolidityType(type);
             ProgramVariable programVariable = new ProgramVariable(name, ksType, DataLocation.fromString(declaration.findValue("storageLocation").asText()));
+            ArrayDeclaration array = new ArrayDeclaration(programVariable);
 
-            ArrayDeclaration field = new ArrayDeclaration(programVariable, length);
-            id2Name.put(id, field);
-            return field;
+            id2Name.put(id, array);
+            return array;
         }
         DataLocation dataLocation =
             DataLocation.fromString(declaration.findValue("storageLocation").asText());
