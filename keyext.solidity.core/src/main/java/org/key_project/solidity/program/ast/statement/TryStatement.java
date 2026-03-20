@@ -131,7 +131,9 @@ public class TryStatement implements Statement, ProgramPrefix {
 
     @Override
     public String toString() {
-        return "try " + expression + " " + body + " " +
+        String returnsString = returnDeclaration.size() == 0 ? "" :
+                "returns (" + returnDeclaration.stream().map(ProgramVariable::parameterString).collect(Collectors.joining(", ")) + ") ";
+        return "try " + expression + " " + returnsString + body + " " +
             catchClauses.stream().map(CatchClause::toString).collect(Collectors.joining());
     }
 

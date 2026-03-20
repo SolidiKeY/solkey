@@ -656,6 +656,26 @@ public class SolJsonParserTest {
     }
 
     @Test
+    void parseTryWithReturn() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function f(address target) public {
+                        try SimpleContract(target).g() returns (int a)
+                        { int b = a;
+                        }
+                        catch { }
+                    }
+                    function g() external pure returns (int) {
+                        return 0;
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        String contractS = contractDec.toString();
+        assertTrue(contractS.contains("SimpleContract(target).g() returns (int default a)"));
+    }
+
+    @Test
     @EnabledOnOs(OS.LINUX)
     void parseTryCatchMoreCases() throws IOException {
         // language=solidity

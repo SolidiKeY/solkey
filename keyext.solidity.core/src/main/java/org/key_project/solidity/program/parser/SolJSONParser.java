@@ -315,7 +315,10 @@ public class SolJSONParser {
                 List<CatchClause> clauses = clausesList.stream().skip(1)
                         .map(this::parseCatchClause)
                         .toList();
-                yield new TryStatement(expression, new ImmutableArray<>(List.of()), body,
+                List<ProgramVariable> returns = statement.findValue("parameters") == null ? List.of() :
+                        statement.findValue("parameters").findValue("parameters")
+                                .valueStream().map(this::parseParam).toList();
+                yield new TryStatement(expression, new ImmutableArray<>(returns), body,
                     new ImmutableArray<>(clauses));
             }
             case "PlaceholderStatement" -> new PlaceholdStatement();
@@ -581,7 +584,7 @@ public class SolJSONParser {
             case null -> switch (expType.toString()) {
                 case "function" -> new FunctionReference(idDecl, name, type);
                 case "contract" -> new ContractReference(idDecl, name, type);
-                default -> throw new RuntimeException("Unknown type " + expType);
+                default -> new ProgramVariable(name, getUndeclaredSolidityType(type), DataLocation.Memory);
             };
             case ProgramVariable programVariable -> programVariable;
             default -> throw new RuntimeException(
