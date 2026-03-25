@@ -624,7 +624,7 @@ public class SolJSONParser {
                 new EnumReference(enumDeclaration, type);
             case null -> switch (expType.toString()) {// TODO: When can this happen?
                 case "function" -> new FunctionReference(idDecl, name, type);
-                case "contract" -> new ContractReference(idDecl, name, type);
+                case "contract" -> new ContractReference(idDecl, name, type); // TODO: When does a contract reference occur that is not a type?
                 default -> throw new RuntimeException("FixMe"); // a new created program variable is not a
                                                                 // reference to an existing one.
                                                                 // This is most likely wrong.
