@@ -26,7 +26,7 @@ public class StructType implements Type, Resolver {
 
     @Override
     public @NonNull Sort getSort(Services services) {
-        return new SortImpl(name, false);
+        return services.getNamespaces().sorts().lookup(name);
     }
 
     @Override

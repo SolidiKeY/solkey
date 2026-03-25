@@ -59,7 +59,7 @@ public class StructDeclaration extends DeclarationClass implements Type, Resolve
 
     @Override
     public @Nullable Sort getSort(Services services) {
-        return new SortImpl(name, false);
+        return services.getNamespaces().sorts().lookup(name);
     }
 
     @Override

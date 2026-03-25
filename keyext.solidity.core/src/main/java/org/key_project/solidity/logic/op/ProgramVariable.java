@@ -32,10 +32,9 @@ import org.jspecify.annotations.NonNull;
  */
 
 public class ProgramVariable extends AbstractSortedOperator
-        implements Expression, UpdateableOperator, IProgramVariable, Resolver, Declaration {
-    private KeYSolidityType type;
-    private int contractId = -1;
-    final private DataLocation location;
+        implements Expression, UpdateableOperator, IProgramVariable {
+    private final KeYSolidityType type;
+    // private final DataLocation dataLocation;
 
     public ProgramVariable(Name name, Sort s, KeYSolidityType type, DataLocation location) {
         super(name, s, Modifier.NONE);
@@ -43,15 +42,8 @@ public class ProgramVariable extends AbstractSortedOperator
         this.location = location;
     }
 
-    public ProgramVariable(Name name, DataLocation location, int contractId) {
-        super(name, null, Modifier.NONE);
-        this.type = null;
-        this.location = location;
-        this.contractId = contractId;
-    }
-
-    public ProgramVariable(Name name, KeYSolidityType type, DataLocation location) {
-        this(name, Objects.requireNonNull(type.getSort(), name.toString()), type, location);
+    public ProgramVariable(Name name, int contractId, KeYSolidityType type) {
+        this(name, Objects.requireNonNull(type.getSort(), name.toString()), type);
     }
 
     @Override
@@ -86,15 +78,6 @@ public class ProgramVariable extends AbstractSortedOperator
             this.sort = sort;
             this.type = new KeYSolidityType(type, sort);
         }
-    }
-
-    public String parameterString() {
-        DataLocation loc = getLocation();
-        return type.name() + (loc.equals(DataLocation.Default) ? "" : " " + loc) + " " + name();
-    }
-
-    public DataLocation getLocation() {
-        return location;
     }
 
     /// TODO: implement

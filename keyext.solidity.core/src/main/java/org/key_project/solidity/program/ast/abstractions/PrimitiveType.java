@@ -67,7 +67,7 @@ public class PrimitiveType implements Type, SyntaxElement {
 
     @Override
     public @Nullable Sort getSort(Services services) {
-        return new SortImpl(name, false);
+        throw new RuntimeException("Not implemented yet");
     }
 
     @Override

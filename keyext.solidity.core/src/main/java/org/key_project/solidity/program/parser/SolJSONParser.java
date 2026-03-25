@@ -15,6 +15,7 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.SolidityInfo;
 import org.key_project.solidity.program.ast.abstractions.*;
@@ -107,6 +108,20 @@ public class SolJSONParser {
         List<ModifierDeclaration> modifiers = new ArrayList<>();
         List<EnumDeclaration> enums = new ArrayList<>();
 
+        SolidityInfo info = services.getSolidityInfo();
+        KeYSolidityType contractType = info.getKeYSolidityType(contractName);
+
+        if (contractType == null) {
+            Sort contractSort = services.getNamespaces().sorts().lookup(contractName);
+            if (contractSort == null) {
+                contractSort = new SortImpl(new Name(contractName), false); // HACK: inheritance
+                services.getNamespaces().sorts().addSafely(contractSort);
+            }
+            contractType = new KeYSolidityType(contractSort);
+        }
+
+        assert contractType.getSolidityType() == null: "Contract has already been parsed";
+
         for (Iterator<JsonNode> it = contractNode.findValue("nodes").elements(); it.hasNext();) {
             final JsonNode node = it.next();
             final String nodeType = node.findValue("nodeType").asText();
@@ -123,7 +138,9 @@ public class SolJSONParser {
         final ContractDeclaration cDecl =
             new ContractDeclaration(new Name(contractName), fields, structs, modifiers,
                 functions, enums);
-        addTypeToServices(cDecl);
+
+        contractType.setSolidityType(cDecl);
+
         id2Name.put(contractId, cDecl);
         completeReferences(cDecl);
         return cDecl;
@@ -422,6 +439,8 @@ public class SolJSONParser {
         if (initializer != null) {
             initializerExp = parseExpression(initializer);
         }
+
+        KeYSolidityType type = getUndeclaredSolidityType(expType);
 
         ProgramVariable programVariable =
             expType == null ? new ProgramVariable(new Name(fieldName), null, idRef)

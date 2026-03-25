@@ -14,22 +14,24 @@ import org.jspecify.annotations.Nullable;
 
 public class MappingType implements Type, SyntaxElement {
 
+    private final Name name;
     private final Type keyType;
     private final Type valueType;
 
     public MappingType(Type keyType, Type valueType) {
         this.keyType = keyType;
         this.valueType = valueType;
+        this.name = new Name("mapping(" + keyType + " => " + valueType.name() + ")");
     }
 
     @Override
     public @NonNull Name name() {
-        return new Name("mapping(" + keyType + " => " + valueType.name() + ")");
+        return name;
     }
 
     @Override
     public @Nullable Sort getSort(Services services) {
-        return new SortImpl(name(), false);
+        throw new RuntimeException("Not implemented yet");
     }
 
     @Override

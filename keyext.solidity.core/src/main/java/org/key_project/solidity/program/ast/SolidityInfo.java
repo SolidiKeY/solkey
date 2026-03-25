@@ -158,7 +158,7 @@ public class SolidityInfo {
             case "function" -> FUNCTION;
             case "contract" -> CONTRACT;
 
-            default -> throw new RuntimeException("Primitive type " + typeS + " does not exist");
+            default -> null;
         };
     }
 

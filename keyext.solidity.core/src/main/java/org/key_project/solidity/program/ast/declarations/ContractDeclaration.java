@@ -99,7 +99,7 @@ public class ContractDeclaration extends DeclarationClass implements Type {
 
     @Override
     public @Nullable Sort getSort(Services services) {
-        return new SortImpl(name, false);
+        return services.getNamespaces().sorts().lookup(name);
     }
 
     @Override
