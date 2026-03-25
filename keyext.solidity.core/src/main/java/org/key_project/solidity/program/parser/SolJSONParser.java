@@ -51,6 +51,10 @@ public class SolJSONParser {
     /// TODO: what if a type under declaration references itself (is that possible in Solidity?)
     private final HashMap<Integer, SyntaxElement> id2Name = new HashMap<>();
 
+    record StaticTypeArray(Type type, int size) {}
+    private final HashMap<StaticTypeArray, ArrayType> staticArrayTypes = new HashMap<>();
+    private final HashMap<Type, DynamicArrayType> dynamicArrayTypes = new HashMap<>();
+
     private final Services services;
 
     public SolJSONParser() {
@@ -354,14 +358,11 @@ public class SolJSONParser {
             String struct = typeNameNode.findValue("baseType").findValue("name").asText();
             Type primitiveType = SolidityInfo.getPrimitiveType(struct);
             Type type;
-            // TODO: Fix below. That is not correct as a new type is always created.
-            // There must always only be one instance for each type.
-            // there has to be a lookup
             if (typeNameNode.has("length")) {
                 int size = typeNameNode.findValue("length").findValue("value").asInt();
-                type = new ArrayType(primitiveType, size);
+                type = getStaticArrayType(primitiveType, size);
             } else {
-                type = new DynamicArrayType(primitiveType);
+                type = getDynamicArrayType(primitiveType);
             }
 
 
@@ -387,6 +388,19 @@ public class SolJSONParser {
             new StatementVariableDeclaration(programVariable);
         id2Name.put(id, memDeclaration);
         return memDeclaration;
+    }
+
+    private @NonNull DynamicArrayType getDynamicArrayType(Type primitiveType) {
+        if(!dynamicArrayTypes.containsKey(primitiveType))
+            dynamicArrayTypes.put(primitiveType, new DynamicArrayType(primitiveType));
+        return dynamicArrayTypes.get(primitiveType);
+    }
+
+    private @NonNull ArrayType getStaticArrayType(Type primitiveType, int size) {
+        StaticTypeArray st = new StaticTypeArray(primitiveType, size);
+        if(!staticArrayTypes.containsKey(st))
+            staticArrayTypes.put(st, new ArrayType(primitiveType, size));
+        return staticArrayTypes.get(st);
     }
 
     private ProgramVariable parseParam(JsonNode node) {
