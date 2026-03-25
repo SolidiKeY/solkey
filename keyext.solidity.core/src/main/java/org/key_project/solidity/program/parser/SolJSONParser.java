@@ -356,6 +356,7 @@ public class SolJSONParser {
             Type type;
             // TODO: Fix below. That is not correct as a new type is always created.
             // There must always only be one instance for each type.
+            // there has to be a lookup
             if (typeNameNode.has("length")) {
                 int size = typeNameNode.findValue("length").findValue("value").asInt();
                 type = new ArrayType(primitiveType, size);
@@ -624,7 +625,7 @@ public class SolJSONParser {
             case null -> switch (expType.toString()) {// TODO: When can this happen?
                 case "function" -> new FunctionReference(idDecl, name, type);
                 case "contract" -> new ContractReference(idDecl, name, type);
-                default -> throw new RuntimeException("FixMe"); // a program variable is not a
+                default -> throw new RuntimeException("FixMe"); // a new created program variable is not a
                                                                 // reference to an existing one.
                                                                 // This is most likely wrong.
                 // new ProgramVariable(name, getUndeclaredSolidityType(type), DataLocation.Memory);
