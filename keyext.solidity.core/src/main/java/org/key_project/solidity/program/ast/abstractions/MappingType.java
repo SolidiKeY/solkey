@@ -11,7 +11,7 @@ import org.key_project.solidity.common.Services;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-public class MappingType implements Type, SyntaxElement {
+public class MappingType implements Type {
 
     private final Name name;
     private final Type keyType;

@@ -14,6 +14,9 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
+// TODO: Where does an array declaration occur?
+// Should that not be simply a statement variable declaration? It seems to be only the type
+// of the declared local variable.
 public class ArrayDeclaration extends DeclarationClass implements SolidityProgramElement {
     private final ProgramVariable programVariable;
 

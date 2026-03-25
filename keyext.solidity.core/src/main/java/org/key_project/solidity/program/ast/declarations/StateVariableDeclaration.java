@@ -27,13 +27,6 @@ public class StateVariableDeclaration extends DeclarationClass {
 
     private final ProgramVariable programVariable;
 
-    public StateVariableDeclaration(ProgramVariable programVariable, Visibility visibility) {
-        super(new ImmutableArray<>());
-        this.programVariable = programVariable;
-        this.initializer = null;
-        this.visibility = visibility;
-    }
-
     public StateVariableDeclaration(ProgramVariable programVariable,
             @Nullable Expression initializer, Visibility visibility) {
         super(new ImmutableArray<>());
