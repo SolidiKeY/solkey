@@ -13,10 +13,18 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.prover.rules.RuleSet;
 import org.key_project.solidity.logic.op.ParametricFunctionDecl;
 import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.logic.sort.ArraySort;
+import org.key_project.solidity.logic.sort.DynamicArraySort;
+import org.key_project.solidity.logic.sort.MappingSort;
 import org.key_project.solidity.logic.sort.ParametricSortDecl;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.key_project.solidity.program.ast.abstractions.ArrayInterface;
+import org.key_project.solidity.program.ast.abstractions.MappingInterface;
+import org.key_project.solidity.program.ast.abstractions.Type;
+
+import java.util.HashMap;
 
 /// Container of namespaces for the logic's signature (sorts, function symbols, predicate symbols
 /// etc.)
@@ -30,6 +38,10 @@ public final class NamespaceSet {
     private Namespace<@NonNull QuantifiableVariable> varNS = new Namespace<>();
     private Namespace<@NonNull RuleSet> ruleSetNS = new Namespace<>();
     private Namespace<@NonNull Choice> choicesNS = new Namespace<>();
+
+    private HashMap<ArrayInterface, Sort> arraySorts = new HashMap<>();
+    private HashMap<Type, Sort> dynamicArraySorts = new HashMap<>();
+    private HashMap<MappingInterface, Sort> mappingSorts = new HashMap<>();
 
     public NamespaceSet() {
     }
@@ -115,6 +127,24 @@ public final class NamespaceSet {
 
     public Namespace<@NonNull Sort> sorts() {
         return sortNS;
+    }
+
+    public Sort getArraySort(ArrayInterface type){
+        if(!arraySorts.containsKey(type))
+            arraySorts.put(type, new ArraySort(type));
+        return arraySorts.get(type);
+    }
+
+    public Sort getDynamicArraySort(Type type){
+        if(!dynamicArraySorts.containsKey(type))
+            dynamicArraySorts.put(type, new DynamicArraySort(type));
+        return dynamicArraySorts.get(type);
+    }
+
+    public Sort getMappingSort(MappingInterface map){
+        if(!mappingSorts.containsKey(map))
+            mappingSorts.put(map, new MappingSort(map));
+        return mappingSorts.get(map);
     }
 
     public void setVariables(Namespace<@NonNull QuantifiableVariable> varNS) {

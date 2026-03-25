@@ -11,24 +11,25 @@ import org.key_project.solidity.common.Services;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-public class ArrayType implements Type, SyntaxElement {
-
+public class ArrayType implements Type, SyntaxElement, ArrayInterface {
     Type type;
     int length;
+    Name name;
 
     public ArrayType(Type type, int length) {
         this.type = type;
         this.length = length;
+        this.name = new Name("Array " + type + " " + length);
     }
 
     @Override
     public @NonNull Name name() {
-        return type.name();
+        return name;
     }
 
     @Override
     public @Nullable Sort getSort(Services services) {
-        throw new RuntimeException("Not implemented yet");
+        return services.getNamespaces().getArraySort(this);
     }
 
     @Override
@@ -36,13 +37,23 @@ public class ArrayType implements Type, SyntaxElement {
         throw new IndexOutOfBoundsException("Array Type has no children");
     }
 
-    public int getLength() {
-        return length;
-    }
-
-
     @Override
     public int getChildCount() {
         return 0;
+    }
+
+    @Override
+    public String toString() {
+        return type + "[" + length + "]";
+    }
+
+    @Override
+    public Type type() {
+        return type;
+    }
+
+    @Override
+    public int length() {
+        return length;
     }
 }

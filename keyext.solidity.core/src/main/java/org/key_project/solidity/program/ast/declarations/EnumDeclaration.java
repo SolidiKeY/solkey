@@ -7,10 +7,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.NonNull;
 import org.key_project.logic.Name;
+import org.key_project.logic.Namespace;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
@@ -65,7 +68,11 @@ public class EnumDeclaration extends DeclarationClass implements Type {
 
     @Override
     public @Nullable Sort getSort(Services services) {
-        return services.getNamespaces().sorts().lookup(name);
+        Namespace<@NonNull Sort> sorts = services.getNamespaces().sorts();
+        Sort sort = sorts.lookup(name);
+        if(sort == null)
+            sorts.add(new SortImpl(name));
+        return sorts.lookup(name);
     }
 
     @Override

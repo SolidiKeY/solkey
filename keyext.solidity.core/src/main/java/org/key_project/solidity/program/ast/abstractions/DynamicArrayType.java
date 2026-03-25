@@ -27,7 +27,7 @@ public class DynamicArrayType implements Type, SyntaxElement {
 
     @Override
     public @Nullable Sort getSort(Services services) {
-        return new SortImpl(name(), false);
+        return services.getNamespaces().getDynamicArraySort(type);
     }
 
     @Override
@@ -38,5 +38,10 @@ public class DynamicArrayType implements Type, SyntaxElement {
     @Override
     public int getChildCount() {
         return 0;
+    }
+
+    @Override
+    public String toString() {
+        return type.toString() + "[]";
     }
 }

@@ -31,6 +31,10 @@ public enum DataLocation implements Modifier {
         return label;
     }
 
+    public String noDefaultSpaceRightString() {
+        return this.equals(Default) ? "" : toString() + " ";
+    }
+
     @Override
     public SyntaxElement getChild(int n) {
         throw new IndexOutOfBoundsException("Data Location has no children");

@@ -49,8 +49,8 @@ public class ArrayDeclaration extends DeclarationClass implements SolidityProgra
         Type type = programVariable.getType();
         String size = "";
         if (type instanceof ArrayType)
-            size = String.valueOf(((ArrayType) type).getLength());
-        return programVariable.sort() + "[" + size + "]" + " memory " + programVariable.name();
+            size = String.valueOf(((ArrayType) type).length());
+        return type + " memory " + programVariable.name();
     }
 
     public void visit(Visitor v) {

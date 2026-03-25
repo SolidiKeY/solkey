@@ -4,12 +4,14 @@
 package org.key_project.solidity.program.ast.abstractions;
 
 import org.key_project.logic.Name;
+import org.key_project.logic.Namespace;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.key_project.solidity.logic.sort.SortImpl;
 
 public class EnumType implements Type, SyntaxElement {
 
@@ -21,7 +23,11 @@ public class EnumType implements Type, SyntaxElement {
 
     @Override
     public @Nullable Sort getSort(Services services) {
-        return services.getNamespaces().sorts().lookup(name);
+        Namespace<@NonNull Sort> sorts = services.getNamespaces().sorts();
+        Sort sort = sorts.lookup(name);
+        if(sort == null)
+            sorts.add(new SortImpl(name));
+        return sorts.lookup(name);
     }
 
     @Override

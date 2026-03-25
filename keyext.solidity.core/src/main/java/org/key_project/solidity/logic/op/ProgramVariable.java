@@ -73,6 +73,10 @@ public class ProgramVariable extends AbstractSortedOperator
         return dataLocation;
     }
 
+    public String typeAndName(){
+        return type.getSolidityType() + " " +  dataLocation.noDefaultSpaceRightString() + name();
+    }
+
     /// TODO: implement
     // @Override
     // public void visit(Visitor v) {

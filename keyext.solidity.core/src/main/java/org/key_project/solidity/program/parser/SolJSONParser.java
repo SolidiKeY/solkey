@@ -470,16 +470,16 @@ public class SolJSONParser {
         // TODO/FIXME: Not sure that this is right. One cannot deduce
         // the declared type of program variable from its
         // initializer expression, e.g. 0 is assigned to uint, uint8 etc.
-        ProgramVariable programVariable = null;
-        throw new RuntimeException("Fix creation of state variables.");
+        ProgramVariable programVariable = new ProgramVariable(new Name(fieldName),
+                getUndeclaredSolidityType(expType), DataLocation.Storage);
         // expType == null ? new ProgramVariable(new Name(fieldName), , idRef)
         // : new ProgramVariable(new Name(fieldName), getUndeclaredSolidityType(expType),
         // DataLocation.Storage);
-        // final StateVariableDeclaration field =
-        // new StateVariableDeclaration(programVariable, initializerExp, visibility);
-        // id2Name.put(id, field);
-        //
-        // return field;
+         final StateVariableDeclaration field =
+             new StateVariableDeclaration(programVariable, initializerExp, visibility);
+         id2Name.put(id, field);
+
+         return field;
     }
 
     private Expression parseExpression(JsonNode initializer) {
@@ -488,11 +488,14 @@ public class SolJSONParser {
         Type expType;
         String type_str =
             initializer.findValue("typeDescriptions").findValue("typeIdentifier").textValue();
+        if(expNode == null && initializer.has("referencedDeclaration"))
+            expNode = initializer;
         if (expNode != null && expNode.has("referencedDeclaration")) {
-            Declaration decl = (Declaration) id2Name.get(initializer.findValue("expression")
-                    .findValue("referencedDeclaration").asInt());
+            SyntaxElement decl = id2Name.get(expNode.findValue("referencedDeclaration").asInt());
             if (decl instanceof Type)
                 expType = (Type) decl;
+            if(decl instanceof ProgramVariable)
+                return (ProgramVariable) decl;
             else
                 expType = getType(type_str);
         } else if (expNode != null && expNode.has("typeName")) {
@@ -623,9 +626,10 @@ public class SolJSONParser {
         final Name name = new Name(nameS);
         final String type_str =
             literal.findValue("typeDescriptions").findValue("typeIdentifier").asText();
+        // TODO: Fix this type
         final Type type = getType(type_str);
 
-        final Declaration declaration = (Declaration) id2Name.get(idDecl);
+        final SyntaxElement declaration = id2Name.get(idDecl);
         return switch (declaration) {
             case StateVariableDeclaration stateVarDeclaration ->
                 new StateVariableReference(name, stateVarDeclaration, type);
@@ -639,10 +643,10 @@ public class SolJSONParser {
             case null -> switch (expType.toString()) {// TODO: When can this happen?
                 case "function" -> new FunctionReference(idDecl, name, type);
                 case "contract" -> new ContractReference(idDecl, name, type); // TODO: When does a contract reference occur that is not a type?
-                default -> throw new RuntimeException("FixMe"); // a new created program variable is not a
-                                                                // reference to an existing one.
-                                                                // This is most likely wrong.
-                // new ProgramVariable(name, getUndeclaredSolidityType(type), DataLocation.Memory);
+                default -> new ProgramVariable(name, getUndeclaredSolidityType(type), DataLocation.Memory);
+//                default -> throw new RuntimeException("FixMe"); // a new created program variable is not a
+//                                                                // reference to an existing one.
+//                                                                // This is most likely wrong.
             };
             case ProgramVariable programVariable -> programVariable;
             default -> throw new RuntimeException(
@@ -686,6 +690,7 @@ public class SolJSONParser {
                 getType(type_parts.subList(2, type_parts.size())));
             case "array" -> new ArrayType(SolidityInfo.getPrimitiveType(type_parts.get(1)), 0);
             case "function", "type", "tuple" -> SolidityInfo.getPrimitiveType(type_parts.get(1));
+            // TODO: enum type should be enum declaration
             case "enum" -> new EnumType(new Name(type_parts.get(1)));
             default ->
                 throw new RuntimeException("Array type " + array_type + " is not implemented");
@@ -720,6 +725,7 @@ public class SolJSONParser {
     }
 
     private @NonNull KeYSolidityType getUndeclaredSolidityType(Type type) {
+        if(type == null) return null;
         final Sort sort = type.getSort(services);
         KeYSolidityType ksType = new KeYSolidityType(type, sort);
         services.getSolidityInfo().addType(sort, ksType);

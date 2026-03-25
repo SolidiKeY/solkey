@@ -11,6 +11,7 @@ import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.util.ExtList;
@@ -59,7 +60,12 @@ public class StructDeclaration extends DeclarationClass implements Type, Resolve
 
     @Override
     public @Nullable Sort getSort(Services services) {
-        return services.getNamespaces().sorts().lookup(name);
+        Sort sort = services.getNamespaces().sorts().lookup(name);
+        if(sort == null){
+            sort = new SortImpl(name);
+            services.getNamespaces().sorts().add(sort);
+        }
+        return sort;
     }
 
     @Override

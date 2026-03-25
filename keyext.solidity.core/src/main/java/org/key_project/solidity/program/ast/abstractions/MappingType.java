@@ -11,7 +11,7 @@ import org.key_project.solidity.common.Services;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-public class MappingType implements Type {
+public class MappingType implements Type, MappingInterface {
 
     private final Name name;
     private final Type keyType;
@@ -30,7 +30,7 @@ public class MappingType implements Type {
 
     @Override
     public @Nullable Sort getSort(Services services) {
-        throw new RuntimeException("Not implemented yet");
+        return services.getNamespaces().getMappingSort(this);
     }
 
     @Override
@@ -46,5 +46,15 @@ public class MappingType implements Type {
     @Override
     public int getChildCount() {
         return 0;
+    }
+
+    @Override
+    public Type keyType() {
+        return keyType;
+    }
+
+    @Override
+    public Type valueType() {
+        return valueType;
     }
 }

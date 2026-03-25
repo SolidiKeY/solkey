@@ -14,6 +14,7 @@ import org.key_project.solidity.common.Services;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.key_project.solidity.logic.sort.SortImpl;
 
 public class PrimitiveType implements Type, SyntaxElement {
 
@@ -66,7 +67,8 @@ public class PrimitiveType implements Type, SyntaxElement {
 
     @Override
     public @Nullable Sort getSort(Services services) {
-        throw new RuntimeException("Not implemented yet");
+        return new SortImpl(name, false);
+//        throw new RuntimeException("Not implemented yet");
     }
 
     @Override
