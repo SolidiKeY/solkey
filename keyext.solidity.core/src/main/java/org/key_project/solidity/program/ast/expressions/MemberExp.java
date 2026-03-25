@@ -9,7 +9,6 @@ import java.util.Objects;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
-import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
@@ -63,7 +62,7 @@ public class MemberExp extends SolidityExpression implements Resolver {
     }
 
     @Override
-    public void resolve(HashMap<Integer, Declaration> id2Name) {
+    public void resolve(HashMap<Integer, SyntaxElement> id2Name) {
         if (id != -1)
             rightExp = id2Name.get(id);
 

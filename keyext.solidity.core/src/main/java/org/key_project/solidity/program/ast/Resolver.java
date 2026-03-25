@@ -5,8 +5,8 @@ package org.key_project.solidity.program.ast;
 
 import java.util.HashMap;
 
-import org.key_project.solidity.program.ast.declarations.Declaration;
+import org.key_project.logic.SyntaxElement;
 
 public interface Resolver {
-    void resolve(HashMap<Integer, Declaration> id2Name);
+    void resolve(HashMap<Integer, SyntaxElement> id2Name);
 }

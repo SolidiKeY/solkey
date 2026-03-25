@@ -93,11 +93,12 @@ public class FunctionDeclaration extends DeclarationClass {
     @Override
     public String toString() {
         StringBuffer strBuffer = new StringBuffer();
+        String params = inputParameters.stream().map(ProgramVariable::toString)
+                .collect(Collectors.joining(", "));
         strBuffer.append("function ");
         strBuffer.append(name)
                 .append(" (")
-                .append(inputParameters.stream().map(ProgramVariable::parameterString)
-                        .collect(Collectors.joining(", ")))
+                .append(inputParameters)
                 .append(") ")
                 .append(visibility)
                 .append(" ")

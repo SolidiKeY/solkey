@@ -46,12 +46,13 @@ public class HirSolidityReader {
         return readBlock(block, context, new Namespace<>());
     }
 
-    public SolidityBlock readBlock(String block, Context context, Namespace<ProgramSV> schemaVariables) throws IOException {
+    public SolidityBlock readBlock(String block, Context context,
+            Namespace<ProgramSV> schemaVariables) throws IOException {
         SolcParser solcParser = new SolcParser(services);
         if (context.getSolidityPath() != null)
             solcParser.getDeclStrJsonParser(context.getSolidityPath());
         SolidityToKeyConverter stk =
-                new SolidityToKeyConverter(services, context.getVarNS(), schemaVariables);
+            new SolidityToKeyConverter(services, context.getVarNS(), schemaVariables);
 
         CodePointCharStream input = CharStreams.fromString(block);
         SolidityLexer lexer = new SolidityLexer(input);

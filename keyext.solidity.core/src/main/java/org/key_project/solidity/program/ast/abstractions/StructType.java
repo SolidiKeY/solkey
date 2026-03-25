@@ -9,9 +9,7 @@ import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
-import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.Resolver;
-import org.key_project.solidity.program.ast.declarations.Declaration;
 
 import org.jspecify.annotations.NonNull;
 
@@ -50,7 +48,7 @@ public class StructType implements Type, Resolver {
     }
 
     @Override
-    public void resolve(HashMap<Integer, Declaration> id2Name) {
+    public void resolve(HashMap<Integer, SyntaxElement> id2Name) {
         return;
     }
 }

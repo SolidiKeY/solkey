@@ -52,7 +52,8 @@ public class HIRTest {
     @Test
     void referenceSameProgVar() throws IOException {
         Namespace<ProgramVariable> varNS = new Namespace<>();
-        KeYSolidityType ksType = new KeYSolidityType(PrimitiveType.UINT, new SortImpl(new Name("UINT")));
+        KeYSolidityType ksType =
+            new KeYSolidityType(PrimitiveType.UINT, new SortImpl(new Name("UINT")));
         ProgramVariable x = new ProgramVariable(new Name("x"), ksType, null);
         varNS.add(x);
         Block block = (Block) hir.readBlockWithProgramVariables(varNS, "{ x = 1; }").program();

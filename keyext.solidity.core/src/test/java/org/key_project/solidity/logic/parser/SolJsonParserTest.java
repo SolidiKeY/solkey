@@ -44,7 +44,8 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         assertEquals(1, contractDeclaration.getFieldDeclarations().size());
-        assertEquals(Storage, contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getLocation());
+        assertEquals(Storage,
+            contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getLocation());
     }
 
     @Test
@@ -190,7 +191,8 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         assertTrue(contractDec.toString().contains("int256 v"));
-        assertEquals(Default, ((ProgramVariable) contractDec.getChild(0).getChild(0).getChild(0).getChild(0).getChild(0)).getLocation());
+        assertEquals(Default, ((ProgramVariable) contractDec.getChild(0).getChild(0).getChild(0)
+                .getChild(0).getChild(0)).getLocation());
     }
 
     @Test
@@ -338,7 +340,8 @@ public class SolJsonParserTest {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         String structName = contractDeclaration.getStructs().get(0).name().toString();
         assertEquals("SimpleContract.Person", structName);
-        assertEquals(Memory, contractDeclaration.getFunctions().get(0).getInputParameters().get(0).getLocation());
+        assertEquals(Memory,
+            contractDeclaration.getFunctions().get(0).getInputParameters().get(0).getLocation());
     }
 
     @Test
@@ -355,7 +358,8 @@ public class SolJsonParserTest {
         List<StructDeclaration> structs = contractDeclaration.getStructs();
         assertEquals(1, structs.size());
         assertEquals(1, structs.getFirst().getFields().size());
-        assertEquals(Storage, contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getLocation());
+        assertEquals(Storage,
+            contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getLocation());
     }
 
     @Test
@@ -422,7 +426,8 @@ public class SolJsonParserTest {
                     }
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
-        ProgramVariable bob = (ProgramVariable) contractDeclaration.getFunctions().get(0).getBody().getStatements().get(0).getChild(0).getChild(0);
+        ProgramVariable bob = (ProgramVariable) contractDeclaration.getFunctions().get(0).getBody()
+                .getStatements().get(0).getChild(0).getChild(0);
         assertEquals("bob", bob.name().toString());
         assertEquals(Storage, bob.getLocation());
     }

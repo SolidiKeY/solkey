@@ -10,9 +10,10 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
-import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 
 public class ContractReference extends SolidityExpression implements Resolver, VariableReference {
 
@@ -55,7 +56,7 @@ public class ContractReference extends SolidityExpression implements Resolver, V
     }
 
     @Override
-    public void resolve(HashMap<Integer, Declaration> id2Name) {
+    public void resolve(@MonotonicNonNull HashMap<Integer, SyntaxElement> id2Name) {
         this.contractDeclaration = (ContractDeclaration) id2Name.get(id);
     }
 

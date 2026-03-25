@@ -3,11 +3,12 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.declarations;
 
+import java.util.List;
+
 import org.key_project.logic.SyntaxElement;
 import org.key_project.util.collection.ImmutableArray;
 
-import java.util.List;
-
 public interface Declaration extends SyntaxElement {
+    // TODO: Why this static field?
     ImmutableArray<Modifier> modifiers = new ImmutableArray<>(List.of());
 }

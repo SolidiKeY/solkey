@@ -49,7 +49,7 @@ public class SolJSONParser {
     /// keeps track of JSON ids assigned to declarations, required for resolving field references,
     /// types etc.
     /// TODO: what if a type under declaration references itself (is that possible in Solidity?)
-    private final HashMap<Integer, Declaration> id2Name = new HashMap<>();
+    private final HashMap<Integer, SyntaxElement> id2Name = new HashMap<>();
 
     private final Services services;
 
@@ -120,7 +120,7 @@ public class SolJSONParser {
             contractType = new KeYSolidityType(contractSort);
         }
 
-        assert contractType.getSolidityType() == null: "Contract has already been parsed";
+        assert contractType.getSolidityType() == null : "Contract has already been parsed";
 
         for (Iterator<JsonNode> it = contractNode.findValue("nodes").elements(); it.hasNext();) {
             final JsonNode node = it.next();
@@ -332,9 +332,10 @@ public class SolJSONParser {
                 List<CatchClause> clauses = clausesList.stream().skip(1)
                         .map(this::parseCatchClause)
                         .toList();
-                List<ProgramVariable> returns = statement.findValue("parameters") == null ? List.of() :
-                        statement.findValue("parameters").findValue("parameters")
-                                .valueStream().map(this::parseParam).toList();
+                List<ProgramVariable> returns =
+                    statement.findValue("parameters") == null ? List.of()
+                            : statement.findValue("parameters").findValue("parameters")
+                                    .valueStream().map(this::parseParam).toList();
                 yield new TryStatement(expression, new ImmutableArray<>(returns), body,
                     new ImmutableArray<>(clauses));
             }
@@ -353,17 +354,19 @@ public class SolJSONParser {
             String struct = typeNameNode.findValue("baseType").findValue("name").asText();
             Type primitiveType = SolidityInfo.getPrimitiveType(struct);
             Type type;
-            if(typeNameNode.has("length")){
+            // TODO: Fix below. That is not correct as a new type is always created.
+            // There must always only be one instance for each type.
+            if (typeNameNode.has("length")) {
                 int size = typeNameNode.findValue("length").findValue("value").asInt();
                 type = new ArrayType(primitiveType, size);
-            }
-            else {
+            } else {
                 type = new DynamicArrayType(primitiveType);
             }
 
 
             KeYSolidityType ksType = getUndeclaredSolidityType(type);
-            ProgramVariable programVariable = new ProgramVariable(name, ksType, DataLocation.fromString(declaration.findValue("storageLocation").asText()));
+            ProgramVariable programVariable = new ProgramVariable(name, ksType.getSort(), ksType,
+                DataLocation.fromString(declaration.findValue("storageLocation").asText()));
             ArrayDeclaration array = new ArrayDeclaration(programVariable);
 
             id2Name.put(id, array);
@@ -377,8 +380,10 @@ public class SolJSONParser {
                 : getType(typeNameNode.findValue("typeDescriptions")
                         .findValue("typeIdentifier").asText());
         KeYSolidityType ksType = getUndeclaredSolidityType(type);
-        ProgramVariable programVariable = new ProgramVariable(name, ksType, dataLocation);
-        StatementVariableDeclaration memDeclaration = new StatementVariableDeclaration(programVariable);
+        ProgramVariable programVariable =
+            new ProgramVariable(name, ksType.getSort(), ksType, dataLocation);
+        StatementVariableDeclaration memDeclaration =
+            new StatementVariableDeclaration(programVariable);
         id2Name.put(id, memDeclaration);
         return memDeclaration;
     }
@@ -392,17 +397,20 @@ public class SolJSONParser {
         final DataLocation dataLocation = DataLocation.fromString(dataLocationS);
 
         ProgramVariable programVariable;
-        if(node.findValue("typeName").has("referencedDeclaration")){
+        if (node.findValue("typeName").has("referencedDeclaration")) {
             int typeId = node.findValue("typeName").findValue("referencedDeclaration").asInt();
             Type typeRef = (Type) id2Name.get(typeId);
 
-            programVariable = new ProgramVariable(new Name(fieldName), getUndeclaredSolidityType(typeRef), dataLocation);
-        }
-        else {
+            final KeYSolidityType kst = getUndeclaredSolidityType(typeRef);
+            programVariable = new ProgramVariable(new Name(fieldName),
+                kst.getSort(), kst, dataLocation);
+        } else {
             Type type = parseType(node.findValue("typeName"));
-            programVariable = new ProgramVariable(new Name(fieldName), getUndeclaredSolidityType(type) , dataLocation);
+            final KeYSolidityType kst = getUndeclaredSolidityType(type);
+            programVariable = new ProgramVariable(new Name(fieldName),
+                kst.getSort(), kst, dataLocation);
         }
-
+        // TODO: a program variable is not a declaration and should not be
         id2Name.put(id, programVariable);
 
         return programVariable;
@@ -413,7 +421,8 @@ public class SolJSONParser {
         return switch (typeName) {
             case "ElementaryTypeName" -> getPrimitiveType(node.findValue("name").asText());
             case "ArrayTypeName" -> new ArrayType(parseType(node.findValue("baseType")), -1);
-            case "Mapping" -> new MappingType(parseType(node.findValue("keyType")), parseType(node.findValue("valueType")));
+            case "Mapping" -> new MappingType(parseType(node.findValue("keyType")),
+                parseType(node.findValue("valueType")));
             default -> throw new RuntimeException("Type " + typeName + " not covered");
         };
     }
@@ -442,14 +451,20 @@ public class SolJSONParser {
 
         KeYSolidityType type = getUndeclaredSolidityType(expType);
 
-        ProgramVariable programVariable =
-            expType == null ? new ProgramVariable(new Name(fieldName), null, idRef)
-                    : new ProgramVariable(new Name(fieldName), getUndeclaredSolidityType(expType), DataLocation.Storage);
-        final StateVariableDeclaration field =
-            new StateVariableDeclaration(programVariable, initializerExp, visibility);
-        id2Name.put(id, field);
 
-        return field;
+        // TODO/FIXME: Not sure that this is right. One cannot deduce
+        // the declared type of program variable from its
+        // initializer expression, e.g. 0 is assigned to uint, uint8 etc.
+        ProgramVariable programVariable = null;
+        throw new RuntimeException("Fix creation of state variables.");
+        // expType == null ? new ProgramVariable(new Name(fieldName), , idRef)
+        // : new ProgramVariable(new Name(fieldName), getUndeclaredSolidityType(expType),
+        // DataLocation.Storage);
+        // final StateVariableDeclaration field =
+        // new StateVariableDeclaration(programVariable, initializerExp, visibility);
+        // id2Name.put(id, field);
+        //
+        // return field;
     }
 
     private Expression parseExpression(JsonNode initializer) {
@@ -459,7 +474,7 @@ public class SolJSONParser {
         String type_str =
             initializer.findValue("typeDescriptions").findValue("typeIdentifier").textValue();
         if (expNode != null && expNode.has("referencedDeclaration")) {
-            Declaration decl = id2Name.get(initializer.findValue("expression")
+            Declaration decl = (Declaration) id2Name.get(initializer.findValue("expression")
                     .findValue("referencedDeclaration").asInt());
             if (decl instanceof Type)
                 expType = (Type) decl;
@@ -543,7 +558,7 @@ public class SolJSONParser {
     }
 
     private ProgramVariable getProgramVariable(int idLeftRef) {
-        Declaration declaration = id2Name.get(idLeftRef);
+        Declaration declaration = (Declaration) id2Name.get(idLeftRef);
 
         return switch (declaration) {
             case StateVariableDeclaration stateVarDeclaration ->
@@ -595,7 +610,7 @@ public class SolJSONParser {
             literal.findValue("typeDescriptions").findValue("typeIdentifier").asText();
         final Type type = getType(type_str);
 
-        final Declaration declaration = id2Name.get(idDecl);
+        final Declaration declaration = (Declaration) id2Name.get(idDecl);
         return switch (declaration) {
             case StateVariableDeclaration stateVarDeclaration ->
                 new StateVariableReference(name, stateVarDeclaration, type);
@@ -606,10 +621,13 @@ public class SolJSONParser {
                 stmVarDeclaration.getProgramVariable();
             case EnumDeclaration enumDeclaration ->
                 new EnumReference(enumDeclaration, type);
-            case null -> switch (expType.toString()) {
+            case null -> switch (expType.toString()) {// TODO: When can this happen?
                 case "function" -> new FunctionReference(idDecl, name, type);
                 case "contract" -> new ContractReference(idDecl, name, type);
-                default -> new ProgramVariable(name, getUndeclaredSolidityType(type), DataLocation.Memory);
+                default -> throw new RuntimeException("FixMe"); // a program variable is not a
+                                                                // reference to an existing one.
+                                                                // This is most likely wrong.
+                // new ProgramVariable(name, getUndeclaredSolidityType(type), DataLocation.Memory);
             };
             case ProgramVariable programVariable -> programVariable;
             default -> throw new RuntimeException(

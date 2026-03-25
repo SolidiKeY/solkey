@@ -75,12 +75,8 @@ public class KeYSolidityType implements Type {
         if (o == null || o.getClass() != this.getClass()) {
             return false;
         }
-        try {
-            return Objects.equals(solidityType, ((KeYSolidityType) o).solidityType)
-                    && Objects.equals(sort, ((KeYSolidityType) o).sort);
-        } catch (Exception e) {
-            return false;
-        }
+        return Objects.equals(solidityType, ((KeYSolidityType) o).solidityType)
+                && Objects.equals(sort, ((KeYSolidityType) o).sort);
     }
 
     @Override

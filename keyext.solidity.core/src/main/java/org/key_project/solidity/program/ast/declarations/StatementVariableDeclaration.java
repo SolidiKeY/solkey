@@ -16,7 +16,8 @@ import org.key_project.util.collection.ImmutableArray;
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Default;
 
 //
-public class StatementVariableDeclaration extends DeclarationClass implements SolidityProgramElement {
+public class StatementVariableDeclaration extends DeclarationClass
+        implements SolidityProgramElement {
     private final ProgramVariable programVariable;
 
     public StatementVariableDeclaration(ProgramVariable programVariable) {

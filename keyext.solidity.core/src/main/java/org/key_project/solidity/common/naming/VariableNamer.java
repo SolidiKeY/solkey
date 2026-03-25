@@ -143,7 +143,8 @@ public class VariableNamer {
 
         ProgramVariable newVar = var;
         if (!newName.equals(name)) {
-            newVar = new ProgramVariable(newName, var.getKeYSolidityType(), null);
+            newVar = new ProgramVariable(newName, var.sort(), var.getKeYSolidityType(),
+                var.getLocation());
             map.put(var, newVar);
             renamingHistory = map;
         }

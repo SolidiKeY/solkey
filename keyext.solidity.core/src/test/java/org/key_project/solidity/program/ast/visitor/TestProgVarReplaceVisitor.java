@@ -67,15 +67,15 @@ class TestProgVarReplaceVisitor {
     @Test
     void testReplacement() {
         Expression original = new ProgramVariable(new Name("original"), uintKST, null); // <-
-                                                                                  // here
-                                                                                  // actual
-                                                                                  // statement
-                                                                                  // needed
+        // here
+        // actual
+        // statement
+        // needed
         Expression replacement = new ProgramVariable(new Name("replacement"), uintKST, null); // <-
-                                                                                        // here
-                                                                                        // actual
-                                                                                        // statement
-                                                                                        // needed
+        // here
+        // actual
+        // statement
+        // needed
 
         map.put((ProgramVariable) original, (ProgramVariable) replacement);
 

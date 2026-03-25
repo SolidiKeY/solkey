@@ -250,7 +250,8 @@ public class SolidityToKeyConverterTest {
     @Test
     void structType() {
         DeclarationStatement stm = (DeclarationStatement) parseStatement("Person memory alice;");
-        ProgramVariable alice = ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable();
+        ProgramVariable alice =
+            ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable();
         assertEquals("alice", alice.name().toString());
         assertEquals(Memory, alice.getLocation());
     }

@@ -31,7 +31,8 @@ public class ParserForTesting {
     private static SolidityToKeyConverter solConverter() {
         Services services = new Services();
 
-        KeYSolidityType ksType = new KeYSolidityType(PrimitiveType.UINT, new SortImpl(new Name("UINT")));
+        KeYSolidityType ksType =
+            new KeYSolidityType(PrimitiveType.UINT, new SortImpl(new Name("UINT")));
         ProgramVariable px = new ProgramVariable(new Name("x"), ksType, null);
         ProgramVariable pf = new ProgramVariable(new Name("f"), ksType, null);
         ProgramVariable pv = new ProgramVariable(new Name("v"), ksType, null);

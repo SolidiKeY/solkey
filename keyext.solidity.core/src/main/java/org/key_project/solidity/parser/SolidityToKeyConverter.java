@@ -192,7 +192,8 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
             Expression initial) {
         KeYSolidityType ksType = (KeYSolidityType) visitTypeName(ctx.typeName());
         ProgramVariable programVariable =
-            new ProgramVariable(new Name(ctx.identifier().Identifier().getText()), ksType, (DataLocation) visitStorageLocation(ctx.storageLocation()));
+            new ProgramVariable(new Name(ctx.identifier().Identifier().getText()), ksType.getSort(),
+                ksType, (DataLocation) visitStorageLocation(ctx.storageLocation()));
         localVars.add(programVariable);
         StatementVariableDeclaration stmDecl =
             new StatementVariableDeclaration(programVariable);
@@ -312,7 +313,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitStorageLocation(StorageLocationContext ctx) {
-        if(ctx == null)
+        if (ctx == null)
             return Default;
         String location = ctx.getText();
         return DataLocation.fromString(location);

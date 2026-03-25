@@ -9,7 +9,6 @@ import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
-import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
@@ -41,7 +40,7 @@ public class FunctionReference extends SolidityExpression implements Resolver, V
     }
 
     @Override
-    public void resolve(HashMap<Integer, Declaration> id2Name) {
+    public void resolve(HashMap<Integer, SyntaxElement> id2Name) {
         if (this.referencedDeclaration == null)
             this.referencedDeclaration = (FunctionDeclaration) id2Name.get(id);
         else
