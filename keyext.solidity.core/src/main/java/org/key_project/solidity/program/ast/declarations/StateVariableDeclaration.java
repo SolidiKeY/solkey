@@ -3,11 +3,13 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.declarations;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.program.ast.ResolverProgVar;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.expressions.Expression;
@@ -16,7 +18,7 @@ import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.Nullable;
 
-public class StateVariableDeclaration extends DeclarationClass {
+public class StateVariableDeclaration extends DeclarationClass implements ResolverProgVar {
 
     private final @Nullable Expression initializer;
     private final Visibility visibility;
@@ -25,12 +27,22 @@ public class StateVariableDeclaration extends DeclarationClass {
         return programVariable;
     }
 
-    private final ProgramVariable programVariable;
+    private ProgramVariable programVariable;
+    int programVariableId = -1;
 
     public StateVariableDeclaration(ProgramVariable programVariable,
             @Nullable Expression initializer, Visibility visibility) {
         super(new ImmutableArray<>());
         this.programVariable = programVariable;
+        this.initializer = initializer;
+        this.visibility = visibility;
+    }
+
+    public StateVariableDeclaration(int programVariableId,
+                                    @Nullable Expression initializer, Visibility visibility) {
+        super(new ImmutableArray<>());
+        this.programVariable = null;
+        this.programVariableId = programVariableId;
         this.initializer = initializer;
         this.visibility = visibility;
     }
@@ -50,7 +62,7 @@ public class StateVariableDeclaration extends DeclarationClass {
     // Syntax Element interface
     @Override
     public int getChildCount() {
-        return initializer == null ? 1 : 2;
+        return initializer == null ? 0 : 1 + (programVariable == null ? 0 : 1);
     }
 
     @Override
@@ -59,7 +71,7 @@ public class StateVariableDeclaration extends DeclarationClass {
             throw new IndexOutOfBoundsException(
                 "No child at index " + i + " in " + programVariable.name());
         }
-        if (i == 0) {
+        if (i == 0 && programVariable != null) {
             return programVariable;
         }
         return initializer;
@@ -76,5 +88,11 @@ public class StateVariableDeclaration extends DeclarationClass {
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.joining(" "))
             + ";";
+    }
+
+    @Override
+    public void resolve(HashMap<Integer, ProgramVariable> id2ProgVar) {
+        if(programVariable == null)
+            programVariable = id2ProgVar.get(programVariableId);
     }
 }

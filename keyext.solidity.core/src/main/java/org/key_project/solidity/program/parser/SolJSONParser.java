@@ -14,9 +14,11 @@ import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.UndeclaredProgramVariable;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.Resolver;
+import org.key_project.solidity.program.ast.ResolverProgVar;
 import org.key_project.solidity.program.ast.SolidityInfo;
 import org.key_project.solidity.program.ast.abstractions.*;
 import org.key_project.solidity.program.ast.declarations.*;
@@ -50,6 +52,8 @@ public class SolJSONParser {
     /// types etc.
     /// TODO: what if a type under declaration references itself (is that possible in Solidity?)
     private final HashMap<Integer, SyntaxElement> id2Name = new HashMap<>();
+    private final HashMap<Integer, UndeclaredProgramVariable> id2UndeclaredProgVar = new HashMap<>();
+    private final HashMap<Integer, ProgramVariable> id2ProgVar = new HashMap<>();
 
     record StaticTypeArray(Type type, int size) {}
     private final HashMap<StaticTypeArray, ArrayType> staticArrayTypes = new HashMap<>();
@@ -146,8 +150,19 @@ public class SolJSONParser {
         contractType.setSolidityType(cDecl);
 
         id2Name.put(contractId, cDecl);
+        fixProgramVariables();
         completeReferences(cDecl);
         return cDecl;
+    }
+
+    private void fixProgramVariables() {
+        for(int id: id2UndeclaredProgVar.keySet()){
+            UndeclaredProgramVariable undeclaredProgramVariable = id2UndeclaredProgVar.get(id);
+            Type type = (Type) id2Name.get(undeclaredProgramVariable.contractId);
+            KeYSolidityType kType = getUndeclaredSolidityType(type);
+            ProgramVariable programVariable = undeclaredProgramVariable.getProgramVariable(kType);
+            id2ProgVar.put(id, programVariable);
+        }
     }
 
     private void completeReferences(SyntaxElement cDecl) {
@@ -156,6 +171,8 @@ public class SolJSONParser {
         for (SyntaxElement el : elements) {
             if (el instanceof Resolver)
                 ((Resolver) el).resolve(id2Name);
+            if(el instanceof ResolverProgVar)
+                ((ResolverProgVar) el).resolve(id2ProgVar);
         }
     }
 
@@ -466,17 +483,24 @@ public class SolJSONParser {
 
         KeYSolidityType type = getUndeclaredSolidityType(expType);
 
-
-        // TODO/FIXME: Not sure that this is right. One cannot deduce
-        // the declared type of program variable from its
-        // initializer expression, e.g. 0 is assigned to uint, uint8 etc.
-        ProgramVariable programVariable = new ProgramVariable(new Name(fieldName),
-                getUndeclaredSolidityType(expType), DataLocation.Storage);
-        // expType == null ? new ProgramVariable(new Name(fieldName), , idRef)
-        // : new ProgramVariable(new Name(fieldName), getUndeclaredSolidityType(expType),
-        // DataLocation.Storage);
-         final StateVariableDeclaration field =
-             new StateVariableDeclaration(programVariable, initializerExp, visibility);
+        StateVariableDeclaration field;
+        if(type == null){
+            UndeclaredProgramVariable programVariable =
+                    new UndeclaredProgramVariable(new Name(fieldName), DataLocation.Storage, idRef);
+            id2UndeclaredProgVar.put(id, programVariable);
+            field = new StateVariableDeclaration(id, initializerExp, visibility);
+        }
+        else {
+            // TODO/FIXME: Not sure that this is right. One cannot deduce
+            // the declared type of program variable from its
+            // initializer expression, e.g. 0 is assigned to uint, uint8 etc.
+            ProgramVariable programVariable = new ProgramVariable(new Name(fieldName),
+                    getUndeclaredSolidityType(expType), DataLocation.Storage);
+            // expType == null ? new ProgramVariable(new Name(fieldName), , idRef)
+            // : new ProgramVariable(new Name(fieldName), getUndeclaredSolidityType(expType),
+            // DataLocation.Storage);
+            field = new StateVariableDeclaration(programVariable, initializerExp, visibility);
+        }
          id2Name.put(id, field);
 
          return field;
