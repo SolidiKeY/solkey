@@ -518,8 +518,10 @@ public class SolJSONParser {
             SyntaxElement decl = id2Name.get(expNode.findValue("referencedDeclaration").asInt());
             if (decl instanceof Type)
                 expType = (Type) decl;
-            if(decl instanceof ProgramVariable)
+            else if(decl instanceof ProgramVariable)
                 return (ProgramVariable) decl;
+            else if (decl instanceof StatementVariableDeclaration)
+                expType = ((StatementVariableDeclaration) decl).getProgramVariable().getType();
             else
                 expType = getType(type_str);
         } else if (expNode != null && expNode.has("typeName")) {
@@ -644,14 +646,10 @@ public class SolJSONParser {
         return ParserUtils.parseBinaryOperation(leftExpression, rightExpression, operator, expType);
     }
 
-    private Expression parseIdentifier(Type expType, JsonNode literal) {
+    private Expression parseIdentifier(Type type, JsonNode literal) {
         final int idDecl = literal.findValue("referencedDeclaration").asInt();
         final String nameS = literal.findValue("name").asText();
         final Name name = new Name(nameS);
-        final String type_str =
-            literal.findValue("typeDescriptions").findValue("typeIdentifier").asText();
-        // TODO: Fix this type
-        final Type type = getType(type_str);
 
         final SyntaxElement declaration = id2Name.get(idDecl);
         return switch (declaration) {
@@ -664,7 +662,7 @@ public class SolJSONParser {
                 stmVarDeclaration.getProgramVariable();
             case EnumDeclaration enumDeclaration ->
                 new EnumReference(enumDeclaration, type);
-            case null -> switch (expType.toString()) {// TODO: When can this happen?
+            case null -> switch (type.toString()) {// TODO: When can this happen?
                 case "function" -> new FunctionReference(idDecl, name, type);
                 case "contract" -> new ContractReference(idDecl, name, type); // TODO: When does a contract reference occur that is not a type?
                 default -> new ProgramVariable(name, getUndeclaredSolidityType(type), DataLocation.Memory);
@@ -710,12 +708,8 @@ public class SolJSONParser {
         }
         return switch (array_type) {
             case "" -> SolidityInfo.getPrimitiveType(type_parts.getFirst());
-            case "mapping" -> new MappingType(SolidityInfo.getPrimitiveType(type_parts.get(1)),
-                getType(type_parts.subList(2, type_parts.size())));
             case "array" -> new ArrayType(SolidityInfo.getPrimitiveType(type_parts.get(1)), 0);
             case "function", "type", "tuple" -> SolidityInfo.getPrimitiveType(type_parts.get(1));
-            // TODO: enum type should be enum declaration
-            case "enum" -> new EnumType(new Name(type_parts.get(1)));
             default ->
                 throw new RuntimeException("Array type " + array_type + " is not implemented");
         };
