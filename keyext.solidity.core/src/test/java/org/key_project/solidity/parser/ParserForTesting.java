@@ -12,7 +12,7 @@ import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
-import org.key_project.solidity.program.ast.abstractions.StructType;
+import org.key_project.solidity.program.ast.declarations.StructDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.program.ast.statement.Statement;
@@ -21,6 +21,8 @@ import org.key_project.solidity.rule.sv.ProgramSV;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
+
+import java.util.List;
 
 import static org.key_project.solidity.rule.sv.SchemaVariableFactory.createProgramSV;
 
@@ -48,11 +50,10 @@ public class ParserForTesting {
         schemaVariables.add(sv);
         schemaVariables.add(svv);
 
-        Name contractName = new Name("Contract");
         Name structName = new Name("Person");
-        StructType structType = new StructType(contractName, structName);
-        final Sort sort = structType.getSort(services);
-        KeYSolidityType ksStructType = new KeYSolidityType(structType, sort);
+        StructDeclaration structDeclaration = new StructDeclaration(structName, List.of(), -1);
+        final Sort sort = structDeclaration.getSort(services);
+        KeYSolidityType ksStructType = new KeYSolidityType(structDeclaration, sort);
         services.getSolidityInfo().addType(sort, ksStructType);
         services.getNamespaces().sorts().add(sort);
 
