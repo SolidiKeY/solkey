@@ -8,6 +8,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 
 import org.key_project.logic.Name;
+import org.key_project.logic.Namespace;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
@@ -67,8 +68,11 @@ public class PrimitiveType implements Type, SyntaxElement {
 
     @Override
     public @Nullable Sort getSort(Services services) {
-        return new SortImpl(name, false);
-//        throw new RuntimeException("Not implemented yet");
+        Namespace<@NonNull Sort> sorts = services.getNamespaces().sorts();
+        Sort sort = sorts.lookup(name);
+        if(sort == null)
+            sorts.add(new SortImpl(name, false));
+        return sorts.lookup(name);
     }
 
     @Override
