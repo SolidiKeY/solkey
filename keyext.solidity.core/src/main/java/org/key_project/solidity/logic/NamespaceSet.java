@@ -39,9 +39,9 @@ public final class NamespaceSet {
     private Namespace<@NonNull RuleSet> ruleSetNS = new Namespace<>();
     private Namespace<@NonNull Choice> choicesNS = new Namespace<>();
 
-    private HashMap<ArrayInterface, Sort> arraySorts = new HashMap<>();
-    private HashMap<Type, Sort> dynamicArraySorts = new HashMap<>();
-    private HashMap<MappingInterface, Sort> mappingSorts = new HashMap<>();
+    private HashMap<ArrayInterface, ArraySort> arraySorts = new HashMap<>();
+    private HashMap<Type, DynamicArraySort> dynamicArraySorts = new HashMap<>();
+    private HashMap<MappingInterface, MappingSort> mappingSorts = new HashMap<>();
 
     public NamespaceSet() {
     }
@@ -129,19 +129,19 @@ public final class NamespaceSet {
         return sortNS;
     }
 
-    public Sort getArraySort(ArrayInterface type){
+    public ArraySort getArraySort(ArrayInterface type){
         if(!arraySorts.containsKey(type))
             arraySorts.put(type, new ArraySort(type));
         return arraySorts.get(type);
     }
 
-    public Sort getDynamicArraySort(Type type){
+    public DynamicArraySort getDynamicArraySort(Type type){
         if(!dynamicArraySorts.containsKey(type))
             dynamicArraySorts.put(type, new DynamicArraySort(type));
         return dynamicArraySorts.get(type);
     }
 
-    public Sort getMappingSort(MappingInterface map){
+    public MappingSort getMappingSort(MappingInterface map){
         if(!mappingSorts.containsKey(map))
             mappingSorts.put(map, new MappingSort(map));
         return mappingSorts.get(map);
