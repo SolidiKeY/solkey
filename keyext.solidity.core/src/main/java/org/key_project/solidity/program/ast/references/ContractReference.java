@@ -18,7 +18,6 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 public class ContractReference extends SolidityExpression implements Resolver, VariableReference {
 
     public int id;
-    public final Name name;
 
     public ContractDeclaration getContractDeclaration() {
         return contractDeclaration;
@@ -26,17 +25,14 @@ public class ContractReference extends SolidityExpression implements Resolver, V
 
     private ContractDeclaration contractDeclaration;
 
-    public ContractReference(int id, Name name, Type type) {
+    public ContractReference(int id, Type type) {
         super(type);
         this.id = id;
-        this.name = name;
     }
 
-    public ContractReference(ContractDeclaration contractDeclaration, Type type, int id,
-            Name name) {
+    public ContractReference(ContractDeclaration contractDeclaration, Type type, int id) {
         super(type);
         this.id = id;
-        this.name = name;
         this.contractDeclaration = contractDeclaration;
     }
 
@@ -52,7 +48,7 @@ public class ContractReference extends SolidityExpression implements Resolver, V
 
     @Override
     public String toString() {
-        return name.toString();
+        return contractDeclaration.name().toString();
     }
 
     @Override

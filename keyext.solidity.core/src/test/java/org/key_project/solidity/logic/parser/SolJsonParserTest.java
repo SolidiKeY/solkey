@@ -104,7 +104,7 @@ public class SolJsonParserTest {
         Expression initializer = contractDeclaration.getFieldDeclarations().get(1).getInitializer();
         assertNotNull(initializer);
         assertInstanceOf(AddOperator.class, initializer);
-        assertInstanceOf(StateVariableReference.class, initializer.getChild(0));
+        assertInstanceOf(ProgramVariable.class, initializer.getChild(0));
         assertInstanceOf(Uint256Literal.class, initializer.getChild(1));
     }
 

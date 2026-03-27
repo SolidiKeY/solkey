@@ -654,17 +654,17 @@ public class SolJSONParser {
         final SyntaxElement declaration = id2Name.get(idDecl);
         return switch (declaration) {
             case StateVariableDeclaration stateVarDeclaration ->
-                new StateVariableReference(name, stateVarDeclaration, type);
+                stateVarDeclaration.getProgramVariable();
             case ArrayDeclaration arrayDeclaration -> arrayDeclaration.getProgramVariable();
             case FunctionDeclaration ignored ->
-                new FunctionReference(idDecl, name, type);
+                new FunctionReference(idDecl, type);
             case StatementVariableDeclaration stmVarDeclaration ->
                 stmVarDeclaration.getProgramVariable();
             case EnumDeclaration enumDeclaration ->
                 new EnumReference(enumDeclaration, type);
             case null -> switch (type.toString()) {// TODO: When can this happen?
-                case "function" -> new FunctionReference(idDecl, name, type);
-                case "contract" -> new ContractReference(idDecl, name, type); // TODO: When does a contract reference occur that is not a type?
+                case "function" -> new FunctionReference(idDecl, type);
+                case "contract" -> new ContractReference(idDecl, type); // TODO: When does a contract reference occur that is not a type?
                 default -> new ProgramVariable(name, getUndeclaredSolidityType(type), DataLocation.Memory);
 //                default -> throw new RuntimeException("FixMe"); // a new created program variable is not a
 //                                                                // reference to an existing one.

@@ -676,7 +676,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ContractReference(x.getContractDeclaration(), x.getType(), x.id, x.name);
+                return new ContractReference(x.getContractDeclaration(), x.getType(), x.id);
             }
         };
         def.doAction(x);
@@ -698,7 +698,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new FunctionReference(x.referencedDeclaration, x.getType(), x.id, x.name);
+                return new FunctionReference(x.referencedDeclaration, x.getType(), x.id);
             }
         };
         def.doAction(x);

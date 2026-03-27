@@ -16,27 +16,23 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 public class FunctionReference extends SolidityExpression implements Resolver, VariableReference {
 
     public final int id;
-    public final Name name;
     public FunctionDeclaration referencedDeclaration;
 
-    public FunctionReference(int id, Name name, Type type) {
+    public FunctionReference(int id, Type type) {
         super(type);
         this.id = id;
-        this.name = name;
         this.referencedDeclaration = null;
     }
 
-    public FunctionReference(FunctionDeclaration referencedDeclaration, Type type, int id,
-            Name name) {
+    public FunctionReference(FunctionDeclaration referencedDeclaration, Type type, int id) {
         super(type);
         this.id = id;
-        this.name = name;
         this.referencedDeclaration = referencedDeclaration;
     }
 
     @Override
     public String toString() {
-        return name.toString();
+        return referencedDeclaration.getName().toString();
     }
 
     @Override
@@ -44,7 +40,7 @@ public class FunctionReference extends SolidityExpression implements Resolver, V
         if (this.referencedDeclaration == null)
             this.referencedDeclaration = (FunctionDeclaration) id2Name.get(id);
         else
-            throw new IllegalStateException("function " + name + " has already been resolved");
+            throw new IllegalStateException("function " + referencedDeclaration.getName() + " has already been resolved");
     }
 
     @Override
