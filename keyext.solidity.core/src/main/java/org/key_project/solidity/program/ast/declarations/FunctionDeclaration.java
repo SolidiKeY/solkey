@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.key_project.logic.Name;
+import org.key_project.logic.Named;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.StateMutability;
@@ -15,7 +16,7 @@ import org.key_project.solidity.program.ast.references.ModifierReference;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.util.collection.ImmutableArray;
 
-public class FunctionDeclaration extends DeclarationClass {
+public class FunctionDeclaration extends DeclarationClass implements Named {
     // TODO: Create another class for return type
     private final ImmutableArray<ProgramVariable> returnParameters;
     private final ImmutableArray<ProgramVariable> inputParameters;
@@ -122,7 +123,8 @@ public class FunctionDeclaration extends DeclarationClass {
         return stateMutability;
     }
 
-    public Name getName() {
+    @Override
+    public Name name() {
         return name;
     }
 }

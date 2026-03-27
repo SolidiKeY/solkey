@@ -15,6 +15,7 @@ import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.*;
@@ -34,19 +35,23 @@ import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.UI
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Default;
 
 public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
+    private Namespace<FunctionDeclaration> localFunctions;
     private Namespace<ProgramVariable> localVars;
     final private Namespace<ProgramSV> schemaVariables;
     final private Services services;
 
     public SolidityToKeyConverter() {
         this.services = new Services();
+        this.localFunctions = new Namespace<>();
         this.localVars = new Namespace<>();
         this.schemaVariables = new Namespace<>();
     }
 
-    public SolidityToKeyConverter(Services services, Namespace<ProgramVariable> localVars,
+    public SolidityToKeyConverter(Services services, Namespace<FunctionDeclaration> localFunctions,
+                                  Namespace<ProgramVariable> localVars,
             Namespace<ProgramSV> schemaVariables) {
         this.services = services;
+        this.localFunctions = localFunctions;
         this.localVars = localVars;
         this.schemaVariables = schemaVariables;
     }
@@ -122,7 +127,9 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitFunctionCallExp(FunctionCallExpContext ctx) {
-        FunctionReference functionRef = new FunctionReference(0, UINT256);
+        String nameS = visitExpression(ctx.expression()).toString();
+        FunctionDeclaration functionDeclaration = localFunctions.lookup(new Name(nameS));
+        FunctionReference functionRef = new FunctionReference(functionDeclaration, UINT256, -1);
         FunctionCallArguments args =
             (FunctionCallArguments) visitFunctionCallArguments(ctx.functionCallArguments());
         return new FunctionCallExpression(UINT256, functionRef, args.getArgs());

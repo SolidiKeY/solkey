@@ -32,7 +32,7 @@ public class FunctionReference extends SolidityExpression implements Resolver, V
 
     @Override
     public String toString() {
-        return referencedDeclaration.getName().toString();
+        return referencedDeclaration.name().toString();
     }
 
     @Override
@@ -40,7 +40,7 @@ public class FunctionReference extends SolidityExpression implements Resolver, V
         if (this.referencedDeclaration == null)
             this.referencedDeclaration = (FunctionDeclaration) id2Name.get(id);
         else
-            throw new IllegalStateException("function " + referencedDeclaration.getName() + " has already been resolved");
+            throw new IllegalStateException("function " + referencedDeclaration.name() + " has already been resolved");
     }
 
     @Override

@@ -53,7 +53,7 @@ public class MemberExp extends SolidityExpression implements Resolver {
     @Override
     public String toString() {
         if (rightExp instanceof FunctionDeclaration)
-            return leftExp + "." + ((FunctionDeclaration) rightExp).getName() + "()";
+            return leftExp + "." + ((FunctionDeclaration) rightExp).name() + "()";
         return leftExp + "." + rightExp;
     }
 

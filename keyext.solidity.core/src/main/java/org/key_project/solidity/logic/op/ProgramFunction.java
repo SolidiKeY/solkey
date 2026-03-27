@@ -26,7 +26,7 @@ public class ProgramFunction extends ObserverFunction implements SolidityProgram
     private final @NonNull KeYSolidityType returnType;
 
     public ProgramFunction(FunctionDeclaration function, KeYSolidityType returnType) {
-        super(function.getName().toString(), Objects.requireNonNull(returnType.getSort()),
+        super(function.name().toString(), Objects.requireNonNull(returnType.getSort()),
             returnType,
             getParamTypes(function));
         this.function = function;

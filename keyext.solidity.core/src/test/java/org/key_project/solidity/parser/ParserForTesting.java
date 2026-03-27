@@ -12,6 +12,7 @@ import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
+import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.StructDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.statement.Block;
@@ -57,8 +58,12 @@ public class ParserForTesting {
         services.getSolidityInfo().addType(sort, ksStructType);
         services.getNamespaces().sorts().add(sort);
 
+        Namespace<FunctionDeclaration> functions = new Namespace<>();
+        FunctionDeclaration f = new FunctionDeclaration(new Name("f"),
+                List.of(), List.of(), null, null, null, null, List.of(), null);
+        functions.add(f);
 
-        return new SolidityToKeyConverter(services, localVars, schemaVariables);
+        return new SolidityToKeyConverter(services, functions, localVars, schemaVariables);
     }
 
     static public SolidityParser parse(String s) {

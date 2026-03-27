@@ -49,13 +49,13 @@ public class SolidityReader {
     public SolidityBlock readBlockWithProgramVariables(
             Namespace<@NonNull ProgramVariable> programVariableNamespace, String solidity) {
         SolidityToKeyConverter stk =
-            new SolidityToKeyConverter(services, programVariableNamespace, new Namespace<>());
+            new SolidityToKeyConverter(services, new Namespace<>(), programVariableNamespace, new Namespace<>());
         return new SolidityBlock(parseBlock(stk, solidity));
     }
 
     public SolidityBlock readBlockWithEmptyContext(String solidity) {
         SolidityToKeyConverter stk =
-            new SolidityToKeyConverter(services, nss.programVariables(), new Namespace<>());
+            new SolidityToKeyConverter(services, new Namespace<>(), nss.programVariables(), new Namespace<>());
         return new SolidityBlock(parseBlock(stk, solidity));
     }
 }
