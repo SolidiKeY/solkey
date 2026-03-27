@@ -24,10 +24,10 @@ public class FunctionReference extends SolidityExpression implements Resolver, V
         this.referencedDeclaration = null;
     }
 
-    public FunctionReference(FunctionDeclaration referencedDeclaration, Type type, int id) {
+    public FunctionReference(FunctionDeclaration referencedDeclaration, Type type) {
         super(type);
-        this.id = id;
         this.referencedDeclaration = referencedDeclaration;
+        this.id = -1;
     }
 
     @Override
