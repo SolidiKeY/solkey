@@ -515,11 +515,14 @@ public class SolJSONParser {
         if(expNode == null && initializer.has("referencedDeclaration"))
             expNode = initializer;
         if (expNode != null && expNode.has("referencedDeclaration")) {
-            SyntaxElement decl = id2Name.get(expNode.findValue("referencedDeclaration").asInt());
+            int id = expNode.findValue("referencedDeclaration").asInt();
+            SyntaxElement decl = id2Name.get(id);
             if (decl instanceof Type)
                 expType = (Type) decl;
             else if(decl instanceof ProgramVariable)
                 return (ProgramVariable) decl;
+            else if(decl instanceof FunctionDeclaration)
+                expType = ((FunctionDeclaration) decl).getType();
             else if (decl instanceof StatementVariableDeclaration)
                 expType = ((StatementVariableDeclaration) decl).getProgramVariable().getType();
             else

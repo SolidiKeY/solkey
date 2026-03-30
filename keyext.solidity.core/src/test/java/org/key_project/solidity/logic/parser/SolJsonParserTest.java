@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.program.ast.abstractions.TupleType;
 import org.key_project.solidity.program.ast.declarations.*;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
@@ -18,7 +19,6 @@ import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.references.ContractReference;
 import org.key_project.solidity.program.ast.references.FunctionReference;
-import org.key_project.solidity.program.ast.references.StateVariableReference;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.program.parser.SolcParser;
 
@@ -28,6 +28,7 @@ import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.BOOL;
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.INT256;
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.*;
 import static org.key_project.solidity.program.parser.SolcParserNoServices.getDeclStr;
@@ -747,6 +748,27 @@ public class SolJsonParserTest {
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
         assertTrue(contractS.contains("false, true"));
+        TupleType type = contractDec.getFunctions().get(0).getType();
+        assertEquals(BOOL, type.getChild(0));
+    }
+
+    @Test
+    void multipleReturns() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function f() public returns (bool, bool) {
+                        return (false, true);
+                    }
+                    function g() public {
+                        (bool a, bool b) = f();
+                        (int c, int d) = (1, 2);
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        DeclarationStatement decl = (DeclarationStatement) contractDec.getFunctions().get(1).getBody().getStatements().get(0);
+        assertEquals(3, decl.getChildCount());
+        assertEquals("(bool a, bool b) = f();", decl.toString());
     }
 
     @Test

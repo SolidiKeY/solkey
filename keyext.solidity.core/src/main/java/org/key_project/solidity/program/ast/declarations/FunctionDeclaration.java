@@ -10,6 +10,7 @@ import org.key_project.logic.Name;
 import org.key_project.logic.Named;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.program.ast.abstractions.TupleType;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.StateMutability;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.references.ModifierReference;
@@ -26,6 +27,7 @@ public class FunctionDeclaration extends DeclarationClass implements Named {
     private final StateMutability stateMutability;
     private final ImmutableArray<ModifierReference> modifiers;
     private final Name name;
+    private final TupleType type;
 
     public String getDocumentation() {
         return documentation;
@@ -40,6 +42,7 @@ public class FunctionDeclaration extends DeclarationClass implements Named {
         super(new ImmutableArray<>());
         this.name = name;
         this.returnParameters = new ImmutableArray<>(returnParameters);
+        this.type = new TupleType(returnParameters.stream().map(ProgramVariable::getType).toList());
         this.inputParameters = new ImmutableArray<>(inputParameters);
         this.body = body;
         this.kind = kind;
@@ -121,6 +124,10 @@ public class FunctionDeclaration extends DeclarationClass implements Named {
 
     public StateMutability getStateMutability() {
         return stateMutability;
+    }
+
+    public TupleType getType(){
+        return type;
     }
 
     @Override

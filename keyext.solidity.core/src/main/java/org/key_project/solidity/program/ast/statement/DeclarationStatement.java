@@ -50,7 +50,9 @@ public class DeclarationStatement implements Statement {
 
     @Override
     public String toString() {
-        String s = declarations.stream().map(Declaration::toString).collect(Collectors.joining(""));
+        String s = declarations.stream().map(Declaration::toString).collect(Collectors.joining(", "));
+        if(declarations.size() > 1)
+            s = "(" + s + ")";
         if (initialValue != null)
             s += " = " + initialValue;
         return s + ";";
