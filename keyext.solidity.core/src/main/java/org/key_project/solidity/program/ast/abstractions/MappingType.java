@@ -40,12 +40,17 @@ public class MappingType implements Type, MappingInterface {
 
     @Override
     public SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException("Mapping type has 0 children");
+        if(n == 0)
+            return keyType;
+        else if (n == 1) {
+            return valueType;
+        }
+        throw new IndexOutOfBoundsException(n + " should be 0 or 1");
     }
 
     @Override
     public int getChildCount() {
-        return 0;
+        return 2;
     }
 
     @Override

@@ -34,12 +34,14 @@ public class ArrayType implements Type, SyntaxElement, ArrayInterface {
 
     @Override
     public SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException("Array Type has no children");
+        if (n == 0)
+            return type;
+        throw new IndexOutOfBoundsException(n + " should be 0");
     }
 
     @Override
     public int getChildCount() {
-        return 0;
+        return 1;
     }
 
     @Override

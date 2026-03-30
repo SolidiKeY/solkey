@@ -32,12 +32,14 @@ public class DynamicArrayType implements Type, SyntaxElement {
 
     @Override
     public SyntaxElement getChild(int n) {
-        return null;
+        if (n == 0)
+            return type;
+        throw new IndexOutOfBoundsException(n + " should be 0");
     }
 
     @Override
     public int getChildCount() {
-        return 0;
+        return 1;
     }
 
     @Override
