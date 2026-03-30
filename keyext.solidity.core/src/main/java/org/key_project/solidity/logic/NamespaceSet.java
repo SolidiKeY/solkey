@@ -13,18 +13,17 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.prover.rules.RuleSet;
 import org.key_project.solidity.logic.op.ParametricFunctionDecl;
 import org.key_project.solidity.logic.op.ProgramVariable;
-import org.key_project.solidity.logic.sort.ArraySort;
-import org.key_project.solidity.logic.sort.DynamicArraySort;
-import org.key_project.solidity.logic.sort.MappingSort;
-import org.key_project.solidity.logic.sort.ParametricSortDecl;
+import org.key_project.solidity.logic.sort.*;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.key_project.solidity.program.ast.abstractions.ArrayInterface;
 import org.key_project.solidity.program.ast.abstractions.MappingInterface;
 import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.util.collection.ImmutableArray;
 
 import java.util.HashMap;
+import java.util.List;
 
 /// Container of namespaces for the logic's signature (sorts, function symbols, predicate symbols
 /// etc.)
@@ -40,6 +39,7 @@ public final class NamespaceSet {
     private Namespace<@NonNull Choice> choicesNS = new Namespace<>();
 
     private HashMap<ArrayInterface, ArraySort> arraySorts = new HashMap<>();
+    private HashMap<ImmutableArray<Type>, TupleSort> tupleSorts = new HashMap<>();
     private HashMap<Type, DynamicArraySort> dynamicArraySorts = new HashMap<>();
     private HashMap<MappingInterface, MappingSort> mappingSorts = new HashMap<>();
 
@@ -146,6 +146,13 @@ public final class NamespaceSet {
             mappingSorts.put(map, new MappingSort(map));
         return mappingSorts.get(map);
     }
+
+    public TupleSort getTupleSorts(ImmutableArray<Type> types, List<Sort> sorts) {
+        if(!tupleSorts.containsKey(types))
+            tupleSorts.put(types, new TupleSort(sorts));
+        return tupleSorts.get(types);
+    }
+
 
     public void setVariables(Namespace<@NonNull QuantifiableVariable> varNS) {
         this.varNS = varNS;

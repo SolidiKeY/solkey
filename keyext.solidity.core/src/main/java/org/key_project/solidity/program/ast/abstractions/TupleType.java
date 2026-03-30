@@ -18,7 +18,7 @@ public class TupleType implements Type {
 
     @Override
     public @Nullable Sort getSort(Services services) {
-        return null;
+        return services.getNamespaces().getTupleSorts(types, types.stream().map(x -> x.getSort(services)).toList());
     }
 
     @Override
