@@ -769,6 +769,11 @@ public class SolJsonParserTest {
         DeclarationStatement decl = (DeclarationStatement) contractDec.getFunctions().get(1).getBody().getStatements().get(0);
         assertEquals(3, decl.getChildCount());
         assertEquals("(bool a, bool b) = f();", decl.toString());
+
+        TupleType type = (TupleType) decl.getInitialValue().getType();
+        assertEquals(2, type.getChildCount());
+        assertEquals(BOOL, type.getChild(0));
+        assertEquals(BOOL, type.getChild(1));
     }
 
     @Test

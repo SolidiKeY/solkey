@@ -61,4 +61,9 @@ public class DeclarationStatement implements Statement {
     public void visit(Visitor v) {
         v.performActionOnDeclarationStatement(this);
     }
+
+    public Expression getInitialValue() {
+        return initialValue;
+    }
+
 }
