@@ -14,6 +14,7 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
+import org.key_project.solidity.program.ast.abstractions.TupleType;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
@@ -91,7 +92,9 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitTupleExpression(TupleExpressionContext ctx) {
-        return new TupleExpression(UINT256, parseExps(ctx.expression()));
+        List<Expression> exps = parseExps(ctx.expression());
+        TupleType tupleType = new TupleType(exps.stream().map(Expression::getType).toList());
+        return new TupleExpression(tupleType, exps);
     }
 
     List<Expression> parseExps(List<ExpressionContext> exps) {
@@ -129,10 +132,10 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     public SyntaxElement visitFunctionCallExp(FunctionCallExpContext ctx) {
         String nameS = visitExpression(ctx.expression()).toString();
         FunctionDeclaration functionDeclaration = localFunctions.lookup(new Name(nameS));
-        FunctionReference functionRef = new FunctionReference(functionDeclaration, UINT256);
+        FunctionReference functionRef = new FunctionReference(functionDeclaration, functionDeclaration.getType());
         FunctionCallArguments args =
             (FunctionCallArguments) visitFunctionCallArguments(ctx.functionCallArguments());
-        return new FunctionCallExpression(UINT256, functionRef, args.getArgs());
+        return new FunctionCallExpression(functionRef.getType(), functionRef, args.getArgs());
     }
 
     @Override
@@ -157,7 +160,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         Expression falseExp = visitExpression(ctx.false_);
         Expression trueExp = visitExpression(ctx.true_);
 
-        return new TernaryOperator(UINT256, condition, falseExp, trueExp);
+        return new TernaryOperator(falseExp.getType(), condition, falseExp, trueExp);
     }
 
     @Override
