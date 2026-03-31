@@ -32,7 +32,6 @@ import org.key_project.solidity.program.parser.ParserUtils;
 import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.util.collection.ImmutableArray;
 
-import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.UINT256;
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Default;
 
 public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
@@ -107,7 +106,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         String operator = ctx.children.get(1).toString();
         Expression left = exps.get(0);
         Expression right = exps.get(1);
-        return ParserUtils.parseAllBinary(left, right, operator, UINT256);
+        return ParserUtils.parseAllBinary(left, right, operator, left.getType());
     }
 
     public Expression visitExpression(ExpressionContext ctx) {
@@ -118,14 +117,14 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     public SyntaxElement visitUnaryPrefix(UnaryPrefixContext ctx) {
         String operator = ctx.children.getFirst().toString();
         Expression uExp = visitExpression(ctx.expression());
-        return ParserUtils.parseUnaryOperation(uExp, operator, UINT256, true);
+        return ParserUtils.parseUnaryOperation(uExp, operator, uExp.getType(), true);
     }
 
     @Override
     public SyntaxElement visitPostfix(PostfixContext ctx) {
         String operator = ctx.children.get(1).toString();
         Expression uExp = visitExpression(ctx.expression());
-        return ParserUtils.parseUnaryOperation(uExp, operator, UINT256, false);
+        return ParserUtils.parseUnaryOperation(uExp, operator, uExp.getType(), false);
     }
 
     @Override
@@ -142,7 +141,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     public SyntaxElement visitIndexAccess(IndexAccessContext ctx) {
         Expression left = visitExpression(ctx.left);
         Expression index = visitExpression(ctx.index);
-        return new IndexExpression(left, index, UINT256);
+        return new IndexExpression(left, index, left.getType());
     }
 
     @Override
@@ -151,7 +150,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         Expression start = visitExpression(ctx.start);
         Expression end = visitExpression(ctx.end);
 
-        return new IndexRangeExpression(base, start, end, UINT256);
+        return new IndexRangeExpression(base, start, end, base.getType());
     }
 
     @Override
@@ -299,9 +298,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitStatement(StatementContext ctx) {
-        if (ctx == null)
-            return null;
-        return visitChildren(ctx);
+        return ctx == null ? null : visitChildren(ctx);
     }
 
     @Override
