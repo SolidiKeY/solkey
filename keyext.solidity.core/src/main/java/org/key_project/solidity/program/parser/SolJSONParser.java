@@ -348,15 +348,15 @@ public class SolJSONParser {
             case "TryStatement" -> {
                 Expression expression =
                     parseExpression(statement.findValue("externalCall").findValue("expression"));
+                List<ProgramVariable> returns =
+                        statement.findValue("parameters") == null ? List.of()
+                                : statement.findValue("parameters").findValue("parameters")
+                                .valueStream().map(this::parseParam).toList();
                 List<JsonNode> clausesList = statement.findValue("clauses").valueStream().toList();
                 Block body = clausesList.stream().map(this::parseBlock).findFirst().orElse(null);
                 List<CatchClause> clauses = clausesList.stream().skip(1)
                         .map(this::parseCatchClause)
                         .toList();
-                List<ProgramVariable> returns =
-                    statement.findValue("parameters") == null ? List.of()
-                            : statement.findValue("parameters").findValue("parameters")
-                                    .valueStream().map(this::parseParam).toList();
                 yield new TryStatement(expression, new ImmutableArray<>(returns), body,
                     new ImmutableArray<>(clauses));
             }
@@ -651,8 +651,6 @@ public class SolJSONParser {
 
     private Expression parseIdentifier(Type type, JsonNode literal) {
         final int idDecl = literal.findValue("referencedDeclaration").asInt();
-        final String nameS = literal.findValue("name").asText();
-        final Name name = new Name(nameS);
 
         final SyntaxElement declaration = id2Name.get(idDecl);
         return switch (declaration) {
@@ -668,12 +666,8 @@ public class SolJSONParser {
             case null -> switch (type.toString()) {// TODO: When can this happen?
                 case "function" -> new FunctionReference(idDecl, type);
                 case "contract" -> new ContractReference(idDecl, type); // TODO: When does a contract reference occur that is not a type?
-                default -> new ProgramVariable(name, getUndeclaredSolidityType(type), DataLocation.Memory);
-//                default -> throw new RuntimeException("FixMe"); // a new created program variable is not a
-//                                                                // reference to an existing one.
-//                                                                // This is most likely wrong.
+                default -> throw new RuntimeException("Type " + type + " is not function or contract");
             };
-            case ProgramVariable programVariable -> programVariable;
             default -> throw new RuntimeException(
                 "Unexpected reference declaration " + declaration + " expected a state variable.");
         };
