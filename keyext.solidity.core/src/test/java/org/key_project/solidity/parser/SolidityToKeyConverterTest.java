@@ -186,9 +186,12 @@ public class SolidityToKeyConverterTest {
 
     @Test
     void tryWithReturn() {
-        TryStatement stm = (TryStatement) parseStatement("try false returns (address) {}");
+        TryStatement stm = (TryStatement) parseStatement("try false returns (bool a) { a = false; }");
         assertFalse(((BoolLiteral) stm.getExpression()).getValue());
         assertEquals(1, stm.getReturnCount());
+        ProgramVariable ra = stm.getReturnParameter(0);
+        ProgramVariable ba = (ProgramVariable) stm.getBody().getStatements().get(0).getChild(0).getChild(0);
+        assertSame(ra, ba);
     }
 
     @Test

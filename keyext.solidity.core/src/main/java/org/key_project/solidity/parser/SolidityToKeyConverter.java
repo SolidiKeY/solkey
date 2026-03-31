@@ -274,12 +274,12 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     @Override
     public SyntaxElement visitTryStatement(TryStatementContext ctx) {
         Expression exp = visitExpression(ctx.expression());
+        List<ProgramVariable> parameters = ctx.returnParameters() == null ? List.of()
+                : ((SyntaxElementList) visitReturnParameters(ctx.returnParameters()))
+                .getElements().stream().map(ProgramVariable.class::cast).toList();
         Block body = (Block) visitBlock(ctx.block());
         List<CatchClause> clauses = ctx.catchClause().stream().map(this::visitCatchClause)
                 .map(CatchClause.class::cast).toList();
-        List<ProgramVariable> parameters = ctx.returnParameters() == null ? List.of()
-                : ((SyntaxElementList) visitReturnParameters(ctx.returnParameters()))
-                        .getElements().stream().map(ProgramVariable.class::cast).toList();
         return new TryStatement(exp, new ImmutableArray<>(parameters), body,
             new ImmutableArray<>(clauses));
     }
@@ -303,7 +303,13 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitParameter(ParameterContext ctx) {
-        return null;
+        KeYSolidityType type = (KeYSolidityType) visitTypeName(ctx.typeName());
+        DataLocation dataLocation = (DataLocation) visitStorageLocation(ctx.storageLocation());
+        String variableName = ctx.identifier().getText();
+
+        ProgramVariable programVariable = new ProgramVariable(new Name(variableName), type, dataLocation);
+        localVars.add(programVariable);
+        return programVariable;
     }
 
     @Override
