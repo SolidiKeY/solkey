@@ -35,14 +35,14 @@ public class FunctionDeclaration extends DeclarationClass implements Named {
 
     private final String documentation;
 
-    public FunctionDeclaration(Name name, List<ProgramVariable> returnParameters,
+    public FunctionDeclaration(Name name, List<ProgramVariable> returnParameters, TupleType type,
             List<ProgramVariable> inputParameters, Block body, String kind,
             Visibility visibility, StateMutability stateMutability,
             List<ModifierReference> modifiers, String documentation) {
         super(new ImmutableArray<>());
         this.name = name;
         this.returnParameters = new ImmutableArray<>(returnParameters);
-        this.type = new TupleType(returnParameters.stream().map(ProgramVariable::getType).toList());
+        this.type = type;
         this.inputParameters = new ImmutableArray<>(inputParameters);
         this.body = body;
         this.kind = kind;

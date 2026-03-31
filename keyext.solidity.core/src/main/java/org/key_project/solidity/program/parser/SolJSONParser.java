@@ -58,6 +58,8 @@ public class SolJSONParser {
     record StaticTypeArray(Type type, int size) {}
     private final HashMap<StaticTypeArray, ArrayType> staticArrayTypes = new HashMap<>();
     private final HashMap<Type, DynamicArrayType> dynamicArrayTypes = new HashMap<>();
+    private final HashMap<List<Type>, TupleType> tupleTypes = new HashMap<>();
+    private final HashMap<Map.Entry<Type, Type>, MappingType> mappingTypes = new HashMap<>();
 
     private final Services services;
 
@@ -245,6 +247,7 @@ public class SolJSONParser {
         Stream<JsonNode> parameters =
             node.findValue("returnParameters").findValue("parameters").valueStream();
         List<ProgramVariable> returnParameters = parameters.map(this::parseParam).toList();
+        TupleType returnType = getTupleType(returnParameters.stream().map(ProgramVariable::getType).toList());
         List<ProgramVariable> inputParamenters =
             node.findValue("parameters").findValue("parameters").valueStream()
                     .map(this::parseParam).toList();
@@ -260,7 +263,7 @@ public class SolJSONParser {
         String documentation = "";
         if (documentationNode != null)
             documentation = documentationNode.findValue("text").asText();
-        FunctionDeclaration function = new FunctionDeclaration(new Name(name), returnParameters,
+        FunctionDeclaration function = new FunctionDeclaration(new Name(name), returnParameters, returnType,
             inputParamenters, body, kind, visibility, stateMutability, modifiers, documentation);
         id2Name.put(id, function);
         return function;
@@ -453,10 +456,16 @@ public class SolJSONParser {
         return switch (typeName) {
             case "ElementaryTypeName" -> getPrimitiveType(node.findValue("name").asText());
             case "ArrayTypeName" -> new ArrayType(parseType(node.findValue("baseType")), -1);
-            case "Mapping" -> new MappingType(parseType(node.findValue("keyType")),
-                parseType(node.findValue("valueType")));
+            case "Mapping" -> getMappingType(parseType(node.findValue("keyType")), parseType(node.findValue("valueType")));
             default -> throw new RuntimeException("Type " + typeName + " not covered");
         };
+    }
+
+    private @NonNull MappingType getMappingType(Type keyType, Type valueType) {
+        Map.Entry<Type, Type> entry = Map.entry(keyType, valueType);
+        if(!mappingTypes.containsKey(entry))
+            mappingTypes.put(entry, new MappingType(keyType, valueType));
+        return mappingTypes.get(entry);
     }
 
     private StateVariableDeclaration parseVariableField(JsonNode fieldNode) {
@@ -546,7 +555,7 @@ public class SolJSONParser {
             case "MemberAccess" -> parseMemberAccess(expType, initializer);
             case "IndexAccess" -> parseIndexAccess(expType, initializer);
             case "Conditional" -> parseConditional(expType, initializer);
-            case "TupleExpression" -> parseTuple(expType, initializer);
+            case "TupleExpression" -> parseTuple(initializer);
             case "IndexRangeAccess" -> parseIndexRangeAccess(expType, initializer);
             case "FunctionCall" -> parseFunctionCall(expType, initializer);
             case "ElementaryTypeNameExpression" -> parseElementaryExpression(expType, initializer);
@@ -581,10 +590,11 @@ public class SolJSONParser {
         return new IndexRangeExpression(baseExp, startExp, endExp, expType);
     }
 
-    private Expression parseTuple(Type expType, JsonNode initializer) {
+    private Expression parseTuple(JsonNode initializer) {
         List<Expression> components =
             initializer.findValue("components").valueStream().map(this::parseExpression).toList();
-        return new TupleExpression(expType, components);
+        List<Type> types = components.stream().map(Expression::getType).toList();
+        return new TupleExpression(getTupleType(types), components);
     }
 
     private Expression parseConditional(Type expType, JsonNode initializer) {
@@ -726,6 +736,12 @@ public class SolJSONParser {
             // FIX!!!!
             default -> throw new RuntimeException("Not yet supported literal");
         };
+    }
+
+    private TupleType getTupleType(List<Type> types){
+        if(!tupleTypes.containsKey(types))
+            tupleTypes.put(types, new TupleType(types));
+        return tupleTypes.get(types);
     }
 
     private @Nullable Expression findOrNullExpression(JsonNode statement, String field) {

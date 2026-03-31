@@ -60,7 +60,7 @@ public class ParserForTesting {
 
         Namespace<FunctionDeclaration> functions = new Namespace<>();
         FunctionDeclaration f = new FunctionDeclaration(new Name("f"),
-                List.of(), List.of(), null, null, null, null, List.of(), null);
+                List.of(), null, List.of(), null, null, null, null, List.of(), null);
         functions.add(f);
 
         return new SolidityToKeyConverter(services, functions, localVars, schemaVariables);
