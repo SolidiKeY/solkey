@@ -24,6 +24,7 @@ import org.key_project.util.collection.ImmutableArray;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /// Container of namespaces for the logic's signature (sorts, function symbols, predicate symbols
 /// etc.)
@@ -41,7 +42,7 @@ public final class NamespaceSet {
     private HashMap<ArrayInterface, ArraySort> arraySorts = new HashMap<>();
     private HashMap<ImmutableArray<Type>, TupleSort> tupleSorts = new HashMap<>();
     private HashMap<Type, DynamicArraySort> dynamicArraySorts = new HashMap<>();
-    private HashMap<MappingInterface, MappingSort> mappingSorts = new HashMap<>();
+    private HashMap<Map.Entry<Type, Type>, MappingSort> mappingSorts = new HashMap<>();
 
     public NamespaceSet() {
     }
@@ -141,9 +142,10 @@ public final class NamespaceSet {
         return dynamicArraySorts.get(type);
     }
 
-    public MappingSort getMappingSort(MappingInterface map){
+    public MappingSort getMappingSort(MappingInterface mapInt){
+        Map.Entry<Type, Type> map = Map.entry(mapInt.keyType(), mapInt.valueType());
         if(!mappingSorts.containsKey(map))
-            mappingSorts.put(map, new MappingSort(map));
+            mappingSorts.put(map, new MappingSort(mapInt));
         return mappingSorts.get(map);
     }
 

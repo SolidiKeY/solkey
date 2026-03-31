@@ -7,8 +7,10 @@ import java.io.IOException;
 import java.util.List;
 
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.abstractions.TupleType;
+import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.*;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
@@ -192,8 +194,10 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         assertTrue(contractDec.toString().contains("int256 v"));
-        assertEquals(Default, ((ProgramVariable) contractDec.getChild(0).getChild(0).getChild(0)
-                .getChild(0).getChild(0)).getLocation());
+        ProgramVariable v = (ProgramVariable) contractDec.getChild(0).getChild(0).getChild(0)
+                .getChild(0).getChild(0);
+        assertSame(Default, v.getLocation());
+        assertSame(INT256, v.getType());
     }
 
     @Test
@@ -691,8 +695,11 @@ public class SolJsonParserTest {
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
-        String contractS = contractDec.toString();
-        assertTrue(contractS.contains("SimpleContract(target).g() returns (int a)"));
+        TryStatement tryStatement = (TryStatement) contractDec.getFunctions().get(0).getBody().getStatements().get(0);
+        assertTrue(tryStatement.toString().contains("SimpleContract(target).g() returns (int a)"));
+        ProgramVariable returnA = tryStatement.getReturnDeclaration().get(0);
+        ProgramVariable rightA = (ProgramVariable) tryStatement.getBody().getStatements().get(0).getChild(1);
+        assertSame(returnA, rightA);
     }
 
     @Test
@@ -964,5 +971,43 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
+    }
+
+    @Test
+    void sameTupleReturn() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function f() public returns (int, bool) {
+                        return (0, false);
+                    }
+                    function g() public returns (int, bool) {
+                        return (0, true);
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        Type fType = contractDec.getFunctions().get(0).getType();
+        Type gType = contractDec.getFunctions().get(1).getType();
+        Services services = new Services();
+        // TODO: Should it be the same?
+        assertNotSame(fType, gType);
+        assertSame(fType.getSort(services), gType.getSort(services));
+    }
+
+    @Test
+    void twoMappings() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    mapping(bool => int) public m1;
+                    mapping(bool => int) public m2;
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        Type m1Type = contractDec.getFieldDeclarations().get(0).getProgramVariable().getType();
+        Type m2Type = contractDec.getFieldDeclarations().get(1).getProgramVariable().getType();
+        Services services = new Services();
+        // TODO: Should it be the same?
+        assertNotSame(m1Type, m2Type);
+        assertSame(m1Type.getSort(services), m2Type.getSort(services));
     }
 }
