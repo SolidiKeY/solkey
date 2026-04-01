@@ -455,7 +455,7 @@ public class SolJSONParser {
         String typeName = node.findValue("nodeType").asText();
         return switch (typeName) {
             case "ElementaryTypeName" -> getPrimitiveType(node.findValue("name").asText());
-            case "ArrayTypeName" -> new ArrayType(parseType(node.findValue("baseType")), -1);
+            case "ArrayTypeName" -> new DynamicArrayType(parseType(node.findValue("baseType")));
             case "Mapping" -> getMappingType(parseType(node.findValue("keyType")), parseType(node.findValue("valueType")));
             default -> throw new RuntimeException("Type " + typeName + " not covered");
         };
@@ -756,7 +756,8 @@ public class SolJSONParser {
     }
 
     private @NonNull KeYSolidityType getUndeclaredSolidityType(Type type) {
-        if(type == null) return null;
+        if(type == null)
+            return new KeYSolidityType();
         final Sort sort = type.getSort(services);
         KeYSolidityType ksType = new KeYSolidityType(type, sort);
         services.getSolidityInfo().addType(sort, ksType);

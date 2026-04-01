@@ -4,15 +4,16 @@
 package org.key_project.solidity.program.ast.abstractions;
 
 import org.key_project.logic.Name;
+import org.key_project.logic.Namespace;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.key_project.solidity.logic.sort.MappingSort;
 
-public class MappingType implements Type, MappingInterface {
-
+public class MappingType implements Type {
     private final Name name;
     private final Type keyType;
     private final Type valueType;
@@ -20,7 +21,7 @@ public class MappingType implements Type, MappingInterface {
     public MappingType(Type keyType, Type valueType) {
         this.keyType = keyType;
         this.valueType = valueType;
-        this.name = new Name("mapping(" + keyType + " => " + valueType.name() + ")");
+        this.name = new Name("mapping(" + keyType + " => " + valueType + ")");
     }
 
     @Override
@@ -30,7 +31,14 @@ public class MappingType implements Type, MappingInterface {
 
     @Override
     public @Nullable Sort getSort(Services services) {
-        return services.getNamespaces().getMappingSort(this);
+        Namespace<@NonNull Sort> sorts = services.getNamespaces().sorts();
+        Sort sort = sorts.lookup(name);
+        if(sort == null){
+            Sort keySort = keyType.getSort(services);
+            Sort valueSort = valueType.getSort(services);
+            sorts.add(new MappingSort(keySort, valueSort));
+        }
+        return sorts.lookup(name);
     }
 
     @Override
@@ -53,12 +61,10 @@ public class MappingType implements Type, MappingInterface {
         return 2;
     }
 
-    @Override
     public Type keyType() {
         return keyType;
     }
 
-    @Override
     public Type valueType() {
         return valueType;
     }

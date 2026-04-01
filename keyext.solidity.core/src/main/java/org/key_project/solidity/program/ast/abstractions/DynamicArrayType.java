@@ -4,30 +4,38 @@
 package org.key_project.solidity.program.ast.abstractions;
 
 import org.key_project.logic.Name;
+import org.key_project.logic.Namespace;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
-import org.key_project.solidity.logic.sort.SortImpl;
+import org.key_project.solidity.logic.sort.DynamicArraySort;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public class DynamicArrayType implements Type, SyntaxElement {
-
+    private final Name name;
     private final Type type;
 
     public DynamicArrayType(Type type) {
         this.type = type;
+        this.name = new Name(type + "[]");
     }
 
     @Override
     public @NonNull Name name() {
-        return type.name();
+        return name;
     }
 
     @Override
     public @Nullable Sort getSort(Services services) {
-        return services.getNamespaces().getDynamicArraySort(type);
+        Namespace<@NonNull Sort> sorts = services.getNamespaces().sorts();
+        Sort sort = sorts.lookup(name);
+        if(sort == null){
+            Sort sortPrim = type.getSort(services);
+            sorts.add(new DynamicArraySort(sortPrim));
+        }
+        return sorts.lookup(name);
     }
 
     @Override

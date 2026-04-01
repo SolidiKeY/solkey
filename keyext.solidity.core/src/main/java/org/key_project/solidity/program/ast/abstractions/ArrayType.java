@@ -4,22 +4,24 @@
 package org.key_project.solidity.program.ast.abstractions;
 
 import org.key_project.logic.Name;
+import org.key_project.logic.Namespace;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.key_project.solidity.logic.sort.ArraySort;
 
-public class ArrayType implements Type, SyntaxElement, ArrayInterface {
-    Type type;
-    int length;
-    Name name;
+public class ArrayType implements Type, SyntaxElement {
+    private final Name name;
+    private final Type type;
+    private final int length;
 
     public ArrayType(Type type, int length) {
         this.type = type;
         this.length = length;
-        this.name = new Name("Array " + type + " " + length);
+        this.name = new Name(type + "[" + length + "]");
     }
 
     @Override
@@ -29,7 +31,13 @@ public class ArrayType implements Type, SyntaxElement, ArrayInterface {
 
     @Override
     public @Nullable Sort getSort(Services services) {
-        return services.getNamespaces().getArraySort(this);
+        Namespace<@NonNull Sort> sorts = services.getNamespaces().sorts();
+        Sort sort = sorts.lookup(name);
+        if(sort == null){
+            Sort sortPrim = type.getSort(services);
+            sorts.add(new ArraySort(sortPrim, length));
+        }
+        return sorts.lookup(name);
     }
 
     @Override
@@ -49,12 +57,6 @@ public class ArrayType implements Type, SyntaxElement, ArrayInterface {
         return type + "[" + length + "]";
     }
 
-    @Override
-    public Type type() {
-        return type;
-    }
-
-    @Override
     public int length() {
         return length;
     }
