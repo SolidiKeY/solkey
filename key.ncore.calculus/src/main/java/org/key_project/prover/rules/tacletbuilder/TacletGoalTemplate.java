@@ -77,6 +77,10 @@ public abstract class TacletGoalTemplate {
         return addedProgVars;
     }
 
+    public @Nullable Object replaceWithExpressionAsObject() {
+        return null;
+    }
+
     /**
      * a Taclet may replace parts of sequent.
      *

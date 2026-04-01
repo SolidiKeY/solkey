@@ -90,7 +90,7 @@ public abstract class FindTacletExecutor
     /// applies the `add`-expressions of taclet goal descriptions
     ///
     /// @param add the [org.key_project.prover.sequent.Sequent] with the uninstantiated
-    /// [SequentFormula]'s to be added
+    /// [org.key_project.prover.sequent.SequentFormula]'s to be added
     /// to the goal's sequent
     /// @param currentSequent the [SequentChangeInfo] which is the current (intermediate)
     /// result of applying the taclet

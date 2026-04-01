@@ -6,6 +6,7 @@ package org.key_project.solidity.rule.taclets;
 import org.key_project.logic.op.QuantifiableVariable;
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.prover.rules.Taclet;
+import org.key_project.prover.sequent.Sequent;
 import org.key_project.solidity.logic.visitor.BoundVarsVisitor;
 import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableList;
@@ -15,20 +16,19 @@ import org.jspecify.annotations.NonNull;
 
 /// this class contains the goals of the schematic theory specific rules (Taclet). There are new
 /// sequents that have to be added, new rules and rule variables. The replacewith-goal is
-/// implemented
-/// in subclasses
+/// implemented in subclasses
 public class TacletGoalTemplate
         extends org.key_project.prover.rules.tacletbuilder.TacletGoalTemplate {
     /// creates new Goaldescription
     ///
-    /// @param addedSeq new Sequent to be added
-    /// @param addedRules IList<Taclet> contains the new allowed rules at this branch
+    /// @param addedSeq new [Sequent] to be added
+    /// @param addedRules ImmutableList<Taclet> contains the new allowed rules at this branch
     /// @param addedProgVars a SetOf<SchemaVariable> which will be instantiated with an application
     /// time unused (new) program variables that are introduced by an application of this
     /// template
-    public TacletGoalTemplate(org.key_project.prover.sequent.Sequent addedSeq,
-            ImmutableList<Taclet> addedRules,
-            ImmutableSet<SchemaVariable> addedProgVars) {
+    public TacletGoalTemplate(Sequent addedSeq,
+                              ImmutableList<Taclet> addedRules,
+                              ImmutableSet<SchemaVariable> addedProgVars) {
         super(addedSeq, addedRules, addedProgVars);
     }
 
@@ -39,22 +39,24 @@ public class TacletGoalTemplate
     ///
     /// @param addedSeq new Sequent to be added
     /// @param addedRules IList<Taclet> contains the new allowed rules at this branch
-    public TacletGoalTemplate(org.key_project.prover.sequent.Sequent addedSeq,
-            ImmutableList<Taclet> addedRules) {
+    public TacletGoalTemplate(Sequent addedSeq,
+                              ImmutableList<Taclet> addedRules) {
         this(addedSeq, addedRules, DefaultImmutableSet.nil());
     }
 
     /// a Taclet may add a new Sequent as Goal. Use this method to get this Sequent
     ///
     /// @return Sequent to be added as Goal or Sequent.EMPTY_SEQUENT if no such Sequent exists
-    public org.key_project.prover.sequent.Sequent sequent() {
+    @Override
+    public @NonNull Sequent sequent() {
         return super.sequent();
     }
 
     /// the goal of a Taclet may introduce new rules. Call this method to get them
     ///
     /// @return IList<Taclet> contains new introduced rules
-    public ImmutableList<Taclet> rules() {
+    @Override
+    public @NonNull ImmutableList<Taclet> rules() {
         return (ImmutableList<@NonNull Taclet>) super.rules();
     }
 
@@ -65,7 +67,8 @@ public class TacletGoalTemplate
     /// retrieves and returns all variables that are bound in the goal template
     ///
     /// @return all variables that occur bound in this goal template
-    public ImmutableSet<QuantifiableVariable> getBoundVariables() {
+    @Override
+    public @NonNull ImmutableSet<QuantifiableVariable> getBoundVariables() {
         ImmutableSet<QuantifiableVariable> result = DefaultImmutableSet.nil();
 
         for (Taclet taclet : rules()) {
@@ -79,7 +82,7 @@ public class TacletGoalTemplate
     }
 
     @Override
-    public String toString() {
+    public @NonNull String toString() {
         String result = "";
         if (!sequent().isEmpty()) {
             result += "\\add " + sequent() + " ";

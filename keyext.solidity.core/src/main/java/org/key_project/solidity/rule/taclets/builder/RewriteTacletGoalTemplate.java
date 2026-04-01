@@ -4,15 +4,16 @@
 package org.key_project.solidity.rule.taclets.builder;
 
 import org.key_project.logic.Term;
-import org.key_project.logic.op.QuantifiableVariable;
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.prover.rules.Taclet;
-import org.key_project.prover.rules.tacletbuilder.TacletGoalTemplate;
 import org.key_project.solidity.proof.calculus.SoliditySequentKit;
+import org.key_project.solidity.rule.taclets.TacletGoalTemplate;
 import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
 import org.key_project.util.collection.ImmutableSet;
+
+import org.jspecify.annotations.NonNull;
 
 public class RewriteTacletGoalTemplate extends TacletGoalTemplate {
     /// term that replaces another one
@@ -38,24 +39,21 @@ public class RewriteTacletGoalTemplate extends TacletGoalTemplate {
         this(addedSeq, addedRules, replacewith, DefaultImmutableSet.nil());
     }
 
-
     public RewriteTacletGoalTemplate(Term replacewith) {
         this(SoliditySequentKit.getInstance().getEmptySequent(), ImmutableSLList.nil(),
             replacewith);
     }
 
-
     /// a Taclet may replace a Term by another. The new Term is returned.
     ///
     /// @return Term being paramter in the rule goal replacewith(Seq)
-    @Override
     public Term replaceWith() {
         return replacewith;
     }
 
     @Override
-    public ImmutableSet<QuantifiableVariable> getBoundVariables() {
-        throw new RuntimeException("Not implemented yet");
+    public Object replaceWithExpressionAsObject() {
+        return replacewith;
     }
 
     @Override
@@ -78,7 +76,7 @@ public class RewriteTacletGoalTemplate extends TacletGoalTemplate {
 
     /// toString
     @Override
-    public String toString() {
+    public @NonNull String toString() {
         String result = super.toString();
         result += "\\replacewith(" + replaceWith() + ") ";
         return result;

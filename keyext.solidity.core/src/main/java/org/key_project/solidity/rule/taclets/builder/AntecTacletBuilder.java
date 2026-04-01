@@ -74,10 +74,6 @@ public class AntecTacletBuilder extends FindTacletBuilder<@NonNull SolAntecTacle
                 variableConditions),
             goals, ruleSets, attrs, prefixBuilder.getPrefixMap(),
             choices, false, tacletAnnotations, noFreeVarIns);
-        // t.setOrigin(origin);
         return t;
-    }
-
-    public void setIgnoreTopLevelUpdates(boolean ignore) {
     }
 }

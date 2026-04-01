@@ -17,7 +17,7 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.rule.SolTaclet;
 import org.key_project.solidity.rule.matching.inst.MatchConditions;
-import org.key_project.solidity.rule.taclets.RewriteTacletGoalTemplate;
+import org.key_project.solidity.rule.taclets.builder.RewriteTacletGoalTemplate;
 import org.key_project.util.collection.ImmutableArray;
 
 public class RewriteTacletExecutor extends FindTacletExecutor {

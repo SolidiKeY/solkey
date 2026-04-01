@@ -12,7 +12,7 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.rule.SolTaclet;
 import org.key_project.solidity.rule.matching.inst.MatchConditions;
-import org.key_project.solidity.rule.taclets.AntecSuccTacletGoalTemplate;
+import org.key_project.solidity.rule.taclets.builder.AntecSuccTacletGoalTemplate;
 
 /// Executes a Taclet which matches on a formula in the antecedent
 ///
