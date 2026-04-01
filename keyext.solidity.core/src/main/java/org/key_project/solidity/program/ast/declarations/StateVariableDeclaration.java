@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.ResolverProgVar;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.util.ExtList;
@@ -28,21 +29,11 @@ public class StateVariableDeclaration extends DeclarationClass implements Resolv
     }
 
     private ProgramVariable programVariable;
-    int programVariableId = -1;
 
     public StateVariableDeclaration(ProgramVariable programVariable,
             @Nullable Expression initializer, Visibility visibility) {
         super(new ImmutableArray<>());
         this.programVariable = programVariable;
-        this.initializer = initializer;
-        this.visibility = visibility;
-    }
-
-    public StateVariableDeclaration(int programVariableId,
-                                    @Nullable Expression initializer, Visibility visibility) {
-        super(new ImmutableArray<>());
-        this.programVariable = null;
-        this.programVariableId = programVariableId;
         this.initializer = initializer;
         this.visibility = visibility;
     }
@@ -62,7 +53,7 @@ public class StateVariableDeclaration extends DeclarationClass implements Resolv
     // Syntax Element interface
     @Override
     public int getChildCount() {
-        return initializer == null ? 0 : 1 + (programVariable == null ? 0 : 1);
+        return initializer == null ? 0 : 1 + 1;
     }
 
     @Override
@@ -92,7 +83,8 @@ public class StateVariableDeclaration extends DeclarationClass implements Resolv
 
     @Override
     public void resolve(HashMap<Integer, ProgramVariable> id2ProgVar) {
-        if(programVariable == null)
-            programVariable = id2ProgVar.get(programVariableId);
+        Type type = programVariable.getType();
+        if(type  == null)
+            throw new RuntimeException("Not implemented");
     }
 }
