@@ -3,15 +3,12 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.declarations;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.key_project.solidity.logic.op.ProgramVariable;
-import org.key_project.solidity.program.ast.ResolverProgVar;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
-import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.util.ExtList;
@@ -19,7 +16,7 @@ import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.Nullable;
 
-public class StateVariableDeclaration extends DeclarationClass implements ResolverProgVar {
+public class StateVariableDeclaration extends DeclarationClass {
 
     private final @Nullable Expression initializer;
     private final Visibility visibility;
@@ -53,7 +50,7 @@ public class StateVariableDeclaration extends DeclarationClass implements Resolv
     // Syntax Element interface
     @Override
     public int getChildCount() {
-        return initializer == null ? 0 : 1 + 1;
+        return 1 + (initializer == null ? 0 : 1);
     }
 
     @Override
@@ -79,12 +76,5 @@ public class StateVariableDeclaration extends DeclarationClass implements Resolv
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.joining(" "))
             + ";";
-    }
-
-    @Override
-    public void resolve(HashMap<Integer, ProgramVariable> id2ProgVar) {
-        Type type = programVariable.getType();
-        if(type  == null)
-            throw new RuntimeException("Not implemented");
     }
 }

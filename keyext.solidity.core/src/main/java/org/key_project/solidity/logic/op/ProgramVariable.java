@@ -69,6 +69,10 @@ public class ProgramVariable extends AbstractSortedOperator
         return type == null ? null : type.getSolidityType();
     }
 
+    public KeYSolidityType getKeySolidityType(){
+        return type;
+    }
+
     public DataLocation getLocation() {
         return dataLocation;
     }

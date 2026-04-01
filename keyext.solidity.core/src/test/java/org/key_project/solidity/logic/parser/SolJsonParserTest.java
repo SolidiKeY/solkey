@@ -970,7 +970,11 @@ public class SolJsonParserTest {
                     SimpleContract sc;
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
+        Type contractType = contractDec.getFieldDeclarations().get(0).getProgramVariable().getType();
+        assertNotNull(contractType);
+        assertInstanceOf(ContractDeclaration.class, contractType);
         String contractS = contractDec.toString();
+        assertTrue(contractS.contains("SimpleContract sc"));
     }
 
     @Test

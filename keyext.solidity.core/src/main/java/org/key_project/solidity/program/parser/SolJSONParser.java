@@ -17,7 +17,6 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.Resolver;
-import org.key_project.solidity.program.ast.ResolverProgVar;
 import org.key_project.solidity.program.ast.SolidityInfo;
 import org.key_project.solidity.program.ast.abstractions.*;
 import org.key_project.solidity.program.ast.declarations.*;
@@ -51,7 +50,6 @@ public class SolJSONParser {
     /// types etc.
     /// TODO: what if a type under declaration references itself (is that possible in Solidity?)
     private final HashMap<Integer, SyntaxElement> id2Name = new HashMap<>();
-    private final HashMap<Integer, ProgramVariable> id2ProgVar = new HashMap<>();
 
     record StaticTypeArray(Type type, int size) {}
     private final HashMap<StaticTypeArray, ArrayType> staticArrayTypes = new HashMap<>();
@@ -160,8 +158,9 @@ public class SolJSONParser {
         for (SyntaxElement el : elements) {
             if (el instanceof Resolver)
                 ((Resolver) el).resolve(id2Name);
-            if(el instanceof ResolverProgVar)
-                ((ResolverProgVar) el).resolve(id2ProgVar);
+            if(el instanceof ProgramVariable){
+                ((ProgramVariable) el).getKeySolidityType().resolve(id2Name);
+            }
         }
     }
 
@@ -477,7 +476,7 @@ public class SolJSONParser {
             initializerExp = parseExpression(initializer);
         }
 
-        KeYSolidityType type = getUndeclaredSolidityType(expType);
+        KeYSolidityType type = expType == null ? new KeYSolidityType(idRef) : getUndeclaredSolidityType(expType);
 
         StateVariableDeclaration field;
         // TODO/FIXME: Not sure that this is right. One cannot deduce
@@ -734,9 +733,7 @@ public class SolJSONParser {
         services.getNamespaces().sorts().add(sort);
     }
 
-    private @NonNull KeYSolidityType getUndeclaredSolidityType(Type type) {
-        if(type == null)
-            return new KeYSolidityType();
+    private @NonNull KeYSolidityType getUndeclaredSolidityType(@NonNull Type type) {
         final Sort sort = type.getSort(services);
         KeYSolidityType ksType = new KeYSolidityType(type, sort);
         services.getSolidityInfo().addType(sort, ksType);

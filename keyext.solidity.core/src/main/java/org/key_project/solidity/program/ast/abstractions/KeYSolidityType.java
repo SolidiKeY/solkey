@@ -3,22 +3,25 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.abstractions;
 
+import java.util.HashMap;
 import java.util.Objects;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-public class KeYSolidityType implements Type {
+public class KeYSolidityType implements Type, Resolver {
     /// the AST type
     private @Nullable Type solidityType = null;
     /// the logic sort
     private @Nullable Sort sort = null;
+    private int typeId;
 
     public KeYSolidityType() {
     }
@@ -26,6 +29,10 @@ public class KeYSolidityType implements Type {
     public KeYSolidityType(Type solidityType, Sort sort) {
         this.solidityType = solidityType;
         this.sort = sort;
+    }
+
+    public KeYSolidityType(int typeId) {
+        this.typeId = typeId;
     }
 
     public KeYSolidityType(ExtList children) {
@@ -81,11 +88,17 @@ public class KeYSolidityType implements Type {
 
     @Override
     public SyntaxElement getChild(int n) {
-        return null;
+        throw  new IndexOutOfBoundsException("KeySolidityType has 0 children");
     }
 
     @Override
     public int getChildCount() {
         return 0;
+    }
+
+    @Override
+    public void resolve(HashMap<Integer, SyntaxElement> id2Name) {
+        if(solidityType == null)
+            solidityType = (Type) id2Name.get(typeId);
     }
 }
