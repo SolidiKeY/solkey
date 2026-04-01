@@ -221,4 +221,5 @@ public class Services implements LogicServices, ProofServices {
     public void initTheories() {
         theoryInfo = new TheoryInfo(this);
     }
+
 }

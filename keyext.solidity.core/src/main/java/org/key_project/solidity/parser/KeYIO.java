@@ -7,12 +7,14 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.key_project.logic.Namespace;
 import org.key_project.logic.Term;
 import org.key_project.logic.op.sv.SchemaVariable;
+import org.key_project.prover.rules.Taclet;
 import org.key_project.prover.sequent.Sequent;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.NamespaceSet;
@@ -20,6 +22,7 @@ import org.key_project.solidity.parser.builder.DeclarationBuilder;
 import org.key_project.solidity.parser.builder.ExpressionBuilder;
 import org.key_project.solidity.parser.builder.FunctionPredicateBuilder;
 import org.key_project.solidity.parser.builder.ProblemFinder;
+import org.key_project.solidity.parser.builder.TacletPBuilder;
 import org.key_project.solidity.util.parsing.BuildingException;
 import org.key_project.solidity.util.parsing.BuildingIssue;
 
@@ -31,7 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.key_project.solidity.parser.ParsingFacade.parseFiles;
-
 
 /// Facade used to parse KeY files, formulas etc.
 public class KeYIO {
@@ -192,7 +194,7 @@ public class KeYIO {
         private final URL resource;
         private final CharStream content;
         private List<KeYAst.File> ctx = new LinkedList<>();
-        private Namespace<SchemaVariable> schemaNamespace;
+        private Namespace<@NonNull SchemaVariable> schemaNamespace;
 
         Loader(URL resource) {
             this(null, resource);
@@ -207,85 +209,58 @@ public class KeYIO {
             return schemaNamespace;
         }
 
-        /*
-         * public List<Taclet> loadComplete() throws IOException {
-         * if (ctx.isEmpty()) {
-         * parseFile();
-         * }
-         * loadDeclarations();
-         * loadSndDegreeDeclarations();
-         * activateLDTs();
-         * return loadTaclets();
-         * }
-         *
-         * public Loader activateLDTs() {
-         * services.getTypeConverter().init();
-         * return this;
-         * }
-         */
-
-        public ProblemFinder loadCompleteProblem() throws IOException {
+        public List<Taclet> loadComplete() throws IOException {
             if (ctx.isEmpty()) {
                 parseFile();
             }
             loadDeclarations();
             loadSndDegreeDeclarations();
-            // activateLDTs();
-            // loadTaclets();
-            return loadProblem();
+            activateLDTs();
+            return loadTaclets();
+        }
+
+        public Loader activateLDTs() {
+            services.initTheories();
+            return this;
         }
 
         public Loader parseFile() throws IOException {
             if (!ctx.isEmpty()) {
                 return this;
             }
+            long start = System.currentTimeMillis();
             if (resource != null) {
                 ctx = parseFiles(resource);
             } else {
                 KeYAst.File c = ParsingFacade.parseFile(content);
                 ctx.add(c);
             }
+            long stop = System.currentTimeMillis();
             return this;
         }
 
-        /*
-         * public ProblemInformation getProblemInformation() {
-         * if (ctx.isEmpty()) {
-         * throw new IllegalStateException("No files loaded.");
-         * }
-         * return ctx.get(0).getProblemInformation();
-         * }
-         */
-
-        public ChoiceInformation loadChoices() {
+        public ProblemInformation getProblemInformation() {
             if (ctx.isEmpty()) {
                 throw new IllegalStateException("No files loaded.");
             }
-            return ParsingFacade.getChoices(ctx);
+            return ctx.get(0).getProblemInformation();
         }
 
         public Loader loadDeclarations() {
             DeclarationBuilder declBuilder = new DeclarationBuilder(services, nss);
-            long start = System.currentTimeMillis();
             for (int i = ctx.size() - 1; i >= 0; --i) {
                 var file = ctx.get(i);
-                LOGGER.debug("Load declarations of {}", file);
                 file.accept(declBuilder);
             }
-            long stop = System.currentTimeMillis();
-            LOGGER.info("MODE: {} took {} ms", "declarations", stop - start);
             return this;
         }
 
         public Loader loadSndDegreeDeclarations() {
             FunctionPredicateBuilder visitor = new FunctionPredicateBuilder(services, nss);
-            long start = System.currentTimeMillis();
             for (int i = ctx.size() - 1; i >= 0; --i) {
                 KeYAst.File s = ctx.get(i);
                 s.accept(visitor);
             }
-            long stop = System.currentTimeMillis();
-            LOGGER.debug("MODE: {} took {}", "2nd degree decls", stop - start);
             return this;
         }
 
@@ -297,32 +272,29 @@ public class KeYIO {
             ctx.get(0).accept(pf);
             return pf;
         }
-        /*
-         * public List<Taclet> loadTaclets() {
-         * if (ctx.isEmpty()) {
-         * throw new IllegalStateException();
-         * }
-         * List<TacletPBuilder> parsers = ctx.stream().map(it -> new TacletPBuilder(services, nss))
-         * .toList();
-         * long start = System.currentTimeMillis();
-         * List<Taclet> taclets = new ArrayList<>(2048);
-         * for (int i = 0; i < ctx.size(); i++) {
-         * KeYAst.File s = ctx.get(i);
-         * TacletPBuilder p = parsers.get(i);
-         * if (KeyIO.this.schemaNamespace != null) {
-         * p.setSchemaVariables(new Namespace<>(KeyIO.this.schemaNamespace));
-         * }
-         * s.accept(p);
-         * taclets.addAll(p.getTopLevelTaclets());
-         * schemaNamespace = p.schemaVariables();
-         * }
-         * long stop = System.currentTimeMillis();
-         * LOGGER.debug("MODE: {} took {}ms", "taclets", stop - start);
-         * return taclets;
-         * }
-         */
+
+        public List<Taclet> loadTaclets() {
+            if (ctx.isEmpty()) {
+                throw new IllegalStateException();
+            }
+            List<TacletPBuilder> parsers = ctx.stream().map(it -> new TacletPBuilder(services, nss))
+                    .toList();
+            List<Taclet> taclets = new ArrayList<>(2048);
+            for (int i = 0; i < ctx.size(); i++) {
+                KeYAst.File s = ctx.get(i);
+                TacletPBuilder p = parsers.get(i);
+                if (KeYIO.this.schemaNamespace != null) {
+                    p.setSchemaVariables(new Namespace<>(KeYIO.this.schemaNamespace));
+                }
+                s.accept(p);
+                taclets.addAll(p.getTopLevelTaclets());
+                schemaNamespace = p.schemaVariables();
+            }
+            return taclets;
+        }
 
         public Term getProblem() {
+            // TODO weigl tbd
             return null;
         }
     }
