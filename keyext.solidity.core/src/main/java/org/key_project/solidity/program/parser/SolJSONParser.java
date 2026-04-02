@@ -361,31 +361,17 @@ public class SolJSONParser {
         String nameS = declaration.findValue("name").asText();
         Name name = new Name(nameS);
         JsonNode typeNameNode = declaration.findValue("typeName");
-        String typeName = typeNameNode.findValue("nodeType").asText();
-        if (typeName.equals("ArrayTypeName")) {
-            Type type = parseType(typeNameNode);
-            KeYSolidityType ksType = getUndeclaredSolidityType(type);
-            ProgramVariable programVariable = new ProgramVariable(name, ksType.getSort(), ksType,
-                DataLocation.fromString(declaration.findValue("storageLocation").asText()));
-            ArrayDeclaration array = new ArrayDeclaration(programVariable);
-
-            id2Name.put(id, array);
-            return array;
-        }
-        DataLocation dataLocation =
-            DataLocation.fromString(declaration.findValue("storageLocation").asText());
-
-        Type type = typeNameNode.has("referencedDeclaration")
-                ? (Type) id2Name.get(typeNameNode.findValue("referencedDeclaration").asInt())
-                : getType(typeNameNode.findValue("typeDescriptions")
-                        .findValue("typeIdentifier").asText());
+        Type type = parseType(typeNameNode);
         KeYSolidityType ksType = getUndeclaredSolidityType(type);
-        ProgramVariable programVariable =
-            new ProgramVariable(name, ksType.getSort(), ksType, dataLocation);
-        StatementVariableDeclaration memDeclaration =
-            new StatementVariableDeclaration(programVariable);
-        id2Name.put(id, memDeclaration);
-        return memDeclaration;
+        DataLocation dataLocation =
+                DataLocation.fromString(declaration.findValue("storageLocation").asText());
+        ProgramVariable programVariable = new ProgramVariable(name, ksType.getSort(), ksType, dataLocation);
+        Declaration decl = type instanceof DynamicArrayType || type instanceof ArrayType ?
+                new ArrayDeclaration(programVariable) :
+                new StatementVariableDeclaration(programVariable);
+        id2Name.put(id, decl);
+        return decl;
+
     }
 
     private @NonNull DynamicArrayType getDynamicArrayType(Type primitiveType) {
@@ -442,6 +428,10 @@ public class SolJSONParser {
                     yield getDynamicArrayType(baseType);
             }
             case "Mapping" -> getMappingType(parseType(node.findValue("keyType")), parseType(node.findValue("valueType")));
+            case "UserDefinedTypeName" -> node.has("referencedDeclaration")
+                    ? (Type) id2Name.get(node.findValue("referencedDeclaration").asInt())
+                    : getType(node.findValue("typeDescriptions")
+                    .findValue("typeIdentifier").asText());
             default -> throw new RuntimeException("Type " + typeName + " not covered");
         };
     }
