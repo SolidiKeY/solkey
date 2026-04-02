@@ -55,6 +55,7 @@ public class SolJSONParser {
     private final HashMap<StaticTypeArray, ArrayType> staticArrayTypes = new HashMap<>();
     private final HashMap<Type, DynamicArrayType> dynamicArrayTypes = new HashMap<>();
     private final HashMap<List<Type>, TupleType> tupleTypes = new HashMap<>();
+    private final HashMap<Integer, TupleType> functionId2Type = new HashMap<>();
     private final HashMap<Map.Entry<Type, Type>, MappingType> mappingTypes = new HashMap<>();
 
     private final Services services;
@@ -234,6 +235,7 @@ public class SolJSONParser {
             node.findValue("returnParameters").findValue("parameters").valueStream();
         List<ProgramVariable> returnParameters = parameters.map(this::parseParam).toList();
         TupleType returnType = getTupleType(returnParameters.stream().map(ProgramVariable::getType).toList());
+        functionId2Type.put(id, returnType);
         List<ProgramVariable> inputParamenters =
             node.findValue("parameters").findValue("parameters").valueStream()
                     .map(this::parseParam).toList();
@@ -512,6 +514,9 @@ public class SolJSONParser {
                 expType = ((FunctionDeclaration) decl).getType();
             else if (decl instanceof StatementVariableDeclaration)
                 expType = ((StatementVariableDeclaration) decl).getProgramVariable().getType();
+            else if(functionId2Type.containsKey(id)){
+                expType = functionId2Type.get(id);
+            }
             else
                 expType = getType(type_str);
         } else if (expNode != null && expNode.has("typeName")) {
@@ -651,10 +656,14 @@ public class SolJSONParser {
                 stmVarDeclaration.getProgramVariable();
             case EnumDeclaration enumDeclaration ->
                 new EnumReference(enumDeclaration, type);
-            case null -> switch (type.toString()) {// TODO: When can this happen?
-                case "function" -> new FunctionReference(idDecl, type);
-                case "contract" -> new ContractReference(idDecl, type); // TODO: When does a contract reference occur that is not a type?
-                default -> throw new RuntimeException("Type " + type + " is not function or contract");
+            case null ->
+                switch (type) {
+                    case TupleType tupleType -> new FunctionReference(idDecl, tupleType);
+                    default -> switch (type.toString()) {// TODO: When can this happen?
+                        case "contract" ->
+                                new ContractReference(idDecl, type); // TODO: When does a contract reference occur that is not a type?
+                        default -> throw new RuntimeException("Type " + type + " is not function or contract");
+                    };
             };
             default -> throw new RuntimeException(
                 "Unexpected reference declaration " + declaration + " expected a state variable.");

@@ -867,10 +867,14 @@ public class SolJsonParserTest {
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
         assertTrue(contractS.contains("f();"));
-        FunctionDeclaration refDecl =
-            ((FunctionReference) ((FunctionCallExpression) ((ExpressionStatement) contractDec
-                    .getFunctions().getFirst().getBody().getStatements()
-                    .get(0)).getExpression()).functionExp).referencedDeclaration;
+        FunctionReference fRef = (FunctionReference) ((FunctionCallExpression) ((ExpressionStatement) contractDec
+                .getFunctions().getFirst().getBody().getStatements()
+                .get(0)).getExpression()).functionExp;
+        Type type = fRef.getType();
+        assertInstanceOf(TupleType.class, type);
+        assertEquals(0, type.getChildCount());
+
+        FunctionDeclaration refDecl = fRef.referencedDeclaration;
         assertNotNull(refDecl);
     }
 
