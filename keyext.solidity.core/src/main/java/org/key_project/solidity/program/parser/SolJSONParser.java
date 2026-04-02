@@ -426,10 +426,8 @@ public class SolJSONParser {
                     yield getDynamicArrayType(baseType);
             }
             case "Mapping" -> getMappingType(parseType(node.findValue("keyType")), parseType(node.findValue("valueType")));
-            case "UserDefinedTypeName" -> node.has("referencedDeclaration")
-                    ? (Type) id2Name.get(node.findValue("referencedDeclaration").asInt())
-                    : getType(node.findValue("typeDescriptions")
-                    .findValue("typeIdentifier").asText());
+            case "UserDefinedTypeName" -> (Type) id2Name.get(node.findValue("referencedDeclaration").asInt());
+            case "Identifier" -> getType(node.findValue("typeDescriptions").findValue("typeIdentifier").asText());
             default -> throw new RuntimeException("Type " + typeName + " not covered");
         };
     }
@@ -475,7 +473,7 @@ public class SolJSONParser {
         // : new ProgramVariable(new Name(fieldName), getUndeclaredSolidityType(expType),
         // DataLocation.Storage);
         field = new StateVariableDeclaration(programVariable, initializerExp, visibility);
-         id2Name.put(id, field);
+        id2Name.put(id, field);
 
          return field;
     }
@@ -502,7 +500,7 @@ public class SolJSONParser {
             else if(functionId2Type.containsKey(id))
                 expType = functionId2Type.get(id);
             else
-                expType = getType(type_str);
+                expType = parseType(expNode);
         } else if (expNode != null && expNode.has("typeName")) {
             JsonNode typeName = expNode.findValue("typeName");
             try {
