@@ -514,18 +514,18 @@ public class SolJSONParser {
                 expType = ((FunctionDeclaration) decl).getType();
             else if (decl instanceof StatementVariableDeclaration)
                 expType = ((StatementVariableDeclaration) decl).getProgramVariable().getType();
-            else if(functionId2Type.containsKey(id)){
+            else if(functionId2Type.containsKey(id))
                 expType = functionId2Type.get(id);
-            }
             else
                 expType = getType(type_str);
         } else if (expNode != null && expNode.has("typeName")) {
+            JsonNode typeName = expNode.findValue("typeName");
             try {
                 int referenceId =
-                    expNode.findValue("typeName").findValue("referencedDeclaration").asInt();
+                    typeName.findValue("referencedDeclaration").asInt();
                 expType = (Type) id2Name.get(referenceId);
             } catch (Exception e) {
-                expType = getType(type_str);
+                expType = parseNodeType(typeName);
             }
         } else
             expType = getType(type_str);
@@ -547,6 +547,27 @@ public class SolJSONParser {
             default -> throw new RuntimeException("Not yet supported expression type: " + nodeType);
         };
         return exp;
+    }
+
+    private Type parseNodeType(JsonNode node){
+        String typeName = node.findValue("nodeType").asText();
+        return switch (typeName){
+            case "ArrayTypeName" -> {
+                String struct = node.findValue("baseType").findValue("name").asText();
+                Type primitiveType = SolidityInfo.getPrimitiveType(struct);
+                if (node.has("length")) {
+                    int size = node.findValue("length").findValue("value").asInt();
+                    yield getStaticArrayType(primitiveType, size);
+                } else {
+                    yield getDynamicArrayType(primitiveType);
+                }
+            }
+            case "ElementaryTypeName" -> SolidityInfo.getPrimitiveType(node.findValue("name").asText());
+            default -> node.has("referencedDeclaration")
+                    ? (Type) id2Name.get(node.findValue("referencedDeclaration").asInt())
+                    : getType(node.findValue("typeDescriptions")
+                    .findValue("typeIdentifier").asText());
+        };
     }
 
     private Expression parseNewExpression(Type expType, JsonNode initializer) {
@@ -659,12 +680,9 @@ public class SolJSONParser {
             case null ->
                 switch (type) {
                     case TupleType tupleType -> new FunctionReference(idDecl, tupleType);
-                    default -> switch (type.toString()) {// TODO: When can this happen?
-                        case "contract" ->
-                                new ContractReference(idDecl, type); // TODO: When does a contract reference occur that is not a type?
-                        default -> throw new RuntimeException("Type " + type + " is not function or contract");
-                    };
-            };
+                    case PrimitiveType tp -> new ContractReference(idDecl, tp);
+                    default -> throw new RuntimeException("Type " + type + " is not function or contract");
+                };
             default -> throw new RuntimeException(
                 "Unexpected reference declaration " + declaration + " expected a state variable.");
         };
