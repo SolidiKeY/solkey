@@ -366,9 +366,7 @@ public class SolJSONParser {
         DataLocation dataLocation =
                 DataLocation.fromString(declaration.findValue("storageLocation").asText());
         ProgramVariable programVariable = new ProgramVariable(name, ksType.getSort(), ksType, dataLocation);
-        Declaration decl = type instanceof DynamicArrayType || type instanceof ArrayType ?
-                new ArrayDeclaration(programVariable) :
-                new StatementVariableDeclaration(programVariable);
+        Declaration decl = new StatementVariableDeclaration(programVariable);
         id2Name.put(id, decl);
         return decl;
 
@@ -610,7 +608,6 @@ public class SolJSONParser {
         return switch (declaration) {
             case StateVariableDeclaration stateVarDeclaration ->
                 stateVarDeclaration.getProgramVariable();
-            case ArrayDeclaration arrayDeclaration -> arrayDeclaration.getProgramVariable();
             case StatementVariableDeclaration stmVarDeclaration ->
                 stmVarDeclaration.getProgramVariable();
             default -> throw new RuntimeException(
@@ -656,7 +653,6 @@ public class SolJSONParser {
         return switch (declaration) {
             case StateVariableDeclaration stateVarDeclaration ->
                 stateVarDeclaration.getProgramVariable();
-            case ArrayDeclaration arrayDeclaration -> arrayDeclaration.getProgramVariable();
             case FunctionDeclaration ignored ->
                 new FunctionReference(idDecl, type);
             case StatementVariableDeclaration stmVarDeclaration ->

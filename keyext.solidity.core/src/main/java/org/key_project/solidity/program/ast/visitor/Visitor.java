@@ -22,8 +22,6 @@ public interface Visitor {
 
     void performActionOnProgramMetaConstruct(ProgramTransformer programTransformer);
 
-    void performActionOnArrayDeclaration(ArrayDeclaration x);
-
     void performActionOnStatementVariableDeclaration(StatementVariableDeclaration x);
 
     void performActionOnElementaryExpression(ElementaryExpression x);

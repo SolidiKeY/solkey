@@ -51,11 +51,6 @@ public abstract class SolidityASTVisitor extends SolidityASTWalker implements Vi
     }
 
     @Override
-    public void performActionOnArrayDeclaration(ArrayDeclaration x) {
-        doDefaultAction(x);
-    }
-
-    @Override
     public void performActionOnStatementVariableDeclaration(StatementVariableDeclaration x) {
         doDefaultAction(x);
     }
