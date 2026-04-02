@@ -363,17 +363,7 @@ public class SolJSONParser {
         JsonNode typeNameNode = declaration.findValue("typeName");
         String typeName = typeNameNode.findValue("nodeType").asText();
         if (typeName.equals("ArrayTypeName")) {
-            String struct = typeNameNode.findValue("baseType").findValue("name").asText();
-            Type primitiveType = SolidityInfo.getPrimitiveType(struct);
-            Type type;
-            if (typeNameNode.has("length")) {
-                int size = typeNameNode.findValue("length").findValue("value").asInt();
-                type = getStaticArrayType(primitiveType, size);
-            } else {
-                type = getDynamicArrayType(primitiveType);
-            }
-
-
+            Type type = parseType(typeNameNode);
             KeYSolidityType ksType = getUndeclaredSolidityType(type);
             ProgramVariable programVariable = new ProgramVariable(name, ksType.getSort(), ksType,
                 DataLocation.fromString(declaration.findValue("storageLocation").asText()));
@@ -443,7 +433,14 @@ public class SolJSONParser {
         String typeName = node.findValue("nodeType").asText();
         return switch (typeName) {
             case "ElementaryTypeName" -> getPrimitiveType(node.findValue("name").asText());
-            case "ArrayTypeName" -> new DynamicArrayType(parseType(node.findValue("baseType")));
+            case "ArrayTypeName" -> {
+                Type baseType = parseType(node.findValue("baseType"));
+                if (node.has("length")) {
+                    int size = node.findValue("length").findValue("value").asInt();
+                    yield getStaticArrayType(baseType, size);
+                } else
+                    yield getDynamicArrayType(baseType);
+            }
             case "Mapping" -> getMappingType(parseType(node.findValue("keyType")), parseType(node.findValue("valueType")));
             default -> throw new RuntimeException("Type " + typeName + " not covered");
         };
@@ -525,7 +522,7 @@ public class SolJSONParser {
                     typeName.findValue("referencedDeclaration").asInt();
                 expType = (Type) id2Name.get(referenceId);
             } catch (Exception e) {
-                expType = parseNodeType(typeName);
+                expType = parseType(typeName);
             }
         } else
             expType = getType(type_str);
@@ -553,13 +550,12 @@ public class SolJSONParser {
         String typeName = node.findValue("nodeType").asText();
         return switch (typeName){
             case "ArrayTypeName" -> {
-                String struct = node.findValue("baseType").findValue("name").asText();
-                Type primitiveType = SolidityInfo.getPrimitiveType(struct);
+                Type baseType = parseNodeType(node.findValue("baseType"));
                 if (node.has("length")) {
                     int size = node.findValue("length").findValue("value").asInt();
-                    yield getStaticArrayType(primitiveType, size);
+                    yield getStaticArrayType(baseType, size);
                 } else {
-                    yield getDynamicArrayType(primitiveType);
+                    yield getDynamicArrayType(baseType);
                 }
             }
             case "ElementaryTypeName" -> SolidityInfo.getPrimitiveType(node.findValue("name").asText());
