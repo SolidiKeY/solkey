@@ -405,7 +405,7 @@ public class SolJSONParser {
             programVariable = new ProgramVariable(new Name(fieldName),
                 kst.getSort(), kst, dataLocation);
         } else {
-            Type type = parseType(node.findValue("typeName"));
+            Type type = parseTypeName(node);
             final KeYSolidityType kst = getUndeclaredSolidityType(type);
             programVariable = new ProgramVariable(new Name(fieldName),
                 kst.getSort(), kst, dataLocation);
@@ -454,7 +454,7 @@ public class SolJSONParser {
                 expType = (Type) id2Name.get(idRef);
             }
         } else
-            expType = parseType(fieldNode.findValue("typeName"));
+            expType = parseTypeName(fieldNode);
 
         Visibility visibility = Visibility.fromString(fieldNode.findValue("visibility").asText());
 
@@ -524,14 +524,14 @@ public class SolJSONParser {
             case "Identifier" -> parseIdentifier(expType, initializer);
             case "Assignment" -> parseAssignment(expType, initializer);
             case "MemberAccess" -> parseMemberAccess(expType, initializer);
-            case "IndexAccess" -> parseIndexAccess(expType, initializer);
+            case "IndexAccess" -> parseIndexAccess(initializer);
             case "Conditional" -> parseConditional(initializer);
             case "TupleExpression" -> parseTuple(initializer);
-            case "IndexRangeAccess" -> parseIndexRangeAccess(expType, initializer);
+            case "IndexRangeAccess" -> parseIndexRangeAccess(initializer);
             case "FunctionCall" -> parseFunctionCall(expType, initializer);
-            case "ElementaryTypeNameExpression" -> parseElementaryExpression(expType, initializer);
+            case "ElementaryTypeNameExpression" -> parseElementaryExpression(initializer);
             case "ExpressionStatement" -> parseExpression(initializer.findValue("expression"));
-            case "NewExpression" -> parseNewExpression(expType, initializer);
+            case "NewExpression" -> parseNewExpression(initializer);
             default -> throw new RuntimeException("Not yet supported expression type: " + nodeType);
         };
         return exp;
@@ -557,14 +557,20 @@ public class SolJSONParser {
         };
     }
 
-    private Expression parseNewExpression(Type expType, JsonNode initializer) {
+    private Expression parseNewExpression(JsonNode initializer) {
         String functionDef =
             initializer.findValue("typeDescriptions").findValue("typeString").asText();
-        return new NewExpression(functionDef, expType);
+        Type type = parseTypeName(initializer);
+        return new NewExpression(functionDef, type);
     }
 
-    private Expression parseElementaryExpression(Type expType, JsonNode initializer) {
-        return new ElementaryExpression(expType);
+    private Expression parseElementaryExpression(JsonNode initializer) {
+        Type type = parseTypeName(initializer);
+        return new ElementaryExpression(type);
+    }
+
+    private Type parseTypeName(JsonNode initializer) {
+        return parseType(initializer.findValue("typeName"));
     }
 
     private Expression parseFunctionCall(Type expType, JsonNode initializer) {
@@ -574,11 +580,12 @@ public class SolJSONParser {
         return new FunctionCallExpression(expType, functionExp, arguments);
     }
 
-    private Expression parseIndexRangeAccess(Type expType, JsonNode initializer) {
+    private Expression parseIndexRangeAccess(JsonNode initializer) {
         Expression baseExp = parseExpression(initializer.findValue("baseExpression"));
         Expression startExp = parseExpression(initializer.findValue("startExpression"));
         Expression endExp = parseExpression(initializer.findValue("endExpression"));
-        return new IndexRangeExpression(baseExp, startExp, endExp, expType);
+        Type type = getTypeFromDescription(initializer);
+        return new IndexRangeExpression(baseExp, startExp, endExp, type);
     }
 
     private Expression parseTuple(JsonNode initializer) {
@@ -596,13 +603,13 @@ public class SolJSONParser {
         return new TernaryOperator(BOOL, cond, falseExpression, trueExpression);
     }
 
-    private Expression parseIndexAccess(Type expType, JsonNode initializer) {
+    private Expression parseIndexAccess(JsonNode initializer) {
         int idLeftRef =
             initializer.findValue("baseExpression").findValue("referencedDeclaration").asInt();
         Expression indexExp = parseExpression(initializer.findValue("indexExpression"));
         ProgramVariable leftExp = getProgramVariable(idLeftRef);
-
-        return new IndexExpression(leftExp, indexExp, expType);
+        Type type = getTypeFromDescription(initializer);
+        return new IndexExpression(leftExp, indexExp, type);
     }
 
     private ProgramVariable getProgramVariable(int idLeftRef) {
@@ -623,7 +630,8 @@ public class SolJSONParser {
         int rightId = initializer.findValue("referencedDeclaration").asInt();
         if (id2Name.containsKey(rightId))
             return new MemberExp(leftExp, id2Name.get(rightId), expType);
-        return new MemberExp(leftExp, rightId, expType);
+        Type type = getTypeFromDescription(initializer);
+        return new MemberExp(leftExp, rightId, type);
     }
 
     private Expression parseAssignment(Type expType, JsonNode assign) {
