@@ -481,6 +481,30 @@ public class SolJSONParser {
          return field;
     }
 
+    Type parseReferenceTypeDeclaration(JsonNode expNode) {
+        if(expNode.has("referencedDeclaration")) {
+            int id = expNode.findValue("referencedDeclaration").asInt();
+            SyntaxElement decl = id2Name.get(id);
+            Type expType;
+            if (decl instanceof Type)
+                expType = (Type) decl;
+                //        else if(decl instanceof ProgramVariable)
+                //            return (ProgramVariable) decl;
+            else if (decl instanceof FunctionDeclaration)
+                expType = ((FunctionDeclaration) decl).getType();
+            else if (decl instanceof StatementVariableDeclaration)
+                expType = ((StatementVariableDeclaration) decl).getProgramVariable().getType();
+            else if (functionId2Type.containsKey(id))
+                expType = functionId2Type.get(id);
+            else if (contractIds.contains(id))
+                expType = ADDRESS;
+            else
+                expType = parseType(expNode);
+            return expType;
+        }
+        return getTypeFromDescription(expNode);
+    }
+
     private Expression parseExpression(JsonNode initializer) {
         final String nodeType = initializer.findValue("nodeType").asText();
         JsonNode expNode = initializer.findValue("expression");
@@ -523,7 +547,7 @@ public class SolJSONParser {
             case "UnaryOperation" -> parseUnaryOperation(initializer);
             case "Identifier" -> parseIdentifier(expType, initializer);
             case "Assignment" -> parseAssignment(expType, initializer);
-            case "MemberAccess" -> parseMemberAccess(expType, initializer);
+            case "MemberAccess" -> parseMemberAccess(initializer);
             case "IndexAccess" -> parseIndexAccess(initializer);
             case "Conditional" -> parseConditional(initializer);
             case "TupleExpression" -> parseTuple(initializer);
@@ -625,12 +649,13 @@ public class SolJSONParser {
         };
     }
 
-    private Expression parseMemberAccess(Type expType, JsonNode initializer) {
+    private Expression parseMemberAccess(JsonNode initializer) {
         Expression leftExp = parseExpression(initializer.findValue("expression"));
         int rightId = initializer.findValue("referencedDeclaration").asInt();
+        JsonNode expNode = initializer.findValue("expression");
+        Type type = parseReferenceTypeDeclaration(expNode);
         if (id2Name.containsKey(rightId))
-            return new MemberExp(leftExp, id2Name.get(rightId), expType);
-        Type type = getTypeFromDescription(initializer);
+            return new MemberExp(leftExp, id2Name.get(rightId), type);
         return new MemberExp(leftExp, rightId, type);
     }
 
