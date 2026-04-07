@@ -56,6 +56,8 @@ public class SolJSONParser {
     private final HashMap<Type, DynamicArrayType> dynamicArrayTypes = new HashMap<>();
     private final HashMap<List<Type>, TupleType> tupleTypes = new HashMap<>();
     private final HashMap<Integer, TupleType> functionId2Type = new HashMap<>();
+    private final Set<Integer> contractIds = new HashSet<>();
+
     private final HashMap<Map.Entry<Type, Type>, MappingType> mappingTypes = new HashMap<>();
 
     private final Services services;
@@ -109,6 +111,7 @@ public class SolJSONParser {
     private ContractDeclaration parseContract(JsonNode contractNode) {
         String contractName = contractNode.findValue("canonicalName").asText(); // there is also a
         final int contractId = contractNode.findValue("id").asInt();
+        contractIds.add(contractId);
         List<StateVariableDeclaration> fields = new ArrayList<>();
         List<FunctionDeclaration> functions = new ArrayList<>();
         List<StructDeclaration> structs = new ArrayList<>();
@@ -427,7 +430,7 @@ public class SolJSONParser {
             }
             case "Mapping" -> getMappingType(parseType(node.findValue("keyType")), parseType(node.findValue("valueType")));
             case "UserDefinedTypeName" -> (Type) id2Name.get(node.findValue("referencedDeclaration").asInt());
-            case "Identifier" -> getType(node.findValue("typeDescriptions").findValue("typeIdentifier").asText());
+            case "Identifier" -> SolidityInfo.getPrimitiveType(node.findValue("typeDescriptions").findValue("typeString").asText());
             default -> throw new RuntimeException("Type " + typeName + " not covered");
         };
     }
@@ -499,6 +502,8 @@ public class SolJSONParser {
                 expType = ((StatementVariableDeclaration) decl).getProgramVariable().getType();
             else if(functionId2Type.containsKey(id))
                 expType = functionId2Type.get(id);
+            else if(contractIds.contains(id))
+                expType = ADDRESS;
             else
                 expType = parseType(expNode);
         } else if (expNode != null && expNode.has("typeName")) {
