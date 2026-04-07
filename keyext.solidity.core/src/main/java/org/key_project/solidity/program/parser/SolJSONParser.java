@@ -518,14 +518,14 @@ public class SolJSONParser {
         } else
             expType = getType(type_str);
         Expression exp = switch (nodeType) {
-            case "Literal" -> parseLiteral(expType, initializer);
-            case "BinaryOperation" -> parseBinaryOperation(expType, initializer);
-            case "UnaryOperation" -> parseUnaryOperation(expType, initializer);
+            case "Literal" -> parseLiteral(initializer);
+            case "BinaryOperation" -> parseBinaryOperation(initializer);
+            case "UnaryOperation" -> parseUnaryOperation(initializer);
             case "Identifier" -> parseIdentifier(expType, initializer);
             case "Assignment" -> parseAssignment(expType, initializer);
             case "MemberAccess" -> parseMemberAccess(expType, initializer);
             case "IndexAccess" -> parseIndexAccess(expType, initializer);
-            case "Conditional" -> parseConditional(expType, initializer);
+            case "Conditional" -> parseConditional(initializer);
             case "TupleExpression" -> parseTuple(initializer);
             case "IndexRangeAccess" -> parseIndexRangeAccess(expType, initializer);
             case "FunctionCall" -> parseFunctionCall(expType, initializer);
@@ -588,12 +588,12 @@ public class SolJSONParser {
         return new TupleExpression(getTupleType(types), components);
     }
 
-    private Expression parseConditional(Type expType, JsonNode initializer) {
+    private Expression parseConditional(JsonNode initializer) {
         Expression cond = parseExpression(initializer.findValue("condition"));
         Expression falseExpression = parseExpression(initializer.findValue("falseExpression"));
         Expression trueExpression = parseExpression(initializer.findValue("trueExpression"));
 
-        return new TernaryOperator(expType, cond, falseExpression, trueExpression);
+        return new TernaryOperator(BOOL, cond, falseExpression, trueExpression);
     }
 
     private Expression parseIndexAccess(Type expType, JsonNode initializer) {
@@ -634,19 +634,25 @@ public class SolJSONParser {
         return ParserUtils.parseAssignment(left, right, op, expType);
     }
 
-    private Expression parseUnaryOperation(Type expType, JsonNode initializer) {
+    private Expression parseUnaryOperation(JsonNode initializer) {
         Expression uExp = parseExpression(initializer.findValue("subExpression"));
         final String operator = initializer.findValue("operator").asText();
         boolean prefix = initializer.findValue("prefix").asBoolean();
-        return ParserUtils.parseUnaryOperation(uExp, operator, expType, prefix);
+        Type type = getTypeFromDescription(initializer);
+        return ParserUtils.parseUnaryOperation(uExp, operator, type, prefix);
     }
 
-    private Expression parseBinaryOperation(Type expType, JsonNode initializer) {
+    private Expression parseBinaryOperation(JsonNode initializer) {
         Expression leftExpression = parseExpression(initializer.findValue("leftExpression"));
         Expression rightExpression = parseExpression(initializer.findValue("rightExpression"));
 
         final String operator = initializer.findValue("operator").asText();
-        return ParserUtils.parseBinaryOperation(leftExpression, rightExpression, operator, expType);
+        Type type = getTypeFromDescription(initializer);
+        return ParserUtils.parseBinaryOperation(leftExpression, rightExpression, operator, type);
+    }
+
+    private Type getTypeFromDescription(JsonNode initializer) {
+        return getType(initializer.findValue("typeDescriptions").findValue("typeIdentifier").textValue());
     }
 
     private Expression parseIdentifier(Type type, JsonNode literal) {
@@ -712,7 +718,7 @@ public class SolJSONParser {
         };
     }
 
-    private Literal parseLiteral(Type expType, JsonNode literal) {
+    private Literal parseLiteral(JsonNode literal) {
         final String kind = literal.findValue("kind").asText();
         return switch (kind) {
             case "number" -> {
