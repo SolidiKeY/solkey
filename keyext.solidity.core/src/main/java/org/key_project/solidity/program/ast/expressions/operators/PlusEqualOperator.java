@@ -10,8 +10,8 @@ import org.key_project.util.ExtList;
 
 public final class PlusEqualOperator extends BinaryOperator {
 
-    public PlusEqualOperator(Expression left, Expression right, Type type) {
-        super(left, right, type);
+    public PlusEqualOperator(Expression left, Expression right) {
+        super(left, right, left.getType());
     }
 
     public PlusEqualOperator(ExtList changeList, Type type) {

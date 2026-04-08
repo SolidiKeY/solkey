@@ -10,8 +10,8 @@ import org.key_project.util.ExtList;
 
 public final class XorEqualOperator extends BinaryOperator {
 
-    public XorEqualOperator(Expression left, Expression right, Type type) {
-        super(left, right, type);
+    public XorEqualOperator(Expression left, Expression right) {
+        super(left, right, left.getType());
     }
 
     public XorEqualOperator(ExtList changeList, Type type) {

@@ -10,8 +10,8 @@ import org.key_project.util.ExtList;
 
 public final class LeftShiftEqualOperator extends BinaryOperator {
 
-    public LeftShiftEqualOperator(Expression left, Expression right, Type type) {
-        super(left, right, type);
+    public LeftShiftEqualOperator(Expression left, Expression right) {
+        super(left, right, left.getType());
     }
 
     public LeftShiftEqualOperator(ExtList changeList, Type type) {

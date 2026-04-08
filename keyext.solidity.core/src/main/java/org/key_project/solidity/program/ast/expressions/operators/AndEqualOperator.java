@@ -10,8 +10,8 @@ import org.key_project.util.ExtList;
 
 public final class AndEqualOperator extends BinaryOperator {
 
-    public AndEqualOperator(Expression left, Expression right, Type type) {
-        super(left, right, type);
+    public AndEqualOperator(Expression left, Expression right) {
+        super(left, right, left.getType());
     }
 
     public AndEqualOperator(ExtList changeList, Type type) {

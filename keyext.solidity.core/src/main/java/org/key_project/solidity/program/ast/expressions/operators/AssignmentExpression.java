@@ -10,8 +10,8 @@ import org.key_project.util.ExtList;
 
 public class AssignmentExpression extends BinaryOperator {
 
-    public AssignmentExpression(Expression left, Expression right, Type type) {
-        super(left, right, type);
+    public AssignmentExpression(Expression left, Expression right) {
+        super(left, right, left.getType());
     }
 
     public AssignmentExpression(ExtList changeList, Type type) {

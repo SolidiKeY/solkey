@@ -10,8 +10,8 @@ import org.key_project.util.ExtList;
 
 public final class OrEqualOperator extends BinaryOperator {
 
-    public OrEqualOperator(Expression left, Expression right, Type type) {
-        super(left, right, type);
+    public OrEqualOperator(Expression left, Expression right) {
+        super(left, right, left.getType());
     }
 
     public OrEqualOperator(ExtList changeList, Type type) {

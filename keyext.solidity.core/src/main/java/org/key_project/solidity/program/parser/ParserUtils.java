@@ -48,18 +48,18 @@ public class ParserUtils {
     static public Optional<Expression> parseAssignmentMaybe(Expression left, Expression right,
             String operator, Type expType) {
         Expression exp = switch (operator) {
-            case "=" -> new AssignmentExpression(left, right, expType);
-            case "|=" -> new OrEqualOperator(left, right, expType);
-            case "^=" -> new XorEqualOperator(left, right, expType);
-            case "&=" -> new AndEqualOperator(left, right, expType);
-            case "<<=" -> new LeftShiftEqualOperator(left, right, expType);
-            case ">>=" -> new RightShiftEqualOperator(left, right, expType);
-            case ">>>=" -> new LogicalRightShiftEqualOperator(left, right, expType);
-            case "+=" -> new PlusEqualOperator(left, right, expType);
-            case "-=" -> new MinusEqualOperator(left, right, expType);
-            case "*=" -> new MultiplicationEqualOperator(left, right, expType);
-            case "/=" -> new DivisionEqualOperator(left, right, expType);
-            case "%=" -> new ModEqualOperator(left, right, expType);
+            case "=" -> new AssignmentExpression(left, right);
+            case "|=" -> new OrEqualOperator(left, right);
+            case "^=" -> new XorEqualOperator(left, right);
+            case "&=" -> new AndEqualOperator(left, right);
+            case "<<=" -> new LeftShiftEqualOperator(left, right);
+            case ">>=" -> new RightShiftEqualOperator(left, right);
+            case ">>>=" -> new LogicalRightShiftEqualOperator(left, right);
+            case "+=" -> new PlusEqualOperator(left, right);
+            case "-=" -> new MinusEqualOperator(left, right);
+            case "*=" -> new MultiplicationEqualOperator(left, right);
+            case "/=" -> new DivisionEqualOperator(left, right);
+            case "%=" -> new ModEqualOperator(left, right);
             default -> null;
         };
         return exp == null ? Optional.empty() : Optional.of(exp);
