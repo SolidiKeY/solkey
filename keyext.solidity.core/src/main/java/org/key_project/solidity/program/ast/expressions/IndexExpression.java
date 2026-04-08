@@ -16,8 +16,8 @@ public class IndexExpression extends SolidityExpression {
     Expression leftExp;
     Expression indexExp;
 
-    public IndexExpression(Expression leftExp, Expression indexExp, Type expType) {
-        super(expType);
+    public IndexExpression(Expression leftExp, Expression indexExp) {
+        super(leftExp.getType());
         this.leftExp = leftExp;
         this.indexExp = indexExp;
     }

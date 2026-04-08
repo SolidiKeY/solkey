@@ -141,7 +141,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     public SyntaxElement visitIndexAccess(IndexAccessContext ctx) {
         Expression left = visitExpression(ctx.left);
         Expression index = visitExpression(ctx.index);
-        return new IndexExpression(left, index, left.getType());
+        return new IndexExpression(left, index);
     }
 
     @Override
