@@ -597,7 +597,9 @@ public class SolJSONParser {
         Expression leftExp = parseExpression(initializer.findValue("expression"));
         int rightId = initializer.findValue("referencedDeclaration").asInt();
         JsonNode expNode = initializer.findValue("expression");
-        Type type = parseMaybeReferenceTypeDeclaration(expNode);
+        Type type = expNode.has("referencedDeclaration") ?
+                parseReferenceTypeDeclaration(expNode) :
+                ADDRESS;
         if (id2Name.containsKey(rightId))
             return new MemberExp(leftExp, id2Name.get(rightId), type);
         return new MemberExp(leftExp, rightId, type);
