@@ -613,7 +613,7 @@ public class SolJSONParser {
         Type expType = (expNode != null && expNode.has("referencedDeclaration"))
                 ? parseReferenceTypeDeclaration(expNode)
                 : getTypeFromDescription(assign);
-        return ParserUtils.parseAssignment(left, right, op, expType);
+        return ParserUtils.parseAssignment(left, right, op);
     }
 
     private Expression parseUnaryOperation(JsonNode initializer) {

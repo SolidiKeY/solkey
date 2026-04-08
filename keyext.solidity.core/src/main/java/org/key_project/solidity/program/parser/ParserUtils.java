@@ -46,7 +46,7 @@ public class ParserUtils {
     }
 
     static public Optional<Expression> parseAssignmentMaybe(Expression left, Expression right,
-            String operator, Type expType) {
+            String operator) {
         Expression exp = switch (operator) {
             case "=" -> new AssignmentExpression(left, right);
             case "|=" -> new OrEqualOperator(left, right);
@@ -65,9 +65,8 @@ public class ParserUtils {
         return exp == null ? Optional.empty() : Optional.of(exp);
     }
 
-    static public Expression parseAssignment(Expression left, Expression right, String operator,
-            Type expType) {
-        return parseAssignmentMaybe(left, right, operator, expType)
+    static public Expression parseAssignment(Expression left, Expression right, String operator) {
+        return parseAssignmentMaybe(left, right, operator)
                 .orElseThrow(
                     () -> new RuntimeException("Assignment: " + operator + " not supported"));
     }
@@ -75,7 +74,7 @@ public class ParserUtils {
     static public Optional<Expression> parseAllBinaryMaybe(Expression left, Expression right,
             String operator, Type expType) {
         return parseBinaryOperationMaybe(left, right, operator, expType)
-                .or(() -> parseAssignmentMaybe(left, right, operator, expType));
+                .or(() -> parseAssignmentMaybe(left, right, operator));
     }
 
     static public Expression parseAllBinary(Expression left, Expression right, String operator,
