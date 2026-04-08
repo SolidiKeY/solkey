@@ -485,20 +485,18 @@ public class SolJSONParser {
         if(expNode.has("referencedDeclaration")) {
             int id = expNode.findValue("referencedDeclaration").asInt();
             SyntaxElement decl = id2Name.get(id);
-            Type expType;
-            if (decl instanceof Type)
-                expType = (Type) decl;
-            else if (decl instanceof FunctionDeclaration)
-                expType = ((FunctionDeclaration) decl).getType();
-            else if (decl instanceof StatementVariableDeclaration)
-                expType = ((StatementVariableDeclaration) decl).getProgramVariable().getType();
-            else if (functionId2Type.containsKey(id))
-                expType = functionId2Type.get(id);
-            else if (contractIds.contains(id))
-                expType = ADDRESS;
-            else
-                expType = parseType(expNode);
-            return expType;
+            return Optional.ofNullable(decl).map(v -> switch (v){
+                case Type tp -> tp;
+                case FunctionDeclaration fd -> fd.getType();
+                case StatementVariableDeclaration svd -> svd.getProgramVariable().getType();
+                default -> null;
+            }).orElseGet(() -> {
+                if (functionId2Type.containsKey(id))
+                    return functionId2Type.get(id);
+                else if (contractIds.contains(id))
+                    return ADDRESS;
+                return parseType(expNode);
+            });
         }
         return getTypeFromDescription(expNode);
     }
