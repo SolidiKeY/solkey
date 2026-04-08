@@ -30,9 +30,9 @@ public class ParserUtils {
             case ">" -> new GreaterOperator(left, right, expType);
             case "<=" -> new LessEqualOperator(left, right, expType);
             case "<" -> new LessOperator(left, right, expType);
-            case "<<" -> new LeftShiftOperator(left, right, expType);
-            case ">>" -> new RightShiftOperator(left, right, expType);
-            case ">>>" -> new LogicalRightShiftOperator(left, right, expType);
+            case "<<" -> new LeftShiftOperator(left, right);
+            case ">>" -> new RightShiftOperator(left, right);
+            case ">>>" -> new LogicalRightShiftOperator(left, right);
             default -> null;
         };
         return exp == null ? Optional.empty() : Optional.of(exp);

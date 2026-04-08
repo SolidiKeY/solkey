@@ -9,8 +9,8 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 public class LeftShiftOperator extends BinaryOperator {
-    public LeftShiftOperator(Expression left, Expression right, Type type) {
-        super(left, right, type);
+    public LeftShiftOperator(Expression left, Expression right) {
+        super(left, right, left.getType());
     }
 
     public LeftShiftOperator(ExtList changeList, Type type) {
