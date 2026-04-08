@@ -8,10 +8,12 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
+import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.BOOL;
+
 public final class UnequalOperator extends BinaryOperator {
 
-    public UnequalOperator(Expression left, Expression right, Type type) {
-        super(left, right, type);
+    public UnequalOperator(Expression left, Expression right) {
+        super(left, right, BOOL);
     }
 
     public UnequalOperator(ExtList changeList, Type type) {

@@ -8,10 +8,12 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
+import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.BOOL;
+
 public final class GreaterOperator extends BinaryOperator {
 
-    public GreaterOperator(Expression left, Expression right, Type type) {
-        super(left, right, type);
+    public GreaterOperator(Expression left, Expression right) {
+        super(left, right, BOOL);
     }
 
     public GreaterOperator(ExtList changeList, Type type) {
