@@ -10,8 +10,11 @@ import java.util.Set;
 import org.key_project.logic.Name;
 import org.key_project.logic.op.Function;
 import org.key_project.logic.sort.Sort;
+import org.key_project.solidity.program.ast.abstractions.ArrayType;
+import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.solidity.program.ast.expressions.Expression;
 
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.*;
 
@@ -28,6 +31,26 @@ public class SolidityInfo {
         if (typeMap.containsKey(typeName))
             return typeMap.get(typeName);
         return getPrimitiveType(typeName.toString());
+    }
+
+    public Type getDynamicTypeMap(Name primaryTypeName) {
+        Name typeName = new Name(primaryTypeName + "[]");
+        if (typeMap.containsKey(typeName ))
+            return typeMap.get(typeName);
+        Type primaryType = getType(primaryTypeName);
+        Type type = new DynamicArrayType(primaryType);
+        typeMap.put(typeName, type);
+        return type;
+    }
+
+    public Type getStaticTypeMap(Name primaryTypeName, Expression expression) {
+        Name typeName = new Name(primaryTypeName + "[" + expression.toString() + "]");
+        if (typeMap.containsKey(typeName))
+            return typeMap.get(typeName);
+        Type primaryType = getType(primaryTypeName);
+        Type type = new ArrayType(primaryType, Integer.parseInt(expression.toString()));
+        typeMap.put(typeName, type);
+        return type;
     }
 
     public KeYSolidityType getKeYSolidityType(String type) {

@@ -222,6 +222,16 @@ public class SolidityToKeyConverterTest {
     }
 
     @Test
+    void dynamicArrayDefinition() {
+        Statement statement = parseStatement("bool[] b;");
+    }
+
+    @Test
+    void staticArrayDefinition() {
+        Statement statement = parseStatement("bool[10] b;");
+    }
+
+    @Test
     void sliceArray() {
         IndexRangeExpression exp = (IndexRangeExpression) parseExpression("v[false:true]");
         assertEquals("v", ((ProgramVariable) exp.getChild(0)).toString());
