@@ -956,6 +956,12 @@ public class SolJsonParserTest {
         String contractS = contractDec.toString();
         assertTrue(contractS.contains("enum State"));
         assertTrue(contractS.contains("Begin, End"));
+        assertEquals(1, contractDec.getChildCount());
+        SyntaxElement enumChild = contractDec.getChild(0);
+        assertInstanceOf(EnumDeclaration.class, enumChild);
+        EnumDeclaration stateEnum = (EnumDeclaration) enumChild;
+        assertEquals("State", stateEnum.getName().toString());
+        assertEquals(2, stateEnum.getChildCount());
     }
 
     @Test
@@ -974,6 +980,15 @@ public class SolJsonParserTest {
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
         assertTrue(contractS.contains("State.Begin"));
+        // Contract has 1 function + 1 enum = 2 children; enum is at index 1
+        EnumDeclaration stateEnum = (EnumDeclaration) contractDec.getChild(1);
+        DeclarationStatement declStm = (DeclarationStatement) contractDec.getFunctions().getFirst()
+                .getBody().getStatements().get(0);
+        StatementVariableDeclaration decl = (StatementVariableDeclaration) declStm.getDeclarations().get(0);
+        ProgramVariable s = decl.getProgramVariable();
+        Type sType = s.getType();
+        assertInstanceOf(EnumDeclaration.class, sType);
+        assertSame(stateEnum, sType);
     }
 
     @Test
