@@ -103,6 +103,16 @@ Central singleton-like registry accessed via `Services`. Contains all registered
 
 Formatting is enforced by **Spotless** using the Eclipse style defined in `scripts/tools/checkstyle/keyCodeStyle.xml`. Run `./gradlew spotlessApply` before committing. Nullness is checked via the EISOP Checker Framework — fields are `@NonNull` by default; use `@Nullable` explicitly.
 
+## Testing After Refactoring
+
+After every refactor related to Solidity code, run the Solidity module tests to verify the changes pass:
+
+```bash
+./gradlew :keyext.solidity.core:test
+```
+
+This ensures that modifications to the Solidity verification pipeline do not break existing functionality.
+
 ## Key Inherited KeY Concepts
 
 - **`Term`** (`key.ncore`) — immutable, has an `Operator`, subterms, bound variables, and a `Sort`.
