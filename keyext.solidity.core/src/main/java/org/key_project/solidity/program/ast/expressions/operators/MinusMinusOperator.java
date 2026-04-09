@@ -3,18 +3,17 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions.operators;
 
-import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 public class MinusMinusOperator extends UnaryBothCases {
-    public MinusMinusOperator(Expression exp, Type type, boolean prefix) {
-        super(exp, type, prefix);
+    public MinusMinusOperator(Expression exp, boolean prefix) {
+        super(exp, exp.getType(), prefix);
     }
 
-    public MinusMinusOperator(ExtList changeList, Type type) {
-        super(changeList, type);
+    public MinusMinusOperator(ExtList changeList) {
+        super(changeList);
     }
 
     @Override

@@ -85,22 +85,22 @@ public class ParserUtils {
     }
 
     static public Optional<Expression> parseUnaryOperationMaybe(Expression uExp, String operator,
-            Type expType, boolean prefix) {
+            boolean prefix) {
         Expression exp = switch (operator) {
-            case "++" -> new PlusPlusOperator(uExp, expType, prefix);
-            case "--" -> new MinusMinusOperator(uExp, expType, prefix);
-            case "~" -> new BitwiseNotOperator(uExp, expType);
-            case "!" -> new NotOperator(uExp, expType);
-            case "-" -> new NegateOperator(uExp, expType);
-            case "delete" -> new DeleteOperator(uExp, expType);
+            case "++" -> new PlusPlusOperator(uExp, prefix);
+            case "--" -> new MinusMinusOperator(uExp, prefix);
+            case "~" -> new BitwiseNotOperator(uExp);
+            case "!" -> new NotOperator(uExp);
+            case "-" -> new NegateOperator(uExp);
+            case "delete" -> new DeleteOperator(uExp);
             default -> null;
         };
         return exp == null ? Optional.empty() : Optional.of(exp);
     }
 
-    static public Expression parseUnaryOperation(Expression uExp, String operator, Type expType,
+    static public Expression parseUnaryOperation(Expression uExp, String operator,
             boolean prefix) {
-        return parseUnaryOperationMaybe(uExp, operator, expType, prefix)
+        return parseUnaryOperationMaybe(uExp, operator, prefix)
                 .orElseThrow(
                     () -> new RuntimeException("Not yet supported binary operation: " + operator));
     }

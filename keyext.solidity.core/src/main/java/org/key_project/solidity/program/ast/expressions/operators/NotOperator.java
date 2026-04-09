@@ -3,18 +3,17 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions.operators;
 
-import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 public class NotOperator extends UnaryOperator {
-    public NotOperator(Expression exp, Type type) {
-        super(exp, type);
+    public NotOperator(Expression exp) {
+        super(exp, exp.getType());
     }
 
-    public NotOperator(ExtList changeList, Type type) {
-        super(changeList, type);
+    public NotOperator(ExtList changeList) {
+        super(changeList);
     }
 
     @Override

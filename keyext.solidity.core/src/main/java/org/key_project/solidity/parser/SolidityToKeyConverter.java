@@ -117,14 +117,14 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     public SyntaxElement visitUnaryPrefix(UnaryPrefixContext ctx) {
         String operator = ctx.children.getFirst().toString();
         Expression uExp = visitExpression(ctx.expression());
-        return ParserUtils.parseUnaryOperation(uExp, operator, uExp.getType(), true);
+        return ParserUtils.parseUnaryOperation(uExp, operator, true);
     }
 
     @Override
     public SyntaxElement visitPostfix(PostfixContext ctx) {
         String operator = ctx.children.get(1).toString();
         Expression uExp = visitExpression(ctx.expression());
-        return ParserUtils.parseUnaryOperation(uExp, operator, uExp.getType(), false);
+        return ParserUtils.parseUnaryOperation(uExp, operator, false);
     }
 
     @Override

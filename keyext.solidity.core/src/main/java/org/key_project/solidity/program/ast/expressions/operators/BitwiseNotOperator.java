@@ -3,19 +3,18 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions.operators;
 
-import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 public class BitwiseNotOperator extends UnaryOperator {
 
-    public BitwiseNotOperator(Expression exp, Type type) {
-        super(exp, type);
+    public BitwiseNotOperator(Expression exp) {
+        super(exp, exp.getType());
     }
 
-    public BitwiseNotOperator(ExtList changeList, Type type) {
-        super(changeList, type);
+    public BitwiseNotOperator(ExtList changeList) {
+        super(changeList);
     }
 
     @Override

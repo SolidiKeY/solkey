@@ -302,7 +302,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new BitwiseNotOperator(changeList, x.getType());
+                return new BitwiseNotOperator(changeList);
             }
         };
         def.doAction(x);
@@ -324,7 +324,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new DeleteOperator(changeList, x.getType());
+                return new DeleteOperator(changeList);
             }
         };
         def.doAction(x);
@@ -478,7 +478,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new MinusMinusOperator(changeList, x.getType());
+                return new MinusMinusOperator(changeList);
             }
         };
         def.doAction(x);
@@ -533,7 +533,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new NegateOperator(changeList, x.getType());
+                return new NegateOperator(changeList);
             }
         };
         def.doAction(x);
@@ -544,7 +544,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new NotOperator(changeList, x.getType());
+                return new NotOperator(changeList);
             }
         };
         def.doAction(x);
@@ -588,7 +588,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new PlusPlusOperator(changeList, x.getType());
+                return new PlusPlusOperator(changeList);
             }
         };
         def.doAction(x);

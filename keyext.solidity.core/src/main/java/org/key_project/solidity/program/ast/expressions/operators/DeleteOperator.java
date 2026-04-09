@@ -3,18 +3,17 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions.operators;
 
-import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 public class DeleteOperator extends UnaryOperator {
-    public DeleteOperator(Expression exp, Type type) {
-        super(exp, type);
+    public DeleteOperator(Expression exp) {
+        super(exp, exp.getType());
     }
 
-    public DeleteOperator(ExtList changeList, Type type) {
-        super(changeList, type);
+    public DeleteOperator(ExtList changeList) {
+        super(changeList);
     }
 
     @Override

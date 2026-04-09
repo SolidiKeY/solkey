@@ -3,18 +3,17 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions.operators;
 
-import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 public class NegateOperator extends UnaryOperator {
-    public NegateOperator(Expression exp, Type type) {
-        super(exp, type);
+    public NegateOperator(Expression exp) {
+        super(exp, exp.getType());
     }
 
-    public NegateOperator(ExtList changeList, Type type) {
-        super(changeList, type);
+    public NegateOperator(ExtList changeList) {
+        super(changeList);
     }
 
     @Override

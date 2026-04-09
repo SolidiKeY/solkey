@@ -25,6 +25,19 @@ public abstract class UnaryOperator extends SolidityExpression {
         this.exp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
     }
 
+    public UnaryOperator(ExtList children) {
+        super(getTypeFromExpression(children));
+        this.exp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+    }
+
+    private static Type getTypeFromExpression(ExtList children) {
+        Expression exp = children.get(Expression.class);
+        if (exp == null) {
+            throw new IllegalArgumentException("ExtList must contain an Expression");
+        }
+        return exp.getType();
+    }
+
     @Override
     public Type getType() {
         if (type == null) {

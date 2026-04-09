@@ -620,8 +620,7 @@ public class SolJSONParser {
         Expression uExp = parseExpression(initializer.findValue("subExpression"));
         final String operator = initializer.findValue("operator").asText();
         boolean prefix = initializer.findValue("prefix").asBoolean();
-        Type type = getTypeFromDescription(initializer);
-        return ParserUtils.parseUnaryOperation(uExp, operator, type, prefix);
+        return ParserUtils.parseUnaryOperation(uExp, operator, prefix);
     }
 
     private Expression parseBinaryOperation(JsonNode initializer) {

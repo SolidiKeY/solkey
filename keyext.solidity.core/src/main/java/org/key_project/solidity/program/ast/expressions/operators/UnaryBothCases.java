@@ -16,8 +16,8 @@ abstract class UnaryBothCases extends UnaryOperator {
         this.prefix = prefix;
     }
 
-    public UnaryBothCases(ExtList changeList, Type type) {
-        super(changeList, type);
+    public UnaryBothCases(ExtList changeList) {
+        super(changeList);
     }
 
     @Override
