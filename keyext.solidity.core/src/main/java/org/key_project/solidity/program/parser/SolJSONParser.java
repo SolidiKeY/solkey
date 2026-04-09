@@ -481,12 +481,6 @@ public class SolJSONParser {
          return field;
     }
 
-    Type parseMaybeReferenceTypeDeclaration(JsonNode expNode) {
-        return expNode.has("referencedDeclaration") ?
-            parseReferenceTypeDeclaration(expNode) :
-            getTypeFromDescription(expNode);
-    }
-
     Type parseReferenceTypeDeclaration(JsonNode expNode) {
         int id = expNode.findValue("referencedDeclaration").asInt();
         SyntaxElement decl = id2Name.get(id);
@@ -543,7 +537,9 @@ public class SolJSONParser {
 
     private Expression parseFunctionCall(JsonNode initializer) {
         JsonNode expNode = initializer.findValue("expression");
-        Type expType = parseMaybeReferenceTypeDeclaration(expNode);
+        Type expType = expNode.has("referencedDeclaration") ?
+                parseReferenceTypeDeclaration(expNode) :
+                parseTypeName(initializer);
         Expression functionExp = parseExpression(expNode);
         List<Expression> arguments =
             initializer.findValue("arguments").valueStream().map(this::parseExpression).toList();
@@ -609,10 +605,6 @@ public class SolJSONParser {
         final String op = assign.findValue("operator").asText();
         Expression left = parseExpression(assign.findValue("leftHandSide"));
         Expression right = parseExpression(assign.findValue("rightHandSide"));
-        JsonNode expNode = assign.findValue("expression");
-        Type expType = (expNode != null && expNode.has("referencedDeclaration"))
-                ? parseReferenceTypeDeclaration(expNode)
-                : getTypeFromDescription(assign);
         return ParserUtils.parseAssignment(left, right, op);
     }
 
