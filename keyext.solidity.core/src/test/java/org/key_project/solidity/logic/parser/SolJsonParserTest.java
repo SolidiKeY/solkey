@@ -9,6 +9,8 @@ import java.util.List;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.program.ast.abstractions.ArrayType;
+import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
 import org.key_project.solidity.program.ast.abstractions.TupleType;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.*;
@@ -478,6 +480,10 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         assertTrue(contractDec.toString().contains("v[1 + 1]"));
+        Type vType = contractDec.getFieldDeclarations().get(0).getProgramVariable().getType();
+        assertInstanceOf(DynamicArrayType.class, vType);
+        DynamicArrayType arrayType = (DynamicArrayType) vType;
+        assertSame(INT, arrayType.getChild(0));
     }
 
     @Test
@@ -494,6 +500,15 @@ public class SolJsonParserTest {
         String contractS = contractDec.toString();
         assertTrue(contractS.contains("bool[3] memory foo;"));
         assertTrue(contractS.contains("foo = [false, true, false];"));
+        DeclarationStatement declStm = (DeclarationStatement) contractDec.getFunctions().getFirst()
+                .getBody().getStatements().get(0);
+        StatementVariableDeclaration decl = (StatementVariableDeclaration) declStm.getDeclarations().get(0);
+        ProgramVariable foo = decl.getProgramVariable();
+        Type fooType = foo.getType();
+        assertInstanceOf(ArrayType.class, fooType);
+        ArrayType arrayType = (ArrayType) fooType;
+        assertEquals(3, arrayType.length());
+        assertSame(BOOL, arrayType.getChild(0));
     }
 
     @Test
@@ -508,6 +523,14 @@ public class SolJsonParserTest {
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
         assertTrue(contractS.contains("bool[] memory foo"));
+        DeclarationStatement declStm = (DeclarationStatement) contractDec.getFunctions().getFirst()
+                .getBody().getStatements().get(0);
+        StatementVariableDeclaration decl = (StatementVariableDeclaration) declStm.getDeclarations().get(0);
+        ProgramVariable foo = decl.getProgramVariable();
+        Type fooType = foo.getType();
+        assertInstanceOf(DynamicArrayType.class, fooType);
+        DynamicArrayType arrayType = (DynamicArrayType) fooType;
+        assertSame(BOOL, arrayType.getChild(0));
     }
 
     @Test
@@ -521,6 +544,11 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         assertTrue(contractDec.toString().contains("v[0:1];"));
+        ProgramVariable v = contractDec.getFunctions().getFirst().getInputParameters().get(0);
+        Type vType = v.getType();
+        assertInstanceOf(DynamicArrayType.class, vType);
+        DynamicArrayType arrayType = (DynamicArrayType) vType;
+        assertSame(BOOL, arrayType.getChild(0));
     }
 
     @Test
