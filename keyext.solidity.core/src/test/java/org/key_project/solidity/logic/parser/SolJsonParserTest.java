@@ -50,6 +50,8 @@ public class SolJsonParserTest {
         assertEquals(1, contractDeclaration.getFieldDeclarations().size());
         assertEquals(Storage,
             contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getLocation());
+        assertSame(UINT256,
+            contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getType());
     }
 
     @Test
@@ -62,6 +64,10 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         assertEquals(2, contractDeclaration.getFieldDeclarations().size());
+        assertSame(UINT256,
+            contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getType());
+        assertSame(BOOL,
+            contractDeclaration.getFieldDeclarations().get(1).getProgramVariable().getType());
     }
 
     @Test
@@ -81,6 +87,8 @@ public class SolJsonParserTest {
         StateVariableDeclaration secondField = contractDeclaration.getFieldDeclarations().get(1);
         assertInstanceOf(BoolLiteral.class, secondField.getInitializer());
         assertSame(TRUE, secondField.getInitializer());
+        assertSame(UINT256, firstField.getProgramVariable().getType());
+        assertSame(BOOL, secondField.getProgramVariable().getType());
     }
 
     @Test
@@ -110,6 +118,7 @@ public class SolJsonParserTest {
         assertInstanceOf(AddOperator.class, initializer);
         assertInstanceOf(ProgramVariable.class, initializer.getChild(0));
         assertInstanceOf(Uint256Literal.class, initializer.getChild(1));
+        assertSame(UINT256, initializer.getType());
     }
 
     @Test
@@ -160,6 +169,8 @@ public class SolJsonParserTest {
         assertNotNull(block);
         assertEquals(1, block.getChildCount());
         assertEquals(Default, function.getInputParameters().get(0).getLocation());
+        assertSame(UINT256, function.getInputParameters().get(0).getType());
+        assertSame(UINT256, function.getReturnParameters().get(0).getType());
     }
 
     @Test
@@ -213,6 +224,9 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         assertTrue(contractDec.toString().contains("b = true"));
+        ProgramVariable b = (ProgramVariable) contractDec.getChild(0).getChild(0).getChild(0)
+                .getChild(0).getChild(0);
+        assertSame(BOOL, b.getType());
     }
 
     @Test
@@ -260,6 +274,8 @@ public class SolJsonParserTest {
         assertEquals(2, contractDeclaration.getFieldDeclarations().size());
         assertInstanceOf(OrOperator.class,
             contractDeclaration.getFieldDeclarations().get(0).getInitializer());
+        assertSame(BOOL, contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getType());
+        assertSame(INT, contractDeclaration.getFieldDeclarations().get(1).getProgramVariable().getType());
     }
 
     @Test
@@ -273,6 +289,8 @@ public class SolJsonParserTest {
         assertEquals(1, contractDeclaration.getFieldDeclarations().size());
         assertInstanceOf(TernaryOperator.class,
             contractDeclaration.getFieldDeclarations().get(0).getInitializer());
+        assertSame(BOOL, contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getType());
+        assertSame(BOOL, ((TernaryOperator) contractDeclaration.getFieldDeclarations().get(0).getInitializer()).getType());
     }
 
     @Test
@@ -302,6 +320,9 @@ public class SolJsonParserTest {
         assertEquals(3, contractDeclaration.getFieldDeclarations().size());
         SyntaxElement exp = contractDeclaration.getChild(2).getChild(1).getChild(0);
         assertInstanceOf(PlusPlusOperator.class, exp);
+        assertSame(UINT256, contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getType());
+        assertSame(UINT256, contractDeclaration.getFieldDeclarations().get(1).getProgramVariable().getType());
+        assertSame(UINT256, contractDeclaration.getFieldDeclarations().get(2).getProgramVariable().getType());
     }
 
     @Test
@@ -317,6 +338,10 @@ public class SolJsonParserTest {
         assertEquals(1, contractDeclaration.getFunctions().size());
         assertInstanceOf(PlusEqualOperator.class, contractDeclaration.getFunctions()
                 .getFirst().getBody().getStatements().get(0).getChild(0));
+        FunctionDeclaration func = contractDeclaration.getFunctions().getFirst();
+        assertSame(UINT256, func.getInputParameters().get(0).getType());
+        assertSame(UINT256, func.getInputParameters().get(1).getType());
+        assertSame(UINT256, func.getInputParameters().get(2).getType());
     }
 
     @Test
@@ -522,6 +547,9 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         assertTrue(contractDec.toString().contains("f(v);"));
+        FunctionDeclaration f = contractDec.getFunctions().get(0);
+        assertSame(BOOL, f.getInputParameters().get(0).getType());
+        assertSame(BOOL, f.getReturnParameters().get(0).getType());
     }
 
     @Test
@@ -538,6 +566,7 @@ public class SolJsonParserTest {
         String contractS = contractDec.toString();
         assertTrue(contractS.contains("if"));
         assertTrue(contractS.contains("i = 0;"));
+        assertSame(INT, contractDec.getFieldDeclarations().get(0).getProgramVariable().getType());
     }
 
     @Test
@@ -656,6 +685,8 @@ public class SolJsonParserTest {
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
         assertTrue(contractS.contains("SimpleContract(target).f()"));
+        FunctionDeclaration g = contractDec.getFunctions().get(1);
+        assertSame(ADDRESS, g.getInputParameters().get(0).getType());
     }
 
     @Test
@@ -701,6 +732,7 @@ public class SolJsonParserTest {
         ProgramVariable returnA = tryStatement.getReturnDeclaration().get(0);
         ProgramVariable rightA = (ProgramVariable) tryStatement.getBody().getStatements().get(0).getChild(1);
         assertSame(returnA, rightA);
+        assertSame(INT, returnA.getType());
     }
 
     @Test
@@ -1000,6 +1032,8 @@ public class SolJsonParserTest {
         Services services = new Services();
         assertSame(fType, gType);
         assertSame(fType.getSort(services), gType.getSort(services));
+        assertEquals(INT, fType.getChild(0));
+        assertEquals(BOOL, fType.getChild(1));
     }
 
     @Test
