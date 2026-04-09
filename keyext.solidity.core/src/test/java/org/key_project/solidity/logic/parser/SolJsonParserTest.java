@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
+import org.key_project.util.collection.ImmutableArray;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.*;
@@ -290,7 +291,7 @@ public class SolJsonParserTest {
         assertInstanceOf(TernaryOperator.class,
             contractDeclaration.getFieldDeclarations().get(0).getInitializer());
         assertSame(BOOL, contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getType());
-        assertSame(BOOL, ((TernaryOperator) contractDeclaration.getFieldDeclarations().get(0).getInitializer()).getType());
+        assertSame(BOOL, contractDeclaration.getFieldDeclarations().get(0).getInitializer().getType());
     }
 
     @Test
@@ -317,12 +318,13 @@ public class SolJsonParserTest {
                    uint256 v = i++ + j--;
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
-        assertEquals(3, contractDeclaration.getFieldDeclarations().size());
+        ImmutableArray<StateVariableDeclaration> fieldDeclarations = contractDeclaration.getFieldDeclarations();
+        assertEquals(3, fieldDeclarations.size());
         SyntaxElement exp = contractDeclaration.getChild(2).getChild(1).getChild(0);
         assertInstanceOf(PlusPlusOperator.class, exp);
-        assertSame(UINT256, contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getType());
-        assertSame(UINT256, contractDeclaration.getFieldDeclarations().get(1).getProgramVariable().getType());
-        assertSame(UINT256, contractDeclaration.getFieldDeclarations().get(2).getProgramVariable().getType());
+        assertSame(UINT256, fieldDeclarations.get(0).getProgramVariable().getType());
+        assertSame(UINT256, fieldDeclarations.get(1).getProgramVariable().getType());
+        assertSame(UINT256, fieldDeclarations.get(2).getProgramVariable().getType());
     }
 
     @Test
@@ -339,9 +341,10 @@ public class SolJsonParserTest {
         assertInstanceOf(PlusEqualOperator.class, contractDeclaration.getFunctions()
                 .getFirst().getBody().getStatements().get(0).getChild(0));
         FunctionDeclaration func = contractDeclaration.getFunctions().getFirst();
-        assertSame(UINT256, func.getInputParameters().get(0).getType());
-        assertSame(UINT256, func.getInputParameters().get(1).getType());
-        assertSame(UINT256, func.getInputParameters().get(2).getType());
+        ImmutableArray<ProgramVariable> inputParameters = func.getInputParameters();
+        assertSame(UINT256, inputParameters.get(0).getType());
+        assertSame(UINT256, inputParameters.get(1).getType());
+        assertSame(UINT256, inputParameters.get(2).getType());
     }
 
     @Test
