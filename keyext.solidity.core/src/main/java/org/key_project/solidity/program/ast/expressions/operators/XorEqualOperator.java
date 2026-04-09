@@ -8,10 +8,10 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public final class XorEqualOperator extends BinaryOperator {
+public final class XorEqualOperator extends AbstractOperator {
 
     public XorEqualOperator(Expression left, Expression right) {
-        super(left, right, left.getType());
+        super(left, right);
     }
 
     public XorEqualOperator(ExtList changeList, Type type) {

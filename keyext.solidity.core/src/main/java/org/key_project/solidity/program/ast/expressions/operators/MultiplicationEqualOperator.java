@@ -8,10 +8,10 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public final class MultiplicationEqualOperator extends BinaryOperator {
+public final class MultiplicationEqualOperator extends AbstractOperator {
 
     public MultiplicationEqualOperator(Expression left, Expression right) {
-        super(left, right, left.getType());
+        super(left, right);
     }
 
     public MultiplicationEqualOperator(ExtList changeList, Type type) {

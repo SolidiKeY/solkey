@@ -8,10 +8,10 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public final class PlusEqualOperator extends BinaryOperator {
+public final class PlusEqualOperator extends AbstractOperator {
 
     public PlusEqualOperator(Expression left, Expression right) {
-        super(left, right, left.getType());
+        super(left, right);
     }
 
     public PlusEqualOperator(ExtList changeList, Type type) {

@@ -8,10 +8,10 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public class AssignmentExpression extends BinaryOperator {
+public class AssignmentExpression extends AbstractOperator {
 
     public AssignmentExpression(Expression left, Expression right) {
-        super(left, right, left.getType());
+        super(left, right);
     }
 
     public AssignmentExpression(ExtList changeList, Type type) {

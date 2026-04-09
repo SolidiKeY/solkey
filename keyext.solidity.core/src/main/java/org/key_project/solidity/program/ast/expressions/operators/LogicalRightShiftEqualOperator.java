@@ -8,10 +8,10 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public final class LogicalRightShiftEqualOperator extends BinaryOperator {
+public final class LogicalRightShiftEqualOperator extends AbstractOperator {
 
     public LogicalRightShiftEqualOperator(Expression left, Expression right) {
-        super(left, right, left.getType());
+        super(left, right);
     }
 
     public LogicalRightShiftEqualOperator(ExtList changeList, Type type) {
