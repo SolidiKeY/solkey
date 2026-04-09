@@ -4,13 +4,12 @@
 package org.key_project.solidity.parser;
 
 import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.program.ast.abstractions.*;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
+import org.key_project.solidity.program.ast.declarations.StructDeclaration;
 import org.key_project.solidity.program.ast.expressions.*;
-import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
-import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
-import org.key_project.solidity.program.ast.expressions.operators.AddOperator;
-import org.key_project.solidity.program.ast.expressions.operators.PlusPlusOperator;
-import org.key_project.solidity.program.ast.expressions.operators.TernaryOperator;
+import org.key_project.solidity.program.ast.expressions.literals.*;
+import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.rule.sv.ProgramSV;
 
@@ -20,7 +19,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.key_project.solidity.parser.ParserForTesting.*;
-import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Memory;
+import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.*;
+import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.*;
 
 public class SolidityToKeyConverterTest {
 
@@ -112,8 +112,10 @@ public class SolidityToKeyConverterTest {
     @Test
     void variableDeclarationWithType() {
         DeclarationStatement stm = (DeclarationStatement) parseStatement("int x;");
-        assertEquals("x", ((StatementVariableDeclaration) stm.getDeclarations().get(0))
-                .getProgramVariable().toString());
+        ProgramVariable x =
+            ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable();
+        assertEquals("x", x.toString());
+        assertEquals(INT, x.getType());
     }
 
     @Test
@@ -223,12 +225,21 @@ public class SolidityToKeyConverterTest {
 
     @Test
     void dynamicArrayDefinition() {
-        Statement statement = parseStatement("bool[] b;");
+        DeclarationStatement stm = (DeclarationStatement) parseStatement("bool[] b;");
+        ProgramVariable b =
+            ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable();
+        DynamicArrayType type = (DynamicArrayType) b.getType();
+        assertEquals(BOOL, type.getChild(0));
     }
 
     @Test
     void staticArrayDefinition() {
-        Statement statement = parseStatement("bool[10] b;");
+        DeclarationStatement stm = (DeclarationStatement) parseStatement("bool[10] b;");
+        ProgramVariable b =
+            ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable();
+        ArrayType type = (ArrayType) b.getType();
+        assertEquals(BOOL, type.getChild(0));
+        assertEquals(10, type.length());
     }
 
     @Test
@@ -267,5 +278,9 @@ public class SolidityToKeyConverterTest {
             ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable();
         assertEquals("alice", alice.name().toString());
         assertEquals(Memory, alice.getLocation());
+        assertInstanceOf(KeYSolidityType.class, alice.getType());
+        Type structType = ((KeYSolidityType) alice.getType()).getSolidityType();
+        assertInstanceOf(StructDeclaration.class, structType);
+        assertEquals("Person", structType.toString());
     }
 }
