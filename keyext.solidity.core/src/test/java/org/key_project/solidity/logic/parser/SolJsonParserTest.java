@@ -17,7 +17,8 @@ import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
 import org.key_project.solidity.program.ast.expressions.MemberExp;
 import org.key_project.solidity.program.ast.expressions.NewExpression;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
-import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
+import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral.*;
+import org.key_project.solidity.program.ast.expressions.literals.*;
 import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.references.ContractReference;
 import org.key_project.solidity.program.ast.references.FunctionReference;
@@ -30,9 +31,9 @@ import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.BOOL;
-import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.INT256;
+import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.*;
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.*;
+import static org.key_project.solidity.program.ast.expressions.literals.BoolLiteral.*;
 import static org.key_project.solidity.program.parser.SolcParserNoServices.getDeclStr;
 
 
@@ -79,7 +80,7 @@ public class SolJsonParserTest {
             ((Uint256Literal) firstField.getInitializer()).getValue().longValue());
         StateVariableDeclaration secondField = contractDeclaration.getFieldDeclarations().get(1);
         assertInstanceOf(BoolLiteral.class, secondField.getInitializer());
-        assertSame(BoolLiteral.TRUE, secondField.getInitializer());
+        assertSame(TRUE, secondField.getInitializer());
     }
 
     @Test
