@@ -8,7 +8,7 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public final class ModEqualOperator extends AbstractOperator {
+public final class ModEqualOperator extends AssignOperator {
 
     public ModEqualOperator(Expression left, Expression right) {
         super(left, right);

@@ -8,7 +8,7 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-public class AssignmentExpression extends AbstractOperator {
+public class AssignmentExpression extends AssignOperator {
 
     public AssignmentExpression(Expression left, Expression right) {
         super(left, right);
