@@ -13,9 +13,7 @@ import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.rule.sv.ProgramSV;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.key_project.solidity.parser.ParserForTesting.*;
@@ -48,7 +46,7 @@ public class SolidityToKeyConverterTest {
     @Test
     void literalBool() {
         BoolLiteral exp = (BoolLiteral) parseExpression("false");
-        assertEquals(false, exp.getValue());
+        assertFalse(exp.getValue());
     }
 
     @Test
@@ -60,7 +58,7 @@ public class SolidityToKeyConverterTest {
     @Test
     void tupleExpression() {
         TupleExpression exp = (TupleExpression) parseExpression("(false, true)");
-        assertEquals(false, ((BoolLiteral) exp.getChild(0)).getValue());
+        assertFalse(((BoolLiteral) exp.getChild(0)).getValue());
     }
 
     @Test
