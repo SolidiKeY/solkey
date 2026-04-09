@@ -26,12 +26,13 @@ variableDeclaration
   : typeName storageLocation? identifier ;
 
 typeName
-  : elementaryTypeName
-  | userDefinedTypeName
-  | mapping
-  | typeName '[' expression? ']'
-  | functionTypeName
-  | 'address' 'payable' ;
+  : elementaryTypeName            # ElementaryType
+  | userDefinedTypeName           # UserDefinedType
+  | mapping                       # MappingType
+  | typeName '[' expression? ']'  # ArrayType
+  | functionTypeName              # FunctionType
+  | 'address' 'payable'           # AddressPayable
+  ;
 
 userDefinedTypeName
   : identifier ( '.' identifier )* ;

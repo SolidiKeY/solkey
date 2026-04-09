@@ -179,12 +179,26 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         return res;
     }
 
-    @Override
     public SyntaxElement visitTypeName(TypeNameContext ctx) {
+        return ctx.accept(this);
+    }
+
+    public SyntaxElement visitTypeDefined(TypeNameContext ctx) {
         Type type = services.getSolidityInfo().getType(new Name(ctx.getText()));
         final Sort sort = type.getSort(services);
         return new KeYSolidityType(type, sort);
     }
+
+    @Override
+    public SyntaxElement visitElementaryType(ElementaryTypeContext ctx) {
+        return visitTypeDefined(ctx);
+    }
+
+    @Override
+    public SyntaxElement visitUserDefinedType(UserDefinedTypeContext ctx) {
+        return visitTypeDefined(ctx);
+    }
+
 
     @Override
     public SyntaxElement visitVariableDeclaration(VariableDeclarationContext ctx) {
