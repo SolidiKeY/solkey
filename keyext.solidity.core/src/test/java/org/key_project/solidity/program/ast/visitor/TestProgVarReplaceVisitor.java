@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.key_project.solidity.parser.ParserForTesting.*;
 import static org.key_project.solidity.program.parser.SolcParserNoServices.getDeclStr;
 
 class TestProgVarReplaceVisitor {
@@ -66,16 +67,8 @@ class TestProgVarReplaceVisitor {
 
     @Test
     void testReplacement() {
-        Expression original = new ProgramVariable(new Name("original"), uintKST, null); // <-
-        // here
-        // actual
-        // statement
-        // needed
-        Expression replacement = new ProgramVariable(new Name("replacement"), uintKST, null); // <-
-        // here
-        // actual
-        // statement
-        // needed
+        Expression original = new ProgramVariable(new Name("original"), uintKST, null);
+        Expression replacement = new ProgramVariable(new Name("replacement"), uintKST, null);
 
         map.put((ProgramVariable) original, (ProgramVariable) replacement);
 
@@ -85,18 +78,9 @@ class TestProgVarReplaceVisitor {
     }
 
     @Test
-    void testSimpleInt() throws IOException {
-        // language=solidity
-        String contract = """
-                contract SimpleContract {
-                    function f() public pure {
-                        int original;
-                        original = 5;
-                    }
-                }""";
-        ContractDeclaration contractDeclaration = getDeclStr(contract);
-        DeclarationStatement dstm = (DeclarationStatement) contractDeclaration.getFunctions()
-                .getFirst().getBody().getStatements().get(0);
+    void testSimpleInt() {
+        Block body = parseBlock("{ int original; original = 5; }");
+        DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
         StatementVariableDeclaration stm =
             (StatementVariableDeclaration) dstm.getDeclarations().get(0);
 
@@ -111,17 +95,8 @@ class TestProgVarReplaceVisitor {
     }
 
     @Test
-    void testWholeBody() throws IOException {
-        // language=solidity
-        String contract = """
-                contract SimpleContract {
-                    function f() public pure {
-                        int original;
-                        original = 5;
-                    }
-                }""";
-        ContractDeclaration contractDeclaration = getDeclStr(contract);
-        Block body = contractDeclaration.getFunctions().getFirst().getBody();
+    void testWholeBody() {
+        Block body = parseBlock("{ int original; original = 5; }");
         DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
         StatementVariableDeclaration stm =
             (StatementVariableDeclaration) dstm.getDeclarations().get(0);
@@ -138,21 +113,13 @@ class TestProgVarReplaceVisitor {
     }
 
     @Test
-    void testArray() throws IOException {
-        // language=solidity
-        String contract = """
-                contract SimpleContract {
-                    function f() public pure {
-                        int256[10] memory original;
-                        original[1] = 1;
-                    }
-                }""";
-        ContractDeclaration contractDeclaration = getDeclStr(contract);
-        Block body = contractDeclaration.getFunctions().getFirst().getBody();
+    void testArray() {
+        Block body = parseBlock("{ int256[10] memory original; original[1] = 1; }");
 
         ProgramVariable original =
             (ProgramVariable) body.getStatements().get(0).getChild(0).getChild(0);
         addMap(original);
+
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
         replacer.start();
         SolidityProgramElement result = replacer.result();
@@ -162,20 +129,8 @@ class TestProgVarReplaceVisitor {
     }
 
     @Test
-    void testStruct() throws IOException {
-        // language=solidity
-        String contract = """
-                contract SimpleContract {
-                    struct Person {
-                       int age;
-                    }
-                    function f() public pure {
-                        Person memory alice;
-                    }
-                }""";
-        ContractDeclaration contractDeclaration = getDeclStr(contract);
-        DeclarationStatement dstm = (DeclarationStatement) contractDeclaration.getFunctions()
-                .getFirst().getBody().getStatements().get(0);
+    void testStruct() {
+        DeclarationStatement dstm = (DeclarationStatement) parseStatement("Person memory original;");
         StatementVariableDeclaration stm =
             (StatementVariableDeclaration) dstm.getDeclarations().get(0);
 
@@ -190,21 +145,8 @@ class TestProgVarReplaceVisitor {
     }
 
     @Test
-    void testEnum() throws IOException {
-        // language=solidity
-        String contract = """
-                contract SimpleContract {
-                    enum State {
-                        Begin,
-                        End
-                    }
-                    function f() public {
-                        State s = State.Begin;
-                        s = State.End;
-                    }
-                }""";
-        ContractDeclaration contractDeclaration = getDeclStr(contract);
-        Block body = contractDeclaration.getFunctions().getFirst().getBody();
+    void testEnum() {
+        Block body = parseBlock("{ State s; s = s; }");
         DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
         StatementVariableDeclaration stm =
             (StatementVariableDeclaration) dstm.getDeclarations().get(0);
@@ -220,17 +162,8 @@ class TestProgVarReplaceVisitor {
     }
 
     @Test
-    void testFor() throws IOException {
-        // language=solidity
-        String contract = """
-                contract SimpleContract {
-                    function f() public pure {
-                        int original;
-                        for(original = 0; original<10; original++){}
-                    }
-                }""";
-        ContractDeclaration contractDeclaration = getDeclStr(contract);
-        Block body = contractDeclaration.getFunctions().getFirst().getBody();
+    void testFor() {
+        Block body = parseBlock("{ int original; for(original = 0; original<10; original++){} }");
         DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
         StatementVariableDeclaration stm =
             (StatementVariableDeclaration) dstm.getDeclarations().get(0);
@@ -249,24 +182,14 @@ class TestProgVarReplaceVisitor {
     }
 
     @Test
-    void testMultipleFeatures() throws IOException {
-        // language=solidity
-        String contract = """
-                contract SimpleContract {
-                    function f() public pure {
-                        int original;
-                        if(original == 2)
-                            original = 0;
-                        else
-                            original = 1;
-                        while(original == 0) original = 1;
-                        original++;
-                        original += 1;
-                        do { original++; } while (original == 0);
-                    }
-                }""";
-        ContractDeclaration contractDeclaration = getDeclStr(contract);
-        Block body = contractDeclaration.getFunctions().getFirst().getBody();
+    void testMultipleFeatures() {
+        Block body = parseBlock("""
+            { int original;
+              if(original == 2) original = 0; else original = 1;
+              while(original == 0) original = 1;
+              original++;
+              original += 1;
+              do { original++; } while (original == 0); }""");
         DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
         StatementVariableDeclaration stm =
             (StatementVariableDeclaration) dstm.getDeclarations().get(0);
@@ -282,44 +205,31 @@ class TestProgVarReplaceVisitor {
     }
 
     @Test
-    void testOtherFeatures() throws IOException {
-        // language=solidity
-        String contract = """
-                contract SimpleContract {
-                    modifier mod1(){
-                        _;
-                    }
-                    modifier mod2(){
-                        _;
-                    }
-                    function f(address target) public mod1 mod2 {
-                    }
-                }""";
-        ContractDeclaration contractDeclaration = getDeclStr(contract);
-        Block body = contractDeclaration.getFunctions().getFirst().getBody();
+    void testOtherFeatures() {
+        Block body = parseBlock("{ }");
 
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
         replacer.start();
     }
 
     @Test
-    void testSelfReference() throws IOException {
-        // language=solidity
-        String contract = """
-                contract SimpleContract {
-                    function f() public {
-                        f();
-                    }
-                }""";
-        ContractDeclaration contractDeclaration = getDeclStr(contract);
-        Block body = contractDeclaration.getFunctions().getFirst().getBody();
+    void testSelfReference() {
+        Block body = parseBlock("{ f(); }");
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
         replacer.start();
         Block result = ((Block) replacer.result());
     }
 
     @Test
-    void testAddress() throws IOException {
+    void testAddress() {
+        Block body = parseBlock("{ try false { } catch { } }");
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
+        replacer.start();
+        Block result = ((Block) replacer.result());
+    }
+
+    @Test
+    void testAddressComplex() throws IOException {
         // language=solidity
         String contract = """
                 contract SimpleContract {
@@ -332,14 +242,14 @@ class TestProgVarReplaceVisitor {
                 }""";
 
         ContractDeclaration contractDeclaration = getDeclStr(contract);
-        Block body = contractDeclaration.getFunctions().getFirst().getBody();
+        Block body = parseBlock("{ try false { } catch { } }");
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
         replacer.start();
         Block result = ((Block) replacer.result());
     }
 
     @Test
-    void testNested() throws IOException {
+    void testNested() {
         Block body = getNestedBody();
         DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
         StatementVariableDeclaration stm =
@@ -359,7 +269,7 @@ class TestProgVarReplaceVisitor {
     }
 
     @Test
-    void testNestedSecond() throws IOException {
+    void testNestedSecond() {
         Block body = getNestedBody();
 
         ProgramVariable original =
@@ -379,7 +289,7 @@ class TestProgVarReplaceVisitor {
     }
 
     @Test
-    void testNestedThird() throws IOException {
+    void testNestedThird() {
         Block body = getNestedBody();
 
         ProgramVariable original =
@@ -400,7 +310,7 @@ class TestProgVarReplaceVisitor {
     }
 
     @Test
-    void testNestedLast() throws IOException {
+    void testNestedLast() {
         Block body = getNestedBody();
 
         ProgramVariable original =
@@ -418,30 +328,20 @@ class TestProgVarReplaceVisitor {
         noReplacement(stmRes.get(2));
     }
 
-    public Block getNestedBody() throws IOException {
-        // language=solidity
-        String contract = """
-                contract SimpleContract {
-                    function f() public pure {
-                        int original;
-                        original = 1;
-                        {
-                            int original;
-                            original = 2;
-                            {
-                                int original;
-                                original = 3;
-                            }
-                        }
-                        {
-                            int original;
-                            original = 4;
-                        }
-                    }
-                }""";
-
-        ContractDeclaration contractDeclaration = getDeclStr(contract);
-        return contractDeclaration.getFunctions().getFirst().getBody();
+    public Block getNestedBody() {
+        return parseBlock("""
+            { int original;
+              original = 1;
+              { int original;
+                original = 2;
+                { int original;
+                  original = 3;
+                }
+              }
+              { int original;
+                original = 4;
+              }
+            }""");
     }
 
     void noReplacement(SyntaxElement st) {

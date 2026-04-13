@@ -12,7 +12,9 @@ import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
+import org.key_project.solidity.program.ast.declarations.EnumDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
+import org.key_project.solidity.program.ast.declarations.MemberEnumDeclaration;
 import org.key_project.solidity.program.ast.declarations.StructDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.statement.Block;
@@ -57,6 +59,16 @@ public class ParserForTesting {
         KeYSolidityType ksStructType = new KeYSolidityType(structDeclaration, sort);
         services.getSolidityInfo().addType(sort, ksStructType);
         services.getNamespaces().sorts().add(sort);
+
+        Name enumName = new Name("State");
+        EnumDeclaration stateEnum = new EnumDeclaration(enumName, List.of(
+            new MemberEnumDeclaration(new Name("Begin")),
+            new MemberEnumDeclaration(new Name("End"))
+        ));
+        final Sort enumSort = stateEnum.getSort(services);
+        KeYSolidityType ksEnumType = new KeYSolidityType(stateEnum, enumSort);
+        services.getSolidityInfo().addType(enumSort, ksEnumType);
+        services.getNamespaces().sorts().add(enumSort);
 
         Namespace<FunctionDeclaration> functions = new Namespace<>();
         FunctionDeclaration f = new FunctionDeclaration(new Name("f"),
