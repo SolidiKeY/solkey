@@ -43,6 +43,9 @@ public class IndexExpression extends SolidityExpression {
         return 2;
     }
 
+    public Expression getLeftExp()  { return leftExp; }
+    public Expression getIndexExp() { return indexExp; }
+
     public String toString() {
         return leftExp + "[" + indexExp + "]";
     }

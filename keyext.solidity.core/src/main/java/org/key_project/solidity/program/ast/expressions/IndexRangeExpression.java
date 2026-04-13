@@ -60,6 +60,10 @@ public class IndexRangeExpression extends SolidityExpression {
         return size;
     }
 
+    public Expression getBaseExp()  { return baseExp; }
+    public Expression getStartExp() { return startExp; }
+    public Expression getEndExp()   { return endExp; }
+
     public String toString() {
         return baseExp + "[" + startExp + ":" + endExp + "]";
     }

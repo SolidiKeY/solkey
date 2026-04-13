@@ -61,6 +61,8 @@ public abstract class UnaryOperator extends SolidityExpression {
         return 1;
     }
 
+    public Expression getExp() { return exp; }
+
     public abstract String getOperator();
 
     public abstract boolean isPrefix();

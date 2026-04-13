@@ -37,6 +37,8 @@ public class TupleExpression extends SolidityExpression {
         return expressions.size();
     }
 
+    public Expression getExpression(int n) { return expressions.get(n); }
+
     @Override
     public String toString() {
         return "[" + expressions.stream().map(Objects::toString).collect(Collectors.joining(", "))

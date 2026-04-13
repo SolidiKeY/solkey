@@ -31,8 +31,8 @@ public class SolidityToKeyConverterTest {
     @Test
     void creatingProgramVariables() {
         Block block = parseBlock("{ int x; x = 1; }");
-        ProgramVariable p1 = (ProgramVariable) block.getChild(0).getChild(0).getChild(0);
-        ProgramVariable p2 = (ProgramVariable) block.getChild(1).getChild(0).getChild(0);
+        ProgramVariable p1 = ((StatementVariableDeclaration) ((DeclarationStatement) block.getStatements().get(0)).getDeclarations().get(0)).getProgramVariable();
+        ProgramVariable p2 = (ProgramVariable) ((BinaryOperator) ((ExpressionStatement) block.getStatements().get(1)).getExpression()).getLeft();
         assertEquals("x", p1.toString());
         assertSame(p1, p2);
     }
@@ -58,13 +58,13 @@ public class SolidityToKeyConverterTest {
     @Test
     void tupleExpression() {
         TupleExpression exp = (TupleExpression) parseExpression("(false, true)");
-        assertFalse(((BoolLiteral) exp.getChild(0)).getValue());
+        assertFalse(((BoolLiteral) exp.getExpression(0)).getValue());
     }
 
     @Test
     void addiction() {
         AddOperator exp = (AddOperator) parseExpression("1 + 2");
-        assertEquals(1, ((Uint256Literal) exp.getChild(0)).getValue().intValue());
+        assertEquals(1, ((Uint256Literal) exp.getLeft()).getValue().intValue());
     }
 
     @Test
@@ -76,14 +76,14 @@ public class SolidityToKeyConverterTest {
     @Test
     void plusPlusLeft() {
         PlusPlusOperator exp = (PlusPlusOperator) parseExpression("++1");
-        assertEquals(1, ((Uint256Literal) exp.getChild(0)).getValue().intValue());
+        assertEquals(1, ((Uint256Literal) exp.getExp()).getValue().intValue());
         assertTrue(exp.isPrefix());
     }
 
     @Test
     void plusPlusRight() {
         PlusPlusOperator exp = (PlusPlusOperator) parseExpression("1++");
-        assertEquals(1, ((Uint256Literal) exp.getChild(0)).getValue().intValue());
+        assertEquals(1, ((Uint256Literal) exp.getExp()).getValue().intValue());
         assertFalse(exp.isPrefix());
     }
 
@@ -96,7 +96,7 @@ public class SolidityToKeyConverterTest {
     @Test
     void variableAssignment() {
         Expression exp = parseExpression("x = 1");
-        assertEquals("x", exp.getChild(0).toString());
+        assertEquals("x", ((BinaryOperator) exp).getLeft().toString());
     }
 
     @Test
@@ -120,15 +120,15 @@ public class SolidityToKeyConverterTest {
     void ifStatement() {
         ConditionStatement stm = (ConditionStatement) parseStatement("if(false) true;");
         assertFalse(((BoolLiteral) stm.getCondition()).getValue());
-        assertTrue(((BoolLiteral) stm.getTrueBody().getChild(0)).getValue());
+        assertTrue(((BoolLiteral) ((ExpressionStatement) stm.getTrueBody()).getExpression()).getValue());
     }
 
     @Test
     void ifAndElseStatement() {
         ConditionStatement stm = (ConditionStatement) parseStatement("if(false) true; else false;");
         assertFalse(((BoolLiteral) stm.getCondition()).getValue());
-        assertTrue(((BoolLiteral) stm.getTrueBody().getChild(0)).getValue());
-        assertFalse(((BoolLiteral) stm.getFalseBody().getChild(0)).getValue());
+        assertTrue(((BoolLiteral) ((ExpressionStatement) stm.getTrueBody()).getExpression()).getValue());
+        assertFalse(((BoolLiteral) ((ExpressionStatement) stm.getFalseBody()).getExpression()).getValue());
     }
 
     @Test
@@ -154,14 +154,14 @@ public class SolidityToKeyConverterTest {
     void whileStatement() {
         WhileStatement stm = (WhileStatement) parseStatement("while(true) false;");
         assertTrue(((BoolLiteral) stm.getCondition()).getValue());
-        assertFalse(((BoolLiteral) stm.getBody().getChild(0)).getValue());
+        assertFalse(((BoolLiteral) ((ExpressionStatement) stm.getBody()).getExpression()).getValue());
     }
 
     @Test
     void doWhileStatement() {
         DoWhileStatement stm = (DoWhileStatement) parseStatement("do false; while(true);");
         assertTrue(((BoolLiteral) stm.getCondition()).getValue());
-        assertFalse(((BoolLiteral) stm.getBody().getChild(0)).getValue());
+        assertFalse(((BoolLiteral) ((ExpressionStatement) stm.getBody()).getExpression()).getValue());
     }
 
     @Test
@@ -180,7 +180,7 @@ public class SolidityToKeyConverterTest {
     void tryStm() {
         TryStatement stm = (TryStatement) parseStatement("try false { true; }");
         assertFalse(((BoolLiteral) stm.getExpression()).getValue());
-        assertTrue(((BoolLiteral) stm.getBody().getStatements().get(0).getChild(0))
+        assertTrue(((BoolLiteral) ((ExpressionStatement) stm.getBody().getStatements().get(0)).getExpression())
                 .getValue());
     }
 
@@ -190,7 +190,7 @@ public class SolidityToKeyConverterTest {
         assertFalse(((BoolLiteral) stm.getExpression()).getValue());
         assertEquals(1, stm.getReturnCount());
         ProgramVariable ra = stm.getReturnParameter(0);
-        ProgramVariable ba = (ProgramVariable) stm.getBody().getStatements().get(0).getChild(0).getChild(0);
+        ProgramVariable ba = (ProgramVariable) ((BinaryOperator) ((ExpressionStatement) stm.getBody().getStatements().get(0)).getExpression()).getLeft();
         assertSame(ra, ba);
     }
 
@@ -217,8 +217,8 @@ public class SolidityToKeyConverterTest {
     @Test
     void array() {
         IndexExpression exp = (IndexExpression) parseExpression("v[false]");
-        assertEquals("v", ((ProgramVariable) exp.getChild(0)).toString());
-        assertFalse(((BoolLiteral) exp.getChild(1)).getValue());
+        assertEquals("v", ((ProgramVariable) exp.getLeftExp()).toString());
+        assertFalse(((BoolLiteral) exp.getIndexExp()).getValue());
     }
 
     @Test
@@ -227,7 +227,7 @@ public class SolidityToKeyConverterTest {
         ProgramVariable b =
             ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable();
         DynamicArrayType type = (DynamicArrayType) b.getType();
-        assertEquals(BOOL, type.getChild(0));
+        assertEquals(BOOL, type.getElementType());
     }
 
     @Test
@@ -236,22 +236,22 @@ public class SolidityToKeyConverterTest {
         ProgramVariable b =
             ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable();
         ArrayType type = (ArrayType) b.getType();
-        assertEquals(BOOL, type.getChild(0));
+        assertEquals(BOOL, type.getElementType());
         assertEquals(10, type.length());
     }
 
     @Test
     void sliceArray() {
         IndexRangeExpression exp = (IndexRangeExpression) parseExpression("v[false:true]");
-        assertEquals("v", ((ProgramVariable) exp.getChild(0)).toString());
-        assertFalse(((BoolLiteral) exp.getChild(1)).getValue());
-        assertTrue(((BoolLiteral) exp.getChild(2)).getValue());
+        assertEquals("v", ((ProgramVariable) exp.getBaseExp()).toString());
+        assertFalse(((BoolLiteral) exp.getStartExp()).getValue());
+        assertTrue(((BoolLiteral) exp.getEndExp()).getValue());
     }
 
     @Test
     void sliceEmpty() {
         IndexRangeExpression exp = (IndexRangeExpression) parseExpression("v[:]");
-        assertEquals("v", ((ProgramVariable) exp.getChild(0)).toString());
+        assertEquals("v", ((ProgramVariable) exp.getBaseExp()).toString());
         assertEquals(1, exp.getChildCount());
     }
 
