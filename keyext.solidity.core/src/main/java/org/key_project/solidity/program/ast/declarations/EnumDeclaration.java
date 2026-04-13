@@ -41,6 +41,10 @@ public class EnumDeclaration extends DeclarationClass implements Type {
         this.members = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
     }
 
+    public List<MemberEnumDeclaration> getMembers() {
+        return members;
+    }
+
     public MemberEnumDeclaration findMember(Name name) {
         return members.stream()
                 .filter(x -> x.getName().equals(name))

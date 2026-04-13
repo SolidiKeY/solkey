@@ -744,7 +744,7 @@ public class SolJsonParserTest {
         MemberExp memberExp = (MemberExp) tryStmt.getExpression();
         FunctionCallExpression innerCall = (FunctionCallExpression) memberExp.getLeftExp();
         ContractReference contr = (ContractReference) innerCall.getFunctionExp();
-        assertEquals(contr.getChildCount(), 0);
+        assertEquals(0, contr.getChildCount());
     }
 
     @Test
@@ -810,7 +810,6 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
-        assertTrue(contractS.contains(""));
     }
 
     @Test
@@ -825,7 +824,7 @@ public class SolJsonParserTest {
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
         assertTrue(contractS.contains("false, true"));
-        TupleType type = contractDec.getFunctions().get(0).getType();
+        TupleType type = contractDec.getFunctions().getFirst().getType();
         assertEquals(BOOL, type.getTypes().get(0));
     }
 
@@ -844,11 +843,11 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         DeclarationStatement decl = (DeclarationStatement) contractDec.getFunctions().get(1).getBody().getStatements().get(0);
-        assertEquals(3, decl.getChildCount());
+        assertEquals(2, decl.getDeclarations().size());
         assertEquals("(bool a, bool b) = f();", decl.toString());
 
         TupleType type = (TupleType) decl.getInitialValue().getType();
-        assertEquals(2, type.getChildCount());
+        assertEquals(2, type.getTypes().size());
         assertEquals(BOOL, type.getTypes().get(0));
         assertEquals(BOOL, type.getTypes().get(1));
     }
@@ -942,7 +941,7 @@ public class SolJsonParserTest {
                 .get(0)).getExpression()).functionExp;
         Type type = fRef.getType();
         assertInstanceOf(TupleType.class, type);
-        assertEquals(0, type.getChildCount());
+        assertEquals(0, ((TupleType) type).getTypes().size());
 
         FunctionDeclaration refDecl = fRef.referencedDeclaration;
         assertNotNull(refDecl);
@@ -965,7 +964,7 @@ public class SolJsonParserTest {
         assertEquals(1, contractDec.getEnumDeclarations().size());
         EnumDeclaration stateEnum = contractDec.getEnumDeclarations().get(0);
         assertEquals("State", stateEnum.getName().toString());
-        assertEquals(2, stateEnum.getChildCount());
+        assertEquals(2, stateEnum.getMembers().size());
     }
 
     @Test
