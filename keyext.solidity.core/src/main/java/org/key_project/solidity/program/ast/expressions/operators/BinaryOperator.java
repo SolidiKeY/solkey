@@ -54,6 +54,9 @@ public abstract class BinaryOperator extends SolidityExpression {
         return 2;
     }
 
+    public Expression getLeft()  { return left; }
+    public Expression getRight() { return right; }
+
     public abstract String getOperator();
 
     public String toString() {

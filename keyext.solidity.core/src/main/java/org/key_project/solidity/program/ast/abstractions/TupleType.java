@@ -38,6 +38,8 @@ public class TupleType implements Type {
         return name;
     }
 
+    public ImmutableArray<Type> getTypes() { return types; }
+
     @Override
     public SyntaxElement getChild(int n) {
         if(0 <= n && n < getChildCount())

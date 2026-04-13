@@ -50,6 +50,8 @@ public class DynamicArrayType implements Type, SyntaxElement {
         return 1;
     }
 
+    public Type getElementType() { return type; }
+
     @Override
     public String toString() {
         return type.toString() + "[]";

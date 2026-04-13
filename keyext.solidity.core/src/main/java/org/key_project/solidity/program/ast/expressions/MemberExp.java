@@ -38,6 +38,8 @@ public class MemberExp extends SolidityExpression implements Resolver {
         this.id = -1;
     }
 
+    public Expression getLeftExp() { return leftExp; }
+
     @Override
     public SyntaxElement getChild(int n) {
         if (n == 0)

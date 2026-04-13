@@ -96,6 +96,10 @@ public class ContractDeclaration extends DeclarationClass implements Type {
         return functions.toList();
     }
 
+    public List<EnumDeclaration> getEnumDeclarations() {
+        return enums.toList();
+    }
+
     @Override
     public @Nullable Sort getSort(Services services) {
         return services.getNamespaces().sorts().lookup(name);

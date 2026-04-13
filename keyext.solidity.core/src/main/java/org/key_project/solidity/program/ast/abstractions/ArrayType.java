@@ -57,6 +57,8 @@ public class ArrayType implements Type, SyntaxElement {
         return type + "[" + length + "]";
     }
 
+    public Type getElementType() { return type; }
+
     public int length() {
         return length;
     }
