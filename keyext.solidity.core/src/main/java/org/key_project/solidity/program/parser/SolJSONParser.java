@@ -47,10 +47,6 @@ public class SolJSONParser {
     /// TODO: what if a type under declaration references itself (is that possible in Solidity?)
     private final HashMap<Integer, SyntaxElement> id2Name = new HashMap<>();
 
-    record StaticTypeArray(Type type, int size) {}
-    private final HashMap<StaticTypeArray, ArrayType> staticArrayTypes = new HashMap<>();
-    private final HashMap<Type, DynamicArrayType> dynamicArrayTypes = new HashMap<>();
-    private final HashMap<List<Type>, TupleType> tupleTypes = new HashMap<>();
     private final HashMap<Integer, TupleType> functionId2Type = new HashMap<>();
     private final Set<Integer> contractIds = new HashSet<>();
 
@@ -372,16 +368,13 @@ public class SolJSONParser {
     }
 
     private @NonNull DynamicArrayType getDynamicArrayType(Type primitiveType) {
-        if(!dynamicArrayTypes.containsKey(primitiveType))
-            dynamicArrayTypes.put(primitiveType, new DynamicArrayType(primitiveType));
-        return dynamicArrayTypes.get(primitiveType);
+        Type t = services.getSolidityInfo().getDynamicTypeMap(primitiveType.name());
+        return (DynamicArrayType) (t instanceof KeYSolidityType kst ? kst.getSolidityType() : t);
     }
 
     private @NonNull ArrayType getStaticArrayType(Type primitiveType, int size) {
-        StaticTypeArray st = new StaticTypeArray(primitiveType, size);
-        if(!staticArrayTypes.containsKey(st))
-            staticArrayTypes.put(st, new ArrayType(primitiveType, size));
-        return staticArrayTypes.get(st);
+        Type t = services.getSolidityInfo().getStaticTypeMap(primitiveType.name(), size);
+        return (ArrayType) (t instanceof KeYSolidityType kst ? kst.getSolidityType() : t);
     }
 
     private ProgramVariable parseParam(JsonNode node) {
@@ -693,10 +686,8 @@ public class SolJSONParser {
         };
     }
 
-    private TupleType getTupleType(List<Type> types){
-        if(!tupleTypes.containsKey(types))
-            tupleTypes.put(types, new TupleType(types));
-        return tupleTypes.get(types);
+    private TupleType getTupleType(List<Type> types) {
+        return services.getSolidityInfo().getTupleTypeMap(types);
     }
 
     private @Nullable Expression findOrNullExpression(JsonNode statement, String field) {

@@ -4,8 +4,10 @@
 package org.key_project.solidity.program.ast;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.op.Function;
@@ -13,6 +15,7 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.program.ast.abstractions.ArrayType;
 import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
+import org.key_project.solidity.program.ast.abstractions.TupleType;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 
@@ -44,11 +47,25 @@ public class SolidityInfo {
     }
 
     public Type getStaticTypeMap(Name primaryTypeName, Expression expression) {
-        Name typeName = new Name(primaryTypeName + "[" + expression.toString() + "]");
+        return getStaticTypeMap(primaryTypeName, Integer.parseInt(expression.toString()));
+    }
+
+    public Type getStaticTypeMap(Name primaryTypeName, int size) {
+        Name typeName = new Name(primaryTypeName + "[" + size + "]");
         if (typeMap.containsKey(typeName))
             return typeMap.get(typeName);
         Type primaryType = getType(primaryTypeName);
-        Type type = new ArrayType(primaryType, Integer.parseInt(expression.toString()));
+        Type type = new ArrayType(primaryType, size);
+        typeMap.put(typeName, type);
+        return type;
+    }
+
+    public TupleType getTupleTypeMap(List<Type> types) {
+        Name typeName = new Name("(" + types.stream().map(Object::toString)
+                .collect(Collectors.joining(", ")) + ")");
+        if (typeMap.containsKey(typeName))
+            return (TupleType) typeMap.get(typeName);
+        TupleType type = new TupleType(types);
         typeMap.put(typeName, type);
         return type;
     }
