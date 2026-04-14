@@ -89,8 +89,8 @@ public class SolJSONParser {
     /// @param root the root node representing the JSON AST
     /// @return the KeY AST representation of {@code root}
     private List<SyntaxElement> json2SolidityAST(JsonNode root) {
-        if ("SourceUnit".equals(root.findValue("nodeType").asText())) {
-            return parseSourceUnit(root.findValue("nodes").valueStream().toList());
+        if ("SourceUnit".equals(root.get("nodeType").asText())) {
+            return parseSourceUnit(root.get("nodes").valueStream().toList());
         }
         return new ArrayList<>();
     }
@@ -98,7 +98,7 @@ public class SolJSONParser {
     private List<SyntaxElement> parseSourceUnit(List<JsonNode> nodes) {
         List<SyntaxElement> elements = new ArrayList<>();
         for (var node : nodes) {
-            if (node.findValue("contractKind").asText().equals("contract")) {
+            if (node.get("contractKind").asText().equals("contract")) {
                 elements.add(parseContract(node));
             }
         }
@@ -107,8 +107,8 @@ public class SolJSONParser {
 
 
     private ContractDeclaration parseContract(JsonNode contractNode) {
-        String contractName = contractNode.findValue("canonicalName").asText(); // there is also a
-        final int contractId = contractNode.findValue("id").asInt();
+        String contractName = contractNode.get("canonicalName").asText(); // there is also a
+        final int contractId = contractNode.get("id").asInt();
         contractIds.add(contractId);
         List<StateVariableDeclaration> fields = new ArrayList<>();
         List<FunctionDeclaration> functions = new ArrayList<>();
@@ -130,9 +130,9 @@ public class SolJSONParser {
 
         assert contractType.getSolidityType() == null : "Contract has already been parsed";
 
-        for (Iterator<JsonNode> it = contractNode.findValue("nodes").elements(); it.hasNext();) {
+        for (Iterator<JsonNode> it = contractNode.get("nodes").elements(); it.hasNext();) {
             final JsonNode node = it.next();
-            final String nodeType = node.findValue("nodeType").asText();
+            final String nodeType = node.get("nodeType").asText();
             switch (nodeType) {
                 case "VariableDeclaration" -> fields.add(parseVariableField(node));
                 case "FunctionDefinition" -> functions.add(parseFunction(node));
@@ -176,10 +176,10 @@ public class SolJSONParser {
 
 
     private EnumDeclaration parseEnum(JsonNode node) {
-        final int id = node.findValue("id").asInt();
-        String name = node.findValue("name").asText();
+        final int id = node.get("id").asInt();
+        String name = node.get("name").asText();
         List<MemberEnumDeclaration> members =
-            node.findValue("members").valueStream().map(this::parseMemberEnum).toList();
+            node.get("members").valueStream().map(this::parseMemberEnum).toList();
         EnumDeclaration enumDeclaration = new EnumDeclaration(new Name(name), members);
         addTypeToServices(enumDeclaration);
         id2Name.put(id, enumDeclaration);
@@ -187,71 +187,71 @@ public class SolJSONParser {
     }
 
     private MemberEnumDeclaration parseMemberEnum(JsonNode node) {
-        String name = node.findValue("name").asText();
-        int id = node.findValue("id").asInt();
+        String name = node.get("name").asText();
+        int id = node.get("id").asInt();
         MemberEnumDeclaration member = new MemberEnumDeclaration(new Name(name));
         id2Name.put(id, member);
         return member;
     }
 
     private ModifierDeclaration parseModifier(JsonNode node) {
-        final String name = node.findValue("name").asText();
+        final String name = node.get("name").asText();
         List<ProgramVariable> inputParameters =
-            node.findValue("parameters").findValue("parameters").valueStream()
+            node.get("parameters").get("parameters").valueStream()
                     .map(this::parseParam).toList();
-        Block body = parseBlock(node.findValue("body"));
-        Visibility visibility = Visibility.fromString(node.findValue("visibility").asText());
+        Block body = parseBlock(node.get("body"));
+        Visibility visibility = Visibility.fromString(node.get("visibility").asText());
         ModifierDeclaration modifier =
             new ModifierDeclaration(new Name(name), inputParameters, body, visibility);
-        id2Name.put(node.findValue("id").asInt(), modifier);
+        id2Name.put(node.get("id").asInt(), modifier);
         return modifier;
     }
 
     private StructDeclaration parseStruct(JsonNode structNode, int contractId) {
-        String name = structNode.findValue("name").asText();
+        String name = structNode.get("name").asText();
         List<FieldDeclaration> fields =
-            structNode.findValue("members").valueStream().map(this::parseField).toList();
+            structNode.get("members").valueStream().map(this::parseField).toList();
 
         StructDeclaration stDecl = new StructDeclaration(new Name(name), fields, contractId);
         addTypeToServices(stDecl);
-        id2Name.put(structNode.findValue("id").asInt(), stDecl);
+        id2Name.put(structNode.get("id").asInt(), stDecl);
 
         return stDecl;
     }
 
     private FieldDeclaration parseField(JsonNode fieldNode) {
-        final String fieldName = fieldNode.findValue("name").asText();
-        final String fieldType = fieldNode.findValue("typeName").findValue("name").asText();
+        final String fieldName = fieldNode.get("name").asText();
+        final String fieldType = fieldNode.get("typeName").get("name").asText();
 
         FieldDeclaration field =
             new FieldDeclaration(new Name(fieldName), new TypeReference(new Name(fieldType)));
-        id2Name.put(fieldNode.findValue("id").asInt(), field);
+        id2Name.put(fieldNode.get("id").asInt(), field);
         return field;
     }
 
     private FunctionDeclaration parseFunction(JsonNode node) {
-        final int id = node.findValue("id").asInt();
-        final String name = node.findValue("name").asText();
+        final int id = node.get("id").asInt();
+        final String name = node.get("name").asText();
         Stream<JsonNode> parameters =
-            node.findValue("returnParameters").findValue("parameters").valueStream();
+            node.get("returnParameters").get("parameters").valueStream();
         List<ProgramVariable> returnParameters = parameters.map(this::parseParam).toList();
         TupleType returnType = getTupleType(returnParameters.stream().map(ProgramVariable::getType).toList());
         functionId2Type.put(id, returnType);
         List<ProgramVariable> inputParamenters =
-            node.findValue("parameters").findValue("parameters").valueStream()
+            node.get("parameters").get("parameters").valueStream()
                     .map(this::parseParam).toList();
 
-        Block body = parseBlock(node.findValue("body"));
-        String kind = node.findValue("kind").asText();
-        Visibility visibility = Visibility.fromString(node.findValue("visibility").asText());
+        Block body = parseBlock(node.get("body"));
+        String kind = node.get("kind").asText();
+        Visibility visibility = Visibility.fromString(node.get("visibility").asText());
         StateMutability stateMutability =
-            StateMutability.valueOf(node.findValue("stateMutability").asText());
+            StateMutability.valueOf(node.get("stateMutability").asText());
         List<ModifierReference> modifiers =
-            node.findValue("modifiers").valueStream().map(this::parseModifierRefence).toList();
-        JsonNode documentationNode = node.findValue("documentation");
+            node.get("modifiers").valueStream().map(this::parseModifierRefence).toList();
+        JsonNode documentationNode = node.get("documentation");
         String documentation = "";
         if (documentationNode != null)
-            documentation = documentationNode.findValue("text").asText();
+            documentation = documentationNode.get("text").asText();
         FunctionDeclaration function = new FunctionDeclaration(new Name(name), returnParameters, returnType,
             inputParamenters, body, kind, visibility, stateMutability, modifiers, documentation);
         id2Name.put(id, function);
@@ -259,23 +259,23 @@ public class SolJSONParser {
     }
 
     private ModifierReference parseModifierRefence(JsonNode node) {
-        String name = node.findValue("modifierName").findValue("name").asText();
+        String name = node.get("modifierName").get("name").asText();
         return new ModifierReference(name);
     }
 
     private Block parseBlock(JsonNode jsonBody) {
         List<Statement> blockStatements =
-            jsonBody.findValue("statements").valueStream().map(this::parseStatement).toList();
+            jsonBody.get("statements").valueStream().map(this::parseStatement).toList();
         return new Block(blockStatements);
     }
 
     private CatchClause parseCatchClause(JsonNode jsonBody) {
-        Block block = parseBlock(jsonBody);
+        Block block = parseBlock(jsonBody.get("block"));
         if (jsonBody.has("errorName")) {
-            String errorName = jsonBody.findValue("errorName").asText();
+            String errorName = jsonBody.get("errorName").asText();
             if (!errorName.isEmpty()) {
                 List<StatementVariableDeclaration> arguments =
-                    jsonBody.findValue("parameters").findValue("parameters").valueStream()
+                    jsonBody.get("parameters").get("parameters").valueStream()
                             .map(this::parseDeclaration)
                             .map(StatementVariableDeclaration.class::cast).toList();
                 return new CatchClause(new ImmutableArray<>(arguments), block);
@@ -285,9 +285,9 @@ public class SolJSONParser {
     }
 
     private @NonNull Statement parseStatement(JsonNode statement) {
-        String type = statement.findValue("nodeType").asText();
+        String type = statement.get("nodeType").asText();
         if (statement.has("expression")) {
-            Expression expression = parseExpression(statement.findValue("expression"));
+            Expression expression = parseExpression(statement.get("expression"));
             return switch (type) {
                 case "ExpressionStatement" -> new ExpressionStatement(expression);
                 case "Return" -> new ReturnStatement(expression);
@@ -295,21 +295,21 @@ public class SolJSONParser {
                     throw new RuntimeException("Statement type " + type + " is not supported");
             };
         } else if (statement.has("declarations")) {
-            List<Declaration> declarations = statement.findValue("declarations").valueStream()
+            List<Declaration> declarations = statement.get("declarations").valueStream()
                     .map(this::parseDeclaration).toList();
             Expression initialValue = findOrNullExpression(statement, "initialValue");
             return new DeclarationStatement(declarations, initialValue);
         } else if (statement.has("condition")) {
-            Expression condition = parseExpression(statement.findValue("condition"));
+            Expression condition = parseExpression(statement.get("condition"));
             if (type.equals("IfStatement")) {
-                Statement trueBody = parseStatement(statement.findValue("trueBody"));
+                Statement trueBody = parseStatement(statement.get("trueBody"));
                 if (!statement.has("falseBody"))
                     return new ConditionStatement(condition, trueBody);
-                Statement falseBody = parseStatement(statement.findValue("falseBody"));
+                Statement falseBody = parseStatement(statement.get("falseBody"));
                 return new ConditionStatement(condition, trueBody, falseBody);
 
             } else if (type.equals("WhileStatement")) {
-                Statement body = parseStatement(statement.findValue("body"));
+                Statement body = parseStatement(statement.get("body"));
                 return new WhileStatement(condition, body);
 
             }
@@ -323,29 +323,30 @@ public class SolJSONParser {
             case "ForStatement" -> {
                 ForInit init = statement.has("initializationExpression")
                         ? new ForInit(
-                            parseExpression(statement.findValue("initializationExpression")))
+                            parseExpression(statement.get("initializationExpression")))
                         : null;
                 Expression condition = findOrNullExpression(statement, "condition");
                 ForUpdate forUpdate = statement.has("loopExpression")
-                        ? new ForUpdate(parseExpression(statement.findValue("loopExpression")))
+                        ? new ForUpdate(parseExpression(statement.get("loopExpression")))
                         : null;
-                Statement body = parseStatement(statement.findValue("body"));
+                Statement body = parseStatement(statement.get("body"));
                 yield new ForStatement(init, condition, forUpdate, body);
             }
             case "DoWhileStatement" -> {
-                Expression condition = parseExpression(statement.findValue("condition"));
-                Statement body = parseStatement(statement.findValue("body"));
+                Expression condition = parseExpression(statement.get("condition"));
+                Statement body = parseStatement(statement.get("body"));
                 yield new DoWhileStatement(condition, body);
             }
             case "TryStatement" -> {
                 Expression expression =
-                    parseExpression(statement.findValue("externalCall").findValue("expression"));
+                    parseExpression(statement.get("externalCall").get("expression"));
+                List<JsonNode> clausesList = statement.get("clauses").valueStream().toList();
+                JsonNode firstClause = clausesList.getFirst();
                 List<ProgramVariable> returns =
-                        statement.findValue("parameters") == null ? List.of()
-                                : statement.findValue("parameters").findValue("parameters")
+                        firstClause.get("parameters") == null ? List.of()
+                                : firstClause.get("parameters").get("parameters")
                                 .valueStream().map(this::parseParam).toList();
-                List<JsonNode> clausesList = statement.findValue("clauses").valueStream().toList();
-                Block body = clausesList.stream().map(this::parseBlock).findFirst().orElse(null);
+                Block body = parseBlock(firstClause.get("block"));
                 List<CatchClause> clauses = clausesList.stream().skip(1)
                         .map(this::parseCatchClause)
                         .toList();
@@ -358,14 +359,14 @@ public class SolJSONParser {
     }
 
     private Declaration parseDeclaration(JsonNode declaration) {
-        final int id = declaration.findValue("id").asInt();
-        String nameS = declaration.findValue("name").asText();
+        final int id = declaration.get("id").asInt();
+        String nameS = declaration.get("name").asText();
         Name name = new Name(nameS);
-        JsonNode typeNameNode = declaration.findValue("typeName");
+        JsonNode typeNameNode = declaration.get("typeName");
         Type type = parseType(typeNameNode);
         KeYSolidityType ksType = getUndeclaredSolidityType(type);
         DataLocation dataLocation =
-                DataLocation.fromString(declaration.findValue("storageLocation").asText());
+                DataLocation.fromString(declaration.get("storageLocation").asText());
         ProgramVariable programVariable = new ProgramVariable(name, ksType.getSort(), ksType, dataLocation);
         Declaration decl = new StatementVariableDeclaration(programVariable);
         id2Name.put(id, decl);
@@ -382,14 +383,14 @@ public class SolJSONParser {
     }
 
     private ProgramVariable parseParam(JsonNode node) {
-        final int id = node.findValue("id").asInt();
-        final String fieldName = node.findValue("name").asText();
-        final String dataLocationS = node.findValue("storageLocation").asText();
+        final int id = node.get("id").asInt();
+        final String fieldName = node.get("name").asText();
+        final String dataLocationS = node.get("storageLocation").asText();
         final DataLocation dataLocation = DataLocation.fromString(dataLocationS);
 
         ProgramVariable programVariable;
-        if (node.findValue("typeName").has("referencedDeclaration")) {
-            int typeId = node.findValue("typeName").findValue("referencedDeclaration").asInt();
+        if (node.get("typeName").has("referencedDeclaration")) {
+            int typeId = node.get("typeName").get("referencedDeclaration").asInt();
             Type typeRef = (Type) id2Name.get(typeId);
 
             final KeYSolidityType kst = getUndeclaredSolidityType(typeRef);
@@ -407,20 +408,20 @@ public class SolJSONParser {
     }
 
     private Type parseType(JsonNode node) {
-        String typeName = node.findValue("nodeType").asText();
+        String typeName = node.get("nodeType").asText();
         return switch (typeName) {
-            case "ElementaryTypeName" -> getPrimitiveType(node.findValue("name").asText());
+            case "ElementaryTypeName" -> getPrimitiveType(node.get("name").asText());
             case "ArrayTypeName" -> {
-                Type baseType = parseType(node.findValue("baseType"));
+                Type baseType = parseType(node.get("baseType"));
                 if (node.has("length")) {
-                    int size = node.findValue("length").findValue("value").asInt();
+                    int size = node.get("length").get("value").asInt();
                     yield getStaticArrayType(baseType, size);
                 } else
                     yield getDynamicArrayType(baseType);
             }
-            case "Mapping" -> getMappingType(parseType(node.findValue("keyType")), parseType(node.findValue("valueType")));
-            case "UserDefinedTypeName" -> (Type) id2Name.get(node.findValue("referencedDeclaration").asInt());
-            case "Identifier" -> SolidityInfo.getPrimitiveType(node.findValue("typeDescriptions").findValue("typeString").asText());
+            case "Mapping" -> getMappingType(parseType(node.get("keyType")), parseType(node.get("valueType")));
+            case "UserDefinedTypeName" -> (Type) id2Name.get(node.get("referencedDeclaration").asInt());
+            case "Identifier" -> SolidityInfo.getPrimitiveType(node.get("typeDescriptions").get("typeString").asText());
             default -> throw new RuntimeException("Type " + typeName + " not covered");
         };
     }
@@ -430,25 +431,24 @@ public class SolJSONParser {
     }
 
     private StateVariableDeclaration parseVariableField(JsonNode fieldNode) {
-        final int id = fieldNode.findValue("id").asInt();
-        final String fieldName = fieldNode.findValue("name").asText();
-        JsonNode typeName = fieldNode.findValue("typeName");
+        final int id = fieldNode.get("id").asInt();
+        final String fieldName = fieldNode.get("name").asText();
+        JsonNode typeName = fieldNode.get("typeName");
         Type expType = null;
         int idRef = -1;
         if (typeName.has("referencedDeclaration")) {
-            idRef = typeName.findValue("referencedDeclaration").asInt();
+            idRef = typeName.get("referencedDeclaration").asInt();
             if (id2Name.containsKey(idRef)) {
                 expType = (Type) id2Name.get(idRef);
             }
         } else
             expType = parseTypeName(fieldNode);
 
-        Visibility visibility = Visibility.fromString(fieldNode.findValue("visibility").asText());
+        Visibility visibility = Visibility.fromString(fieldNode.get("visibility").asText());
 
-        JsonNode initializer = fieldNode.findValue("value");
         Expression initializerExp = null;
-        if (initializer != null && initializer.has("nodeType")) {
-            initializerExp = parseExpression(initializer);
+        if (fieldNode.has("value")) {
+            initializerExp = parseExpression(fieldNode.get("value"));
         }
 
         KeYSolidityType type = expType == null ? new KeYSolidityType(idRef) : getUndeclaredSolidityType(expType);
@@ -461,7 +461,7 @@ public class SolJSONParser {
     }
 
     Type parseReferenceTypeDeclaration(JsonNode expNode) {
-        int id = expNode.findValue("referencedDeclaration").asInt();
+        int id = expNode.get("referencedDeclaration").asInt();
         SyntaxElement decl = id2Name.get(id);
         return Optional.ofNullable(decl).map(v -> switch (v){
             case Type tp -> tp;
@@ -478,7 +478,7 @@ public class SolJSONParser {
     }
 
     private Expression parseExpression(JsonNode initializer) {
-        final String nodeType = initializer.findValue("nodeType").asText();
+        final String nodeType = initializer.get("nodeType").asText();
         return switch (nodeType) {
             case "Literal" -> parseLiteral(initializer);
             case "BinaryOperation" -> parseBinaryOperation(initializer);
@@ -492,7 +492,7 @@ public class SolJSONParser {
             case "IndexRangeAccess" -> parseIndexRangeAccess(initializer);
             case "FunctionCall" -> parseFunctionCall(initializer);
             case "ElementaryTypeNameExpression" -> parseElementaryExpression(initializer);
-            case "ExpressionStatement" -> parseExpression(initializer.findValue("expression"));
+            case "ExpressionStatement" -> parseExpression(initializer.get("expression"));
             case "NewExpression" -> parseNewExpression(initializer);
             default -> throw new RuntimeException("Not yet supported expression type: " + nodeType);
         };
@@ -500,7 +500,7 @@ public class SolJSONParser {
 
     private Expression parseNewExpression(JsonNode initializer) {
         String functionDef =
-            initializer.findValue("typeDescriptions").findValue("typeString").asText();
+            initializer.get("typeDescriptions").get("typeString").asText();
         Type type = parseTypeName(initializer);
         return new NewExpression(functionDef, type);
     }
@@ -511,46 +511,46 @@ public class SolJSONParser {
     }
 
     private Type parseTypeName(JsonNode initializer) {
-        return parseType(initializer.findValue("typeName"));
+        return parseType(initializer.get("typeName"));
     }
 
     private Expression parseFunctionCall(JsonNode initializer) {
-        JsonNode expNode = initializer.findValue("expression");
+        JsonNode expNode = initializer.get("expression");
         Type expType = expNode.has("referencedDeclaration") ?
                 parseReferenceTypeDeclaration(expNode) :
-                parseTypeName(initializer);
+                parseTypeName(expNode);
         Expression functionExp = parseExpression(expNode);
         List<Expression> arguments =
-            initializer.findValue("arguments").valueStream().map(this::parseExpression).toList();
+            initializer.get("arguments").valueStream().map(this::parseExpression).toList();
         return new FunctionCallExpression(expType, functionExp, arguments);
     }
 
     private Expression parseIndexRangeAccess(JsonNode initializer) {
-        Expression baseExp = parseExpression(initializer.findValue("baseExpression"));
-        Expression startExp = parseExpression(initializer.findValue("startExpression"));
-        Expression endExp = parseExpression(initializer.findValue("endExpression"));
+        Expression baseExp = parseExpression(initializer.get("baseExpression"));
+        Expression startExp = parseExpression(initializer.get("startExpression"));
+        Expression endExp = parseExpression(initializer.get("endExpression"));
         return new IndexRangeExpression(baseExp, startExp, endExp, baseExp.getType());
     }
 
     private Expression parseTuple(JsonNode initializer) {
         List<Expression> components =
-            initializer.findValue("components").valueStream().map(this::parseExpression).toList();
+            initializer.get("components").valueStream().map(this::parseExpression).toList();
         List<Type> types = components.stream().map(Expression::getType).toList();
         return new TupleExpression(getTupleType(types), components);
     }
 
     private Expression parseConditional(JsonNode initializer) {
-        Expression cond = parseExpression(initializer.findValue("condition"));
-        Expression falseExpression = parseExpression(initializer.findValue("falseExpression"));
-        Expression trueExpression = parseExpression(initializer.findValue("trueExpression"));
+        Expression cond = parseExpression(initializer.get("condition"));
+        Expression falseExpression = parseExpression(initializer.get("falseExpression"));
+        Expression trueExpression = parseExpression(initializer.get("trueExpression"));
 
         return new TernaryOperator(BOOL, cond, falseExpression, trueExpression);
     }
 
     private Expression parseIndexAccess(JsonNode initializer) {
         int idLeftRef =
-            initializer.findValue("baseExpression").findValue("referencedDeclaration").asInt();
-        Expression indexExp = parseExpression(initializer.findValue("indexExpression"));
+            initializer.get("baseExpression").get("referencedDeclaration").asInt();
+        Expression indexExp = parseExpression(initializer.get("indexExpression"));
         ProgramVariable leftExp = getProgramVariable(idLeftRef);
         return new IndexExpression(leftExp, indexExp);
     }
@@ -569,9 +569,9 @@ public class SolJSONParser {
     }
 
     private Expression parseMemberAccess(JsonNode initializer) {
-        Expression leftExp = parseExpression(initializer.findValue("expression"));
-        int rightId = initializer.findValue("referencedDeclaration").asInt();
-        JsonNode expNode = initializer.findValue("expression");
+        Expression leftExp = parseExpression(initializer.get("expression"));
+        int rightId = initializer.get("referencedDeclaration").asInt();
+        JsonNode expNode = initializer.get("expression");
         Type type = expNode.has("referencedDeclaration") ?
                 parseReferenceTypeDeclaration(expNode) :
                 ADDRESS;
@@ -581,34 +581,34 @@ public class SolJSONParser {
     }
 
     private Expression parseAssignment(JsonNode assign) {
-        final String op = assign.findValue("operator").asText();
-        Expression left = parseExpression(assign.findValue("leftHandSide"));
-        Expression right = parseExpression(assign.findValue("rightHandSide"));
+        final String op = assign.get("operator").asText();
+        Expression left = parseExpression(assign.get("leftHandSide"));
+        Expression right = parseExpression(assign.get("rightHandSide"));
         return ParserUtils.parseAssignment(left, right, op);
     }
 
     private Expression parseUnaryOperation(JsonNode initializer) {
-        Expression uExp = parseExpression(initializer.findValue("subExpression"));
-        final String operator = initializer.findValue("operator").asText();
-        boolean prefix = initializer.findValue("prefix").asBoolean();
+        Expression uExp = parseExpression(initializer.get("subExpression"));
+        final String operator = initializer.get("operator").asText();
+        boolean prefix = initializer.get("prefix").asBoolean();
         return ParserUtils.parseUnaryOperation(uExp, operator, prefix);
     }
 
     private Expression parseBinaryOperation(JsonNode initializer) {
-        Expression leftExpression = parseExpression(initializer.findValue("leftExpression"));
-        Expression rightExpression = parseExpression(initializer.findValue("rightExpression"));
+        Expression leftExpression = parseExpression(initializer.get("leftExpression"));
+        Expression rightExpression = parseExpression(initializer.get("rightExpression"));
 
-        final String operator = initializer.findValue("operator").asText();
+        final String operator = initializer.get("operator").asText();
         Type type = getTypeFromDescription(initializer);
         return ParserUtils.parseBinaryOperation(leftExpression, rightExpression, operator, type);
     }
 
     private Type getTypeFromDescription(JsonNode initializer) {
-        return getType(initializer.findValue("typeDescriptions").findValue("typeIdentifier").textValue());
+        return getType(initializer.get("typeDescriptions").get("typeIdentifier").textValue());
     }
 
     private Expression parseIdentifier(JsonNode literal) {
-        final int idDecl = literal.findValue("referencedDeclaration").asInt();
+        final int idDecl = literal.get("referencedDeclaration").asInt();
         final SyntaxElement declaration = id2Name.get(idDecl);
         Type type = parseReferenceTypeDeclaration(literal);
         return switch (declaration) {
@@ -672,14 +672,14 @@ public class SolJSONParser {
     }
 
     private Literal parseLiteral(JsonNode literal) {
-        final String kind = literal.findValue("kind").asText();
+        final String kind = literal.get("kind").asText();
         return switch (kind) {
             case "number" -> {
-                String initializerExp = literal.findValue("value").asText();
+                String initializerExp = literal.get("value").asText();
                 yield new Uint256Literal(new BigInteger(initializerExp));
             }
             case "bool" -> {
-                String initializerExp = literal.findValue("value").asText();
+                String initializerExp = literal.get("value").asText();
                 yield initializerExp.equals("true") ? TRUE : FALSE;
             }
             // FIX!!!!
@@ -692,7 +692,7 @@ public class SolJSONParser {
     }
 
     private @Nullable Expression findOrNullExpression(JsonNode statement, String field) {
-        return statement.has(field) ? parseExpression(statement.findValue(field)) : null;
+        return statement.has(field) ? parseExpression(statement.get(field)) : null;
     }
 
     private void addTypeToServices(Type type) {
