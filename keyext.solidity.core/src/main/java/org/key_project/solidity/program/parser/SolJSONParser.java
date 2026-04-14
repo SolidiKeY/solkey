@@ -428,8 +428,7 @@ public class SolJSONParser {
     }
 
     private @NonNull MappingType getMappingType(Type keyType, Type valueType) {
-        Type t = services.getSolidityInfo().getMappingTypeMap(keyType, valueType);
-        return (MappingType) (t instanceof KeYSolidityType kst ? kst.getSolidityType() : t);
+        return services.getSolidityInfo().getMappingTypeMap(keyType, valueType);
     }
 
     private StateVariableDeclaration parseVariableField(JsonNode fieldNode) {
