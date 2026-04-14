@@ -83,7 +83,7 @@ public class SolidityInfo {
         return (KeYSolidityType) getType(new Name(type));
     }
 
-    public void addType(Sort sort, KeYSolidityType type) {
+    public void addType(Sort sort, Type type) {
         Name sortName = sort.name();
         if(!typeMap.containsKey(sortName))
             typeMap.put(sortName, type);

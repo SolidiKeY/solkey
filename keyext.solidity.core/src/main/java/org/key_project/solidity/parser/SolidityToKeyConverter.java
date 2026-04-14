@@ -13,6 +13,7 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.parser.SolidityParser.*;
+import org.key_project.solidity.program.ast.SolidityInfo;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.TupleType;
 import org.key_project.solidity.program.ast.abstractions.Type;
@@ -192,7 +193,9 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitElementaryType(ElementaryTypeContext ctx) {
-        return visitTypeDefined(ctx);
+        Type type = SolidityInfo.getPrimitiveType(ctx.getText());
+        final Sort sort = type.getSort(services);
+        return new KeYSolidityType(type, sort);
     }
 
     @Override

@@ -10,10 +10,13 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.parser.SolidityParser.*;
+import org.key_project.solidity.program.ast.abstractions.ArrayType;
+import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
 import org.key_project.solidity.program.ast.abstractions.TupleType;
+import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
+import org.key_project.solidity.program.ast.declarations.StateVariableDeclaration;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
-import org.key_project.solidity.program.ast.expressions.TupleExpression;
 import org.key_project.solidity.program.ast.statement.DeclarationStatement;
 import org.key_project.solidity.program.ast.statement.ReturnStatement;
 import org.key_project.solidity.program.ast.statement.Statement;
@@ -80,6 +83,56 @@ public class BothParsersTest {
         TupleType parsedTupleType = (TupleType) returnStm.getReturnExp().getType();
 
         Assertions.assertSame(contractTupleType, parsedTupleType);
+    }
+
+    @Test
+    void sameBoolType() throws IOException {
+        // language=solidity
+        String contract = """
+                contract BoolContract {
+                    function f() public returns (bool) {}
+                }""";
+        ContractDeclaration contractDec = solcParser.getDeclStrJsonParser(contract);
+        Type contractBoolType = contractDec.getFunctions().getFirst().getReturnParameters().get(0).getType();
+
+        DeclarationStatement stm = (DeclarationStatement) parseStatement("bool x;");
+        Type parsedBoolType = ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable().getType();
+
+        Assertions.assertSame(contractBoolType, parsedBoolType);
+    }
+
+    @Test
+    void sameStaticArrayType() throws IOException {
+        // language=solidity
+        String contract = """
+                contract StaticArrayContract {
+                    bool[2] x;
+                }""";
+        ContractDeclaration contractDec = solcParser.getDeclStrJsonParser(contract);
+        StateVariableDeclaration field = contractDec.getFieldDeclarations().get(0);
+        ArrayType contractArrayType = (ArrayType) field.getProgramVariable().getType();
+
+        DeclarationStatement stm = (DeclarationStatement) parseStatement("bool[2] x;");
+        ArrayType parsedArrayType = (ArrayType) ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable().getType();
+
+        Assertions.assertSame(contractArrayType, parsedArrayType);
+    }
+
+    @Test
+    void sameDynamicArrayType() throws IOException {
+        // language=solidity
+        String contract = """
+                contract DynamicArrayContract {
+                    bool[] x;
+                }""";
+        ContractDeclaration contractDec = solcParser.getDeclStrJsonParser(contract);
+        StateVariableDeclaration field = contractDec.getFieldDeclarations().get(0);
+        DynamicArrayType contractArrayType = (DynamicArrayType) field.getProgramVariable().getType();
+
+        DeclarationStatement stm = (DeclarationStatement) parseStatement("bool[] x;");
+        DynamicArrayType parsedArrayType = (DynamicArrayType) ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable().getType();
+
+        Assertions.assertSame(contractArrayType, parsedArrayType);
     }
 
 }

@@ -447,7 +447,7 @@ public class SolJSONParser {
 
         JsonNode initializer = fieldNode.findValue("value");
         Expression initializerExp = null;
-        if (initializer != null) {
+        if (initializer != null && initializer.has("nodeType")) {
             initializerExp = parseExpression(initializer);
         }
 
@@ -698,7 +698,7 @@ public class SolJSONParser {
     private void addTypeToServices(Type type) {
         final Sort sort = type.getSort(services);
         KeYSolidityType ksType = new KeYSolidityType(type, sort);
-        services.getSolidityInfo().addType(sort, ksType);
+        services.getSolidityInfo().addType(sort, type);
         services.getNamespaces().sorts().add(sort);
     }
 
