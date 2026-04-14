@@ -7,14 +7,12 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.HashSet;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.key_project.logic.Name;
@@ -604,7 +602,8 @@ public class SolJSONParser {
     }
 
     private Type getTypeFromDescription(JsonNode initializer) {
-        return getType(initializer.get("typeDescriptions").get("typeIdentifier").textValue());
+        String typeIdentifier = initializer.get("typeDescriptions").get("typeIdentifier").textValue();
+        return SolidityInfo.getPrimitiveType(typeIdentifier.split("\\$")[0].substring(2).split("_")[0]);
     }
 
     private Expression parseIdentifier(JsonNode literal) {
@@ -629,45 +628,6 @@ public class SolJSONParser {
                 };
             default -> throw new RuntimeException(
                 "Unexpected reference declaration " + declaration + " expected a state variable.");
-        };
-    }
-
-    Optional<String> nextAfterT(List<String> list) {
-        return IntStream.range(0, list.size() - 1)
-                .filter(i -> list.get(i).equals("t"))
-                .mapToObj(i -> list.get(i + 1))
-                .findFirst();
-    }
-
-    private Type getType(String type_str) {
-        @NonNull
-        String[] type_parts = type_str.split("\\$");
-        List<String[]> type_parts_split = Arrays.stream(type_parts)
-                .map(x -> x.split("_")).toList();
-        type_parts = type_parts_split.stream()
-                .map(list -> nextAfterT(Arrays.asList(list)))
-                .flatMap(Optional::stream).toArray(String[]::new);
-        List<@NonNull String> parts = Arrays.stream(type_parts).toList();
-        if (parts.contains("enum")) {
-            int i = parts.indexOf("enum");
-            String name = type_parts_split.get(i + 1)[1];
-            List<@NonNull String> xs = List.of(parts.get(i), name);
-            return getType(xs);
-        }
-        return getType(parts);
-    }
-
-    private Type getType(List<String> type_parts) {
-        String array_type = "";
-        if (type_parts.size() > 1) {
-            array_type = type_parts.getFirst();
-        }
-        return switch (array_type) {
-            case "" -> SolidityInfo.getPrimitiveType(type_parts.getFirst());
-            case "array" -> new ArrayType(SolidityInfo.getPrimitiveType(type_parts.get(1)), 0);
-            case "function", "type", "tuple" -> SolidityInfo.getPrimitiveType(type_parts.get(1));
-            default ->
-                throw new RuntimeException("Array type " + array_type + " is not implemented");
         };
     }
 
