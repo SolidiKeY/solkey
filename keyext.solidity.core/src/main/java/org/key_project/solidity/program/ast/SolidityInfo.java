@@ -15,6 +15,7 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.program.ast.abstractions.ArrayType;
 import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
+import org.key_project.solidity.program.ast.abstractions.MappingType;
 import org.key_project.solidity.program.ast.abstractions.TupleType;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
@@ -58,6 +59,16 @@ public class SolidityInfo {
         Type type = new ArrayType(primaryType, size);
         typeMap.put(typeName, type);
         return type;
+    }
+
+    public MappingType getMappingTypeMap(Type keyType, Type valueType) {
+        MappingType mapping = new MappingType(keyType, valueType);
+        if (typeMap.containsKey(mapping.name())) {
+            Type t = typeMap.get(mapping.name());
+            return (MappingType) (t instanceof KeYSolidityType kst ? kst.getSolidityType() : t);
+        }
+        typeMap.put(mapping.name(), mapping);
+        return mapping;
     }
 
     public TupleType getTupleTypeMap(List<Type> types) {

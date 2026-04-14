@@ -6,7 +6,14 @@ package org.key_project.solidity.program.parser;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -50,7 +57,6 @@ public class SolJSONParser {
     private final HashMap<Integer, TupleType> functionId2Type = new HashMap<>();
     private final Set<Integer> contractIds = new HashSet<>();
 
-    private final HashMap<Map.Entry<Type, Type>, MappingType> mappingTypes = new HashMap<>();
 
     private final Services services;
 
@@ -422,10 +428,8 @@ public class SolJSONParser {
     }
 
     private @NonNull MappingType getMappingType(Type keyType, Type valueType) {
-        Map.Entry<Type, Type> entry = Map.entry(keyType, valueType);
-        if(!mappingTypes.containsKey(entry))
-            mappingTypes.put(entry, new MappingType(keyType, valueType));
-        return mappingTypes.get(entry);
+        Type t = services.getSolidityInfo().getMappingTypeMap(keyType, valueType);
+        return (MappingType) (t instanceof KeYSolidityType kst ? kst.getSolidityType() : t);
     }
 
     private StateVariableDeclaration parseVariableField(JsonNode fieldNode) {
