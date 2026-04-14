@@ -89,7 +89,8 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     @Override
     public SyntaxElement visitTupleExpression(TupleExpressionContext ctx) {
         List<Expression> exps = parseExps(ctx.expression());
-        TupleType tupleType = new TupleType(exps.stream().map(Expression::getType).toList());
+        TupleType tupleType = services.getSolidityInfo().getTupleTypeMap(
+            exps.stream().map(Expression::getType).toList());
         return new TupleExpression(tupleType, exps);
     }
 

@@ -10,8 +10,12 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.parser.SolidityParser.*;
+import org.key_project.solidity.program.ast.abstractions.TupleType;
+import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
+import org.key_project.solidity.program.ast.expressions.TupleExpression;
 import org.key_project.solidity.program.ast.statement.DeclarationStatement;
+import org.key_project.solidity.program.ast.statement.ReturnStatement;
 import org.key_project.solidity.program.ast.statement.Statement;
 import org.key_project.solidity.program.parser.SolcParser;
 
@@ -57,6 +61,25 @@ public class BothParsersTest {
         ProgramVariable programVariable = ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable();
         Sort sort = programVariable.getType().getSort(services);
         Assertions.assertEquals("Person", sort.toString());
+    }
+
+    @Test
+    void sameTupleType() throws IOException {
+        // language=solidity
+        String contract = """
+                contract AnotherContract {
+                    function f() public returns (bool, bool) {
+                        return (false, false);
+                    }
+                }""";
+        ContractDeclaration contractDec = solcParser.getDeclStrJsonParser(contract);
+        TupleType contractTupleType = contractDec.getFunctions().getFirst().getType();
+
+        // Parse "return (false, false);" via the ANTLR parser
+        ReturnStatement returnStm = (ReturnStatement) parseStatement("return (false, false);");
+        TupleType parsedTupleType = (TupleType) returnStm.getReturnExp().getType();
+
+        Assertions.assertSame(contractTupleType, parsedTupleType);
     }
 
 }
