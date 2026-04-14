@@ -22,6 +22,9 @@ public class ForUpdate implements SolidityProgramElement {
         this.update = children.get(Expression.class);
     }
 
+    public Expression getUpdate() {
+        return update;
+    }
 
     @Override
     public @NonNull SyntaxElement getChild(int n) {

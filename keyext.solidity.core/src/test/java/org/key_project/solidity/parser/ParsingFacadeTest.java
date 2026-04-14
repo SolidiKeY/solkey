@@ -15,7 +15,9 @@ import org.key_project.solidity.logic.op.*;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
+import org.key_project.solidity.program.ast.expressions.operators.BinaryOperator;
 import org.key_project.solidity.program.ast.statement.Block;
+import org.key_project.solidity.program.ast.statement.ExpressionStatement;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -130,7 +132,7 @@ class ParsingFacadeTest {
         assertTrue(((SModality) term.op()).kind() == SModality.SolidityModalityKind.DIA);
         assert (((SModality) term.op()).programBlock().program() instanceof Block);
         Block block = (Block) ((SModality) term.op()).programBlock().program();
-        assertTrue(block.getChildCount() == 0);
+        assertTrue(block.getStatements().isEmpty());
     }
 
     @Test
@@ -141,7 +143,7 @@ class ParsingFacadeTest {
         assertTrue(((SModality) term.op()).kind() == SModality.SolidityModalityKind.DIA);
         assert (((SModality) term.op()).programBlock().program() instanceof Block);
         Block block = (Block) ((SModality) term.op()).programBlock().program();
-        assertTrue(block.getChildCount() == 1);
+        assertEquals(1, block.getStatements().size());
     }
 
     @Test
@@ -155,9 +157,9 @@ class ParsingFacadeTest {
         assertSame(SModality.SolidityModalityKind.DIA, ((SModality) term.op()).kind());
         assert (((SModality) term.op()).programBlock().program() instanceof Block);
         Block block = (Block) ((SModality) term.op()).programBlock().program();
-        assertEquals(1, block.getChildCount());
+        assertEquals(1, block.getStatements().size());
 
-        assertEquals(px, block.getChild(0).getChild(0).getChild(0));
+        assertEquals(px, ((BinaryOperator) ((ExpressionStatement) block.getStatements().get(0)).getExpression()).getLeft());
     }
 
     @Test

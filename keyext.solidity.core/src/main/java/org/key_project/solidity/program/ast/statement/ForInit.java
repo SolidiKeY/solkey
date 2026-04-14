@@ -22,6 +22,9 @@ public class ForInit implements SolidityProgramElement {
         this.init = children.get(Expression.class);
     }
 
+    public Expression getInit() {
+        return init;
+    }
 
     @Override
     public @NonNull SyntaxElement getChild(int n) {

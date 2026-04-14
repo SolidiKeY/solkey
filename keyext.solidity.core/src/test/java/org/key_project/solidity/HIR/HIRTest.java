@@ -16,7 +16,9 @@ import org.key_project.solidity.program.ast.Context;
 import org.key_project.solidity.program.ast.HirSolidityReader;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
+import org.key_project.solidity.program.ast.expressions.operators.BinaryOperator;
 import org.key_project.solidity.program.ast.statement.Block;
+import org.key_project.solidity.program.ast.statement.ExpressionStatement;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -58,7 +60,7 @@ public class HIRTest {
         varNS.add(x);
         Block block = (Block) hir.readBlockWithProgramVariables(varNS, "{ x = 1; }").program();
         ProgramVariable xTest =
-            (ProgramVariable) block.getStatements().get(0).getChild(0).getChild(0);
+            (ProgramVariable) ((BinaryOperator) ((ExpressionStatement) block.getStatements().get(0)).getExpression()).getLeft();
         assertEquals(x, xTest);
     }
 }

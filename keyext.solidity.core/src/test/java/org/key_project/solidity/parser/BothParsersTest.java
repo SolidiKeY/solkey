@@ -10,6 +10,7 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.parser.SolidityParser.*;
+import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.statement.DeclarationStatement;
 import org.key_project.solidity.program.ast.statement.Statement;
 import org.key_project.solidity.program.parser.SolcParser;
@@ -53,7 +54,7 @@ public class BothParsersTest {
     @Test
     void usingVariable() {
         DeclarationStatement stm = (DeclarationStatement) parseStatement("Person alice;");
-        ProgramVariable programVariable = (ProgramVariable) stm.getChild(0).getChild(0);
+        ProgramVariable programVariable = ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable();
         Sort sort = programVariable.getType().getSort(services);
         Assertions.assertEquals("Person", sort.toString());
     }

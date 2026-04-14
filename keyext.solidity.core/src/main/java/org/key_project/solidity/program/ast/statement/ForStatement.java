@@ -59,6 +59,14 @@ public class ForStatement extends LoopStatement {
         return n;
     }
 
+    public ForInit getInit() {
+        return init;
+    }
+
+    public ForUpdate getUpdate() {
+        return update;
+    }
+
     public String nullOrEmpty(SolidityProgramElement e) {
         return e == null ? "" : e.toString();
     }

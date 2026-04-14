@@ -11,6 +11,7 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.SoliditySchemaReader;
 import org.key_project.solidity.program.ast.Context;
 import org.key_project.solidity.program.ast.statement.Block;
+import org.key_project.solidity.program.ast.statement.ExpressionStatement;
 import org.key_project.solidity.rule.sv.ProgramSV;
 
 import org.jspecify.annotations.NonNull;
@@ -33,6 +34,6 @@ public class SchemaReaderTest {
         Context ctx = new Context(new Namespace<>());
 
         Block block = (Block) scr.readBlock("{ s#v; }", ctx).program();
-        assertEquals(sv, block.getStatements().get(0).getChild(0));
+        assertEquals(sv, ((ExpressionStatement) block.getStatements().get(0)).getExpression());
     }
 }
