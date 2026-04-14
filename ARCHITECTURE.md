@@ -99,6 +99,10 @@ Generated parser code goes to `build/generated-src/antlr/main/`.
 
 Central singleton-like registry accessed via `Services`. Contains all registered Solidity primitive types (int8–int256, uint8–uint256, bytes1–bytes32, bool, address) and their KeY sort mappings. When adding new types or built-ins, register them here.
 
+### `SolJSONParser`
+
+Parses the JSON AST produced by the `solc` compiler (`--ast-compact-json`) into the internal Solidity AST. When refactoring or extending `SolJSONParser`, refer to **`solidity-json-documentation.md`** (at the repository root) to understand the structure of `solc`'s JSON output — what node types exist, what fields each node has, and what the type descriptor format looks like.
+
 ## Code Style
 
 Formatting is enforced by **Spotless** using the Eclipse style defined in `scripts/tools/checkstyle/keyCodeStyle.xml`. Run `./gradlew spotlessApply` before committing. Nullness is checked via the EISOP Checker Framework — fields are `@NonNull` by default; use `@Nullable` explicitly.
