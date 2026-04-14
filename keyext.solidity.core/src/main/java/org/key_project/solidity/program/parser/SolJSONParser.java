@@ -374,13 +374,11 @@ public class SolJSONParser {
     }
 
     private @NonNull DynamicArrayType getDynamicArrayType(Type primitiveType) {
-        Type t = services.getSolidityInfo().getDynamicTypeMap(primitiveType.name());
-        return (DynamicArrayType) (t instanceof KeYSolidityType kst ? kst.getSolidityType() : t);
+        return (DynamicArrayType) services.getSolidityInfo().getDynamicTypeMap(primitiveType.name());
     }
 
     private @NonNull ArrayType getStaticArrayType(Type primitiveType, int size) {
-        Type t = services.getSolidityInfo().getStaticTypeMap(primitiveType.name(), size);
-        return (ArrayType) (t instanceof KeYSolidityType kst ? kst.getSolidityType() : t);
+        return (ArrayType) services.getSolidityInfo().getStaticTypeMap(primitiveType.name(), size);
     }
 
     private ProgramVariable parseParam(JsonNode node) {

@@ -63,10 +63,8 @@ public class SolidityInfo {
 
     public MappingType getMappingTypeMap(Type keyType, Type valueType) {
         MappingType mapping = new MappingType(keyType, valueType);
-        if (typeMap.containsKey(mapping.name())) {
-            Type t = typeMap.get(mapping.name());
-            return (MappingType) (t instanceof KeYSolidityType kst ? kst.getSolidityType() : t);
-        }
+        if (typeMap.containsKey(mapping.name()))
+            return (MappingType) typeMap.get(mapping.name());
         typeMap.put(mapping.name(), mapping);
         return mapping;
     }
@@ -86,7 +84,9 @@ public class SolidityInfo {
     }
 
     public void addType(Sort sort, KeYSolidityType type) {
-        typeMap.put(sort.name(), type);
+        Name sortName = sort.name();
+        if(!typeMap.containsKey(sortName))
+            typeMap.put(sortName, type);
     }
 
     public Set<Function> getAllSolidityFunctions() {
