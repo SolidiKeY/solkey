@@ -23,10 +23,13 @@ import org.key_project.solidity.program.ast.expressions.IndexExpression;
 import org.key_project.solidity.program.ast.expressions.operators.BinaryOperator;
 import org.key_project.solidity.program.ast.expressions.operators.UnaryOperator;
 import org.key_project.solidity.program.ast.statement.Block;
+import org.key_project.solidity.program.ast.statement.ConditionStatement;
 import org.key_project.solidity.program.ast.statement.DeclarationStatement;
+import org.key_project.solidity.program.ast.statement.DoWhileStatement;
 import org.key_project.solidity.program.ast.statement.ExpressionStatement;
 import org.key_project.solidity.program.ast.statement.ForStatement;
 import org.key_project.solidity.program.ast.statement.Statement;
+import org.key_project.solidity.program.ast.statement.WhileStatement;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.junit.jupiter.api.Disabled;
@@ -187,14 +190,8 @@ class TestProgVarReplaceVisitor {
     }
 
     @Test
-    void testMultipleFeatures() {
-        Block body = parseBlock("""
-            { int original;
-              if(original == 2) original = 0; else original = 1;
-              while(original == 0) original = 1;
-              original++;
-              original += 1;
-              do { original++; } while (original == 0); }""");
+    void testIf() {
+        Block body = parseBlock("{ int original; if(original == 2) original = 0; else original = 1; }");
         DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
         StatementVariableDeclaration stm =
             (StatementVariableDeclaration) dstm.getDeclarations().get(0);
@@ -204,9 +201,82 @@ class TestProgVarReplaceVisitor {
 
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
         replacer.start();
-        Block result = ((Block) replacer.result());
-        assertFalse(result.toString().contains("original"));
-        assertTrue(result.toString().contains("replacement"));
+        Block result = (Block) replacer.result();
+        assertSame(replacement, ((StatementVariableDeclaration) ((DeclarationStatement) result.getStatements().get(0)).getDeclarations().get(0)).getProgramVariable());
+        ConditionStatement ifStmt = (ConditionStatement) result.getStatements().get(1);
+        assertSame(replacement, ((BinaryOperator) ifStmt.getCondition()).getLeft());
+        assertSame(replacement, ((BinaryOperator) ((ExpressionStatement) ifStmt.getTrueBody()).getExpression()).getLeft());
+        assertSame(replacement, ((BinaryOperator) ((ExpressionStatement) ifStmt.getFalseBody()).getExpression()).getLeft());
+    }
+
+    @Test
+    void testWhile() {
+        Block body = parseBlock("{ int original; while(original == 0) original = 1; }");
+        DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
+        StatementVariableDeclaration stm =
+            (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+
+        ProgramVariable original = stm.getProgramVariable();
+        addMap(original);
+
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
+        replacer.start();
+        Block result = (Block) replacer.result();
+        assertSame(replacement, ((StatementVariableDeclaration) ((DeclarationStatement) result.getStatements().get(0)).getDeclarations().get(0)).getProgramVariable());
+        WhileStatement whileStmt = (WhileStatement) result.getStatements().get(1);
+        assertSame(replacement, ((BinaryOperator) whileStmt.getCondition()).getLeft());
+        assertSame(replacement, ((BinaryOperator) ((ExpressionStatement) whileStmt.getBody()).getExpression()).getLeft());
+    }
+
+    @Test
+    void testUnaryIncrement() {
+        Block body = parseBlock("{ int original; original++; }");
+        DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
+        StatementVariableDeclaration stm =
+            (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+
+        ProgramVariable original = stm.getProgramVariable();
+        addMap(original);
+
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
+        replacer.start();
+        Block result = (Block) replacer.result();
+        assertSame(replacement, ((UnaryOperator) ((ExpressionStatement) result.getStatements().get(1)).getExpression()).getExp());
+    }
+
+    @Test
+    void testCompoundAssignment() {
+        Block body = parseBlock("{ int original; original += 1; }");
+        DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
+        StatementVariableDeclaration stm =
+            (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+
+        ProgramVariable original = stm.getProgramVariable();
+        addMap(original);
+
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
+        replacer.start();
+        Block result = (Block) replacer.result();
+        assertSame(replacement, ((BinaryOperator) ((ExpressionStatement) result.getStatements().get(1)).getExpression()).getLeft());
+    }
+
+    @Test
+    void testDoWhile() {
+        Block body = parseBlock("{ int original; do { original++; } while (original == 0); }");
+        DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
+        StatementVariableDeclaration stm =
+            (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+
+        ProgramVariable original = stm.getProgramVariable();
+        addMap(original);
+
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
+        replacer.start();
+        Block result = (Block) replacer.result();
+        assertSame(replacement, ((StatementVariableDeclaration) ((DeclarationStatement) result.getStatements().get(0)).getDeclarations().get(0)).getProgramVariable());
+        DoWhileStatement doWhileStmt = (DoWhileStatement) result.getStatements().get(1);
+        assertSame(replacement, ((BinaryOperator) doWhileStmt.getCondition()).getLeft());
+        assertSame(replacement, ((UnaryOperator) ((ExpressionStatement) ((Block) doWhileStmt.getBody()).getStatements().get(0)).getExpression()).getExp());
     }
 
     @Test
