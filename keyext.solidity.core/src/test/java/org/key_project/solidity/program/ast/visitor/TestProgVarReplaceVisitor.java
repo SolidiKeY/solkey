@@ -56,10 +56,6 @@ class TestProgVarReplaceVisitor {
         replacement = new ProgramVariable(new Name("replacement"), uintKST, null);
     }
 
-    void addMap(ProgramVariable original) {
-        map.put(original, replacement);
-    }
-
     // TODO: why does this test should work?
     @Disabled("Not understanding why should pass")
     @Test
@@ -95,45 +91,29 @@ class TestProgVarReplaceVisitor {
         ProgramVariable original = stm.getProgramVariable();
         addMap(original);
 
-        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(stm, map, false, services);
-        replacer.start();
         ProgramVariable result =
-            ((StatementVariableDeclaration) replacer.result()).getProgramVariable();
+            ((StatementVariableDeclaration) runOn(stm)).getProgramVariable();
         assertSame(replacement, result);
     }
 
     @Test
     void testWholeBody() {
         Block body = parseBlock("{ int original; original = 5; }");
-        DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
-        StatementVariableDeclaration stm =
-            (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+        extractAndMap(body);
 
-        ProgramVariable original = stm.getProgramVariable();
-        addMap(original);
-
-        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
-        replacer.start();
-        Block result = ((Block) replacer.result());
-        ProgramVariable progRes =
-            (ProgramVariable) ((BinaryOperator) ((ExpressionStatement) result.getStatements().get(1)).getExpression()).getLeft();
-        assertSame(replacement, progRes);
+        Block result = runOnBlock(body);
+        assertSame(replacement, getDeclaredVar(result));
+        assertSame(replacement, ((BinaryOperator) getExpression(result, 1)).getLeft());
     }
 
     @Test
     void testArray() {
         Block body = parseBlock("{ int256[10] memory original; original[1] = 1; }");
+        extractAndMap(body);
 
-        ProgramVariable original =
-            ((StatementVariableDeclaration) ((DeclarationStatement) body.getStatements().get(0)).getDeclarations().get(0)).getProgramVariable();
-        addMap(original);
-
-        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
-        replacer.start();
-        SolidityProgramElement result = replacer.result();
-
-        assertEquals(replacement, ((StatementVariableDeclaration) ((DeclarationStatement) ((Block) result).getStatements().get(0)).getDeclarations().get(0)).getProgramVariable());
-        assertEquals(replacement, ((IndexExpression) ((BinaryOperator) ((ExpressionStatement) ((Block) result).getStatements().get(1)).getExpression()).getLeft()).getLeftExp());
+        Block result = runOnBlock(body);
+        assertEquals(replacement, getDeclaredVar(result));
+        assertEquals(replacement, ((IndexExpression) ((BinaryOperator) getExpression(result, 1)).getLeft()).getLeftExp());
     }
 
     @Test
@@ -145,44 +125,27 @@ class TestProgVarReplaceVisitor {
         ProgramVariable original = stm.getProgramVariable();
         addMap(original);
 
-        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(stm, map, false, services);
-        replacer.start();
-        StatementVariableDeclaration result = (StatementVariableDeclaration) replacer.result();
-        ProgramVariable resultPV = result.getProgramVariable();
-        assertEquals(replacement, resultPV);
+        StatementVariableDeclaration result = (StatementVariableDeclaration) runOn(stm);
+        assertEquals(replacement, result.getProgramVariable());
     }
 
     @Test
     void testEnum() {
         Block body = parseBlock("{ State s; s = s; }");
-        DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
-        StatementVariableDeclaration stm =
-            (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+        extractAndMap(body);
 
-        ProgramVariable original = stm.getProgramVariable();
-        addMap(original);
-
-        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
-        replacer.start();
-        Block result = (Block) replacer.result();
-        assertEquals(replacement, ((StatementVariableDeclaration) ((DeclarationStatement) result.getStatements().get(0)).getDeclarations().get(0)).getProgramVariable());
-        assertEquals(replacement, ((BinaryOperator) ((ExpressionStatement) result.getStatements().get(1)).getExpression()).getLeft());
+        Block result = runOnBlock(body);
+        assertEquals(replacement, getDeclaredVar(result));
+        assertEquals(replacement, ((BinaryOperator) getExpression(result, 1)).getLeft());
     }
 
     @Test
     void testFor() {
         Block body = parseBlock("{ int original; for(original = 0; original<10; original++){} }");
-        DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
-        StatementVariableDeclaration stm =
-            (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+        extractAndMap(body);
 
-        ProgramVariable original = stm.getProgramVariable();
-        addMap(original);
-
-        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
-        replacer.start();
-        Block result = ((Block) replacer.result());
-        assertSame(replacement, ((StatementVariableDeclaration) ((DeclarationStatement) result.getStatements().get(0)).getDeclarations().get(0)).getProgramVariable());
+        Block result = runOnBlock(body);
+        assertSame(replacement, getDeclaredVar(result));
         Statement forLoop = result.getStatements().get(1);
         assertSame(replacement, ((BinaryOperator) ((ForStatement) forLoop).getInit().getInit()).getLeft());
         assertSame(replacement, ((BinaryOperator) ((ForStatement) forLoop).getCondition()).getLeft());
@@ -192,17 +155,10 @@ class TestProgVarReplaceVisitor {
     @Test
     void testIf() {
         Block body = parseBlock("{ int original; if(original == 2) original = 0; else original = 1; }");
-        DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
-        StatementVariableDeclaration stm =
-            (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+        extractAndMap(body);
 
-        ProgramVariable original = stm.getProgramVariable();
-        addMap(original);
-
-        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
-        replacer.start();
-        Block result = (Block) replacer.result();
-        assertSame(replacement, ((StatementVariableDeclaration) ((DeclarationStatement) result.getStatements().get(0)).getDeclarations().get(0)).getProgramVariable());
+        Block result = runOnBlock(body);
+        assertSame(replacement, getDeclaredVar(result));
         ConditionStatement ifStmt = (ConditionStatement) result.getStatements().get(1);
         assertSame(replacement, ((BinaryOperator) ifStmt.getCondition()).getLeft());
         assertSame(replacement, ((BinaryOperator) ((ExpressionStatement) ifStmt.getTrueBody()).getExpression()).getLeft());
@@ -212,17 +168,10 @@ class TestProgVarReplaceVisitor {
     @Test
     void testWhile() {
         Block body = parseBlock("{ int original; while(original == 0) original = 1; }");
-        DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
-        StatementVariableDeclaration stm =
-            (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+        extractAndMap(body);
 
-        ProgramVariable original = stm.getProgramVariable();
-        addMap(original);
-
-        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
-        replacer.start();
-        Block result = (Block) replacer.result();
-        assertSame(replacement, ((StatementVariableDeclaration) ((DeclarationStatement) result.getStatements().get(0)).getDeclarations().get(0)).getProgramVariable());
+        Block result = runOnBlock(body);
+        assertSame(replacement, getDeclaredVar(result));
         WhileStatement whileStmt = (WhileStatement) result.getStatements().get(1);
         assertSame(replacement, ((BinaryOperator) whileStmt.getCondition()).getLeft());
         assertSame(replacement, ((BinaryOperator) ((ExpressionStatement) whileStmt.getBody()).getExpression()).getLeft());
@@ -231,49 +180,30 @@ class TestProgVarReplaceVisitor {
     @Test
     void testUnaryIncrement() {
         Block body = parseBlock("{ int original; original++; }");
-        DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
-        StatementVariableDeclaration stm =
-            (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+        extractAndMap(body);
 
-        ProgramVariable original = stm.getProgramVariable();
-        addMap(original);
-
-        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
-        replacer.start();
-        Block result = (Block) replacer.result();
-        assertSame(replacement, ((UnaryOperator) ((ExpressionStatement) result.getStatements().get(1)).getExpression()).getExp());
+        Block result = runOnBlock(body);
+        assertSame(replacement, getDeclaredVar(result));
+        assertSame(replacement, ((UnaryOperator) getExpression(result, 1)).getExp());
     }
 
     @Test
     void testCompoundAssignment() {
         Block body = parseBlock("{ int original; original += 1; }");
-        DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
-        StatementVariableDeclaration stm =
-            (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+        extractAndMap(body);
 
-        ProgramVariable original = stm.getProgramVariable();
-        addMap(original);
-
-        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
-        replacer.start();
-        Block result = (Block) replacer.result();
-        assertSame(replacement, ((BinaryOperator) ((ExpressionStatement) result.getStatements().get(1)).getExpression()).getLeft());
+        Block result = runOnBlock(body);
+        assertSame(replacement, getDeclaredVar(result));
+        assertSame(replacement, ((BinaryOperator) getExpression(result, 1)).getLeft());
     }
 
     @Test
     void testDoWhile() {
         Block body = parseBlock("{ int original; do { original++; } while (original == 0); }");
-        DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
-        StatementVariableDeclaration stm =
-            (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+        extractAndMap(body);
 
-        ProgramVariable original = stm.getProgramVariable();
-        addMap(original);
-
-        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
-        replacer.start();
-        Block result = (Block) replacer.result();
-        assertSame(replacement, ((StatementVariableDeclaration) ((DeclarationStatement) result.getStatements().get(0)).getDeclarations().get(0)).getProgramVariable());
+        Block result = runOnBlock(body);
+        assertSame(replacement, getDeclaredVar(result));
         DoWhileStatement doWhileStmt = (DoWhileStatement) result.getStatements().get(1);
         assertSame(replacement, ((BinaryOperator) doWhileStmt.getCondition()).getLeft());
         assertSame(replacement, ((UnaryOperator) ((ExpressionStatement) ((Block) doWhileStmt.getBody()).getStatements().get(0)).getExpression()).getExp());
@@ -282,25 +212,19 @@ class TestProgVarReplaceVisitor {
     @Test
     void testOtherFeatures() {
         Block body = parseBlock("{ }");
-
-        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
-        replacer.start();
+        runOnBlock(body);
     }
 
     @Test
     void testSelfReference() {
         Block body = parseBlock("{ f(); }");
-        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
-        replacer.start();
-        Block result = ((Block) replacer.result());
+        runOnBlock(body);
     }
 
     @Test
     void testAddress() {
         Block body = parseBlock("{ try false { } catch { } }");
-        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
-        replacer.start();
-        Block result = ((Block) replacer.result());
+        runOnBlock(body);
     }
 
     @Test
@@ -318,27 +242,18 @@ class TestProgVarReplaceVisitor {
 
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         Block body = parseBlock("{ try false { } catch { } }");
-        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
-        replacer.start();
-        Block result = ((Block) replacer.result());
+        runOnBlock(body);
     }
 
     @Test
     void testNested() {
         Block body = getNestedBody();
-        DeclarationStatement dstm = (DeclarationStatement) body.getStatements().get(0);
-        StatementVariableDeclaration stm =
-            (StatementVariableDeclaration) dstm.getDeclarations().get(0);
+        extractAndMap(body);
 
-        ProgramVariable original = stm.getProgramVariable();
-        addMap(original);
-
-        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
-        replacer.start();
-        Block result = ((Block) replacer.result());
-
+        Block result = runOnBlock(body);
         ImmutableArray<Statement> stmRes = result.getStatements();
-        assertSame(replacement, ((BinaryOperator) ((ExpressionStatement) stmRes.get(1)).getExpression()).getLeft());
+        assertSame(replacement, getDeclaredVar(result));
+        assertSame(replacement, ((BinaryOperator) getExpression(result, 1)).getLeft());
         noReplacement(stmRes.get(2));
         noReplacement(stmRes.get(3));
     }
@@ -346,17 +261,15 @@ class TestProgVarReplaceVisitor {
     @Test
     void testNestedSecond() {
         Block body = getNestedBody();
+        Block innerBlock = (Block) body.getStatements().get(2);
 
-        ProgramVariable original =
-            ((StatementVariableDeclaration) ((DeclarationStatement) ((Block) body.getStatements().get(2)).getStatements().get(0)).getDeclarations().get(0)).getProgramVariable();
+        ProgramVariable original = getDeclaredVar(innerBlock);
         addMap(original);
 
-        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
-        replacer.start();
-        Block result = ((Block) replacer.result());
-
+        Block result = runOnBlock(body);
         ImmutableArray<Statement> stmRes = result.getStatements();
-        assertSame(replacement, ((BinaryOperator) ((ExpressionStatement) ((Block) result.getStatements().get(2)).getStatements().get(1)).getExpression()).getLeft());
+        assertSame(replacement, getDeclaredVar((Block) result.getStatements().get(2)));
+        assertSame(replacement, ((BinaryOperator) getExpression((Block) result.getStatements().get(2), 1)).getLeft());
         noReplacement(stmRes.get(0));
         noReplacement(stmRes.get(1));
         noReplacement(((Block) stmRes.get(2)).getStatements().get(2));
@@ -366,17 +279,16 @@ class TestProgVarReplaceVisitor {
     @Test
     void testNestedThird() {
         Block body = getNestedBody();
+        Block innerBlock = (Block) ((Block) body.getStatements().get(2)).getStatements().get(2);
 
-        ProgramVariable original =
-            ((StatementVariableDeclaration) ((DeclarationStatement) ((Block) ((Block) body.getStatements().get(2)).getStatements().get(2)).getStatements().get(0)).getDeclarations().get(0)).getProgramVariable();
+        ProgramVariable original = getDeclaredVar(innerBlock);
         addMap(original);
 
-        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
-        replacer.start();
-        Block result = ((Block) replacer.result());
-
+        Block result = runOnBlock(body);
         ImmutableArray<Statement> stmRes = result.getStatements();
-        assertSame(replacement, ((BinaryOperator) ((ExpressionStatement) ((Block) ((Block) result.getStatements().get(2)).getStatements().get(2)).getStatements().get(1)).getExpression()).getLeft());
+        Block innerResult = (Block) ((Block) result.getStatements().get(2)).getStatements().get(2);
+        assertSame(replacement, getDeclaredVar(innerResult));
+        assertSame(replacement, ((BinaryOperator) getExpression(innerResult, 1)).getLeft());
         noReplacement(stmRes.get(0));
         noReplacement(stmRes.get(1));
         noReplacement(((Block) stmRes.get(2)).getStatements().get(0));
@@ -387,20 +299,52 @@ class TestProgVarReplaceVisitor {
     @Test
     void testNestedLast() {
         Block body = getNestedBody();
+        Block innerBlock = (Block) body.getStatements().get(3);
 
-        ProgramVariable original =
-            ((StatementVariableDeclaration) ((DeclarationStatement) ((Block) body.getStatements().get(3)).getStatements().get(0)).getDeclarations().get(0)).getProgramVariable();
+        ProgramVariable original = getDeclaredVar(innerBlock);
         addMap(original);
 
-        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
-        replacer.start();
-        Block result = ((Block) replacer.result());
-
+        Block result = runOnBlock(body);
         ImmutableArray<Statement> stmRes = result.getStatements();
-        assertSame(replacement, ((BinaryOperator) ((ExpressionStatement) ((Block) stmRes.get(3)).getStatements().get(1)).getExpression()).getLeft());
+        assertSame(replacement, getDeclaredVar((Block) stmRes.get(3)));
+        assertSame(replacement, ((BinaryOperator) getExpression((Block) stmRes.get(3), 1)).getLeft());
         noReplacement(stmRes.get(0));
         noReplacement(stmRes.get(1));
         noReplacement(stmRes.get(2));
+    }
+
+    void addMap(ProgramVariable original) {
+        map.put(original, replacement);
+    }
+
+    ProgramVariable extractAndMap(Block body) {
+        ProgramVariable original = getDeclaredVar(body, 0);
+        addMap(original);
+        return original;
+    }
+
+    Block runOnBlock(Block body) {
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(body, map, false, services);
+        replacer.start();
+        return (Block) replacer.result();
+    }
+
+    SolidityProgramElement runOn(SolidityProgramElement element) {
+        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(element, map, false, services);
+        replacer.start();
+        return replacer.result();
+    }
+
+    ProgramVariable getDeclaredVar(Block block) {
+        return getDeclaredVar(block, 0);
+    }
+
+    ProgramVariable getDeclaredVar(Block block, int statementIndex) {
+        return ((StatementVariableDeclaration) ((DeclarationStatement) block.getStatements().get(statementIndex)).getDeclarations().get(0)).getProgramVariable();
+    }
+
+    Expression getExpression(Block block, int index) {
+        return ((ExpressionStatement) block.getStatements().get(index)).getExpression();
     }
 
     public Block getNestedBody() {
