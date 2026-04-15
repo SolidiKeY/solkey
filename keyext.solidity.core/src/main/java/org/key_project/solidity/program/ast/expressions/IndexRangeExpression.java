@@ -11,7 +11,6 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 
-// uint a; a = 4; // ProgramVariable
 public class IndexRangeExpression extends SolidityExpression {
 
     private final Expression baseExp;
