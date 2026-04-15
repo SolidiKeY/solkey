@@ -33,6 +33,13 @@ public class IndexRangeExpression extends SolidityExpression {
         this.endExp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
     }
 
+    public IndexRangeExpression(ExtList children, Type type) {
+        super(type);
+        this.baseExp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.startExp = children.removeFirstOccurrence(Expression.class);
+        this.endExp = children.removeFirstOccurrence(Expression.class);
+    }
+
     @Override
     public SyntaxElement getChild(int n) {
         int i = n;

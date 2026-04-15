@@ -148,7 +148,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new FunctionCallExpression(changeList);
+                return new FunctionCallExpression(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -170,7 +170,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new IndexRangeExpression(changeList);
+                return new IndexRangeExpression(changeList, x.getType());
             }
         };
         def.doAction(x);
@@ -632,7 +632,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new TernaryOperator(changeList);
+                return new TernaryOperator(changeList, x.getType());
             }
         };
         def.doAction(x);

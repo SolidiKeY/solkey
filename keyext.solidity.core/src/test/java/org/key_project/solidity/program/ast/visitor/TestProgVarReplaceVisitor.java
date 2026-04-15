@@ -19,8 +19,11 @@ import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
 import org.key_project.solidity.program.ast.expressions.IndexExpression;
+import org.key_project.solidity.program.ast.expressions.IndexRangeExpression;
 import org.key_project.solidity.program.ast.expressions.operators.BinaryOperator;
+import org.key_project.solidity.program.ast.expressions.operators.TernaryOperator;
 import org.key_project.solidity.program.ast.expressions.operators.UnaryOperator;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.program.ast.statement.ConditionStatement;
@@ -28,6 +31,7 @@ import org.key_project.solidity.program.ast.statement.DeclarationStatement;
 import org.key_project.solidity.program.ast.statement.DoWhileStatement;
 import org.key_project.solidity.program.ast.statement.ExpressionStatement;
 import org.key_project.solidity.program.ast.statement.ForStatement;
+import org.key_project.solidity.program.ast.statement.ReturnStatement;
 import org.key_project.solidity.program.ast.statement.Statement;
 import org.key_project.solidity.program.ast.statement.WhileStatement;
 import org.key_project.util.collection.ImmutableArray;
@@ -219,6 +223,67 @@ class TestProgVarReplaceVisitor {
     void testSelfReference() {
         Block body = parseBlock("{ f(); }");
         runOnBlock(body);
+    }
+
+    @Test
+    void testReturn() {
+        Block body = parseBlock("{ int original; return original; }");
+        extractAndMap(body);
+        Block result = runOnBlock(body);
+        assertSame(replacement, getDeclaredVar(result));
+        ReturnStatement ret = (ReturnStatement) result.getStatements().get(1);
+        assertSame(replacement, ret.getReturnExp());
+    }
+
+    @Test
+    void testTernary() {
+        Block body = parseBlock("{ int original; original == 0 ? original : 1; }");
+        extractAndMap(body);
+        Block result = runOnBlock(body);
+        assertSame(replacement, getDeclaredVar(result));
+        TernaryOperator ternary = (TernaryOperator) getExpression(result, 1);
+        assertSame(replacement, ((BinaryOperator) ternary.getCondition()).getLeft());
+        assertSame(replacement, ternary.getTrueExpression());
+    }
+
+    @Test
+    void testSliceAccess() {
+        Block body = parseBlock("{ int[] memory arr; int original; arr[original:5]; }");
+        ProgramVariable original = getDeclaredVar(body, 1);
+        addMap(original);
+        Block result = runOnBlock(body);
+        IndexRangeExpression slice = (IndexRangeExpression) getExpression(result, 2);
+        assertSame(replacement, slice.getStartExp());
+    }
+
+    @Test
+    void testBreak() {
+        Block body = parseBlock("{ int original; while(original == 0) { break; } }");
+        extractAndMap(body);
+        Block result = runOnBlock(body);
+        assertSame(replacement, getDeclaredVar(result));
+        WhileStatement whileStmt = (WhileStatement) result.getStatements().get(1);
+        assertSame(replacement, ((BinaryOperator) whileStmt.getCondition()).getLeft());
+    }
+
+    @Test
+    void testContinue() {
+        Block body = parseBlock("{ int original; while(original == 0) { continue; } }");
+        extractAndMap(body);
+        Block result = runOnBlock(body);
+        assertSame(replacement, getDeclaredVar(result));
+        WhileStatement whileStmt = (WhileStatement) result.getStatements().get(1);
+        assertSame(replacement, ((BinaryOperator) whileStmt.getCondition()).getLeft());
+    }
+
+    @Test
+    void testFunctionCallWithArgs() {
+        Block body = parseBlock("{ int original; f(original); }");
+        extractAndMap(body);
+        Block result = runOnBlock(body);
+        assertSame(replacement, getDeclaredVar(result));
+        FunctionCallExpression call = (FunctionCallExpression) getExpression(result, 1);
+        assertSame(replacement, call.getArgument(0));
     }
 
     @Test

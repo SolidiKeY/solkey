@@ -34,6 +34,17 @@ public class FunctionCallExpression extends SolidityExpression {
         this.arguments = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
     }
 
+    public FunctionCallExpression(ExtList children, Type type) {
+        super(type);
+        List<Expression> exprs = new java.util.ArrayList<>();
+        Expression expr;
+        while ((expr = children.removeFirstOccurrence(Expression.class)) != null) {
+            exprs.add(expr);
+        }
+        this.functionExp = exprs.remove(exprs.size() - 1);
+        this.arguments = exprs;
+    }
+
     @Override
     public SyntaxElement getChild(int n) {
         if (0 <= n && n < arguments.size()) {

@@ -25,12 +25,13 @@ public class ReturnStatement implements Statement {
 
     @Override
     public SyntaxElement getChild(int n) {
+        if (n == 0 && returnExp != null) return returnExp;
         throw new IndexOutOfBoundsException();
     }
 
     @Override
     public int getChildCount() {
-        return 0;
+        return returnExp != null ? 1 : 0;
     }
 
     public Expression getReturnExp() {

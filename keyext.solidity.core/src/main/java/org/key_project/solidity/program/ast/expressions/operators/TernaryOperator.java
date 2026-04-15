@@ -61,6 +61,15 @@ public class TernaryOperator extends SolidityExpression {
             Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
     }
 
+    public TernaryOperator(ExtList children, Type type) {
+        super(type);
+        this.condition = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.falseExpression =
+            Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.trueExpression =
+            Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+    }
+
     public Expression getCondition() {
         return condition;
     }
