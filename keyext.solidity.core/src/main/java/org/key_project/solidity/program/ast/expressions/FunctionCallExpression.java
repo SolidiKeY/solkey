@@ -4,7 +4,6 @@
 package org.key_project.solidity.program.ast.expressions;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.key_project.logic.SyntaxElement;
@@ -26,12 +25,6 @@ public class FunctionCallExpression extends SolidityExpression {
         super(type);
         this.functionExp = functionExp;
         this.arguments = arguments;
-    }
-
-    public FunctionCallExpression(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
-        this.functionExp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
-        this.arguments = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
     }
 
     public FunctionCallExpression(ExtList children, Type type) {
