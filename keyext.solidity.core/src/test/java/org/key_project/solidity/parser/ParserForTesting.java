@@ -11,7 +11,6 @@ import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
-import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.declarations.EnumDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.MemberEnumDeclaration;
@@ -27,6 +26,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.util.List;
 
+import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.UINT;
 import static org.key_project.solidity.rule.sv.SchemaVariableFactory.createProgramSV;
 
 public class ParserForTesting {
@@ -37,7 +37,7 @@ public class ParserForTesting {
         Services services = new Services();
 
         KeYSolidityType ksType =
-            new KeYSolidityType(PrimitiveType.UINT, new SortImpl(new Name("UINT")));
+            new KeYSolidityType(UINT, new SortImpl(new Name("UINT")));
         ProgramVariable px = new ProgramVariable(new Name("x"), ksType, null);
         ProgramVariable pf = new ProgramVariable(new Name("f"), ksType, null);
         ProgramVariable pv = new ProgramVariable(new Name("v"), ksType, null);
@@ -48,8 +48,8 @@ public class ParserForTesting {
         localVars.add(pv);
 
         Namespace<ProgramSV> schemaVariables = new Namespace<>();
-        ProgramSV sv = createProgramSV(new Name("s#v"), null, false);
-        ProgramSV svv = createProgramSV(new Name("s#vv"), null, false);
+        ProgramSV sv = createProgramSV(new Name("s#v"), null, false, UINT);
+        ProgramSV svv = createProgramSV(new Name("s#vv"), null, false, UINT);
         schemaVariables.add(sv);
         schemaVariables.add(svv);
 

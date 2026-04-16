@@ -60,19 +60,6 @@ class TestProgVarReplaceVisitor {
         replacement = new ProgramVariable(new Name("replacement"), uintKST, null);
     }
 
-    // TODO: why does this test should work?
-    @Disabled("Not understanding why should pass")
-    @Test
-    void testNoReplacement() {
-        // parse in statements
-        Statement stmnt = null; // <- here actual statement needed
-        ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(stmnt, map, false, services);
-        replacer.start();
-        assertEquals(stmnt, replacer.result()); // stmnt.equals(repl.result())
-        assertSame(stmnt, replacer.result()); // stmnt == repl.result()
-    }
-
-
     @Test
     void testReplacement() {
         Expression original = new ProgramVariable(new Name("original"), uintKST, null);

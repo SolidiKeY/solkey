@@ -17,6 +17,7 @@ import org.jspecify.annotations.NonNull;
 
 public class ProgramSV extends OperatorSV implements Expression {
     private final boolean isListSV;
+    private final Type type;
 
     private static final ProgramList EMPTY_LIST_INSTANTIATION =
         new ProgramList(new ImmutableArray<>(new SolidityProgramElement[0]));
@@ -25,8 +26,13 @@ public class ProgramSV extends OperatorSV implements Expression {
     ///
     /// @param name the Name of the SchemaVariable allowed to match a list of program constructs
     ProgramSV(Name name, ProgramSVSort s, boolean isListSV) {
+        this(name, s, isListSV, null);
+    }
+
+    ProgramSV(Name name, ProgramSVSort s, boolean isListSV, Type type) {
         super(name, s, false, false);
         this.isListSV = isListSV;
+        this.type = type;
     }
 
     public boolean isListSV() {
@@ -49,6 +55,6 @@ public class ProgramSV extends OperatorSV implements Expression {
 
     @Override
     public Type getType() {
-        return null;
+        return type;
     }
 }

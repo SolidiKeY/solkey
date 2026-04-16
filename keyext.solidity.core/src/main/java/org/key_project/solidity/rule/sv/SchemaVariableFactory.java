@@ -7,6 +7,7 @@ package org.key_project.solidity.rule.sv;
 import org.key_project.logic.Name;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.logic.op.SModality;
+import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.rule.sv.sort.ProgramSVSort;
 import org.key_project.util.collection.ImmutableSet;
 
@@ -76,6 +77,12 @@ public class SchemaVariableFactory {
     public static ProgramSV createProgramSV(Name name, ProgramSVSort s,
             boolean listSV) {
         return new ProgramSV(name, s, listSV);
+    }
+
+    /// creates a SchemaVariable representing a program construct with a specific type
+    public static ProgramSV createProgramSV(Name name, ProgramSVSort s,
+            boolean listSV, Type type) {
+        return new ProgramSV(name, s, listSV, type);
     }
 
     /// creates a SchemaVariable representing a skolem term
