@@ -25,16 +25,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class HirSolidityReader {
+public class SolidityReader {
 
     private final Services services;
-    private static final Logger LOGGER = LoggerFactory.getLogger(HirSolidityReader.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SolidityReader.class);
 
-    public HirSolidityReader(Services services, NamespaceSet nss) {
+    public SolidityReader(Services services, NamespaceSet nss) {
         this(services);
     }
 
-    public HirSolidityReader(Services services) {
+    public SolidityReader(Services services) {
         this.services = services;
     }
 

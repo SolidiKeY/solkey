@@ -13,7 +13,7 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.Context;
-import org.key_project.solidity.program.ast.HirSolidityReader;
+import org.key_project.solidity.program.ast.SolidityReader;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.expressions.operators.BinaryOperator;
@@ -25,12 +25,12 @@ import org.junit.jupiter.api.io.TempDir;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class HIRTest {
+public class SolidityReaderTest {
     @TempDir
     Path tempDir;
 
     Services services = new Services();
-    HirSolidityReader hir = new HirSolidityReader(services);
+    SolidityReader hir = new SolidityReader(services);
 
     @Test
     void emptyBlock() throws IOException {
