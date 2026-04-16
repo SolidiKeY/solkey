@@ -22,9 +22,9 @@ import org.key_project.solidity.program.ast.statement.ReturnStatement;
 import org.key_project.solidity.program.ast.statement.Statement;
 import org.key_project.solidity.program.parser.SolcParser;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.key_project.solidity.parser.ParserForTesting.parse;
 
 public class BothParsersTest {
@@ -63,7 +63,7 @@ public class BothParsersTest {
         DeclarationStatement stm = (DeclarationStatement) parseStatement("Person alice;");
         ProgramVariable programVariable = ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable();
         Sort sort = programVariable.getType().getSort(services);
-        Assertions.assertEquals("Person", sort.toString());
+        assertEquals("Person", sort.toString());
     }
 
     @Test
@@ -78,11 +78,10 @@ public class BothParsersTest {
         ContractDeclaration contractDec = solcParser.getDeclStrJsonParser(contract);
         TupleType contractTupleType = contractDec.getFunctions().getFirst().getType();
 
-        // Parse "return (false, false);" via the ANTLR parser
         ReturnStatement returnStm = (ReturnStatement) parseStatement("return (false, false);");
         TupleType parsedTupleType = (TupleType) returnStm.getReturnExp().getType();
 
-        Assertions.assertSame(contractTupleType, parsedTupleType);
+        assertSame(contractTupleType, parsedTupleType);
     }
 
     @Test
@@ -98,7 +97,7 @@ public class BothParsersTest {
         DeclarationStatement stm = (DeclarationStatement) parseStatement("bool x;");
         Type parsedBoolType = ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable().getType();
 
-        Assertions.assertSame(contractBoolType, parsedBoolType);
+        assertSame(contractBoolType, parsedBoolType);
     }
 
     @Test
@@ -115,7 +114,7 @@ public class BothParsersTest {
         DeclarationStatement stm = (DeclarationStatement) parseStatement("bool[2] x;");
         ArrayType parsedArrayType = (ArrayType) ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable().getType();
 
-        Assertions.assertSame(contractArrayType, parsedArrayType);
+        assertSame(contractArrayType, parsedArrayType);
     }
 
     @Test
@@ -132,7 +131,7 @@ public class BothParsersTest {
         DeclarationStatement stm = (DeclarationStatement) parseStatement("bool[] x;");
         DynamicArrayType parsedArrayType = (DynamicArrayType) ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable().getType();
 
-        Assertions.assertSame(contractArrayType, parsedArrayType);
+        assertSame(contractArrayType, parsedArrayType);
     }
 
 }
