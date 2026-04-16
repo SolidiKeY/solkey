@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.key_project.solidity.program.parser.SolcWrapper.readSol;
 
-class SolcWrapperTest {
+public class SolcWrapperTest {
     @Test
     void readStringSol() throws IOException {
         // language=solidity

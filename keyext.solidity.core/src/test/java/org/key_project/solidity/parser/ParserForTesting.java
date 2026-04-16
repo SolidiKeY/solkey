@@ -3,28 +3,21 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser;
 
-import org.key_project.logic.Name;
-import org.key_project.logic.Namespace;
+import java.util.List;
+
+import org.key_project.logic.*;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
-import org.key_project.solidity.program.ast.declarations.EnumDeclaration;
-import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
-import org.key_project.solidity.program.ast.declarations.MemberEnumDeclaration;
-import org.key_project.solidity.program.ast.declarations.StructDeclaration;
+import org.key_project.solidity.program.ast.declarations.*;
 import org.key_project.solidity.program.ast.expressions.Expression;
-import org.key_project.solidity.program.ast.statement.Block;
-import org.key_project.solidity.program.ast.statement.Statement;
+import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.rule.sv.ProgramSV;
 
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CodePointCharStream;
-import org.antlr.v4.runtime.CommonTokenStream;
-
-import java.util.List;
+import org.antlr.v4.runtime.*;
 
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.UINT;
 import static org.key_project.solidity.rule.sv.SchemaVariableFactory.createProgramSV;

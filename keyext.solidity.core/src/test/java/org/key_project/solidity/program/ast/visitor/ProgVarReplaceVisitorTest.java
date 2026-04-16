@@ -7,32 +7,17 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.key_project.logic.Name;
-import org.key_project.logic.SyntaxElement;
+import org.key_project.logic.*;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
-import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
-import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
-import org.key_project.solidity.program.ast.expressions.Expression;
-import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
-import org.key_project.solidity.program.ast.expressions.IndexExpression;
-import org.key_project.solidity.program.ast.expressions.IndexRangeExpression;
-import org.key_project.solidity.program.ast.expressions.operators.BinaryOperator;
-import org.key_project.solidity.program.ast.expressions.operators.TernaryOperator;
-import org.key_project.solidity.program.ast.expressions.operators.UnaryOperator;
-import org.key_project.solidity.program.ast.statement.Block;
-import org.key_project.solidity.program.ast.statement.ConditionStatement;
-import org.key_project.solidity.program.ast.statement.DeclarationStatement;
-import org.key_project.solidity.program.ast.statement.DoWhileStatement;
-import org.key_project.solidity.program.ast.statement.ExpressionStatement;
-import org.key_project.solidity.program.ast.statement.ForStatement;
-import org.key_project.solidity.program.ast.statement.ReturnStatement;
-import org.key_project.solidity.program.ast.statement.Statement;
-import org.key_project.solidity.program.ast.statement.WhileStatement;
+import org.key_project.solidity.program.ast.declarations.*;
+import org.key_project.solidity.program.ast.expressions.*;
+import org.key_project.solidity.program.ast.expressions.operators.*;
+import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.junit.jupiter.api.Test;
@@ -42,14 +27,14 @@ import static org.key_project.solidity.parser.ParserForTesting.*;
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.UINT;
 import static org.key_project.solidity.program.parser.SolcParserNoServices.getDeclStr;
 
-class TestProgVarReplaceVisitor {
+public class ProgVarReplaceVisitorTest {
 
     private final Services services;
     private final Map<ProgramVariable, ProgramVariable> map;
     private final KeYSolidityType uintKST;
     private final ProgramVariable replacement;
 
-    public TestProgVarReplaceVisitor() {
+    public ProgVarReplaceVisitorTest() {
         map = new HashMap<>();
         services = new Services();
 
@@ -61,10 +46,10 @@ class TestProgVarReplaceVisitor {
 
     @Test
     void testReplacement() {
-        Expression original = new ProgramVariable(new Name("original"), uintKST, null);
-        Expression replacement = new ProgramVariable(new Name("replacement"), uintKST, null);
+        ProgramVariable original = new ProgramVariable(new Name("original"), uintKST, null);
+        ProgramVariable replacement = new ProgramVariable(new Name("replacement"), uintKST, null);
 
-        map.put((ProgramVariable) original, (ProgramVariable) replacement);
+        map.put(original, replacement);
 
         ProgVarReplaceVisitor replacer = new ProgVarReplaceVisitor(original, map, false, services);
         replacer.start();

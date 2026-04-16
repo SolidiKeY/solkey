@@ -1,28 +1,26 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.key_project.logic.Name;
-import org.key_project.logic.Namespace;
-import org.key_project.logic.Term;
-import org.key_project.logic.op.sv.SchemaVariable;
-import org.key_project.prover.rules.Taclet;
-import org.key_project.prover.sequent.Sequent;
-import org.key_project.prover.sequent.SequentFormula;
-import org.key_project.solidity.common.Services;
-import org.key_project.solidity.logic.NamespaceSet;
-import org.key_project.solidity.proof.calculus.SoliditySequentKit;
-import org.key_project.solidity.rule.taclets.builder.AntecSuccTacletGoalTemplate;
-import org.key_project.solidity.rule.taclets.builder.AntecTacletBuilder;
-import org.key_project.util.collection.ImmutableSLList;
 
 import java.io.IOException;
 import java.util.List;
 
+import org.junit.jupiter.api.*;
+
+import org.key_project.logic.*;
+import org.key_project.logic.op.sv.SchemaVariable;
+import org.key_project.prover.rules.Taclet;
+import org.key_project.prover.sequent.*;
+import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.NamespaceSet;
+import org.key_project.solidity.proof.calculus.SoliditySequentKit;
+import org.key_project.solidity.rule.taclets.builder.*;
+import org.key_project.util.collection.ImmutableSLList;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class TestTacletParser {
+public class TacletParserTest {
     private static final String DECLS =
             ("""
                     \\sorts { s; }

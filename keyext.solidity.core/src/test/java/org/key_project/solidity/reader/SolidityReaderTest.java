@@ -7,23 +7,20 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.key_project.logic.Name;
-import org.key_project.logic.Namespace;
+import org.key_project.logic.*;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.SortImpl;
-import org.key_project.solidity.program.ast.Context;
-import org.key_project.solidity.program.ast.SolidityReader;
+import org.key_project.solidity.program.ast.*;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
-import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.expressions.operators.BinaryOperator;
-import org.key_project.solidity.program.ast.statement.Block;
-import org.key_project.solidity.program.ast.statement.ExpressionStatement;
+import org.key_project.solidity.program.ast.statement.*;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.UINT;
 
 public class SolidityReaderTest {
     @TempDir
@@ -55,7 +52,7 @@ public class SolidityReaderTest {
     void referenceSameProgVar() throws IOException {
         Namespace<ProgramVariable> varNS = new Namespace<>();
         KeYSolidityType ksType =
-            new KeYSolidityType(PrimitiveType.UINT, new SortImpl(new Name("UINT")));
+            new KeYSolidityType(UINT, new SortImpl(new Name("UINT")));
         ProgramVariable x = new ProgramVariable(new Name("x"), ksType, null);
         varNS.add(x);
         Block block = (Block) hir.readBlockWithProgramVariables(varNS, "{ x = 1; }").program();

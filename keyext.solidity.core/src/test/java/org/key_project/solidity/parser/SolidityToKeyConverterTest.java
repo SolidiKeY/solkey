@@ -5,8 +5,7 @@ package org.key_project.solidity.parser;
 
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.abstractions.*;
-import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
-import org.key_project.solidity.program.ast.declarations.StructDeclaration;
+import org.key_project.solidity.program.ast.declarations.*;
 import org.key_project.solidity.program.ast.expressions.*;
 import org.key_project.solidity.program.ast.expressions.literals.*;
 import org.key_project.solidity.program.ast.expressions.operators.*;

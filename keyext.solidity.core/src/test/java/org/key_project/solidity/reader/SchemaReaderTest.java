@@ -5,13 +5,11 @@ package org.key_project.solidity.reader;
 
 import java.io.IOException;
 
-import org.key_project.logic.Name;
-import org.key_project.logic.Namespace;
+import org.key_project.logic.*;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.SoliditySchemaReader;
 import org.key_project.solidity.program.ast.Context;
-import org.key_project.solidity.program.ast.statement.Block;
-import org.key_project.solidity.program.ast.statement.ExpressionStatement;
+import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.rule.sv.ProgramSV;
 
 import org.jspecify.annotations.NonNull;

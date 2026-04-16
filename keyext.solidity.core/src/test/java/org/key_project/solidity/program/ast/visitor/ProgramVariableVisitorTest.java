@@ -11,7 +11,6 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
-import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.statement.Statement;
 
@@ -19,11 +18,12 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.key_project.solidity.parser.ParserForTesting.parseStatement;
+import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.UINT;
 
-class ProgramVariableVisitorTest {
+public class ProgramVariableVisitorTest {
 
     final Sort uint = new SortImpl(new Name("uint"), false);
-    KeYSolidityType uintKST = new KeYSolidityType(PrimitiveType.UINT, uint);
+    KeYSolidityType uintKST = new KeYSolidityType(UINT, uint);
     Services services = new Services();
 
     @Test

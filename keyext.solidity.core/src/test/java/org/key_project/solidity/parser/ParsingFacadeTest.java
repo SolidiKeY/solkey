@@ -5,8 +5,7 @@ package org.key_project.solidity.parser;
 
 import java.util.HashMap;
 
-import org.key_project.logic.Name;
-import org.key_project.logic.Term;
+import org.key_project.logic.*;
 import org.key_project.logic.op.Function;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
@@ -14,10 +13,8 @@ import org.key_project.solidity.logic.SolidityDLTheory;
 import org.key_project.solidity.logic.op.*;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
-import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.expressions.operators.BinaryOperator;
-import org.key_project.solidity.program.ast.statement.Block;
-import org.key_project.solidity.program.ast.statement.ExpressionStatement;
+import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -27,8 +24,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.UINT;
 
-class ParsingFacadeTest {
+public class ParsingFacadeTest {
 
     private Services services;
 
@@ -54,7 +52,7 @@ class ParsingFacadeTest {
         }
 
         services.getNamespaces().functions().addSafely(predicates.values());
-        ksType = new KeYSolidityType(PrimitiveType.UINT, new SortImpl(new Name("UINT")));
+        ksType = new KeYSolidityType(UINT, new SortImpl(new Name("UINT")));
     }
 
     private Function declareAtom(String name, Sort... argumentSorts) {

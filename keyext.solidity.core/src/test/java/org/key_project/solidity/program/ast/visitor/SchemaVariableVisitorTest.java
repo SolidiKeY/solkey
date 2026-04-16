@@ -7,8 +7,7 @@ import org.key_project.logic.Name;
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.solidity.program.ast.statement.Statement;
 import org.key_project.solidity.rule.sv.ProgramSV;
-import org.key_project.util.collection.ImmutableList;
-import org.key_project.util.collection.ImmutableSLList;
+import org.key_project.util.collection.*;
 
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +16,7 @@ import static org.key_project.solidity.parser.ParserForTesting.parseStatement;
 import static org.key_project.solidity.rule.matching.inst.SVInstantiations.EMPTY_SVINSTANTIATIONS;
 import static org.key_project.solidity.rule.sv.SchemaVariableFactory.createProgramSV;
 
-class SchemaVariableVisitorTest {
+public class SchemaVariableVisitorTest {
 
     @Test
     void onlySchema() {
