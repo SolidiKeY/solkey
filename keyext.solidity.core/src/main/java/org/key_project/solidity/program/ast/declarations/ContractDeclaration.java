@@ -47,7 +47,7 @@ public class ContractDeclaration extends DeclarationClass implements Type {
         String contract = "contract ";
         contract += name + " {\n";
         contract += structs.stream().map(it -> "struct " + it.name + " {\n"
-            + it.fields.stream().map(jt -> jt.toString() + "\n").collect(Collectors.joining())
+            + it.getFields().stream().map(jt -> jt.toString() + "\n").collect(Collectors.joining())
             + "}\n").collect(Collectors.joining());
         for (int i = 0; i < fields.size(); i++) {
             contract += fields.get(i).toString();

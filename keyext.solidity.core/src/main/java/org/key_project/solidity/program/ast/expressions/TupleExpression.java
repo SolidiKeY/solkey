@@ -11,19 +11,20 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
+import org.key_project.util.collection.ImmutableArray;
 
 public class TupleExpression extends SolidityExpression {
-    // TODO: Change to Immutable Array
-    List<Expression> expressions;
+    private final ImmutableArray<Expression> expressions;
 
     public TupleExpression(Type type, List<Expression> expressions) {
         super(type);
-        this.expressions = expressions;
+        this.expressions = new ImmutableArray<>(expressions);
     }
 
     public TupleExpression(ExtList children) {
         super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
-        this.expressions = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
+        List<Expression> exprList = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
+        this.expressions = new ImmutableArray<>(exprList);
     }
 
     @Override

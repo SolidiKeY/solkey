@@ -23,7 +23,7 @@ import org.jspecify.annotations.Nullable;
 
 public class StructDeclaration extends DeclarationClass implements Type, Resolver {
     public final @NonNull Name name;
-    List<FieldDeclaration> fields;
+    private final ImmutableArray<FieldDeclaration> fields;
     private final int contractId;
     ContractDeclaration contract;
 
@@ -31,18 +31,11 @@ public class StructDeclaration extends DeclarationClass implements Type, Resolve
     public StructDeclaration(@NonNull Name name, List<FieldDeclaration> fields, int contractId) {
         super(new ImmutableArray<>());
         this.name = name;
-        this.fields = fields;
+        this.fields = new ImmutableArray<>(fields);
         this.contractId = contractId;
     }
 
-    public StructDeclaration(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
-        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
-        this.fields = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
-        this.contractId = 0;
-    }
-
-    public List<FieldDeclaration> getFields() {
+    public ImmutableArray<FieldDeclaration> getFields() {
         return fields;
     }
 

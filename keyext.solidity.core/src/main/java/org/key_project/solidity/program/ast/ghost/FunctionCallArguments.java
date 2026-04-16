@@ -3,15 +3,14 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.ghost;
 
-import java.util.List;
-
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.collection.ImmutableArray;
 
 public class FunctionCallArguments implements SolidityProgramElement {
-    List<Expression> args;
+    private final ImmutableArray<Expression> args;
 
     public FunctionCallArguments(ExpressionList expList) {
         this.args = expList.getExpressions();
@@ -32,7 +31,7 @@ public class FunctionCallArguments implements SolidityProgramElement {
 
     }
 
-    public List<Expression> getArgs() {
+    public ImmutableArray<Expression> getArgs() {
         return args;
     }
 }

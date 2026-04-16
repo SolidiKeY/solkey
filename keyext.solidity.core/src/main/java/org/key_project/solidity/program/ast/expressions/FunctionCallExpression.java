@@ -10,11 +10,11 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
+import org.key_project.util.collection.ImmutableArray;
 
 public class FunctionCallExpression extends SolidityExpression {
 
-    // TODO: Change to immutable array
-    private final List<Expression> arguments;
+    private final ImmutableArray<Expression> arguments;
 
     public Expression getFunctionExp() {
         return functionExp;
@@ -23,6 +23,12 @@ public class FunctionCallExpression extends SolidityExpression {
     public final Expression functionExp;
 
     public FunctionCallExpression(Type type, Expression functionExp, List<Expression> arguments) {
+        super(type);
+        this.functionExp = functionExp;
+        this.arguments = new ImmutableArray<>(arguments);
+    }
+
+    public FunctionCallExpression(Type type, Expression functionExp, ImmutableArray<Expression> arguments) {
         super(type);
         this.functionExp = functionExp;
         this.arguments = arguments;
@@ -36,7 +42,7 @@ public class FunctionCallExpression extends SolidityExpression {
             exprs.add(expr);
         }
         this.functionExp = exprs.remove(exprs.size() - 1);
-        this.arguments = exprs;
+        this.arguments = new ImmutableArray<>(exprs);
     }
 
     @Override
@@ -64,7 +70,7 @@ public class FunctionCallExpression extends SolidityExpression {
         v.performActionOnFunctionCallExpression(this);
     }
 
-    public List<Expression> getArguments() {
+    public ImmutableArray<Expression> getArguments() {
         return arguments;
     }
 

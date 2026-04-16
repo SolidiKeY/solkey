@@ -10,16 +10,17 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.collection.ImmutableArray;
 
 public class ExpressionList implements SolidityProgramElement {
-    public List<Expression> getExpressions() {
+    public ImmutableArray<Expression> getExpressions() {
         return expressions;
     }
 
-    List<Expression> expressions;
+    private final ImmutableArray<Expression> expressions;
 
     public ExpressionList(List<Expression> expressions) {
-        this.expressions = expressions;
+        this.expressions = new ImmutableArray<>(expressions);
     }
 
     @Override

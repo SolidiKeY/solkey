@@ -9,16 +9,17 @@ import java.util.List;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.util.collection.ImmutableArray;
 
 public class SyntaxElementList implements SolidityProgramElement {
-    public List<SyntaxElement> getElements() {
+    public ImmutableArray<SyntaxElement> getElements() {
         return elements;
     }
 
-    List<SyntaxElement> elements;
+    private final ImmutableArray<SyntaxElement> elements;
 
-    public SyntaxElementList(List<SyntaxElement> Elements) {
-        this.elements = Elements;
+    public SyntaxElementList(List<SyntaxElement> elements) {
+        this.elements = new ImmutableArray<>(elements);
     }
 
     @Override

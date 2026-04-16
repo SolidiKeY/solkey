@@ -21,7 +21,7 @@ import org.key_project.util.collection.ImmutableArray;
 import org.jspecify.annotations.Nullable;
 
 public class EnumDeclaration extends DeclarationClass implements Type {
-    private final List<MemberEnumDeclaration> members;
+    private final ImmutableArray<MemberEnumDeclaration> members;
 
     public Name getName() {
         return name;
@@ -32,16 +32,10 @@ public class EnumDeclaration extends DeclarationClass implements Type {
     public EnumDeclaration(Name name, List<MemberEnumDeclaration> members) {
         super(new ImmutableArray<>());
         this.name = name;
-        this.members = members;
+        this.members = new ImmutableArray<>(members);
     }
 
-    public EnumDeclaration(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
-        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
-        this.members = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
-    }
-
-    public List<MemberEnumDeclaration> getMembers() {
+    public ImmutableArray<MemberEnumDeclaration> getMembers() {
         return members;
     }
 

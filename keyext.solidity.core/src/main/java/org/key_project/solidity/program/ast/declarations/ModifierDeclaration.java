@@ -16,7 +16,7 @@ import org.key_project.util.collection.ImmutableArray;
 
 public class ModifierDeclaration extends DeclarationClass {
 
-    private final List<ProgramVariable> inputParameters;
+    private final ImmutableArray<ProgramVariable> inputParameters;
     private final Block body;
     private final Visibility visibility;
     private final Name name;
@@ -25,22 +25,14 @@ public class ModifierDeclaration extends DeclarationClass {
             Visibility visibility) {
         super(new ImmutableArray<>());
         this.name = name;
-        this.inputParameters = inputParameters;
+        this.inputParameters = new ImmutableArray<>(inputParameters);
         this.body = body;
         this.visibility = visibility;
     }
 
-    public ModifierDeclaration(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
-        this.name = Objects.requireNonNull(children.removeFirstOccurrence(Name.class));
-        this.inputParameters = Objects.requireNonNull(children.removeFirstOccurrence(List.class));
-        this.body = Objects.requireNonNull(children.removeFirstOccurrence(Block.class));
-        this.visibility = Objects.requireNonNull(children.removeFirstOccurrence(Visibility.class));
-    }
-
     @Override
     public SyntaxElement getChild(int n) {
-        return null;
+        throw new RuntimeException("Not implemented");
     }
 
     @Override
