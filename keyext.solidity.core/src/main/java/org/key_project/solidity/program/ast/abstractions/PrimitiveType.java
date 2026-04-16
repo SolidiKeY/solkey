@@ -14,7 +14,6 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.key_project.solidity.logic.sort.SortImpl;
 
 public class PrimitiveType implements Type, SyntaxElement {
@@ -67,12 +66,14 @@ public class PrimitiveType implements Type, SyntaxElement {
     }
 
     @Override
-    public @Nullable Sort getSort(Services services) {
+    public @NonNull Sort getSort(Services services) {
         Namespace<@NonNull Sort> sorts = services.getNamespaces().sorts();
         Sort sort = sorts.lookup(name);
-        if(sort == null)
-            sorts.add(new SortImpl(name, false));
-        return sorts.lookup(name);
+        if (sort == null) {
+            sort = new SortImpl(name, false);
+            sorts.add(sort);
+        }
+        return sort;
     }
 
     @Override

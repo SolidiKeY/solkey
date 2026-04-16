@@ -142,7 +142,7 @@ public abstract class SuperTermGenerator implements TermGenerator<Goal> {
 
             @Override
             public ImmutableArray<Sort> argSorts() {
-                return null;
+                throw new UnsupportedOperationException();
             }
 
             @Override

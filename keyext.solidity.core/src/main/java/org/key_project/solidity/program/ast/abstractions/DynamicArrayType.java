@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.abstractions;
 
+import java.util.Objects;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.Namespace;
 import org.key_project.logic.SyntaxElement;
@@ -28,14 +30,15 @@ public class DynamicArrayType implements Type, SyntaxElement {
     }
 
     @Override
-    public @Nullable Sort getSort(Services services) {
+    public @NonNull Sort getSort(Services services) {
         Namespace<@NonNull Sort> sorts = services.getNamespaces().sorts();
         Sort sort = sorts.lookup(name);
-        if(sort == null){
-            Sort sortPrim = type.getSort(services);
-            sorts.add(new DynamicArraySort(sortPrim));
+        if (sort == null) {
+            Sort sortPrim = Objects.requireNonNull(type.getSort(services));
+            sort = new DynamicArraySort(sortPrim);
+            sorts.add(sort);
         }
-        return sorts.lookup(name);
+        return sort;
     }
 
     @Override

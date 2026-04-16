@@ -15,10 +15,7 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.abstractions.Type;
-import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
-
-import org.jspecify.annotations.Nullable;
 
 public class EnumDeclaration extends DeclarationClass implements Type {
     private final ImmutableArray<MemberEnumDeclaration> members;
@@ -65,12 +62,14 @@ public class EnumDeclaration extends DeclarationClass implements Type {
     }
 
     @Override
-    public @Nullable Sort getSort(Services services) {
+    public @NonNull Sort getSort(Services services) {
         Namespace<@NonNull Sort> sorts = services.getNamespaces().sorts();
         Sort sort = sorts.lookup(name);
-        if(sort == null)
-            sorts.add(new SortImpl(name));
-        return sorts.lookup(name);
+        if (sort == null) {
+            sort = new SortImpl(name);
+            sorts.add(sort);
+        }
+        return sort;
     }
 
     @Override

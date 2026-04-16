@@ -14,12 +14,10 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
-import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 public class StructDeclaration extends DeclarationClass implements Type, Resolver {
     public final @NonNull Name name;
@@ -52,7 +50,7 @@ public class StructDeclaration extends DeclarationClass implements Type, Resolve
     }
 
     @Override
-    public @Nullable Sort getSort(Services services) {
+    public @NonNull Sort getSort(Services services) {
         Sort sort = services.getNamespaces().sorts().lookup(name);
         if(sort == null){
             sort = new SortImpl(name);

@@ -1,7 +1,8 @@
 package org.key_project.solidity.program.ast.abstractions;
 
+import java.util.Objects;
+
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.key_project.logic.Name;
 import org.key_project.logic.Namespace;
 import org.key_project.logic.SyntaxElement;
@@ -23,14 +24,17 @@ public class TupleType implements Type {
     }
 
     @Override
-    public @Nullable Sort getSort(Services services) {
+    public @NonNull Sort getSort(Services services) {
         Namespace<@NonNull Sort> sortsSet = services.getNamespaces().sorts();
         Sort sort = sortsSet.lookup(name());
-        if(sort == null){
-            List<Sort> sorts = types.stream().map(type -> type.getSort(services)).toList();
-            sortsSet.add(new TupleSort(sorts));
+        if (sort == null) {
+            List<Sort> sorts = types.stream()
+                .map(type -> Objects.requireNonNull(type.getSort(services)))
+                .toList();
+            sort = new TupleSort(sorts);
+            sortsSet.add(sort);
         }
-        return sortsSet.lookup(name());
+        return sort;
     }
 
     @Override

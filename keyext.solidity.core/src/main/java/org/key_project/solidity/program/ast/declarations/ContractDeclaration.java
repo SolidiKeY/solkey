@@ -65,7 +65,7 @@ public class ContractDeclaration extends DeclarationClass implements Type {
     @Override
     public SyntaxElement getChild(int n) {
         if (n < 0)
-            return null;
+            throw new IndexOutOfBoundsException("Index " + n + " is out of bounds");
         if (n < fields.size())
             return fields.get(n);
         n -= fields.size();

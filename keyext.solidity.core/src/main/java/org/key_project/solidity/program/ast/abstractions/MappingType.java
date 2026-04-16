@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.abstractions;
 
+import java.util.Objects;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.Namespace;
 import org.key_project.logic.SyntaxElement;
@@ -10,7 +12,6 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.key_project.solidity.logic.sort.MappingSort;
 
 public class MappingType implements Type {
@@ -30,15 +31,16 @@ public class MappingType implements Type {
     }
 
     @Override
-    public @Nullable Sort getSort(Services services) {
+    public @NonNull Sort getSort(Services services) {
         Namespace<@NonNull Sort> sorts = services.getNamespaces().sorts();
         Sort sort = sorts.lookup(name);
-        if(sort == null){
-            Sort keySort = keyType.getSort(services);
-            Sort valueSort = valueType.getSort(services);
-            sorts.add(new MappingSort(keySort, valueSort));
+        if (sort == null) {
+            Sort keySort = Objects.requireNonNull(keyType.getSort(services));
+            Sort valueSort = Objects.requireNonNull(valueType.getSort(services));
+            sort = new MappingSort(keySort, valueSort);
+            sorts.add(sort);
         }
-        return sorts.lookup(name);
+        return sort;
     }
 
     @Override

@@ -44,7 +44,7 @@ public class VMTacletMatcher implements TacletMatcher {
     public @NonNull AssumesMatchResult matchAssumes(
             @NonNull Iterable<@NonNull AssumesFormulaInstantiation> toMatch, @NonNull Term template,
             @NonNull MatchResultInfo matchCond, @NonNull LogicServices services) {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
