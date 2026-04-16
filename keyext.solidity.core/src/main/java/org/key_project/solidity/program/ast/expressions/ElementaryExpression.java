@@ -10,6 +10,7 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
+// TODO: Find out when it is used
 public class ElementaryExpression extends SolidityExpression {
 
     public ElementaryExpression(Type type) {
@@ -23,6 +24,7 @@ public class ElementaryExpression extends SolidityExpression {
 
     @Override
     public SyntaxElement getChild(int n) {
+        // TODO: Fix this
         return null;
     }
 

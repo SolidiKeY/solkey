@@ -18,7 +18,7 @@ public class BitwiseNotOperator extends UnaryOperator {
     }
 
     @Override
-    public String getOperator() {
+    public String getName() {
         return "~";
     }
 

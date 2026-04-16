@@ -19,7 +19,7 @@ public final class MinusEqualOperator extends AssignOperator {
     }
 
     @Override
-    public String getOperator() { return "-="; }
+    public String getName() { return "-="; }
 
     public void visit(Visitor v) {
         v.performActionOnMinusEqualOperator(this);

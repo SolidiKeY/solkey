@@ -19,7 +19,7 @@ public class RightShiftOperator extends BinaryOperator {
     }
 
     @Override
-    public String getOperator() {
+    public String getName() {
         return ">>";
     }
 

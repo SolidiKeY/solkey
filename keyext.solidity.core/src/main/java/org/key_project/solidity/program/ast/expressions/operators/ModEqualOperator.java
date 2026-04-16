@@ -19,7 +19,7 @@ public final class ModEqualOperator extends AssignOperator {
     }
 
     @Override
-    public String getOperator() { return "%="; }
+    public String getName() { return "%="; }
 
     public void visit(Visitor v) {
         v.performActionOnModEqualOperator(this);

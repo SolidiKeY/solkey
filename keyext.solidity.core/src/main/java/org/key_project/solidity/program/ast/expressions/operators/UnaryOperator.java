@@ -15,6 +15,7 @@ import org.key_project.util.ExtList;
 public abstract class UnaryOperator extends SolidityExpression {
     protected final Expression exp;
 
+    // TODO: Same type null checker thing of binary operator
     protected UnaryOperator(Expression exp, Type type) {
         super(type);
         this.exp = exp;
@@ -63,14 +64,14 @@ public abstract class UnaryOperator extends SolidityExpression {
 
     public Expression getExp() { return exp; }
 
-    public abstract String getOperator();
+    public abstract String getName();
 
     public abstract boolean isPrefix();
 
     public String toString() {
         if (isPrefix())
-            return getOperator() + " " + exp;
+            return getName() + " " + exp;
         else
-            return exp + " " + getOperator();
+            return exp + " " + getName();
     }
 }

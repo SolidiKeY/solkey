@@ -17,7 +17,7 @@ public class NegateOperator extends UnaryOperator {
     }
 
     @Override
-    public String getOperator() {
+    public String getName() {
         return "-";
     }
 

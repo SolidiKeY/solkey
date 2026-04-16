@@ -13,6 +13,7 @@ import org.key_project.util.ExtList;
 
 public class FunctionCallExpression extends SolidityExpression {
 
+    // TODO: Change to immutable array
     private final List<Expression> arguments;
 
     public Expression getFunctionExp() {

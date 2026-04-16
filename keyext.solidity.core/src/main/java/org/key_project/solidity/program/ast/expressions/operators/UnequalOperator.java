@@ -21,7 +21,7 @@ public final class UnequalOperator extends BinaryOperator {
     }
 
     @Override
-    public String getOperator() { return "!="; }
+    public String getName() { return "!="; }
 
     public void visit(Visitor v) {
         v.performActionOnUnequalOperator(this);

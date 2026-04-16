@@ -18,7 +18,7 @@ public class LeftShiftOperator extends BinaryOperator {
     }
 
     @Override
-    public String getOperator() {
+    public String getName() {
         return "<<";
     }
 

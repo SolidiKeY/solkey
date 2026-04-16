@@ -18,7 +18,7 @@ public class PlusPlusOperator extends UnaryBothCases {
     }
 
     @Override
-    public String getOperator() {
+    public String getName() {
         return "++";
     }
 

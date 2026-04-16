@@ -21,7 +21,7 @@ public final class EqualOperator extends BinaryOperator {
     }
 
     @Override
-    public String getOperator() { return "=="; }
+    public String getName() { return "=="; }
 
     public void visit(Visitor v) {
         v.performActionOnEqualOperator(this);

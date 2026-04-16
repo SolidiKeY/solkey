@@ -19,7 +19,7 @@ public class AssignmentExpression extends AssignOperator {
     }
 
     @Override
-    public String getOperator() {
+    public String getName() {
         return "=";
     }
 

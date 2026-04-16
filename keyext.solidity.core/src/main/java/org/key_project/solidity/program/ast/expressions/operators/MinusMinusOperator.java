@@ -17,7 +17,7 @@ public class MinusMinusOperator extends UnaryBothCases {
     }
 
     @Override
-    public String getOperator() {
+    public String getName() {
         return "--";
     }
 

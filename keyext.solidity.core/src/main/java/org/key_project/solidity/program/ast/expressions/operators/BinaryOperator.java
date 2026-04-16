@@ -19,12 +19,14 @@ public abstract class BinaryOperator extends SolidityExpression {
 
     protected BinaryOperator(Expression left, Expression right, Type type) {
         super(type);
+        // TODO: assert type is not null
         this.left = left;
         this.right = right;
     }
 
     public BinaryOperator(ExtList children, Type type) {
         super(type);
+        // TODO: assert type is not null
         this.left = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
         this.right = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
     }
@@ -57,9 +59,9 @@ public abstract class BinaryOperator extends SolidityExpression {
     public Expression getLeft()  { return left; }
     public Expression getRight() { return right; }
 
-    public abstract String getOperator();
+    public abstract String getName();
 
     public String toString() {
-        return left + " " + getOperator() + " " + right;
+        return left + " " + getName() + " " + right;
     }
 }

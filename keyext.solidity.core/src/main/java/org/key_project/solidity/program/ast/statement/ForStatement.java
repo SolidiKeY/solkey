@@ -31,6 +31,7 @@ public class ForStatement extends LoopStatement {
 
     @Override
     public SyntaxElement getChild(int n) {
+        // TODO: Don't use array List
         List<SolidityProgramElement> exps = new ArrayList<>();
         exps.add(init);
         exps.add(condition);

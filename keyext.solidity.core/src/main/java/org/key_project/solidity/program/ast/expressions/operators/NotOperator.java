@@ -17,7 +17,7 @@ public class NotOperator extends UnaryOperator {
     }
 
     @Override
-    public String getOperator() {
+    public String getName() {
         return "!";
     }
 

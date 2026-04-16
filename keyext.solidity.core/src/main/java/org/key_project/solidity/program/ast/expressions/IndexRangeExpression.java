@@ -10,7 +10,7 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-
+// v[0:2]
 public class IndexRangeExpression extends SolidityExpression {
 
     private final Expression baseExp;
@@ -32,6 +32,7 @@ public class IndexRangeExpression extends SolidityExpression {
         this.endExp = children.removeFirstOccurrence(Expression.class);
     }
 
+    // TODO: Verify if there is test
     @Override
     public SyntaxElement getChild(int n) {
         int i = n;

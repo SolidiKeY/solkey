@@ -13,6 +13,7 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 public class TupleExpression extends SolidityExpression {
+    // TODO: Change to Immutable Array
     List<Expression> expressions;
 
     public TupleExpression(Type type, List<Expression> expressions) {

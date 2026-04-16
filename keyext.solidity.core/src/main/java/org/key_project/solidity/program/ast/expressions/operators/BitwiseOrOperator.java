@@ -19,7 +19,7 @@ public final class BitwiseOrOperator extends BinaryOperator {
     }
 
     @Override
-    public String getOperator() { return "|"; }
+    public String getName() { return "|"; }
 
     public void visit(Visitor v) {
         v.performActionOnBitwiseOrOperator(this);
