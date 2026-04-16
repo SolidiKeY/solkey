@@ -353,10 +353,9 @@ public class ProgVarReplaceVisitorTest {
         map.put(original, replacement);
     }
 
-    ProgramVariable extractAndMap(Block body) {
+    void extractAndMap(Block body) {
         ProgramVariable original = getDeclaredVar(body, 0);
         addMap(original);
-        return original;
     }
 
     Block runOnBlock(Block body) {
