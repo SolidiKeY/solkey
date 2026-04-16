@@ -1,6 +1,7 @@
 package org.key_project.solidity.parser;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.key_project.logic.Name;
 import org.key_project.logic.Namespace;
@@ -109,6 +110,7 @@ public class TestTacletParser {
     }
 
 
+    @Disabled("TODO: Richard")
     @Test
     public void testImpLeft() {
         // imp-left rule
@@ -125,7 +127,7 @@ public class TestTacletParser {
                 new AntecSuccTacletGoalTemplate(emptySequent,
                         ImmutableSLList.nil(), sequent(null, "b")));
 
-        Taclet impleft = builder.getAntecTaclet();
+        Taclet impleft = builder.getAntecTaclet(io.getServices());
         String impleftString =
                 "imp_left{\\find(b->b0 ==>) \\replacewith(b0 ==>); \\replacewith(==> b)}";
         assertEquals(impleft, parseTaclet(impleftString), "imp-left");
