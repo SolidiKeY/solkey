@@ -219,6 +219,17 @@ public class SolidityToKeyConverterTest {
         IndexExpression exp = (IndexExpression) parseExpression("v[false]");
         assertEquals("v", ((ProgramVariable) exp.getLeftExp()).toString());
         assertFalse(((BoolLiteral) exp.getIndexExp()).getValue());
+
+        assertEquals(2, exp.getChildCount());
+        assertEquals("v", ((ProgramVariable) exp.getChild(0)).toString());
+        assertFalse(((BoolLiteral) exp.getChild(1)).getValue());
+    }
+
+    @Test
+    void indexExpressionGetChildOutOfBounds() {
+        IndexExpression exp = (IndexExpression) parseExpression("v[1]");
+        assertThrows(IndexOutOfBoundsException.class, () -> exp.getChild(2));
+        assertThrows(IndexOutOfBoundsException.class, () -> exp.getChild(-1));
     }
 
     @Test
@@ -241,18 +252,59 @@ public class SolidityToKeyConverterTest {
     }
 
     @Test
-    void sliceArray() {
+    void sliceArrayBothPresent() {
         IndexRangeExpression exp = (IndexRangeExpression) parseExpression("v[false:true]");
         assertEquals("v", ((ProgramVariable) exp.getBaseExp()).toString());
         assertFalse(((BoolLiteral) exp.getStartExp()).getValue());
         assertTrue(((BoolLiteral) exp.getEndExp()).getValue());
+
+        assertEquals(3, exp.getChildCount());
+        assertEquals("v", ((ProgramVariable) exp.getChild(0)).toString());
+        assertFalse(((BoolLiteral) exp.getChild(1)).getValue());
+        assertTrue(((BoolLiteral) exp.getChild(2)).getValue());
+        assertThrows(IndexOutOfBoundsException.class, () -> exp.getChild(3));
+        assertThrows(IndexOutOfBoundsException.class, () -> exp.getChild(-1));
     }
 
     @Test
-    void sliceEmpty() {
+    void sliceArrayOnlyStart() {
+        IndexRangeExpression exp = (IndexRangeExpression) parseExpression("v[false:]");
+        assertEquals("v", ((ProgramVariable) exp.getBaseExp()).toString());
+        assertFalse(((BoolLiteral) exp.getStartExp()).getValue());
+        assertNull(exp.getEndExp());
+
+        assertEquals(2, exp.getChildCount());
+        assertEquals("v", ((ProgramVariable) exp.getChild(0)).toString());
+        assertFalse(((BoolLiteral) exp.getChild(1)).getValue());
+        assertThrows(IndexOutOfBoundsException.class, () -> exp.getChild(2));
+        assertThrows(IndexOutOfBoundsException.class, () -> exp.getChild(-1));
+    }
+
+    @Test
+    void sliceArrayOnlyEnd() {
+        IndexRangeExpression exp = (IndexRangeExpression) parseExpression("v[:true]");
+        assertEquals("v", ((ProgramVariable) exp.getBaseExp()).toString());
+        assertNull(exp.getStartExp());
+        assertTrue(((BoolLiteral) exp.getEndExp()).getValue());
+
+        assertEquals(2, exp.getChildCount());
+        assertEquals("v", ((ProgramVariable) exp.getChild(0)).toString());
+        assertTrue(((BoolLiteral) exp.getChild(1)).getValue());
+        assertThrows(IndexOutOfBoundsException.class, () -> exp.getChild(2));
+        assertThrows(IndexOutOfBoundsException.class, () -> exp.getChild(-1));
+    }
+
+    @Test
+    void sliceArrayEmpty() {
         IndexRangeExpression exp = (IndexRangeExpression) parseExpression("v[:]");
         assertEquals("v", ((ProgramVariable) exp.getBaseExp()).toString());
+        assertNull(exp.getStartExp());
+        assertNull(exp.getEndExp());
+
         assertEquals(1, exp.getChildCount());
+        assertEquals("v", ((ProgramVariable) exp.getChild(0)).toString());
+        assertThrows(IndexOutOfBoundsException.class, () -> exp.getChild(1));
+        assertThrows(IndexOutOfBoundsException.class, () -> exp.getChild(-1));
     }
 
     @Test

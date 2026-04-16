@@ -32,22 +32,19 @@ public class IndexRangeExpression extends SolidityExpression {
         this.endExp = children.removeFirstOccurrence(Expression.class);
     }
 
-    // TODO: Verify if there is test
     @Override
     public SyntaxElement getChild(int n) {
-        int i = n;
-        if (i == 0) {
-            return baseExp;
+        if (n == 0) return baseExp;
+        n--;
+        if (startExp != null) {
+            if (n == 0) return startExp;
+            n--;
         }
-        if (startExp == null)
-            i++;
-        if (endExp == null)
-            i++;
-        return switch (i) {
-            case 1 -> startExp;
-            case 2 -> endExp;
-            default -> throw new IndexOutOfBoundsException(n + " is out of bound");
-        };
+        if (endExp != null) {
+            if (n == 0) return endExp;
+            n--;
+        }
+        throw new IndexOutOfBoundsException(" n should be (0 <= " + n + " < " + getChildCount() + ")");
     }
 
     @Override
