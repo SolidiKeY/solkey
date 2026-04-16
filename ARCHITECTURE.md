@@ -50,6 +50,10 @@ The project uses a layered, modular Gradle structure:
 
 Extensions (`keyext.*`) depend on `key.core`; `key.core` depends on `key.ncore`; `key.ncore` depends on `key.util`.
 
+## Default Scope
+
+All questions and tasks are assumed to be about **`keyext.solidity.core`** (source: `keyext.solidity.core/src/main/java/org/key_project/solidity/`) and its tests (`org.key_project.solidity` in `keyext.solidity.core/src/test/`). Only look outside these directories if explicitly instructed.
+
 ## keyext.solidity.core Architecture
 
 This is the primary module being developed. Source root: `keyext.solidity.core/src/main/java/org/key_project/solidity/`
