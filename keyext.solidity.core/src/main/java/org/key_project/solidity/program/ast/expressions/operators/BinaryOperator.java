@@ -9,7 +9,6 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.SolidityExpression;
-import org.key_project.solidity.program.ast.expressions.UnresolvedTypeException;
 import org.key_project.util.ExtList;
 
 public abstract class BinaryOperator extends SolidityExpression {
@@ -19,23 +18,20 @@ public abstract class BinaryOperator extends SolidityExpression {
 
     protected BinaryOperator(Expression left, Expression right, Type type) {
         super(type);
-        // TODO: assert type is not null
+        assert type != null;
         this.left = left;
         this.right = right;
     }
 
     public BinaryOperator(ExtList children, Type type) {
         super(type);
-        // TODO: assert type is not null
+        assert type != null;
         this.left = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
         this.right = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
     }
 
     @Override
     public Type getType() {
-        if (type == null) {
-            throw new UnresolvedTypeException("Could not determine type of " + this);
-        }
         return type;
     }
 

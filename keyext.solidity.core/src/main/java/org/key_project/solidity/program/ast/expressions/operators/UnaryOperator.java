@@ -15,14 +15,15 @@ import org.key_project.util.ExtList;
 public abstract class UnaryOperator extends SolidityExpression {
     protected final Expression exp;
 
-    // TODO: Same type null checker thing of binary operator
     protected UnaryOperator(Expression exp, Type type) {
         super(type);
+        assert type != null;
         this.exp = exp;
     }
 
     public UnaryOperator(ExtList children, Type type) {
         super(type);
+        assert type != null;
         this.exp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
     }
 
@@ -41,9 +42,6 @@ public abstract class UnaryOperator extends SolidityExpression {
 
     @Override
     public Type getType() {
-        if (type == null) {
-            throw new UnresolvedTypeException("Could not determine type of " + this);
-        }
         return type;
     }
 

@@ -24,8 +24,7 @@ public class ElementaryExpression extends SolidityExpression {
 
     @Override
     public SyntaxElement getChild(int n) {
-        // TODO: Fix this
-        return null;
+        throw new IndexOutOfBoundsException("There is no children");
     }
 
     @Override

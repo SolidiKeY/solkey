@@ -3,9 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.statement;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
@@ -31,20 +28,19 @@ public class ForStatement extends LoopStatement {
 
     @Override
     public SyntaxElement getChild(int n) {
-        // TODO: Don't use array List
-        List<SolidityProgramElement> exps = new ArrayList<>();
-        exps.add(init);
-        exps.add(condition);
-        exps.add(update);
-        for (var exp : exps) {
-            if (exp == null)
-                continue;
-            if (n == 0)
-                return exp;
-            n -= 1;
+        if (init != null) {
+            if (n == 0) return init;
+            n--;
         }
-        if (n == 0)
-            return body;
+        if (condition != null) {
+            if (n == 0) return condition;
+            n--;
+        }
+        if (update != null) {
+            if (n == 0) return update;
+            n--;
+        }
+        if (n == 0) return body;
         throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
