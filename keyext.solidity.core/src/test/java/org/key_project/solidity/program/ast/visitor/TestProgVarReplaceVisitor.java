@@ -15,7 +15,6 @@ import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
-import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
@@ -36,11 +35,11 @@ import org.key_project.solidity.program.ast.statement.Statement;
 import org.key_project.solidity.program.ast.statement.WhileStatement;
 import org.key_project.util.collection.ImmutableArray;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.key_project.solidity.parser.ParserForTesting.*;
+import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.UINT;
 import static org.key_project.solidity.program.parser.SolcParserNoServices.getDeclStr;
 
 class TestProgVarReplaceVisitor {
@@ -55,7 +54,7 @@ class TestProgVarReplaceVisitor {
         services = new Services();
 
         final Sort uint = new SortImpl(new Name("uint"), false);
-        uintKST = new KeYSolidityType(PrimitiveType.UINT, uint);
+        uintKST = new KeYSolidityType(UINT, uint);
         services.getNamespaces().sorts().add(uint);
         replacement = new ProgramVariable(new Name("replacement"), uintKST, null);
     }
