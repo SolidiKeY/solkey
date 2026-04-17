@@ -5,16 +5,17 @@ package org.key_project.solidity.program.ast.statement;
 
 import java.util.Objects;
 
+import org.jspecify.annotations.NonNull;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 public class ExpressionStatement implements Statement {
-    final Expression expression;
+    final @NonNull Expression expression;
 
     public ExpressionStatement(Expression expression) {
-        this.expression = expression;
+        this.expression = Objects.requireNonNull(expression);
     }
 
     public ExpressionStatement(ExtList children) {
@@ -22,7 +23,7 @@ public class ExpressionStatement implements Statement {
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         if (n == 0)
             return expression;
         throw new IndexOutOfBoundsException("index " + n + " is out of bounds");
@@ -42,7 +43,7 @@ public class ExpressionStatement implements Statement {
         v.performActionOnExpressionStatement(this);
     }
 
-    public Expression getExpression() {
+    public @NonNull Expression getExpression() {
         return expression;
     }
 }

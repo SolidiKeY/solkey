@@ -6,6 +6,7 @@ package org.key_project.solidity.program.ast.expressions;
 import java.util.HashMap;
 import java.util.Objects;
 
+import org.jspecify.annotations.NonNull;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
@@ -14,7 +15,7 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 public class MemberExp extends SolidityExpression implements Resolver {
-    final Expression leftExp;
+    final @NonNull Expression leftExp;
     SyntaxElement rightExp;
     final int id;
 
@@ -38,10 +39,10 @@ public class MemberExp extends SolidityExpression implements Resolver {
         this.id = -1;
     }
 
-    public Expression getLeftExp() { return leftExp; }
+    public @NonNull Expression getLeftExp() { return leftExp; }
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         if (n == 0)
             return leftExp;
         throw new IndexOutOfBoundsException(n + " is out of bonds");

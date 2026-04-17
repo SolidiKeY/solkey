@@ -5,17 +5,19 @@ package org.key_project.solidity.program.ast.statement;
 
 import java.util.Objects;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.util.ExtList;
 
 public abstract class LoopStatement implements Statement {
-    protected final Expression condition;
-    protected final Statement body;
+    protected final @Nullable Expression condition;
+    protected final @NonNull Statement body;
 
-    protected LoopStatement(Expression condition, Statement body) {
+    protected LoopStatement(@Nullable Expression condition, @NonNull Statement body) {
         this.condition = condition;
-        this.body = body;
+        this.body = Objects.requireNonNull(body);
     }
 
     public LoopStatement(ExtList children) {
@@ -38,11 +40,11 @@ public abstract class LoopStatement implements Statement {
         return 2;
     }
 
-    public Expression getCondition() {
+    public @Nullable Expression getCondition() {
         return condition;
     }
 
-    public Statement getBody() {
+    public @NonNull Statement getBody() {
         return body;
     }
 }

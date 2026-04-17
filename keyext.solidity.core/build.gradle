@@ -65,7 +65,7 @@ checkerFramework {
                 "org.checkerframework.checker.nullness.NullnessChecker",
         ]
         extraJavacArgs = [
-                "-AonlyDefs=^org\\.key_project\\.solidity\\.parser\\.builder",
+                "-AonlyDefs=^org\\.key_project\\.solidity\\.(parser\\.builder|program\\.ast)",
                 "-Xmaxerrs", "10000",
                 "-Astubs=$rootDir/key.util/src/main/checkerframework:permit-nullness-assertion-exception.astub",
                 "-AstubNoWarnIfNotFound",

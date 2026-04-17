@@ -5,6 +5,7 @@ package org.key_project.solidity.program.ast.expressions;
 
 import java.util.Objects;
 
+import org.jspecify.annotations.Nullable;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
@@ -14,8 +15,8 @@ import org.key_project.util.ExtList;
 public class IndexRangeExpression extends SolidityExpression {
 
     private final Expression baseExp;
-    private final Expression startExp;
-    private final Expression endExp;
+    private final @Nullable Expression startExp;
+    private final @Nullable Expression endExp;
 
     public IndexRangeExpression(Expression baseExp, Expression startExp, Expression endExp,
             Type expType) {
@@ -57,9 +58,9 @@ public class IndexRangeExpression extends SolidityExpression {
         return size;
     }
 
-    public Expression getBaseExp()  { return baseExp; }
-    public Expression getStartExp() { return startExp; }
-    public Expression getEndExp()   { return endExp; }
+    public Expression getBaseExp()           { return baseExp; }
+    public @Nullable Expression getStartExp() { return startExp; }
+    public @Nullable Expression getEndExp()   { return endExp; }
 
     public String toString() {
         return baseExp + "[" + startExp + ":" + endExp + "]";

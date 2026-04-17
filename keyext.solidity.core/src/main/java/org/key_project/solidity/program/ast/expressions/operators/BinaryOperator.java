@@ -5,6 +5,7 @@ package org.key_project.solidity.program.ast.expressions.operators;
 
 import java.util.Objects;
 
+import org.jspecify.annotations.NonNull;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
@@ -13,14 +14,14 @@ import org.key_project.util.ExtList;
 
 public abstract class BinaryOperator extends SolidityExpression {
 
-    protected final Expression left;
-    protected final Expression right;
+    protected final @NonNull Expression left;
+    protected final @NonNull Expression right;
 
     protected BinaryOperator(Expression left, Expression right, Type type) {
         super(type);
         assert type != null;
-        this.left = left;
-        this.right = right;
+        this.left = Objects.requireNonNull(left);
+        this.right = Objects.requireNonNull(right);
     }
 
     public BinaryOperator(ExtList children, Type type) {
@@ -52,8 +53,8 @@ public abstract class BinaryOperator extends SolidityExpression {
         return 2;
     }
 
-    public Expression getLeft()  { return left; }
-    public Expression getRight() { return right; }
+    public @NonNull Expression getLeft()  { return left; }
+    public @NonNull Expression getRight() { return right; }
 
     public abstract String getName();
 

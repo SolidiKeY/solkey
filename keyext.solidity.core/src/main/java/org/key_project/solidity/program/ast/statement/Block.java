@@ -5,6 +5,7 @@ package org.key_project.solidity.program.ast.statement;
 
 import java.util.List;
 
+import org.jspecify.annotations.NonNull;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.PosInProgram;
 import org.key_project.solidity.program.ProgramPrefix;
@@ -14,7 +15,7 @@ import org.key_project.util.collection.ImmutableArray;
 
 public class Block implements Statement, ProgramPrefix {
 
-    private final ImmutableArray<Statement> statements;
+    private final @NonNull ImmutableArray<Statement> statements;
 
     public Block(ImmutableArray<Statement> statements) {
         this.statements = statements;
@@ -51,7 +52,7 @@ public class Block implements Statement, ProgramPrefix {
         return body + "}\n";
     }
 
-    public ImmutableArray<Statement> getStatements() { return statements; }
+    public @NonNull ImmutableArray<Statement> getStatements() { return statements; }
 
     @Override
     public boolean isPrefix() {

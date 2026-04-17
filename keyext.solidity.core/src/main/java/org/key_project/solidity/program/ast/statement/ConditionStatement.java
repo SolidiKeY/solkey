@@ -5,6 +5,7 @@ package org.key_project.solidity.program.ast.statement;
 
 import java.util.Objects;
 
+import org.jspecify.annotations.Nullable;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
@@ -13,7 +14,7 @@ import org.key_project.util.ExtList;
 public class ConditionStatement implements Statement {
     Expression condition;
     Statement trueBody;
-    Statement falseBody;
+    @Nullable Statement falseBody;
 
     public ConditionStatement(Expression condition, Statement trueBody) {
         this.condition = condition;
@@ -73,7 +74,7 @@ public class ConditionStatement implements Statement {
         return trueBody;
     }
 
-    public Statement getFalseBody() {
+    public @Nullable Statement getFalseBody() {
         return falseBody;
     }
 }

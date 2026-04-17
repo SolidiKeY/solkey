@@ -5,17 +5,18 @@ package org.key_project.solidity.program.ast.statement;
 
 import java.util.Objects;
 
+import org.jspecify.annotations.Nullable;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 public class ReturnStatement implements Statement {
-    private Expression returnExp;
+    private @Nullable Expression returnExp;
 
     public ReturnStatement() {}
 
-    public ReturnStatement(Expression returnExp) {
+    public ReturnStatement(@Nullable Expression returnExp) {
         this.returnExp = returnExp;
     }
 
@@ -34,7 +35,7 @@ public class ReturnStatement implements Statement {
         return returnExp != null ? 1 : 0;
     }
 
-    public Expression getReturnExp() {
+    public @Nullable Expression getReturnExp() {
         return returnExp;
     }
 

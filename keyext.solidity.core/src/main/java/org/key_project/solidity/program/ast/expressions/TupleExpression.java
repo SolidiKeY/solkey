@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.NonNull;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
@@ -14,7 +15,7 @@ import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
 public class TupleExpression extends SolidityExpression {
-    private final ImmutableArray<Expression> expressions;
+    private final @NonNull ImmutableArray<Expression> expressions;
 
     public TupleExpression(Type type, List<Expression> expressions) {
         super(type);
@@ -28,9 +29,9 @@ public class TupleExpression extends SolidityExpression {
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         if (0 <= n && n < expressions.size())
-            return expressions.get(n);
+            return Objects.requireNonNull(expressions.get(n));
         throw new IndexOutOfBoundsException("Not 0 <= " + n + " < " + expressions.size());
     }
 
@@ -39,7 +40,9 @@ public class TupleExpression extends SolidityExpression {
         return expressions.size();
     }
 
-    public Expression getExpression(int n) { return expressions.get(n); }
+    public @NonNull Expression getExpression(int n) {
+        return Objects.requireNonNull(expressions.get(n));
+    }
 
     @Override
     public String toString() {

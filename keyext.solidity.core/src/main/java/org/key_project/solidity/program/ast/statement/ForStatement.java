@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.statement;
 
+import org.jspecify.annotations.Nullable;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
@@ -10,8 +11,8 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 public class ForStatement extends LoopStatement {
-    private final ForInit init;
-    private final ForUpdate update;
+    private final @Nullable ForInit init;
+    private final @Nullable ForUpdate update;
 
     public ForStatement(ForInit init, Expression condition,
             ForUpdate updateExpression, Statement body) {
@@ -56,11 +57,11 @@ public class ForStatement extends LoopStatement {
         return n;
     }
 
-    public ForInit getInit() {
+    public @Nullable ForInit getInit() {
         return init;
     }
 
-    public ForUpdate getUpdate() {
+    public @Nullable ForUpdate getUpdate() {
         return update;
     }
 

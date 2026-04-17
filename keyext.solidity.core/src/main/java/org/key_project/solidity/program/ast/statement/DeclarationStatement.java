@@ -6,6 +6,8 @@ package org.key_project.solidity.program.ast.statement;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
@@ -14,8 +16,8 @@ import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
 public class DeclarationStatement implements Statement {
-    private final ImmutableArray<Declaration> declarations;
-    private final Expression initialValue;
+    private final @NonNull ImmutableArray<Declaration> declarations;
+    private final @Nullable Expression initialValue;
 
     public DeclarationStatement(List<Declaration> declarations, Expression initialValue) {
         this.declarations = new ImmutableArray<>(declarations);
@@ -44,7 +46,7 @@ public class DeclarationStatement implements Statement {
         return declarations.size() + (initialValue == null ? 0 : 1);
     }
 
-    public ImmutableArray<Declaration> getDeclarations() {
+    public @NonNull ImmutableArray<Declaration> getDeclarations() {
         return declarations;
     }
 
@@ -62,7 +64,7 @@ public class DeclarationStatement implements Statement {
         v.performActionOnDeclarationStatement(this);
     }
 
-    public Expression getInitialValue() {
+    public @Nullable Expression getInitialValue() {
         return initialValue;
     }
 
