@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.key_project.logic.Name;
@@ -94,13 +96,10 @@ public class SolJSONParser {
     }
 
     private List<SyntaxElement> parseSourceUnit(List<JsonNode> nodes) {
-        List<SyntaxElement> elements = new ArrayList<>();
-        for (var node : nodes) {
-            if (node.get("contractKind").asText().equals("contract")) {
-                elements.add(parseContract(node));
-            }
-        }
-        return elements;
+        return nodes.stream()
+            .filter(n -> "contract".equals(n.get("contractKind").asText()))
+            .map(this::parseContract)
+            .collect(Collectors.toList());
     }
 
 
@@ -155,21 +154,17 @@ public class SolJSONParser {
     private void completeReferences(SyntaxElement cDecl) {
         List<SyntaxElement> elements = new ArrayList<>();
         queueRefs(cDecl, elements);
-        for (SyntaxElement el : elements) {
-            if (el instanceof Resolver)
-                ((Resolver) el).resolve(id2Name);
-            if(el instanceof ProgramVariable){
-                ((ProgramVariable) el).getKeySolidityType().resolve(id2Name);
-            }
-        }
+        elements.forEach(el -> {
+            if (el instanceof Resolver r) r.resolve(id2Name);
+            if (el instanceof ProgramVariable pv) pv.getKeySolidityType().resolve(id2Name);
+        });
     }
 
     private void queueRefs(SyntaxElement cDecl, List<SyntaxElement> queue) {
-        for (int i = 0; i < cDecl.getChildCount(); i++) {
-            SyntaxElement child = cDecl.getChild(i);
+        IntStream.range(0, cDecl.getChildCount()).mapToObj(cDecl::getChild).forEach(child -> {
             queue.add(child);
             queueRefs(child, queue);
-        }
+        });
     }
 
 
