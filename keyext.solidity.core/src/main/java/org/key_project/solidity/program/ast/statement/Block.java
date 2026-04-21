@@ -31,7 +31,7 @@ public class Block implements Statement, ProgramPrefix {
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         return statements.get(n);
     }
 

@@ -13,6 +13,8 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
+import org.jspecify.annotations.NonNull;
+
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Default;
 
 //
@@ -35,7 +37,7 @@ public class StatementVariableDeclaration extends DeclarationClass
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         if (n < 0 || n >= getChildCount())
             throw new IndexOutOfBoundsException(n + " out of bonds");
         if (n < modifiers.size())

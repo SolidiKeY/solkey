@@ -13,6 +13,8 @@ import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
+import org.jspecify.annotations.NonNull;
+
 public class ParameterVariableReference extends SolidityExpression implements VariableReference {
     public final Name name;
     private final ProgramVariable referencedDeclaration;
@@ -41,7 +43,7 @@ public class ParameterVariableReference extends SolidityExpression implements Va
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         throw new IndexOutOfBoundsException();
     }
 

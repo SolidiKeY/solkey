@@ -9,6 +9,8 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.collection.ImmutableArray;
 
+import org.jspecify.annotations.NonNull;
+
 public class FunctionCallArguments implements SolidityProgramElement {
     private final ImmutableArray<Expression> args;
 
@@ -17,7 +19,7 @@ public class FunctionCallArguments implements SolidityProgramElement {
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         return args.get(n);
     }
 

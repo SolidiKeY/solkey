@@ -7,12 +7,13 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.solidity.rule.matching.inst.MatchConditions;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public interface SolidityProgramElement extends SyntaxElement {
 
     @Override
-    SyntaxElement getChild(int n);
+    @NonNull SyntaxElement getChild(int n);
 
     @Override
     int getChildCount();

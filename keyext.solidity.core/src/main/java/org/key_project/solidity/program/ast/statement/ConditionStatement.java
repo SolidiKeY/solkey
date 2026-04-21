@@ -10,6 +10,7 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public class ConditionStatement implements Statement {
@@ -36,7 +37,7 @@ public class ConditionStatement implements Statement {
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         return switch (n) {
             case 0 -> condition;
             case 1 -> trueBody;

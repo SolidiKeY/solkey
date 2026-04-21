@@ -12,6 +12,8 @@ import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibilit
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.util.collection.ImmutableArray;
 
+import org.jspecify.annotations.NonNull;
+
 public class ModifierDeclaration extends DeclarationClass {
 
     private final ImmutableArray<ProgramVariable> inputParameters;
@@ -29,7 +31,7 @@ public class ModifierDeclaration extends DeclarationClass {
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         throw new RuntimeException("Not implemented");
     }
 

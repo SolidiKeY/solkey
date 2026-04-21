@@ -6,9 +6,11 @@ package org.key_project.solidity.program.ast.statement;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 
+import org.jspecify.annotations.NonNull;
+
 public class ContinueStatement implements Statement {
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         throw new IndexOutOfBoundsException();
     }
 

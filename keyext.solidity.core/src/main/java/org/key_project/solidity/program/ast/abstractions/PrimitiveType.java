@@ -81,7 +81,6 @@ public class PrimitiveType implements Type, SyntaxElement {
         return name.toString();
     }
 
-    // TODO add all primitive types
     public static final @NonNull PrimitiveType INT = newPrimitiveType("int");
     public static final @NonNull PrimitiveType INT8 = newPrimitiveType("int8");
     public static final @NonNull PrimitiveType INT16 = newPrimitiveType("int16");
@@ -197,8 +196,8 @@ public class PrimitiveType implements Type, SyntaxElement {
 
 
     @Override
-    public SyntaxElement getChild(int n) {
-        return null;
+    public @NonNull SyntaxElement getChild(int n) {
+        throw new IndexOutOfBoundsException();
     }
 
     @Override

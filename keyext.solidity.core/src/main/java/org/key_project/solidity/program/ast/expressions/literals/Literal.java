@@ -7,13 +7,15 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 
+import org.jspecify.annotations.NonNull;
+
 public abstract class Literal extends SolidityExpression {
     protected Literal(Type type) {
         super(type);
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         throw new IndexOutOfBoundsException("Literal has no children");
     }
 

@@ -17,6 +17,8 @@ import org.key_project.solidity.program.ast.references.ModifierReference;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.util.collection.ImmutableArray;
 
+import org.jspecify.annotations.NonNull;
+
 public class FunctionDeclaration extends DeclarationClass implements Named {
     // TODO: Create another class for return type
     private final ImmutableArray<ProgramVariable> returnParameters;
@@ -67,7 +69,7 @@ public class FunctionDeclaration extends DeclarationClass implements Named {
     // Interface SolidityProgramElement
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         if (n < returnParameters.size()) {
             return returnParameters.get(n);
         } else {

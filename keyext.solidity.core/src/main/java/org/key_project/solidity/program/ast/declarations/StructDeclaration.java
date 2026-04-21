@@ -20,7 +20,7 @@ import org.jspecify.annotations.NonNull;
 
 public class StructDeclaration extends DeclarationClass implements Type, Resolver {
     public final @NonNull Name name;
-    private final ImmutableArray<FieldDeclaration> fields;
+    private final @NonNull ImmutableArray<@NonNull FieldDeclaration> fields;
     private final int contractId;
     ContractDeclaration contract;
 
@@ -37,7 +37,7 @@ public class StructDeclaration extends DeclarationClass implements Type, Resolve
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         if (0 <= n && n < getChildCount())
             return fields.get(n);
         throw new RuntimeException("Child " + n + " out of bound");

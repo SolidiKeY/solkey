@@ -7,6 +7,8 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 
+import org.jspecify.annotations.NonNull;
+
 public class NewExpression extends SolidityExpression {
     static String function;
 
@@ -16,7 +18,7 @@ public class NewExpression extends SolidityExpression {
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         throw new IndexOutOfBoundsException("New Expression has no children");
     }
 

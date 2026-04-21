@@ -13,6 +13,8 @@ import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
+import org.jspecify.annotations.NonNull;
+
 public class StateVariableReference extends SolidityExpression implements VariableReference {
 
     // private ReferencePrefix prefix; // a reference prefix for account.person.age here
@@ -49,7 +51,7 @@ public class StateVariableReference extends SolidityExpression implements Variab
 
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         if (n == 0)
             return referencedDeclaration;
         throw new IndexOutOfBoundsException();

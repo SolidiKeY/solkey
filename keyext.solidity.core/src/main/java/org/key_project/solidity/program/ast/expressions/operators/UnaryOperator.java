@@ -11,6 +11,8 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.util.ExtList;
 
+import org.jspecify.annotations.NonNull;
+
 public abstract class UnaryOperator extends SolidityExpression {
     protected final Expression exp;
 
@@ -45,7 +47,7 @@ public abstract class UnaryOperator extends SolidityExpression {
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         switch (n) {
             case 0:
                 return exp;

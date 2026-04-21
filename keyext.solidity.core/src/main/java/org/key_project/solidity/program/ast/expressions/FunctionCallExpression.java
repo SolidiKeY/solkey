@@ -49,7 +49,7 @@ public class FunctionCallExpression extends SolidityExpression {
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         if (0 <= n && n < arguments.size()) {
             return arguments.get(n);
         }

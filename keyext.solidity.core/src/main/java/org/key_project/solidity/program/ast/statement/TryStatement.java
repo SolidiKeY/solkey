@@ -45,7 +45,7 @@ public class TryStatement implements Statement, ProgramPrefix {
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         if (n == 0)
             return expression;
         n -= 1;
@@ -93,7 +93,7 @@ public class TryStatement implements Statement, ProgramPrefix {
         return returnDeclaration.get(i);
     }
 
-    public ImmutableArray<CatchClause> getCatchClauses() {
+    public @NonNull ImmutableArray<CatchClause> getCatchClauses() {
         return catchClauses;
     }
 
@@ -101,7 +101,7 @@ public class TryStatement implements Statement, ProgramPrefix {
         return catchClauses.size();
     }
 
-    public CatchClause getCatchClause(int i) {
+    public @NonNull CatchClause getCatchClause(int i) {
         return catchClauses.get(i);
     }
 

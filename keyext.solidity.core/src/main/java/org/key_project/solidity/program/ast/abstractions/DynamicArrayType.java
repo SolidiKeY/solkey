@@ -41,7 +41,7 @@ public class DynamicArrayType implements Type, SyntaxElement {
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         if (n == 0)
             return type;
         throw new IndexOutOfBoundsException(n + " should be 0");

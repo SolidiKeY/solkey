@@ -27,7 +27,7 @@ public abstract class LoopStatement implements Statement {
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         return switch (n) {
             case 0 -> condition;
             case 1 -> body;

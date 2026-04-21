@@ -31,7 +31,7 @@ public class DeclarationStatement implements Statement {
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         if (n < 0 || n >= getChildCount()) {
             throw new IndexOutOfBoundsException(n + " out of bonds");
         }

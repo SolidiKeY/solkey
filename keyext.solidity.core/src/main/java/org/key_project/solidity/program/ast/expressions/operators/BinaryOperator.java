@@ -38,7 +38,7 @@ public abstract class BinaryOperator extends SolidityExpression {
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         switch (n) {
             case 0:
                 return left;

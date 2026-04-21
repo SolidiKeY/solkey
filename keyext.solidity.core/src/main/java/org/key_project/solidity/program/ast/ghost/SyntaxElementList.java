@@ -11,19 +11,21 @@ import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.collection.ImmutableArray;
 
+import org.jspecify.annotations.NonNull;
+
 public class SyntaxElementList implements SolidityProgramElement {
     public ImmutableArray<SyntaxElement> getElements() {
         return elements;
     }
 
-    private final ImmutableArray<SyntaxElement> elements;
+    private final @NonNull ImmutableArray<@NonNull SyntaxElement> elements;
 
     public SyntaxElementList(List<SyntaxElement> elements) {
         this.elements = new ImmutableArray<>(elements);
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         return elements.get(n);
     }
 

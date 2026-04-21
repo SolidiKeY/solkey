@@ -43,7 +43,7 @@ public class EnumDeclaration extends DeclarationClass implements Type {
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         return members.get(n);
     }
 

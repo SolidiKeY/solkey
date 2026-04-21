@@ -23,8 +23,8 @@ public class MemberEnumDeclaration extends DeclarationClass {
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
-        return null;
+    public @NonNull SyntaxElement getChild(int n) {
+        throw new IndexOutOfBoundsException();
     }
 
     @Override

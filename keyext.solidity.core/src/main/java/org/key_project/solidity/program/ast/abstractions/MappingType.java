@@ -49,7 +49,7 @@ public class MappingType implements Type {
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         if (n == 0)
             return keyType;
         else if (n == 1) {

@@ -12,6 +12,8 @@ import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 
+import org.jspecify.annotations.NonNull;
+
 public class FunctionReference extends SolidityExpression implements Resolver, VariableReference {
 
     public final int id;
@@ -44,7 +46,7 @@ public class FunctionReference extends SolidityExpression implements Resolver, V
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         throw new IndexOutOfBoundsException();
     }
 

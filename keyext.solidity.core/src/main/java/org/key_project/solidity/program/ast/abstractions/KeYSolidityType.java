@@ -87,7 +87,7 @@ public class KeYSolidityType implements Type, Resolver {
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         throw new IndexOutOfBoundsException("KeySolidityType has 0 children");
     }
 

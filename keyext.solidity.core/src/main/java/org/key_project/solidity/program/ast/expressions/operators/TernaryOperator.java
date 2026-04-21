@@ -12,6 +12,8 @@ import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
+import org.jspecify.annotations.NonNull;
+
 public class TernaryOperator extends SolidityExpression {
 
     protected final Expression condition;
@@ -27,7 +29,7 @@ public class TernaryOperator extends SolidityExpression {
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
+    public @NonNull SyntaxElement getChild(int n) {
         if (n == 0)
             return condition;
         else if (n == 1)

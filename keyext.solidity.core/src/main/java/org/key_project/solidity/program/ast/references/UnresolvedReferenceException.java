@@ -8,6 +8,8 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 
+import org.jspecify.annotations.NonNull;
+
 public class UnresolvedReferenceException extends RuntimeException
         implements SolidityProgramElement {
     public UnresolvedReferenceException(Name typeName) {
@@ -18,8 +20,8 @@ public class UnresolvedReferenceException extends RuntimeException
     }
 
     @Override
-    public SyntaxElement getChild(int n) {
-        return null;
+    public @NonNull SyntaxElement getChild(int n) {
+        throw new IndexOutOfBoundsException();
     }
 
     @Override
