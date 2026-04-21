@@ -6,14 +6,15 @@ package org.key_project.solidity.program.ast.statement;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
+
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class DeclarationStatement implements Statement {
     private final @NonNull ImmutableArray<Declaration> declarations;
@@ -52,8 +53,9 @@ public class DeclarationStatement implements Statement {
 
     @Override
     public String toString() {
-        String s = declarations.stream().map(Declaration::toString).collect(Collectors.joining(", "));
-        if(declarations.size() > 1)
+        String s =
+            declarations.stream().map(Declaration::toString).collect(Collectors.joining(", "));
+        if (declarations.size() > 1)
             s = "(" + s + ")";
         if (initialValue != null)
             s += " = " + initialValue;

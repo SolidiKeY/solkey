@@ -12,9 +12,9 @@ import org.key_project.logic.Namespace;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.sort.SortImpl;
 
 import org.jspecify.annotations.NonNull;
-import org.key_project.solidity.logic.sort.SortImpl;
 
 public class PrimitiveType implements Type, SyntaxElement {
 

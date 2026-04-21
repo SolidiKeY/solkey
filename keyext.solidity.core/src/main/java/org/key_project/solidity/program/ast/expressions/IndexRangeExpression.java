@@ -5,11 +5,12 @@ package org.key_project.solidity.program.ast.expressions;
 
 import java.util.Objects;
 
-import org.jspecify.annotations.Nullable;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
+
+import org.jspecify.annotations.Nullable;
 
 // v[0:2]
 public class IndexRangeExpression extends SolidityExpression {
@@ -35,17 +36,21 @@ public class IndexRangeExpression extends SolidityExpression {
 
     @Override
     public SyntaxElement getChild(int n) {
-        if (n == 0) return baseExp;
+        if (n == 0)
+            return baseExp;
         n--;
         if (startExp != null) {
-            if (n == 0) return startExp;
+            if (n == 0)
+                return startExp;
             n--;
         }
         if (endExp != null) {
-            if (n == 0) return endExp;
+            if (n == 0)
+                return endExp;
             n--;
         }
-        throw new IndexOutOfBoundsException(" n should be (0 <= " + n + " < " + getChildCount() + ")");
+        throw new IndexOutOfBoundsException(
+            " n should be (0 <= " + n + " < " + getChildCount() + ")");
     }
 
     @Override
@@ -58,9 +63,11 @@ public class IndexRangeExpression extends SolidityExpression {
         return size;
     }
 
-    public Expression getBaseExp()           { return baseExp; }
+    public Expression getBaseExp() { return baseExp; }
+
     public @Nullable Expression getStartExp() { return startExp; }
-    public @Nullable Expression getEndExp()   { return endExp; }
+
+    public @Nullable Expression getEndExp() { return endExp; }
 
     public String toString() {
         return baseExp + "[" + startExp + ":" + endExp + "]";

@@ -31,10 +31,10 @@ import org.key_project.solidity.rule.sv.OperatorSV;
 import org.key_project.solidity.rule.sv.SchemaVariableFactory;
 import org.key_project.solidity.rule.sv.VariableSV;
 import org.key_project.solidity.rule.sv.sort.ProgramSVSort;
-import org.key_project.solidity.rule.taclets.builder.*;
 import org.key_project.solidity.rule.taclets.SolNoFindTaclet;
 import org.key_project.solidity.rule.taclets.SolRewriteTaclet;
 import org.key_project.solidity.rule.taclets.TacletGoalTemplate;
+import org.key_project.solidity.rule.taclets.builder.*;
 import org.key_project.solidity.util.parsing.BuildingException;
 import org.key_project.util.collection.*;
 

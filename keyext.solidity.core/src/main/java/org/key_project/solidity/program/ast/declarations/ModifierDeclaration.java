@@ -4,14 +4,12 @@
 package org.key_project.solidity.program.ast.declarations;
 
 import java.util.List;
-import java.util.Objects;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.statement.Block;
-import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
 public class ModifierDeclaration extends DeclarationClass {

@@ -56,8 +56,7 @@ public class ParserForTesting {
         Name enumName = new Name("State");
         EnumDeclaration stateEnum = new EnumDeclaration(enumName, List.of(
             new MemberEnumDeclaration(new Name("Begin")),
-            new MemberEnumDeclaration(new Name("End"))
-        ));
+            new MemberEnumDeclaration(new Name("End"))));
         final Sort enumSort = stateEnum.getSort(services);
         KeYSolidityType ksEnumType = new KeYSolidityType(stateEnum, enumSort);
         services.getSolidityInfo().addType(enumSort, ksEnumType);
@@ -65,7 +64,7 @@ public class ParserForTesting {
 
         Namespace<FunctionDeclaration> functions = new Namespace<>();
         FunctionDeclaration f = new FunctionDeclaration(new Name("f"),
-                List.of(), null, List.of(), null, null, null, null, List.of(), null);
+            List.of(), null, List.of(), null, null, null, null, List.of(), null);
         functions.add(f);
 
         return new SolidityToKeyConverter(services, functions, localVars, schemaVariables);

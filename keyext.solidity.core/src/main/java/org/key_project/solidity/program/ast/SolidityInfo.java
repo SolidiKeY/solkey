@@ -39,7 +39,7 @@ public class SolidityInfo {
 
     public Type getDynamicTypeMap(Name primaryTypeName) {
         Name typeName = new Name(primaryTypeName + "[]");
-        if (typeMap.containsKey(typeName ))
+        if (typeMap.containsKey(typeName))
             return typeMap.get(typeName);
         Type primaryType = getType(primaryTypeName);
         Type type = new DynamicArrayType(primaryType);
@@ -71,7 +71,8 @@ public class SolidityInfo {
 
     public TupleType getTupleTypeMap(List<Type> types) {
         Name typeName = new Name("(" + types.stream().map(Object::toString)
-                .collect(Collectors.joining(", ")) + ")");
+                .collect(Collectors.joining(", "))
+            + ")");
         if (typeMap.containsKey(typeName))
             return (TupleType) typeMap.get(typeName);
         TupleType type = new TupleType(types);
@@ -85,7 +86,7 @@ public class SolidityInfo {
 
     public void addType(Sort sort, Type type) {
         Name sortName = sort.name();
-        if(!typeMap.containsKey(sortName))
+        if (!typeMap.containsKey(sortName))
             typeMap.put(sortName, type);
     }
 

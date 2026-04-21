@@ -5,7 +5,6 @@ package org.key_project.solidity.program.ast.references;
 
 import java.util.HashMap;
 
-import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
@@ -40,7 +39,8 @@ public class FunctionReference extends SolidityExpression implements Resolver, V
         if (this.referencedDeclaration == null)
             this.referencedDeclaration = (FunctionDeclaration) id2Name.get(id);
         else
-            throw new IllegalStateException("function " + referencedDeclaration.name() + " has already been resolved");
+            throw new IllegalStateException(
+                "function " + referencedDeclaration.name() + " has already been resolved");
     }
 
     @Override

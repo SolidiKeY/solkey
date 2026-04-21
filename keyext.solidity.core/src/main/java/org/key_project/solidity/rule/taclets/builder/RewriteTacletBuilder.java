@@ -80,7 +80,8 @@ public class RewriteTacletBuilder<T extends SolRewriteTaclet> extends FindTaclet
     /// builds and returns the Taclet that is specified by former set... / add... methods. If no
     /// name is specified then a Taclet with an empty string name is build. No specifications for
     /// variable conditions, goals or heuristics imply that the corresponding parts of the Taclet
-    /// are empty. No specification for the assumes-sequence is represented as a sequent with two empty
+    /// are empty. No specification for the assumes-sequence is represented as a sequent with two
+    /// empty
     /// semisequences. No specification for the interactive or recursive flags imply that the flags
     /// are not set.
     /// @throws IllegalStateException if no find is specified.

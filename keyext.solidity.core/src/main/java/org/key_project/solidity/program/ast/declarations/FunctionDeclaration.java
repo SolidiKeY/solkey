@@ -126,7 +126,7 @@ public class FunctionDeclaration extends DeclarationClass implements Named {
         return stateMutability;
     }
 
-    public TupleType getType(){
+    public TupleType getType() {
         return type;
     }
 

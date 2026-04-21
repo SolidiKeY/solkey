@@ -27,8 +27,8 @@ public class TacletGoalTemplate
     /// time unused (new) program variables that are introduced by an application of this
     /// template
     public TacletGoalTemplate(Sequent addedSeq,
-                              ImmutableList<Taclet> addedRules,
-                              ImmutableSet<SchemaVariable> addedProgVars) {
+            ImmutableList<Taclet> addedRules,
+            ImmutableSet<SchemaVariable> addedProgVars) {
         super(addedSeq, addedRules, addedProgVars);
     }
 
@@ -40,7 +40,7 @@ public class TacletGoalTemplate
     /// @param addedSeq new Sequent to be added
     /// @param addedRules IList<Taclet> contains the new allowed rules at this branch
     public TacletGoalTemplate(Sequent addedSeq,
-                              ImmutableList<Taclet> addedRules) {
+            ImmutableList<Taclet> addedRules) {
         this(addedSeq, addedRules, DefaultImmutableSet.nil());
     }
 

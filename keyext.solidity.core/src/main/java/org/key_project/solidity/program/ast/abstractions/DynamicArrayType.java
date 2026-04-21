@@ -13,7 +13,6 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.sort.DynamicArraySort;
 
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 public class DynamicArrayType implements Type, SyntaxElement {
     private final Name name;

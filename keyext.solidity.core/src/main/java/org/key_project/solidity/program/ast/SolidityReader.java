@@ -52,7 +52,8 @@ public class SolidityReader {
         if (context.getSolidityPath() != null)
             solcParser.getDeclStrJsonParser(context.getSolidityPath());
         SolidityToKeyConverter stk =
-            new SolidityToKeyConverter(services, new Namespace<>(), context.getVarNS(), schemaVariables);
+            new SolidityToKeyConverter(services, new Namespace<>(), context.getVarNS(),
+                schemaVariables);
 
         CodePointCharStream input = CharStreams.fromString(block);
         SolidityLexer lexer = new SolidityLexer(input);

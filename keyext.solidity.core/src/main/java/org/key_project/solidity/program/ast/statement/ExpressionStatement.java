@@ -5,11 +5,12 @@ package org.key_project.solidity.program.ast.statement;
 
 import java.util.Objects;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
+
+import org.jspecify.annotations.NonNull;
 
 public class ExpressionStatement implements Statement {
     final @NonNull Expression expression;

@@ -157,7 +157,9 @@ public class ParsingFacadeTest {
         Block block = (Block) ((SModality) term.op()).programBlock().program();
         assertEquals(1, block.getStatements().size());
 
-        assertEquals(px, ((BinaryOperator) ((ExpressionStatement) block.getStatements().get(0)).getExpression()).getLeft());
+        assertEquals(px,
+            ((BinaryOperator) ((ExpressionStatement) block.getStatements().get(0)).getExpression())
+                    .getLeft());
     }
 
     @Test

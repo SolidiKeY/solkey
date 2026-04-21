@@ -5,7 +5,6 @@ package org.key_project.solidity.program.ast.references;
 
 import java.util.HashMap;
 
-import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.abstractions.Type;

@@ -9,8 +9,8 @@ import org.key_project.prover.strategy.costbased.MutableState;
 import org.key_project.prover.strategy.costbased.feature.Feature;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.rule.TacletApp;
-import org.key_project.solidity.rule.taclets.builder.RewriteTacletGoalTemplate;
 import org.key_project.solidity.rule.taclets.SolRewriteTaclet;
+import org.key_project.solidity.rule.taclets.builder.RewriteTacletGoalTemplate;
 
 /// Binary feature that returns zero iff the replacewith- and find-parts of a Taclet are matched to
 /// different terms.

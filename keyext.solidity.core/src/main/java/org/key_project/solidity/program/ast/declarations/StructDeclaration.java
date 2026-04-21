@@ -5,7 +5,6 @@ package org.key_project.solidity.program.ast.declarations;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
@@ -52,7 +51,7 @@ public class StructDeclaration extends DeclarationClass implements Type, Resolve
     @Override
     public @NonNull Sort getSort(Services services) {
         Sort sort = services.getNamespaces().sorts().lookup(name);
-        if(sort == null){
+        if (sort == null) {
             sort = new SortImpl(name);
             services.getNamespaces().sorts().add(sort);
         }

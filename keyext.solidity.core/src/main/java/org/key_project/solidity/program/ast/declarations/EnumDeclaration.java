@@ -4,10 +4,8 @@
 package org.key_project.solidity.program.ast.declarations;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.Name;
 import org.key_project.logic.Namespace;
 import org.key_project.logic.SyntaxElement;
@@ -16,6 +14,8 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.util.collection.ImmutableArray;
+
+import org.jspecify.annotations.NonNull;
 
 public class EnumDeclaration extends DeclarationClass implements Type {
     private final ImmutableArray<MemberEnumDeclaration> members;

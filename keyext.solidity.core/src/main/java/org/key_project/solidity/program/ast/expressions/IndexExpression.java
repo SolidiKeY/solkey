@@ -5,17 +5,20 @@ package org.key_project.solidity.program.ast.expressions;
 
 import java.util.Objects;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
+import org.jspecify.annotations.NonNull;
+
 public class IndexExpression extends SolidityExpression {
 
-    @NonNull Expression leftExp;
-    @NonNull Expression indexExp;
+    @NonNull
+    Expression leftExp;
+    @NonNull
+    Expression indexExp;
 
     public IndexExpression(Expression leftExp, Expression indexExp) {
         super(leftExp.getType());
@@ -44,7 +47,8 @@ public class IndexExpression extends SolidityExpression {
         return 2;
     }
 
-    public @NonNull Expression getLeftExp()  { return leftExp; }
+    public @NonNull Expression getLeftExp() { return leftExp; }
+
     public @NonNull Expression getIndexExp() { return indexExp; }
 
     public String toString() {

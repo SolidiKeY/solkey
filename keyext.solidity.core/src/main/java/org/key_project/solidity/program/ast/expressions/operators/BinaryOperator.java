@@ -5,12 +5,13 @@ package org.key_project.solidity.program.ast.expressions.operators;
 
 import java.util.Objects;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.util.ExtList;
+
+import org.jspecify.annotations.NonNull;
 
 public abstract class BinaryOperator extends SolidityExpression {
 
@@ -53,7 +54,8 @@ public abstract class BinaryOperator extends SolidityExpression {
         return 2;
     }
 
-    public @NonNull Expression getLeft()  { return left; }
+    public @NonNull Expression getLeft() { return left; }
+
     public @NonNull Expression getRight() { return right; }
 
     public abstract String getName();

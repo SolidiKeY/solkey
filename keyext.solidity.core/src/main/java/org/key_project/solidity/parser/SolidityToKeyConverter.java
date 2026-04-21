@@ -46,7 +46,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     }
 
     public SolidityToKeyConverter(Services services, Namespace<FunctionDeclaration> localFunctions,
-                                  Namespace<ProgramVariable> localVars,
+            Namespace<ProgramVariable> localVars,
             Namespace<ProgramSV> schemaVariables) {
         this.services = services;
         this.localFunctions = localFunctions;
@@ -130,7 +130,8 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     public SyntaxElement visitFunctionCallExp(FunctionCallExpContext ctx) {
         String nameS = visitExpression(ctx.expression()).toString();
         FunctionDeclaration functionDeclaration = localFunctions.lookup(new Name(nameS));
-        FunctionReference functionRef = new FunctionReference(functionDeclaration, functionDeclaration.getType());
+        FunctionReference functionRef =
+            new FunctionReference(functionDeclaration, functionDeclaration.getType());
         FunctionCallArguments args =
             (FunctionCallArguments) visitFunctionCallArguments(ctx.functionCallArguments());
         return new FunctionCallExpression(functionRef.getType(), functionRef, args.getArgs());
@@ -206,7 +207,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     @Override
     public SyntaxElement visitArrayType(ArrayTypeContext ctx) {
         Type primaryType = (Type) visitTypeName(ctx.typeName());
-        if(ctx.expression() == null){
+        if (ctx.expression() == null) {
             Type type = services.getSolidityInfo().getDynamicTypeMap(primaryType.name());
             final Sort sort = type.getSort(services);
             return new KeYSolidityType(type, sort);
@@ -303,7 +304,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         Expression exp = visitExpression(ctx.expression());
         List<ProgramVariable> parameters = ctx.returnParameters() == null ? List.of()
                 : ((SyntaxElementList) visitReturnParameters(ctx.returnParameters()))
-                .getElements().stream().map(ProgramVariable.class::cast).toList();
+                        .getElements().stream().map(ProgramVariable.class::cast).toList();
         Block body = (Block) visitBlock(ctx.block());
         List<CatchClause> clauses = ctx.catchClause().stream().map(this::visitCatchClause)
                 .map(CatchClause.class::cast).toList();
@@ -334,7 +335,8 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         DataLocation dataLocation = (DataLocation) visitStorageLocation(ctx.storageLocation());
         String variableName = ctx.identifier().getText();
 
-        ProgramVariable programVariable = new ProgramVariable(new Name(variableName), type, dataLocation);
+        ProgramVariable programVariable =
+            new ProgramVariable(new Name(variableName), type, dataLocation);
         localVars.add(programVariable);
         return programVariable;
     }

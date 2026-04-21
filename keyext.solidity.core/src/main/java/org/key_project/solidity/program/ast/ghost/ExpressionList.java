@@ -7,12 +7,13 @@ package org.key_project.solidity.program.ast.ghost;
 import java.util.List;
 import java.util.Objects;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.collection.ImmutableArray;
+
+import org.jspecify.annotations.NonNull;
 
 public class ExpressionList implements SolidityProgramElement {
     public @NonNull ImmutableArray<@NonNull Expression> getExpressions() {
@@ -26,7 +27,8 @@ public class ExpressionList implements SolidityProgramElement {
     }
 
     @Override
-    @NonNull public SyntaxElement getChild(int n) {
+    @NonNull
+    public SyntaxElement getChild(int n) {
         return Objects.requireNonNull(expressions.get(n));
     }
 

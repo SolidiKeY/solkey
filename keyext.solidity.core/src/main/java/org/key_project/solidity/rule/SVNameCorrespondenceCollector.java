@@ -9,10 +9,10 @@ import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.prover.rules.Taclet;
 import org.key_project.prover.sequent.Semisequent;
 import org.key_project.solidity.logic.op.SubstOp;
-import org.key_project.solidity.rule.taclets.builder.AntecSuccTacletGoalTemplate;
-import org.key_project.solidity.rule.taclets.builder.RewriteTacletGoalTemplate;
 import org.key_project.solidity.rule.taclets.SolFindTaclet;
 import org.key_project.solidity.rule.taclets.TacletGoalTemplate;
+import org.key_project.solidity.rule.taclets.builder.AntecSuccTacletGoalTemplate;
+import org.key_project.solidity.rule.taclets.builder.RewriteTacletGoalTemplate;
 import org.key_project.util.collection.DefaultImmutableMap;
 import org.key_project.util.collection.ImmutableMap;
 

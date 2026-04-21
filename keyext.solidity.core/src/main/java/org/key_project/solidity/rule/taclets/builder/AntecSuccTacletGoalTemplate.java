@@ -24,14 +24,14 @@ public class AntecSuccTacletGoalTemplate extends TacletGoalTemplate {
     /// @param addedRules IList<Taclet> contains the new allowed rules at this branch
     /// @param replaceWith the Sequent that replaces another one
     public AntecSuccTacletGoalTemplate(Sequent addedSeq, ImmutableList<Taclet> addedRules,
-                                       Sequent replaceWith, ImmutableSet<SchemaVariable> pvs) {
+            Sequent replaceWith, ImmutableSet<SchemaVariable> pvs) {
         super(addedSeq, addedRules, pvs);
         // TacletBuilder.checkContainsFreeVarSV(replaceWith, null, "replaceWith sequent");
         this.replaceWith = replaceWith;
     }
 
     public AntecSuccTacletGoalTemplate(Sequent addedSeq, ImmutableList<Taclet> addedRules,
-                                       Sequent replaceWith) {
+            Sequent replaceWith) {
         this(addedSeq, addedRules, replaceWith, DefaultImmutableSet.nil());
     }
 

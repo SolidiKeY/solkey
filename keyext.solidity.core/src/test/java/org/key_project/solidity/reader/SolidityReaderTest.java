@@ -57,7 +57,8 @@ public class SolidityReaderTest {
         varNS.add(x);
         Block block = (Block) hir.readBlockWithProgramVariables(varNS, "{ x = 1; }").program();
         ProgramVariable xTest =
-            (ProgramVariable) ((BinaryOperator) ((ExpressionStatement) block.getStatements().get(0)).getExpression()).getLeft();
+            (ProgramVariable) ((BinaryOperator) ((ExpressionStatement) block.getStatements().get(0))
+                    .getExpression()).getLeft();
         assertEquals(x, xTest);
     }
 }

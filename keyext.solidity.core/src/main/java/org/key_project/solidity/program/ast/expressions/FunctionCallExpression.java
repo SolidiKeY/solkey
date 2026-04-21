@@ -6,12 +6,13 @@ package org.key_project.solidity.program.ast.expressions;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
+
+import org.jspecify.annotations.NonNull;
 
 public class FunctionCallExpression extends SolidityExpression {
 
@@ -29,7 +30,8 @@ public class FunctionCallExpression extends SolidityExpression {
         this.arguments = new ImmutableArray<>(arguments);
     }
 
-    public FunctionCallExpression(Type type, Expression functionExp, ImmutableArray<Expression> arguments) {
+    public FunctionCallExpression(Type type, Expression functionExp,
+            ImmutableArray<Expression> arguments) {
         super(type);
         this.functionExp = functionExp;
         this.arguments = arguments;

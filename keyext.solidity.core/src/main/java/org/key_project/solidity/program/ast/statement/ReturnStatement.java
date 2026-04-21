@@ -5,11 +5,12 @@ package org.key_project.solidity.program.ast.statement;
 
 import java.util.Objects;
 
-import org.jspecify.annotations.Nullable;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
+
+import org.jspecify.annotations.Nullable;
 
 public class ReturnStatement implements Statement {
     private @Nullable Expression returnExp;
@@ -26,7 +27,8 @@ public class ReturnStatement implements Statement {
 
     @Override
     public SyntaxElement getChild(int n) {
-        if (n == 0 && returnExp != null) return returnExp;
+        if (n == 0 && returnExp != null)
+            return returnExp;
         throw new IndexOutOfBoundsException();
     }
 

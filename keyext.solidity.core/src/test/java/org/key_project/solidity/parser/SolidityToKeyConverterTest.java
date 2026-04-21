@@ -30,8 +30,12 @@ public class SolidityToKeyConverterTest {
     @Test
     void creatingProgramVariables() {
         Block block = parseBlock("{ int x; x = 1; }");
-        ProgramVariable p1 = ((StatementVariableDeclaration) ((DeclarationStatement) block.getStatements().get(0)).getDeclarations().get(0)).getProgramVariable();
-        ProgramVariable p2 = (ProgramVariable) ((BinaryOperator) ((ExpressionStatement) block.getStatements().get(1)).getExpression()).getLeft();
+        ProgramVariable p1 =
+            ((StatementVariableDeclaration) ((DeclarationStatement) block.getStatements().get(0))
+                    .getDeclarations().get(0)).getProgramVariable();
+        ProgramVariable p2 =
+            (ProgramVariable) ((BinaryOperator) ((ExpressionStatement) block.getStatements().get(1))
+                    .getExpression()).getLeft();
         assertEquals("x", p1.toString());
         assertSame(p1, p2);
     }
@@ -119,15 +123,18 @@ public class SolidityToKeyConverterTest {
     void ifStatement() {
         ConditionStatement stm = (ConditionStatement) parseStatement("if(false) true;");
         assertFalse(((BoolLiteral) stm.getCondition()).getValue());
-        assertTrue(((BoolLiteral) ((ExpressionStatement) stm.getTrueBody()).getExpression()).getValue());
+        assertTrue(
+            ((BoolLiteral) ((ExpressionStatement) stm.getTrueBody()).getExpression()).getValue());
     }
 
     @Test
     void ifAndElseStatement() {
         ConditionStatement stm = (ConditionStatement) parseStatement("if(false) true; else false;");
         assertFalse(((BoolLiteral) stm.getCondition()).getValue());
-        assertTrue(((BoolLiteral) ((ExpressionStatement) stm.getTrueBody()).getExpression()).getValue());
-        assertFalse(((BoolLiteral) ((ExpressionStatement) stm.getFalseBody()).getExpression()).getValue());
+        assertTrue(
+            ((BoolLiteral) ((ExpressionStatement) stm.getTrueBody()).getExpression()).getValue());
+        assertFalse(
+            ((BoolLiteral) ((ExpressionStatement) stm.getFalseBody()).getExpression()).getValue());
     }
 
     @Test
@@ -153,14 +160,16 @@ public class SolidityToKeyConverterTest {
     void whileStatement() {
         WhileStatement stm = (WhileStatement) parseStatement("while(true) false;");
         assertTrue(((BoolLiteral) stm.getCondition()).getValue());
-        assertFalse(((BoolLiteral) ((ExpressionStatement) stm.getBody()).getExpression()).getValue());
+        assertFalse(
+            ((BoolLiteral) ((ExpressionStatement) stm.getBody()).getExpression()).getValue());
     }
 
     @Test
     void doWhileStatement() {
         DoWhileStatement stm = (DoWhileStatement) parseStatement("do false; while(true);");
         assertTrue(((BoolLiteral) stm.getCondition()).getValue());
-        assertFalse(((BoolLiteral) ((ExpressionStatement) stm.getBody()).getExpression()).getValue());
+        assertFalse(
+            ((BoolLiteral) ((ExpressionStatement) stm.getBody()).getExpression()).getValue());
     }
 
     @Test
@@ -179,17 +188,20 @@ public class SolidityToKeyConverterTest {
     void tryStm() {
         TryStatement stm = (TryStatement) parseStatement("try false { true; }");
         assertFalse(((BoolLiteral) stm.getExpression()).getValue());
-        assertTrue(((BoolLiteral) ((ExpressionStatement) stm.getBody().getStatements().get(0)).getExpression())
+        assertTrue(((BoolLiteral) ((ExpressionStatement) stm.getBody().getStatements().get(0))
+                .getExpression())
                 .getValue());
     }
 
     @Test
     void tryWithReturn() {
-        TryStatement stm = (TryStatement) parseStatement("try false returns (bool a) { a = false; }");
+        TryStatement stm =
+            (TryStatement) parseStatement("try false returns (bool a) { a = false; }");
         assertFalse(((BoolLiteral) stm.getExpression()).getValue());
         assertEquals(1, stm.getReturnCount());
         ProgramVariable ra = stm.getReturnParameter(0);
-        ProgramVariable ba = (ProgramVariable) ((BinaryOperator) ((ExpressionStatement) stm.getBody().getStatements().get(0)).getExpression()).getLeft();
+        ProgramVariable ba = (ProgramVariable) ((BinaryOperator) ((ExpressionStatement) stm
+                .getBody().getStatements().get(0)).getExpression()).getLeft();
         assertSame(ra, ba);
     }
 

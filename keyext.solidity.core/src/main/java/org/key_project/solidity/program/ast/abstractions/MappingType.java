@@ -10,9 +10,9 @@ import org.key_project.logic.Namespace;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.sort.MappingSort;
 
 import org.jspecify.annotations.NonNull;
-import org.key_project.solidity.logic.sort.MappingSort;
 
 public class MappingType implements Type {
     private final Name name;
@@ -50,7 +50,7 @@ public class MappingType implements Type {
 
     @Override
     public SyntaxElement getChild(int n) {
-        if(n == 0)
+        if (n == 0)
             return keyType;
         else if (n == 1) {
             return valueType;

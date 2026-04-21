@@ -28,7 +28,8 @@ public class BothParsersTest {
 
     public BothParsersTest() throws IOException {
         services = new Services();
-        stk = new SolidityToKeyConverter(services, new Namespace<>(), new Namespace<>(), new Namespace<>());
+        stk = new SolidityToKeyConverter(services, new Namespace<>(), new Namespace<>(),
+            new Namespace<>());
         solcParser = new SolcParser(services);
         addContractToService();
     }
@@ -54,7 +55,8 @@ public class BothParsersTest {
     @Test
     void usingVariable() {
         DeclarationStatement stm = (DeclarationStatement) parseStatement("Person alice;");
-        ProgramVariable programVariable = ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable();
+        ProgramVariable programVariable =
+            ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable();
         Sort sort = programVariable.getType().getSort(services);
         assertEquals("Person", sort.toString());
     }
@@ -85,10 +87,12 @@ public class BothParsersTest {
                     function f() public returns (bool) {}
                 }""";
         ContractDeclaration contractDec = solcParser.getDeclStrJsonParser(contract);
-        Type contractBoolType = contractDec.getFunctions().getFirst().getReturnParameters().get(0).getType();
+        Type contractBoolType =
+            contractDec.getFunctions().getFirst().getReturnParameters().get(0).getType();
 
         DeclarationStatement stm = (DeclarationStatement) parseStatement("bool x;");
-        Type parsedBoolType = ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable().getType();
+        Type parsedBoolType = ((StatementVariableDeclaration) stm.getDeclarations().get(0))
+                .getProgramVariable().getType();
 
         assertSame(contractBoolType, parsedBoolType);
     }
@@ -105,7 +109,9 @@ public class BothParsersTest {
         ArrayType contractArrayType = (ArrayType) field.getProgramVariable().getType();
 
         DeclarationStatement stm = (DeclarationStatement) parseStatement("bool[2] x;");
-        ArrayType parsedArrayType = (ArrayType) ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable().getType();
+        ArrayType parsedArrayType =
+            (ArrayType) ((StatementVariableDeclaration) stm.getDeclarations().get(0))
+                    .getProgramVariable().getType();
 
         assertSame(contractArrayType, parsedArrayType);
     }
@@ -119,10 +125,13 @@ public class BothParsersTest {
                 }""";
         ContractDeclaration contractDec = solcParser.getDeclStrJsonParser(contract);
         StateVariableDeclaration field = contractDec.getFieldDeclarations().get(0);
-        DynamicArrayType contractArrayType = (DynamicArrayType) field.getProgramVariable().getType();
+        DynamicArrayType contractArrayType =
+            (DynamicArrayType) field.getProgramVariable().getType();
 
         DeclarationStatement stm = (DeclarationStatement) parseStatement("bool[] x;");
-        DynamicArrayType parsedArrayType = (DynamicArrayType) ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable().getType();
+        DynamicArrayType parsedArrayType =
+            (DynamicArrayType) ((StatementVariableDeclaration) stm.getDeclarations().get(0))
+                    .getProgramVariable().getType();
 
         assertSame(contractArrayType, parsedArrayType);
     }
