@@ -22,8 +22,10 @@ import org.key_project.solidity.program.ast.expressions.literals.*;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral.*;
 import org.key_project.solidity.program.ast.expressions.operators.*;
+import org.key_project.solidity.program.ast.abstractions.MappingType;
 import org.key_project.solidity.program.ast.references.ContractReference;
 import org.key_project.solidity.program.ast.references.FunctionReference;
+import org.key_project.solidity.program.ast.references.ModifierReference;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.program.parser.SolcParser;
 import org.key_project.util.collection.ImmutableArray;
@@ -875,7 +877,13 @@ public class SolJsonParserTest {
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
-        assertNotNull(contractDec);
+        FunctionDeclaration constructor = contractDec.getFunctions().stream()
+            .filter(f -> f.getKind().equals("constructor"))
+            .findFirst().orElse(null);
+        assertNotNull(constructor);
+        assertEquals(0, constructor.getInputParameters().size());
+        assertNotNull(constructor.getBody());
+        assertEquals(0, constructor.getBody().getStatements().size());
     }
 
     @Test
@@ -886,8 +894,11 @@ public class SolJsonParserTest {
                     mapping(bool => int256) public b;
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
-        String contractS = contractDec.toString();
-        assertTrue(contractS.contains("mapping(bool => int256) public b;"));
+        Type bType = contractDec.getFieldDeclarations().get(0).getProgramVariable().getType();
+        assertInstanceOf(MappingType.class, bType);
+        MappingType mappingType = (MappingType) bType;
+        assertSame(BOOL, mappingType.keyType());
+        assertSame(INT256, mappingType.valueType());
     }
 
     @Test
@@ -898,8 +909,14 @@ public class SolJsonParserTest {
                     mapping(bool => mapping(bool => int256)) public b;
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
-        String contractS = contractDec.toString();
-        assertTrue(contractS.contains("mapping(bool => mapping(bool => int256))"));
+        Type bType = contractDec.getFieldDeclarations().get(0).getProgramVariable().getType();
+        assertInstanceOf(MappingType.class, bType);
+        MappingType outerMapping = (MappingType) bType;
+        assertSame(BOOL, outerMapping.keyType());
+        assertInstanceOf(MappingType.class, outerMapping.valueType());
+        MappingType innerMapping = (MappingType) outerMapping.valueType();
+        assertSame(BOOL, innerMapping.keyType());
+        assertSame(INT256, innerMapping.valueType());
     }
 
     @Test
@@ -917,9 +934,13 @@ public class SolJsonParserTest {
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
-        String contractS = contractDec.toString();
-        assertTrue(contractS.contains("_;"));
-        assertTrue(contractS.contains("mod1 mod2"));
+        ImmutableArray<ModifierDeclaration> modDecls = contractDec.getModifiers();
+        assertEquals(2, modDecls.size());
+        FunctionDeclaration f = contractDec.getFunctions().getFirst();
+        ImmutableArray<ModifierReference> modRefs = f.getModifiers();
+        assertEquals(2, modRefs.size());
+        assertEquals("mod1", modRefs.get(0).name);
+        assertEquals("mod2", modRefs.get(1).name);
     }
 
     @Test
@@ -934,8 +955,13 @@ public class SolJsonParserTest {
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
-        String contractS = contractDec.toString();
-        assertTrue(contractS.contains("memory bob"));
+        FunctionDeclaration f = contractDec.getFunctions().getFirst();
+        assertEquals(1, f.getInputParameters().size());
+        ProgramVariable bob = f.getInputParameters().get(0);
+        assertEquals(Memory, bob.getLocation());
+        assertEquals("bob", bob.name().toString());
+        assertInstanceOf(StructDeclaration.class, bob.getType());
+        assertEquals("SimpleContract.Person", bob.getType().name().toString());
     }
 
     @Test

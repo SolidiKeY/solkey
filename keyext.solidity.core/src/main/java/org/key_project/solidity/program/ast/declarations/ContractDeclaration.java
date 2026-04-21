@@ -42,6 +42,10 @@ public class ContractDeclaration extends DeclarationClass implements Type {
         return fields;
     }
 
+    public ImmutableArray<ModifierDeclaration> getModifiers() {
+        return modifiers;
+    }
+
     @Override
     public @NonNull String toString() {
         String contract = "contract ";

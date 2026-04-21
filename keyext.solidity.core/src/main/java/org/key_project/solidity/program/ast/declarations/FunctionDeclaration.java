@@ -116,6 +116,10 @@ public class FunctionDeclaration extends DeclarationClass implements Named {
         return strBuffer.toString();
     }
 
+    public ImmutableArray<ModifierReference> getModifiers() {
+        return modifiers;
+    }
+
     public String getKind() {
         return kind;
     }
