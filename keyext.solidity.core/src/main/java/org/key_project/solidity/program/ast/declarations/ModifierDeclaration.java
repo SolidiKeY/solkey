@@ -16,13 +16,13 @@ import org.jspecify.annotations.NonNull;
 
 public class ModifierDeclaration extends DeclarationClass {
 
-    private final ImmutableArray<ProgramVariable> inputParameters;
-    private final Block body;
-    private final Visibility visibility;
-    private final Name name;
+    private final @NonNull ImmutableArray<@NonNull ProgramVariable> inputParameters;
+    private final @NonNull Block body;
+    private final @NonNull Visibility visibility;
+    private final @NonNull Name name;
 
-    public ModifierDeclaration(Name name, List<ProgramVariable> inputParameters, Block body,
-            Visibility visibility) {
+    public ModifierDeclaration(@NonNull Name name, @NonNull List<@NonNull ProgramVariable> inputParameters, @NonNull Block body,
+                               @NonNull Visibility visibility) {
         super(new ImmutableArray<>());
         this.name = name;
         this.inputParameters = new ImmutableArray<>(inputParameters);
@@ -32,12 +32,16 @@ public class ModifierDeclaration extends DeclarationClass {
 
     @Override
     public @NonNull SyntaxElement getChild(int n) {
-        throw new RuntimeException("Not implemented");
+        if (n < inputParameters.size())
+            return inputParameters.get(n);
+        if (n == inputParameters.size())
+            return body;
+        throw new IndexOutOfBoundsException("Child " + n + " out of bounds, child count is " + getChildCount());
     }
 
     @Override
     public int getChildCount() {
-        return 0;
+        return inputParameters.size() + 1;
     }
 
     @Override

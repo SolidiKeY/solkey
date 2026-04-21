@@ -941,6 +941,31 @@ public class SolJsonParserTest {
         assertEquals(2, modRefs.size());
         assertEquals("mod1", modRefs.get(0).name);
         assertEquals("mod2", modRefs.get(1).name);
+        for (ModifierDeclaration mod : modDecls) {
+            assertEquals(1, mod.getChildCount());
+            assertInstanceOf(Block.class, mod.getChild(0));
+            assertThrows(IndexOutOfBoundsException.class, () -> mod.getChild(1));
+        }
+    }
+
+    @Test
+    void modifierWithParameters() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    modifier mod(uint256 x, address y){
+                        _;
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract);
+        ImmutableArray<ModifierDeclaration> modDecls = contractDec.getModifiers();
+        assertEquals(1, modDecls.size());
+        ModifierDeclaration mod = modDecls.get(0);
+        assertEquals(3, mod.getChildCount());
+        assertInstanceOf(ProgramVariable.class, mod.getChild(0));
+        assertInstanceOf(ProgramVariable.class, mod.getChild(1));
+        assertInstanceOf(Block.class, mod.getChild(2));
+        assertThrows(IndexOutOfBoundsException.class, () -> mod.getChild(3));
     }
 
     @Test
