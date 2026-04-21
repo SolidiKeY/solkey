@@ -53,7 +53,7 @@ public abstract class ProgramTransformer implements Statement, SolidityProgramEl
         if (n == 0) {
             return body;
         }
-        throw new IndexOutOfBoundsException();
+        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

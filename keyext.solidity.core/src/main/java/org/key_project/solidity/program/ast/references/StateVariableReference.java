@@ -54,7 +54,7 @@ public class StateVariableReference extends SolidityExpression implements Variab
     public @NonNull SyntaxElement getChild(int n) {
         if (n == 0)
             return referencedDeclaration;
-        throw new IndexOutOfBoundsException();
+        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

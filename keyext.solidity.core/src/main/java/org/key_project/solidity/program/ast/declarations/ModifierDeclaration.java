@@ -36,7 +36,7 @@ public class ModifierDeclaration extends DeclarationClass {
             return inputParameters.get(n);
         if (n == inputParameters.size())
             return body;
-        throw new IndexOutOfBoundsException("Child " + n + " out of bounds, child count is " + getChildCount());
+        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

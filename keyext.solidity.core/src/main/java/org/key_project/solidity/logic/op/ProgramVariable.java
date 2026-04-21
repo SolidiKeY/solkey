@@ -47,7 +47,7 @@ public class ProgramVariable extends AbstractSortedOperator
 
     @Override
     public @NonNull SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException("Program variable does not have a child");
+        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

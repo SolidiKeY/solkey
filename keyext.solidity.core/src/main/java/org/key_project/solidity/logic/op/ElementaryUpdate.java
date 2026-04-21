@@ -73,6 +73,6 @@ public class ElementaryUpdate extends AbstractSortedOperator {
     public @NonNull SyntaxElement getChild(int n) {
         if (n == 0)
             return lhs;
-        throw new IndexOutOfBoundsException("Elementary updates only contain 1 child");
+        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 }

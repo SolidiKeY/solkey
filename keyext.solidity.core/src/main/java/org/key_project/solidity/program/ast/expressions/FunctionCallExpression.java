@@ -55,7 +55,7 @@ public class FunctionCallExpression extends SolidityExpression {
         }
         if (n == arguments.size())
             return functionExp;
-        throw new IndexOutOfBoundsException("Not 0 <= " + n + " < " + getChildCount());
+        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

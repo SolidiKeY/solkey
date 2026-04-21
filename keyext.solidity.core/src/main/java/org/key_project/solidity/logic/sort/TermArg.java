@@ -30,6 +30,6 @@ public record TermArg(Term term) implements GenericArgument {
         if (n == 0) {
             return term;
         }
-        throw new IndexOutOfBoundsException("Invalid child index: " + n);
+        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 }

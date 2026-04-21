@@ -52,7 +52,7 @@ public class TupleType implements Type {
     public @NonNull SyntaxElement getChild(int n) {
         if (0 <= n && n < getChildCount())
             return types.get(n);
-        throw new IndexOutOfBoundsException("!(0 < " + n + " <= " + getChildCount() + ")");
+        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

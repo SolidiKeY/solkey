@@ -69,7 +69,7 @@ public class ContractDeclaration extends DeclarationClass implements Type {
     @Override
     public @NonNull SyntaxElement getChild(int n) {
         if (n < 0)
-            throw new IndexOutOfBoundsException("Index " + n + " is out of bounds");
+            throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
         if (n < fields.size())
             return fields.get(n);
         n -= fields.size();
@@ -84,7 +84,7 @@ public class ContractDeclaration extends DeclarationClass implements Type {
         n -= functions.size();;
         if (n < enums.size())
             return enums.get(n);
-        throw new IndexOutOfBoundsException("Index " + n + " is out of the bonds");
+        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

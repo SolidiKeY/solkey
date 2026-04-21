@@ -16,7 +16,7 @@ public abstract class Literal extends SolidityExpression {
 
     @Override
     public @NonNull SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException("Literal has no children");
+        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

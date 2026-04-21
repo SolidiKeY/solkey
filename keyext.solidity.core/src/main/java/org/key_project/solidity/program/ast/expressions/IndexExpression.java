@@ -38,7 +38,7 @@ public class IndexExpression extends SolidityExpression {
         return switch (n) {
             case 0 -> leftExp;
             case 1 -> indexExp;
-            default -> throw new IndexOutOfBoundsException();
+            default -> throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
         };
     }
 

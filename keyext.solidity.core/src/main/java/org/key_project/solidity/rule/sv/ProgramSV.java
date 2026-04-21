@@ -41,7 +41,7 @@ public class ProgramSV extends OperatorSV implements Expression {
 
     @Override
     public @NonNull SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException("ProgramSV " + this + " has no children");
+        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

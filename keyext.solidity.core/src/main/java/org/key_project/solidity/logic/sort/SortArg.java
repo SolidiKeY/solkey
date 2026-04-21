@@ -18,7 +18,7 @@ public record SortArg(Sort sort) implements GenericArgument, SyntaxElement {
     public @NonNull SyntaxElement getChild(int n) {
         if (n == 0 && sort instanceof ParametricSortInstance psi)
             return psi;
-        throw new IndexOutOfBoundsException();
+        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

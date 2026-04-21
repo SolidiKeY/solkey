@@ -27,7 +27,7 @@ public class ExpressionStatement implements Statement {
     public @NonNull SyntaxElement getChild(int n) {
         if (n == 0)
             return expression;
-        throw new IndexOutOfBoundsException("index " + n + " is out of bounds");
+        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

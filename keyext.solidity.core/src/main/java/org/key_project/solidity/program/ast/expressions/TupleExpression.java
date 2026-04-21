@@ -34,7 +34,7 @@ public class TupleExpression extends SolidityExpression {
     public @NonNull SyntaxElement getChild(int n) {
         if (0 <= n && n < expressions.size())
             return Objects.requireNonNull(expressions.get(n));
-        throw new IndexOutOfBoundsException("Not 0 <= " + n + " < " + expressions.size());
+        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

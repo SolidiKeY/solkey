@@ -46,7 +46,7 @@ public class MemberExp extends SolidityExpression implements Resolver {
     public @NonNull SyntaxElement getChild(int n) {
         if (n == 0)
             return leftExp;
-        throw new IndexOutOfBoundsException(n + " is out of bonds");
+        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

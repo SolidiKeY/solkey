@@ -31,7 +31,7 @@ public class ForUpdate implements SolidityProgramElement {
         if (n == 0) {
             return update;
         }
-        throw new IndexOutOfBoundsException();
+        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

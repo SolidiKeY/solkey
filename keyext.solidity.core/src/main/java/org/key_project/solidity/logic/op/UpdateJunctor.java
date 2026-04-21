@@ -44,6 +44,6 @@ public final class UpdateJunctor extends AbstractSortedOperator {
 
     @Override
     public @NonNull SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException("UpdateJunctor " + name() + " has no children");
+        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 }

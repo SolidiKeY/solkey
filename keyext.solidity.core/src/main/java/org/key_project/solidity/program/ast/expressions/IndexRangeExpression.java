@@ -50,8 +50,7 @@ public class IndexRangeExpression extends SolidityExpression {
                 return endExp;
             n--;
         }
-        throw new IndexOutOfBoundsException(
-            " n should be (0 <= " + n + " < " + getChildCount() + ")");
+        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

@@ -85,7 +85,7 @@ public class FunctionDeclaration extends DeclarationClass implements Named {
                     if (n == 0) {
                         return body;
                     }
-                    throw new IndexOutOfBoundsException("Index out of bounds");
+                    throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
                 }
             }
         }

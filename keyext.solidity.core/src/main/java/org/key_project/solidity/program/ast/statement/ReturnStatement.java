@@ -30,7 +30,7 @@ public class ReturnStatement implements Statement {
     public @NonNull SyntaxElement getChild(int n) {
         if (n == 0 && returnExp != null)
             return returnExp;
-        throw new IndexOutOfBoundsException();
+        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

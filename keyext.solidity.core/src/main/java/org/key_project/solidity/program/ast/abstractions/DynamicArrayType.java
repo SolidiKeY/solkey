@@ -44,7 +44,7 @@ public class DynamicArrayType implements Type, SyntaxElement {
     public @NonNull SyntaxElement getChild(int n) {
         if (n == 0)
             return type;
-        throw new IndexOutOfBoundsException(n + " should be 0");
+        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

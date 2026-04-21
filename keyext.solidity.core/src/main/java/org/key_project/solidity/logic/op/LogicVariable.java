@@ -64,7 +64,7 @@ public final class LogicVariable extends AbstractSortedOperator
 
     @Override
     public @NonNull SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException("Logic variable " + name() + " does not have children");
+        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

@@ -31,7 +31,7 @@ public class ForInit implements SolidityProgramElement {
         if (n == 0) {
             return init;
         }
-        throw new IndexOutOfBoundsException();
+        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

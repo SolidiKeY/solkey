@@ -55,7 +55,7 @@ public class MappingType implements Type {
         else if (n == 1) {
             return valueType;
         }
-        throw new IndexOutOfBoundsException(n + " should be 0 or 1");
+        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override
