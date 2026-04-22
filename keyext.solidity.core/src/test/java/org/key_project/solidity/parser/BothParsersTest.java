@@ -12,6 +12,7 @@ import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.abstractions.*;
 import org.key_project.solidity.program.ast.declarations.*;
+import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.program.parser.SolcParser;
 
@@ -50,6 +51,12 @@ public class BothParsersTest {
         SolidityParser parser = parse(s);
         StatementContext stmCtx = parser.statement();
         return (Statement) stk.visitStatement(stmCtx);
+    }
+
+    static public Expression parseExpression(String s) {
+        SolidityParser parser = parse(s);
+        ExpressionContext expCtx = parser.expression();
+        return stk.visitExpression(expCtx);
     }
 
     @Test
@@ -134,6 +141,23 @@ public class BothParsersTest {
                     .getProgramVariable().getType();
 
         assertSame(contractArrayType, parsedArrayType);
+    }
+
+    @Test
+    void sameNewExpression() throws IOException {
+        // language=solidity
+        String contract = """
+                contract NewExpressionContract {
+                    function f() public {
+                        new uint256[](5);
+                    }
+                }""";
+        ContractDeclaration contractDec = solcParser.getDeclStrJsonParser(contract);
+        FunctionDeclaration func = contractDec.getFunctions().getFirst();
+        Block body = func.getBody();
+        ExpressionStatement exprStmt = (ExpressionStatement) body.getStatements().get(0);
+
+        assertEquals(exprStmt.getExpression(), parseExpression("new uint256[](5)"));
     }
 
 }

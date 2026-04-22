@@ -168,8 +168,9 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitNewInstance(NewInstanceContext ctx) {
-        KeYSolidityType func = (KeYSolidityType) visitTypeName(ctx.typeName());
-        return new NewExpression(func.getSort().toString(), func);
+        KeYSolidityType keyType = (KeYSolidityType) visitTypeName(ctx.typeName());
+        Type type = keyType.getSolidityType();
+        return new NewExpression(type.name().toString(), type);
     }
 
     @Override

@@ -36,4 +36,18 @@ public class Uint256Literal extends Literal {
     public void visit(Visitor v) {
         v.performActionOnUint256Literal(this);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof Uint256Literal that))
+            return false;
+        return Objects.equals(value, that.value);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(value);
+    }
 }

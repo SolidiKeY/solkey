@@ -4,6 +4,7 @@
 package org.key_project.solidity.program.ast.expressions;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.key_project.logic.SyntaxElement;
@@ -79,5 +80,21 @@ public class FunctionCallExpression extends SolidityExpression {
 
     public Expression getArgument(int i) {
         return arguments.get(i);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof FunctionCallExpression that))
+            return false;
+        return Objects.equals(arguments, that.arguments)
+            && Objects.equals(functionExp, that.functionExp)
+            && Objects.equals(type, that.type);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(arguments, functionExp, type);
     }
 }
