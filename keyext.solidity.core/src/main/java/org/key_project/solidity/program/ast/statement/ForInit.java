@@ -28,9 +28,8 @@ public class ForInit implements SolidityProgramElement {
 
     @Override
     public @NonNull SyntaxElement getChild(int n) {
-        if (n == 0) {
+        if (n == 0)
             return init;
-        }
         throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 

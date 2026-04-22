@@ -130,10 +130,6 @@ public interface Visitor {
 
     void performActionOnModifierReference(ModifierReference x);
 
-    void performActionOnParameterVariableReference(ParameterVariableReference x);
-
-    void performActionOnStateVariableReference(StateVariableReference x);
-
     void performActionOnTypeReference(TypeReference x);
 
     void performActionOnUnresolvedReferenceException(UnresolvedReferenceException x);

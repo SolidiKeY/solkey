@@ -716,28 +716,6 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
     }
 
     @Override
-    public void performActionOnParameterVariableReference(ParameterVariableReference x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ParameterVariableReference(changeList, x.getType(), x.name);
-            }
-        };
-        def.doAction(x);
-    }
-
-    @Override
-    public void performActionOnStateVariableReference(StateVariableReference x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new StateVariableReference(changeList, x.getType(), x.name);
-            }
-        };
-        def.doAction(x);
-    }
-
-    @Override
     public void performActionOnTypeReference(TypeReference x) {
         DefaultAction def = new DefaultAction(x) {
             @Override

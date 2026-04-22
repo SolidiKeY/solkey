@@ -321,16 +321,6 @@ public abstract class SolidityASTVisitor extends SolidityASTWalker implements Vi
     }
 
     @Override
-    public void performActionOnParameterVariableReference(ParameterVariableReference x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnStateVariableReference(StateVariableReference x) {
-        doDefaultAction(x);
-    }
-
-    @Override
     public void performActionOnTypeReference(TypeReference x) {
         doDefaultAction(x);
     }

@@ -16,8 +16,6 @@ import org.jspecify.annotations.Nullable;
 public class ReturnStatement implements Statement {
     private @Nullable Expression returnExp;
 
-    public ReturnStatement() {}
-
     public ReturnStatement(@Nullable Expression returnExp) {
         this.returnExp = returnExp;
     }

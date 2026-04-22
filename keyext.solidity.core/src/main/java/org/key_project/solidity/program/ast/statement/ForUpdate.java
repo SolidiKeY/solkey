@@ -28,9 +28,8 @@ public class ForUpdate implements SolidityProgramElement {
 
     @Override
     public @NonNull SyntaxElement getChild(int n) {
-        if (n == 0) {
+        if (n == 0)
             return update;
-        }
         throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
