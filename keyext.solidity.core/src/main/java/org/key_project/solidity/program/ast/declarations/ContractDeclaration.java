@@ -5,6 +5,7 @@ package org.key_project.solidity.program.ast.declarations;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
@@ -48,22 +49,25 @@ public class ContractDeclaration extends DeclarationClass implements Type {
 
     @Override
     public @NonNull String toString() {
-        String contract = "contract ";
-        contract += name + " {\n";
-        contract += structs.stream().map(it -> "struct " + it.name + " {\n"
-            + it.getFields().stream().map(jt -> jt.toString() + "\n").collect(Collectors.joining())
-            + "}\n").collect(Collectors.joining());
-        for (int i = 0; i < fields.size(); i++) {
-            contract += fields.get(i).toString();
-            contract += "\n";
-        }
-        contract +=
-            modifiers.stream().map(ModifierDeclaration::toString).collect(Collectors.joining("\n"));
-        contract += enums.stream().map(EnumDeclaration::toString).collect(Collectors.joining("\n"));
-        contract += getFunctions().stream().map(FunctionDeclaration::toString)
-                .collect(Collectors.joining("\n"));
-        contract += "}";
-        return contract;
+        return Stream.of(
+                "contract " + name + " {",
+                structs.stream()
+                    .map(it -> "struct " + it.name + " {\n"
+                        + it.getFields().stream()
+                            .map(jt -> jt.toString() + "\n")
+                            .collect(Collectors.joining())
+                        + "}")
+                    .collect(Collectors.joining("\n")),
+                fields.stream().map(StateVariableDeclaration::toString)
+                    .collect(Collectors.joining("\n")),
+                modifiers.stream().map(ModifierDeclaration::toString)
+                    .collect(Collectors.joining("\n")),
+                enums.stream().map(EnumDeclaration::toString).collect(Collectors.joining("\n")),
+                getFunctions().stream().map(FunctionDeclaration::toString)
+                    .collect(Collectors.joining("\n")),
+                "}")
+            .filter(s -> !s.isEmpty())
+            .collect(Collectors.joining("\n"));
     }
 
     @Override

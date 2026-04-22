@@ -4,14 +4,12 @@
 package org.key_project.solidity.program.ast.declarations;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.expressions.Expression;
-import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.Nullable;
@@ -33,14 +31,6 @@ public class StateVariableDeclaration extends DeclarationClass {
         this.programVariable = programVariable;
         this.initializer = initializer;
         this.visibility = visibility;
-    }
-
-    public StateVariableDeclaration(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(ImmutableArray.class)));
-        this.programVariable =
-            Objects.requireNonNull(children.removeFirstOccurrence(ProgramVariable.class));
-        this.initializer = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
-        this.visibility = Objects.requireNonNull(children.removeFirstOccurrence(Visibility.class));
     }
 
     public @Nullable Expression getInitializer() {
