@@ -4,7 +4,10 @@ plugins {
 
 description = "The core data structures for KeY for Solidity"
 
-configurations { antlr4 }
+configurations {
+    antlr4
+    proguardTool
+}
 
 repositories {
     mavenCentral()
@@ -15,6 +18,7 @@ dependencies {
     api project(':key.ncore')
     api project(':key.ncore.calculus')
     antlr4 "org.antlr:antlr4:4.13.2"
+    proguardTool 'com.guardsquare:proguard-gradle:7.5.0'
     api "org.antlr:antlr4-runtime:4.13.2"
 
     implementation 'org.jspecify:jspecify:1.0.0'
@@ -97,3 +101,57 @@ tasks.register("downloadBinary") {
 }
 
 processResources.dependsOn("downloadBinary")
+
+task proguardAnalyze(dependsOn: jar) {
+    group = 'verification'
+    description = 'Finds unused public methods in the AST package via ProGuard shrink analysis'
+
+    def unusedReport = layout.buildDirectory.file('reports/proguard/unused-ast-methods.txt')
+    def outputJar    = layout.buildDirectory.file('proguard/analyzed.jar')
+    def rulesFile    = layout.buildDirectory.file('proguard/rules.pro')
+
+    inputs.files jar.archiveFile, configurations.runtimeClasspath
+    outputs.file unusedReport
+
+    doLast {
+        rulesFile.get().asFile.parentFile.mkdirs()
+        outputJar.get().asFile.parentFile.mkdirs()
+
+        def libLines = configurations.runtimeClasspath.files.collect {
+            "-libraryjars ${it.absolutePath}"
+        }.join('\n')
+        def javaHome = System.getProperty('java.home')
+        def jmodBase = new File("${javaHome}/jmods/java.base.jmod")
+
+        rulesFile.get().asFile.text = """\
+${libLines}
+${jmodBase.exists() ? "-libraryjars ${jmodBase.absolutePath}(!**.jar;!module-info.class)" : ''}
+
+-injars ${jar.archiveFile.get().asFile.absolutePath}
+-outjars ${outputJar.get().asFile.absolutePath}
+
+-dontoptimize
+-dontobfuscate
+-dontwarn
+
+-keep class !org.key_project.solidity.program.ast.** { public protected *; }
+-keep interface org.key_project.solidity.program.ast.** { *; }
+-keepclassmembers,allowshrinking class org.key_project.solidity.program.ast.** {
+    public protected *;
+}
+
+-printusage '${unusedReport.get().asFile.absolutePath}'
+"""
+        def javaPath = "${System.getProperty('java.home')}/bin/java"
+        def classpathStr = configurations.proguardTool.asPath
+        def proc = new ProcessBuilder(
+                javaPath, '-cp', classpathStr, 'proguard.ProGuard',
+                "@${rulesFile.get().asFile.absolutePath}"
+        ).redirectErrorStream(true).start()
+        proc.inputStream.eachLine { line -> logger.lifecycle(line) }
+        def exitCode = proc.waitFor()
+        if (exitCode != 0) throw new GradleException("ProGuard failed with exit code $exitCode")
+
+        logger.lifecycle("ProGuard unused AST report: ${unusedReport.get().asFile.absolutePath}")
+    }
+}

@@ -6,6 +6,7 @@ package org.key_project.solidity.logic.parser;
 import java.io.IOException;
 import java.util.List;
 
+import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
@@ -65,6 +66,8 @@ public class SolJsonParserTest {
         assertEquals(1, balanceDecl.getChildCount());
         assertInstanceOf(ProgramVariable.class, balanceDecl.getChild(0));
         assertThrows(IndexOutOfBoundsException.class, () -> balanceDecl.getChild(1));
+        assertTrue(balanceDecl.toString().contains("balance"));
+        assertEquals("SimpleContract", contractDeclaration.name().toString());
     }
 
     @Test
@@ -178,6 +181,7 @@ public class SolJsonParserTest {
         assertThrows(IndexOutOfBoundsException.class, () -> block.getChild(0));
         assertSame(Public, functionDeclaration.getVisibility());
         assertSame(pure, functionDeclaration.getStateMutability());
+        assertEquals("func", functionDeclaration.name().toString());
     }
 
     @Test
@@ -467,9 +471,16 @@ public class SolJsonParserTest {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         List<StructDeclaration> structs = contractDeclaration.getStructs();
         assertEquals(1, structs.size());
-        assertEquals(1, structs.getFirst().getFields().size());
+        StructDeclaration struct = structs.getFirst();
+        assertEquals(1, struct.getFields().size());
         assertEquals(Storage,
             contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getLocation());
+        assertEquals(1, struct.getChildCount());
+        assertInstanceOf(FieldDeclaration.class, struct.getChild(0));
+        FieldDeclaration field = struct.getFields().get(0);
+        assertNotNull(field.getTypeReference());
+        assertNull(field.getInitializer());
+        assertNotNull(field.getTypeReference().getTypeName());
     }
 
     @Test
@@ -677,6 +688,9 @@ public class SolJsonParserTest {
         assertInstanceOf(ProgramVariable.class, fCall.getChild(0)); // v
         assertInstanceOf(FunctionReference.class, fCall.getChild(1)); // functionExp
         assertThrows(IndexOutOfBoundsException.class, () -> fCall.getChild(2));
+        ImmutableArray<Expression> args = fCall.getArguments();
+        assertEquals(1, args.size());
+        assertSame(fCall.getArgument(0), args.get(0));
     }
 
     @Test
@@ -793,6 +807,10 @@ public class SolJsonParserTest {
             .getBody().getStatements().get(0);
         assertEquals(4, forStmt.getChildCount());
         assertThrows(IndexOutOfBoundsException.class, () -> forStmt.getChild(4));
+        assertNotNull(forStmt.getInit());
+        assertNotNull(forStmt.getInit().getInit());
+        assertNotNull(forStmt.getUpdate());
+        assertNotNull(forStmt.getUpdate().getUpdate());
     }
 
     @Test
@@ -930,6 +948,20 @@ public class SolJsonParserTest {
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
         assertTrue(contractS.contains("catch Error(string memory reason)"));
+        TryStatement tryStmt = (TryStatement) contractDec.getFunctions().getFirst()
+            .getBody().getStatements().get(0);
+        ImmutableArray<CatchClause> clauses = tryStmt.getCatchClauses();
+        assertEquals(2, clauses.size());
+        assertSame(tryStmt.getCatchClause(0), clauses.get(0));
+        CatchClause errorClause = tryStmt.getCatchClause(0);
+        assertEquals("Error", ((Object) errorClause.getKind()).toString());
+        assertTrue(errorClause.getBody().toString().contains("int j"));
+        StatementVariableDeclaration catchDecl = errorClause.getCatchDeclaration();
+        assertEquals("string memory reason", catchDecl.toString());
+        assertSame(STRING, catchDecl.getProgramVariable().getType());
+        CatchClause allClause = tryStmt.getCatchClause(1);
+        assertEquals("ALL", ((Object) allClause.getKind()).toString());
+        assertTrue(allClause.getBody().toString().contains("int k"));
     }
 
     @Disabled("Revert and require should be implemented as a regular function")
@@ -1068,11 +1100,15 @@ public class SolJsonParserTest {
         assertEquals(2, modRefs.size());
         assertEquals("mod1", modRefs.get(0).name);
         assertEquals("mod2", modRefs.get(1).name);
+        assertEquals("mod1", modRefs.get(0).toString());
+        assertEquals(0, modRefs.get(0).getChildCount());
+        assertThrows(IndexOutOfBoundsException.class, () -> modRefs.get(0).getChild(0));
         for (ModifierDeclaration mod : modDecls) {
             assertEquals(1, mod.getChildCount());
             assertInstanceOf(Block.class, mod.getChild(0));
             assertThrows(IndexOutOfBoundsException.class, () -> mod.getChild(1));
         }
+        assertTrue(contractDec.getModifiers().get(0).toString().contains("mod1"));
         assertEquals(3, contractDec.getChildCount());
         assertInstanceOf(ModifierDeclaration.class, contractDec.getChild(0));
         assertInstanceOf(ModifierDeclaration.class, contractDec.getChild(1));
@@ -1169,6 +1205,16 @@ public class SolJsonParserTest {
         assertEquals(1, contractDec.getChildCount());
         assertInstanceOf(EnumDeclaration.class, contractDec.getChild(0));
         assertThrows(IndexOutOfBoundsException.class, () -> contractDec.getChild(1));
+        assertEquals("State", stateEnum.name().toString());
+        assertEquals(2, stateEnum.getChildCount());
+        assertInstanceOf(MemberEnumDeclaration.class, stateEnum.getChild(0));
+        assertTrue(stateEnum.toString().contains("enum State"));
+        assertEquals("Begin", stateEnum.findMember(new Name("Begin")).getName().toString());
+        MemberEnumDeclaration member = stateEnum.getMembers().get(0);
+        assertEquals("Begin", member.getName().toString());
+        assertEquals(0, member.getChildCount());
+        assertThrows(IndexOutOfBoundsException.class, () -> member.getChild(0));
+        assertEquals("Begin", member.toString());
     }
 
     @Test
