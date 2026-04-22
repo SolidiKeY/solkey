@@ -121,6 +121,8 @@ After every refactor related to Solidity code, run the Solidity module tests to 
 
 This ensures that modifications to the Solidity verification pipeline do not break existing functionality.
 
+**Test Creation Policy:** When adding tests, prefer modifying existing test classes over creating new ones. Only create new test files when it is not reasonably possible to add tests to existing files, or when explicitly instructed to do so.
+
 ## Key Inherited KeY Concepts
 
 - **`Term`** (`key.ncore`) — immutable, has an `Operator`, subterms, bound variables, and a `Sort`.
