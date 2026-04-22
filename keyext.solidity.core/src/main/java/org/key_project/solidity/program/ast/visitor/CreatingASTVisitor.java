@@ -199,6 +199,17 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
     }
 
     @Override
+    public void performActionOnNewExpression(NewExpression x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new NewExpression(x.getFunction(), x.getType());
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
     public void performActionOnUnresolvedTypeException(UnresolvedTypeException x) {
         DefaultAction def = new DefaultAction(x) {
             @Override

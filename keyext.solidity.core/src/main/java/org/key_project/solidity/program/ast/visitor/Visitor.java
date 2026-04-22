@@ -36,6 +36,8 @@ public interface Visitor {
 
     void performActionOnTupleExpression(TupleExpression x);
 
+    void performActionOnNewExpression(NewExpression x);
+
     void performActionOnUnresolvedTypeException(UnresolvedTypeException x);
 
     void performActionOnBoolLiteral(BoolLiteral x);

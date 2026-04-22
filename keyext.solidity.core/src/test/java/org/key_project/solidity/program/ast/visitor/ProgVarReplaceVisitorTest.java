@@ -272,6 +272,19 @@ public class ProgVarReplaceVisitorTest {
     }
 
     @Test
+    void testNewExpression() {
+        Block body = parseBlock("{ int original; int[] memory arr = new int[](original); }");
+        extractAndMap(body);
+
+        Block result = runOnBlock(body);
+        assertSame(replacement, getDeclaredVar(result));
+        DeclarationStatement arrDecl = (DeclarationStatement) result.getStatements().get(1);
+        FunctionCallExpression newCall = (FunctionCallExpression) arrDecl.getInitialValue();
+        assertSame(replacement, newCall.getArgument(0));
+        assertInstanceOf(NewExpression.class, newCall.getFunctionExp());
+    }
+
+    @Test
     void testAddress() {
         Block body = parseBlock("{ try false { } catch { } }");
         runOnBlock(body);

@@ -86,6 +86,11 @@ public abstract class SolidityASTVisitor extends SolidityASTWalker implements Vi
     }
 
     @Override
+    public void performActionOnNewExpression(NewExpression x) {
+        doDefaultAction(x);
+    }
+
+    @Override
     public void performActionOnUnresolvedTypeException(UnresolvedTypeException x) {
         doDefaultAction(x);
     }

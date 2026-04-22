@@ -128,12 +128,16 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitFunctionCallExp(FunctionCallExpContext ctx) {
-        String nameS = visitExpression(ctx.expression()).toString();
+        Expression functionExp = visitExpression(ctx.expression());
+        FunctionCallArguments args =
+            (FunctionCallArguments) visitFunctionCallArguments(ctx.functionCallArguments());
+        if (functionExp instanceof NewExpression newExp) {
+            return new FunctionCallExpression(newExp.getType(), newExp, args.getArgs());
+        }
+        String nameS = functionExp.toString();
         FunctionDeclaration functionDeclaration = localFunctions.lookup(new Name(nameS));
         FunctionReference functionRef =
             new FunctionReference(functionDeclaration, functionDeclaration.getType());
-        FunctionCallArguments args =
-            (FunctionCallArguments) visitFunctionCallArguments(ctx.functionCallArguments());
         return new FunctionCallExpression(functionRef.getType(), functionRef, args.getArgs());
     }
 

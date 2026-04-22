@@ -29,7 +29,7 @@ public class NewExpression extends SolidityExpression {
 
     @Override
     public void visit(Visitor v) {
-
+        v.performActionOnNewExpression(this);
     }
 
     @Override
