@@ -946,8 +946,6 @@ public class SolJsonParserTest {
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
-        String contractS = contractDec.toString();
-        assertTrue(contractS.contains("catch Error(string memory reason)"));
         TryStatement tryStmt = (TryStatement) contractDec.getFunctions().getFirst()
             .getBody().getStatements().get(0);
         ImmutableArray<CatchClause> clauses = tryStmt.getCatchClauses();
@@ -955,13 +953,18 @@ public class SolJsonParserTest {
         assertSame(tryStmt.getCatchClause(0), clauses.get(0));
         CatchClause errorClause = tryStmt.getCatchClause(0);
         assertEquals("Error", ((Object) errorClause.getKind()).toString());
-        assertTrue(errorClause.getBody().toString().contains("int j"));
+        DeclarationStatement jDecl =
+            (DeclarationStatement) errorClause.getBody().getStatements().get(0);
+        assertEquals("int j;", jDecl.toString());
         StatementVariableDeclaration catchDecl = errorClause.getCatchDeclaration();
         assertEquals("string memory reason", catchDecl.toString());
         assertSame(STRING, catchDecl.getProgramVariable().getType());
+        assertEquals("catch Error(string memory reason) {\nint j;\n}\n", errorClause.toString());
         CatchClause allClause = tryStmt.getCatchClause(1);
         assertEquals("ALL", ((Object) allClause.getKind()).toString());
-        assertTrue(allClause.getBody().toString().contains("int k"));
+        DeclarationStatement kDecl =
+            (DeclarationStatement) allClause.getBody().getStatements().get(0);
+        assertEquals("int k;", kDecl.toString());
     }
 
     @Disabled("Revert and require should be implemented as a regular function")
