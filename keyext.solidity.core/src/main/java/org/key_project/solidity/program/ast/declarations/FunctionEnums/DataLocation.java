@@ -34,7 +34,7 @@ public enum DataLocation implements Modifier {
     }
 
     public String noDefaultSpaceRightString() {
-        return this.equals(Default) ? "" : toString() + " ";
+        return this.equals(Default) ? "" : this + " ";
     }
 
     @Override
