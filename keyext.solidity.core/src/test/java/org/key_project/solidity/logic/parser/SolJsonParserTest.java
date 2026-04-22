@@ -40,6 +40,8 @@ import org.junit.jupiter.api.condition.OS;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.*;
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.*;
+import static org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility.*;
+import static org.key_project.solidity.program.ast.declarations.FunctionEnums.StateMutability.*;
 import static org.key_project.solidity.program.ast.expressions.literals.BoolLiteral.*;
 import static org.key_project.solidity.program.parser.SolcParserNoServices.getDeclStr;
 
@@ -174,6 +176,8 @@ public class SolJsonParserTest {
         assertThrows(IndexOutOfBoundsException.class, () -> functionDeclaration.getChild(1));
         assertEquals(0, block.getChildCount());
         assertThrows(IndexOutOfBoundsException.class, () -> block.getChild(0));
+        assertSame(Public, functionDeclaration.getVisibility());
+        assertSame(pure, functionDeclaration.getStateMutability());
     }
 
     @Test
@@ -208,6 +212,8 @@ public class SolJsonParserTest {
         assertEquals(1, retStmt.getChildCount());
         assertInstanceOf(ProgramVariable.class, retStmt.getChild(0));
         assertThrows(IndexOutOfBoundsException.class, () -> retStmt.getChild(1));
+        assertSame(Public, function.getVisibility());
+        assertSame(pure, function.getStateMutability());
     }
 
     @Test
@@ -837,8 +843,13 @@ public class SolJsonParserTest {
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
         assertTrue(contractS.contains("SimpleContract(target).f()"));
+        FunctionDeclaration f = contractDec.getFunctions().get(0);
+        assertSame(external, f.getVisibility());
+        assertSame(pure, f.getStateMutability());
         FunctionDeclaration g = contractDec.getFunctions().get(1);
         assertSame(ADDRESS, g.getInputParameters().get(0).getType());
+        assertSame(Public, g.getVisibility());
+        assertSame(nonpayable, g.getStateMutability());
     }
 
     @Test
@@ -1132,6 +1143,9 @@ public class SolJsonParserTest {
 
         FunctionDeclaration refDecl = fRef.referencedDeclaration;
         assertNotNull(refDecl);
+        FunctionDeclaration selfF = contractDec.getFunctions().getFirst();
+        assertSame(Public, selfF.getVisibility());
+        assertSame(nonpayable, selfF.getStateMutability());
     }
 
     @Test

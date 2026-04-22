@@ -31,9 +31,6 @@ public class StatementVariableDeclaration extends DeclarationClass
         super(children);
         this.programVariable =
             Objects.requireNonNull(children.removeFirstOccurrence(ProgramVariable.class));
-        // this.struct = Objects.requireNonNull(children.removeFirstOccurrence(String.class));
-        // this.dataLocation =
-        // Objects.requireNonNull(children.removeFirstOccurrence(DataLocation.class));
     }
 
     @Override
