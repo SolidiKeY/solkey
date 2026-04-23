@@ -14,7 +14,7 @@ import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
 
-public class ModifierDeclaration extends DeclarationClass {
+public class ModifierDeclaration implements Declaration {
 
     private final @NonNull ImmutableArray<@NonNull ProgramVariable> inputParameters;
     private final @NonNull Block body;
@@ -24,7 +24,6 @@ public class ModifierDeclaration extends DeclarationClass {
     public ModifierDeclaration(@NonNull Name name,
             @NonNull List<@NonNull ProgramVariable> inputParameters, @NonNull Block body,
             @NonNull Visibility visibility) {
-        super(new ImmutableArray<>());
         this.name = name;
         this.inputParameters = new ImmutableArray<>(inputParameters);
         this.body = body;

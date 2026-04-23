@@ -17,7 +17,7 @@ import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
 
-public class EnumDeclaration extends DeclarationClass implements Type {
+public class EnumDeclaration implements Declaration, Type {
     private final ImmutableArray<MemberEnumDeclaration> members;
 
     public Name getName() {
@@ -27,7 +27,6 @@ public class EnumDeclaration extends DeclarationClass implements Type {
     private final Name name;
 
     public EnumDeclaration(Name name, List<MemberEnumDeclaration> members) {
-        super(new ImmutableArray<>());
         this.name = name;
         this.members = new ImmutableArray<>(members);
     }

@@ -5,11 +5,9 @@ package org.key_project.solidity.program.ast.declarations;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
-import org.key_project.util.collection.ImmutableArray;
-
 import org.jspecify.annotations.NonNull;
 
-public class MemberEnumDeclaration extends DeclarationClass {
+public class MemberEnumDeclaration implements Declaration {
 
     public @NonNull Name getName() {
         return name;
@@ -18,7 +16,6 @@ public class MemberEnumDeclaration extends DeclarationClass {
     private final @NonNull Name name;
 
     public MemberEnumDeclaration(@NonNull Name name) {
-        super(new ImmutableArray<>());
         this.name = name;
     }
 

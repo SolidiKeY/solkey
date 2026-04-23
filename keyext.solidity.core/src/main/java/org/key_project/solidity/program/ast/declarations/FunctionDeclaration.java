@@ -19,7 +19,7 @@ import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
 
-public class FunctionDeclaration extends DeclarationClass implements Named {
+public class FunctionDeclaration implements Declaration, Named {
     // TODO: Create another class for return type
     private final ImmutableArray<ProgramVariable> returnParameters;
     private final ImmutableArray<ProgramVariable> inputParameters;
@@ -41,7 +41,6 @@ public class FunctionDeclaration extends DeclarationClass implements Named {
             List<ProgramVariable> inputParameters, Block body, String kind,
             Visibility visibility, StateMutability stateMutability,
             List<ModifierReference> modifiers, String documentation) {
-        super(new ImmutableArray<>());
         this.name = name;
         this.returnParameters = new ImmutableArray<>(returnParameters);
         this.type = type;

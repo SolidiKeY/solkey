@@ -3,49 +3,42 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.declarations;
 
-import java.util.Objects;
-
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.visitor.Visitor;
-import org.key_project.util.ExtList;
-import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
+import org.key_project.util.ExtList;
+
+import java.util.Objects;
 
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Default;
 
 //
-public class StatementVariableDeclaration extends DeclarationClass
-        implements SolidityProgramElement {
+public class StatementVariableDeclaration implements Declaration, SolidityProgramElement {
     private final ProgramVariable programVariable;
 
     public StatementVariableDeclaration(ProgramVariable programVariable) {
-        super(new ImmutableArray<>());
         this.programVariable = programVariable;
     }
 
-    public StatementVariableDeclaration(ExtList children) {
-        super(children);
-        this.programVariable =
-            Objects.requireNonNull(children.removeFirstOccurrence(ProgramVariable.class));
+    public StatementVariableDeclaration(ExtList extList) {
+        this.programVariable = Objects.requireNonNull(extList.removeFirstOccurrence(ProgramVariable.class));
     }
 
     @Override
     public @NonNull SyntaxElement getChild(int n) {
-        if (n < 0 || n >= getChildCount())
-            throw new IndexOutOfBoundsException(
-                "Index should be 0 <= " + n + " < " + getChildCount());
-        if (n < modifiers.size())
-            return modifiers.get(n);
-        return programVariable;
+        if (n == 0)
+            return programVariable;
+        throw new IndexOutOfBoundsException(
+            "Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override
     public int getChildCount() {
-        return 1 + modifiers.size();
+        return 1;
     }
 
     @Override

@@ -18,7 +18,7 @@ import org.key_project.util.collection.ImmutableArray;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.jspecify.annotations.NonNull;
 
-public class StructDeclaration extends DeclarationClass implements Type, Resolver {
+public class StructDeclaration implements Declaration, Type, Resolver {
     public final @NonNull Name name;
     private final @NonNull ImmutableArray<@NonNull FieldDeclaration> fields;
     private final int contractId;
@@ -26,7 +26,6 @@ public class StructDeclaration extends DeclarationClass implements Type, Resolve
 
 
     public StructDeclaration(@NonNull Name name, List<FieldDeclaration> fields, int contractId) {
-        super(new ImmutableArray<>());
         this.name = name;
         this.fields = new ImmutableArray<>(fields);
         this.contractId = contractId;

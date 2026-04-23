@@ -10,11 +10,9 @@ import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.expressions.Expression;
-import org.key_project.util.collection.ImmutableArray;
-
 import org.jspecify.annotations.Nullable;
 
-public class StateVariableDeclaration extends DeclarationClass {
+public class StateVariableDeclaration implements Declaration {
 
     private final @Nullable Expression initializer;
     private final Visibility visibility;
@@ -27,7 +25,6 @@ public class StateVariableDeclaration extends DeclarationClass {
 
     public StateVariableDeclaration(ProgramVariable programVariable,
             @Nullable Expression initializer, Visibility visibility) {
-        super(new ImmutableArray<>());
         this.programVariable = programVariable;
         this.initializer = initializer;
         this.visibility = visibility;

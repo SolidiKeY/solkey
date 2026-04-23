@@ -17,7 +17,7 @@ import org.key_project.util.collection.ImmutableArray;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-public class ContractDeclaration extends DeclarationClass implements Type {
+public class ContractDeclaration implements Declaration, Type {
 
     private final ImmutableArray<StateVariableDeclaration> fields;
     private final ImmutableArray<StructDeclaration> structs;
@@ -30,7 +30,6 @@ public class ContractDeclaration extends DeclarationClass implements Type {
             List<StructDeclaration> structs,
             List<ModifierDeclaration> modifiers, List<FunctionDeclaration> functions,
             List<EnumDeclaration> enums) {
-        super(new ImmutableArray<>());
         this.name = name;
         this.fields = new ImmutableArray<>(fields.toArray(new StateVariableDeclaration[0]));
         this.structs = new ImmutableArray<>(structs);

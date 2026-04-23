@@ -7,19 +7,16 @@ import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.references.TypeReference;
-import org.key_project.util.collection.ImmutableArray;
-
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-public class FieldDeclaration extends DeclarationClass {
+public class FieldDeclaration implements Declaration {
 
     private final @NonNull TypeReference typeReference;
     private final @Nullable Expression initializer;
     private final @NonNull Name name;
 
     public FieldDeclaration(@NonNull Name name, @NonNull TypeReference type) {
-        super(new ImmutableArray<>());
         this.name = name;
         this.typeReference = type;
         this.initializer = null;
