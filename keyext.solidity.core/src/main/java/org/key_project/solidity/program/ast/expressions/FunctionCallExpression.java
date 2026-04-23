@@ -42,18 +42,16 @@ public class FunctionCallExpression extends SolidityExpression {
         super(type);
         List<Expression> exprs = new java.util.ArrayList<>();
         Expression expr;
-        while ((expr = children.removeFirstOccurrence(Expression.class)) != null) {
+        while ((expr = children.removeFirstOccurrence(Expression.class)) != null)
             exprs.add(expr);
-        }
         this.functionExp = exprs.remove(exprs.size() - 1);
         this.arguments = new ImmutableArray<>(exprs);
     }
 
     @Override
     public @NonNull SyntaxElement getChild(int n) {
-        if (0 <= n && n < arguments.size()) {
+        if (0 <= n && n < arguments.size())
             return arguments.get(n);
-        }
         if (n == arguments.size())
             return functionExp;
         throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());

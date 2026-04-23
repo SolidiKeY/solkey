@@ -51,7 +51,6 @@ public class SolJSONParser {
 
     /// keeps track of JSON ids assigned to declarations, required for resolving field references,
     /// types etc.
-    /// TODO: what if a type under declaration references itself (is that possible in Solidity?)
     private final HashMap<Integer, SyntaxElement> id2Name = new HashMap<>();
 
     private final HashMap<Integer, TupleType> functionId2Type = new HashMap<>();

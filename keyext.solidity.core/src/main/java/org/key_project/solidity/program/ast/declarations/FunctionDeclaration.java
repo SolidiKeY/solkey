@@ -70,26 +70,19 @@ public class FunctionDeclaration extends DeclarationClass implements Named {
 
     @Override
     public @NonNull SyntaxElement getChild(int n) {
-        if (n < returnParameters.size()) {
+        if (n < returnParameters.size())
             return returnParameters.get(n);
-        } else {
-            n -= returnParameters.size();
-            if (n < inputParameters.size()) {
-                return inputParameters.get(n);
-            } else {
-                n -= inputParameters.size();
-                if (n < modifiers.size()) {
-                    return modifiers.get(n);
-                } else {
-                    n -= modifiers.size();
-                    if (n == 0) {
-                        return body;
-                    }
-                    throw new IndexOutOfBoundsException(
-                        "Index should be 0 <= " + n + " < " + getChildCount());
-                }
-            }
-        }
+        n -= returnParameters.size();
+        if (n < inputParameters.size())
+            return inputParameters.get(n);
+        n -= inputParameters.size();
+        if (n < modifiers.size())
+            return modifiers.get(n);
+        n -= modifiers.size();
+        if (n == 0)
+            return body;
+        throw new IndexOutOfBoundsException(
+            "Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

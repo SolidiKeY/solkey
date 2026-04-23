@@ -21,11 +21,10 @@ public enum DataLocation implements Modifier {
 
     public static DataLocation fromString(String text) {
         for (DataLocation level : DataLocation.values()) {
-            if (level.label.equalsIgnoreCase(text)) {
+            if (level.label.equalsIgnoreCase(text))
                 return level;
-            }
         }
-        return null;
+        throw new RuntimeException("Datalocation " + text + " does not exists");
     }
 
     @Override

@@ -22,7 +22,6 @@ public class CatchClause implements SolidityProgramElement {
     }
 
     private final Kind kind;
-    // TODO: test multiple catches
     private final ImmutableArray<StatementVariableDeclaration> declarations;
     private final Block body;
 
@@ -32,20 +31,19 @@ public class CatchClause implements SolidityProgramElement {
     public CatchClause(ImmutableArray<StatementVariableDeclaration> declarations, Block body) {
         this.declarations = declarations;
         this.body = body;
-        if (declarations == null) {
+        if (declarations == null)
             this.kind = Kind.ALL;
-        } else {
+        else {
             Type type = declarations.get(0).getProgramVariable().getType();
-            if (type == PrimitiveType.UINT) {
+            if (type == PrimitiveType.UINT)
                 this.kind = Kind.Panic;
-            } else if (type == PrimitiveType.STRING) {
+            else if (type == PrimitiveType.STRING)
                 this.kind = Kind.Error;
-            } else if (type == PrimitiveType.BYTES) {
+            else if (type == PrimitiveType.BYTES)
                 this.kind = Kind.LowLevel;
-            } else {
+            else
                 throw new IllegalArgumentException(
                     "Unknown catch clause kind for declared catch variable " + declarations);
-            }
         }
     }
 
@@ -104,12 +102,10 @@ public class CatchClause implements SolidityProgramElement {
 
     @Override
     public boolean equals(@Nullable Object obj) {
-        if (this == obj) {
+        if (this == obj)
             return true;
-        }
-        if (obj == null || getClass() != obj.getClass()) {
+        if (obj == null || getClass() != obj.getClass())
             return false;
-        }
         final CatchClause other = (CatchClause) obj;
         return Objects.equals(declarations, other.declarations) && Objects.equals(body, other.body);
     }

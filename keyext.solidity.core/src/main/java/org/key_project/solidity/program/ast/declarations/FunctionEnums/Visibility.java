@@ -12,14 +12,13 @@ public enum Visibility {
         this.label = label;
     }
 
-
     public static Visibility fromString(String text) {
         for (Visibility level : Visibility.values()) {
             if (level.label.equalsIgnoreCase(text)) {
                 return level;
             }
         }
-        return null;
+        throw new RuntimeException("Visibility " + text + " does not exists");
     }
 
     @Override

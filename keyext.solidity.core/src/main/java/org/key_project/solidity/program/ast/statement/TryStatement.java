@@ -49,13 +49,11 @@ public class TryStatement implements Statement, ProgramPrefix {
         if (n == 0)
             return expression;
         n -= 1;
-        if (n >= 0 && n < returnDeclaration.size()) {
+        if (n >= 0 && n < returnDeclaration.size())
             return returnDeclaration.get(n);
-        }
         n -= returnDeclaration.size();
-        if (n == 0) {
+        if (n == 0)
             return body;
-        }
         n -= 1;
         return catchClauses.get(n);
     }
@@ -116,12 +114,10 @@ public class TryStatement implements Statement, ProgramPrefix {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
+        if (this == obj)
             return true;
-        }
-        if (obj == null || getClass() != obj.getClass()) {
+        if (obj == null || getClass() != obj.getClass())
             return false;
-        }
         final TryStatement other = (TryStatement) obj;
         return Objects.equals(this.expression, other.expression) &&
                 Objects.equals(this.returnDeclaration, other.returnDeclaration) &&
