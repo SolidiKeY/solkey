@@ -7,7 +7,7 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
-// TODO: Not all declarations should be below a common class
+//TODO Delete this class, only functions have modifiers
 public abstract class DeclarationClass implements Declaration, SyntaxElement {
     final ImmutableArray<Modifier> modifiers;
 

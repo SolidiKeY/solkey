@@ -25,7 +25,7 @@ public class CatchClause implements SolidityProgramElement {
     private final ImmutableArray<StatementVariableDeclaration> declarations;
     private final Block body;
 
-    // cache for hashcode
+    // TODO: Make this field protected and in SolidityProgramElement
     private int hashCode = -1;
 
     public CatchClause(ImmutableArray<StatementVariableDeclaration> declarations, Block body) {
@@ -68,7 +68,6 @@ public class CatchClause implements SolidityProgramElement {
         return body;
     }
 
-    // TODO: body should be just one child
     @Override
     public int getChildCount() {
         int count = declarations == null ? 0 : 1;
@@ -81,7 +80,6 @@ public class CatchClause implements SolidityProgramElement {
         v.performActionOnCatchClause(this);
     }
 
-    // TODO: body should be just one child
     @Override
     public SolidityProgramElement getChild(int index) {
         if (declarations != null)
@@ -91,6 +89,7 @@ public class CatchClause implements SolidityProgramElement {
         return body.getStatements().get(index);
     }
 
+    // TODO: Move this to SolidityProgramElement and should be protected
     @Override
     public int hashCode() {
         if (hashCode == -1) {

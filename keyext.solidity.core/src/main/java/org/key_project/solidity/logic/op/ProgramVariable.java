@@ -29,7 +29,6 @@ import org.jspecify.annotations.NonNull;
 public class ProgramVariable extends AbstractSortedOperator
         implements Expression, UpdateableOperator, IProgramVariable {
     private final KeYSolidityType type;
-    // TODO: why is the data location needed. Is that not indirectly present in the type?
     private final DataLocation dataLocation;
 
     public ProgramVariable(Name name, Sort s, KeYSolidityType type, DataLocation location) {
