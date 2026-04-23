@@ -4,56 +4,14 @@
 package org.key_project.solidity.program.ast.references;
 
 
+import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.declarations.Declaration;
 
-public interface VariableReference {
-    // protected Type type;
-    // protected final Name typeName;
-    //
-    // protected VariableReference(Type type) {
-    // super(type);
-    // this.type = type;
-    // this.typeName = type.name();
-    // }
-    //
-    // protected VariableReference(Name typeName, Type type) {
-    // super(type);
-    // this.typeName = typeName;
-    // }
-    //
-    // protected VariableReference(ExtList children) {
-    // super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
-    // this.type = Objects.requireNonNull(children.removeFirstOccurrence(Type.class));
-    // this.typeName = type.name();
-    // }
-    //
-    // public boolean isResolved() {
-    // return type != null;
-    // }
-    //
-    // public void resolve(TypeResolver resolver) {
-    // if (!isResolved()) {
-    // type = resolver.resolveTypeByName(typeName);
-    // }
-    // }
-    //
-    // public abstract Name name();
-    //
-    // public abstract Declaration getDeclaration();
-    //
-    // @Override
-    // public SyntaxElement getChild(int n) {
-    // throw new IndexOutOfBoundsException("A variable reference has no children");
-    // }
-    //
-    // @Override
-    // public int getChildCount() {
-    // return 0;
-    // }
-    //
-    // @Override
-    // public Type getType() {
-    // return type;
-    // }
+public interface VariableReference extends SolidityProgramElement {
+    Declaration mainProgramElement();
 
-
+    @Override
+    default int computeHashCode() {
+        return 37 * SolidityProgramElement.super.computeHashCode() + mainProgramElement().hashCode();
+    }
 }

@@ -56,6 +56,11 @@ public class ContractReference extends SolidityExpression implements Resolver, V
         this.contractDeclaration = (ContractDeclaration) id2Name.get(id);
     }
 
+    @Override
+    public ContractDeclaration mainProgramElement() {
+        return contractDeclaration;
+    }
+
     public void visit(Visitor v) {
         v.performActionOnContractReference(this);
     }

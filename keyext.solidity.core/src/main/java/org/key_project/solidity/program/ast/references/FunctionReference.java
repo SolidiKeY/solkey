@@ -55,6 +55,11 @@ public class FunctionReference extends SolidityExpression implements Resolver, V
         return 0;
     }
 
+    @Override
+    public FunctionDeclaration mainProgramElement() {
+        return referencedDeclaration;
+    }
+
     public void visit(Visitor v) {
         v.performActionOnFunctionReference(this);
     }

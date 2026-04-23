@@ -43,6 +43,11 @@ public class EnumReference extends SolidityExpression implements VariableReferen
         return 0;
     }
 
+    @Override
+    public EnumDeclaration mainProgramElement() {
+        return enumDeclaration;
+    }
+
     public void visit(Visitor v) {
         v.performActionOnEnumReference(this);
     }

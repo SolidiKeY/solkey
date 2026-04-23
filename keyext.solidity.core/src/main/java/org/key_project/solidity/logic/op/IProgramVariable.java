@@ -8,5 +8,6 @@ import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.references.VariableReference;
 
 public interface IProgramVariable
-        extends SolidityProgramElement, SortedOperator, VariableReference {
+    // TODO: Maybe needs to implement VariableReference
+        extends SolidityProgramElement, SortedOperator {
 }
