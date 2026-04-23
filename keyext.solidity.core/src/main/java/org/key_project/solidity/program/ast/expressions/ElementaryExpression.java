@@ -42,4 +42,9 @@ public class ElementaryExpression extends SolidityExpression {
     public void visit(Visitor v) {
         v.performActionOnElementaryExpression(this);
     }
+
+    @Override
+    public int computeHashCode() {
+        return 37 * super.computeHashCode() + type.hashCode();
+    }
 }

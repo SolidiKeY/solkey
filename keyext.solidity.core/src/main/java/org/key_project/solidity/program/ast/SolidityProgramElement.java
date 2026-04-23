@@ -85,7 +85,7 @@ public interface SolidityProgramElement extends SyntaxElement {
     void visit(Visitor v);
 
     default int computeHashCode() {
-        // Cache for hashcode computation would be of advanatage as it is for instance recomputed
+        // Cache for hashcode computation would be of advantage as it is for instance recomputed
         // for each modality
         // creation and can be rather expensive as the whole AST is repeatedly traversed
         // at the mmoment this has to be cached at each subclass

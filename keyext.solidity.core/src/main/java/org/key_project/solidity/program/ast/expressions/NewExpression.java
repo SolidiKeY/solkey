@@ -44,6 +44,11 @@ public class NewExpression extends SolidityExpression {
     }
 
     @Override
+    public int computeHashCode() {
+        return 37 * super.computeHashCode() + function.hashCode();
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o)
             return true;

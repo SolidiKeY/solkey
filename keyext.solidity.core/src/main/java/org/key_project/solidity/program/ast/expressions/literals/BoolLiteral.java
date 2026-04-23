@@ -38,4 +38,9 @@ public class BoolLiteral extends Literal {
     public void visit(Visitor v) {
         v.performActionOnBoolLiteral(this);
     }
+
+    @Override
+    public int computeHashCode() {
+        return 37 * super.computeHashCode() + Boolean.hashCode(value);
+    }
 }

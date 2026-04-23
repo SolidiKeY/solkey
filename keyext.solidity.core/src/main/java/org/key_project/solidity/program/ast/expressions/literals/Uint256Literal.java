@@ -38,6 +38,11 @@ public class Uint256Literal extends Literal {
     }
 
     @Override
+    public int computeHashCode() {
+        return 37 * super.computeHashCode() + value.hashCode();
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o)
             return true;

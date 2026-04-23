@@ -22,6 +22,7 @@ public class TypeReference implements SolidityProgramElement {
         this.referencedType = null;
     }
 
+    // TODO: Look at this
     public TypeReference(Type referencedType) {
         this.referencedType = referencedType;
         this.typeName = null;
