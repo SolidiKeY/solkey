@@ -33,7 +33,8 @@ public class DeclarationStatement implements Statement {
     @Override
     public @NonNull SyntaxElement getChild(int n) {
         if (n < 0 || n >= getChildCount()) {
-            throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+            throw new IndexOutOfBoundsException(
+                "Index should be 0 <= " + n + " < " + getChildCount());
         }
 
         if (n < declarations.size()) {

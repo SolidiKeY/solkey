@@ -52,7 +52,8 @@ public abstract class UnaryOperator extends SolidityExpression {
             case 0:
                 return exp;
             default:
-                throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+                throw new IndexOutOfBoundsException(
+                    "Index should be 0 <= " + n + " < " + getChildCount());
         }
     }
 

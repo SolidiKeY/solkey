@@ -89,8 +89,8 @@ public class FunctionCallExpression extends SolidityExpression {
         if (!(o instanceof FunctionCallExpression that))
             return false;
         return Objects.equals(arguments, that.arguments)
-            && Objects.equals(functionExp, that.functionExp)
-            && Objects.equals(type, that.type);
+                && Objects.equals(functionExp, that.functionExp)
+                && Objects.equals(type, that.type);
     }
 
     @Override

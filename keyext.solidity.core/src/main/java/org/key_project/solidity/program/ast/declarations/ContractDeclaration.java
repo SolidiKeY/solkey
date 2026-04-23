@@ -50,30 +50,31 @@ public class ContractDeclaration extends DeclarationClass implements Type {
     @Override
     public @NonNull String toString() {
         return Stream.of(
-                "contract " + name + " {",
-                structs.stream()
+            "contract " + name + " {",
+            structs.stream()
                     .map(it -> "struct " + it.name + " {\n"
                         + it.getFields().stream()
-                            .map(jt -> jt.toString() + "\n")
-                            .collect(Collectors.joining())
+                                .map(jt -> jt.toString() + "\n")
+                                .collect(Collectors.joining())
                         + "}")
                     .collect(Collectors.joining("\n")),
-                fields.stream().map(StateVariableDeclaration::toString)
+            fields.stream().map(StateVariableDeclaration::toString)
                     .collect(Collectors.joining("\n")),
-                modifiers.stream().map(ModifierDeclaration::toString)
+            modifiers.stream().map(ModifierDeclaration::toString)
                     .collect(Collectors.joining("\n")),
-                enums.stream().map(EnumDeclaration::toString).collect(Collectors.joining("\n")),
-                getFunctions().stream().map(FunctionDeclaration::toString)
+            enums.stream().map(EnumDeclaration::toString).collect(Collectors.joining("\n")),
+            getFunctions().stream().map(FunctionDeclaration::toString)
                     .collect(Collectors.joining("\n")),
-                "}")
-            .filter(s -> !s.isEmpty())
-            .collect(Collectors.joining("\n"));
+            "}")
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.joining("\n"));
     }
 
     @Override
     public @NonNull SyntaxElement getChild(int n) {
         if (n < 0)
-            throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+            throw new IndexOutOfBoundsException(
+                "Index should be 0 <= " + n + " < " + getChildCount());
         if (n < fields.size())
             return fields.get(n);
         n -= fields.size();

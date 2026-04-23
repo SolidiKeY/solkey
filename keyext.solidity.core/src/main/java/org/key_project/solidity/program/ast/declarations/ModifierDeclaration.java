@@ -21,8 +21,9 @@ public class ModifierDeclaration extends DeclarationClass {
     private final @NonNull Visibility visibility;
     private final @NonNull Name name;
 
-    public ModifierDeclaration(@NonNull Name name, @NonNull List<@NonNull ProgramVariable> inputParameters, @NonNull Block body,
-                               @NonNull Visibility visibility) {
+    public ModifierDeclaration(@NonNull Name name,
+            @NonNull List<@NonNull ProgramVariable> inputParameters, @NonNull Block body,
+            @NonNull Visibility visibility) {
         super(new ImmutableArray<>());
         this.name = name;
         this.inputParameters = new ImmutableArray<>(inputParameters);

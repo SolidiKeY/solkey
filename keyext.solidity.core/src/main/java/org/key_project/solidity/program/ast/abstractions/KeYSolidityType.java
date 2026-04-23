@@ -76,12 +76,10 @@ public class KeYSolidityType implements Type, Resolver {
 
     @Override
     public boolean equals(@Nullable Object o) {
-        if (o == this) {
+        if (o == this)
             return true;
-        }
-        if (o == null || o.getClass() != this.getClass()) {
+        if (o == null || o.getClass() != this.getClass())
             return false;
-        }
         return Objects.equals(solidityType, ((KeYSolidityType) o).solidityType)
                 && Objects.equals(sort, ((KeYSolidityType) o).sort);
     }

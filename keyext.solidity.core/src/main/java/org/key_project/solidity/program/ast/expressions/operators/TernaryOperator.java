@@ -37,7 +37,8 @@ public class TernaryOperator extends SolidityExpression {
         else if (n == 2)
             return trueExpression;
         else
-            throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+            throw new IndexOutOfBoundsException(
+                "Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

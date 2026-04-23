@@ -49,6 +49,7 @@ public class SingleProof extends ProofAggregate {
 
     @Override
     public ProofAggregate getChildrenAt(int i) {
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + i + " < " + getChildren().size());
+        throw new IndexOutOfBoundsException(
+            "Index should be 0 <= " + i + " < " + getChildren().size());
     }
 }

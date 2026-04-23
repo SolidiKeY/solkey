@@ -33,9 +33,8 @@ public class PrimitiveType implements Type, SyntaxElement {
         PrimitiveType primitive;
         synchronized (primitives) {
             primitive = primitives.get(name);
-            if (primitive == null) {
+            if (primitive == null)
                 throw new NoSuchElementException("No primitive type with name " + name);
-            }
         }
         return primitive;
     }

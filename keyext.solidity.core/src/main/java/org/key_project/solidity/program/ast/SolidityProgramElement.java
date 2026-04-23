@@ -13,7 +13,8 @@ import org.jspecify.annotations.Nullable;
 public interface SolidityProgramElement extends SyntaxElement {
 
     @Override
-    @NonNull SyntaxElement getChild(int n);
+    @NonNull
+    SyntaxElement getChild(int n);
 
     @Override
     int getChildCount();

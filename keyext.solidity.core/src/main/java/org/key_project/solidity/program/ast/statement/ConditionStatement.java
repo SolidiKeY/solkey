@@ -45,7 +45,8 @@ public class ConditionStatement implements Statement {
                 if (getChildCount() == 3 && n == 2) {
                     yield falseBody;
                 }
-                throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+                throw new IndexOutOfBoundsException(
+                    "Index should be 0 <= " + n + " < " + getChildCount());
             }
         };
     }

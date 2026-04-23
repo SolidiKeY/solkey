@@ -12,6 +12,7 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.abstractions.ArrayType;
 import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
+import org.key_project.solidity.program.ast.abstractions.MappingType;
 import org.key_project.solidity.program.ast.abstractions.TupleType;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.*;
@@ -25,7 +26,6 @@ import org.key_project.solidity.program.ast.expressions.literals.*;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral.*;
 import org.key_project.solidity.program.ast.expressions.operators.*;
-import org.key_project.solidity.program.ast.abstractions.MappingType;
 import org.key_project.solidity.program.ast.references.ContractReference;
 import org.key_project.solidity.program.ast.references.FunctionReference;
 import org.key_project.solidity.program.ast.references.ModifierReference;
@@ -41,8 +41,8 @@ import org.junit.jupiter.api.condition.OS;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.*;
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.*;
-import static org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility.*;
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.StateMutability.*;
+import static org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility.*;
 import static org.key_project.solidity.program.ast.expressions.literals.BoolLiteral.*;
 import static org.key_project.solidity.program.parser.SolcParserNoServices.getDeclStr;
 
@@ -206,7 +206,7 @@ public class SolJsonParserTest {
         assertEquals(3, function.getChildCount());
         assertInstanceOf(ProgramVariable.class, function.getChild(0)); // return param
         assertInstanceOf(ProgramVariable.class, function.getChild(1)); // input param
-        assertInstanceOf(Block.class, function.getChild(2));           // body
+        assertInstanceOf(Block.class, function.getChild(2)); // body
         assertThrows(IndexOutOfBoundsException.class, () -> function.getChild(3));
         assertEquals(1, block.getChildCount());
         assertInstanceOf(ReturnStatement.class, block.getChild(0));
@@ -301,7 +301,7 @@ public class SolJsonParserTest {
         assertTrue(s.contains("bool b = true"));
         assertTrue(s.contains("bool c = true || false"));
         DeclarationStatement ds1 = (DeclarationStatement) contractDec.getFunctions().getFirst()
-            .getBody().getStatements().get(0);
+                .getBody().getStatements().get(0);
         assertEquals(2, ds1.getChildCount());
         assertInstanceOf(StatementVariableDeclaration.class, ds1.getChild(0));
         assertSame(TRUE, ds1.getChild(1));
@@ -357,11 +357,12 @@ public class SolJsonParserTest {
             contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getType());
         assertSame(BOOL,
             contractDeclaration.getFieldDeclarations().get(0).getInitializer().getType());
-        TernaryOperator ternary = (TernaryOperator) contractDeclaration.getFieldDeclarations().get(0).getInitializer();
+        TernaryOperator ternary =
+            (TernaryOperator) contractDeclaration.getFieldDeclarations().get(0).getInitializer();
         assertEquals(3, ternary.getChildCount());
-        assertSame(TRUE,  ternary.getChild(0));  // condition = true
-        assertSame(TRUE,  ternary.getChild(1));  // falseExpression = true (value after :)
-        assertSame(FALSE, ternary.getChild(2));  // trueExpression = false (value after ?)
+        assertSame(TRUE, ternary.getChild(0)); // condition = true
+        assertSame(TRUE, ternary.getChild(1)); // falseExpression = true (value after :)
+        assertSame(FALSE, ternary.getChild(2)); // trueExpression = false (value after ?)
         assertThrows(IndexOutOfBoundsException.class, () -> ternary.getChild(3));
     }
 
@@ -575,11 +576,11 @@ public class SolJsonParserTest {
         DynamicArrayType arrayType = (DynamicArrayType) vType;
         assertSame(INT, arrayType.getElementType());
         ReturnStatement retStmt = (ReturnStatement) contractDec.getFunctions().getFirst()
-            .getBody().getStatements().get(0);
+                .getBody().getStatements().get(0);
         IndexExpression idxExp = (IndexExpression) retStmt.getReturnExp();
         assertEquals(2, idxExp.getChildCount());
         assertInstanceOf(ProgramVariable.class, idxExp.getChild(0)); // v
-        assertInstanceOf(AddOperator.class, idxExp.getChild(1));     // 1+1
+        assertInstanceOf(AddOperator.class, idxExp.getChild(1)); // 1+1
         assertThrows(IndexOutOfBoundsException.class, () -> idxExp.getChild(2));
     }
 
@@ -708,7 +709,7 @@ public class SolJsonParserTest {
         assertTrue(contractS.contains("i = 0;"));
         assertSame(INT, contractDec.getFieldDeclarations().get(0).getProgramVariable().getType());
         ConditionStatement ifStmt = (ConditionStatement) contractDec.getFunctions().getFirst()
-            .getBody().getStatements().get(0);
+                .getBody().getStatements().get(0);
         assertEquals(2, ifStmt.getChildCount());
         assertSame(TRUE, ifStmt.getChild(0));
         assertInstanceOf(ExpressionStatement.class, ifStmt.getChild(1));
@@ -736,7 +737,7 @@ public class SolJsonParserTest {
         assertTrue(contractS.contains("else"));
         assertTrue(contractS.contains("i = 1;"));
         ConditionStatement ifElseStmt = (ConditionStatement) contractDec.getFunctions().getFirst()
-            .getBody().getStatements().get(0);
+                .getBody().getStatements().get(0);
         assertEquals(3, ifElseStmt.getChildCount());
         assertInstanceOf(EqualOperator.class, ifElseStmt.getChild(0));
         assertInstanceOf(ExpressionStatement.class, ifElseStmt.getChild(1));
@@ -779,7 +780,7 @@ public class SolJsonParserTest {
         assertTrue(contractS.contains("continue;"));
         assertTrue(contractS.contains("break;"));
         WhileStatement whileStmt = (WhileStatement) contractDec.getFunctions().getFirst()
-            .getBody().getStatements().get(0);
+                .getBody().getStatements().get(0);
         Block whileBody = (Block) whileStmt.getBody();
         ContinueStatement contStmt = (ContinueStatement) whileBody.getStatements().get(0);
         assertEquals(0, contStmt.getChildCount());
@@ -803,7 +804,7 @@ public class SolJsonParserTest {
         String contractS = contractDec.toString();
         assertTrue(contractS.contains("for(i = 0; i < 10; i ++)"));
         ForStatement forStmt = (ForStatement) contractDec.getFunctions().getFirst()
-            .getBody().getStatements().get(0);
+                .getBody().getStatements().get(0);
         assertEquals(4, forStmt.getChildCount());
         assertThrows(IndexOutOfBoundsException.class, () -> forStmt.getChild(4));
         assertInstanceOf(AssignmentExpression.class, forStmt.getInit().getInit());
@@ -825,7 +826,7 @@ public class SolJsonParserTest {
         String contractS = contractDec.toString();
         assertTrue(contractS.contains("for(; ; )"));
         ForStatement forStmt = (ForStatement) contractDec.getFunctions().getFirst()
-            .getBody().getStatements().get(0);
+                .getBody().getStatements().get(0);
         assertEquals(1, forStmt.getChildCount());
         assertInstanceOf(Block.class, forStmt.getChild(0));
         assertThrows(IndexOutOfBoundsException.class, () -> forStmt.getChild(1));
@@ -946,7 +947,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         TryStatement tryStmt = (TryStatement) contractDec.getFunctions().getFirst()
-            .getBody().getStatements().get(0);
+                .getBody().getStatements().get(0);
         ImmutableArray<CatchClause> clauses = tryStmt.getCatchClauses();
         assertEquals(2, clauses.size());
         assertSame(tryStmt.getCatchClause(0), clauses.get(0));
@@ -1021,7 +1022,7 @@ public class SolJsonParserTest {
         assertEquals(BOOL, type.getTypes().get(0));
         assertEquals(BOOL, type.getTypes().get(1));
         ReturnStatement retStmt0 = (ReturnStatement) contractDec.getFunctions().get(0)
-            .getBody().getStatements().get(0);
+                .getBody().getStatements().get(0);
         TupleExpression tupleExpr = (TupleExpression) retStmt0.getReturnExp();
         assertEquals(2, tupleExpr.getChildCount());
         assertSame(FALSE, tupleExpr.getChild(0));
@@ -1039,8 +1040,8 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
         FunctionDeclaration constructor = contractDec.getFunctions().stream()
-            .filter(f -> f.getKind().equals("constructor"))
-            .findFirst().orElse(null);
+                .filter(f -> f.getKind().equals("constructor"))
+                .findFirst().orElse(null);
         assertNotNull(constructor);
         assertEquals(0, constructor.getInputParameters().size());
         assertTrue(constructor.getBody().isEmpty());
@@ -1277,7 +1278,7 @@ public class SolJsonParserTest {
             ((NewExpression) ((FunctionCallExpression) ctrl.getFieldDeclarations().get(0)
                     .getInitializer()).getFunctionExp()).getFunction());
         NewExpression newExp = (NewExpression) ((FunctionCallExpression) ctrl.getFieldDeclarations()
-            .get(0).getInitializer()).getFunctionExp();
+                .get(0).getInitializer()).getFunctionExp();
         assertEquals(0, newExp.getChildCount());
         assertThrows(IndexOutOfBoundsException.class, () -> newExp.getChild(0));
     }

@@ -45,7 +45,8 @@ public abstract class BinaryOperator extends SolidityExpression {
             case 1:
                 return right;
             default:
-                throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+                throw new IndexOutOfBoundsException(
+                    "Index should be 0 <= " + n + " < " + getChildCount());
         }
     }
 

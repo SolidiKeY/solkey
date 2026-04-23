@@ -52,9 +52,8 @@ public class MappingType implements Type {
     public @NonNull SyntaxElement getChild(int n) {
         if (n == 0)
             return keyType;
-        else if (n == 1) {
+        else if (n == 1)
             return valueType;
-        }
         throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
