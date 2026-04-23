@@ -507,9 +507,10 @@ public class SolJsonParserTest {
         Expression retExp = retStm.getReturnExp();
         assertInstanceOf(MemberExp.class, retExp);
         MemberExp memberExp = (MemberExp) retExp;
-        assertEquals(1, memberExp.getChildCount());
-        assertInstanceOf(ProgramVariable.class, memberExp.getChild(0)); // alice
-        assertThrows(IndexOutOfBoundsException.class, () -> memberExp.getChild(1));
+        assertEquals(2, memberExp.getChildCount());
+        assertInstanceOf(ProgramVariable.class, memberExp.getLeftExp()); // alice
+        assertInstanceOf(FieldDeclaration.class, memberExp.getRightExp());
+        assertThrows(IndexOutOfBoundsException.class, () -> memberExp.getChild(2));
     }
 
     @Test
@@ -1357,5 +1358,51 @@ public class SolJsonParserTest {
         Services services = new Services();
         assertSame(m1Type, m2Type);
         assertSame(m1Type.getSort(services), m2Type.getSort(services));
+    }
+
+    @Test
+    void parseNestedStructMemberAssignment() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    struct Account {
+                        uint256 balance;
+                    }
+                    struct Person {
+                        uint256 age;
+                        Account account;
+                    }
+                    Person alice;
+                    function f() public {
+                        alice.account.balance = 10;
+                    }
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        FunctionDeclaration functionF = contractDeclaration.getFunctions().get(0);
+
+        // ExpressionStatement -> AssignmentExpression
+        var stmt = functionF.getBody().getStatements().get(0);
+        ExpressionStatement exprStatement = (ExpressionStatement) stmt;
+        AssignmentExpression assignExpr = (AssignmentExpression) exprStatement.getExpression();
+
+        assertInstanceOf(Uint256Literal.class, assignExpr.getRight());
+
+        // Outer MemberExp: alice.account.balance
+        MemberExp outerMember = (MemberExp) assignExpr.getLeft();
+        FieldDeclaration balanceField = (FieldDeclaration) outerMember.getRightExp();
+        assertEquals("balance", balanceField.name().toString());
+        assertEquals("uint256", balanceField.getTypeReference().getTypeName().toString());
+
+        // Inner MemberExp: alice.account
+        MemberExp innerMember = (MemberExp) outerMember.getLeftExp();
+        assertEquals("alice", ((ProgramVariable) innerMember.getLeftExp()).name().toString());
+        FieldDeclaration accountField = (FieldDeclaration) innerMember.getRightExp();
+        assertEquals("account", accountField.name().toString());
+        assertEquals("SimpleContract.Account",
+            accountField.getTypeReference().referencedType.name().toString());
+
+        // Right-hand side literal value 10
+        Uint256Literal rhs = (Uint256Literal) assignExpr.getRight();
+        assertEquals(10, rhs.getValue().intValueExact());
     }
 }

@@ -6,6 +6,7 @@ package org.key_project.solidity.program.ast.expressions;
 import java.util.HashMap;
 import java.util.Objects;
 
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
@@ -16,8 +17,8 @@ import org.key_project.util.ExtList;
 import org.jspecify.annotations.NonNull;
 
 public class MemberExp extends SolidityExpression implements Resolver {
-    final @NonNull Expression leftExp;
-    SyntaxElement rightExp;
+    final Expression leftExp;
+    @MonotonicNonNull SyntaxElement rightExp;
     final int id;
 
     public MemberExp(Expression leftExp, SyntaxElement rightExp, Type type) {
@@ -40,18 +41,24 @@ public class MemberExp extends SolidityExpression implements Resolver {
         this.id = -1;
     }
 
-    public @NonNull Expression getLeftExp() { return leftExp; }
+    public Expression getLeftExp() { return leftExp; }
+
+    public SyntaxElement getRightExp() {
+        return rightExp;
+    }
 
     @Override
     public @NonNull SyntaxElement getChild(int n) {
         if (n == 0)
             return leftExp;
+        if (n == 1)
+            return rightExp;
         throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override
     public int getChildCount() {
-        return 1;
+        return 1 + (rightExp == null ? 0 : 1);
     }
 
     @Override
@@ -69,6 +76,5 @@ public class MemberExp extends SolidityExpression implements Resolver {
     public void resolve(HashMap<Integer, SyntaxElement> id2Name) {
         if (id != -1)
             rightExp = id2Name.get(id);
-
     }
 }

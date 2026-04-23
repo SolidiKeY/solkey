@@ -215,10 +215,18 @@ public class SolJSONParser {
 
     private FieldDeclaration parseField(JsonNode fieldNode) {
         final String fieldName = fieldNode.get("name").asText();
-        final String fieldType = fieldNode.get("typeName").get("name").asText();
+        JsonNode typeName = fieldNode.get("typeName");
 
-        FieldDeclaration field =
-            new FieldDeclaration(new Name(fieldName), new TypeReference(new Name(fieldType)));
+        TypeReference typeReference;
+        if (typeName.has("referencedDeclaration")) {
+            int typeId = typeName.get("referencedDeclaration").asInt();
+            Type typeRef = (Type) id2Name.get(typeId);
+            typeReference = new TypeReference(typeRef);
+        } else {
+            typeReference = new TypeReference(new Name(typeName.get("name").asText()));
+        }
+
+        FieldDeclaration field = new FieldDeclaration(new Name(fieldName), typeReference);
         id2Name.put(fieldNode.get("id").asInt(), field);
         return field;
     }
@@ -470,6 +478,7 @@ public class SolJSONParser {
             case Type tp -> tp;
             case FunctionDeclaration fd -> fd.getType();
             case StatementVariableDeclaration svd -> svd.getProgramVariable().getType();
+            case FieldDeclaration fd -> fd.getTypeReference().referencedType;
             default -> null;
         }).orElseGet(() -> {
             if (functionId2Type.containsKey(id))

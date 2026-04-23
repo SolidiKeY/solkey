@@ -22,6 +22,10 @@ public class FieldDeclaration implements Declaration {
         this.initializer = null;
     }
 
+    public @NonNull Name name() {
+        return name;
+    }
+
     public @NonNull TypeReference getTypeReference() {
         return typeReference;
     }
