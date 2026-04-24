@@ -18,6 +18,9 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.*;
 import org.key_project.solidity.logic.op.*;
 import org.key_project.solidity.logic.sort.*;
+
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
+import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 import org.key_project.solidity.parser.KeYSolidityDLParser;
 import org.key_project.solidity.parser.SchemaVariableModifierSet;
 import org.key_project.solidity.parser.varcond.ArgumentType;
@@ -109,7 +112,7 @@ public class TacletPBuilder extends ExpressionBuilder {
             KeYSolidityDLParser.One_schema_modal_op_declContext ctx) {
         ImmutableSet<SModality.SolidityModalityKind> modalities = DefaultImmutableSet.nil();
         Sort sort = accept(ctx.sort);
-        if (sort != null && sort != SolidityDLTheory.FORMULA) {
+        if (sort != null && sort != FORMULA) {
             semanticError(ctx, "Modal operator SV must be a FORMULA, not " + sort);
         }
         List<String> ids = accept(ctx.simple_ident_comma_list());
@@ -452,7 +455,7 @@ public class TacletPBuilder extends ExpressionBuilder {
             KeYSolidityDLParser.Datatype_declContext ctx, Sort sort) {
         var tacletBuilder = new NoFindTacletBuilder();
         tacletBuilder.setName(new Name(String.format("%s_Ind", ctx.name.getText())));
-        var phi = declareSchemaVariable(ctx, "phi", SolidityDLTheory.FORMULA, true,
+        var phi = declareSchemaVariable(ctx, "phi", FORMULA, true,
             false, false, new SchemaVariableModifierSet.FormulaSV());
         var tb = services.getTermBuilder();
         var qvar = (VariableSV) declareSchemaVariable(ctx, "x_" + ctx.name.getText(), sort,
@@ -494,7 +497,7 @@ public class TacletPBuilder extends ExpressionBuilder {
         var tacletBuilder = new NoFindTacletBuilder();
         tacletBuilder.setName(new Name(String.format("%s_axiom", ctx.name.getText())));
 
-        var phi = declareSchemaVariable(ctx, "phi", SolidityDLTheory.FORMULA, true,
+        var phi = declareSchemaVariable(ctx, "phi", FORMULA, true,
             false, false, new SchemaVariableModifierSet.FormulaSV());
         var tb = services.getTermBuilder();
         var qvar = (VariableSV) declareSchemaVariable(ctx, "x_" + ctx.name.getText(), sort,
@@ -950,7 +953,7 @@ public class TacletPBuilder extends ExpressionBuilder {
         if (ctx.FORMULA() != null) {
             mods = new SchemaVariableModifierSet.FormulaSV();
             accept(ctx.schema_modifiers(), mods);
-            s = SolidityDLTheory.FORMULA;
+            s = FORMULA;
         }
         if (ctx.TERMLABEL() != null) {
             makeTermLabelSV = true;
@@ -960,13 +963,13 @@ public class TacletPBuilder extends ExpressionBuilder {
         if (ctx.UPDATE() != null) {
             mods = new SchemaVariableModifierSet.FormulaSV();
             accept(ctx.schema_modifiers(), mods);
-            s = SolidityDLTheory.UPDATE;
+            s = UPDATE;
         }
         if (ctx.SKOLEMFORMULA() != null) {
             makeSkolemTermSV = true;
             mods = new SchemaVariableModifierSet.FormulaSV();
             accept(ctx.schema_modifiers(), mods);
-            s = SolidityDLTheory.FORMULA;
+            s = FORMULA;
         }
         if (ctx.TERM() != null) {
             mods = new SchemaVariableModifierSet.TermSV();
@@ -1021,9 +1024,9 @@ public class TacletPBuilder extends ExpressionBuilder {
             boolean makeVariableSV, boolean makeSkolemTermSV, boolean makeTermLabelSV,
             SchemaVariableModifierSet mods) {
         OperatorSV v;
-        if (s == SolidityDLTheory.FORMULA && !makeSkolemTermSV) {
+        if (s == FORMULA && !makeSkolemTermSV) {
             v = SchemaVariableFactory.createFormulaSV(new Name(name), mods.rigid());
-        } else if (s == SolidityDLTheory.UPDATE) {
+        } else if (s == UPDATE) {
             v = SchemaVariableFactory.createUpdateSV(new Name(name));
         } else if (s instanceof ProgramSVSort) {
             v = SchemaVariableFactory.createProgramSV(new Name(name),

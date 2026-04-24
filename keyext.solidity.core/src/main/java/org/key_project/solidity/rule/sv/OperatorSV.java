@@ -7,8 +7,10 @@ import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.logic.TermCreationException;
 import org.key_project.logic.op.AbstractSortedOperator;
-import org.key_project.logic.op.Modifier;
 import org.key_project.logic.op.sv.SchemaVariable;
+
+import static org.key_project.logic.op.Modifier.NONE;
+import static org.key_project.logic.op.Modifier.RIGID;
 import org.key_project.logic.sort.Sort;
 import org.key_project.util.collection.ImmutableArray;
 
@@ -19,7 +21,7 @@ public abstract class OperatorSV extends AbstractSortedOperator
 
     protected OperatorSV(Name name, ImmutableArray<Sort> argSorts, Sort sort, boolean isRigid,
             boolean isStrict) {
-        super(name, argSorts, sort, isRigid ? Modifier.RIGID : Modifier.NONE);
+        super(name, argSorts, sort, isRigid ? RIGID : NONE);
         this.isStrict = isStrict;
     }
 

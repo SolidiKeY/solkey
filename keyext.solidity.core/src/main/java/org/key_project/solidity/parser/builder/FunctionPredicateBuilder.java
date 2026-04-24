@@ -12,7 +12,8 @@ import org.key_project.logic.op.Function;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.NamespaceSet;
-import org.key_project.solidity.logic.SolidityDLTheory;
+
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
 import org.key_project.solidity.logic.op.ParametricFunctionDecl;
 import org.key_project.solidity.logic.op.SFunction;
 import org.key_project.solidity.logic.sort.*;
@@ -145,7 +146,7 @@ public class FunctionPredicateBuilder extends DefaultBuilder {
             assert pred_name != null;
 
             assert argSorts != null;
-            Function p = new SFunction(new Name(pred_name), SolidityDLTheory.FORMULA,
+            Function p = new SFunction(new Name(pred_name), FORMULA,
                 argSorts.toArray(new Sort[0]),
                 whereToBind == null ? null : whereToBind.toArray(new Boolean[0]),
                 false);

@@ -6,7 +6,9 @@ package org.key_project.solidity.logic.op;
 import org.key_project.logic.Name;
 import org.key_project.logic.op.Function;
 import org.key_project.logic.sort.Sort;
-import org.key_project.solidity.logic.SolidityDLTheory;
+
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
+import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.Nullable;
@@ -17,8 +19,8 @@ public class SFunction extends Function {
             @Nullable ImmutableArray<Boolean> whereToBind, boolean isRigid, boolean unique,
             boolean isSkolemConstant) {
         super(name, argSorts, sort, whereToBind, isRigid, unique, isSkolemConstant);
-        assert sort != SolidityDLTheory.UPDATE;
-        assert !(unique && sort == SolidityDLTheory.FORMULA);
+        assert sort != UPDATE;
+        assert !(unique && sort == FORMULA);
 
     }
 

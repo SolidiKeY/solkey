@@ -19,6 +19,9 @@ import org.key_project.util.collection.ImmutableArray;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
 
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
+import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
+
 public class TermBuilder {
     private final TermFactory tf;
     private final Term tt;
@@ -205,7 +208,7 @@ public class TermBuilder {
 
     /// Creates a term with the correct equality symbol for the sorts involved
     public Term equals(Term t1, Term t2) {
-        if (t1.sort() == SolidityDLTheory.FORMULA) {
+        if (t1.sort() == FORMULA) {
             if (t1.op() == Junctor.TRUE) {
                 return t2;
             } else if (t2.op() == Junctor.TRUE) {
@@ -288,9 +291,9 @@ public class TermBuilder {
     }
 
     public Term parallel(Term u1, Term u2) {
-        if (u1.sort() != SolidityDLTheory.UPDATE) {
+        if (u1.sort() != UPDATE) {
             throw new TermCreationException("Not an update: " + u1);
-        } else if (u2.sort() != SolidityDLTheory.UPDATE) {
+        } else if (u2.sort() != UPDATE) {
             throw new TermCreationException("Not an update: " + u2);
         }
         if (u1.op() == UpdateJunctor.SKIP) {
@@ -359,7 +362,7 @@ public class TermBuilder {
     }
 
     public Term apply(Term update, Term target) {
-        if (update.sort() != SolidityDLTheory.UPDATE) {
+        if (update.sort() != UPDATE) {
             throw new TermCreationException("Not an update: " + update);
         } else if (update.op() == UpdateJunctor.SKIP) {
             return target;

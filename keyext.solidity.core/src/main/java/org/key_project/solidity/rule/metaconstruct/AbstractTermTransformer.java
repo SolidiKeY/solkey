@@ -10,8 +10,9 @@ import java.util.Map;
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.logic.op.AbstractSortedOperator;
-import org.key_project.logic.op.Modifier;
 import org.key_project.logic.op.Operator;
+
+import static org.key_project.logic.op.Modifier.NONE;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.UpdateApplication;
@@ -55,7 +56,7 @@ public abstract class AbstractTermTransformer extends AbstractSortedOperator
 
     @SuppressWarnings("argument.type.incompatible")
     protected AbstractTermTransformer(Name name, int arity, Sort sort) {
-        super(name, createMetaSortArray(arity), sort, Modifier.NONE);
+        super(name, createMetaSortArray(arity), sort, NONE);
         NAME_TO_META_OP.put(name.toString(), this);
     }
 

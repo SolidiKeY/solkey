@@ -9,10 +9,11 @@ import java.util.WeakHashMap;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.op.AbstractSortedOperator;
-import org.key_project.logic.op.Modifier;
 import org.key_project.logic.op.UpdateableOperator;
 import org.key_project.logic.sort.Sort;
-import org.key_project.solidity.logic.SolidityDLTheory;
+
+import static org.key_project.logic.op.Modifier.NONE;
+import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 
 import org.jspecify.annotations.NonNull;
 
@@ -36,8 +37,8 @@ public class ElementaryUpdate extends AbstractSortedOperator {
 
     private ElementaryUpdate(UpdateableOperator lhs) {
         super(new Name("elem-update(" + lhs + ")"), new Sort[] { lhs.sort() },
-            SolidityDLTheory.UPDATE,
-            Modifier.NONE);
+            UPDATE,
+            NONE);
         this.lhs = lhs;
         assert lhs.arity() == 0;
     }

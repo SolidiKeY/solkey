@@ -8,7 +8,10 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.TermCreationException;
 import org.key_project.logic.op.AbstractOperator;
 import org.key_project.logic.sort.Sort;
-import org.key_project.solidity.logic.SolidityDLTheory;
+
+import static org.key_project.solidity.logic.SolidityDLTheory.ANY;
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
+import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 import org.key_project.util.collection.ImmutableSet;
 
 import org.jspecify.annotations.NonNull;
@@ -25,26 +28,26 @@ public final class IfThenElse extends AbstractOperator {
     }
 
     private Sort getCommonSuperSort(Sort s1, Sort s2) {
-        if (s1 == SolidityDLTheory.FORMULA) {
-            assert s2 == SolidityDLTheory.FORMULA
+        if (s1 == FORMULA) {
+            assert s2 == FORMULA
                     : "Sorts FORMULA and " + s2 + " are incompatible.";
-            return SolidityDLTheory.FORMULA;
+            return FORMULA;
         } else if (s1.extendsTrans(s2)) {
             return s2;
         } else if (s2.extendsTrans(s1)) {
             return s1;
         } else {
-            Sort result = SolidityDLTheory.ANY;
+            Sort result = ANY;
             final ImmutableSet<Sort> set1 = s1.extendsSorts();
             final ImmutableSet<Sort> set2 = s2.extendsSorts();
 
             for (final Sort sort1 : set1) {
                 if (set2.contains(sort1)) {
-                    if (result == SolidityDLTheory.ANY) {
+                    if (result == ANY) {
                         result = sort1;
                     } else {
                         // not uniquely determinable
-                        return SolidityDLTheory.ANY;
+                        return ANY;
                     }
                 }
             }
@@ -70,9 +73,9 @@ public final class IfThenElse extends AbstractOperator {
         final Sort s1 = term.sub(1).sort();
         final Sort s2 = term.sub(2).sort();
 
-        if (!(s0 == SolidityDLTheory.FORMULA
-                && (s1 == SolidityDLTheory.FORMULA) == (s2 == SolidityDLTheory.FORMULA)
-                && s1 != SolidityDLTheory.UPDATE && s2 != SolidityDLTheory.UPDATE)) {
+        if (!(s0 == FORMULA
+                && (s1 == FORMULA) == (s2 == FORMULA)
+                && s1 != UPDATE && s2 != UPDATE)) {
             throw new TermCreationException(this, term);
         }
     }

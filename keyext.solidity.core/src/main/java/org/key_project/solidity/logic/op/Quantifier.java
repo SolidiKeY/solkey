@@ -8,9 +8,10 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.Term;
 import org.key_project.logic.TermCreationException;
 import org.key_project.logic.op.AbstractSortedOperator;
-import org.key_project.logic.op.Modifier;
 import org.key_project.logic.sort.Sort;
-import org.key_project.solidity.logic.SolidityDLTheory;
+
+import static org.key_project.logic.op.Modifier.RIGID;
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
 
 import org.jspecify.annotations.NonNull;
 
@@ -33,8 +34,8 @@ public final class Quantifier extends AbstractSortedOperator {
 
 
     private Quantifier(Name name) {
-        super(name, new Sort[] { SolidityDLTheory.FORMULA }, SolidityDLTheory.FORMULA,
-            new Boolean[] { true }, Modifier.RIGID);
+        super(name, new Sort[] { FORMULA }, FORMULA,
+            new Boolean[] { true }, RIGID);
     }
 
     @Override

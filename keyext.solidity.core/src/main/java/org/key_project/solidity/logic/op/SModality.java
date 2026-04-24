@@ -11,7 +11,8 @@ import java.util.WeakHashMap;
 import org.key_project.logic.Name;
 import org.key_project.logic.TermCreationException;
 import org.key_project.solidity.logic.SolidityBlock;
-import org.key_project.solidity.logic.SolidityDLTheory;
+
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 
 import org.jspecify.annotations.NonNull;
@@ -59,7 +60,7 @@ public class SModality extends org.key_project.logic.op.Modality {
     /// Creates a modal operator with the given name
     /// **Creation must only be done by ???!**
     private SModality(SolidityBlock prg, SolidityModalityKind kind) {
-        super(kind.name(), SolidityDLTheory.FORMULA, kind);
+        super(kind.name(), FORMULA, kind);
         this.block = prg;
     }
 

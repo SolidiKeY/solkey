@@ -5,13 +5,13 @@ package org.key_project.solidity.rule.sv;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.TerminalSyntaxElement;
-import org.key_project.solidity.logic.SolidityDLTheory;
+import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 
 import org.jspecify.annotations.NonNull;
 
 public class UpdateSV extends OperatorSV implements TerminalSyntaxElement {
     UpdateSV(Name name) {
-        super(name, SolidityDLTheory.UPDATE, false, true);
+        super(name, UPDATE, false, true);
     }
 
 

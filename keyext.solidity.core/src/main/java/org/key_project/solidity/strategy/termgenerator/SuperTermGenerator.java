@@ -20,7 +20,9 @@ import org.key_project.prover.strategy.costbased.TopRuleAppCost;
 import org.key_project.prover.strategy.costbased.termfeature.TermFeature;
 import org.key_project.prover.strategy.costbased.termgenerator.TermGenerator;
 import org.key_project.solidity.common.Services;
-import org.key_project.solidity.logic.SolidityDLTheory;
+
+import static org.key_project.logic.op.Modifier.RIGID;
+import static org.key_project.solidity.logic.SolidityDLTheory.ANY;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.theory.IntLDT;
 import org.key_project.util.collection.ImmutableArray;
@@ -127,17 +129,17 @@ public abstract class SuperTermGenerator implements TermGenerator<Goal> {
 
             @Override
             public @NonNull Sort sort(Sort[] sorts) {
-                return SolidityDLTheory.ANY;
+                return ANY;
             }
 
             @Override
             public @NonNull Sort sort() {
-                return SolidityDLTheory.ANY;
+                return ANY;
             }
 
             @Override
             public @NonNull Sort argSort(int i) {
-                return SolidityDLTheory.ANY;
+                return ANY;
             }
 
             @Override
@@ -152,7 +154,7 @@ public abstract class SuperTermGenerator implements TermGenerator<Goal> {
 
             @Override
             public @NonNull Modifier modifier() {
-                return Modifier.RIGID;
+                return RIGID;
             }
 
             @Override

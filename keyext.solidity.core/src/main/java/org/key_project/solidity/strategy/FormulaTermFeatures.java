@@ -6,8 +6,9 @@ package org.key_project.solidity.strategy;
 import org.key_project.logic.op.Function;
 import org.key_project.prover.strategy.costbased.termfeature.OperatorClassTF;
 import org.key_project.prover.strategy.costbased.termfeature.TermFeature;
-import org.key_project.solidity.logic.SolidityDLTheory;
 import org.key_project.solidity.logic.op.*;
+
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
 import org.key_project.solidity.strategy.termfeature.AtomTermFeature;
 import org.key_project.solidity.strategy.termfeature.ContainsExecutableCodeTermFeature;
 
@@ -46,7 +47,7 @@ class FormulaTermFeatures extends StaticFeatureCollection {
     final TermFeature cutPriority;
 
     public FormulaTermFeatures(ArithTermFeatures tf) {
-        forF = extendsTrans(SolidityDLTheory.FORMULA);
+        forF = extendsTrans(FORMULA);
         orF = op(Junctor.OR);
         andF = op(Junctor.AND);
         impF = op(Junctor.IMP);

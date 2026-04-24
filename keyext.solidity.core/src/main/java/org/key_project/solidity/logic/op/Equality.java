@@ -6,9 +6,11 @@ package org.key_project.solidity.logic.op;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.op.AbstractSortedOperator;
-import org.key_project.logic.op.Modifier;
 import org.key_project.logic.sort.Sort;
-import org.key_project.solidity.logic.SolidityDLTheory;
+
+import static org.key_project.logic.op.Modifier.RIGID;
+import static org.key_project.solidity.logic.SolidityDLTheory.ANY;
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
 
 import org.jspecify.annotations.NonNull;
 
@@ -20,17 +22,17 @@ import org.jspecify.annotations.NonNull;
 public final class Equality extends AbstractSortedOperator {
 
     /// the usual 'equality' operator '='
-    public static final Equality EQUALS = new Equality(new Name("equals"), SolidityDLTheory.ANY);
+    public static final Equality EQUALS = new Equality(new Name("equals"), ANY);
 
     /// the usual 'equivalence' operator `<->` (be `A, B` formulae then `A <-> B`
     /// is true
     /// if and only if `A` and `B` have the same truth value
-    public static final Equality EQV = new Equality(new Name("equiv"), SolidityDLTheory.FORMULA);
+    public static final Equality EQV = new Equality(new Name("equiv"), FORMULA);
 
 
     private Equality(Name name, Sort targetSort) {
-        super(name, new Sort[] { targetSort, targetSort }, SolidityDLTheory.FORMULA,
-            Modifier.RIGID);
+        super(name, new Sort[] { targetSort, targetSort }, FORMULA,
+            RIGID);
     }
 
     @Override

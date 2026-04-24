@@ -7,7 +7,6 @@ package org.key_project.solidity.logic.op;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.op.AbstractSortedOperator;
-import org.key_project.logic.op.Modifier;
 import org.key_project.logic.op.UpdateableOperator;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
@@ -17,6 +16,8 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 
 import org.jspecify.annotations.NonNull;
+
+import static org.key_project.logic.op.Modifier.NONE;
 
 
 /**
@@ -32,13 +33,13 @@ public class ProgramVariable extends AbstractSortedOperator
     private final DataLocation dataLocation;
 
     public ProgramVariable(Name name, Sort s, KeYSolidityType type, DataLocation location) {
-        super(name, s, Modifier.NONE);
+        super(name, s, NONE);
         this.type = type;
         this.dataLocation = location;
     }
 
     public ProgramVariable(Name name, KeYSolidityType type, DataLocation location) {
-        super(name, type.getSort(), Modifier.NONE);
+        super(name, type.getSort(), NONE);
         this.type = type;
         this.dataLocation = location;
     }

@@ -6,8 +6,10 @@ package org.key_project.solidity.rule.matching.inst;
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.logic.sort.Sort;
 import org.key_project.prover.rules.instantiation.InstantiationEntry;
-import org.key_project.solidity.logic.SolidityDLTheory;
 import org.key_project.solidity.logic.sort.GenericSort;
+
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
+import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 import org.key_project.solidity.logic.sort.ParametricSortInstance;
 import org.key_project.solidity.logic.sort.SortArg;
 import org.key_project.util.collection.ImmutableList;
@@ -57,8 +59,8 @@ public abstract class GenericSortCondition {
     protected static ImmutableList<GenericSortCondition> createCondition(Sort s0, Sort s1,
             boolean p_identity) {
         if (!(s0 instanceof GenericSort || s0 instanceof ParametricSortInstance)
-                || s1 == SolidityDLTheory.FORMULA
-                || s1 == SolidityDLTheory.UPDATE) {
+                || s1 == FORMULA
+                || s1 == UPDATE) {
             return null;
         }
 

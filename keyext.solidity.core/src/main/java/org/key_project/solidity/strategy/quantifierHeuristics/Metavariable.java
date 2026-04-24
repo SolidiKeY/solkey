@@ -7,9 +7,10 @@ import org.key_project.logic.Name;
 import org.key_project.logic.Named;
 import org.key_project.logic.TerminalSyntaxElement;
 import org.key_project.logic.op.AbstractSortedOperator;
-import org.key_project.logic.op.Modifier;
 import org.key_project.logic.sort.Sort;
-import org.key_project.solidity.logic.SolidityDLTheory;
+
+import static org.key_project.logic.op.Modifier.RIGID;
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
 
 import org.jspecify.annotations.NonNull;
 
@@ -28,8 +29,8 @@ public final class Metavariable extends AbstractSortedOperator
     }
 
     private Metavariable(Name name, Sort sort, boolean isTemporaryVariable) {
-        super(name, sort, Modifier.RIGID);
-        if (sort == SolidityDLTheory.FORMULA) {
+        super(name, sort, RIGID);
+        if (sort == FORMULA) {
             throw new RuntimeException("Attempt to create metavariable of type formula");
         }
         this.isTemporaryVariable = isTemporaryVariable;

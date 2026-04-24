@@ -22,7 +22,8 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.prover.rules.RuleSet;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.NamespaceSet;
-import org.key_project.solidity.logic.SolidityDLTheory;
+
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
 import org.key_project.solidity.logic.op.ParametricFunctionInstance;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.*;
@@ -190,7 +191,7 @@ public class DefaultBuilder extends AbstractBuilder<@Nullable Object> {
     public Sort visitArg_sorts_or_formula_helper(
             KeYSolidityDLParser.Arg_sorts_or_formula_helperContext ctx) {
         if (ctx.FORMULA() != null) {
-            return SolidityDLTheory.FORMULA;
+            return FORMULA;
         } else {
             return accept(ctx.sortId());
         }

@@ -13,7 +13,8 @@ import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.prover.rules.instantiation.IllegalInstantiationException;
 import org.key_project.prover.rules.instantiation.InstantiationEntry;
 import org.key_project.solidity.common.Services;
-import org.key_project.solidity.logic.SolidityDLTheory;
+
+import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 import org.key_project.solidity.logic.op.SModality;
 import org.key_project.solidity.program.PosInProgram;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
@@ -256,7 +257,7 @@ public class SVInstantiations
 
     /// adds an update to the update context
     public SVInstantiations addUpdate(Term update) {
-        assert update.sort() == SolidityDLTheory.UPDATE;
+        assert update.sort() == UPDATE;
         return new SVInstantiations(map, interesting(),
             updateContext.append(update),
             getGenericSortInstantiations(), getGenericSortConditions());

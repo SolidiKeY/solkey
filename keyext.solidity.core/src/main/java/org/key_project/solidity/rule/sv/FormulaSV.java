@@ -5,7 +5,7 @@ package org.key_project.solidity.rule.sv;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.TerminalSyntaxElement;
-import org.key_project.solidity.logic.SolidityDLTheory;
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
 
 import org.jspecify.annotations.NonNull;
 
@@ -13,7 +13,7 @@ public class FormulaSV extends OperatorSV implements TerminalSyntaxElement {
     /// @param name the name of the SchemaVariable
     /// @param isRigid true iff this SV may only match rigid formulas
     FormulaSV(Name name, boolean isRigid) {
-        super(name, SolidityDLTheory.FORMULA, isRigid, true);
+        super(name, FORMULA, isRigid, true);
     }
 
     @Override

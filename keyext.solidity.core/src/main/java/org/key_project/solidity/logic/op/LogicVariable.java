@@ -10,11 +10,13 @@ import java.util.Objects;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.op.AbstractSortedOperator;
-import org.key_project.logic.op.Modifier;
 import org.key_project.logic.op.ParsableVariable;
 import org.key_project.logic.op.QuantifiableVariable;
 import org.key_project.logic.sort.Sort;
-import org.key_project.solidity.logic.SolidityDLTheory;
+
+import static org.key_project.logic.op.Modifier.RIGID;
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
+import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 
 import org.jspecify.annotations.NonNull;
 
@@ -42,9 +44,9 @@ public final class LogicVariable extends AbstractSortedOperator
     }
 
     private LogicVariable(int index, Sort sort) {
-        super(new Name("@" + index), sort, Modifier.RIGID);
-        assert sort != SolidityDLTheory.FORMULA;
-        assert sort != SolidityDLTheory.UPDATE;
+        super(new Name("@" + index), sort, RIGID);
+        assert sort != FORMULA;
+        assert sort != UPDATE;
         this.index = index;
     }
 

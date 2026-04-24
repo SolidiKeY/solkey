@@ -15,7 +15,8 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.prover.rules.RuleSet;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.NamespaceSet;
-import org.key_project.solidity.logic.SolidityDLTheory;
+
+import static org.key_project.solidity.logic.SolidityDLTheory.ANY;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.GenericParameter;
 import org.key_project.solidity.logic.sort.GenericSort;
@@ -160,7 +161,7 @@ public class DeclarationBuilder extends DefaultBuilder {
                     if (isGenericSort) {
                         s = new GenericSort(sortName, ext, oneOf);
                     } else if (new Name("any").equals(sortName)) {
-                        s = SolidityDLTheory.ANY;
+                        s = ANY;
                     } else {
                         s = new SortImpl(sortName, isAbstractSort, ext);
                     }

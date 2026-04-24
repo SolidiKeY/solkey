@@ -25,8 +25,9 @@ import org.key_project.prover.sequent.SequentFormula;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.NamespaceSet;
 import org.key_project.solidity.logic.SolidityBlock;
-import org.key_project.solidity.logic.SolidityDLTheory;
 import org.key_project.solidity.logic.TermFactory;
+
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
 import org.key_project.solidity.logic.op.*;
 import org.key_project.solidity.parser.KeYSolidityDLLexer;
 import org.key_project.solidity.parser.KeYSolidityDLParser;
@@ -543,7 +544,7 @@ public class ExpressionBuilder extends DefaultBuilder {
     @Override
     public @Nullable Object visitIfThenElseTerm(KeYSolidityDLParser.IfThenElseTermContext ctx) {
         Term condF = (Term) ctx.condF.accept(this);
-        if (condF.sort() != SolidityDLTheory.FORMULA) {
+        if (condF.sort() != FORMULA) {
             semanticError(ctx, "Condition of an \\if-then-else term has to be a formula.");
         }
         Term thenT = (Term) ctx.thenT.accept(this);
@@ -695,7 +696,7 @@ public class ExpressionBuilder extends DefaultBuilder {
                 final Term num = result.sub(0);
                 return capsulateTf(ctx,
                     () -> getTermFactory().createTerm(Z, getTermFactory().createTerm(neglit, num)));
-            } else if (result.sort() != SolidityDLTheory.FORMULA) {
+            } else if (result.sort() != FORMULA) {
                 Sort sort = result.sort();
                 if (sort == null) {
                     semanticError(ctx, "No sort for %s", result);

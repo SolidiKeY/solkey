@@ -8,9 +8,10 @@ import java.util.Arrays;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.op.AbstractSortedOperator;
-import org.key_project.logic.op.Modifier;
 import org.key_project.logic.sort.Sort;
-import org.key_project.solidity.logic.SolidityDLTheory;
+
+import static org.key_project.logic.op.Modifier.NONE;
+import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 
 import org.jspecify.annotations.NonNull;
 
@@ -28,13 +29,13 @@ public final class UpdateJunctor extends AbstractSortedOperator {
 
     private static Sort[] createUpdateSortArray(int arity) {
         Sort[] result = new Sort[arity];
-        Arrays.fill(result, SolidityDLTheory.UPDATE);
+        Arrays.fill(result, UPDATE);
         return result;
     }
 
 
     private UpdateJunctor(Name name, int arity) {
-        super(name, createUpdateSortArray(arity), SolidityDLTheory.UPDATE, Modifier.NONE);
+        super(name, createUpdateSortArray(arity), UPDATE, NONE);
     }
 
     @Override

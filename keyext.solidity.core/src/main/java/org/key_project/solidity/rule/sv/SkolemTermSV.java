@@ -6,7 +6,7 @@ package org.key_project.solidity.rule.sv;
 import org.key_project.logic.Name;
 import org.key_project.logic.TerminalSyntaxElement;
 import org.key_project.logic.sort.Sort;
-import org.key_project.solidity.logic.SolidityDLTheory;
+import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 
 import org.jspecify.annotations.NonNull;
 
@@ -18,7 +18,7 @@ public class SkolemTermSV extends OperatorSV implements TerminalSyntaxElement {
     /// program constructs
     SkolemTermSV(Name name, Sort sort) {
         super(name, sort, true, false);
-        assert sort != SolidityDLTheory.UPDATE;
+        assert sort != UPDATE;
     }
 
     @Override

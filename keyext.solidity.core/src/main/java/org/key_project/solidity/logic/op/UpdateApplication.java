@@ -9,7 +9,8 @@ import org.key_project.logic.Term;
 import org.key_project.logic.TermCreationException;
 import org.key_project.logic.op.AbstractOperator;
 import org.key_project.logic.sort.Sort;
-import org.key_project.solidity.logic.SolidityDLTheory;
+
+import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 
 import org.jspecify.annotations.NonNull;
 
@@ -34,7 +35,7 @@ public final class UpdateApplication extends AbstractOperator {
     public <T extends Term> void validTopLevelException(T term)
             throws TermCreationException {
         super.validTopLevelException(term);
-        if (term.sub(0).sort() != SolidityDLTheory.UPDATE) {
+        if (term.sub(0).sort() != UPDATE) {
             throw new TermCreationException(this, term);
         }
     }

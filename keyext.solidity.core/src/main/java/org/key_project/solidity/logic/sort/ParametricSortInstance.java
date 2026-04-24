@@ -13,7 +13,8 @@ import org.key_project.logic.Term;
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.logic.sort.AbstractSort;
 import org.key_project.logic.sort.Sort;
-import org.key_project.solidity.logic.SolidityDLTheory;
+
+import static org.key_project.solidity.logic.SolidityDLTheory.ANY;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
@@ -48,7 +49,7 @@ public class ParametricSortInstance extends AbstractSort implements SyntaxElemen
     private ParametricSortInstance(ParametricSortDecl base, ImmutableList<GenericArgument> args) {
         super(makeName(base, args), base.isAbstract());
 
-        this.extendsSorts = ImmutableSet.singleton(SolidityDLTheory.ANY);
+        this.extendsSorts = ImmutableSet.singleton(ANY);
         this.base = base;
         this.args = args;
     }

@@ -6,7 +6,8 @@ package org.key_project.solidity.rule.sv;
 import org.key_project.logic.Name;
 import org.key_project.logic.TerminalSyntaxElement;
 import org.key_project.logic.sort.Sort;
-import org.key_project.solidity.logic.SolidityDLTheory;
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
+import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 
 import org.jspecify.annotations.NonNull;
 
@@ -19,8 +20,8 @@ public class TermSV extends OperatorSV implements TerminalSyntaxElement {
     /// type match
     TermSV(Name name, Sort sort, boolean isRigid, boolean isStrict) {
         super(name, sort, isRigid, isStrict);
-        assert sort != SolidityDLTheory.FORMULA;
-        assert sort != SolidityDLTheory.UPDATE;
+        assert sort != FORMULA;
+        assert sort != UPDATE;
     }
 
     @Override

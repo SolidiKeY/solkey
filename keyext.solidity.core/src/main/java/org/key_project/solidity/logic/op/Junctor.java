@@ -8,9 +8,10 @@ import java.util.Arrays;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.op.AbstractSortedOperator;
-import org.key_project.logic.op.Modifier;
 import org.key_project.logic.sort.Sort;
-import org.key_project.solidity.logic.SolidityDLTheory;
+
+import static org.key_project.logic.op.Modifier.RIGID;
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
 
 import org.jspecify.annotations.NonNull;
 
@@ -45,13 +46,13 @@ public final class Junctor extends AbstractSortedOperator {
 
     private static Sort[] createFormulaSortArray(int arity) {
         Sort[] result = new Sort[arity];
-        Arrays.fill(result, SolidityDLTheory.FORMULA);
+        Arrays.fill(result, FORMULA);
         return result;
     }
 
 
     private Junctor(Name name, int arity) {
-        super(name, createFormulaSortArray(arity), SolidityDLTheory.FORMULA, Modifier.RIGID);
+        super(name, createFormulaSortArray(arity), FORMULA, RIGID);
     }
 
     @Override

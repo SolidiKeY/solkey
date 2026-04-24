@@ -6,10 +6,11 @@ package org.key_project.solidity.logic.op;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.op.AbstractSortedOperator;
-import org.key_project.logic.op.Modifier;
 import org.key_project.logic.op.ParsableVariable;
 import org.key_project.logic.op.QuantifiableVariable;
 import org.key_project.logic.sort.Sort;
+
+import static org.key_project.logic.op.Modifier.RIGID;
 
 import org.jspecify.annotations.NonNull;
 
@@ -17,7 +18,7 @@ import org.jspecify.annotations.NonNull;
 public final class BoundVariable extends AbstractSortedOperator
         implements QuantifiableVariable, ParsableVariable {
     public BoundVariable(Name name, Sort sort) {
-        super(name, sort, Modifier.RIGID);
+        super(name, sort, RIGID);
     }
 
     @Override

@@ -11,7 +11,10 @@ package org.key_project.solidity.logic.sort;
 import org.key_project.logic.Name;
 import org.key_project.logic.sort.AbstractSort;
 import org.key_project.logic.sort.Sort;
-import org.key_project.solidity.logic.SolidityDLTheory;
+
+import static org.key_project.solidity.logic.SolidityDLTheory.ANY;
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
+import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableSet;
 
@@ -35,12 +38,12 @@ public class SortImpl extends AbstractSort {
 
     @Override
     public @NonNull ImmutableSet<Sort> extendsSorts() {
-        if (this == SolidityDLTheory.FORMULA || this == SolidityDLTheory.UPDATE
-                || this == SolidityDLTheory.ANY) {
+        if (this == FORMULA || this == UPDATE
+                || this == ANY) {
             return DefaultImmutableSet.nil();
         } else {
             if (ext.isEmpty()) {
-                ext = DefaultImmutableSet.<Sort>nil().add(SolidityDLTheory.ANY);
+                ext = DefaultImmutableSet.<Sort>nil().add(ANY);
             }
             return ext;
         }
@@ -50,9 +53,9 @@ public class SortImpl extends AbstractSort {
     public boolean extendsTrans(@NonNull Sort sort) {
         if (sort == this) {
             return true;
-        } else if (this == SolidityDLTheory.FORMULA || this == SolidityDLTheory.UPDATE) {
+        } else if (this == FORMULA || this == UPDATE) {
             return false;
-        } else if (sort == SolidityDLTheory.ANY) {
+        } else if (sort == ANY) {
             return true;
         }
 
