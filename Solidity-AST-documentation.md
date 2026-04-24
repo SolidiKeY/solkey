@@ -959,3 +959,668 @@ DeclarationStatement
     ├── EnumReference "State"
     └── MemberEnumDeclaration "Begin"
 ```
+
+### Binary operator in field initializer
+
+```solidity
+contract SimpleContract {
+    uint256 balance = 1000;
+    uint256 deposit = balance + 100;
+}
+```
+
+```
+ContractDeclaration "SimpleContract"
+├── StateVariableDeclaration
+│   └── ProgramVariable "balance" : UINT256 @ Storage
+│       — (no initializer child shown when value is a literal)
+└── StateVariableDeclaration
+    ├── ProgramVariable "deposit" : UINT256 @ Storage
+    └── AddOperator : UINT256
+        ├── ProgramVariable "balance"
+        └── Uint256Literal 100
+```
+
+`addOp.getChild(0)` and `addOp.getChild(1)` are the same objects as `addOp.getLeft()` and `addOp.getRight()`.
+
+### Simple assignment statement
+
+```solidity
+contract SimpleContract {
+    function func(uint256 v) public pure {
+        v = 4;
+    }
+}
+```
+
+```
+FunctionDeclaration "func" [public pure]
+├── ProgramVariable "v" : UINT256
+└── Block
+    └── ExpressionStatement
+        └── AssignmentExpression
+            ├── ProgramVariable "v"   (left)
+            └── Uint256Literal 4      (right)
+```
+
+### Local variable declaration
+
+```solidity
+function func() public pure {
+    int256 v;
+}
+```
+
+```
+Block
+└── DeclarationStatement                        (1 child — no initializer)
+    └── StatementVariableDeclaration
+        └── ProgramVariable "v" : INT256 @ Default
+```
+
+### Local variable with inline initializer
+
+```solidity
+function func() public pure {
+    bool b = true;
+    bool c = true || false;
+}
+```
+
+```
+Block
+├── DeclarationStatement                        (2 children)
+│   ├── StatementVariableDeclaration
+│   │   └── ProgramVariable "b" : BOOL
+│   └── BoolLiteral TRUE
+└── DeclarationStatement                        (2 children)
+    ├── StatementVariableDeclaration
+    │   └── ProgramVariable "c" : BOOL
+    └── OrOperator : BOOL
+        ├── BoolLiteral TRUE
+        └── BoolLiteral FALSE
+```
+
+### Unary postfix operators
+
+```solidity
+contract SimpleContract {
+    uint256 i;
+    uint256 j;
+    uint256 v = i++ + j--;
+}
+```
+
+```
+StateVariableDeclaration
+├── ProgramVariable "v" : UINT256 @ Storage
+└── AddOperator : UINT256
+    ├── PlusPlusOperator : UINT256       (postfix i++)
+    │   └── ProgramVariable "i"
+    └── MinusMinusOperator : UINT256     (postfix j--)
+        └── ProgramVariable "j"
+```
+
+### Compound assignment
+
+```solidity
+function func(uint256 u, uint256 v, uint256 w) public pure {
+    v += w = u -= 1;
+}
+```
+
+```
+Block
+└── ExpressionStatement
+    └── PlusEqualOperator
+        ├── ProgramVariable "v"          (left)
+        └── AssignmentExpression         (right: w = u -= 1)
+            ├── ProgramVariable "w"
+            └── MinusEqualOperator
+                ├── ProgramVariable "u"
+                └── Uint256Literal 1
+```
+
+### Struct as function parameter
+
+```solidity
+contract SimpleContract {
+    struct Person { int age; }
+    function func(Person memory p) public pure { }
+}
+```
+
+```
+FunctionDeclaration "func" [public pure]
+├── ProgramVariable "p" : StructDeclaration("SimpleContract.Person") @ Memory
+└── Block (empty)
+```
+
+```java
+assertEquals(Memory,
+    contractDeclaration.getFunctions().get(0).getInputParameters().get(0).getLocation());
+```
+
+### Member access in return statement
+
+```solidity
+contract SimpleContract {
+    struct Person { uint256 age; }
+    Person alice;
+    function f() public returns (uint256) {
+        return alice.age;
+    }
+}
+```
+
+```
+FunctionDeclaration "f" [public]
+├── ProgramVariable "_ret0" : UINT256   (return param)
+└── Block
+    └── ReturnStatement
+        └── MemberExp : UINT256
+            ├── ProgramVariable "alice"       (left)
+            └── FieldDeclaration "age" : uint256  (right)
+```
+
+### Array indexing
+
+```solidity
+contract SimpleContract {
+    int[] v;
+    function f() public returns (int) {
+        return v[1+1];
+    }
+}
+```
+
+```
+StateVariableDeclaration
+└── ProgramVariable "v" : DynamicArrayType(INT) @ Storage
+
+Block
+└── ReturnStatement
+    └── IndexExpression                     (2 children)
+        ├── ProgramVariable "v"
+        └── AddOperator
+            ├── Uint256Literal 1
+            └── Uint256Literal 1
+```
+
+`v`'s type is `DynamicArrayType` with element type `INT`. `toString()` produces `"v[1 + 1]"`.
+
+### Fixed-size array declaration
+
+```solidity
+function f() public {
+    bool[3] memory foo;
+    foo = [false, true, false];
+}
+```
+
+```
+Block
+├── DeclarationStatement
+│   └── StatementVariableDeclaration
+│       └── ProgramVariable "foo" : ArrayType(BOOL, 3) @ Memory
+└── ExpressionStatement
+    └── AssignmentExpression
+        ├── ProgramVariable "foo"
+        └── TupleExpression
+            ├── BoolLiteral FALSE
+            ├── BoolLiteral TRUE
+            └── BoolLiteral FALSE
+```
+
+```java
+ArrayType arrayType = (ArrayType) foo.getType();
+assertEquals(3, arrayType.length());
+assertSame(BOOL, arrayType.getElementType());
+```
+
+### Dynamic array with `new`
+
+```solidity
+function f() public {
+    bool[] memory foo = new bool[](3);
+}
+```
+
+```
+DeclarationStatement
+├── StatementVariableDeclaration
+│   └── ProgramVariable "foo" : DynamicArrayType(BOOL) @ Memory
+└── FunctionCallExpression
+    ├── Uint256Literal 3                         (argument)
+    └── NewExpression "function () returns (bool[])"
+```
+
+### Function call
+
+```solidity
+contract SimpleContract {
+    function f(bool v) public returns (bool) { return v; }
+    function g(bool v) public { f(v); }
+}
+```
+
+```
+FunctionDeclaration "g" [public]
+└── Block
+    └── ExpressionStatement
+        └── FunctionCallExpression              (2 children: args first, then callee)
+            ├── ProgramVariable "v"             (child 0 — argument)
+            └── FunctionReference "f"           (child 1 — callee)
+```
+
+```java
+assertEquals(2, fCall.getChildCount());
+assertEquals(1, fCall.getArguments().size());
+assertSame(fCall.getArgument(0), fCall.getArguments().get(0));
+```
+
+### If statement
+
+```solidity
+contract SimpleContract {
+    int i;
+    function f() public {
+        if(true) i = 0;
+    }
+}
+```
+
+```
+Block
+└── ConditionStatement                          (2 children — no else branch)
+    ├── BoolLiteral TRUE                        (condition)
+    └── ExpressionStatement
+        └── AssignmentExpression
+            ├── ProgramVariable "i"
+            └── Uint256Literal 0
+```
+
+### If-else statement
+
+```solidity
+if(i == 2)
+    i = 0;
+else
+    i = 1;
+```
+
+```
+ConditionStatement                              (3 children)
+├── EqualOperator                               (condition)
+│   ├── ProgramVariable "i"
+│   └── Uint256Literal 2
+├── ExpressionStatement                         (true branch)
+│   └── AssignmentExpression …
+└── ExpressionStatement                         (false branch / else)
+    └── AssignmentExpression …
+```
+
+### While loop with break and continue
+
+```solidity
+function f() public {
+    while(true) {
+        continue;
+        break;
+    }
+}
+```
+
+```
+Block
+└── WhileStatement
+    ├── BoolLiteral TRUE                        (condition)
+    └── Block
+        ├── ContinueStatement                   (0 children)
+        └── BreakStatement                      (0 children)
+```
+
+### For loop
+
+```solidity
+contract SimpleContract {
+    int i;
+    function f() public {
+        for(i = 0; i<10; i++){}
+    }
+}
+```
+
+```
+Block
+└── ForStatement                                (4 children: init, condition, update, body)
+    ├── ForInit
+    │   └── AssignmentExpression (i = 0)
+    ├── LessOperator (i < 10)
+    │   ├── ProgramVariable "i"
+    │   └── Uint256Literal 10
+    ├── ForUpdate
+    │   └── PlusPlusOperator (i++)
+    │       └── ProgramVariable "i"
+    └── Block (empty)
+```
+
+`toString()` produces `"for(i = 0; i < 10; i ++)"`.
+
+An empty `for(; ; ){}` has only 1 child (the body `Block`).
+
+### Do-while loop
+
+```solidity
+function f() public {
+    do {} while (true);
+}
+```
+
+```
+Block
+└── DoWhileStatement
+    ├── Block (empty)                           (body)
+    └── BoolLiteral TRUE                        (condition)
+```
+
+### External contract call
+
+```solidity
+contract SimpleContract {
+    function f() external pure { }
+    function g(address target) public {
+        SimpleContract(target).f();
+    }
+}
+```
+
+```
+FunctionDeclaration "g" [public nonpayable]
+├── ProgramVariable "target" : ADDRESS
+└── Block
+    └── ExpressionStatement
+        └── MemberExp
+            ├── FunctionCallExpression           (SimpleContract(target))
+            │   ├── ProgramVariable "target"     (argument)
+            │   └── ContractReference            (callee — leaf, 0 children)
+            └── FunctionReference "f"
+```
+
+```java
+assertSame(external,    f.getVisibility());
+assertSame(pure,        f.getStateMutability());
+assertSame(ADDRESS,     g.getInputParameters().get(0).getType());
+assertSame(nonpayable,  g.getStateMutability());
+```
+
+### Basic try-catch
+
+```solidity
+function f(address target) public {
+    try SimpleContract(target).g() { }
+    catch { }
+}
+```
+
+```
+TryStatement                                    (3 children: expression, body, catch)
+├── MemberExp                                   (child 0 — tried expression)
+│   ├── FunctionCallExpression
+│   │   ├── ProgramVariable "target"
+│   │   └── ContractReference                   (0 children)
+│   └── FunctionReference "g"
+├── Block (empty)                               (child 1 — success body)
+└── CatchClause [ALL]                           (child 2)
+    └── Block (empty)
+```
+
+### Multiple catch clauses
+
+```solidity
+try SimpleContract(target).g() { int i; }
+catch Error(string memory reason) { int j; }
+catch { int k; }
+```
+
+```
+TryStatement
+├── MemberExp …
+├── Block
+│   └── DeclarationStatement (int i)
+├── CatchClause [Error]
+│   ├── StatementVariableDeclaration "reason" : STRING @ Memory
+│   └── Block
+│       └── DeclarationStatement (int j)
+└── CatchClause [ALL]
+    └── Block
+        └── DeclarationStatement (int k)
+```
+
+```java
+assertEquals(2, tryStmt.getCatchClauses().size());
+assertEquals("Error", tryStmt.getCatchClause(0).getKind().toString());
+assertEquals("ALL",   tryStmt.getCatchClause(1).getKind().toString());
+assertSame(STRING, errorClause.getCatchDeclaration().getProgramVariable().getType());
+```
+
+### Tuple (multiple) return values
+
+```solidity
+function f() public returns (bool, bool) {
+    return (false, true);
+}
+```
+
+```
+FunctionDeclaration "f" [public]
+│   type = TupleType(BOOL, BOOL)
+└── Block
+    └── ReturnStatement
+        └── TupleExpression                     (2 children)
+            ├── BoolLiteral FALSE
+            └── BoolLiteral TRUE
+```
+
+```java
+TupleType type = contractDec.getFunctions().getFirst().getType();
+assertEquals(BOOL, type.getTypes().get(0));
+assertEquals(BOOL, type.getTypes().get(1));
+```
+
+Two functions with the same return signature share the **same** `TupleType` instance:
+
+```java
+TupleType fType = contractDec.getFunctions().get(0).getType();
+TupleType gType = contractDec.getFunctions().get(1).getType();
+assertSame(fType, gType); // structural interning
+```
+
+### Destructuring tuple assignment
+
+```solidity
+function g() public {
+    (bool a, bool b) = f();
+    (int c, int d) = (1, 2);
+}
+```
+
+```
+Block
+├── DeclarationStatement  →  toString: "(bool a, bool b) = f();"
+│   ├── StatementVariableDeclaration "a" : BOOL
+│   ├── StatementVariableDeclaration "b" : BOOL
+│   └── FunctionCallExpression "f()"      (initialValue — TupleType(BOOL, BOOL))
+└── DeclarationStatement
+    ├── StatementVariableDeclaration "c" : INT
+    ├── StatementVariableDeclaration "d" : INT
+    └── TupleExpression
+        ├── Uint256Literal 1
+        └── Uint256Literal 2
+```
+
+### Constructor
+
+```solidity
+contract SimpleContract {
+    constructor () { }
+}
+```
+
+```
+ContractDeclaration "SimpleContract"
+└── FunctionDeclaration [kind="constructor"]
+    └── Block (empty)
+```
+
+```java
+FunctionDeclaration constructor = contractDec.getFunctions().stream()
+    .filter(f -> f.getKind().equals("constructor"))
+    .findFirst().orElse(null);
+assertNotNull(constructor);
+assertEquals(0, constructor.getInputParameters().size());
+```
+
+### Modifier with body
+
+```solidity
+contract SimpleContract {
+    modifier mod1() { _; }
+    modifier mod2() { _; }
+    function f() public mod1 mod2 { }
+}
+```
+
+```
+ContractDeclaration "SimpleContract"           (3 children)
+├── ModifierDeclaration "mod1"                 (child 0)
+│   └── Block
+├── ModifierDeclaration "mod2"                 (child 1)
+│   └── Block
+└── FunctionDeclaration "f" [public]           (child 2)
+    │   modifiers: [ModifierReference "mod1", ModifierReference "mod2"]
+    └── Block (empty)
+```
+
+```java
+assertEquals(2, f.getModifiers().size());
+assertEquals("mod1", f.getModifiers().get(0).name);
+assertEquals(0,      f.getModifiers().get(0).getChildCount()); // leaf
+```
+
+### Modifier with parameters
+
+```solidity
+modifier mod(uint256 x, address y) { _; }
+```
+
+```
+ModifierDeclaration "mod"                      (3 children)
+├── ProgramVariable "x" : UINT256
+├── ProgramVariable "y" : ADDRESS
+└── Block
+```
+
+### Self-referencing function call
+
+```solidity
+contract SimpleContract {
+    function f() public {
+        f();
+    }
+}
+```
+
+```
+FunctionDeclaration "f" [public nonpayable]
+└── Block
+    └── ExpressionStatement
+        └── FunctionCallExpression              (1 child — no args, only callee)
+            └── FunctionReference "f"
+                  referencedDeclaration → FunctionDeclaration "f"  (same object)
+                  type = TupleType()  (empty tuple — void)
+```
+
+```java
+assertSame(selfF, fRef.referencedDeclaration);
+assertInstanceOf(TupleType.class, fRef.getType());
+assertEquals(0, ((TupleType) fRef.getType()).getTypes().size());
+```
+
+### NatSpec documentation
+
+```solidity
+/// @return BoolTrue
+function func() public pure returns (bool) {
+    return true;
+}
+```
+
+```java
+assertEquals("@return BoolTrue", functionDeclaration.getDocumentation());
+```
+
+The leading `///` and whitespace are stripped; only the comment body is stored.
+
+### Two contracts — `new` expression
+
+```solidity
+contract A {}
+contract SimpleContract {
+    A a = new A();
+}
+```
+
+```
+[ContractDeclaration "A",
+ ContractDeclaration "SimpleContract"]
+
+ContractDeclaration "SimpleContract"
+└── StateVariableDeclaration
+    ├── ProgramVariable "a" : ContractDeclaration("A") @ Storage
+    └── FunctionCallExpression
+        ├── (no arguments)
+        └── NewExpression "function () returns (contract A)"  (0 children)
+```
+
+```java
+List<SyntaxElement> elements = solcParser.getDeclsJsonParser(contracts);
+assertEquals(2, elements.size());
+NewExpression newExp = (NewExpression) ((FunctionCallExpression) ctrl
+    .getFieldDeclarations().get(0).getInitializer()).getFunctionExp();
+assertEquals("function () returns (contract A)", newExp.getFunction());
+assertEquals(0, newExp.getChildCount());
+```
+
+### Two contracts — constructor with arguments
+
+```solidity
+contract A { constructor(int a) { } }
+contract SimpleContract { A a = new A(0); }
+```
+
+```
+FunctionCallExpression
+├── Uint256Literal 0                            (argument)
+└── NewExpression "function (int256) returns (contract A)"
+```
+
+```java
+assertEquals("function (int256) returns (contract A)", newExp.getFunction());
+```
+
+### Mapping type interning
+
+```solidity
+contract SimpleContract {
+    mapping(bool => int) public m1;
+    mapping(bool => int) public m2;
+}
+```
+
+Two mappings with identical key/value types are the **same object**:
+
+```java
+assertSame(m1Type, m2Type);
+assertSame(m1Type.getSort(services), m2Type.getSort(services));
+```
