@@ -30,7 +30,7 @@ tasks.register('runAntlr4Key', JavaExec) {
 }
 compileJava.dependsOn runAntlr4Key
 
-tasks.withType(Test) {
+tasks.withType(Test).configureEach {
     enableAssertions = true
 }
 

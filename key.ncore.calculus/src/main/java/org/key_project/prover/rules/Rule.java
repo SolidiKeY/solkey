@@ -17,6 +17,10 @@ public interface Rule extends Named {
         return Collections.emptyIterator();
     }
 
+    default Iterator<RuleSet> ruleSets() {
+        return Collections.emptyIterator();
+    }
+
     /// Returns the rule executor for this rule.
     /// The rule executor encapsulates the logic for rule applications.
     ///
@@ -29,5 +33,4 @@ public interface Rule extends Named {
     default String displayName() {
         return name().toString();
     }
-
 }
