@@ -5,6 +5,7 @@ package org.key_project.solidity.parser;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 import org.key_project.logic.*;
 import org.key_project.logic.op.sv.SchemaVariable;
@@ -19,6 +20,7 @@ import org.key_project.util.collection.ImmutableSLList;
 import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TacletParserTest {
     private static final String DECLS =
@@ -29,16 +31,6 @@ public class TacletParserTest {
                 }
                 \\schemaVariables {
                   \\formula b,b0,post;
-                  \\program Statement #p1, #s ;\s
-                  \\program Expression #e2, #e ;\s
-                  \\program SimpleExpression #se ;\s
-                  \\program Variable #slhs, #arr, #ar, #ar1 ;\s
-                  \\program LoopInit #i ;\s
-                  \\program Label #lab, #lb0, #lb1 ;\s
-                  \\program Label #inner, #outer ;\s
-                  \\program Type #typ ;\s
-                  \\program Variable #v0, #v, #v1, #k, #boolv ;\s
-                  \\program[list] Catch #cf ;\s
                   \\term s x,x0 ;
                   \\skolemTerm s sk ;
                   \\variables s z,z0 ;
@@ -101,14 +93,14 @@ public class TacletParserTest {
         try {
             KeYIO.Loader l = io.load(s);
             List<Taclet> taclets = l.loadComplete();
-            return taclets.get(0);
+            return taclets.getFirst();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
 
-    @Disabled("TODO: Richard")
+    //@Disabled("TODO: Richard")
     @Test
     public void testImpLeft() {
         // imp-left rule
@@ -124,10 +116,87 @@ public class TacletParserTest {
         builder.addTacletGoalTemplate(
             new AntecSuccTacletGoalTemplate(emptySequent,
                 ImmutableSLList.nil(), sequent(null, "b")));
+        var c = builder.getChoices();
 
         Taclet impleft = builder.getAntecTaclet(io.getServices());
-        String impleftString =
-            "imp_left{\\find(b->b0 ==>) \\replacewith(b0 ==>); \\replacewith(==> b)}";
-        assertEquals(impleft, parseTaclet(impleftString), "imp-left");
+        String impleftString = """                
+                imp_left {
+                   \\find(b->b0 ==>)
+                   \\replacewith(b0 ==>);
+                   \\replacewith(==> b)
+                }
+            """;
+        assertTrue(equals(impleft, parseTaclet(impleftString)));
     }
+
+    private boolean equals(Taclet a, Taclet b) {
+        if (a == b) {
+            return true;
+        }
+        if (a.getClass() != b.getClass()) {
+            return false;
+        }
+        if (a.closeGoal() != b.closeGoal()) {
+            return false;
+        }
+        if (!a.name().equals(b.name())) {
+            return false;
+        }
+        if (!a.getAssumesAndFindVariables().equals(b.getAssumesAndFindVariables())) {
+            return false;
+        }
+        if (!a.getBoundVariables().equals(b.getBoundVariables())) {
+            return false;
+        }
+        if (!a.getChoices().equals(b.getChoices())) {
+            return false;
+        }
+        if (!Objects.equals(a.getTrigger(), b.getTrigger())) {
+            return false;
+        }
+        if (!Objects.equals(a.getVariableConditions(), b.getVariableConditions())) {
+            return false;
+        }
+        if (a.goalTemplates().size() != b.goalTemplates().size()) {
+                return false;
+        }
+        for (int i = 0; i<a.goalTemplates().size(); i++) {
+            var agt = a.goalTemplates().get(i);
+            var bgt = b.goalTemplates().get(i);
+            if (!Objects.equals(agt.name(), bgt.name())) {
+                return false;
+            }
+
+            SyntaxElement agtElement = agt.replaceWith();
+            SyntaxElement bgtElement = bgt.replaceWith();
+            if (!compareGTElement(agtElement, bgtElement)) return false;
+            if (!compareGTElement(agt.sequent(), bgt.sequent())) return false;
+            if (!agt.addedProgVars().equals(bgt.addedProgVars())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean compareGTElement(SyntaxElement agtElement, SyntaxElement bgtElement) {
+        if (agtElement instanceof Term at) {
+            if (!(bgtElement instanceof Term bt) || !at.equals(bt)) {
+                return true;
+            }
+        } else if (agtElement instanceof Sequent as) {
+            if (!(bgtElement instanceof Sequent bs) || bs.size() != as.size()) {
+                return false;
+            } else {
+                for (int idx = 0; idx < as.size(); idx++) {
+                    if (!as.getChild(idx).equals(bs.getChild(idx))) {
+                        return false;
+                    }
+                }
+            }
+        } else if (agtElement != bgtElement) {
+            return false;
+        }
+        return true;
+    }
+
 }
