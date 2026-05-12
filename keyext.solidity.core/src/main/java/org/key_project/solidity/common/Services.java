@@ -63,8 +63,6 @@ public class Services implements LogicServices, ProofServices {
         nameRecorder = new NameRecorder();
     }
 
-    @SuppressWarnings({ "argument.type.incompatible", "assignment.type.incompatible",
-        "initialization.fields.uninitialized" })
     public Services(Services services) {
         this.namespaces = services.namespaces;
         this.theoryInfo = services.theoryInfo;
