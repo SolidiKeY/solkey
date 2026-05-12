@@ -4,24 +4,52 @@
 package org.key_project.solidity.theory;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
+import org.key_project.logic.Name;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 
-public class TheoryInfo {
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
-    private final Map<String, LDT> name2LDT = new HashMap<>();
+public class TheoryInfo implements Iterable<LDT> {
+
+    private final BoolLDT boolLDT;
+    private final IntLDT intLDT;;
+    private final Map<Name, LDT> map;
 
     public TheoryInfo(Services services) {
-        // initialize
+        boolLDT = new BoolLDT(services);
+        intLDT = new IntLDT(services);
+        map = new HashMap<>();
+        map.put(boolLDT.name(), boolLDT);
+        map.put(intLDT.name(), intLDT);
     }
 
-    public LDT getLDTFor(Sort sort) {
-        throw new RuntimeException("Not implemented yet");
+    public BoolLDT getBoolLDT() {
+        return boolLDT;
     }
 
     public IntLDT getIntLDT() {
-        throw new RuntimeException("Not implemented yet");
+        return intLDT;
+    }
+
+    public @Nullable LDT get(Name name) {
+        return map.get(name);
+    }
+
+    public @NonNull Iterator<LDT> iterator() {
+        return map.values().iterator();
+    }
+
+    public @Nullable LDT getLDTFor(Sort s) {
+        for (LDT ldt : this) {
+            if (s.equals(ldt.targetSort())) {
+                return ldt;
+            }
+        }
+        return null;
     }
 }
