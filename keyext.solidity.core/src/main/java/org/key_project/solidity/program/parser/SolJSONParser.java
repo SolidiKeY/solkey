@@ -9,7 +9,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -35,9 +34,9 @@ import org.key_project.solidity.program.ast.references.*;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.util.collection.ImmutableArray;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jspecify.annotations.*;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.*;
 import static org.key_project.solidity.program.ast.expressions.literals.BoolLiteral.*;
@@ -73,7 +72,8 @@ public class SolJSONParser {
     /// @return list of top level declarations (usually contracts) representing the Solidity code
     public List<SyntaxElement> parse(URI file) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode root = mapper.readTree(file.toURL());
+
+        JsonNode root = mapper.readTree(file.toURL().openStream());
         return json2SolidityAST(root);
     }
 
@@ -88,7 +88,7 @@ public class SolJSONParser {
     /// @param root the root node representing the JSON AST
     /// @return the KeY AST representation of {@code root}
     private List<SyntaxElement> json2SolidityAST(JsonNode root) {
-        if ("SourceUnit".equals(root.get("nodeType").asText())) {
+        if ("SourceUnit".equals(root.get("nodeType").asString())) {
             return parseSourceUnit(root.get("nodes").valueStream().toList());
         }
         return new ArrayList<>();
@@ -96,14 +96,14 @@ public class SolJSONParser {
 
     private List<SyntaxElement> parseSourceUnit(List<JsonNode> nodes) {
         return nodes.stream()
-                .filter(n -> "contract".equals(n.get("contractKind").asText()))
+                .filter(n -> "contract".equals(n.get("contractKind").asString()))
                 .map(this::parseContract)
                 .collect(Collectors.toList());
     }
 
 
     private ContractDeclaration parseContract(JsonNode contractNode) {
-        String contractName = contractNode.get("canonicalName").asText(); // there is also a
+        String contractName = contractNode.get("canonicalName").asString(); // there is also a
         final int contractId = contractNode.get("id").asInt();
         contractIds.add(contractId);
         List<StateVariableDeclaration> fields = new ArrayList<>();
@@ -126,9 +126,8 @@ public class SolJSONParser {
 
         assert contractType.getSolidityType() == null : "Contract has already been parsed";
 
-        for (Iterator<JsonNode> it = contractNode.get("nodes").elements(); it.hasNext();) {
-            final JsonNode node = it.next();
-            final String nodeType = node.get("nodeType").asText();
+        for (JsonNode node : contractNode.get("nodes").values()) {
+            final String nodeType = node.get("nodeType").asString();
             switch (nodeType) {
                 case "VariableDeclaration" -> fields.add(parseVariableField(node));
                 case "FunctionDefinition" -> functions.add(parseFunction(node));
@@ -171,7 +170,7 @@ public class SolJSONParser {
 
     private EnumDeclaration parseEnum(JsonNode node) {
         final int id = node.get("id").asInt();
-        String name = node.get("name").asText();
+        String name = node.get("name").asString();
         List<MemberEnumDeclaration> members =
             node.get("members").valueStream().map(this::parseMemberEnum).toList();
         EnumDeclaration enumDeclaration = new EnumDeclaration(new Name(name), members);
@@ -181,7 +180,7 @@ public class SolJSONParser {
     }
 
     private MemberEnumDeclaration parseMemberEnum(JsonNode node) {
-        String name = node.get("name").asText();
+        String name = node.get("name").asString();
         int id = node.get("id").asInt();
         MemberEnumDeclaration member = new MemberEnumDeclaration(new Name(name));
         id2Name.put(id, member);
@@ -189,12 +188,12 @@ public class SolJSONParser {
     }
 
     private ModifierDeclaration parseModifier(JsonNode node) {
-        final String name = node.get("name").asText();
+        final String name = node.get("name").asString();
         List<ProgramVariable> inputParameters =
             node.get("parameters").get("parameters").valueStream()
                     .map(this::parseParam).toList();
         Block body = parseBlock(node.get("body"));
-        Visibility visibility = Visibility.fromString(node.get("visibility").asText());
+        Visibility visibility = Visibility.fromString(node.get("visibility").asString());
         ModifierDeclaration modifier =
             new ModifierDeclaration(new Name(name), inputParameters, body, visibility);
         id2Name.put(node.get("id").asInt(), modifier);
@@ -202,7 +201,7 @@ public class SolJSONParser {
     }
 
     private StructDeclaration parseStruct(JsonNode structNode, int contractId) {
-        String name = structNode.get("name").asText();
+        String name = structNode.get("name").asString();
         List<FieldDeclaration> fields =
             structNode.get("members").valueStream().map(this::parseField).toList();
 
@@ -214,7 +213,7 @@ public class SolJSONParser {
     }
 
     private FieldDeclaration parseField(JsonNode fieldNode) {
-        final String fieldName = fieldNode.get("name").asText();
+        final String fieldName = fieldNode.get("name").asString();
         JsonNode typeName = fieldNode.get("typeName");
 
         TypeReference typeReference;
@@ -223,7 +222,7 @@ public class SolJSONParser {
             Type typeRef = (Type) id2Name.get(typeId);
             typeReference = new TypeReference(typeRef);
         } else {
-            typeReference = new TypeReference(new Name(typeName.get("name").asText()));
+            typeReference = new TypeReference(new Name(typeName.get("name").asString()));
         }
 
         FieldDeclaration field = new FieldDeclaration(new Name(fieldName), typeReference);
@@ -233,7 +232,7 @@ public class SolJSONParser {
 
     private FunctionDeclaration parseFunction(JsonNode node) {
         final int id = node.get("id").asInt();
-        final String name = node.get("name").asText();
+        final String name = node.get("name").asString();
         Stream<JsonNode> parameters =
             node.get("returnParameters").get("parameters").valueStream();
         List<ProgramVariable> returnParameters = parameters.map(this::parseParam).toList();
@@ -245,16 +244,16 @@ public class SolJSONParser {
                     .map(this::parseParam).toList();
 
         Block body = parseBlock(node.get("body"));
-        String kind = node.get("kind").asText();
-        Visibility visibility = Visibility.fromString(node.get("visibility").asText());
+        String kind = node.get("kind").asString();
+        Visibility visibility = Visibility.fromString(node.get("visibility").asString());
         StateMutability stateMutability =
-            StateMutability.valueOf(node.get("stateMutability").asText());
+            StateMutability.valueOf(node.get("stateMutability").asString());
         List<ModifierReference> modifiers =
             node.get("modifiers").valueStream().map(this::parseModifierRefence).toList();
         JsonNode documentationNode = node.get("documentation");
         String documentation = "";
         if (documentationNode != null)
-            documentation = documentationNode.get("text").asText();
+            documentation = documentationNode.get("text").asString();
         FunctionDeclaration function = new FunctionDeclaration(new Name(name), returnParameters,
             returnType,
             inputParamenters, body, kind, visibility, stateMutability, modifiers, documentation);
@@ -263,7 +262,7 @@ public class SolJSONParser {
     }
 
     private ModifierReference parseModifierRefence(JsonNode node) {
-        String name = node.get("modifierName").get("name").asText();
+        String name = node.get("modifierName").get("name").asString();
         return new ModifierReference(name);
     }
 
@@ -276,7 +275,7 @@ public class SolJSONParser {
     private CatchClause parseCatchClause(JsonNode jsonBody) {
         Block block = parseBlock(jsonBody.get("block"));
         if (jsonBody.has("errorName")) {
-            String errorName = jsonBody.get("errorName").asText();
+            String errorName = jsonBody.get("errorName").asString();
             if (!errorName.isEmpty()) {
                 List<StatementVariableDeclaration> arguments =
                     jsonBody.get("parameters").get("parameters").valueStream()
@@ -289,7 +288,7 @@ public class SolJSONParser {
     }
 
     private @NonNull Statement parseStatement(JsonNode statement) {
-        String type = statement.get("nodeType").asText();
+        String type = statement.get("nodeType").asString();
         if (statement.has("expression")) {
             Expression expression = parseExpression(statement.get("expression"));
             return switch (type) {
@@ -364,13 +363,13 @@ public class SolJSONParser {
 
     private Declaration parseDeclaration(JsonNode declaration) {
         final int id = declaration.get("id").asInt();
-        String nameS = declaration.get("name").asText();
+        String nameS = declaration.get("name").asString();
         Name name = new Name(nameS);
         JsonNode typeNameNode = declaration.get("typeName");
         Type type = parseType(typeNameNode);
         KeYSolidityType ksType = getUndeclaredSolidityType(type);
         DataLocation dataLocation =
-            DataLocation.fromString(declaration.get("storageLocation").asText());
+            DataLocation.fromString(declaration.get("storageLocation").asString());
         ProgramVariable programVariable =
             new ProgramVariable(name, ksType.getSort(), ksType, dataLocation);
         Declaration decl = new StatementVariableDeclaration(programVariable);
@@ -390,8 +389,8 @@ public class SolJSONParser {
 
     private ProgramVariable parseParam(JsonNode node) {
         final int id = node.get("id").asInt();
-        final String fieldName = node.get("name").asText();
-        final String dataLocationS = node.get("storageLocation").asText();
+        final String fieldName = node.get("name").asString();
+        final String dataLocationS = node.get("storageLocation").asString();
         final DataLocation dataLocation = DataLocation.fromString(dataLocationS);
 
         ProgramVariable programVariable;
@@ -414,9 +413,9 @@ public class SolJSONParser {
     }
 
     private Type parseType(JsonNode node) {
-        String typeName = node.get("nodeType").asText();
+        String typeName = node.get("nodeType").asString();
         return switch (typeName) {
-            case "ElementaryTypeName" -> getPrimitiveType(node.get("name").asText());
+            case "ElementaryTypeName" -> getPrimitiveType(node.get("name").asString());
             case "ArrayTypeName" -> {
                 Type baseType = parseType(node.get("baseType"));
                 if (node.has("length")) {
@@ -430,7 +429,7 @@ public class SolJSONParser {
             case "UserDefinedTypeName" ->
                 (Type) id2Name.get(node.get("referencedDeclaration").asInt());
             case "Identifier" -> SolidityInfo
-                    .getPrimitiveType(node.get("typeDescriptions").get("typeString").asText());
+                    .getPrimitiveType(node.get("typeDescriptions").get("typeString").asString());
             default -> throw new RuntimeException("Type " + typeName + " not covered");
         };
     }
@@ -441,7 +440,7 @@ public class SolJSONParser {
 
     private StateVariableDeclaration parseVariableField(JsonNode fieldNode) {
         final int id = fieldNode.get("id").asInt();
-        final String fieldName = fieldNode.get("name").asText();
+        final String fieldName = fieldNode.get("name").asString();
         JsonNode typeName = fieldNode.get("typeName");
         Type expType = null;
         int idRef = -1;
@@ -453,7 +452,7 @@ public class SolJSONParser {
         } else
             expType = parseTypeName(fieldNode);
 
-        Visibility visibility = Visibility.fromString(fieldNode.get("visibility").asText());
+        Visibility visibility = Visibility.fromString(fieldNode.get("visibility").asString());
 
         Expression initializerExp = null;
         if (fieldNode.has("value")) {
@@ -490,7 +489,7 @@ public class SolJSONParser {
     }
 
     private Expression parseExpression(JsonNode initializer) {
-        final String nodeType = initializer.get("nodeType").asText();
+        final String nodeType = initializer.get("nodeType").asString();
         return switch (nodeType) {
             case "Literal" -> parseLiteral(initializer);
             case "BinaryOperation" -> parseBinaryOperation(initializer);
@@ -512,7 +511,7 @@ public class SolJSONParser {
 
     private Expression parseNewExpression(JsonNode initializer) {
         String functionDef =
-            initializer.get("typeDescriptions").get("typeString").asText();
+            initializer.get("typeDescriptions").get("typeString").asString();
         Type type = parseTypeName(initializer);
         return new NewExpression(functionDef, type);
     }
@@ -591,7 +590,7 @@ public class SolJSONParser {
     }
 
     private Expression parseAssignment(JsonNode assign) {
-        final String op = assign.get("operator").asText();
+        final String op = assign.get("operator").asString();
         Expression left = parseExpression(assign.get("leftHandSide"));
         Expression right = parseExpression(assign.get("rightHandSide"));
         return ParserUtils.parseAssignment(left, right, op);
@@ -599,7 +598,7 @@ public class SolJSONParser {
 
     private Expression parseUnaryOperation(JsonNode initializer) {
         Expression uExp = parseExpression(initializer.get("subExpression"));
-        final String operator = initializer.get("operator").asText();
+        final String operator = initializer.get("operator").asString();
         boolean prefix = initializer.get("prefix").asBoolean();
         return ParserUtils.parseUnaryOperation(uExp, operator, prefix);
     }
@@ -608,14 +607,14 @@ public class SolJSONParser {
         Expression leftExpression = parseExpression(initializer.get("leftExpression"));
         Expression rightExpression = parseExpression(initializer.get("rightExpression"));
 
-        final String operator = initializer.get("operator").asText();
+        final String operator = initializer.get("operator").asString();
         Type type = getTypeFromDescription(initializer);
         return ParserUtils.parseBinaryOperation(leftExpression, rightExpression, operator, type);
     }
 
     private Type getTypeFromDescription(JsonNode initializer) {
         String typeIdentifier =
-            initializer.get("typeDescriptions").get("typeIdentifier").textValue();
+                initializer.get("typeDescriptions").get("typeIdentifier").stringValue();
         return SolidityInfo
                 .getPrimitiveType(typeIdentifier.split("\\$")[0].substring(2).split("_")[0]);
     }
@@ -647,14 +646,14 @@ public class SolJSONParser {
     }
 
     private Literal parseLiteral(JsonNode literal) {
-        final String kind = literal.get("kind").asText();
+        final String kind = literal.get("kind").asString();
         return switch (kind) {
             case "number" -> {
-                String initializerExp = literal.get("value").asText();
+                String initializerExp = literal.get("value").asString();
                 yield new Uint256Literal(new BigInteger(initializerExp));
             }
             case "bool" -> {
-                String initializerExp = literal.get("value").asText();
+                String initializerExp = literal.get("value").asString();
                 yield initializerExp.equals("true") ? TRUE : FALSE;
             }
             // FIX!!!!

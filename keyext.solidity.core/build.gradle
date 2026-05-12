@@ -26,9 +26,14 @@ dependencies {
     testImplementation(platform('org.junit:junit-bom:5.10.0'))
     testImplementation('org.junit.jupiter:junit-jupiter')
 
-    implementation platform("com.fasterxml.jackson:jackson-bom:2.19.1")
-    implementation "com.fasterxml.jackson.core:jackson-databind"
-    implementation 'com.fasterxml.jackson.core:jackson-core:2.19.1'
+    // Import the Jackson BOM — pick the version you want
+    implementation platform("tools.jackson:jackson-bom:3.1.2")
+    implementation "tools.jackson.core:jackson-databind"
+    implementation "tools.jackson.core:jackson-core"
+
+    implementation('info.picocli:picocli:4.7.7')
+    annotationProcessor('info.picocli:picocli-codegen:4.7.7')
+
 }
 
 def antlr4OutputKey = String.valueOf(projectDir) + '/build/generated-src/antlr/main/org/key_project/solidity/parser'

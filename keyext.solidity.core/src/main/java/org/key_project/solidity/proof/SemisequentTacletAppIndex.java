@@ -15,6 +15,7 @@ import org.key_project.prover.sequent.SequentChangeInfo;
 import org.key_project.prover.sequent.SequentFormula;
 import org.key_project.prover.strategy.NewRuleListener;
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.proof.indices.TermTacletAppIndexCacheSet;
 import org.key_project.solidity.rule.NoPosTacletApp;
 import org.key_project.solidity.rule.TacletApp;
 import org.key_project.util.collection.DefaultImmutableMap;
@@ -25,10 +26,12 @@ import org.key_project.util.collection.ImmutableMapEntry;
 import org.jspecify.annotations.NonNull;
 
 public class SemisequentTacletAppIndex {
-    private final Sequent seq;
+    private final org.key_project.prover.sequent.Sequent seq;
     private final boolean antec;
     private ImmutableMap<SequentFormula, TermTacletAppIndex> termIndices =
-        DefaultImmutableMap.nilMap();
+            DefaultImmutableMap.nilMap();
+
+    private TermTacletAppIndexCacheSet indexCaches;
 
     /// Create an index object for the semisequent determined by <code>s</code> and
     /// <code>antec</code> that contains term indices for each formula.
@@ -37,17 +40,20 @@ public class SemisequentTacletAppIndex {
     /// the
     /// succedent
     SemisequentTacletAppIndex(Sequent s, boolean antec, Services services,
-            TacletIndex tacletIndex, NewRuleListener listener) {
+                              TacletIndex tacletIndex, NewRuleListener listener,
+                              TermTacletAppIndexCacheSet indexCaches) {
         this.seq = s;
         this.antec = antec;
+        this.indexCaches = indexCaches;
         addTermIndices((antec ? s.antecedent() : s.succedent()).asList(), services, tacletIndex,
-            listener);
+                listener);
     }
 
     private SemisequentTacletAppIndex(SemisequentTacletAppIndex orig) {
         this.seq = orig.seq;
         this.antec = orig.antec;
         this.termIndices = orig.termIndices;
+        this.indexCaches = orig.indexCaches;
     }
 
     /// Add indices for the given formulas to the map <code>termIndices</code>. Existing entries are
@@ -58,7 +64,7 @@ public class SemisequentTacletAppIndex {
             TacletIndex tacletIndex, NewRuleListener listener) {
         while (!cfmas.isEmpty()) {
             final SequentFormula cfma =
-                (SequentFormula) cfmas.head();
+                    (SequentFormula) cfmas.head();
             cfmas = cfmas.tail();
             addTermIndex(cfma, services, tacletIndex, listener);
         }
@@ -67,10 +73,11 @@ public class SemisequentTacletAppIndex {
     /// Add an index for the given formula to the map <code>termIndices</code>. An existing entry is
     /// replaced with the new one. Note: destructive, use only when constructing new index
     private void addTermIndex(SequentFormula cfma, Services services,
-            TacletIndex tacletIndex, NewRuleListener listener) {
+                              TacletIndex tacletIndex, NewRuleListener listener) {
         final PosInOccurrence pos = new PosInOccurrence(cfma, PosInTerm.getTopLevel(), antec);
         termIndices =
-            termIndices.put(cfma, TermTacletAppIndex.create(pos, services, tacletIndex, listener));
+                termIndices.put(cfma,
+                        TermTacletAppIndex.create(pos, services, tacletIndex, listener, indexCaches));
     }
 
     public SemisequentTacletAppIndex copy() {
@@ -90,7 +97,7 @@ public class SemisequentTacletAppIndex {
 
     /// @return all taclet apps for or below the given position
     public ImmutableList<TacletApp> getTacletAppAtAndBelow(PosInOccurrence pos,
-            Services services) {
+                                                           Services services) {
         return getTermIndex(pos).getTacletAppAtAndBelow(pos, services);
     }
 
@@ -98,33 +105,33 @@ public class SemisequentTacletAppIndex {
     /// <code>termIndices</code>, by adding the taclets that are selected by <code>filter</code>
     /// Note: destructive, use only when constructing new index
     private void addTaclet(NoPosTacletApp newTaclet, SequentFormula cfma, Services services,
-            TacletIndex tacletIndex, NewRuleListener listener) {
+                           TacletIndex tacletIndex, NewRuleListener listener) {
         final TermTacletAppIndex oldIndex = termIndices.get(cfma);
         assert oldIndex != null : "Term index that is supposed to be updated " + "does not exist";
 
         final PosInOccurrence pos = new PosInOccurrence(cfma, PosInTerm.getTopLevel(), antec);
 
         termIndices = termIndices.put(cfma,
-            oldIndex.addTaclet(newTaclet, pos, services, tacletIndex, listener));
+                oldIndex.addTaclet(newTaclet, pos, services, tacletIndex, listener));
     }
 
     /// Create an index that additionally contains the taclet
     public SemisequentTacletAppIndex addSingleTaclet(NoPosTacletApp newTaclet, Services services,
-            TacletIndex tacletIndex, NewRuleListener listener) {
+                                                     TacletIndex tacletIndex, NewRuleListener listener) {
         final SemisequentTacletAppIndex result = copy();
         final Iterator<SequentFormula> it =
-            termIndices.keyIterator();
+                termIndices.keyIterator();
 
         while (it.hasNext()) {
             var cfma = it.next();
-            final TermTacletAppIndex oldIndex = termIndices.get(cfma);
+            final TermTacletAppIndex oldIndex = result.termIndices.get(cfma);
             assert oldIndex != null
                     : "Term index that is supposed to be updated " + "does not exist";
 
             final PosInOccurrence pos = new PosInOccurrence(cfma, PosInTerm.getTopLevel(), antec);
 
-            termIndices = termIndices.put(cfma,
-                oldIndex.addTaclet(newTaclet, pos, services, tacletIndex, listener));
+            result.termIndices = result.termIndices.put(cfma,
+                    oldIndex.addTaclet(newTaclet, pos, services, tacletIndex, listener));
         }
 
         return result;
@@ -137,7 +144,7 @@ public class SemisequentTacletAppIndex {
             final SequentFormula cfma = entry.key();
             final TermTacletAppIndex index = entry.value();
             final PosInOccurrence pio =
-                new PosInOccurrence(cfma, PosInTerm.getTopLevel(), antec);
+                    new PosInOccurrence(cfma, PosInTerm.getTopLevel(), antec);
 
             index.reportTacletApps(pio, l);
         }
@@ -222,12 +229,12 @@ public class SemisequentTacletAppIndex {
      * when constructing new index
      */
     private void updateTermIndices(List<TermTacletAppIndex> oldIndices,
-            ImmutableList<FormulaChangeInfo> infos,
-            Services services,
-            TacletIndex tacletIndex,
-            NewRuleListener listener) {
+                                   ImmutableList<FormulaChangeInfo> infos,
+                                   Services services,
+                                   TacletIndex tacletIndex,
+                                   NewRuleListener listener) {
         final Iterator<FormulaChangeInfo> infoIt =
-            infos.iterator();
+                infos.iterator();
         final Iterator<TermTacletAppIndex> oldIndexIt = oldIndices.iterator();
 
         while (infoIt.hasNext()) {
@@ -241,12 +248,16 @@ public class SemisequentTacletAppIndex {
                 addTermIndex(newFor, services, tacletIndex, listener);
             } else {
                 final PosInOccurrence oldPos =
-                    info.positionOfModification();
+                        info.positionOfModification();
                 final PosInOccurrence newPos =
-                    oldPos.replaceSequentFormula(newFor);
+                        oldPos.replaceSequentFormula(newFor);
                 termIndices = termIndices.put(newFor,
-                    oldIndex.update(newPos, services, tacletIndex, listener/* , indexCaches */));
+                        oldIndex.update(newPos, services, tacletIndex, listener, indexCaches));
             }
         }
+    }
+
+    void setIndexCache(TermTacletAppIndexCacheSet indexCaches) {
+        this.indexCaches = indexCaches;
     }
 }
