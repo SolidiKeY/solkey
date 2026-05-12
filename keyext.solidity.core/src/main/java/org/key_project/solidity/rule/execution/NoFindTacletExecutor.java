@@ -6,7 +6,6 @@ package org.key_project.solidity.rule.execution;
 import java.util.Iterator;
 
 import org.key_project.prover.rules.RuleApp;
-import org.key_project.prover.rules.tacletbuilder.TacletGoalTemplate;
 import org.key_project.prover.sequent.Sequent;
 import org.key_project.prover.sequent.SequentChangeInfo;
 import org.key_project.solidity.common.Services;
@@ -15,6 +14,7 @@ import org.key_project.solidity.rule.TacletApp;
 import org.key_project.solidity.rule.TacletExecutor;
 import org.key_project.solidity.rule.matching.inst.MatchConditions;
 import org.key_project.solidity.rule.taclets.SolNoFindTaclet;
+import org.key_project.solidity.rule.taclets.TacletGoalTemplate;
 import org.key_project.util.collection.ImmutableList;
 
 public class NoFindTacletExecutor extends TacletExecutor {
@@ -27,7 +27,7 @@ public class NoFindTacletExecutor extends TacletExecutor {
     /// @param goal the goal that the rule application should refer to.
     /// @param ruleApp the taclet application that is executed
     @Override
-    public ImmutableList<Goal> apply(Goal goal, RuleApp ruleApp) {
+    public ImmutableList<Goal> apply(Goal goal, org.key_project.prover.rules.RuleApp ruleApp) {
         // Number without the if-goal eventually needed
         int numberOfNewGoals = taclet.goalTemplates().size();
 
@@ -45,7 +45,7 @@ public class NoFindTacletExecutor extends TacletExecutor {
 
         final var services = goal.getOverlayServices();
         while (it.hasNext()) {
-            TacletGoalTemplate gt = it.next();
+            TacletGoalTemplate gt = (TacletGoalTemplate) it.next();
             Goal currentGoal = goalIt.next();
             // add first because we want to use pos information that
             // is lost applying replacewith

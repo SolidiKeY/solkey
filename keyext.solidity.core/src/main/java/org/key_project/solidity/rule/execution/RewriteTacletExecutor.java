@@ -8,7 +8,6 @@ import org.key_project.logic.Term;
 import org.key_project.logic.op.QuantifiableVariable;
 import org.key_project.logic.sort.Sort;
 import org.key_project.prover.rules.RuleApp;
-import org.key_project.prover.rules.tacletbuilder.TacletGoalTemplate;
 import org.key_project.prover.sequent.PosInOccurrence;
 import org.key_project.prover.sequent.Sequent;
 import org.key_project.prover.sequent.SequentChangeInfo;
@@ -17,10 +16,12 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.rule.SolTaclet;
 import org.key_project.solidity.rule.matching.inst.MatchConditions;
+import org.key_project.solidity.rule.taclets.TacletGoalTemplate;
 import org.key_project.solidity.rule.taclets.builder.RewriteTacletGoalTemplate;
 import org.key_project.util.collection.ImmutableArray;
 
-public class RewriteTacletExecutor extends FindTacletExecutor {
+public class RewriteTacletExecutor
+        extends FindTacletExecutor {
 
     public RewriteTacletExecutor(SolTaclet taclet) {
         super(taclet);

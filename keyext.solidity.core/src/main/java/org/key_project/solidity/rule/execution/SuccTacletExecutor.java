@@ -4,7 +4,6 @@
 package org.key_project.solidity.rule.execution;
 
 import org.key_project.prover.rules.RuleApp;
-import org.key_project.prover.rules.tacletbuilder.TacletGoalTemplate;
 import org.key_project.prover.sequent.PosInOccurrence;
 import org.key_project.prover.sequent.Sequent;
 import org.key_project.prover.sequent.SequentChangeInfo;
@@ -12,9 +11,11 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.rule.SolTaclet;
 import org.key_project.solidity.rule.matching.inst.MatchConditions;
+import org.key_project.solidity.rule.taclets.TacletGoalTemplate;
 import org.key_project.solidity.rule.taclets.builder.AntecSuccTacletGoalTemplate;
 
-public class SuccTacletExecutor extends FindTacletExecutor {
+public class SuccTacletExecutor
+        extends FindTacletExecutor {
 
     public SuccTacletExecutor(SolTaclet taclet) {
         super(taclet);

@@ -7,7 +7,6 @@ import java.util.Iterator;
 
 import org.key_project.logic.PosInTerm;
 import org.key_project.prover.rules.RuleApp;
-import org.key_project.prover.rules.tacletbuilder.TacletGoalTemplate;
 import org.key_project.prover.sequent.FormulaChangeInfo;
 import org.key_project.prover.sequent.PosInOccurrence;
 import org.key_project.prover.sequent.SequentChangeInfo;
@@ -17,6 +16,7 @@ import org.key_project.solidity.rule.SolTaclet;
 import org.key_project.solidity.rule.TacletApp;
 import org.key_project.solidity.rule.TacletExecutor;
 import org.key_project.solidity.rule.matching.inst.MatchConditions;
+import org.key_project.solidity.rule.taclets.TacletGoalTemplate;
 import org.key_project.util.collection.ImmutableList;
 
 public abstract class FindTacletExecutor
@@ -26,7 +26,7 @@ public abstract class FindTacletExecutor
     }
 
     @Override
-    public ImmutableList<Goal> apply(Goal goal, RuleApp ruleApp) {
+    public ImmutableList<Goal> apply(Goal goal, org.key_project.prover.rules.RuleApp ruleApp) {
         final var services = goal.getOverlayServices();
         // Number without the if-goal eventually needed
         final int numberOfNewGoals = taclet.goalTemplates().size();
@@ -43,7 +43,8 @@ public abstract class FindTacletExecutor
         final Iterator<SequentChangeInfo> newSequentsIt =
             newSequentsForGoals.iterator();
 
-        for (var gt : taclet.goalTemplates()) {
+        for (var nextGT : taclet.goalTemplates()) {
+            final var gt = (TacletGoalTemplate) nextGT;
             final Goal currentGoal = goalIt.next();
             final SequentChangeInfo currentSequent = newSequentsIt.next();
 
@@ -89,8 +90,7 @@ public abstract class FindTacletExecutor
 
     /// applies the `add`-expressions of taclet goal descriptions
     ///
-    /// @param add the [org.key_project.prover.sequent.Sequent] with the uninstantiated
-    /// [org.key_project.prover.sequent.SequentFormula]'s to be added
+    /// @param add the [Sequent] with the uninstantiated [SequentFormula]'s to be added
     /// to the goal's sequent
     /// @param currentSequent the [SequentChangeInfo] which is the current (intermediate)
     /// result of applying the taclet
@@ -134,7 +134,7 @@ public abstract class FindTacletExecutor
             SequentChangeInfo currentSequent) {
         PosInOccurrence result = tacletApp.posInOccurrence();
 
-        if (result != null && gt.replaceWith() != null) {
+        if (result != null && gt.replaceWithExpressionAsObject() != null) {
             final boolean inAntec = result.isInAntec();
             final ImmutableList<FormulaChangeInfo> modifiedFormulas =
                 currentSequent.modifiedFormulas(inAntec);
