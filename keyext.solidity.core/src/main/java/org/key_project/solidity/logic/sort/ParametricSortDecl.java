@@ -3,27 +3,32 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.logic.sort;
 
-import java.util.Objects;
-
+import org.jspecify.annotations.NonNull;
 import org.key_project.logic.Name;
 import org.key_project.logic.Named;
+import org.key_project.logic.sort.Sort;
+import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.SolidityDLTheory;
 import org.key_project.util.collection.ImmutableList;
+import org.key_project.util.collection.ImmutableSet;
 import org.key_project.util.collection.Immutables;
 
-import org.jspecify.annotations.NonNull;
-
-public final class ParametricSortDecl implements Named {
+/// Abstract declaration of a parametric sort, e.g., `List<[E]>`.
+///
+/// Get instantiated versions using
+/// [ParametricSortInstance#get(ParametricSortDecl, ImmutableList, Services)]
+public class ParametricSortDecl implements Named {
     private final Name name;
     private final boolean isAbstract;
-    private final String documentation;
 
     private final ImmutableList<GenericParameter> parameters;
+    private final ImmutableSet<Sort> extendedSorts;
 
-    public ParametricSortDecl(Name name, boolean isAbstract,
-            ImmutableList<GenericParameter> sortParams, String documentation) {
+    public ParametricSortDecl(Name name, boolean isAbstract, ImmutableSet<Sort> ext,
+                              ImmutableList<GenericParameter> sortParams) {
         this.name = name;
         this.isAbstract = isAbstract;
-        this.documentation = documentation;
+        this.extendedSorts = ext.isEmpty() ? ImmutableSet.singleton(SolidityDLTheory.ANY) : ext;
         this.parameters = sortParams;
         assert Immutables.isDuplicateFree(parameters)
                 : "The caller should have made sure that generic sorts are not duplicated";
@@ -42,27 +47,8 @@ public final class ParametricSortDecl implements Named {
         return isAbstract;
     }
 
-    public String getDocumentation() {
-        return documentation;
+    public ImmutableSet<Sort> getExtendedSorts() {
+        return extendedSorts;
     }
 
-    @Override
-    public String toString() {
-        return name.toString() + "<" + parameters.toString() + ">";
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass())
-            return false;
-        ParametricSortDecl that = (ParametricSortDecl) o;
-        return isAbstract == that.isAbstract && Objects.equals(name, that.name)
-                && Objects.equals(documentation, that.documentation)
-                && Objects.equals(parameters, that.parameters);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(name, isAbstract, documentation, parameters);
-    }
 }

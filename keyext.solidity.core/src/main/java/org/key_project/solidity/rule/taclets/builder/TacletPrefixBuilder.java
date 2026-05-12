@@ -14,7 +14,6 @@ import org.key_project.prover.sequent.Sequent;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ParametricFunctionInstance;
 import org.key_project.solidity.logic.op.SModality;
-import org.key_project.solidity.logic.sort.TermArg;
 import org.key_project.solidity.rule.SolTaclet;
 import org.key_project.solidity.rule.metaconstruct.ShiftTransformer;
 import org.key_project.solidity.rule.sv.FormulaSV;
@@ -90,15 +89,7 @@ public class TacletPrefixBuilder {
                 }
             }
         }
-        if (t.op() instanceof ParametricFunctionInstance pfi) {
-            // We also generate a prefix for SVs in generic arguments, but bound variables should
-            // never appear there
-            for (var a : pfi.getArgs()) {
-                if (a instanceof TermArg(Term term)) {
-                    visit(term);
-                }
-            }
-        }
+
         for (int i = 0; i < t.arity(); i++) {
             int oldBounds = numberOfCurrentlyBoundVars;
             addVarsBoundHere(t, i);

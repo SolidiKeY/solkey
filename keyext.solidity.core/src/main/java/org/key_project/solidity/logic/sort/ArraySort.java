@@ -7,12 +7,20 @@ import org.key_project.logic.Name;
 import org.key_project.logic.sort.Sort;
 
 public class ArraySort extends SortImpl {
-    private final Sort sort;
+    public final Sort elementSort;
     private final int length;
 
-    public ArraySort(Sort sort, int length) {
-        super(new Name(sort + "[" + length + "]"));
-        this.sort = sort;
+    public ArraySort(Sort elementSort, int length) {
+        super(new Name(elementSort + "[" + length + "]"));
+        this.elementSort = elementSort;
         this.length = length;
+    }
+
+    public Sort elementSort() {
+        return elementSort;
+    }
+
+    public int length() {
+        return length;
     }
 }

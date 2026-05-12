@@ -6,12 +6,12 @@ package org.key_project.solidity.rule.matching.inst;
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.logic.sort.Sort;
 import org.key_project.prover.rules.instantiation.InstantiationEntry;
+import org.key_project.solidity.logic.GenericArgument;
+import org.key_project.solidity.logic.SolidityDLTheory;
+import org.key_project.solidity.logic.sort.ArraySort;
 import org.key_project.solidity.logic.sort.GenericSort;
 
-import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
-import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 import org.key_project.solidity.logic.sort.ParametricSortInstance;
-import org.key_project.solidity.logic.sort.SortArg;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
 
@@ -57,10 +57,23 @@ public abstract class GenericSortCondition {
     /// always compatible (no generic sorts) or never compatible (e.g. non-generic sorts that
     /// don't match)
     protected static ImmutableList<GenericSortCondition> createCondition(Sort s0, Sort s1,
-            boolean p_identity) {
-        if (!(s0 instanceof GenericSort || s0 instanceof ParametricSortInstance)
-                || s1 == FORMULA
-                || s1 == UPDATE) {
+                                                                         boolean p_identity) {
+        while (s0 instanceof ArraySort) {
+            // Currently the sort hierarchy is not inherited by
+            // collection sorts; therefore identity has to be ensured
+            p_identity = true;
+
+            if (!s0.getClass().equals(s1.getClass())) {
+                return null;
+            }
+
+            s0 = ((ArraySort) s0).elementSort();
+            s1 = ((ArraySort) s1).elementSort();
+        }
+
+        if (!s0.containsGenericSort()
+                || s1 == SolidityDLTheory.FORMULA
+                || s1 == SolidityDLTheory.UPDATE) {
             return null;
         }
 
@@ -79,8 +92,8 @@ public abstract class GenericSortCondition {
         for (int i = psi.getArgs().size() - 1; i >= 0; i--) {
             var a0 = psi.getArgs().get(i);
             var a1 = ps1.getArgs().get(i);
-            if (a0 instanceof SortArg(Sort sort)) {
-                var c = createCondition(sort, ((SortArg) a1).sort(), p_identity);
+            if (a0 instanceof GenericArgument(Sort sort)) {
+                var c = createCondition(sort, a1.sort(), p_identity);
                 if (c != null) {
                     conds = conds.prepend(c);
                 }

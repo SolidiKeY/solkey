@@ -11,26 +11,30 @@ import java.util.WeakHashMap;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
+import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.GenericArgument;
 import org.key_project.solidity.logic.sort.*;
 import org.key_project.util.collection.ImmutableArray;
 import org.key_project.util.collection.ImmutableList;
-import org.key_project.util.collection.ImmutableSLList;
 
 import org.jspecify.annotations.NonNull;
 
+/// A concrete instance of a [ParametricFunctionDecl].
 public class ParametricFunctionInstance extends SFunction {
     private static final Map<ParametricFunctionInstance, ParametricFunctionInstance> CACHE =
-        new WeakHashMap<>();
+            new WeakHashMap<>();
 
     private final ImmutableList<GenericArgument> args;
     private final ParametricFunctionDecl base;
 
+    /// Returns the function of `decl` instantiated with the arguments `arg`. If necessary, a new
+    /// object is created.
     public static ParametricFunctionInstance get(ParametricFunctionDecl decl,
-            ImmutableList<GenericArgument> args) {
+                                                 ImmutableList<GenericArgument> args, Services services) {
         assert args.size() == decl.getParameters().size();
         var instMap = getInstMap(decl, args);
-        var argSorts = instantiate(decl, instMap);
-        var sort = instantiate(decl.sort(), instMap);
+        var argSorts = instantiate(decl, instMap, services);
+        var sort = ParametricSortInstance.instantiate(decl.sort(), instMap, services);
         var fn = new ParametricFunctionInstance(decl, args, argSorts, sort);
         var cached = CACHE.get(fn);
         if (cached != null) {
@@ -41,10 +45,10 @@ public class ParametricFunctionInstance extends SFunction {
     }
 
     private ParametricFunctionInstance(ParametricFunctionDecl base,
-            ImmutableList<GenericArgument> args, ImmutableArray<Sort> argSorts, Sort sort) {
+                                       ImmutableList<GenericArgument> args, ImmutableArray<Sort> argSorts, Sort sort) {
         super(makeName(base, args), sort, argSorts, base.getWhereToBind(), base.isUnique(),
-            base.isRigid(),
-            base.isSkolemConstant());
+                base.isRigid(),
+                base.isSkolemConstant());
         this.base = base;
         this.args = args;
     }
@@ -58,61 +62,36 @@ public class ParametricFunctionInstance extends SFunction {
     }
 
     private static Name makeName(ParametricFunctionDecl base,
-            ImmutableList<GenericArgument> parameters) {
+                                 ImmutableList<GenericArgument> parameters) {
         // The [ ] are produced by the list's toString method.
         return new Name(base.name() + "<" + parameters + ">");
     }
 
+    /// Instantiates the arguments of `base` with the instantiations for the generic sorts in
+    /// `instMap`.
     private static ImmutableArray<Sort> instantiate(ParametricFunctionDecl base,
-            HashMap<GenericParameter, GenericArgument> instMap) {
+                                                    Map<GenericSort, GenericArgument> instMap, Services services) {
         var baseArgSorts = base.argSorts();
         var argSorts = new Sort[baseArgSorts.size()];
 
         for (int i = 0; i < baseArgSorts.size(); i++) {
             var sort = baseArgSorts.get(i);
-            argSorts[i] = instantiate(sort, instMap);
+            argSorts[i] = ParametricSortInstance.instantiate(sort, instMap, services);
         }
 
         return new ImmutableArray<>(argSorts);
     }
 
-    private static HashMap<GenericParameter, GenericArgument> getInstMap(
-            ParametricFunctionDecl base,
-            ImmutableList<GenericArgument> args) {
-        var map = new HashMap<GenericParameter, GenericArgument>();
-
+    /// Computes an instantiation mapping for `base`.
+    private static Map<GenericSort, GenericArgument> getInstMap(ParametricFunctionDecl base,
+                                                                ImmutableList<GenericArgument> args) {
+        var map = new HashMap<GenericSort, GenericArgument>();
         for (int i = 0; i < base.getParameters().size(); i++) {
             var param = base.getParameters().get(i);
             var arg = args.get(i);
-            map.put(param, arg);
+            map.put(param.sort(), arg);
         }
         return map;
-    }
-
-    private static Sort instantiate(Sort sort, Map<GenericParameter, GenericArgument> map) {
-        if (sort instanceof GenericSort gs) {
-            var param = new GenericSortParam(gs);
-            var arg = map.get(param);
-            return arg == null ? gs : ((SortArg) arg).sort();
-        } else if (sort instanceof ParametricSortInstance psi) {
-            var base = psi.getBase();
-            ImmutableList<GenericArgument> args = ImmutableSLList.nil();
-            for (int i = psi.getArgs().size() - 1; i >= 0; i--) {
-                var psiArg = psi.getArgs().get(i);
-                if (psiArg instanceof SortArg(Sort s)) {
-                    args = args.prepend(new SortArg(instantiate(s, map)));
-                } else if (psiArg instanceof TermArg ta) {
-                    if (ta.term().op() instanceof SFunction sF) {
-                        var t = map.get(new ConstParam(sF.name(), sF.sort()));
-                        var arg = t == null ? ta : t;
-                        args = args.prepend(arg);
-                    }
-                }
-            }
-            return ParametricSortInstance.get(base, args);
-        } else {
-            return sort;
-        }
     }
 
     @Override

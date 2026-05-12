@@ -44,6 +44,11 @@ public class TupleSort implements Sort {
     }
 
     @Override
+    public boolean containsGenericSort() {
+        return false;
+    }
+
+    @Override
     public @NonNull Name name() {
         return name;
     }

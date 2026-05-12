@@ -20,6 +20,7 @@ import org.key_project.prover.sequent.SequentFormula;
 import org.key_project.prover.strategy.RuleApplicationManager;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.NamespaceSet;
+import org.key_project.solidity.logic.op.IProgramVariable;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.proof.event.NodeChangeJournal;
 import org.key_project.solidity.proof.event.RuleAppInfo;

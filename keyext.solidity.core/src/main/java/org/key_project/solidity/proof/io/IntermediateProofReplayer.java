@@ -571,10 +571,9 @@ public class IntermediateProofReplayer {
             Namespace<@NonNull QuantifiableVariable> varNS,
             Namespace<@NonNull ProgramVariable> progVarNS, Namespace<@NonNull Function> functNS) {
         var io = new KeYIO(proof.getServices(),
-            new NamespaceSet(proof.getNamespaces().sorts(), proof.getNamespaces().parametricSorts(),
-                functNS, proof.getNamespaces().parametricFunctions(), progVarNS, varNS,
-                new Namespace<>(),
-                new Namespace<>()));
+            new NamespaceSet(varNS,  functNS, proof.getNamespaces().sorts(), proof.getNamespaces().sortAliases(),
+                    new Namespace<>(), proof.getNamespaces().parametricSorts(), proof.getNamespaces().parametricFunctions(),
+                    new Namespace<>(), progVarNS));
         return io.parseExpression(value);
     }
 
@@ -589,7 +588,7 @@ public class IntermediateProofReplayer {
     public static TacletApp parseSV1(TacletApp app, VariableSV sv, String value,
             Services services) {
         // TODO
-        LogicVariable lv = LogicVariable.create(1, app.getRealSort(sv));
+        LogicVariable lv = LogicVariable.create(1, app.getRealSort(sv, services));
         Term instance = services.getTermFactory().createTerm(lv);
         return app.addCheckedInstantiation(sv, instance, services, true);
     }

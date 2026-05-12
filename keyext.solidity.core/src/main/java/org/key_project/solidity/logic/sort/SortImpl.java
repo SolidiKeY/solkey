@@ -68,4 +68,9 @@ public class SortImpl extends AbstractSort {
     public @NonNull String declarationString() {
         return "";
     }
+
+    @Override
+    public boolean containsGenericSort() {
+        return false;
+    }
 }

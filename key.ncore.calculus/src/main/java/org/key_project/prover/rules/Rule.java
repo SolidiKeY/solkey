@@ -13,9 +13,6 @@ import org.key_project.prover.proof.ProofGoal;
 /// The interface to be implemented by all types of rules of the system.
 /// It provides access to the rule application logic.
 public interface Rule extends Named {
-    default Iterator<RuleSet> ruleSets() {
-        return Collections.emptyIterator();
-    }
 
     default Iterator<RuleSet> ruleSets() {
         return Collections.emptyIterator();

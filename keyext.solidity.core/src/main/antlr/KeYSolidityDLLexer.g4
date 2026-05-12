@@ -17,6 +17,8 @@ IS_LABELED    : '\\isLabeled';
 DIFFERENT     : '\\different';
 NO_FREE_VAR_IN : '\\noFreeVarIn';
 
+ALIAS: '\\alias';
+
 OPENTYPEPARAMS:'<' '[';
 CLOSETYPEPARAMS:']' '>';
 
@@ -25,3 +27,8 @@ SORT: '\\sort';
 NON_RIGID: '\\nonRigid';
 
 CONST : 'const';
+
+CHOOSECONTRACT : '\\chooseContract';
+CONTRACTS : '\\contracts';
+INVARIANTS : '\\invariants';
+

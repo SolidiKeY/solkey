@@ -173,8 +173,6 @@ public class TacletBuilderManipulators {
                     "Expected schema variable of kind EXPRESSION or TYPE, but is " + v);
             } else if (s instanceof GenericSort gs) {
                 return new SolidityTypeToSortCondition(v, gs);
-            } else if (s instanceof ParametricSortInstance psi) {
-                return new SolidityTypeToParametricSortCondition(v, psi);
             } else {
                 throw new IllegalArgumentException(
                     "Generic or parametric sort is expected. Got: " + s);

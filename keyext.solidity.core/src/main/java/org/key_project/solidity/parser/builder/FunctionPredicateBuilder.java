@@ -7,15 +7,18 @@ import java.util.List;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.Namespace;
-import org.key_project.logic.Term;
 import org.key_project.logic.op.Function;
+import org.key_project.logic.op.SortedOperator;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.GenericArgument;
 import org.key_project.solidity.logic.NamespaceSet;
 
-import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
+import org.key_project.solidity.logic.SolidityDLTheory;
 import org.key_project.solidity.logic.op.ParametricFunctionDecl;
+import org.key_project.solidity.logic.op.ParametricFunctionInstance;
 import org.key_project.solidity.logic.op.SFunction;
+import org.key_project.solidity.logic.op.Transformer;
 import org.key_project.solidity.logic.sort.*;
 import org.key_project.solidity.parser.KeYSolidityDLParser;
 import org.key_project.util.collection.ImmutableArray;
@@ -38,197 +41,189 @@ public class FunctionPredicateBuilder extends DefaultBuilder {
         mapMapOf(ctx.pred_decls(), ctx.func_decls(), ctx.transform_decls(), ctx.datatype_decls());
         return null;
     }
-
     @Override
     public Object visitDatatype_decl(KeYSolidityDLParser.Datatype_declContext ctx) {
         // weigl: all datatypes are free ==> functions are unique!
         // boolean freeAdt = ctx.FREE() != null;
         Sort sort;
-        var sorts = new Namespace<>(nss.sorts());
-        var consts = new Namespace<>(nss.functions());
-        ImmutableList<GenericParameter> genericParameters;
+        var dtFnNamespace = new Namespace<@NonNull Function>();
+        var dtPfnNamespace = new Namespace<@NonNull ParametricFunctionDecl>();
+        ImmutableList<GenericParameter> genericParams;
         if (sorts().lookup(ctx.name.getText()) == null) {
-            // Is parametric
+            // Is polymorphic
             var psd = namespaces().parametricSorts().lookup(ctx.name.getText());
             assert psd != null;
-            genericParameters = psd.getParameters();
+            genericParams = psd.getParameters();
             ImmutableList<GenericArgument> args = ImmutableList.of();
             for (int i = psd.getParameters().size() - 1; i >= 0; i--) {
                 var param = psd.getParameters().get(i);
-                if (param instanceof GenericSortParam(GenericSort gs)) {
-                    args = args.prepend(new SortArg(gs));
-                    sorts.add(gs);
-                } else if (param instanceof ConstParam cp) {
-                    SFunction f = new SFunction(cp.name(), cp.sort());
-                    Term term = services.getTermBuilder().func(f);
-                    args = args.prepend(new TermArg(term));
-                    consts.add(f);
-                }
+                args = args.prepend(new GenericArgument(param.sort()));
             }
-            sort = ParametricSortInstance.get(psd, args);
+            sort = ParametricSortInstance.get(psd, args, services);
         } else {
             sort = sorts().lookup(ctx.name.getText());
-            genericParameters = null;
+            genericParams = null;
         }
-        var dtFnNamespace = new Namespace<@NonNull Function>();
-        var dtPfnNamespace = new Namespace<@NonNull ParametricFunctionDecl>();
-
-        return withSortAndConsts(sorts, consts, () -> {
-            for (KeYSolidityDLParser.Datatype_constructorContext constructorContext : ctx
-                    .datatype_constructor()) {
-                Name name = new Name(constructorContext.name.getText());
-                Sort[] args = new Sort[constructorContext.sortId().size()];
-                var argNames = constructorContext.argName;
-                for (int i = 0; i < args.length; i++) {
-                    Sort argSort = accept(constructorContext.sortId(i));
-                    args[i] = argSort;
-                    var argName = argNames.get(i).getText();
-                    var alreadyDefinedFn = dtFnNamespace.lookup(argName);
-                    if (alreadyDefinedFn != null
-                            && (!alreadyDefinedFn.sort().equals(argSort)
-                                    || !alreadyDefinedFn.argSort(0).equals(sort))) {
-                        throw new RuntimeException("Name already in namespace: " + argName);
-                    }
-                    if (genericParameters == null) {
-                        Function fn =
-                            new SFunction(new Name(argName), argSort, new Sort[] { sort }, null,
-                                false, false);
-                        dtFnNamespace.add(fn);
-                    } else {
-                        ParametricFunctionDecl fn = new ParametricFunctionDecl(new Name(argName),
-                            ImmutableList.fromList(genericParameters), new ImmutableArray<>(sort),
-                            argSort, null, false, true, false);
-                        dtPfnNamespace.add(fn);
+        for (KeYSolidityDLParser.Datatype_constructorContext constructorContext : ctx
+                .datatype_constructor()) {
+            Name name = new Name(constructorContext.name.getText());
+            Sort[] args = new Sort[constructorContext.sortId().size()];
+            var argNames = constructorContext.argName;
+            for (int i = 0; i < args.length; i++) {
+                Sort argSort = accept(constructorContext.sortId(i));
+                args[i] = argSort;
+                var argName = argNames.get(i).getText();
+                SortedOperator alreadyDefinedFn = dtFnNamespace.lookup(argName);
+                if (alreadyDefinedFn == null) {
+                    alreadyDefinedFn = namespaces().functions().lookup(argName);
+                }
+                if (alreadyDefinedFn == null) {
+                    alreadyDefinedFn = namespaces().programVariables().lookup(argName);
+                }
+                if (alreadyDefinedFn == null) {
+                    var alreadyDefinedPfn = dtPfnNamespace.lookup(argName);
+                    if (alreadyDefinedPfn != null) {
+                        alreadyDefinedFn = ParametricFunctionInstance.get(alreadyDefinedPfn,
+                                ImmutableList.of(new GenericArgument(sort)), services);
                     }
                 }
-                if (genericParameters == null) {
-                    Function function = new SFunction(name, sort, args, null, true, false);
-                    namespaces().functions().parent().addSafely(function);
+                if (alreadyDefinedFn != null
+                        && (!alreadyDefinedFn.sort().equals(argSort)
+                        || !alreadyDefinedFn.argSorts().equals(ImmutableList.of(sort)))) {
+                    // The condition checks whether there is already a function with the same name
+                    // but different signature. This is necessarily true if there is a globally
+                    // defined function
+                    // of the same name and may or may not be true if there is another constructor
+                    // argument of the
+                    // same name.
+                    semanticError(argNames.get(i), "Name already in namespace: %s" +
+                                    ". Identifiers in datatype definitions must be unique (also wrt. global functions).",
+                            argName);
+                }
+                if (genericParams == null) {
+                    Function fn =
+                            new SFunction(new Name(argName), argSort, new Sort[] { sort }, null,
+                                    false, false);
+                    dtFnNamespace.add(fn);
                 } else {
-                    ParametricFunctionDecl fn =
-                        new ParametricFunctionDecl(name, ImmutableList.fromList(genericParameters),
-                            new ImmutableArray<>(args), sort, null, true, true, false);
-                    namespaces().parametricFunctions().addSafely(fn);
+                    var fn = new ParametricFunctionDecl(new Name(argName), genericParams,
+                            new ImmutableArray<>(sort), argSort, null, false, true, false);
+                    dtPfnNamespace.add(fn);
                 }
             }
-            namespaces().functions().parent().addSafely(dtFnNamespace.allElements());
+            if (genericParams == null) {
+                var fn = new SFunction(name, sort, args, null, true, false);
+                functions().addSafely(fn);
+            } else {
+                var fn = new ParametricFunctionDecl(name, genericParams, new ImmutableArray<>(args),
+                        sort, null, true, true, false);
+                namespaces().parametricFunctions().add(fn);
+            }
+        }
+        if (genericParams != null) {
             namespaces().parametricFunctions().addSafely(dtPfnNamespace.allElements());
-            return null;
-        });
+        } else {
+            namespaces().functions().addSafely(dtFnNamespace.allElements());
+        }
+        return null;
     }
-
 
     @Override
     public Object visitPred_decl(KeYSolidityDLParser.Pred_declContext ctx) {
         String pred_name = accept(ctx.funcpred_name());
+        List<GenericParameter> params = ctx.formal_sort_param_decls() == null ? null
+                : visitFormal_sort_param_decls(ctx.formal_sort_param_decls());
         List<Boolean> whereToBind = accept(ctx.where_to_bind());
         List<Sort> argSorts = accept(ctx.arg_sorts());
         if (whereToBind != null && whereToBind.size() != argSorts.size()) {
             semanticError(ctx, "Where-to-bind list must have same length as argument list");
         }
 
-        var sorts = new Namespace<>(nss.sorts());
-        var consts = new Namespace<>(nss.functions());
+        Function p;
 
-        List<GenericParameter> genericParameters = ctx.formal_sort_param_decls() == null ? null
-                : visitFormal_sort_param_decls(ctx.formal_sort_param_decls());
-        if (genericParameters != null) {
-            for (GenericParameter param : genericParameters) {
-                if (param instanceof GenericSortParam(GenericSort gs)) {
-                    sorts.add(gs);
-                } else if (param instanceof ConstParam(Name name, Sort sort)) {
-                    consts.add(new SFunction(name, sort));
-                }
+        assert argSorts != null;
+        Name name = new Name(pred_name);
+        Boolean[] whereToBind1 =
+                whereToBind == null ? null : whereToBind.toArray(new Boolean[0]);
+        if (params == null) {
+            if (nss.parametricFunctions().lookup(name) != null) {
+                semanticError(ctx,
+                        "Cannot declare predicate %s: Parametric predicate already exists", name);
             }
+            p = new SFunction(name, SolidityDLTheory.FORMULA,
+                    argSorts.toArray(new Sort[0]),
+                    whereToBind1, false);
+        } else {
+            if (functions().lookup(name) != null) {
+                semanticError(ctx,
+                        "Cannot declare parametric predicate %s: Predicate already exists", name);
+            }
+            var d = new ParametricFunctionDecl(name, ImmutableList.fromList(params),
+                    new ImmutableArray<>(argSorts),
+                    SolidityDLTheory.FORMULA,
+                    whereToBind == null ? null : new ImmutableArray<>(whereToBind1), false, true,
+                    false);
+            nss.parametricFunctions().addSafely(d);
+            return null;
         }
 
-        return withSortAndConsts(sorts, consts, () -> {
-            assert pred_name != null;
-
-            assert argSorts != null;
-            Function p = new SFunction(new Name(pred_name), FORMULA,
-                argSorts.toArray(new Sort[0]),
-                whereToBind == null ? null : whereToBind.toArray(new Boolean[0]),
-                false);
-
-            if (lookup(p.name()) == null) {
-                functions().parent().add(p);
-            } else {
-                // weigl: agreement on KaKeY meeting: this should be an error.
-                semanticError(ctx, "Predicate '" + p.name() + "' is already defined!");
-            }
-            return null;
-        });
+        if (lookup(p.name()) == null) {
+            functions().add(p);
+        } else {
+            // weigl: agreement on KaKeY meeting: this should be an error.
+            semanticError(ctx, "Predicate '" + p.name() + "' is already defined!");
+        }
+        return null;
     }
 
     @Override
     public Object visitFunc_decl(KeYSolidityDLParser.Func_declContext ctx) {
         boolean unique = ctx.UNIQUE() != null;
+        Sort retSort = accept(ctx.sortId());
         String funcName = accept(ctx.funcpred_name());
-        var sorts = new Namespace<>(nss.sorts());
-        var consts = new Namespace<>(nss.functions());
-
-        List<GenericParameter> genericParameters = ctx.formal_sort_param_decls() == null ? null
+        List<GenericParameter> params = ctx.formal_sort_param_decls() == null ? null
                 : visitFormal_sort_param_decls(ctx.formal_sort_param_decls());
-        if (genericParameters != null) {
-            for (GenericParameter param : genericParameters) {
-                if (param instanceof GenericSortParam(GenericSort gs)) {
-                    sorts.add(gs);
-                } else if (param instanceof ConstParam(Name name, Sort sort)) {
-                    consts.add(new SFunction(name, sort));
-                }
-            }
+        List<Boolean[]> whereToBind = accept(ctx.where_to_bind());
+        List<Sort> argSorts = accept(ctx.arg_sorts());
+        assert argSorts != null;
+
+        if (whereToBind != null && whereToBind.size() != argSorts.size()) {
+            semanticError(ctx, "Where-to-bind list must have same length as argument list");
         }
 
-        return withSortAndConsts(sorts, consts, () -> {
-            Sort retSort = accept(ctx.sortId());
-            List<Boolean[]> whereToBind = accept(ctx.where_to_bind());
-            List<Sort> argSorts = accept(ctx.arg_sorts());
-            assert argSorts != null;
+        Function f;
+        assert funcName != null;
 
-            if (whereToBind != null && whereToBind.size() != argSorts.size()) {
-                semanticError(ctx, "Where-to-bind list must have same length as argument list");
+        Name name = new Name(funcName);
+        Boolean[] whereToBind1 =
+                whereToBind == null ? null : whereToBind.toArray(new Boolean[0]);
+        if (params == null) {
+            if (nss.parametricFunctions().lookup(name) != null) {
+                semanticError(ctx,
+                        "Cannot declare function %s: Parametric function already exists", name);
             }
+            f = new SFunction(name, retSort, argSorts.toArray(new Sort[0]),
+                    whereToBind1, unique);
+        } else {
+            if (functions().lookup(name) != null) {
+                semanticError(ctx,
+                        "Cannot declare parametric function %s: Function already exists", name);
+            }
+            var d = new ParametricFunctionDecl(name, ImmutableList.fromList(params),
+                    new ImmutableArray<>(argSorts),
+                    retSort, whereToBind == null ? null : new ImmutableArray<>(whereToBind1),
+                    unique, true, false);
+            nss.parametricFunctions().add(d);
+            return null;
+        }
 
-            SFunction f = null;
-            assert funcName != null;
-            int separatorIndex = funcName.indexOf("::");
-            if (separatorIndex > 0) {
-                String sortName = funcName.substring(0, separatorIndex);
-                String baseName = funcName.substring(separatorIndex + 2);
-                Sort genSort = lookupSort(sortName);
-                // if (genSort instanceof GenericSort) {
-                // f = SortDependingFunction.createFirstInstance((GenericSort) genSort,
-                // new Name(baseName), retSort, argSorts.toArray(new Sort[0]), unique);
-                // }
-            }
-
-            // TODO debug this; why Boolean[]?
-
-            if (f == null) {
-                Name name = new Name(funcName);
-                Sort[] sortsArray = argSorts.toArray(new Sort[0]);
-                Boolean[] whereToBind1 =
-                    whereToBind == null ? null : whereToBind.toArray(new Boolean[0]);
-                if (genericParameters == null)
-                    f = new SFunction(name, retSort, sortsArray, whereToBind1, unique);
-                else {
-                    var d = new ParametricFunctionDecl(name,
-                        ImmutableList.fromList(genericParameters), new ImmutableArray<>(sortsArray),
-                        retSort, whereToBind1 == null ? null : new ImmutableArray<>(whereToBind1),
-                        unique, true, false);
-                    nss.parametricFunctions().add(d);
-                    return null;
-                }
-            }
-            if (lookup(f.name()) == null) {
-                functions().parent().add(f);
-            } else {
-                // weigl: agreement on KaKeY meeting: this should be an error.
-                semanticError(ctx, "Function '" + funcName + "' is already defined!");
-            }
-            return f;
-        });
+        if (lookup(f.name()) == null) {
+            functions().add(f);
+        } else {
+            // weigl: agreement on KaKeY meeting: this should be an error.
+            semanticError(ctx, "Function '" + funcName + "' is already defined!");
+        }
+        return f;
     }
 
     @Override
@@ -236,6 +231,28 @@ public class FunctionPredicateBuilder extends DefaultBuilder {
         return mapOf(ctx.func_decl());
     }
 
+
+    @Override
+    public Object visitTransform_decl(KeYSolidityDLParser.Transform_declContext ctx) {
+        Sort retSort = ctx.FORMULA() != null ? SolidityDLTheory.FORMULA : accept(ctx.sortId());
+        String trans_name = accept(ctx.funcpred_name());
+        List<Sort> argSorts = accept(ctx.arg_sorts_or_formula());
+        Transformer t =
+                new Transformer(new Name(trans_name), retSort, new ImmutableArray<>(argSorts));
+        if (lookup(t.name()) == null) {
+            functions().add(t);
+        }
+        return null;
+    }
+
+
+    @Override
+    public Object visitTransform_decls(KeYSolidityDLParser.Transform_declsContext ctx) {
+        return mapOf(ctx.transform_decl());
+    }
+
+
+    @Override
     public Object visitPred_decls(KeYSolidityDLParser.Pred_declsContext ctx) {
         return mapOf(ctx.pred_decl());
     }

@@ -17,6 +17,7 @@ import org.key_project.prover.rules.Rule;
 import org.key_project.prover.rules.RuleApp;
 import org.key_project.prover.sequent.PosInOccurrence;
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.GenericArgument;
 import org.key_project.solidity.logic.SolidityBlock;
 import org.key_project.solidity.logic.TermBuilder;
 import org.key_project.solidity.logic.op.ElementaryUpdate;
@@ -24,7 +25,6 @@ import org.key_project.solidity.logic.op.ParametricFunctionInstance;
 import org.key_project.solidity.logic.op.SModality;
 import org.key_project.solidity.logic.op.SubstOp;
 import org.key_project.solidity.logic.op.TermTransformer;
-import org.key_project.solidity.logic.sort.GenericArgument;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.visitor.ProgramContextAdder;
 import org.key_project.solidity.program.ast.visitor.ProgramReplaceVisitor;
@@ -310,10 +310,10 @@ public class SyntacticalReplaceVisitor implements Visitor<Term> {
         ImmutableList<GenericArgument> args = ImmutableSLList.nil();
 
         for (int i = pfi.getArgs().size() - 1; i >= 0; i--) {
-            args = args.prepend(pfi.getArgs().get(i).instantiateParamArg(svInst, services));
+            args = args.prepend(pfi.getArgs().get(i).instantiate(svInst, services));
         }
 
-        return ParametricFunctionInstance.get(pfi.getBase(), args);
+        return ParametricFunctionInstance.get(pfi.getBase(), args, services);
     }
 
     private ElementaryUpdate instantiateElementaryUpdate(ElementaryUpdate op) {

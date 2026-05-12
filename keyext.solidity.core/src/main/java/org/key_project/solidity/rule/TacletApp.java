@@ -662,7 +662,7 @@ public abstract class TacletApp implements RuleApp {
     /// @param services the Services class allowing access to the type model
     public TacletApp createSkolemConstant(String instantiation, OperatorSV sv,
             boolean interesting, Services services) {
-        return createSkolemConstant(instantiation, sv, getRealSort(sv), interesting,
+        return createSkolemConstant(instantiation, sv, getRealSort(sv, services), interesting,
             services);
     }
 
@@ -676,8 +676,8 @@ public abstract class TacletApp implements RuleApp {
     /// @return p_s iff p_s is not a generic sort, the concrete sort p_s is instantiated with
     /// currently otherwise
     /// @throws GenericSortException iff p_s is a generic sort which is not yet instantiated
-    public Sort getRealSort(OperatorSV p_sv) {
-        return instantiations().getGenericSortInstantiations().getRealSort(p_sv);
+    public Sort getRealSort(OperatorSV p_sv, Services services) {
+        return instantiations().getGenericSortInstantiations().getRealSort(p_sv, services);
     }
 
     /// creates a new Taclet application containing all the instantiations, constraints, new
