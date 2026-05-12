@@ -100,7 +100,6 @@ public class TacletParserTest {
     }
 
 
-    //@Disabled("TODO: Richard")
     @Test
     public void testImpLeft() {
         // imp-left rule
