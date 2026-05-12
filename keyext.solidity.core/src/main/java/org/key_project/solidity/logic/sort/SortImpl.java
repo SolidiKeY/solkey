@@ -11,14 +11,14 @@ package org.key_project.solidity.logic.sort;
 import org.key_project.logic.Name;
 import org.key_project.logic.sort.AbstractSort;
 import org.key_project.logic.sort.Sort;
-
-import static org.key_project.solidity.logic.SolidityDLTheory.ANY;
-import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
-import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableSet;
 
 import org.jspecify.annotations.NonNull;
+
+import static org.key_project.solidity.logic.SolidityDLTheory.ANY;
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
+import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 
 public class SortImpl extends AbstractSort {
     private ImmutableSet<Sort> ext;

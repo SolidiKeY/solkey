@@ -3,6 +3,10 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.control;
 
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+
 import org.key_project.prover.engine.ProverTaskListener;
 import org.key_project.prover.rules.Taclet;
 import org.key_project.prover.rules.instantiation.AssumesFormulaInstSeq;
@@ -17,10 +21,6 @@ import org.key_project.solidity.rule.RuleApp;
 import org.key_project.solidity.rule.TacletApp;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
-
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 
 /// Provides a basic implementation of [ProofControl].
 ///

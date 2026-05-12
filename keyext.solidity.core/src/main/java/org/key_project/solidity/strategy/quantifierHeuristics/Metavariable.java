@@ -9,10 +9,10 @@ import org.key_project.logic.TerminalSyntaxElement;
 import org.key_project.logic.op.AbstractSortedOperator;
 import org.key_project.logic.sort.Sort;
 
+import org.jspecify.annotations.NonNull;
+
 import static org.key_project.logic.op.Modifier.RIGID;
 import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
-
-import org.jspecify.annotations.NonNull;
 
 public final class Metavariable extends AbstractSortedOperator
         implements Comparable<Metavariable>, TerminalSyntaxElement, Named {

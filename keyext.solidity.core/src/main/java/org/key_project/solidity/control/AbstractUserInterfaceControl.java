@@ -3,6 +3,12 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.control;
 
+import java.io.File;
+import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
+
 import org.key_project.prover.engine.ProverTaskListener;
 import org.key_project.prover.engine.TaskFinishedInfo;
 import org.key_project.prover.engine.TaskStartedInfo;
@@ -20,14 +26,9 @@ import org.key_project.solidity.proof.io.ProblemLoaderControl;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
 import org.key_project.solidity.proof.io.SingleThreadProblemLoader;
 import org.key_project.solidity.proof.mgt.ProofEnvironment;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.util.List;
-import java.util.Properties;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Consumer;
 
 public abstract class AbstractUserInterfaceControl
         implements UserInterfaceControl, ProblemLoaderControl, ProverTaskListener {
@@ -64,9 +65,9 @@ public abstract class AbstractUserInterfaceControl
     /// {@inheritDoc}
     @Override
     public AbstractProblemLoader load(Profile profile, File file, List<File> includes,
-                                      Properties poPropertiesToForce,
-                                      boolean forceNewProfileOfNewProofs,
-                                      Consumer<Proof> callback) throws ProblemLoaderException {
+            Properties poPropertiesToForce,
+            boolean forceNewProfileOfNewProofs,
+            Consumer<Proof> callback) throws ProblemLoaderException {
         AbstractProblemLoader loader = null;
         try {
             loader = new SingleThreadProblemLoader(file, includes,

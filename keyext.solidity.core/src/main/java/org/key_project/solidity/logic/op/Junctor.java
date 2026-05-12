@@ -10,10 +10,10 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.op.AbstractSortedOperator;
 import org.key_project.logic.sort.Sort;
 
+import org.jspecify.annotations.NonNull;
+
 import static org.key_project.logic.op.Modifier.RIGID;
 import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
-
-import org.jspecify.annotations.NonNull;
 
 
 /// Class of junctor operators, i.e., operators connecting a given number of formula to create

@@ -7,6 +7,7 @@ import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.references.TypeReference;
+
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 

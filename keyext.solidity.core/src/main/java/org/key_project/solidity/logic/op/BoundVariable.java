@@ -10,9 +10,9 @@ import org.key_project.logic.op.ParsableVariable;
 import org.key_project.logic.op.QuantifiableVariable;
 import org.key_project.logic.sort.Sort;
 
-import static org.key_project.logic.op.Modifier.RIGID;
-
 import org.jspecify.annotations.NonNull;
+
+import static org.key_project.logic.op.Modifier.RIGID;
 
 /// The definition of logical variables.
 public final class BoundVariable extends AbstractSortedOperator

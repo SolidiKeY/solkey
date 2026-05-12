@@ -7,7 +7,6 @@ import java.util.Iterator;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.sort.Sort;
-
 import org.key_project.solidity.logic.SolidityDLTheory;
 import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableSet;
@@ -32,7 +31,7 @@ public class GenericSort extends SortImpl {
     /// creates a generic sort
     ///
     /// @param ext supersorts of this sort, which have to be either concrete sorts or plain generic
-    ///        sorts (i.e. not collection sorts of generic sorts)
+    /// sorts (i.e. not collection sorts of generic sorts)
     public GenericSort(Name name, ImmutableSet<Sort> ext, ImmutableSet<Sort> oneOf)
             throws GenericSupersortException {
         super(name, false, ext);
@@ -58,7 +57,7 @@ public class GenericSort extends SortImpl {
                 }
                 if (t instanceof GenericSort) {
                     throw new GenericSupersortException(
-                            "Illegal supersort " + s + " for generic sort " + name(), s);
+                        "Illegal supersort " + s + " for generic sort " + name(), s);
                 }
             }
         }
@@ -70,9 +69,9 @@ public class GenericSort extends SortImpl {
     }
 
     /// @return true if "p\_s" is a possible instantiation of this sort. This method does not check
-    ///         the instantiations of other generic sorts, i.e. the return value true is possible
-    ///         even if "p\_s" is not a valid instantiation.
-    ///         Use "GenericSortInstantiations" instead
+    /// the instantiations of other generic sorts, i.e. the return value true is possible
+    /// even if "p\_s" is not a valid instantiation.
+    /// Use "GenericSortInstantiations" instead
     public boolean isPossibleInstantiation(Sort p_s) {
         return p_s != SolidityDLTheory.FORMULA && (oneOf.isEmpty() || oneOf.contains(p_s))
                 && checkNonGenericSupersorts(p_s);

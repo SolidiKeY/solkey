@@ -5,9 +5,8 @@ package org.key_project.solidity.logic.op;
 
 import org.key_project.logic.op.SortedOperator;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
-import org.key_project.solidity.program.ast.references.VariableReference;
 
 public interface IProgramVariable
-    // TODO: Maybe needs to implement VariableReference
+        // TODO: Maybe needs to implement VariableReference
         extends SolidityProgramElement, SortedOperator {
 }

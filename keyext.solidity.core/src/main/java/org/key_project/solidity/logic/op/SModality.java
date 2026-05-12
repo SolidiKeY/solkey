@@ -11,12 +11,12 @@ import java.util.WeakHashMap;
 import org.key_project.logic.Name;
 import org.key_project.logic.TermCreationException;
 import org.key_project.solidity.logic.SolidityBlock;
-
-import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
 
 /// This class is used to represent a dynamic logic modality like diamond and box (but also
 /// extensions of DL like preserves and throughout are possible in the future).

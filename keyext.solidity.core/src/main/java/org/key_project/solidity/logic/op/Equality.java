@@ -8,11 +8,11 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.op.AbstractSortedOperator;
 import org.key_project.logic.sort.Sort;
 
+import org.jspecify.annotations.NonNull;
+
 import static org.key_project.logic.op.Modifier.RIGID;
 import static org.key_project.solidity.logic.SolidityDLTheory.ANY;
 import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
-
-import org.jspecify.annotations.NonNull;
 
 
 /// This class defines the logic equality operator `=`. It is a binary predicate accepting

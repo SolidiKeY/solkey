@@ -13,7 +13,6 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.GenericArgument;
 import org.key_project.solidity.logic.NamespaceSet;
-
 import org.key_project.solidity.logic.SolidityDLTheory;
 import org.key_project.solidity.logic.op.ParametricFunctionDecl;
 import org.key_project.solidity.logic.op.ParametricFunctionInstance;
@@ -41,6 +40,7 @@ public class FunctionPredicateBuilder extends DefaultBuilder {
         mapMapOf(ctx.pred_decls(), ctx.func_decls(), ctx.transform_decls(), ctx.datatype_decls());
         return null;
     }
+
     @Override
     public Object visitDatatype_decl(KeYSolidityDLParser.Datatype_declContext ctx) {
         // weigl: all datatypes are free ==> functions are unique!
@@ -84,12 +84,12 @@ public class FunctionPredicateBuilder extends DefaultBuilder {
                     var alreadyDefinedPfn = dtPfnNamespace.lookup(argName);
                     if (alreadyDefinedPfn != null) {
                         alreadyDefinedFn = ParametricFunctionInstance.get(alreadyDefinedPfn,
-                                ImmutableList.of(new GenericArgument(sort)), services);
+                            ImmutableList.of(new GenericArgument(sort)), services);
                     }
                 }
                 if (alreadyDefinedFn != null
                         && (!alreadyDefinedFn.sort().equals(argSort)
-                        || !alreadyDefinedFn.argSorts().equals(ImmutableList.of(sort)))) {
+                                || !alreadyDefinedFn.argSorts().equals(ImmutableList.of(sort)))) {
                     // The condition checks whether there is already a function with the same name
                     // but different signature. This is necessarily true if there is a globally
                     // defined function
@@ -97,17 +97,17 @@ public class FunctionPredicateBuilder extends DefaultBuilder {
                     // argument of the
                     // same name.
                     semanticError(argNames.get(i), "Name already in namespace: %s" +
-                                    ". Identifiers in datatype definitions must be unique (also wrt. global functions).",
-                            argName);
+                        ". Identifiers in datatype definitions must be unique (also wrt. global functions).",
+                        argName);
                 }
                 if (genericParams == null) {
                     Function fn =
-                            new SFunction(new Name(argName), argSort, new Sort[] { sort }, null,
-                                    false, false);
+                        new SFunction(new Name(argName), argSort, new Sort[] { sort }, null,
+                            false, false);
                     dtFnNamespace.add(fn);
                 } else {
                     var fn = new ParametricFunctionDecl(new Name(argName), genericParams,
-                            new ImmutableArray<>(sort), argSort, null, false, true, false);
+                        new ImmutableArray<>(sort), argSort, null, false, true, false);
                     dtPfnNamespace.add(fn);
                 }
             }
@@ -116,7 +116,7 @@ public class FunctionPredicateBuilder extends DefaultBuilder {
                 functions().addSafely(fn);
             } else {
                 var fn = new ParametricFunctionDecl(name, genericParams, new ImmutableArray<>(args),
-                        sort, null, true, true, false);
+                    sort, null, true, true, false);
                 namespaces().parametricFunctions().add(fn);
             }
         }
@@ -144,25 +144,25 @@ public class FunctionPredicateBuilder extends DefaultBuilder {
         assert argSorts != null;
         Name name = new Name(pred_name);
         Boolean[] whereToBind1 =
-                whereToBind == null ? null : whereToBind.toArray(new Boolean[0]);
+            whereToBind == null ? null : whereToBind.toArray(new Boolean[0]);
         if (params == null) {
             if (nss.parametricFunctions().lookup(name) != null) {
                 semanticError(ctx,
-                        "Cannot declare predicate %s: Parametric predicate already exists", name);
+                    "Cannot declare predicate %s: Parametric predicate already exists", name);
             }
             p = new SFunction(name, SolidityDLTheory.FORMULA,
-                    argSorts.toArray(new Sort[0]),
-                    whereToBind1, false);
+                argSorts.toArray(new Sort[0]),
+                whereToBind1, false);
         } else {
             if (functions().lookup(name) != null) {
                 semanticError(ctx,
-                        "Cannot declare parametric predicate %s: Predicate already exists", name);
+                    "Cannot declare parametric predicate %s: Predicate already exists", name);
             }
             var d = new ParametricFunctionDecl(name, ImmutableList.fromList(params),
-                    new ImmutableArray<>(argSorts),
-                    SolidityDLTheory.FORMULA,
-                    whereToBind == null ? null : new ImmutableArray<>(whereToBind1), false, true,
-                    false);
+                new ImmutableArray<>(argSorts),
+                SolidityDLTheory.FORMULA,
+                whereToBind == null ? null : new ImmutableArray<>(whereToBind1), false, true,
+                false);
             nss.parametricFunctions().addSafely(d);
             return null;
         }
@@ -196,23 +196,23 @@ public class FunctionPredicateBuilder extends DefaultBuilder {
 
         Name name = new Name(funcName);
         Boolean[] whereToBind1 =
-                whereToBind == null ? null : whereToBind.toArray(new Boolean[0]);
+            whereToBind == null ? null : whereToBind.toArray(new Boolean[0]);
         if (params == null) {
             if (nss.parametricFunctions().lookup(name) != null) {
                 semanticError(ctx,
-                        "Cannot declare function %s: Parametric function already exists", name);
+                    "Cannot declare function %s: Parametric function already exists", name);
             }
             f = new SFunction(name, retSort, argSorts.toArray(new Sort[0]),
-                    whereToBind1, unique);
+                whereToBind1, unique);
         } else {
             if (functions().lookup(name) != null) {
                 semanticError(ctx,
-                        "Cannot declare parametric function %s: Function already exists", name);
+                    "Cannot declare parametric function %s: Function already exists", name);
             }
             var d = new ParametricFunctionDecl(name, ImmutableList.fromList(params),
-                    new ImmutableArray<>(argSorts),
-                    retSort, whereToBind == null ? null : new ImmutableArray<>(whereToBind1),
-                    unique, true, false);
+                new ImmutableArray<>(argSorts),
+                retSort, whereToBind == null ? null : new ImmutableArray<>(whereToBind1),
+                unique, true, false);
             nss.parametricFunctions().add(d);
             return null;
         }
@@ -238,7 +238,7 @@ public class FunctionPredicateBuilder extends DefaultBuilder {
         String trans_name = accept(ctx.funcpred_name());
         List<Sort> argSorts = accept(ctx.arg_sorts_or_formula());
         Transformer t =
-                new Transformer(new Name(trans_name), retSort, new ImmutableArray<>(argSorts));
+            new Transformer(new Name(trans_name), retSort, new ImmutableArray<>(argSorts));
         if (lookup(t.name()) == null) {
             functions().add(t);
         }

@@ -273,7 +273,7 @@ public class RuleAppIndex {
         ImmutableList<NoPosTacletApp> result = ImmutableSLList.nil();
         if (!autoMode) {
             result =
-                    result.prepend(interactiveTacletAppIndex.getRewriteTaclet(pos));
+                result.prepend(interactiveTacletAppIndex.getRewriteTaclet(pos));
         }
         result = result.prepend(automatedTacletAppIndex.getRewriteTaclet(pos));
 

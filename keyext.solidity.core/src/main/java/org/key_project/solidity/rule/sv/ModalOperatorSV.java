@@ -8,14 +8,14 @@ import org.key_project.logic.Term;
 import org.key_project.logic.TermCreationException;
 import org.key_project.logic.op.Modifier;
 import org.key_project.logic.op.sv.SchemaVariable;
-
-import static org.key_project.logic.op.Modifier.NONE;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.logic.op.SModality;
 import org.key_project.util.collection.ImmutableArray;
 import org.key_project.util.collection.ImmutableSet;
 
 import org.jspecify.annotations.NonNull;
+
+import static org.key_project.logic.op.Modifier.NONE;
 
 public class ModalOperatorSV extends SModality.SolidityModalityKind implements SchemaVariable {
     /// the set of modalities this sv can match

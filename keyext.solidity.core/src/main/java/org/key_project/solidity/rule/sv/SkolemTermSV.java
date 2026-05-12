@@ -6,9 +6,10 @@ package org.key_project.solidity.rule.sv;
 import org.key_project.logic.Name;
 import org.key_project.logic.TerminalSyntaxElement;
 import org.key_project.logic.sort.Sort;
-import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 
 import org.jspecify.annotations.NonNull;
+
+import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 
 public class SkolemTermSV extends OperatorSV implements TerminalSyntaxElement {
     /// Creates a new schema variable that is used as placeholder for skolem terms.

@@ -14,11 +14,11 @@ import org.key_project.logic.op.ParsableVariable;
 import org.key_project.logic.op.QuantifiableVariable;
 import org.key_project.logic.sort.Sort;
 
+import org.jspecify.annotations.NonNull;
+
 import static org.key_project.logic.op.Modifier.RIGID;
 import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
 import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
-
-import org.jspecify.annotations.NonNull;
 
 
 /// The objects of this class represent logical variables, used e.g. for quantification.

@@ -3,15 +3,15 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.logic.sort;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.Name;
 import org.key_project.logic.Named;
 import org.key_project.logic.sort.Sort;
-import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.SolidityDLTheory;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSet;
 import org.key_project.util.collection.Immutables;
+
+import org.jspecify.annotations.NonNull;
 
 /// Abstract declaration of a parametric sort, e.g., `List<[E]>`.
 ///
@@ -25,7 +25,7 @@ public class ParametricSortDecl implements Named {
     private final ImmutableSet<Sort> extendedSorts;
 
     public ParametricSortDecl(Name name, boolean isAbstract, ImmutableSet<Sort> ext,
-                              ImmutableList<GenericParameter> sortParams) {
+            ImmutableList<GenericParameter> sortParams) {
         this.name = name;
         this.isAbstract = isAbstract;
         this.extendedSorts = ext.isEmpty() ? ImmutableSet.singleton(SolidityDLTheory.ANY) : ext;

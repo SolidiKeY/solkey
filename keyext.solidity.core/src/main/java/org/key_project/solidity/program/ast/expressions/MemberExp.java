@@ -6,7 +6,6 @@ package org.key_project.solidity.program.ast.expressions;
 import java.util.HashMap;
 import java.util.Objects;
 
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
@@ -14,11 +13,13 @@ import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.jspecify.annotations.NonNull;
 
 public class MemberExp extends SolidityExpression implements Resolver {
     final Expression leftExp;
-    @MonotonicNonNull SyntaxElement rightExp;
+    @MonotonicNonNull
+    SyntaxElement rightExp;
     final int id;
 
     public MemberExp(Expression leftExp, SyntaxElement rightExp, Type type) {

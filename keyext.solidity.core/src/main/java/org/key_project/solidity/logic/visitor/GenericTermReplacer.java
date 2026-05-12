@@ -4,14 +4,15 @@
 package org.key_project.solidity.logic.visitor;
 
 
-import org.key_project.logic.Term;
-import org.key_project.solidity.common.Services;
-
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import org.key_project.logic.Term;
+import org.key_project.solidity.common.Services;
+
 /**
- * A generic {@link org.key_project.logic.Term} replace visitor based on a filter predicate and a replacement function
+ * A generic {@link org.key_project.logic.Term} replace visitor based on a filter predicate and a
+ * replacement function
  * foro
  * the filtered subterms.
  *
@@ -19,7 +20,7 @@ import java.util.function.Predicate;
  */
 public class GenericTermReplacer {
     public static Term replace(final Term t, final Predicate<Term> filter,
-                               final Function<Term, Term> replacer, Services services) {
+            final Function<Term, Term> replacer, Services services) {
         Term newTopLevelTerm = t;
         if (filter.test(t)) {
             newTopLevelTerm = replacer.apply(t);

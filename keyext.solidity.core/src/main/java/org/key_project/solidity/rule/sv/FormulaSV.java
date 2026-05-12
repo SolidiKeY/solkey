@@ -5,9 +5,10 @@ package org.key_project.solidity.rule.sv;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.TerminalSyntaxElement;
-import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
 
 import org.jspecify.annotations.NonNull;
+
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
 
 public class FormulaSV extends OperatorSV implements TerminalSyntaxElement {
     /// @param name the name of the SchemaVariable

@@ -17,9 +17,6 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.*;
 import org.key_project.solidity.logic.op.*;
 import org.key_project.solidity.logic.sort.*;
-
-import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
-import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 import org.key_project.solidity.parser.KeYSolidityDLParser;
 import org.key_project.solidity.parser.SchemaVariableModifierSet;
 import org.key_project.solidity.parser.varcond.ArgumentType;
@@ -31,22 +28,20 @@ import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.proof.calculus.SoliditySequentKit;
 import org.key_project.solidity.rule.sv.OperatorSV;
 import org.key_project.solidity.rule.sv.SchemaVariableFactory;
-import org.key_project.solidity.rule.sv.VariableSV;
 import org.key_project.solidity.rule.sv.sort.ProgramSVSort;
-import org.key_project.solidity.rule.taclets.SolNoFindTaclet;
-import org.key_project.solidity.rule.taclets.SolRewriteTaclet;
 import org.key_project.solidity.rule.taclets.TacletGoalTemplate;
 import org.key_project.solidity.rule.taclets.builder.*;
 import org.key_project.solidity.util.parsing.BuildingException;
 import org.key_project.util.collection.*;
 
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import static java.text.MessageFormat.format;
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
+import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 
 public class TacletPBuilder extends ExpressionBuilder {
     private final Deque<TacletBuilder<?>> currentTBuilder = new ArrayDeque<>(8);
@@ -245,320 +240,321 @@ public class TacletPBuilder extends ExpressionBuilder {
 
     // No support for ADTs at the moment
 
-//    @Override
-//    public Object visitDatatype_decl(KeYSolidityDLParser.Datatype_declContext ctx) {
-//        var genParams = ctx.formal_sort_param_decls() == null ? null
-//                : visitFormal_sort_param_decls(ctx.formal_sort_param_decls());
-//        final Sort sort;
-//        if (genParams != null) {
-//            var psd = namespaces().parametricSorts().lookup(ctx.name.getText());
-//            assert psd != null;
-//            ImmutableList<GenericArgument> args = ImmutableSLList.nil();
-//            for (int i = psd.getParameters().size() - 1; i >= 0; i--) {
-//                args = args.prepend(new GenericArgument(psd.getParameters().get(i).sort()));
-//            }
-//            sort = ParametricSortInstance.get(psd, args, services);
-//        } else {
-//            sort = sorts().lookup(ctx.name.getText());
-//        }
-//
-//        var tbAx = createAxiomTaclet(ctx, sort);
-//        registerTaclet(ctx, tbAx);
-//
-//        var tbInd = createInductionTaclet(ctx, sort);
-//        registerTaclet(ctx, tbInd);
-//
-//        var tbSplit = createConstructorSplit(ctx, sort);
-//        registerTaclet(ctx, tbSplit);
-//
-//        for (var constructor : ctx.datatype_constructor()) {
-//            for (int i = 0; i < constructor.sortId().size(); i++) {
-//                var argName = constructor.argName.get(i).getText();
-//
-//                var tbDeconstructor = createDeconstructorTaclet(constructor, argName, i, sort);
-//                registerTaclet(ctx, tbDeconstructor);
-//
-//                var tbDeconsEq = createDeconstructorEQTaclet(constructor, argName, i, sort);
-//                registerTaclet(ctx, tbDeconsEq);
-//            }
-//        }
-//
-//        return null;
-//    }
+    // @Override
+    // public Object visitDatatype_decl(KeYSolidityDLParser.Datatype_declContext ctx) {
+    // var genParams = ctx.formal_sort_param_decls() == null ? null
+    // : visitFormal_sort_param_decls(ctx.formal_sort_param_decls());
+    // final Sort sort;
+    // if (genParams != null) {
+    // var psd = namespaces().parametricSorts().lookup(ctx.name.getText());
+    // assert psd != null;
+    // ImmutableList<GenericArgument> args = ImmutableSLList.nil();
+    // for (int i = psd.getParameters().size() - 1; i >= 0; i--) {
+    // args = args.prepend(new GenericArgument(psd.getParameters().get(i).sort()));
+    // }
+    // sort = ParametricSortInstance.get(psd, args, services);
+    // } else {
+    // sort = sorts().lookup(ctx.name.getText());
+    // }
+    //
+    // var tbAx = createAxiomTaclet(ctx, sort);
+    // registerTaclet(ctx, tbAx);
+    //
+    // var tbInd = createInductionTaclet(ctx, sort);
+    // registerTaclet(ctx, tbInd);
+    //
+    // var tbSplit = createConstructorSplit(ctx, sort);
+    // registerTaclet(ctx, tbSplit);
+    //
+    // for (var constructor : ctx.datatype_constructor()) {
+    // for (int i = 0; i < constructor.sortId().size(); i++) {
+    // var argName = constructor.argName.get(i).getText();
+    //
+    // var tbDeconstructor = createDeconstructorTaclet(constructor, argName, i, sort);
+    // registerTaclet(ctx, tbDeconstructor);
+    //
+    // var tbDeconsEq = createDeconstructorEQTaclet(constructor, argName, i, sort);
+    // registerTaclet(ctx, tbDeconsEq);
+    // }
+    // }
+    //
+    // return null;
+    // }
 
-//    private TacletBuilder<? extends Taclet> createDeconstructorTaclet(
-//            KeYSolidityDLParser.Datatype_constructorContext constructor, String argName, int argIndex,
-//            Sort dtSort) {
-//        var tacletBuilder = new RewriteTacletBuilder<>();
-//        tacletBuilder
-//                .setName(new Name(String.format("DT_%s#Dec_%s#%s", dtSort.name(), argName,
-//                        constructor.name.getText())));
-//        tacletBuilder.setDisplayName(
-//                String.format("DT %s Deconstructor %s (for %s)", dtSort.name(), argName,
-//                        constructor.name.getText()));
-//
-//        var schemaVariables = new OperatorSV[constructor.argName.size()];
-//        var args = new Term[constructor.argName.size()];
-//        var tb = services.getTermBuilder();
-//
-//        // Schema vars for constructor, e.g., Cons(head_sv, tail_sv)
-//        for (int i = 0; i < constructor.argName.size(); i++) {
-//            var name = constructor.argName.get(i).getText() + "_sv";
-//            Sort sort = accept(constructor.argSort.get(i));
-//            var sv = declareSchemaVariable(constructor, name, sort, false, false, false,
-//                    new SchemaVariableModifierSet.TermSV());
-//            schemaVariables[i] = sv;
-//            args[i] = tb.var(sv);
-//        }
-//
-//        var function = getPossiblyParametricFunction(argName, dtSort);
-//        var consFn = getPossiblyParametricFunction(constructor.name.getText(), dtSort);
-//
-//        // Find, e.g, tail(Cons(head_sv, tail_sv))
-//        tacletBuilder.setFind(tb.func(function, tb.func(consFn, args)));
-//        tacletBuilder.addTacletGoalTemplate(
-//                new RewriteTacletGoalTemplate(tb.var(schemaVariables[argIndex])));
-//        tacletBuilder.setApplicationRestriction(
-//                new ApplicationRestriction(ApplicationRestriction.SAME_UPDATE_LEVEL));
-//        tacletBuilder.addRuleSet(ruleSets().lookup(new Name("simplify")));
-//
-//        return tacletBuilder;
-//    }
-//
-//    private TacletBuilder<? extends Taclet> createDeconstructorEQTaclet(
-//            KeYSolidityDLParser.Datatype_constructorContext constructor, String argName, int argIndex,
-//            Sort dtSort) {
-//        var tacletBuilder = new RewriteTacletBuilder<>();
-//        tacletBuilder.setName(
-//                new Name(String.format("DT_%s#Dec_%s#%s#EQ", dtSort.name(), argName,
-//                        constructor.name.getText())));
-//        tacletBuilder.setDisplayName(
-//                String.format("DT %s Deconstructor %s (for %s)", dtSort.name(), argName,
-//                        constructor.name.getText()));
-//
-//        var schemaVariables = new OperatorSV[constructor.argName.size()];
-//        var args = new Term[constructor.argName.size()];
-//        var tb = services.getTermBuilder();
-//
-//        // Schema vars for constructor, e.g., Cons(head_sv, tail_sv)
-//        for (int i = 0; i < constructor.argName.size(); i++) {
-//            var name = constructor.argName.get(i).getText() + "_sv";
-//            Sort sort = accept(constructor.argSort.get(i));
-//            var sv = declareSchemaVariable(constructor, name, sort, false, false, false,
-//                    new SchemaVariableModifierSet.TermSV());
-//            schemaVariables[i] = sv;
-//            args[i] = tb.var(sv);
-//        }
-//
-//        var function = getPossiblyParametricFunction(argName, dtSort);
-//        var consFn = getPossiblyParametricFunction(constructor.name.getText(), dtSort);
-//
-//        var x = declareSchemaVariable(constructor, argName + "_x", dtSort, false, false, false,
-//                new SchemaVariableModifierSet.TermSV());
-//        var res = schemaVariables[argIndex];
-//
-//        tacletBuilder.setFind(tb.func(function, tb.var(x)));
-//        tacletBuilder.setIfSequent(SoliditySequentKit.createAnteSequent(
-//                ImmutableSLList
-//                        .singleton(new SequentFormula(tb.equals(tb.func(consFn, args), tb.var(x))))));
-//        tacletBuilder.addTacletGoalTemplate(new RewriteTacletGoalTemplate(tb.var(res)));
-//        tacletBuilder.setApplicationRestriction(
-//                new ApplicationRestriction(ApplicationRestriction.SAME_UPDATE_LEVEL));
-//        tacletBuilder.addRuleSet(ruleSets().lookup(new Name("simplify")));
-//
-//        return tacletBuilder;
-//    }
-//
-//    private Function getPossiblyParametricFunction(String name, Sort sort) {
-//        var fn = functions().lookup(name);
-//        if (fn != null)
-//            return fn;
-//        var psi = (ParametricSortInstance) sort;
-//        var pfn = namespaces().parametricFunctions().lookup(name);
-//        assert pfn != null;
-//        return ParametricFunctionInstance.get(pfn, psi.getArgs(), services);
-//    }
-//
-//    private Sort getPossiblyParametricSort(String name, Sort sort) {
-//        var s = sorts().lookup(name);
-//        if (s != null)
-//            return s;
-//        var psi = (ParametricSortInstance) sort;
-//        var ps = namespaces().parametricSorts().lookup(name);
-//        assert ps != null;
-//        return ParametricSortInstance.get(ps, psi.getArgs(), services);
-//    }
-//
-//    private TacletBuilder<? extends Taclet> createInductionTaclet(
-//            KeYSolidityDLParser.Datatype_declContext ctx, Sort sort) {
-//        var tacletBuilder = new NoFindTacletBuilder();
-//        var phi = declareSchemaVariable(ctx, "phi", SolidityDLTheory.FORMULA, true,
-//                false, false, new SchemaVariableModifierSet.FormulaSV());
-//        var tb = services.getTermBuilder();
-//        var qvar = (VariableSV) declareSchemaVariable(ctx, "x", sort,
-//                true, false, false,
-//                new SchemaVariableModifierSet.VariableSV());
-//        // tacletBuilder.addVarsNotFreeIn(qvar, phi);
-//
-//        var cases = ctx.datatype_constructor().stream()
-//                .map(it -> createGoalDtConstructor(it, qvar, tb.var(phi), sort))
-//                .collect(Collectors.toList());
-//
-//        for (var c : cases) {
-//            if (c.vars == null)
-//                continue;
-//            for (var v : c.vars) {
-//                tacletBuilder.addVarsNotFreeIn((SchemaVariable) v, phi);
-//            }
-//        }
-//
-//        var use = tb.all(qvar, tb.var(phi));
-//        var useCase = new TacletGoalTemplate(
-//                SoliditySequentKit.createAnteSequent(ImmutableSLList.singleton(new SequentFormula(use))),
-//                ImmutableSLList.nil());
-//        useCase.setName("Use case of " + ctx.name.getText());
-//        cases.add(new GoalTemplAndVars(useCase, null));
-//
-//        cases.stream().map(GoalTemplAndVars::tgt).forEach(tacletBuilder::addTacletGoalTemplate);
-//        tacletBuilder.setName(new Name(String.format("DT_%s_Induction", sort.name())));
-//        tacletBuilder.setDisplayName(String.format("DT %s Induction", sort.name()));
-//        return tacletBuilder;
-//    }
-//
-//    private GoalTemplAndVars createGoalDtConstructor(KeYSolidityDLParser.Datatype_constructorContext it,
-//                                                     VariableSV qvar, Term var, Sort sort) {
-//        var constr = createQuantifiedFormula(it, qvar, var, sort);
-//        var goal = new TacletGoalTemplate(
-//                SoliditySequentKit
-//                        .createSuccSequent(ImmutableSLList.singleton(new SequentFormula(constr))),
-//                ImmutableSLList.nil());
-//        goal.setName(it.getText());
-//        return new GoalTemplAndVars(goal, constr.vars);
-//    }
-//
-//    private record GoalTemplAndVars(TacletGoalTemplate tgt,
-//                                    @Nullable List<QuantifiableVariable> vars) {
-//    }
-//
-//    private TacletBuilder<SolNoFindTaclet> createAxiomTaclet(
-//            KeYSolidityDLParser.Datatype_declContext ctx, Sort sort) {
-//        var tacletBuilder = new NoFindTacletBuilder();
-//        var phi = declareSchemaVariable(ctx, "phi", SolidityDLTheory.FORMULA, true,
-//                false, false, new SchemaVariableModifierSet.FormulaSV());
-//        var tb = services.getTermBuilder();
-//        var qvar = (VariableSV) declareSchemaVariable(ctx, "x", sort,
-//                true, false, false,
-//                new SchemaVariableModifierSet.VariableSV());
-//        var find = tb.all(qvar, tb.var(phi)); // \forall #x #phi
-//
-//        var cases = ctx.datatype_constructor().stream()
-//                .map(it -> createQuantifiedFormula(it, qvar, tb.var(phi), sort))
-//                .collect(Collectors.toList());
-//
-//        var axiom = tb.equals(find, tb.and(cases));
-//
-//        var goal = new TacletGoalTemplate(
-//                SoliditySequentKit
-//                        .createAnteSequent(ImmutableSLList.singleton(new SequentFormula(axiom))),
-//                ImmutableSLList.nil());
-//        tacletBuilder.addTacletGoalTemplate(goal);
-//
-//        tacletBuilder.setName(new Name(String.format("DT_%s_Axiom", sort.name())));
-//        tacletBuilder.setDisplayName(String.format("DT %s Axiom", sort.name()));
-//        return tacletBuilder;
-//    }
-//
-//    private Term createQuantifiedFormula(KeYSolidityDLParser.Datatype_constructorContext context,
-//                                         QuantifiableVariable qvX, Term phi, Sort dt) {
-//        var tb = services.getTermBuilder();
-//        var fn = functions().lookup(context.name.getText());
-//        if (fn == null) {
-//            // Is parametric
-//            var pfd = namespaces().parametricFunctions().lookup(context.name.getText());
-//            assert pfd != null;
-//            fn = ParametricFunctionInstance.get(pfd, ((ParametricSortInstance) dt).getArgs(), services);
-//        }
-//        if (context.argName.isEmpty())
-//            return tb.subst(SubstOp.SUBST, qvX, tb.func(fn), phi);
-//
-//        var args = new Term[context.argName.size()];
-//
-//        var argSort =
-//                context.argSort.stream()
-//                        .map(it -> sorts().lookup(it.getText()))
-//                        .toList();
-//        var argNames =
-//                context.argName.stream()
-//                        .map(RuleContext::getText)
-//                        .toList();
-//        var bvs = new ArrayList<BoundVariable>(args.length);
-//        var ind = new ArrayList<Term>(args.length);
-//
-//        for (int i = 0; i < argSort.size(); i++) {
-//            final var lv = LogicVariable.create(i, argSort.get(i));
-//            bvs.add(new BoundVariable(new Name(argNames.get(i)), argSort.get(i)));
-//            args[i] = services.getTermFactory().createTerm(lv);
-//
-//            if (argSort.get(i).equals(dt)) {
-//                ind.add(tb.subst(SubstOp.SUBST, qvX, args[i], phi));
-//            }
-//        }
-//
-//        if (ind.isEmpty()) {
-//            return tb.all(bvs, tb.func(fn, args));
-//        } else {
-//            var base = tb.and(ind);
-//            return tb.all(bvs, tb.imp(base, tb.subst(SubstOp.SUBST, qvX, tb.func(fn, args), phi)));
-//        }
-//    }
-//
-//    private record TermAndVars(Term term, @Nullable List<QuantifiableVariable> vars) {
-//    }
-//
-//    private RewriteTacletBuilder<SolRewriteTaclet> createConstructorSplit(
-//            KeYSolidityDLParser.Datatype_declContext ctx, Sort sort) {
-//        final var tb = services.getTermBuilder();
-//
-//        final String prefix = ctx.name.getText() + "_";
-//
-//        Map<String, Term> variables = new HashMap<>();
-//        for (KeYSolidityDLParser.Datatype_constructorContext context : ctx.datatype_constructor()) {
-//            for (int i = 0; i < context.argName.size(); i++) {
-//                var name = context.argName.get(i).getText();
-//                var argSort = getPossiblyParametricSort(
-//                        context.argSort.get(i).simple_ident_dots().getText(), sort);
-//                var sv = declareSchemaVariable(ctx, prefix + name, argSort,
-//                        false, true, false,
-//                        new SchemaVariableModifierSet.TermSV());
-//                variables.put(name, tb.var(sv));
-//            }
-//        }
-//
-//        final var b = new RewriteTacletBuilder<>();
-//        b.setApplicationRestriction(
-//                new ApplicationRestriction(ApplicationRestriction.SAME_UPDATE_LEVEL));
-//
-//        b.setName(new Name("DT_" + sort.name() + "_ctor_split"));
-//        b.setDisplayName(String.format("DT %s case distinction", sort.name()));
-//
-//        var phi = declareSchemaVariable(ctx, "var", sort,
-//                false, false, false,
-//                new SchemaVariableModifierSet.TermSV());
-//        b.setFind(tb.var(phi));
-//        for (KeYSolidityDLParser.Datatype_constructorContext context : ctx.datatype_constructor()) {
-//            var func = getPossiblyParametricFunction(context.name.getText(), sort);
-//            Term[] args = new Term[context.argName.size()];
-//            for (int i = 0; i < args.length; i++) {
-//                args[i] = variables.get(context.argName.get(i).getText());
-//            }
-//            Sequent addedSeq = SoliditySequentKit.createAnteSequent(ImmutableSLList
-//                    .singleton(new SequentFormula(tb.equals(tb.var(phi), tb.func(func, args)))));
-//            TacletGoalTemplate goal = new TacletGoalTemplate(addedSeq, ImmutableSLList.nil());
-//            goal.setName("#var = " + context.name.getText());
-//            b.addTacletGoalTemplate(goal);
-//        }
-//        return b;
-//    }
+    // private TacletBuilder<? extends Taclet> createDeconstructorTaclet(
+    // KeYSolidityDLParser.Datatype_constructorContext constructor, String argName, int argIndex,
+    // Sort dtSort) {
+    // var tacletBuilder = new RewriteTacletBuilder<>();
+    // tacletBuilder
+    // .setName(new Name(String.format("DT_%s#Dec_%s#%s", dtSort.name(), argName,
+    // constructor.name.getText())));
+    // tacletBuilder.setDisplayName(
+    // String.format("DT %s Deconstructor %s (for %s)", dtSort.name(), argName,
+    // constructor.name.getText()));
+    //
+    // var schemaVariables = new OperatorSV[constructor.argName.size()];
+    // var args = new Term[constructor.argName.size()];
+    // var tb = services.getTermBuilder();
+    //
+    // // Schema vars for constructor, e.g., Cons(head_sv, tail_sv)
+    // for (int i = 0; i < constructor.argName.size(); i++) {
+    // var name = constructor.argName.get(i).getText() + "_sv";
+    // Sort sort = accept(constructor.argSort.get(i));
+    // var sv = declareSchemaVariable(constructor, name, sort, false, false, false,
+    // new SchemaVariableModifierSet.TermSV());
+    // schemaVariables[i] = sv;
+    // args[i] = tb.var(sv);
+    // }
+    //
+    // var function = getPossiblyParametricFunction(argName, dtSort);
+    // var consFn = getPossiblyParametricFunction(constructor.name.getText(), dtSort);
+    //
+    // // Find, e.g, tail(Cons(head_sv, tail_sv))
+    // tacletBuilder.setFind(tb.func(function, tb.func(consFn, args)));
+    // tacletBuilder.addTacletGoalTemplate(
+    // new RewriteTacletGoalTemplate(tb.var(schemaVariables[argIndex])));
+    // tacletBuilder.setApplicationRestriction(
+    // new ApplicationRestriction(ApplicationRestriction.SAME_UPDATE_LEVEL));
+    // tacletBuilder.addRuleSet(ruleSets().lookup(new Name("simplify")));
+    //
+    // return tacletBuilder;
+    // }
+    //
+    // private TacletBuilder<? extends Taclet> createDeconstructorEQTaclet(
+    // KeYSolidityDLParser.Datatype_constructorContext constructor, String argName, int argIndex,
+    // Sort dtSort) {
+    // var tacletBuilder = new RewriteTacletBuilder<>();
+    // tacletBuilder.setName(
+    // new Name(String.format("DT_%s#Dec_%s#%s#EQ", dtSort.name(), argName,
+    // constructor.name.getText())));
+    // tacletBuilder.setDisplayName(
+    // String.format("DT %s Deconstructor %s (for %s)", dtSort.name(), argName,
+    // constructor.name.getText()));
+    //
+    // var schemaVariables = new OperatorSV[constructor.argName.size()];
+    // var args = new Term[constructor.argName.size()];
+    // var tb = services.getTermBuilder();
+    //
+    // // Schema vars for constructor, e.g., Cons(head_sv, tail_sv)
+    // for (int i = 0; i < constructor.argName.size(); i++) {
+    // var name = constructor.argName.get(i).getText() + "_sv";
+    // Sort sort = accept(constructor.argSort.get(i));
+    // var sv = declareSchemaVariable(constructor, name, sort, false, false, false,
+    // new SchemaVariableModifierSet.TermSV());
+    // schemaVariables[i] = sv;
+    // args[i] = tb.var(sv);
+    // }
+    //
+    // var function = getPossiblyParametricFunction(argName, dtSort);
+    // var consFn = getPossiblyParametricFunction(constructor.name.getText(), dtSort);
+    //
+    // var x = declareSchemaVariable(constructor, argName + "_x", dtSort, false, false, false,
+    // new SchemaVariableModifierSet.TermSV());
+    // var res = schemaVariables[argIndex];
+    //
+    // tacletBuilder.setFind(tb.func(function, tb.var(x)));
+    // tacletBuilder.setIfSequent(SoliditySequentKit.createAnteSequent(
+    // ImmutableSLList
+    // .singleton(new SequentFormula(tb.equals(tb.func(consFn, args), tb.var(x))))));
+    // tacletBuilder.addTacletGoalTemplate(new RewriteTacletGoalTemplate(tb.var(res)));
+    // tacletBuilder.setApplicationRestriction(
+    // new ApplicationRestriction(ApplicationRestriction.SAME_UPDATE_LEVEL));
+    // tacletBuilder.addRuleSet(ruleSets().lookup(new Name("simplify")));
+    //
+    // return tacletBuilder;
+    // }
+    //
+    // private Function getPossiblyParametricFunction(String name, Sort sort) {
+    // var fn = functions().lookup(name);
+    // if (fn != null)
+    // return fn;
+    // var psi = (ParametricSortInstance) sort;
+    // var pfn = namespaces().parametricFunctions().lookup(name);
+    // assert pfn != null;
+    // return ParametricFunctionInstance.get(pfn, psi.getArgs(), services);
+    // }
+    //
+    // private Sort getPossiblyParametricSort(String name, Sort sort) {
+    // var s = sorts().lookup(name);
+    // if (s != null)
+    // return s;
+    // var psi = (ParametricSortInstance) sort;
+    // var ps = namespaces().parametricSorts().lookup(name);
+    // assert ps != null;
+    // return ParametricSortInstance.get(ps, psi.getArgs(), services);
+    // }
+    //
+    // private TacletBuilder<? extends Taclet> createInductionTaclet(
+    // KeYSolidityDLParser.Datatype_declContext ctx, Sort sort) {
+    // var tacletBuilder = new NoFindTacletBuilder();
+    // var phi = declareSchemaVariable(ctx, "phi", SolidityDLTheory.FORMULA, true,
+    // false, false, new SchemaVariableModifierSet.FormulaSV());
+    // var tb = services.getTermBuilder();
+    // var qvar = (VariableSV) declareSchemaVariable(ctx, "x", sort,
+    // true, false, false,
+    // new SchemaVariableModifierSet.VariableSV());
+    // // tacletBuilder.addVarsNotFreeIn(qvar, phi);
+    //
+    // var cases = ctx.datatype_constructor().stream()
+    // .map(it -> createGoalDtConstructor(it, qvar, tb.var(phi), sort))
+    // .collect(Collectors.toList());
+    //
+    // for (var c : cases) {
+    // if (c.vars == null)
+    // continue;
+    // for (var v : c.vars) {
+    // tacletBuilder.addVarsNotFreeIn((SchemaVariable) v, phi);
+    // }
+    // }
+    //
+    // var use = tb.all(qvar, tb.var(phi));
+    // var useCase = new TacletGoalTemplate(
+    // SoliditySequentKit.createAnteSequent(ImmutableSLList.singleton(new SequentFormula(use))),
+    // ImmutableSLList.nil());
+    // useCase.setName("Use case of " + ctx.name.getText());
+    // cases.add(new GoalTemplAndVars(useCase, null));
+    //
+    // cases.stream().map(GoalTemplAndVars::tgt).forEach(tacletBuilder::addTacletGoalTemplate);
+    // tacletBuilder.setName(new Name(String.format("DT_%s_Induction", sort.name())));
+    // tacletBuilder.setDisplayName(String.format("DT %s Induction", sort.name()));
+    // return tacletBuilder;
+    // }
+    //
+    // private GoalTemplAndVars
+    // createGoalDtConstructor(KeYSolidityDLParser.Datatype_constructorContext it,
+    // VariableSV qvar, Term var, Sort sort) {
+    // var constr = createQuantifiedFormula(it, qvar, var, sort);
+    // var goal = new TacletGoalTemplate(
+    // SoliditySequentKit
+    // .createSuccSequent(ImmutableSLList.singleton(new SequentFormula(constr))),
+    // ImmutableSLList.nil());
+    // goal.setName(it.getText());
+    // return new GoalTemplAndVars(goal, constr.vars);
+    // }
+    //
+    // private record GoalTemplAndVars(TacletGoalTemplate tgt,
+    // @Nullable List<QuantifiableVariable> vars) {
+    // }
+    //
+    // private TacletBuilder<SolNoFindTaclet> createAxiomTaclet(
+    // KeYSolidityDLParser.Datatype_declContext ctx, Sort sort) {
+    // var tacletBuilder = new NoFindTacletBuilder();
+    // var phi = declareSchemaVariable(ctx, "phi", SolidityDLTheory.FORMULA, true,
+    // false, false, new SchemaVariableModifierSet.FormulaSV());
+    // var tb = services.getTermBuilder();
+    // var qvar = (VariableSV) declareSchemaVariable(ctx, "x", sort,
+    // true, false, false,
+    // new SchemaVariableModifierSet.VariableSV());
+    // var find = tb.all(qvar, tb.var(phi)); // \forall #x #phi
+    //
+    // var cases = ctx.datatype_constructor().stream()
+    // .map(it -> createQuantifiedFormula(it, qvar, tb.var(phi), sort))
+    // .collect(Collectors.toList());
+    //
+    // var axiom = tb.equals(find, tb.and(cases));
+    //
+    // var goal = new TacletGoalTemplate(
+    // SoliditySequentKit
+    // .createAnteSequent(ImmutableSLList.singleton(new SequentFormula(axiom))),
+    // ImmutableSLList.nil());
+    // tacletBuilder.addTacletGoalTemplate(goal);
+    //
+    // tacletBuilder.setName(new Name(String.format("DT_%s_Axiom", sort.name())));
+    // tacletBuilder.setDisplayName(String.format("DT %s Axiom", sort.name()));
+    // return tacletBuilder;
+    // }
+    //
+    // private Term createQuantifiedFormula(KeYSolidityDLParser.Datatype_constructorContext context,
+    // QuantifiableVariable qvX, Term phi, Sort dt) {
+    // var tb = services.getTermBuilder();
+    // var fn = functions().lookup(context.name.getText());
+    // if (fn == null) {
+    // // Is parametric
+    // var pfd = namespaces().parametricFunctions().lookup(context.name.getText());
+    // assert pfd != null;
+    // fn = ParametricFunctionInstance.get(pfd, ((ParametricSortInstance) dt).getArgs(), services);
+    // }
+    // if (context.argName.isEmpty())
+    // return tb.subst(SubstOp.SUBST, qvX, tb.func(fn), phi);
+    //
+    // var args = new Term[context.argName.size()];
+    //
+    // var argSort =
+    // context.argSort.stream()
+    // .map(it -> sorts().lookup(it.getText()))
+    // .toList();
+    // var argNames =
+    // context.argName.stream()
+    // .map(RuleContext::getText)
+    // .toList();
+    // var bvs = new ArrayList<BoundVariable>(args.length);
+    // var ind = new ArrayList<Term>(args.length);
+    //
+    // for (int i = 0; i < argSort.size(); i++) {
+    // final var lv = LogicVariable.create(i, argSort.get(i));
+    // bvs.add(new BoundVariable(new Name(argNames.get(i)), argSort.get(i)));
+    // args[i] = services.getTermFactory().createTerm(lv);
+    //
+    // if (argSort.get(i).equals(dt)) {
+    // ind.add(tb.subst(SubstOp.SUBST, qvX, args[i], phi));
+    // }
+    // }
+    //
+    // if (ind.isEmpty()) {
+    // return tb.all(bvs, tb.func(fn, args));
+    // } else {
+    // var base = tb.and(ind);
+    // return tb.all(bvs, tb.imp(base, tb.subst(SubstOp.SUBST, qvX, tb.func(fn, args), phi)));
+    // }
+    // }
+    //
+    // private record TermAndVars(Term term, @Nullable List<QuantifiableVariable> vars) {
+    // }
+    //
+    // private RewriteTacletBuilder<SolRewriteTaclet> createConstructorSplit(
+    // KeYSolidityDLParser.Datatype_declContext ctx, Sort sort) {
+    // final var tb = services.getTermBuilder();
+    //
+    // final String prefix = ctx.name.getText() + "_";
+    //
+    // Map<String, Term> variables = new HashMap<>();
+    // for (KeYSolidityDLParser.Datatype_constructorContext context : ctx.datatype_constructor()) {
+    // for (int i = 0; i < context.argName.size(); i++) {
+    // var name = context.argName.get(i).getText();
+    // var argSort = getPossiblyParametricSort(
+    // context.argSort.get(i).simple_ident_dots().getText(), sort);
+    // var sv = declareSchemaVariable(ctx, prefix + name, argSort,
+    // false, true, false,
+    // new SchemaVariableModifierSet.TermSV());
+    // variables.put(name, tb.var(sv));
+    // }
+    // }
+    //
+    // final var b = new RewriteTacletBuilder<>();
+    // b.setApplicationRestriction(
+    // new ApplicationRestriction(ApplicationRestriction.SAME_UPDATE_LEVEL));
+    //
+    // b.setName(new Name("DT_" + sort.name() + "_ctor_split"));
+    // b.setDisplayName(String.format("DT %s case distinction", sort.name()));
+    //
+    // var phi = declareSchemaVariable(ctx, "var", sort,
+    // false, false, false,
+    // new SchemaVariableModifierSet.TermSV());
+    // b.setFind(tb.var(phi));
+    // for (KeYSolidityDLParser.Datatype_constructorContext context : ctx.datatype_constructor()) {
+    // var func = getPossiblyParametricFunction(context.name.getText(), sort);
+    // Term[] args = new Term[context.argName.size()];
+    // for (int i = 0; i < args.length; i++) {
+    // args[i] = variables.get(context.argName.get(i).getText());
+    // }
+    // Sequent addedSeq = SoliditySequentKit.createAnteSequent(ImmutableSLList
+    // .singleton(new SequentFormula(tb.equals(tb.var(phi), tb.func(func, args)))));
+    // TacletGoalTemplate goal = new TacletGoalTemplate(addedSeq, ImmutableSLList.nil());
+    // goal.setName("#var = " + context.name.getText());
+    // b.addTacletGoalTemplate(goal);
+    // }
+    // return b;
+    // }
 
     // ------------------------------------------------------------------------------------------
     // here we skip everything from createDeconstructorTaclet(...) to createConstructorSplit(...)

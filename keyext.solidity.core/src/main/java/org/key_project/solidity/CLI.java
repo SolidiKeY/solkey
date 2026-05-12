@@ -3,17 +3,18 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity;
 
-import org.key_project.solidity.control.KeYEnvironment;
-import org.key_project.solidity.proof.io.ProblemLoaderException;
-import org.key_project.solidity.proof.io.ProofSaver;
-import picocli.CommandLine;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+
+import org.key_project.solidity.control.KeYEnvironment;
+import org.key_project.solidity.proof.io.ProblemLoaderException;
+import org.key_project.solidity.proof.io.ProofSaver;
+
+import picocli.CommandLine;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 public class CLI {
     @Option(names = { "-V", "--version" }, versionHelp = true, description = "display version info")

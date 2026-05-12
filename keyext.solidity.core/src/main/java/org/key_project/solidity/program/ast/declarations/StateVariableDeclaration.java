@@ -10,6 +10,7 @@ import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.expressions.Expression;
+
 import org.jspecify.annotations.Nullable;
 
 public class StateVariableDeclaration implements Declaration {

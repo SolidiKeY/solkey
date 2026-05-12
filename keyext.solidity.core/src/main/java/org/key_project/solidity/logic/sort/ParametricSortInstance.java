@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.WeakHashMap;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.sort.AbstractSort;
 import org.key_project.logic.sort.Sort;
@@ -24,7 +25,7 @@ import org.jspecify.annotations.NonNull;
 /// Concrete sort of a parametric sort.
 public final class ParametricSortInstance extends AbstractSort {
     private static final Map<ParametricSortInstance, ParametricSortInstance> CACHE =
-            new WeakHashMap<>();
+        new WeakHashMap<>();
 
     private final ImmutableList<GenericArgument> args;
     private final ParametricSortDecl base;
@@ -33,10 +34,10 @@ public final class ParametricSortInstance extends AbstractSort {
     /// Returns the sort of `decl` instantiated with the arguments `arg`. If necessary, a new object
     /// is created.
     public static ParametricSortInstance get(ParametricSortDecl base,
-                                             ImmutableList<GenericArgument> args, Services services) {
+            ImmutableList<GenericArgument> args, Services services) {
         assert args.size() == base.getParameters().size();
         ParametricSortInstance sort =
-                new ParametricSortInstance(base, args);
+            new ParametricSortInstance(base, args);
         ParametricSortInstance cached = CACHE.get(sort);
         if (cached != null) {
             return cached;
@@ -59,13 +60,13 @@ public final class ParametricSortInstance extends AbstractSort {
     }
 
     private static Name makeName(ParametricSortDecl base,
-                                 ImmutableList<GenericArgument> parameters) {
+            ImmutableList<GenericArgument> parameters) {
         // The [ ] are produced by the list's toString method.
         return new Name(base.name() + "<" + parameters + ">");
     }
 
     private static ImmutableSet<Sort> computeExt(ParametricSortDecl base,
-                                                 ImmutableList<GenericArgument> args, Services services) {
+            ImmutableList<GenericArgument> args, Services services) {
         ImmutableSet<Sort> result = DefaultImmutableSet.nil();
 
         // 1. extensions by base sort
@@ -73,8 +74,8 @@ public final class ParametricSortInstance extends AbstractSort {
         if (!baseExt.isEmpty()) {
             for (Sort s : baseExt) {
                 result =
-                        result.add(instantiate(s, getInstMap(base, args),
-                                services));
+                    result.add(instantiate(s, getInstMap(base, args),
+                        services));
             }
         }
 
@@ -95,11 +96,12 @@ public final class ParametricSortInstance extends AbstractSort {
                     // "Covariance currently not supported");
                 }
                 case CONTRAVARIANT -> throw new UnsupportedOperationException(
-                        "Contravariance currently not supported");
+                    "Contravariance currently not supported");
 
                 case INVARIANT -> {
                     /* Nothing to be done */}
-                default -> throw new IllegalStateException("Unexpected value: " + parameter.variance());
+                default ->
+                    throw new IllegalStateException("Unexpected value: " + parameter.variance());
             }
         }
 
@@ -143,7 +145,7 @@ public final class ParametricSortInstance extends AbstractSort {
 
     /// Compute an instantiation mapping.
     private static Map<GenericSort, GenericArgument> getInstMap(ParametricSortDecl base,
-                                                                ImmutableList<GenericArgument> args) {
+            ImmutableList<GenericArgument> args) {
         var map = new HashMap<GenericSort, GenericArgument>();
         for (int i = 0; i < base.getParameters().size(); i++) {
             var param = base.getParameters().get(i);
@@ -154,7 +156,7 @@ public final class ParametricSortInstance extends AbstractSort {
     }
 
     public static Sort instantiate(GenericSort genericSort, Sort instantiation,
-                                   Sort toInstantiate, Services services) {
+            Sort toInstantiate, Services services) {
         if (genericSort == toInstantiate) {
             return instantiation;
         } else if (toInstantiate instanceof ParametricSortInstance psort) {
@@ -166,7 +168,7 @@ public final class ParametricSortInstance extends AbstractSort {
 
     /// Instantiate a sort that may be or contain generic sorts with `map`.
     public static Sort instantiate(Sort sort, Map<GenericSort, GenericArgument> map,
-                                   Services services) {
+            Services services) {
         if (sort instanceof GenericSort gs) {
             var arg = map.get(gs);
             return arg == null ? gs : arg.sort();
@@ -184,10 +186,10 @@ public final class ParametricSortInstance extends AbstractSort {
     }
 
     public ParametricSortInstance instantiate(GenericSort template, Sort instantiation,
-                                              Services services) {
+            Services services) {
         ImmutableList<GenericArgument> newParameters =
-                args.map(
-                        s -> new GenericArgument(instantiate(template, instantiation, s.sort(), services)));
+            args.map(
+                s -> new GenericArgument(instantiate(template, instantiation, s.sort(), services)));
         return get(base, newParameters, services);
     }
 
@@ -214,12 +216,12 @@ public final class ParametricSortInstance extends AbstractSort {
             var sort = arg.sort();
             if (sort instanceof ParametricSortInstance psi) {
                 newArgs =
-                        newArgs.prepend(
-                                new GenericArgument(psi.resolveSort(instMap, services)));
+                    newArgs.prepend(
+                        new GenericArgument(psi.resolveSort(instMap, services)));
             } else if (sort instanceof GenericSort gs) {
                 newArgs = newArgs.prepend(
-                        new GenericArgument(
-                                instMap.getGenericSortInstantiations().getInstantiation(gs)));
+                    new GenericArgument(
+                        instMap.getGenericSortInstantiations().getInstantiation(gs)));
             } else {
                 newArgs = newArgs.prepend(arg);
             }

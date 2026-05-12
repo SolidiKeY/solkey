@@ -8,11 +8,11 @@ import org.key_project.logic.Term;
 import org.key_project.logic.TermCreationException;
 import org.key_project.logic.op.AbstractSortedOperator;
 import org.key_project.logic.op.sv.SchemaVariable;
+import org.key_project.logic.sort.Sort;
+import org.key_project.util.collection.ImmutableArray;
 
 import static org.key_project.logic.op.Modifier.NONE;
 import static org.key_project.logic.op.Modifier.RIGID;
-import org.key_project.logic.sort.Sort;
-import org.key_project.util.collection.ImmutableArray;
 
 public abstract class OperatorSV extends AbstractSortedOperator
         implements SchemaVariable, org.key_project.logic.op.sv.OperatorSV {

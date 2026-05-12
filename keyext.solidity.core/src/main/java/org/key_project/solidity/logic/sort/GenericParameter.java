@@ -16,4 +16,3 @@ public record GenericParameter(GenericSort sort, Variance variance) {
         COVARIANT, CONTRAVARIANT, INVARIANT
     }
 }
-

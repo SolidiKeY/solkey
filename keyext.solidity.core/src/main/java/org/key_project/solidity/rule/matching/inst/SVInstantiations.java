@@ -13,8 +13,6 @@ import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.prover.rules.instantiation.IllegalInstantiationException;
 import org.key_project.prover.rules.instantiation.InstantiationEntry;
 import org.key_project.solidity.common.Services;
-
-import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 import org.key_project.solidity.logic.op.SModality;
 import org.key_project.solidity.program.PosInProgram;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
@@ -31,6 +29,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import static org.key_project.solidity.common.Services.convertToLogicElement;
+import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 
 
 public class SVInstantiations

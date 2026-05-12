@@ -15,7 +15,6 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.prover.rules.RuleSet;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.NamespaceSet;
-
 import org.key_project.solidity.logic.SolidityDLTheory;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.*;
@@ -44,30 +43,30 @@ public class DeclarationBuilder extends DefaultBuilder {
         return null;
     }
 
-//    @Override
-//    public Object visitDatatype_decl(KeYSolidityDLParser.Datatype_declContext ctx) {
-//        // boolean freeAdt = ctx.FREE() != null;
-//        var name = ctx.name.getText();
-//        var doc = ctx.DOC_COMMENT() != null
-//                ? ctx.DOC_COMMENT().getText()
-//                : null;
-//        List<GenericParameter> typeParameters = accept(ctx.formal_sort_param_decls());
-//        if (typeParameters == null) {
-//            var s = new SortImpl(new Name(name), false, ImmutableSet.empty());
-//            sorts().addSafely(s);
-//        } else {
-//            var doubled = CollectionUtil.findDuplicates(typeParameters);
-//            if (!doubled.isEmpty()) {
-//                semanticError(ctx.formal_sort_param_decls(),
-//                        "Type parameters must be unique within a declaration. Found duplicate: %s",
-//                        doubled.getFirst());
-//            }
-//            var s = new ParametricSortDecl(new Name(name), false, ImmutableSet.empty(),
-//                    ImmutableList.fromList(typeParameters));
-//            namespaces().parametricSorts().addSafely(s);
-//        }
-//        return null;
-//    }
+    // @Override
+    // public Object visitDatatype_decl(KeYSolidityDLParser.Datatype_declContext ctx) {
+    // // boolean freeAdt = ctx.FREE() != null;
+    // var name = ctx.name.getText();
+    // var doc = ctx.DOC_COMMENT() != null
+    // ? ctx.DOC_COMMENT().getText()
+    // : null;
+    // List<GenericParameter> typeParameters = accept(ctx.formal_sort_param_decls());
+    // if (typeParameters == null) {
+    // var s = new SortImpl(new Name(name), false, ImmutableSet.empty());
+    // sorts().addSafely(s);
+    // } else {
+    // var doubled = CollectionUtil.findDuplicates(typeParameters);
+    // if (!doubled.isEmpty()) {
+    // semanticError(ctx.formal_sort_param_decls(),
+    // "Type parameters must be unique within a declaration. Found duplicate: %s",
+    // doubled.getFirst());
+    // }
+    // var s = new ParametricSortDecl(new Name(name), false, ImmutableSet.empty(),
+    // ImmutableList.fromList(typeParameters));
+    // namespaces().parametricSorts().addSafely(s);
+    // }
+    // return null;
+    // }
 
     @Override
     public Object visitProg_var_decls(KeYSolidityDLParser.Prog_var_declsContext ctx) {
@@ -199,9 +198,9 @@ public class DeclarationBuilder extends DefaultBuilder {
                     // have local namespaces for generic sorts
                     // addWarning(ctx, "Sort declaration is ignored, due to collision.");
                     LOGGER.debug(
-                            "Sort declaration of {} in {} is ignored due to collision (already "
-                                    + "present in {}).",
-                            sortName);
+                        "Sort declaration of {} in {} is ignored due to collision (already "
+                            + "present in {}).",
+                        sortName);
                 }
             }
         } else {
@@ -209,20 +208,20 @@ public class DeclarationBuilder extends DefaultBuilder {
             var declCtx = ctx.parametric_sort_decl();
             assert declCtx != null : "One of the two must be present";
             List<GenericParameter> typeParams =
-                    visitFormal_sort_param_decls(declCtx.formal_sort_param_decls());
+                visitFormal_sort_param_decls(declCtx.formal_sort_param_decls());
             ImmutableList<GenericParameter> params = ImmutableList.fromList(typeParams);
             var doubled = CollectionUtil.findDuplicates(params.map(GenericParameter::sort));
             if (!doubled.isEmpty()) {
                 semanticError(declCtx,
-                        "Type parameters must be unique within a declaration. Found duplicate: %s",
-                        doubled.getFirst());
+                    "Type parameters must be unique within a declaration. Found duplicate: %s",
+                    doubled.getFirst());
             }
             String name = declCtx.simple_ident_dots().getText();
             Name sortName = new Name(name);
             if (sorts().lookup(sortName) != null) {
                 semanticError(declCtx,
-                        "Cannot declare parametric sort %s, as a sort of the same name has already been declared",
-                        sortName);
+                    "Cannot declare parametric sort %s, as a sort of the same name has already been declared",
+                    sortName);
             }
             var sortDecl = new ParametricSortDecl(sortName, isAbstractSort, ext, params);
             namespaces().parametricSorts().addSafely(sortDecl);

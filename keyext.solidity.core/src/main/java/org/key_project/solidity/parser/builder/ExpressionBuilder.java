@@ -26,8 +26,6 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.NamespaceSet;
 import org.key_project.solidity.logic.SolidityBlock;
 import org.key_project.solidity.logic.TermFactory;
-
-import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
 import org.key_project.solidity.logic.op.*;
 import org.key_project.solidity.parser.KeYSolidityDLLexer;
 import org.key_project.solidity.parser.KeYSolidityDLParser;
@@ -48,6 +46,8 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
 
 public class ExpressionBuilder extends DefaultBuilder {
 

@@ -7,10 +7,10 @@ import org.key_project.logic.op.Function;
 import org.key_project.prover.strategy.costbased.termfeature.OperatorClassTF;
 import org.key_project.prover.strategy.costbased.termfeature.TermFeature;
 import org.key_project.solidity.logic.op.*;
-
-import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
 import org.key_project.solidity.strategy.termfeature.AtomTermFeature;
 import org.key_project.solidity.strategy.termfeature.ContainsExecutableCodeTermFeature;
+
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
 
 class FormulaTermFeatures extends StaticFeatureCollection {
     final TermFeature forF;

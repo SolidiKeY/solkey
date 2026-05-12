@@ -11,7 +11,6 @@ import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.logic.sort.Sort;
 import org.key_project.prover.rules.VariableCondition;
 import org.key_project.solidity.logic.sort.GenericSort;
-import org.key_project.solidity.logic.sort.ParametricSortInstance;
 import org.key_project.solidity.parser.varcond.TypeComparisonCondition.Mode;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.rule.sv.OperatorSV;

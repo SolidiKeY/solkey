@@ -11,7 +11,6 @@ import org.key_project.logic.op.Function;
 import org.key_project.logic.op.QuantifiableVariable;
 import org.key_project.logic.sort.Sort;
 import org.key_project.prover.rules.RuleSet;
-import org.key_project.solidity.logic.op.IProgramVariable;
 import org.key_project.solidity.logic.op.ParametricFunctionDecl;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.*;
@@ -35,13 +34,13 @@ public class NamespaceSet {
     }
 
     public NamespaceSet(Namespace<@NonNull QuantifiableVariable> varNS,
-                        Namespace<@NonNull Function> funcNS,
-                        Namespace<@NonNull Sort> sortNS, Namespace<@NonNull SortAlias> sortAliases,
-                        Namespace<@NonNull RuleSet> ruleSetNS,
-                        Namespace<@NonNull ParametricSortDecl> parametricSortNS,
-                        Namespace<@NonNull ParametricFunctionDecl> parametricFuncNS,
-                        Namespace<@NonNull Choice> choiceNS,
-                        Namespace<@NonNull ProgramVariable> programVarNS) {
+            Namespace<@NonNull Function> funcNS,
+            Namespace<@NonNull Sort> sortNS, Namespace<@NonNull SortAlias> sortAliases,
+            Namespace<@NonNull RuleSet> ruleSetNS,
+            Namespace<@NonNull ParametricSortDecl> parametricSortNS,
+            Namespace<@NonNull ParametricFunctionDecl> parametricFuncNS,
+            Namespace<@NonNull Choice> choiceNS,
+            Namespace<@NonNull ProgramVariable> programVarNS) {
         this.varNS = varNS;
         this.progVarNS = programVarNS;
         this.funcNS = funcNS;
@@ -55,26 +54,26 @@ public class NamespaceSet {
 
     public NamespaceSet copy() {
         return new NamespaceSet(variables().copy(), functions().copy(),
-                sorts().copy(), sortAliases().copy(),
-                ruleSets().copy(), parametricSortNS.copy(), parametricFuncNS.copy(), choices().copy(),
-                programVariables().copy());
+            sorts().copy(), sortAliases().copy(),
+            ruleSets().copy(), parametricSortNS.copy(), parametricFuncNS.copy(), choices().copy(),
+            programVariables().copy());
     }
 
     public NamespaceSet shallowCopy() {
         return new NamespaceSet(variables(), functions(), sorts(), sortAliases(), ruleSets(),
-                parametricSorts(),
-                parametricFunctions(),
-                choices(),
-                programVariables());
+            parametricSorts(),
+            parametricFunctions(),
+            choices(),
+            programVariables());
     }
 
     // TODO MU: Rename into sth with wrap or similar
     public NamespaceSet copyWithParent() {
         return new NamespaceSet(new Namespace<>(variables()),
-                new Namespace<>(functions()), new Namespace<>(sorts()), new Namespace<>(sortAliases()),
-                new Namespace<>(ruleSets()), new Namespace<>(parametricSorts()),
-                new Namespace<>(parametricFunctions()), new Namespace<>(choices()),
-                new Namespace<>(programVariables()));
+            new Namespace<>(functions()), new Namespace<>(sorts()), new Namespace<>(sortAliases()),
+            new Namespace<>(ruleSets()), new Namespace<>(parametricSorts()),
+            new Namespace<>(parametricFunctions()), new Namespace<>(choices()),
+            new Namespace<>(programVariables()));
     }
 
     public Namespace<@NonNull QuantifiableVariable> variables() {
@@ -167,7 +166,7 @@ public class NamespaceSet {
      */
     private Namespace<?>[] asArray() {
         return new Namespace[] { variables(), programVariables(), sorts(), ruleSets(), functions(),
-                choices() };
+            choices() };
     }
 
     /**
@@ -235,10 +234,10 @@ public class NamespaceSet {
     @Override
     public String toString() {
         return "Sorts: " + sorts() + "\n" + "Alias sorts: " + sortAliases() + "\n"
-                + "Parametric sorts: " + parametricSorts() + "\n" + "Functions: " + functions() + "\n"
-                + "Parametric functions: " + parametricFunctions() + "\n" + "Variables: "
-                + variables() + "\n" + "ProgramVariables: " + programVariables() + "\n" + "Heuristics: "
-                + ruleSets() + "\n" + "Taclet Options: " + choices() + "\n";
+            + "Parametric sorts: " + parametricSorts() + "\n" + "Functions: " + functions() + "\n"
+            + "Parametric functions: " + parametricFunctions() + "\n" + "Variables: "
+            + variables() + "\n" + "ProgramVariables: " + programVariables() + "\n" + "Heuristics: "
+            + ruleSets() + "\n" + "Taclet Options: " + choices() + "\n";
     }
 
 
@@ -274,16 +273,16 @@ public class NamespaceSet {
     // create a namespace
     public NamespaceSet simplify() {
         return new NamespaceSet(varNS.simplify(), funcNS.simplify(), sortNS.simplify(),
-                sortAliases.simplify(),
-                ruleSetNS.simplify(), parametricSortNS.simplify(), parametricFuncNS.simplify(),
-                choiceNS.simplify(), progVarNS.simplify());
+            sortAliases.simplify(),
+            ruleSetNS.simplify(), parametricSortNS.simplify(), parametricFuncNS.simplify(),
+            choiceNS.simplify(), progVarNS.simplify());
     }
 
     public NamespaceSet getCompression() {
         return new NamespaceSet(varNS.compress(), funcNS.compress(), sortNS.compress(),
-                sortAliases.compress(),
-                ruleSetNS.compress(), parametricSortNS.compress(), parametricFuncNS.compress(),
-                choiceNS.compress(), progVarNS.compress());
+            sortAliases.compress(),
+            ruleSetNS.compress(), parametricSortNS.compress(), parametricFuncNS.compress(),
+            choiceNS.compress(), progVarNS.compress());
     }
 
     public void flushToParent() {
@@ -294,9 +293,9 @@ public class NamespaceSet {
 
     public NamespaceSet getParent() {
         return new NamespaceSet(varNS.parent(), funcNS.parent(), sortNS.parent(),
-                sortAliases.parent(),
-                ruleSetNS.parent(), parametricSortNS.parent(), parametricFuncNS.parent(),
-                choiceNS.parent(), progVarNS.parent());
+            sortAliases.parent(),
+            ruleSetNS.parent(), parametricSortNS.parent(), parametricFuncNS.parent(),
+            choiceNS.parent(), progVarNS.parent());
     }
 
 }

@@ -12,10 +12,10 @@ import org.key_project.logic.op.AbstractSortedOperator;
 import org.key_project.logic.op.UpdateableOperator;
 import org.key_project.logic.sort.Sort;
 
+import org.jspecify.annotations.NonNull;
+
 import static org.key_project.logic.op.Modifier.NONE;
 import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
-
-import org.jspecify.annotations.NonNull;
 
 /// Represents an elementary update {@code x:=t } where {@code x} is a program variable and {@code
 /// t} a term of

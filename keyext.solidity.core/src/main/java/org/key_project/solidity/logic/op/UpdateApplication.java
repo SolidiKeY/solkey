@@ -10,9 +10,9 @@ import org.key_project.logic.TermCreationException;
 import org.key_project.logic.op.AbstractOperator;
 import org.key_project.logic.sort.Sort;
 
-import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
-
 import org.jspecify.annotations.NonNull;
+
+import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 
 /// Singleton class defining a binary operator {@code {u}t} that applies updates {@code u} to terms,
 /// formulas, or

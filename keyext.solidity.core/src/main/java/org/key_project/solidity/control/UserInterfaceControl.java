@@ -3,6 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.control;
 
+import java.io.File;
+import java.util.List;
+import java.util.Properties;
+import java.util.function.Consumer;
+
 import org.key_project.solidity.common.Profile;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.init.InitConfig;
@@ -11,11 +16,6 @@ import org.key_project.solidity.proof.init.ProofInputException;
 import org.key_project.solidity.proof.init.ProofOblInput;
 import org.key_project.solidity.proof.io.AbstractProblemLoader;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
-
-import java.io.File;
-import java.util.List;
-import java.util.Properties;
-import java.util.function.Consumer;
 
 /// Provides the user interface independent logic to manage multiple proofs. This includes:
 ///
@@ -51,9 +51,9 @@ public interface UserInterfaceControl {
     /// @return The opened [AbstractProblemLoader].
     /// @throws ProblemLoaderException Occurred Exception.
     AbstractProblemLoader load(Profile profile, File file, List<File> includes,
-                               Properties poPropertiesToForce,
-                               boolean forceNewProfileOfNewProofs,
-                               Consumer<Proof> callbackProofLoaded) throws ProblemLoaderException;
+            Properties poPropertiesToForce,
+            boolean forceNewProfileOfNewProofs,
+            Consumer<Proof> callbackProofLoaded) throws ProblemLoaderException;
 
     /// Instantiates a new [Proof] in this [UserInterfaceControl] for the given
     /// [ProofOblInput] based on the [InitConfig].

@@ -11,8 +11,6 @@ import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.logic.op.AbstractSortedOperator;
 import org.key_project.logic.op.Operator;
-
-import static org.key_project.logic.op.Modifier.NONE;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.UpdateApplication;
@@ -20,6 +18,8 @@ import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.theory.IntLDT;
 
 import org.jspecify.annotations.Nullable;
+
+import static org.key_project.logic.op.Modifier.NONE;
 
 /// Abstract class factoring out commonalities of typical term transformer implementations. The
 /// available singletons of term transformers are kept here.

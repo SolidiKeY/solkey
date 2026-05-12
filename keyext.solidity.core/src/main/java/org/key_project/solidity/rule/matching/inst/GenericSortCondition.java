@@ -10,7 +10,6 @@ import org.key_project.solidity.logic.GenericArgument;
 import org.key_project.solidity.logic.SolidityDLTheory;
 import org.key_project.solidity.logic.sort.ArraySort;
 import org.key_project.solidity.logic.sort.GenericSort;
-
 import org.key_project.solidity.logic.sort.ParametricSortInstance;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
@@ -57,7 +56,7 @@ public abstract class GenericSortCondition {
     /// always compatible (no generic sorts) or never compatible (e.g. non-generic sorts that
     /// don't match)
     protected static ImmutableList<GenericSortCondition> createCondition(Sort s0, Sort s1,
-                                                                         boolean p_identity) {
+            boolean p_identity) {
         while (s0 instanceof ArraySort) {
             // Currently the sort hierarchy is not inherited by
             // collection sorts; therefore identity has to be ensured

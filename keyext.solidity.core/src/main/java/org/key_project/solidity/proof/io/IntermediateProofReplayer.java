@@ -571,9 +571,11 @@ public class IntermediateProofReplayer {
             Namespace<@NonNull QuantifiableVariable> varNS,
             Namespace<@NonNull ProgramVariable> progVarNS, Namespace<@NonNull Function> functNS) {
         var io = new KeYIO(proof.getServices(),
-            new NamespaceSet(varNS,  functNS, proof.getNamespaces().sorts(), proof.getNamespaces().sortAliases(),
-                    new Namespace<>(), proof.getNamespaces().parametricSorts(), proof.getNamespaces().parametricFunctions(),
-                    new Namespace<>(), progVarNS));
+            new NamespaceSet(varNS, functNS, proof.getNamespaces().sorts(),
+                proof.getNamespaces().sortAliases(),
+                new Namespace<>(), proof.getNamespaces().parametricSorts(),
+                proof.getNamespaces().parametricFunctions(),
+                new Namespace<>(), progVarNS));
         return io.parseExpression(value);
     }
 

@@ -12,6 +12,7 @@ public interface VariableReference extends SolidityProgramElement {
 
     @Override
     default int computeHashCode() {
-        return 37 * SolidityProgramElement.super.computeHashCode() + mainProgramElement().hashCode();
+        return 37 * SolidityProgramElement.super.computeHashCode()
+                + mainProgramElement().hashCode();
     }
 }

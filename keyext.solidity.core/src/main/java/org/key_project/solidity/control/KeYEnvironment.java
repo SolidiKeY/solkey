@@ -3,7 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.control;
 
-import org.jspecify.annotations.Nullable;
+import java.io.File;
+import java.util.List;
+import java.util.Properties;
+import java.util.function.Consumer;
+
 import org.key_project.solidity.common.Profile;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.proof.Proof;
@@ -12,10 +16,7 @@ import org.key_project.solidity.proof.io.AbstractProblemLoader;
 import org.key_project.solidity.proof.io.AbstractProblemLoader.ReplayResult;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
 
-import java.io.File;
-import java.util.List;
-import java.util.Properties;
-import java.util.function.Consumer;
+import org.jspecify.annotations.Nullable;
 
 /// Instances of this class are used to collect and access all relevant information for verification
 /// with KeY.
@@ -40,7 +41,7 @@ public class KeYEnvironment<U extends UserInterfaceControl> {
     ///
     /// @param initConfig The loaded project.
     public KeYEnvironment(U ui, InitConfig initConfig, Proof loadedProof,
-                          ReplayResult replayResult) {
+            ReplayResult replayResult) {
         this.ui = ui;
         this.initConfig = initConfig;
         this.loadedProof = loadedProof;

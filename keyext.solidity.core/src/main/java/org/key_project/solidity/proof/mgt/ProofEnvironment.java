@@ -3,13 +3,13 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.mgt;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.proof.init.InitConfig;
 import org.key_project.solidity.proof.init.ProofAggregate;
 import org.key_project.solidity.proof.init.ProofOblInput;
-
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 public class ProofEnvironment {
     private final InitConfig initConfig;

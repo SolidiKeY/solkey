@@ -7,7 +7,6 @@ import org.key_project.logic.Namespace;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.NamespaceSet;
 import org.key_project.solidity.logic.SolidityBlock;
-import org.key_project.solidity.logic.op.IProgramVariable;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.parser.SolidityLexer;
 import org.key_project.solidity.parser.SolidityParser;

@@ -8,13 +8,13 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.TermCreationException;
 import org.key_project.logic.op.AbstractOperator;
 import org.key_project.logic.sort.Sort;
+import org.key_project.util.collection.ImmutableSet;
+
+import org.jspecify.annotations.NonNull;
 
 import static org.key_project.solidity.logic.SolidityDLTheory.ANY;
 import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
 import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
-import org.key_project.util.collection.ImmutableSet;
-
-import org.jspecify.annotations.NonNull;
 
 
 /// This singleton class implements a general conditional operator

@@ -10,10 +10,10 @@ import org.key_project.logic.TermCreationException;
 import org.key_project.logic.op.AbstractSortedOperator;
 import org.key_project.logic.sort.Sort;
 
+import org.jspecify.annotations.NonNull;
+
 import static org.key_project.logic.op.Modifier.RIGID;
 import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
-
-import org.jspecify.annotations.NonNull;
 
 /// The two objects of this class represent the universal and the existential quantifier,
 /// respectively.

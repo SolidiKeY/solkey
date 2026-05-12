@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.logic;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.TerminalSyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
@@ -12,6 +11,8 @@ import org.key_project.solidity.logic.sort.ParametricSortInstance;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
+
+import org.jspecify.annotations.NonNull;
 
 /// An argument for a [ParametricSortInstance] or [ParametricFunctionInstance].
 public record GenericArgument(Sort sort) implements TerminalSyntaxElement {
@@ -23,7 +24,7 @@ public record GenericArgument(Sort sort) implements TerminalSyntaxElement {
     public GenericArgument instantiate(SVInstantiations svInst, Services services) {
         if (sort instanceof GenericSort gs) {
             return new GenericArgument(
-                    svInst.getGenericSortInstantiations().getRealSort(gs, services));
+                svInst.getGenericSortInstantiations().getRealSort(gs, services));
         } else if (sort instanceof ParametricSortInstance psi) {
             ImmutableList<GenericArgument> args = ImmutableSLList.nil();
 

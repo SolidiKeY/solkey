@@ -3,16 +3,16 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.declarations;
 
+import java.util.Objects;
+
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.visitor.Visitor;
-
-import org.jspecify.annotations.NonNull;
 import org.key_project.util.ExtList;
 
-import java.util.Objects;
+import org.jspecify.annotations.NonNull;
 
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Default;
 
@@ -25,7 +25,8 @@ public class StatementVariableDeclaration implements Declaration, SolidityProgra
     }
 
     public StatementVariableDeclaration(ExtList extList) {
-        this.programVariable = Objects.requireNonNull(extList.removeFirstOccurrence(ProgramVariable.class));
+        this.programVariable =
+            Objects.requireNonNull(extList.removeFirstOccurrence(ProgramVariable.class));
     }
 
     @Override

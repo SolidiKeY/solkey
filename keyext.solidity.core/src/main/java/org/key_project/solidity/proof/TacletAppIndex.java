@@ -3,12 +3,14 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof;
 
+import java.util.Iterator;
+import java.util.Map;
+
 import org.key_project.prover.sequent.PosInOccurrence;
 import org.key_project.prover.sequent.Sequent;
 import org.key_project.prover.sequent.SequentChangeInfo;
 import org.key_project.prover.strategy.NewRuleListener;
 import org.key_project.solidity.common.Services;
-import org.key_project.solidity.proof.indices.PrefixTermTacletAppIndexCacheImpl;
 import org.key_project.solidity.proof.indices.PrefixTermTacletAppIndexCacheImpl.CacheKey;
 import org.key_project.solidity.proof.indices.TermTacletAppIndexCacheSet;
 import org.key_project.solidity.rule.NoPosTacletApp;
@@ -22,9 +24,6 @@ import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
 
 import org.jspecify.annotations.NonNull;
-
-import java.util.Iterator;
-import java.util.Map;
 
 
 public class TacletAppIndex {
@@ -49,14 +48,14 @@ public class TacletAppIndex {
 
     public TacletAppIndex(TacletIndex tacletIndex, Goal goal, Services services) {
         this(tacletIndex, null, null, goal, null,
-                new TermTacletAppIndexCacheSet(services.getCaches().getTermTacletAppIndexCache()),
-                services.getCaches().getTermTacletAppIndexCache());
+            new TermTacletAppIndexCacheSet(services.getCaches().getTermTacletAppIndexCache()),
+            services.getCaches().getTermTacletAppIndexCache());
     }
 
     private TacletAppIndex(TacletIndex tacletIndex, SemisequentTacletAppIndex antecIndex,
-                           SemisequentTacletAppIndex succIndex, @NonNull Goal goal,
-                           Sequent seq, TermTacletAppIndexCacheSet indexCaches,
-                           Map<CacheKey, TermTacletAppIndex> cache) {
+            SemisequentTacletAppIndex succIndex, @NonNull Goal goal,
+            Sequent seq, TermTacletAppIndexCacheSet indexCaches,
+            Map<CacheKey, TermTacletAppIndex> cache) {
         this.tacletIndex = tacletIndex;
         this.antecIndex = antecIndex;
         this.succIndex = succIndex;
@@ -67,7 +66,7 @@ public class TacletAppIndex {
     }
 
     static TacletApp createTacletApp(NoPosTacletApp tacletApp, PosInOccurrence pos,
-                                     Services services) {
+            Services services) {
         if (tacletApp.taclet() instanceof SolFindTaclet) {
             return tacletApp.setPosInOccurrence(pos, services);
         } else {
@@ -84,7 +83,7 @@ public class TacletAppIndex {
     }
 
     private ImmutableList<TacletApp> getFindTacletWithPos(PosInOccurrence pos,
-                                                          Services services) {
+            Services services) {
         ImmutableList<NoPosTacletApp> tacletInsts = getFindTaclet(pos);
         return createTacletApps(tacletInsts, pos, services);
     }
@@ -115,7 +114,7 @@ public class TacletAppIndex {
             final NoPosTacletApp tacletApp = it.next();
             final var t = tacletApp.taclet();
             if (t instanceof SolRewriteTaclet && ((SolRewriteTaclet) t).checkPrefix(pos,
-                    MatchConditions.EMPTY_MATCHCONDITIONS) != null) {
+                MatchConditions.EMPTY_MATCHCONDITIONS) != null) {
                 result = result.prepend(tacletApp);
             }
         }
@@ -142,11 +141,11 @@ public class TacletAppIndex {
         this.seq = getNode().sequent();
 
         antecIndex =
-                new SemisequentTacletAppIndex(getSequent(), true, getServices(), tacletIndex(),
-                        newRuleListener, indexCaches);
+            new SemisequentTacletAppIndex(getSequent(), true, getServices(), tacletIndex(),
+                newRuleListener, indexCaches);
         succIndex =
-                new SemisequentTacletAppIndex(getSequent(), false, getServices(), tacletIndex(),
-                        newRuleListener, indexCaches);
+            new SemisequentTacletAppIndex(getSequent(), false, getServices(), tacletIndex(),
+                newRuleListener, indexCaches);
     }
 
     private Services getServices() {
@@ -187,7 +186,7 @@ public class TacletAppIndex {
     }
 
     private static ImmutableList<TacletApp> prepend(ImmutableList<TacletApp> l1,
-                                                    ImmutableList<NoPosTacletApp> l2) {
+            ImmutableList<NoPosTacletApp> l2) {
         for (NoPosTacletApp aL2 : l2) {
             l1 = l1.prepend(aL2);
         }
@@ -200,7 +199,7 @@ public class TacletAppIndex {
     /// @param pos the PosInOccurrence to focus
     /// @return list of all created TacletApps
     static ImmutableList<TacletApp> createTacletApps(ImmutableList<NoPosTacletApp> tacletInsts,
-                                                     PosInOccurrence pos, Services services) {
+            PosInOccurrence pos, Services services) {
         ImmutableList<TacletApp> result = ImmutableSLList.nil();
         for (NoPosTacletApp tacletApp : tacletInsts) {
             if (tacletApp.taclet() instanceof SolFindTaclet) {
@@ -218,7 +217,7 @@ public class TacletAppIndex {
     /// returns a new TacletAppIndex with a given TacletIndex
     TacletAppIndex copyWith(TacletIndex p_tacletIndex, Goal goal) {
         return new TacletAppIndex(p_tacletIndex, antecIndex, succIndex, goal, getSequent(),
-                indexCaches, cache);
+            indexCaches, cache);
     }
 
     /**
@@ -240,10 +239,10 @@ public class TacletAppIndex {
         seq = sci.sequent();
 
         antecIndex =
-                antecIndex.sequentChanged(sci, getServices(), tacletIndex, newRuleListener);
+            antecIndex.sequentChanged(sci, getServices(), tacletIndex, newRuleListener);
 
         succIndex =
-                succIndex.sequentChanged(sci, getServices(), tacletIndex, newRuleListener);
+            succIndex.sequentChanged(sci, getServices(), tacletIndex, newRuleListener);
     }
 
     /// updates the internal caches after a new Taclet with instantiation information has been added
@@ -273,9 +272,9 @@ public class TacletAppIndex {
 
     private void updateIndices(final NoPosTacletApp newTaclet) {
         antecIndex =
-                antecIndex.addSingleTaclet(newTaclet, getServices(), tacletIndex, newRuleListener);
+            antecIndex.addSingleTaclet(newTaclet, getServices(), tacletIndex, newRuleListener);
         succIndex =
-                succIndex.addSingleTaclet(newTaclet, getServices(), tacletIndex, newRuleListener);
+            succIndex.addSingleTaclet(newTaclet, getServices(), tacletIndex, newRuleListener);
     }
 
     public void clearIndexes() {
@@ -302,9 +301,9 @@ public class TacletAppIndex {
     /// like (static)types etc.
     /// @return the possible rule applications
     public ImmutableList<TacletApp> getTacletAppAtAndBelow(PosInOccurrence pos,
-                                                           Services services) {
+            Services services) {
         final ImmutableList<TacletApp> findTaclets =
-                getIndex(pos).getTacletAppAtAndBelow(pos, services);
+            getIndex(pos).getTacletAppAtAndBelow(pos, services);
         return prepend(findTaclets, getNoFindTaclet(services));
     }
 

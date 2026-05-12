@@ -4,13 +4,14 @@
 package org.key_project.solidity.control;
 
 
-import org.jspecify.annotations.Nullable;
 import org.key_project.prover.engine.ProverTaskListener;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.ProofEvent;
 import org.key_project.solidity.util.ProofStarter;
 import org.key_project.util.collection.ImmutableList;
+
+import org.jspecify.annotations.Nullable;
 
 /// The default implementation of [ProofControl].
 ///
@@ -35,7 +36,7 @@ public class DefaultProofControl extends AbstractProofControl {
 
     @Override
     public synchronized void startAutoMode(Proof proof, ImmutableList<Goal> goals,
-                                           ProverTaskListener ptl) {
+            ProverTaskListener ptl) {
         if (!isInAutoMode()) {
             autoModeThread = new AutoModeThread(proof, goals, ptl);
             autoModeThread.start();

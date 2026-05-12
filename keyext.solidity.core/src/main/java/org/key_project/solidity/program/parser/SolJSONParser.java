@@ -614,7 +614,7 @@ public class SolJSONParser {
 
     private Type getTypeFromDescription(JsonNode initializer) {
         String typeIdentifier =
-                initializer.get("typeDescriptions").get("typeIdentifier").stringValue();
+            initializer.get("typeDescriptions").get("typeIdentifier").stringValue();
         return SolidityInfo
                 .getPrimitiveType(typeIdentifier.split("\\$")[0].substring(2).split("_")[0]);
     }

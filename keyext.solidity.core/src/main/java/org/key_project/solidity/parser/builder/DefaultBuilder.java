@@ -12,7 +12,6 @@ import org.key_project.logic.Choice;
 import org.key_project.logic.Name;
 import org.key_project.logic.Named;
 import org.key_project.logic.Namespace;
-import org.key_project.logic.Term;
 import org.key_project.logic.op.Function;
 import org.key_project.logic.op.Operator;
 import org.key_project.logic.op.ParsableVariable;
@@ -23,10 +22,6 @@ import org.key_project.prover.rules.RuleSet;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.GenericArgument;
 import org.key_project.solidity.logic.NamespaceSet;
-
-import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
-
-import org.key_project.solidity.logic.op.IProgramVariable;
 import org.key_project.solidity.logic.op.ParametricFunctionInstance;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.*;
@@ -42,6 +37,8 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
+
 public class DefaultBuilder extends AbstractBuilder<@Nullable Object> {
     protected static final Logger LOGGER = LoggerFactory.getLogger(DefaultBuilder.class);
 
@@ -54,11 +51,12 @@ public class DefaultBuilder extends AbstractBuilder<@Nullable Object> {
         this.nss = nss;
     }
 
-    private ImmutableList<GenericArgument> getGenericArgs(KeYSolidityDLParser.Formal_sort_argsContext ctx,
-                                                          ImmutableList<GenericParameter> params) {
+    private ImmutableList<GenericArgument> getGenericArgs(
+            KeYSolidityDLParser.Formal_sort_argsContext ctx,
+            ImmutableList<GenericParameter> params) {
         if (ctx.sortId().size() != params.size()) {
             semanticError(ctx, "Expected %d sort arguments, got only %d",
-                    params.size(), ctx.sortId().size());
+                params.size(), ctx.sortId().size());
         }
         ImmutableList<GenericArgument> args = ImmutableSLList.nil();
         for (int i = params.size() - 1; i >= 0; i--) {
@@ -187,11 +185,11 @@ public class DefaultBuilder extends AbstractBuilder<@Nullable Object> {
             KeYSolidityDLParser.Formal_sort_argsContext genericArgsCtxt) {
         Name name = new Name(varfuncName);
         Operator[] operators =
-                { schemaVariables().lookup(name), variables().lookup(name),
-                        programVariables().lookup(new Name(varfuncName)),
-                        functions().lookup(name),
-                        AbstractTermTransformer.name2metaop(varfuncName),
-                };
+            { schemaVariables().lookup(name), variables().lookup(name),
+                programVariables().lookup(new Name(varfuncName)),
+                functions().lookup(name),
+                AbstractTermTransformer.name2metaop(varfuncName),
+            };
 
         for (Operator op : operators) {
             if (op != null) {
@@ -281,7 +279,7 @@ public class DefaultBuilder extends AbstractBuilder<@Nullable Object> {
                 semanticError(ctx, "Could not find polymorphic sort: %s", name);
             }
             ImmutableList<GenericArgument> params =
-                    getGenericArgs(ctx.formal_sort_args(), sortDecl.getParameters());
+                getGenericArgs(ctx.formal_sort_args(), sortDecl.getParameters());
             return ParametricSortInstance.get(sortDecl, params, services);
         } else {
             Sort s = lookupSort(name);

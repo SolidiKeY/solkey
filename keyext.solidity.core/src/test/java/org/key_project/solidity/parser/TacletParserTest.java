@@ -19,7 +19,6 @@ import org.key_project.util.collection.ImmutableSLList;
 
 import org.junit.jupiter.api.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TacletParserTest {
@@ -118,13 +117,13 @@ public class TacletParserTest {
         var c = builder.getChoices();
 
         Taclet impleft = builder.getAntecTaclet(io.getServices());
-        String impleftString = """                
-                imp_left {
-                   \\find(b->b0 ==>)
-                   \\replacewith(b0 ==>);
-                   \\replacewith(==> b)
-                }
-            """;
+        String impleftString = """
+                    imp_left {
+                       \\find(b->b0 ==>)
+                       \\replacewith(b0 ==>);
+                       \\replacewith(==> b)
+                    }
+                """;
         assertTrue(equals(impleft, parseTaclet(impleftString)));
     }
 
@@ -157,9 +156,9 @@ public class TacletParserTest {
             return false;
         }
         if (a.goalTemplates().size() != b.goalTemplates().size()) {
-                return false;
+            return false;
         }
-        for (int i = 0; i<a.goalTemplates().size(); i++) {
+        for (int i = 0; i < a.goalTemplates().size(); i++) {
             var agt = a.goalTemplates().get(i);
             var bgt = b.goalTemplates().get(i);
             if (!Objects.equals(agt.name(), bgt.name())) {
@@ -168,8 +167,10 @@ public class TacletParserTest {
 
             SyntaxElement agtElement = agt.replaceWith();
             SyntaxElement bgtElement = bgt.replaceWith();
-            if (!compareGTElement(agtElement, bgtElement)) return false;
-            if (!compareGTElement(agt.sequent(), bgt.sequent())) return false;
+            if (!compareGTElement(agtElement, bgtElement))
+                return false;
+            if (!compareGTElement(agt.sequent(), bgt.sequent()))
+                return false;
             if (!agt.addedProgVars().equals(bgt.addedProgVars())) {
                 return false;
             }

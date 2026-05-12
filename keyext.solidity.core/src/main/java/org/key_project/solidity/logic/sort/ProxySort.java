@@ -11,7 +11,7 @@ import org.key_project.util.collection.ImmutableSet;
 public class ProxySort extends SortImpl {
 
     public ProxySort(Name name, ImmutableSet<Sort> ext) {
-        super(name, false,  ext);
+        super(name, false, ext);
     }
 
     public ProxySort(Name name) {

@@ -69,7 +69,7 @@ public interface ProofControl {
     ///
     /// @return a list of Taclets with all applicable RewriteTaclets
     ImmutableList<TacletApp> getRewriteTaclet(Goal focusedGoal,
-                                              PosInOccurrence pos);
+            PosInOccurrence pos);
 
     /// collects all applicable FindTaclets of the current goal (called by the SequentViewer)
     ///

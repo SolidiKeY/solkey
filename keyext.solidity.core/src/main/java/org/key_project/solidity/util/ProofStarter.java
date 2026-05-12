@@ -3,8 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.util;
 
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.prover.engine.ProofSearchInformation;
@@ -28,6 +26,9 @@ import org.key_project.solidity.strategy.StrategyFactory;
 import org.key_project.solidity.strategy.StrategyProperties;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
+
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /// This class encapsulates the registration of a proof for a given problem. It then starts a proof
 /// attempt.

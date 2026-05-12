@@ -6,12 +6,12 @@ package org.key_project.solidity.logic.op;
 import org.key_project.logic.Name;
 import org.key_project.logic.op.Function;
 import org.key_project.logic.sort.Sort;
-
-import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
-import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.Nullable;
+
+import static org.key_project.solidity.logic.SolidityDLTheory.FORMULA;
+import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 
 /// This class represents a function or predicate symbol in the logic
 public class SFunction extends Function {
