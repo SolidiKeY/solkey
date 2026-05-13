@@ -45,7 +45,7 @@ public class SolidityProfile implements Profile {
     }
 
     public SolidityProfile() {
-        this("standardRustRules.key");
+        this("standardSolidityRules.key");
     }
 
     public static SolidityProfile getDefaultInstance() {
