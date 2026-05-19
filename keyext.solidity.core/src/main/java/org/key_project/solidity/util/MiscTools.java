@@ -52,8 +52,6 @@ public final class MiscTools {
 
         public ReadPVCollector(SolidityProgramElement root, Services services) {
             super(root, services);
-            throw new RuntimeException(
-                "Check if all left hand sides are collected correctly and then remove this throw statement");
         }
 
         @Override

@@ -266,9 +266,9 @@ public class SVInstantiations
     ///
     /// @return the Object the SchemaVariable will be instantiated with, null if no instantiation is
     /// stored
-    public Object getInstantiation(SchemaVariable sv) {
+    public <T> T getInstantiation(SchemaVariable sv) {
         final InstantiationEntry<?> entry = getInstantiationEntry(sv);
-        return entry == null ? null : entry.getInstantiation();
+        return entry == null ? null : (T) entry.getInstantiation();
     }
 
     /// returns the instantiation entry for the context "schema variable" or null if non such exists

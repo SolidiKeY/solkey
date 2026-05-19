@@ -14,6 +14,7 @@ import org.key_project.prover.sequent.PosInOccurrence;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.rule.matching.inst.MatchConditions;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
+import org.key_project.solidity.rule.sv.VariableSV;
 import org.key_project.solidity.rule.taclets.SolFindTaclet;
 import org.key_project.solidity.rule.taclets.SolRewriteTaclet;
 import org.key_project.solidity.rule.taclets.TacletSchemaVariableCollector;
@@ -111,7 +112,7 @@ public class PosTacletApp extends TacletApp {
     private static Iterator<SchemaVariable> allVariableSV(Taclet taclet) {
         TacletSchemaVariableCollector coll = new TacletSchemaVariableCollector();
         coll.visit(taclet, true); // __CHANGE__ true or false???
-        return coll.getCollectedSchemaVariables().iterator();
+        return coll.getCollectedSchemaVariables().stream().filter(sv -> sv instanceof VariableSV).iterator();
     }
 
 
@@ -141,7 +142,7 @@ public class PosTacletApp extends TacletApp {
             Iterator<SchemaVariable> it = allVariableSV(taclet);
             while (it.hasNext()) {
                 SchemaVariable varSV = it.next();
-                Term inst = (Term) insts.getInstantiation(varSV);
+                Term inst = insts.getInstantiation(varSV);
                 if (inst != null && k.contains(inst.op())) {
                     insts = replaceInstantiation(taclet, insts, varSV, services);
                 }

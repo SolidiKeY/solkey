@@ -10,7 +10,6 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.NamespaceSet;
 import org.key_project.solidity.logic.SolidityBlock;
 import org.key_project.solidity.program.ast.Context;
-import org.key_project.solidity.program.ast.SolidityReader;
 import org.key_project.solidity.rule.sv.ProgramSV;
 
 import org.jspecify.annotations.NonNull;

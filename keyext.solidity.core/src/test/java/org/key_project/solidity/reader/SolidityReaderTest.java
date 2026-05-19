@@ -11,6 +11,7 @@ import org.key_project.logic.*;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.SortImpl;
+import org.key_project.solidity.program.SolidityReader;
 import org.key_project.solidity.program.ast.*;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.expressions.operators.BinaryOperator;
