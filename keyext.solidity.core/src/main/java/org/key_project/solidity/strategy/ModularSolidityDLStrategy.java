@@ -37,7 +37,7 @@ import org.key_project.solidity.strategy.termProjection.FocusProjection;
 import org.jspecify.annotations.NonNull;
 
 public class ModularSolidityDLStrategy extends AbstractFeatureStrategy {
-    public static final Name NAME = new Name("Modular RustyDL Strategy");
+    public static final Name NAME = new Name("Modular SolidityDL Strategy");
 
     private final List<ComponentStrategy> strategies = new ArrayList<>();
     private final StrategyProperties strategyProperties;
