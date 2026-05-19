@@ -137,6 +137,7 @@ public class CLI {
             }
         } catch (ProblemLoaderException e) {
             System.err.println("Error while loading: " + e.getMessage());
+            e.printStackTrace();
             if (cli.verbose) {
                 System.err.println(e);
                 System.err.println(Arrays.toString(e.getStackTrace()));

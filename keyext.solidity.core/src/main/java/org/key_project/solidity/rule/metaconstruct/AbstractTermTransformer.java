@@ -15,6 +15,7 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.UpdateApplication;
 import org.key_project.solidity.logic.sort.SortImpl;
+import org.key_project.solidity.rule.metaconstruct.arith.*;
 import org.key_project.solidity.theory.IntLDT;
 
 import org.jspecify.annotations.Nullable;
@@ -35,22 +36,22 @@ public abstract class AbstractTermTransformer extends AbstractSortedOperator
 
     // public static final AbstractTermTransformer META_SHIFTRIGHT = new MetaShiftRight();
     // public static final AbstractTermTransformer META_SHIFTLEFT = new MetaShiftLeft();
-    // public static final AbstractTermTransformer META_AND = new MetaBinaryAnd();
-    // public static final AbstractTermTransformer META_OR = new MetaBinaryOr();
-    // public static final AbstractTermTransformer META_XOR = new MetaBinaryXor();
-    // public static final AbstractTermTransformer META_ADD = new MetaAdd();
-    // public static final AbstractTermTransformer META_SUB = new MetaSub();
-    // public static final AbstractTermTransformer META_MUL = new MetaMul();
-    // public static final AbstractTermTransformer META_DIV = new MetaDiv();
-    // public static final AbstractTermTransformer META_POW = new MetaPow();
-    // public static final AbstractTermTransformer META_LESS = new MetaLess();
-    // public static final AbstractTermTransformer META_GREATER = new MetaGreater();
-    // public static final AbstractTermTransformer META_LEQ = new MetaLeq();
-    // public static final AbstractTermTransformer META_GEQ = new MetaGeq();
-    // public static final AbstractTermTransformer META_EQ = new MetaEqual();
+     public static final AbstractTermTransformer META_AND = new MetaBinaryAnd();
+     public static final AbstractTermTransformer META_OR = new MetaBinaryOr();
+     public static final AbstractTermTransformer META_XOR = new MetaBinaryXor();
+     public static final AbstractTermTransformer META_ADD = new MetaAdd();
+     public static final AbstractTermTransformer META_SUB = new MetaSub();
+     public static final AbstractTermTransformer META_MUL = new MetaMul();
+     public static final AbstractTermTransformer META_DIV = new MetaDiv();
+     public static final AbstractTermTransformer META_POW = new MetaPow();
+     public static final AbstractTermTransformer META_LESS = new MetaLess();
+     public static final AbstractTermTransformer META_GREATER = new MetaGreater();
+     public static final AbstractTermTransformer META_LEQ = new MetaLeq();
+     public static final AbstractTermTransformer META_GEQ = new MetaGeq();
+     public static final AbstractTermTransformer META_EQ = new MetaEqual();
     //
-    // public static final AbstractTermTransformer DIVIDE_MONOMIALS = new DivideMonomials();
-    // public static final AbstractTermTransformer DIVIDE_LCR_MONOMIALS = new DivideLCRMonomials();
+     public static final AbstractTermTransformer DIVIDE_MONOMIALS = new DivideMonomials();
+     public static final AbstractTermTransformer DIVIDE_LCR_MONOMIALS = new DivideLCRMonomials();
 
     public static final AbstractTermTransformer LOGIC_SHIFT = new ShiftTransformer();
 

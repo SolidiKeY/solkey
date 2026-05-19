@@ -62,20 +62,21 @@ public class SymExStrategy extends AbstractFeatureStrategy implements ComponentS
     }
 
     private Feature setupGlobalF(Feature dispatcher) {
-        final Feature functionSpecF;
+        final Feature functionSpecF = longConst(0);
         final String methProp =
             strategyProperties.getProperty(StrategyProperties.FUNCTION_OPTIONS_KEY);
-        switch (methProp) {
-            case StrategyProperties.FUNCTION_CONTRACT ->
-                functionSpecF = functionSpecFeature(longConst(-20));
-            case StrategyProperties.FUNCTION_EXPAND, StrategyProperties.FUNCTION_NONE ->
-                functionSpecF =
-                    functionSpecFeature(inftyConst());
-            default -> {
-                functionSpecF = null;
-                assert false;
-            }
-        }
+        //TODO: comment in as soon as function contracts or expansions are supported
+//        switch (methProp) {
+//            case StrategyProperties.FUNCTION_CONTRACT ->
+//                functionSpecF = functionSpecFeature(longConst(-20));
+//            case StrategyProperties.FUNCTION_EXPAND, StrategyProperties.FUNCTION_NONE ->
+//                functionSpecF =
+//                    functionSpecFeature(inftyConst());
+//            default -> {
+//                functionSpecF = null;
+//                assert false;
+//            }
+//        }
 
         return SumFeature.createSum(functionSpecF, dispatcher);
     }
@@ -91,13 +92,13 @@ public class SymExStrategy extends AbstractFeatureStrategy implements ComponentS
 
         bindRuleSet(d, "simplify_expression", -100);
 
-        bindRuleSet(d, "simplify_rust", -4500);
+        bindRuleSet(d, "simplify_solidity", -4500);
 
         bindRuleSet(d, "executeIntegerAssignment", -100);
 
         final Feature findDepthFeature =
             FindDepthFeature.getInstance();
-        bindRuleSet(d, "concrete_rust",
+        bindRuleSet(d, "concrete_solidity",
             add(longConst(-11000),
                 ScaleFeature.createScaled(findDepthFeature, 10.0)));
 

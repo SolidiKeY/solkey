@@ -8,10 +8,12 @@ import de.uka.ilkd.key.rule.BuiltInRule;
 import de.uka.ilkd.key.rule.IBuiltInRuleApp;
 
 import org.key_project.prover.indexing.FormulaTag;
+import org.key_project.prover.proof.ProofGoal;
 import org.key_project.prover.rules.RuleApp;
 import org.key_project.prover.sequent.PosInOccurrence;
 import org.key_project.prover.strategy.costbased.RuleAppCost;
 import org.key_project.prover.strategy.costbased.TopRuleAppCost;
+import org.key_project.prover.strategy.costbased.appcontainer.RuleAppContainer;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
 
@@ -38,9 +40,9 @@ public class BuiltInRuleAppContainer extends RuleAppContainer {
     // constructors
     // -------------------------------------------------------------------------
 
-    private BuiltInRuleAppContainer(IBuiltInRuleApp bir,
-            PosInOccurrence pio, RuleAppCost cost,
-            Goal goal) {
+    public BuiltInRuleAppContainer(IBuiltInRuleApp bir,
+                                   PosInOccurrence pio, RuleAppCost cost,
+                                   Goal goal) {
         super(bir, cost);
         applicationPosition = pio;
         positionTag = pio == null ? null : goal.getFormulaTagManager().getTagForPos(pio.topLevel());
@@ -126,7 +128,8 @@ public class BuiltInRuleAppContainer extends RuleAppContainer {
 
 
     @Override
-    public ImmutableList<RuleAppContainer> createFurtherApps(Goal goal) {
+    public ImmutableList<RuleAppContainer> createFurtherApps(ProofGoal<?> p_goal) {
+        var goal = (Goal) p_goal;
         if (!isStillApplicable(goal)) {
             return ImmutableSLList.nil();
         }
@@ -142,7 +145,8 @@ public class BuiltInRuleAppContainer extends RuleAppContainer {
 
 
     @Override
-    public RuleApp completeRuleApp(Goal goal) {
+    public RuleApp completeRuleApp(ProofGoal<?> p_goal) {
+        var goal = (Goal) p_goal;
         if (!isStillApplicable(goal)) {
             return null;
         }
@@ -164,4 +168,5 @@ public class BuiltInRuleAppContainer extends RuleAppContainer {
 
         return app.complete() ? app : null;
     }
+
 }

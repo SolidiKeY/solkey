@@ -4,30 +4,47 @@
 package org.key_project.solidity.rule.matching.inst;
 
 import org.key_project.prover.rules.instantiation.MatchResultInfo;
-import org.key_project.prover.rules.instantiation.SVInstantiations;
+import org.key_project.solidity.logic.LogicVariableTable;
+import org.key_project.solidity.logic.op.BoundVariable;
 
 public class MatchConditions extends MatchResultInfo {
-
     public static final MatchConditions EMPTY_MATCHCONDITIONS =
-        new MatchConditions(
-            org.key_project.solidity.rule.matching.inst.SVInstantiations.EMPTY_SVINSTANTIATIONS);
+            new MatchConditions(SVInstantiations.EMPTY_SVINSTANTIATIONS, LogicVariableTable.EMPTY);
 
-    public MatchConditions(SVInstantiations pInstantiations) {
-        super(pInstantiations);
+    private final LogicVariableTable lvTable;
+
+    public MatchConditions() {
+        super(SVInstantiations.EMPTY_SVINSTANTIATIONS);
+        lvTable = LogicVariableTable.EMPTY;
     }
 
-    @Override
-    public org.key_project.solidity.rule.matching.inst.SVInstantiations getInstantiations() {
-        return (org.key_project.solidity.rule.matching.inst.SVInstantiations) super.getInstantiations();
+    public MatchConditions(SVInstantiations p_instantiations, LogicVariableTable p_lvTable) {
+        super(p_instantiations);
+        lvTable = p_lvTable;
     }
 
-    @Override
+    public SVInstantiations getInstantiations() {
+        return (SVInstantiations) instantiations;
+    }
+
     public MatchConditions setInstantiations(
             org.key_project.prover.rules.instantiation.SVInstantiations p_instantiations) {
         if (instantiations == p_instantiations) {
             return this;
         } else {
-            return new MatchConditions(p_instantiations);
+            return new MatchConditions((SVInstantiations) p_instantiations, lvTable);
         }
+    }
+
+    public MatchConditions extendLogicVarTable(BoundVariable bv) {
+        return new MatchConditions((SVInstantiations) instantiations, lvTable.extend(bv));
+    }
+
+    public MatchConditions shrinkLogicVarTable() {
+        return new MatchConditions((SVInstantiations) instantiations, lvTable.parent());
+    }
+
+    public LogicVariableTable logicVariableTable() {
+        return lvTable;
     }
 }

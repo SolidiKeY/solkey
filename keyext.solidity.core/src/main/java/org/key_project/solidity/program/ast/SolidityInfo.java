@@ -4,6 +4,7 @@
 package org.key_project.solidity.program.ast;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -18,6 +19,7 @@ import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.MappingType;
 import org.key_project.solidity.program.ast.abstractions.TupleType;
 import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.*;
@@ -90,9 +92,10 @@ public class SolidityInfo {
             typeMap.put(sortName, type);
     }
 
+    /**@ return all function symbols representing a solidity function (with return value) */
     public Set<Function> getAllSolidityFunctions() {
-        // not Set<Function> but Set<ProgramFunction> should be returned
-        return null;
+        // TODO: Implement this method
+        return new HashSet<>();
     }
 
     public static Type getPrimitiveType(String typeS) {

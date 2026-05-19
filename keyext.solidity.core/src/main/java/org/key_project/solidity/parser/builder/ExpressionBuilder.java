@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser.builder;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -508,9 +509,8 @@ public class ExpressionBuilder extends DefaultBuilder {
     public Object visitFuncpred_name(KeYSolidityDLParser.Funcpred_nameContext ctx) {
         List<String> parts = mapOf(ctx.name.simple_ident());
         String varfuncid = ctx.name.getText();
-
         if (ctx.INT_LITERAL() != null) {// number
-            return toZNotation(ctx.INT_LITERAL().getText(), functions());
+            return toZNotation(ctx.INT_LITERAL().getText());
         }
 
         assert parts != null && varfuncid != null;
@@ -537,8 +537,42 @@ public class ExpressionBuilder extends DefaultBuilder {
         return op;
     }
 
-    private Term toZNotation(String text, Namespace<@NonNull Function> functions) {
-        throw new RuntimeException("Not implemented yet: " + text);
+    @Override
+    public Object visitInteger(KeYSolidityDLParser.IntegerContext ctx) {
+        return toZNotation(ctx.getText());
+    }
+
+    private Term toZNotation(String number) {
+        var z = services.getTheoryInfo().getIntLDT().getNumberSymbol();
+        return getTermFactory().createTerm(z, toNum(number));
+    }
+
+    private Term toNum(String number) {
+        String s = number;
+        final boolean negative = (s.charAt(0) == '-');
+        if (negative) {
+            s = number.substring(1, s.length());
+        }
+        if (s.startsWith("0x")) {
+            try {
+                BigInteger bi = new BigInteger(s.substring(2), 16);
+                s = bi.toString();
+            } catch (NumberFormatException nfe) {
+                // Debug.fail("Not a hexadecimal constant (BTW, this should not have happened).");
+            }
+        }
+        Term result = getTermFactory().createTerm(functions().lookup(new Name("#")));
+
+        for (int i = 0; i < s.length(); i++) {
+            result = getTermFactory()
+                    .createTerm(functions().lookup(new Name(s.substring(i, i + 1))), result);
+        }
+
+        if (negative) {
+            result = getTermFactory().createTerm(functions().lookup(new Name("neglit")), result);
+        }
+
+        return result;
     }
 
     @Override

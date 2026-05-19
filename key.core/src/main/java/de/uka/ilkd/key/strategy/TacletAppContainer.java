@@ -13,6 +13,7 @@ import de.uka.ilkd.key.rule.*;
 import de.uka.ilkd.key.util.Debug;
 
 import org.key_project.logic.op.sv.SchemaVariable;
+import org.key_project.prover.proof.ProofGoal;
 import org.key_project.prover.rules.RuleApp;
 import org.key_project.prover.rules.instantiation.AssumesFormulaInstSeq;
 import org.key_project.prover.rules.instantiation.AssumesFormulaInstantiation;
@@ -20,6 +21,7 @@ import org.key_project.prover.sequent.PosInOccurrence;
 import org.key_project.prover.sequent.Sequent;
 import org.key_project.prover.strategy.costbased.RuleAppCost;
 import org.key_project.prover.strategy.costbased.TopRuleAppCost;
+import org.key_project.prover.strategy.costbased.appcontainer.RuleAppContainer;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
 import org.key_project.util.collection.ImmutableSet;
@@ -80,15 +82,19 @@ public abstract class TacletAppContainer extends RuleAppContainer {
     /**
      * Create a list of new RuleAppContainers that are to be considered for application.
      */
+    /**
+     * Create a list of new RuleAppContainers that are to be considered for application.
+     */
     @Override
-    public final ImmutableList<RuleAppContainer> createFurtherApps(Goal p_goal) {
-        if (!isStillApplicable(p_goal)
+    public final ImmutableList<RuleAppContainer> createFurtherApps(ProofGoal<?> p_goal) {
+        var goal = (Goal) p_goal;
+        if (!isStillApplicable(goal)
                 || (getTacletApp().assumesInstantionsComplete()
-                        && !assumesFormulasStillValid(p_goal))) {
+                        && !assumesFormulasStillValid(goal))) {
             return ImmutableSLList.nil();
         }
 
-        final TacletAppContainer newCont = createContainer(p_goal);
+        final TacletAppContainer newCont = createContainer(goal);
         if (newCont.getCost() instanceof TopRuleAppCost) {
             return ImmutableSLList.nil();
         }
@@ -97,12 +103,12 @@ public abstract class TacletAppContainer extends RuleAppContainer {
             ImmutableSLList.<RuleAppContainer>nil().prepend(newCont);
 
         if (getTacletApp().assumesInstantionsComplete()) {
-            res = addInstances(getTacletApp(), res, p_goal);
+            res = addInstances(getTacletApp(), res, goal);
         } else {
-            for (NoPosTacletApp tacletApp : incMatchAssumesFormulas(p_goal)) {
+            for (NoPosTacletApp tacletApp : incMatchAssumesFormulas(goal)) {
                 final NoPosTacletApp app = tacletApp;
-                res = addContainer(app, res, p_goal);
-                res = addInstances(app, res, p_goal);
+                res = addContainer(app, res, goal);
+                res = addInstances(app, res, goal);
             }
         }
 
@@ -282,18 +288,19 @@ public abstract class TacletAppContainer extends RuleAppContainer {
      * Create a <code>RuleApp</code> that is suitable to be applied or <code>null</code>.
      */
     @Override
-    public TacletApp completeRuleApp(Goal p_goal) {
-        if (!(isStillApplicable(p_goal) && assumesFormulasStillValid(p_goal))) {
+    public TacletApp completeRuleApp(ProofGoal<?> p_goal) {
+        var goal = (Goal) p_goal;
+        if (!(isStillApplicable(goal) && assumesFormulasStillValid(goal))) {
             return null;
         }
 
         TacletApp app = getTacletApp();
-        PosInOccurrence pio = getPosInOccurrence(p_goal);
-        if (!p_goal.getGoalStrategy().isApprovedApp(app, pio, p_goal)) {
+        PosInOccurrence pio = getPosInOccurrence(goal);
+        if (!goal.getGoalStrategy().isApprovedApp(app, pio, goal)) {
             return null;
         }
 
-        Services services = p_goal.proof().getServices();
+        Services services = goal.proof().getServices();
         if (pio != null) {
             app = app.setPosInOccurrence(pio, services);
             if (app == null) {
@@ -302,7 +309,7 @@ public abstract class TacletAppContainer extends RuleAppContainer {
         }
 
         if (!app.complete()) {
-            return app.tryToInstantiate(services.getOverlay(p_goal.getLocalNamespaces()));
+            return app.tryToInstantiate(services.getOverlay(goal.getLocalNamespaces()));
         } else if (!app.isExecutable()) {
             return null;
         } else {

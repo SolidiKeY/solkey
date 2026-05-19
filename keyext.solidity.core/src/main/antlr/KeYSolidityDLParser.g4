@@ -112,12 +112,11 @@ func_decl
 :
     doc=DOC_COMMENT?
     (UNIQUE)?
+    retSort = sortId
     func_name = funcpred_name
     formal_sort_param_decls?
 	whereToBind=where_to_bind?
     argSorts = arg_sorts
-    IMP
-    retSort = sortId
     SEMI
 ;
 

@@ -216,10 +216,11 @@ public class StaticFeatureCollection {
     }
 
     protected static Feature functionSpecFeature(Feature cost) {
+        // TODO: implement
         // SetRuleFilter filter = new SetRuleFilter();
         // filter.addRuleToSet(UseOperationContractRule.INSTANCE);
         // return ConditionalFeature.createConditional(filter, cost);
-        throw new RuntimeException("Not yet implemented");
+        return cost;
     }
 
     protected static Feature sum(TermBuffer x, TermGenerator<Goal> gen, Feature body) {

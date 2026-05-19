@@ -152,7 +152,7 @@ public final class SolidityDLStrategy extends AbstractFeatureStrategy implements
 
         bindRuleSet(d, "semantics_blasting", inftyConst());
 
-        bindRuleSet(d, "rustIntegerSemantics",
+        bindRuleSet(d, "solidityIntegerSemantics",
             ifZero(sequentContainsNoPrograms(), longConst(-5000), ifZero(
                 leq(CountBranchFeature.INSTANCE, longConst(1)), longConst(-5000), inftyConst())));
 

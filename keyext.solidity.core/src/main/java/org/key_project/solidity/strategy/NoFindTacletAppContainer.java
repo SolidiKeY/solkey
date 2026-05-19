@@ -8,12 +8,14 @@ import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.rule.NoPosTacletApp;
 
 public class NoFindTacletAppContainer extends TacletAppContainer {
-    public NoFindTacletAppContainer(NoPosTacletApp app, RuleAppCost cost, long localAge) {
-        super(app, cost, 0);
+    public NoFindTacletAppContainer(NoPosTacletApp p_app, RuleAppCost p_cost, long p_age) {
+        super(p_app, p_cost, p_age);
     }
 
+    /// @return true iff the stored rule app is applicable for the given sequent, i.e. always true
+    /// since NoFindTaclets are not bound to a find-position (if-formulas are not considered)
     @Override
     protected boolean isStillApplicable(Goal p_goal) {
-        throw new RuntimeException("Not implemented yet");
+        return true;
     }
 }

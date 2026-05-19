@@ -129,7 +129,7 @@ public class IntegerStrategy extends AbstractFeatureStrategy implements Componen
 
 
         bindRuleSet(d, "defOps_div", NonDuplicateAppModPositionFeature.INSTANCE);
-        bindRuleSet(d, "defOps_rdiv", NonDuplicateAppModPositionFeature.INSTANCE);
+        bindRuleSet(d, "defOps_sdiv", NonDuplicateAppModPositionFeature.INSTANCE);
 
         if (arithNonLinInferences()) {
             setupInEqCaseDistinctionsApproval(d);
@@ -912,14 +912,14 @@ public class IntegerStrategy extends AbstractFeatureStrategy implements Componen
                     applyTF("divDenom", tf.notContainsDivMod),
                     ifZero(isBelow(ff.modalOperator), longConst(200))));
 
-            bindRuleSet(d, "defOps_rdiv",
+            bindRuleSet(d, "defOps_sdiv",
                 SumFeature.createSum(NonDuplicateAppModPositionFeature.INSTANCE,
                     applyTF("divNum", tf.polynomial), applyTF("divDenom", tf.polynomial),
                     applyTF("divNum", tf.notContainsDivMod),
                     applyTF("divDenom", tf.notContainsDivMod),
                     ifZero(isBelow(ff.modalOperator), longConst(200))));
 
-            bindRuleSet(d, "defOps_rdiv_inline", add(applyTF("divNum", tf.literal),
+            bindRuleSet(d, "defOps_sdiv_inline", add(applyTF("divNum", tf.literal),
                 applyTF("divDenom", tf.polynomial), longConst(-5000)));
 
             setupDefOpsExpandMod(d);
@@ -929,9 +929,9 @@ public class IntegerStrategy extends AbstractFeatureStrategy implements Componen
             bindRuleSet(d, "defOps_modHomoEq", -5000);
         } else {
             bindRuleSet(d, "defOps_div", inftyConst());
-            bindRuleSet(d, "defOps_rdiv", inftyConst());
+            bindRuleSet(d, "defOps_sdiv", inftyConst());
 
-            bindRuleSet(d, "defOps_rdiv_inline", add(applyTF("divNum", tf.literal),
+            bindRuleSet(d, "defOps_sdiv_inline", add(applyTF("divNum", tf.literal),
                 applyTF("divDenom", tf.literal), longConst(-4000)));
 
             bindRuleSet(d, "defOps_mod", add(applyTF("divNum", tf.literal),

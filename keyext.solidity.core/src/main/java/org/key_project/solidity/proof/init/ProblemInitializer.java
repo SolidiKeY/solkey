@@ -106,7 +106,7 @@ public final class ProblemInitializer {
 
         // configureTermLabelSupport(initConfig);
 
-        // read Rust
+        // read Solidity
         readSolidity(envInput, initConfig);
 
         // register function and predicate symbols defined by Java program
@@ -114,7 +114,6 @@ public final class ProblemInitializer {
         final Namespace<@NonNull Function> functions =
             initConfig.getServices().getNamespaces().functions();
         if (solidityInfo != null) {
-            // TODO: Declare fields (how?)
             for (var fn : solidityInfo.getAllSolidityFunctions()) {
                 functions.add(fn);
             }

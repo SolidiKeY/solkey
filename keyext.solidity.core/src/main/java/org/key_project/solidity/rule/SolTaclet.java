@@ -254,5 +254,7 @@ public abstract class SolTaclet extends Taclet implements Rule {
         return hashcode;
     }
 
-
+    public ImmutableList<SchemaVariable> noFreeVarIns() {
+        return noFreeVarIns;
+    }
 }
