@@ -4,8 +4,10 @@
 package org.key_project.solidity.proof.mgt;
 
 
+import org.key_project.solidity.speclang.Contract;
+
 // Object should be contract
-public record RuleJustificationBySpec(Object spec) implements RuleJustification {
+public record RuleJustificationBySpec(Contract spec) implements RuleJustification {
     public boolean isAxiomJustification() {
         // TODO
         return false;

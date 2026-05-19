@@ -39,7 +39,7 @@ public class ProofSaver extends OutputStreamProofSaver {
     }
 
     public ProofSaver(Proof proof, File file) {
-        this(proof, file, "2.13.2 (Rusty)");
+        this(proof, file, "0.1.0 (KeYther)");
     }
 
     public ProofSaver(Proof proof, File file, String internalVersion) {
@@ -53,7 +53,7 @@ public class ProofSaver extends OutputStreamProofSaver {
     /// @param file file to save proof into
     /// @param saveProofSteps whether to save proof steps (false -> only proof obligation)
     public ProofSaver(Proof proof, File file, boolean saveProofSteps) {
-        this(proof, file, "2.12.3 (Rusty)", saveProofSteps);
+        this(proof, file, "0.1.0 (KeYther)", saveProofSteps);
     }
 
     /// Create a new proof saver.
