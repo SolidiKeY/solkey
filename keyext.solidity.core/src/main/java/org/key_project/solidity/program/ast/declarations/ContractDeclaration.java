@@ -109,11 +109,6 @@ public class ContractDeclaration implements Declaration, Type {
     }
 
     @Override
-    public @Nullable Sort getSort(Services services) {
-        return services.getNamespaces().sorts().lookup(name);
-    }
-
-    @Override
     public Name name() {
         return name;
     }

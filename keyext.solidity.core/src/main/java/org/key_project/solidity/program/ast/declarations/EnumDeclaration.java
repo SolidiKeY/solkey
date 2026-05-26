@@ -61,17 +61,6 @@ public class EnumDeclaration implements Declaration, Type {
     }
 
     @Override
-    public @NonNull Sort getSort(Services services) {
-        Namespace<@NonNull Sort> sorts = services.getNamespaces().sorts();
-        Sort sort = sorts.lookup(name);
-        if (sort == null) {
-            sort = new SortImpl(name);
-            sorts.add(sort);
-        }
-        return sort;
-    }
-
-    @Override
     public Name name() {
         return name;
     }

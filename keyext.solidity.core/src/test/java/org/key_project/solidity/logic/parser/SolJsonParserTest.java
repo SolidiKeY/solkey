@@ -1336,9 +1336,7 @@ public class SolJsonParserTest {
         ContractDeclaration contractDec = getDeclStr(contract);
         TupleType fType = contractDec.getFunctions().get(0).getType();
         TupleType gType = contractDec.getFunctions().get(1).getType();
-        Services services = new Services();
         assertSame(fType, gType);
-        assertSame(fType.getSort(services), gType.getSort(services));
         assertEquals(INT, fType.getTypes().get(0));
         assertEquals(BOOL, fType.getTypes().get(1));
     }
@@ -1354,9 +1352,7 @@ public class SolJsonParserTest {
         ContractDeclaration contractDec = getDeclStr(contract);
         Type m1Type = contractDec.getFieldDeclarations().get(0).getProgramVariable().getType();
         Type m2Type = contractDec.getFieldDeclarations().get(1).getProgramVariable().getType();
-        Services services = new Services();
         assertSame(m1Type, m2Type);
-        assertSame(m1Type.getSort(services), m2Type.getSort(services));
     }
 
     @Test

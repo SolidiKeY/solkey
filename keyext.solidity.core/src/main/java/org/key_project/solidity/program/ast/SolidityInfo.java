@@ -39,9 +39,20 @@ public class SolidityInfo {
     private final Map<Type, KeYSolidityType> typeMap = new HashMap<>();
     private final Map<KeYSolidityType, Type> revTypeMap = new HashMap<>();
 
+    // caches solidity type name to KST, e.g. uint256 -> (uint256, int)
+    // carefull sort name to KST is not unique and has to be solved differently
+    private final Map<String, KeYSolidityType> solidityTypeName2KeYSolidityType = new HashMap<>();
+
     public SolidityInfo() {
 
     }
+
+    public void put(KeYSolidityType kst) {
+        solidityTypeName2KeYSolidityType.put(kst.getSolidityType().name().toString(), kst);
+        typeMap.put(kst.getSolidityType(), kst);
+        revTypeMap.put(kst, kst.getSolidityType());
+    }
+
 //
 //    public Type getType(Name typeName) {
 //        if (typeMap.containsKey(typeName))
@@ -99,9 +110,8 @@ public class SolidityInfo {
         return typeMap.get(type);
     }
 
-    public void put(KeYSolidityType kst) {
-        typeMap.put(kst.getSolidityType(), kst);
-        revTypeMap.put(kst, kst.getSolidityType());
+    public KeYSolidityType getKeYSolidityType(String typeName) {
+        return solidityTypeName2KeYSolidityType.get(typeName);
     }
 
     /**@ return all function symbols representing a solidity function (with return value) */
@@ -228,5 +238,4 @@ public class SolidityInfo {
             default -> null;
         };
     }
-
 }

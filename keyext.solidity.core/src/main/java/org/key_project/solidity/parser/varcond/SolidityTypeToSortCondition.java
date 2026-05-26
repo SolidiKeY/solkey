@@ -59,10 +59,10 @@ public final class SolidityTypeToSortCondition implements VariableCondition {
         if (svSubst instanceof Term t) {
             type = t.sort();
         } else if (svSubst instanceof Type st) {
-            type = services.getSolidityInfo().getKeYSolidityType(st.name().toString()).getSort();
+            type = services.getSolidityInfo().getKeYSolidityType(st).getSort();
         } else {
             final var expr = (Expression) svSubst;
-            type = services.getSolidityInfo().getKeYSolidityType(expr.getType().name().toString())
+            type = services.getSolidityInfo().getKeYSolidityType(expr.getType())
                     .getSort();
         }
         try {

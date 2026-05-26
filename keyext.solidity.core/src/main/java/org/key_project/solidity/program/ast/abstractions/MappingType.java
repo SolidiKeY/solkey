@@ -31,19 +31,6 @@ public class MappingType implements Type {
     }
 
     @Override
-    public @NonNull Sort getSort(Services services) {
-        Namespace<@NonNull Sort> sorts = services.getNamespaces().sorts();
-        Sort sort = sorts.lookup(name);
-        if (sort == null) {
-            Sort keySort = Objects.requireNonNull(keyType.getSort(services));
-            Sort valueSort = Objects.requireNonNull(valueType.getSort(services));
-            sort = new MappingSort(keySort, valueSort);
-            sorts.add(sort);
-        }
-        return sort;
-    }
-
-    @Override
     public String toString() {
         return name().toString();
     }

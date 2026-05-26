@@ -235,14 +235,12 @@ public class SolJSONParser {
         Stream<JsonNode> parameters =
             node.get("returnParameters").get("parameters").valueStream();
         List<ProgramVariable> returnParameters = parameters.map(this::parseParam).toList();
-        Type returnType;
-        if (returnParameters.size() > 1) {
+        TupleType returnType = null;
+        if (returnParameters.isEmpty()) {
             throw new RuntimeException("Tuple return parameters not yet supported");
 //            returnType = getTupleType(returnParameters.stream().map(ProgramVariable::getType).toList());
         } else if (returnParameters.isEmpty()) {
             returnType = null;
-        } else {
-            returnType = returnParameters.get(0).getType();
         }
         functionId2Type.put(id, returnType);
         List<ProgramVariable> inputParamenters =

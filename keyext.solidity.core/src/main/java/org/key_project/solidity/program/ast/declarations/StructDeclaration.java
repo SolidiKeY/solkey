@@ -48,16 +48,6 @@ public class StructDeclaration implements Declaration, Type, Resolver {
     }
 
     @Override
-    public @NonNull Sort getSort(Services services) {
-        Sort sort = services.getNamespaces().sorts().lookup(name);
-        if (sort == null) {
-            sort = new SortImpl(name);
-            services.getNamespaces().sorts().add(sort);
-        }
-        return sort;
-    }
-
-    @Override
     public Name name() {
         return new Name(contract.name() + "." + name);
     }

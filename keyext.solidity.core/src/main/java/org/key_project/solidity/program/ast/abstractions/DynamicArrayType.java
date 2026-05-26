@@ -29,18 +29,6 @@ public class DynamicArrayType implements Type, SyntaxElement {
     }
 
     @Override
-    public @NonNull Sort getSort(Services services) {
-        Namespace<@NonNull Sort> sorts = services.getNamespaces().sorts();
-        Sort sort = sorts.lookup(name);
-        if (sort == null) {
-            Sort sortPrim = Objects.requireNonNull(type.getSort(services));
-            sort = new DynamicArraySort(sortPrim);
-            sorts.add(sort);
-        }
-        return sort;
-    }
-
-    @Override
     public @NonNull SyntaxElement getChild(int n) {
         if (n == 0)
             return type;

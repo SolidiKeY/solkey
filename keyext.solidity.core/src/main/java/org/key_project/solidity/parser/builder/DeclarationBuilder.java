@@ -20,6 +20,7 @@ import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.*;
 import org.key_project.solidity.parser.KeYSolidityDLParser;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
+import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSet;
 import org.key_project.util.collection.Immutables;
@@ -82,10 +83,11 @@ public class DeclarationBuilder extends DefaultBuilder {
                     if (!(name instanceof ProgramVariable pv)
                             || !pv.getKeYSolidityType().equals(kst)) {
                         programVariables()
-                                .add(new ProgramVariable(pvName, kst.getSort(), kst, null));
+                                .add(new ProgramVariable(pvName, kst, DataLocation.Default));
                     }
                 } else {
-                    programVariables().add(new ProgramVariable(pvName, kst.getSort(), kst, null));
+                    System.out.println(kst);
+                    programVariables().add(new ProgramVariable(pvName, kst, DataLocation.Default));
                 }
             }
         }

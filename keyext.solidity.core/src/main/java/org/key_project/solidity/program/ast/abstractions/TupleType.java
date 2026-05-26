@@ -28,20 +28,6 @@ public class TupleType implements Type {
     }
 
     @Override
-    public @NonNull Sort getSort(Services services) {
-        Namespace<@NonNull Sort> sortsSet = services.getNamespaces().sorts();
-        Sort sort = sortsSet.lookup(name());
-        if (sort == null) {
-            List<Sort> sorts = types.stream()
-                    .map(type -> Objects.requireNonNull(type.getSort(services)))
-                    .toList();
-            sort = new TupleSort(sorts);
-            sortsSet.add(sort);
-        }
-        return sort;
-    }
-
-    @Override
     public Name name() {
         return name;
     }

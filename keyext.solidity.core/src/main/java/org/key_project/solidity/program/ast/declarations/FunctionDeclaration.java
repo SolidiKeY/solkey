@@ -30,7 +30,7 @@ public class FunctionDeclaration implements Declaration, Named {
     private final StateMutability stateMutability;
     private final ImmutableArray<ModifierReference> modifiers;
     private final Name name;
-    private final Type type;
+    private final TupleType type;
 
     public String getDocumentation() {
         return documentation;
@@ -38,7 +38,7 @@ public class FunctionDeclaration implements Declaration, Named {
 
     private final String documentation;
 
-    public FunctionDeclaration(Name name, List<ProgramVariable> returnParameters, Type type,
+    public FunctionDeclaration(Name name, List<ProgramVariable> returnParameters, TupleType type,
             List<ProgramVariable> inputParameters, Block body, String kind,
             Visibility visibility, StateMutability stateMutability,
             List<ModifierReference> modifiers, String documentation) {
@@ -126,7 +126,7 @@ public class FunctionDeclaration implements Declaration, Named {
         return stateMutability;
     }
 
-    public Type getType() {
+    public TupleType getType() {
         return type;
     }
 

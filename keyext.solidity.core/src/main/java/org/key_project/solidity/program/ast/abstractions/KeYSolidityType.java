@@ -48,11 +48,6 @@ public class KeYSolidityType implements Type, Resolver {
         this.sort = sort;
     }
 
-    @Override
-    public @Nullable Sort getSort(Services services) {
-        return sort;
-    }
-
     public @Nullable Sort getSort() {
         return sort;
     }

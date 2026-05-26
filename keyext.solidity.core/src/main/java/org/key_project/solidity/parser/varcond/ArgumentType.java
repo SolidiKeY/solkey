@@ -15,7 +15,8 @@ import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 /// @see TacletBuilderCommand
 public enum ArgumentType {
     TYPE_RESOLVER(TypeResolver.class), SORT(Sort.class), TERM(Term.class),
-    SOLIDITY_TYPE(KeYSolidityType.class), VARIABLE(ParsableVariable.class), STRING(String.class);
+    SOLIDITY_TYPE(KeYSolidityType.class),
+    VARIABLE(ParsableVariable.class), STRING(String.class);
 
     public final Class<?> clazz;
 

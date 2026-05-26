@@ -64,7 +64,7 @@ public class BothParsersTest {
         DeclarationStatement stm = (DeclarationStatement) parseStatement("Person alice;");
         ProgramVariable programVariable =
             ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable();
-        Sort sort = programVariable.getType().getSort(services);
+        Sort sort = programVariable.sort();
         assertEquals("Person", sort.toString());
     }
 

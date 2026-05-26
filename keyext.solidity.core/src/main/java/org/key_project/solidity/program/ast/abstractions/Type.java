@@ -11,6 +11,4 @@ import org.key_project.solidity.common.Services;
 import org.jspecify.annotations.Nullable;
 
 public interface Type extends Named, SyntaxElement {
-    @Nullable
-    Sort getSort(Services services);
 }
