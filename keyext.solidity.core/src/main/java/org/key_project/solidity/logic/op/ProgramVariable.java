@@ -32,12 +32,6 @@ public class ProgramVariable extends AbstractSortedOperator
     private final KeYSolidityType type;
     private final DataLocation dataLocation;
 
-    public ProgramVariable(Name name, Sort s, KeYSolidityType type, DataLocation location) {
-        super(name, s, NONE);
-        this.type = type;
-        this.dataLocation = location;
-    }
-
     public ProgramVariable(Name name, KeYSolidityType type, DataLocation location) {
         super(name, type.getSort(), NONE);
         this.type = type;
@@ -66,14 +60,10 @@ public class ProgramVariable extends AbstractSortedOperator
 
     @Override
     public Type getType() {
-        return type == null ? null : type.getSolidityType();
+        return type.getSolidityType();
     }
 
-    public KeYSolidityType getKeySolidityType() {
-        return type;
-    }
-
-    public DataLocation getLocation() {
+    public DataLocation getDataLocation() {
         return dataLocation;
     }
 

@@ -44,7 +44,7 @@ public class StatementVariableDeclaration implements Declaration, SolidityProgra
 
     @Override
     public String toString() {
-        DataLocation dataLocation = programVariable.getLocation();
+        DataLocation dataLocation = programVariable.getDataLocation();
         String name = programVariable.name().toString();
         String type = programVariable.getType().toString();
         if (dataLocation == Default)

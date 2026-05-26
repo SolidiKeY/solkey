@@ -39,7 +39,7 @@ public class Services implements LogicServices, ProofServices {
     private final HashMap<String, Counter> counters;
     private final SolidityInfo solidityInfo;
 
-    private final SpecificationRepository specificationRepository;
+    private SpecificationRepository specificationRepository;
     /**
      * proof specific namespaces (functions, predicates, sorts, variables)
      */
@@ -200,9 +200,9 @@ public class Services implements LogicServices, ProofServices {
 
     public Services copy(Profile profile) {
         var s = new Services(profile);
-        // s.specRepos = specRepos;
-        s.setTheoryInfo(getTheoryInfo());
+        s.specificationRepository = specificationRepository;
         s.setNamespaces(namespaces.copy());
+        s.setTheoryInfo(theoryInfo.copy(s));
         s.setSolidityModel(getSolidityModel());
         nameRecorder = nameRecorder.copy();
         return s;
@@ -211,8 +211,8 @@ public class Services implements LogicServices, ProofServices {
     /// creates a new service object with the same ldt information as the actual one
     public Services copyPreservesLDTInformation() {
         Services s = new Services(getProfile());
-        s.setTheoryInfo(getTheoryInfo());
         s.setNamespaces(namespaces.copy());
+        s.setTheoryInfo(theoryInfo);
         return s;
     }
 

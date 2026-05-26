@@ -41,7 +41,6 @@ public interface SolidityProgramElement extends SyntaxElement {
         return mc;
     }
 
-    /// TODO: Use this method and cache hash
     /// matches successively all children of this current node. Thereby the <tt>offset</tt>-th child
     /// is matched against <code>source.getSource()</code>. The call <tt>source.next</tt> has to be
     /// done in the @link ProgramElement#match method of the currently matched child in case of a
@@ -84,6 +83,7 @@ public interface SolidityProgramElement extends SyntaxElement {
     /// @param v the Visitor
     void visit(Visitor v);
 
+    /// TODO: Use this method and cache hash
     default int computeHashCode() {
         // Cache for hashcode computation would be of advantage as it is for instance recomputed
         // for each modality

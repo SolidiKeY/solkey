@@ -17,15 +17,18 @@ import org.jspecify.annotations.Nullable;
 public class TheoryInfo implements Iterable<LDT> {
 
     private final BoolLDT boolLDT;
-    private final IntLDT intLDT;;
+    private final IntLDT intLDT;
+    private final StructLDT structLDT;
     private final Map<Name, LDT> map;
 
     public TheoryInfo(Services services) {
         boolLDT = new BoolLDT(services);
         intLDT = new IntLDT(services);
+        structLDT = new StructLDT(services);
         map = new HashMap<>();
         map.put(boolLDT.name(), boolLDT);
         map.put(intLDT.name(), intLDT);
+        map.put(structLDT.name(), structLDT);
     }
 
     public BoolLDT getBoolLDT() {
@@ -51,5 +54,13 @@ public class TheoryInfo implements Iterable<LDT> {
             }
         }
         return null;
+    }
+
+    public TheoryInfo copy(Services services) {
+        return new TheoryInfo(services);
+    }
+
+    public StructLDT getStructLDT() {
+        return structLDT;
     }
 }

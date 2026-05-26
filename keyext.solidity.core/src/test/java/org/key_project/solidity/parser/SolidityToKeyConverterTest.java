@@ -338,7 +338,7 @@ public class SolidityToKeyConverterTest {
         ProgramVariable alice =
             ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable();
         assertEquals("alice", alice.name().toString());
-        assertEquals(Memory, alice.getLocation());
+        assertEquals(Memory, alice.getDataLocation());
         assertInstanceOf(KeYSolidityType.class, alice.getType());
         Type structType = ((KeYSolidityType) alice.getType()).getSolidityType();
         assertInstanceOf(StructDeclaration.class, structType);

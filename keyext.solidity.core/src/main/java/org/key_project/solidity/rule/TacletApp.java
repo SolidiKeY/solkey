@@ -841,7 +841,7 @@ public abstract class TacletApp implements RuleApp {
                 if (o instanceof SchemaVariable peerSV) {
                     final Object peerInst = instantiations().getInstantiation(peerSV);
                     if (peerInst instanceof Type st) {
-                        kst = services.getSolidityInfo().getKeYSolidityType(st.name().toString());
+                        kst = services.getSolidityInfo().getKeYSolidityType(st);
                     } else {
                         Expression peerInstExpr;
                         /*
@@ -851,7 +851,7 @@ public abstract class TacletApp implements RuleApp {
                          */ {
                             peerInstExpr = (Expression) peerInst;
                         }
-                        kst = services.getSolidityInfo().getKeYSolidityType(peerInstExpr.getType().name().toString());
+                        kst = services.getSolidityInfo().getKeYSolidityType(peerInstExpr.getType());
                     }
                 } else {
                     kst = (KeYSolidityType) o;
