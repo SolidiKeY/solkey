@@ -167,6 +167,26 @@ tasks.jar {
         attributes["Main-Class"] = "org.key_project.solidity.CLI"
     }
 }
+
+def solidityCliMainClass = "org.key_project.solidity.CLI"
+def ideaCliProblemFile = rootProject.file("keyext.solidikey.examples/examples/problem.key")
+
+tasks.register('solidityCli', JavaExec) {
+    group = "application"
+    description = "Run the Solidity CLI"
+    mainClass.set(solidityCliMainClass)
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+tasks.register('solidityMainProblem', JavaExec) {
+    group = "application"
+    description = "Run the Solidity CLI with the main problem"
+    mainClass.set(solidityCliMainClass)
+    classpath = sourceSets.main.runtimeClasspath
+    workingDir = rootProject.projectDir
+    args ideaCliProblemFile.absolutePath
+}
+
 shadowJar {
     archiveClassifier = "exe"
     archiveBaseName = "keyext.solidity.core"
