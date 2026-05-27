@@ -78,7 +78,7 @@ public class BothParsersTest {
                     }
                 }""";
         ContractDeclaration contractDec = solcParser.getDeclStrJsonParser(contract);
-        TupleType contractTupleType = contractDec.getFunctions().getFirst().getType();
+        TupleType contractTupleType = (TupleType) contractDec.getFunctions().getFirst().getType();
 
         ReturnStatement returnStm = (ReturnStatement) parseStatement("return (false, false);");
         TupleType parsedTupleType = (TupleType) returnStm.getReturnExp().getType();

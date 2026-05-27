@@ -47,6 +47,7 @@ public class SolJSONParser {
     private final HashMap<Integer, SyntaxElement> id2Name = new HashMap<>();
 
     private final HashMap<Integer, Type> functionId2Type = new HashMap<>();
+    private final HashMap<String, TupleType> tupleTypes = new HashMap<>();
     private final Set<Integer> contractIds = new HashSet<>();
 
 
@@ -235,13 +236,9 @@ public class SolJSONParser {
         Stream<JsonNode> parameters =
             node.get("returnParameters").get("parameters").valueStream();
         List<ProgramVariable> returnParameters = parameters.map(this::parseParam).toList();
-        TupleType returnType = null;
-        if (returnParameters.isEmpty()) {
-            throw new RuntimeException("Tuple return parameters not yet supported");
-//            returnType = getTupleType(returnParameters.stream().map(ProgramVariable::getType).toList());
-        } else if (returnParameters.isEmpty()) {
-            returnType = null;
-        }
+        Type returnType = returnParameters.isEmpty() ? VOID
+                : null;
+//                : getTupleType(returnParameters.stream().map(ProgramVariable::getType).toList());
         functionId2Type.put(id, returnType);
         List<ProgramVariable> inputParamenters =
             node.get("parameters").get("parameters").valueStream()
@@ -638,12 +635,14 @@ public class SolJSONParser {
                 new EnumReference(enumDeclaration, type);
             case ProgramVariable p -> p;
             case null ->
-                switch (type) {
-                    case TupleType tupleType -> new FunctionReference(idDecl, tupleType);
-                    case PrimitiveType tp -> new ContractReference(idDecl, tp);
-                    default ->
-                        throw new RuntimeException("Type " + type + " is not function or contract");
-                };
+                functionId2Type.containsKey(idDecl) ? new FunctionReference(idDecl, type)
+                        : switch (type) {
+                            case TupleType tupleType -> new FunctionReference(idDecl, tupleType);
+                            case PrimitiveType tp -> new ContractReference(idDecl, tp);
+                            default ->
+                                throw new RuntimeException(
+                                    "Type " + type + " is not function or contract");
+                        };
             default -> throw new RuntimeException(
                 "Unexpected reference declaration " + declaration + " expected a state variable.");
         };
@@ -665,9 +664,11 @@ public class SolJSONParser {
         };
     }
 
-//    private TupleType getTupleType(List<Type> types) {
-//        return services.getSolidityInfo().getTupleTypeMap(types);
-//    }
+    private TupleType getTupleType(List<Type> types) {
+        String key = types.stream().map(type -> type.name().toString())
+                .collect(Collectors.joining(",", "(", ")"));
+        return tupleTypes.computeIfAbsent(key, ignored -> new TupleType(types));
+    }
 
     private @Nullable Expression findOrNullExpression(JsonNode statement, String field) {
         return statement.has(field) ? parseExpression(statement.get(field)) : null;

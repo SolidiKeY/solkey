@@ -179,6 +179,8 @@ public class SolJsonParserTest {
         assertSame(Public, functionDeclaration.getVisibility());
         assertSame(pure, functionDeclaration.getStateMutability());
         assertEquals("func", functionDeclaration.name().toString());
+        assertEquals(0, functionDeclaration.getReturnParameters().size());
+        assertSame(VOID, functionDeclaration.getType());
     }
 
     @Test
@@ -993,7 +995,7 @@ public class SolJsonParserTest {
         ContractDeclaration contractDec = getDeclStr(contract);
         String contractS = contractDec.toString();
         assertTrue(contractS.contains("false, true"));
-        TupleType type = contractDec.getFunctions().getFirst().getType();
+        TupleType type = (TupleType) contractDec.getFunctions().getFirst().getType();
         assertEquals(BOOL, type.getTypes().get(0));
     }
 
@@ -1176,8 +1178,7 @@ public class SolJsonParserTest {
                     .getFunctions().getFirst().getBody().getStatements()
                     .get(0)).getExpression()).functionExp;
         Type type = fRef.getType();
-        assertInstanceOf(TupleType.class, type);
-        assertEquals(0, ((TupleType) type).getTypes().size());
+        assertSame(VOID, type);
 
         FunctionDeclaration selfF = contractDec.getFunctions().getFirst();
         FunctionDeclaration refDecl = fRef.referencedDeclaration;
@@ -1333,8 +1334,8 @@ public class SolJsonParserTest {
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract);
-        TupleType fType = contractDec.getFunctions().get(0).getType();
-        TupleType gType = contractDec.getFunctions().get(1).getType();
+        TupleType fType = (TupleType) contractDec.getFunctions().get(0).getType();
+        TupleType gType = (TupleType) contractDec.getFunctions().get(1).getType();
         assertSame(fType, gType);
         assertEquals(INT, fType.getTypes().get(0));
         assertEquals(BOOL, fType.getTypes().get(1));

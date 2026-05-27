@@ -10,7 +10,6 @@ import org.key_project.logic.Name;
 import org.key_project.logic.Named;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.op.ProgramVariable;
-import org.key_project.solidity.program.ast.abstractions.TupleType;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.StateMutability;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
@@ -30,7 +29,7 @@ public class FunctionDeclaration implements Declaration, Named {
     private final StateMutability stateMutability;
     private final ImmutableArray<ModifierReference> modifiers;
     private final Name name;
-    private final TupleType type;
+    private final Type type;
 
     public String getDocumentation() {
         return documentation;
@@ -38,7 +37,7 @@ public class FunctionDeclaration implements Declaration, Named {
 
     private final String documentation;
 
-    public FunctionDeclaration(Name name, List<ProgramVariable> returnParameters, TupleType type,
+    public FunctionDeclaration(Name name, List<ProgramVariable> returnParameters, Type type,
             List<ProgramVariable> inputParameters, Block body, String kind,
             Visibility visibility, StateMutability stateMutability,
             List<ModifierReference> modifiers, String documentation) {
@@ -126,7 +125,7 @@ public class FunctionDeclaration implements Declaration, Named {
         return stateMutability;
     }
 
-    public TupleType getType() {
+    public Type getType() {
         return type;
     }
 

@@ -181,6 +181,7 @@ public class PrimitiveType implements Type, SyntaxElement {
     public static final @NonNull PrimitiveType TUPLE = newPrimitiveType("tuple");
     public static final @NonNull PrimitiveType FUNCTION = newPrimitiveType("function");
     public static final @NonNull PrimitiveType CONTRACT = newPrimitiveType("contract");
+    public static final @NonNull PrimitiveType VOID = newPrimitiveType("void");
 
 
     @Override

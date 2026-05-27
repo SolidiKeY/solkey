@@ -160,7 +160,8 @@ public class SolidityInfo {
         UFIXED,
         TUPLE,
         FUNCTION,
-        CONTRACT);
+        CONTRACT,
+        VOID);
 
     public void put(KeYSolidityType kst) {
         solidityTypeName2KeYSolidityType.put(kst.getSolidityType().name().toString(), kst);
@@ -349,6 +350,7 @@ public class SolidityInfo {
             case "tuple" -> TUPLE;
             case "function" -> FUNCTION;
             case "contract" -> CONTRACT;
+            case "void" -> VOID;
 
             default -> null;
         };
