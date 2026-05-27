@@ -1,4 +1,4 @@
-# Architecture
+# AGENTS.md
 
 **SolKey** is a fork of [KeY](https://github.com/KeYProject/key) — an interactive theorem prover for Java — extended with `keyext.solidity.core`, a module for formal verification of **Solidity smart contracts**. The goal is to verify functional correctness of Solidity contracts against formal specifications.
 
