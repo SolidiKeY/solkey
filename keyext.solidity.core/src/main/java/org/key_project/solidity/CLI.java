@@ -53,22 +53,26 @@ public class CLI {
     int max;
 
     public static void main(String[] args) {
+        System.exit(execute(args));
+    }
+
+    public static int execute(String... args) {
         CLI cli = new CLI();
         CommandLine cmd = new CommandLine(cli);
         cmd.parseArgs(args);
         if (cmd.isUsageHelpRequested()) {
             cmd.usage(System.out);
-            return;
+            return 0;
         } else if (cmd.isVersionHelpRequested()) {
             cmd.printVersionHelp(System.out);
-            return;
+            return 0;
         }
         if (cli.verbose)
             cli.printStats = true;
         boolean success = run(cli);
         System.out.flush();
         System.err.flush();
-        System.exit(success ? 0 : 1);
+        return success ? 0 : 1;
     }
 
     private static boolean run(CLI cli) {

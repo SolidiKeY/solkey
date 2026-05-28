@@ -133,10 +133,9 @@ public final class ProblemInitializer {
 
     private void readSolidity(EnvInput envInput, InitConfig initConfig) throws ProofInputException {
         // this method must only be called once per init config
-        // assert !initConfig.getServices().getRustInfo().rec2key().parsedSpecial();
-        assert initConfig.getServices().getSolidityInfo() == null;
+        assert initConfig.getServices().getSolidityModel() == null;
 
-        // read Rust source
+        // read Solidity source
         envInput.setInitConfig(initConfig);
         final String solidityPath = envInput.readSolidityPath();
 
