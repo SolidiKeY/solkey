@@ -31,9 +31,37 @@
 
 # Generate ANTLR parsers (done automatically during build)
 ./gradlew generateGrammarSource
+
+# Run the Solidity CLI on the default example problem.key
+./gradlew :keyext.solidity.core:solidityCli
+
+# Run the Solidity CLI on a specific .key problem in keyext.solidikey.examples/examples
+./gradlew :keyext.solidity.core:solidityCli --args="problem1.key"
+
+# Pass Solidity CLI options by putting the whole CLI argument list inside --args
+./gradlew :keyext.solidity.core:solidityCli --args="--no-prove problem1.key"
 ```
 
 Java 21 is required. Test max heap is 4GB, max parallel forks is 1.
+
+## Verifying Specific `.key` Problems
+
+`keyext.solidity.core/build.gradle` defines a `solidityCli` Gradle `JavaExec` task for running `org.key_project.solidity.CLI`. The task's working directory is `keyext.solidikey.examples/examples` and its configured default argument is `problem.key`, so `./gradlew :keyext.solidity.core:solidityCli` verifies that default example.
+
+When asked to solve or debug a specific Solidity `.key` problem, run the CLI against that exact file after making changes:
+
+```bash
+./gradlew :keyext.solidity.core:solidityCli --args="problem1.key"
+```
+
+Gradle's `--args` is not an extra argument appended to the existing `args "problem.key"` line; it replaces the JavaExec task arguments. To pass Solidity CLI flags, put the entire Solidity CLI argument list inside the single Gradle `--args` value:
+
+```bash
+./gradlew :keyext.solidity.core:solidityCli --args="--no-prove problem1.key"
+./gradlew :keyext.solidity.core:solidityCli --args="-m 20000 -s problem1.key"
+```
+
+Relative `.key` paths are resolved from `keyext.solidikey.examples/examples`, so example files can be passed by name, such as `problem1.key`. Use an absolute path only when the problem file is outside that working directory. Useful CLI options include `--no-prove` to only load the problem, `--no-replay` to skip replaying an embedded proof, `-m/--max` to set the maximum rule applications, `-t/--timeout` for the prover timeout in milliseconds, and `-s/--print-stats` or `-v/--verbose` for diagnostics. Verified examples: `--args="--help"` prints the CLI usage, and `--args="--no-prove problem.key"` loads the default example problem successfully.
 
 ## Module Architecture
 
