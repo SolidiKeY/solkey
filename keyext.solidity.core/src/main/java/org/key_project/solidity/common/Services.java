@@ -61,7 +61,6 @@ public class Services implements LogicServices, ProofServices {
         caches = new ServiceCaches();
         solidityInfo = new SolidityInfo();
         nameRecorder = new NameRecorder();
-        theoryInfo = new TheoryInfo(this);
     }
 
     public Services(Services services) {
