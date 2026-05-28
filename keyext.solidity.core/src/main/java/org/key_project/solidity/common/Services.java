@@ -61,6 +61,7 @@ public class Services implements LogicServices, ProofServices {
         caches = new ServiceCaches();
         solidityInfo = new SolidityInfo();
         nameRecorder = new NameRecorder();
+        theoryInfo = new TheoryInfo(this);
     }
 
     public Services(Services services) {
@@ -75,7 +76,7 @@ public class Services implements LogicServices, ProofServices {
         this.specificationRepository = services.specificationRepository;
         this.solidityInfo = services.solidityInfo;
         this.model = services.model;
-        nameRecorder = services.nameRecorder;
+        this.nameRecorder = services.nameRecorder;
     }
 
     public Services(Profile profile) {
