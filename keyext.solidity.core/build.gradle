@@ -169,7 +169,7 @@ tasks.jar {
 }
 
 def solidityCliMainClass = "org.key_project.solidity.CLI"
-def solidityExamplesDir = rootProject.file("keyext.solidikey.examples/examples")
+def solidityExamplesDir = rootProject.file("keyext.solidity.core/src/test/resources/org/key_project/solidity/examples")
 
 tasks.register('solidityCli', JavaExec) {
     group = "application"
@@ -177,7 +177,7 @@ tasks.register('solidityCli', JavaExec) {
     mainClass.set(solidityCliMainClass)
     classpath = sourceSets.main.runtimeClasspath
     workingDir = solidityExamplesDir
-    args "problem.key"
+    args "problem2.key"
 }
 
 shadowJar {
