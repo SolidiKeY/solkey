@@ -37,8 +37,24 @@ public class RulesTest {
             .sorted(Comparator.comparing(path -> path.getFileName().toString()))
             .toList();
 
-        return exampleFiles.stream()
+        return selectRequestedExample(exampleFiles).stream()
                 .map(path -> Arguments.of(path.getFileName().toString(), path));
+    }
+
+    private static List<Path> selectRequestedExample(List<Path> exampleFiles) {
+        String selectedIndex = System.getProperty(
+            "org.key_project.solidity.taclets.RulesTest.exampleIndex");
+        if (selectedIndex == null) {
+            return exampleFiles;
+        }
+
+        int index = Integer.parseInt(selectedIndex);
+        if (index < 1 || index > exampleFiles.size()) {
+            throw new IllegalArgumentException(
+                "Requested exampleLoads[" + index + "], but only " + exampleFiles.size()
+                    + " examples exist");
+        }
+        return List.of(exampleFiles.get(index - 1));
     }
 
     private static boolean hasProofObligation(Path exampleFile) {

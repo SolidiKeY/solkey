@@ -66,6 +66,18 @@ compileJava.dependsOn runAntlr4Key
 
 tasks.withType(Test) {
     enableAssertions = true
+    doFirst {
+        def rulesTestInvocation = ~/^org\.key_project\.solidity\.taclets\.RulesTest\.exampleLoads(?:\(String, Path\))?\[(\d+)]$/
+        def selectedRulesTestInvocation = filter.commandLineIncludePatterns.find { it ==~ rulesTestInvocation }
+
+        if (selectedRulesTestInvocation != null) {
+            def matcher = selectedRulesTestInvocation =~ rulesTestInvocation
+            systemProperty "org.key_project.solidity.taclets.RulesTest.exampleIndex", matcher[0][1]
+
+            filter.commandLineIncludePatterns.remove(selectedRulesTestInvocation)
+            filter.includeTestsMatching("org.key_project.solidity.taclets.RulesTest.exampleLoads")
+        }
+    }
 }
 
 
