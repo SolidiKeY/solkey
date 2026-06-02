@@ -46,8 +46,8 @@ public class FindTacletAppContainer extends TacletAppContainer {
      * @param age the age
      */
     public FindTacletAppContainer(NoPosTacletApp app, PosInOccurrence pio,
-                                  RuleAppCost cost, Goal goal,
-                                  long age) {
+            RuleAppCost cost, Goal goal,
+            long age) {
         super(app, cost, age);
         applicationPosition = pio;
 

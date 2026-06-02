@@ -4,15 +4,10 @@
 package org.key_project.solidity.program.ast.abstractions;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.key_project.logic.Name;
-import org.key_project.logic.Namespace;
 import org.key_project.logic.SyntaxElement;
-import org.key_project.logic.sort.Sort;
-import org.key_project.solidity.common.Services;
-import org.key_project.solidity.logic.sort.TupleSort;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;

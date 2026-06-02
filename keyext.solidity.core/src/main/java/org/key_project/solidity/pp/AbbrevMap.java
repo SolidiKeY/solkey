@@ -3,13 +3,13 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.pp;
 
-import org.key_project.logic.Term;
-import org.key_project.util.collection.Pair;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.stream.Collectors;
+
+import org.key_project.logic.Term;
+import org.key_project.util.collection.Pair;
 
 public class AbbrevMap {
 

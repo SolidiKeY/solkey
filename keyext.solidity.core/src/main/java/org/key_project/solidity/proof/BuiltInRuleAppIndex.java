@@ -70,7 +70,7 @@ public class BuiltInRuleAppIndex {
     }
 
     private void scanSimplificationRule(ImmutableList<BuiltInRule> rules, Goal goal,
-                                        boolean antec, NewRuleListener listener) {
+            boolean antec, NewRuleListener listener) {
         final Node node = goal.getNode();
         final Sequent seq = node.sequent();
 
@@ -80,7 +80,7 @@ public class BuiltInRuleAppIndex {
     }
 
     private void scanSimplificationRule(ImmutableList<BuiltInRule> rules, Goal goal, boolean antec,
-                                        SequentFormula cfma, NewRuleListener listener) {
+            SequentFormula cfma, NewRuleListener listener) {
         final PosInOccurrence pos = new PosInOccurrence(cfma, PosInTerm.getTopLevel(), antec);
         ImmutableList<BuiltInRule> subrules = ImmutableSLList.nil();
         while (!rules.isEmpty()) {
@@ -98,7 +98,7 @@ public class BuiltInRuleAppIndex {
 
     // TODO: optimise?
     private void scanSimplificationRule(ImmutableList<BuiltInRule> rules, Goal goal,
-                                        PosInOccurrence pos, NewRuleListener listener) {
+            PosInOccurrence pos, NewRuleListener listener) {
         ImmutableList<BuiltInRule> it = rules;
         while (!it.isEmpty()) {
             final BuiltInRule rule = it.head();
@@ -129,7 +129,7 @@ public class BuiltInRuleAppIndex {
     }
 
     private void scanAddedFormulas(Goal goal, boolean antec, SequentChangeInfo sci,
-                                   NewRuleListener listener) {
+            NewRuleListener listener) {
         ImmutableList<SequentFormula> cfmas = sci.addedFormulas(antec);
         while (!cfmas.isEmpty()) {
             final SequentFormula cfma = cfmas.head();
@@ -140,7 +140,7 @@ public class BuiltInRuleAppIndex {
 
 
     private void scanModifiedFormulas(Goal goal, boolean antec, SequentChangeInfo sci,
-                                      NewRuleListener listener) {
+            NewRuleListener listener) {
         ImmutableList<FormulaChangeInfo> fcis = sci.modifiedFormulas(antec);
 
         while (!fcis.isEmpty()) {

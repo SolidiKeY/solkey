@@ -10,12 +10,15 @@ import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
 
 /// A PositionTable describes the start and end positions of substrings of a String in order to get
-/// a PosInSequent from an int describing a position in a string representing a [Term] or a [Sequent],
+/// a PosInSequent from an int describing a position in a string representing a [Term] or a
+/// [Sequent],
 /// etc.
 /// A PositionTable therefore represents a table consisting of two columns of type int (start and
 /// end position) and a reference to another PositionTable representing the position information for
-/// that substring. A PositionTable is valid (in order to support efficient putting of new entries to the
-/// table and an efficient search for a Position), if the last entry that has been set is {@code (s, e, x)}
+/// that substring. A PositionTable is valid (in order to support efficient putting of new entries
+/// to the
+/// table and an efficient search for a Position), if the last entry that has been set is {@code (s,
+/// e, x)}
 /// and the next entry is {@code (s', e', x')} with {@code s'>e}.
 ///
 /// Positions are reckoned with start positions inclusive and end positions exclusive. Start and end

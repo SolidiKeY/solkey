@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.rule.matching.instructions;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.LogicServices;
 import org.key_project.logic.Term;
 import org.key_project.logic.op.sv.OperatorSV;
@@ -12,6 +11,8 @@ import org.key_project.prover.rules.instantiation.MatchResultInfo;
 import org.key_project.prover.rules.matcher.vm.instruction.MatchInstruction;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
+
+import org.jspecify.annotations.NonNull;
 
 import static org.key_project.solidity.logic.equality.RenamingTermProperty.RENAMING_TERM_PROPERTY;
 
@@ -64,8 +65,8 @@ public abstract class MatchSchemaVariableInstruction
     /// @return `null` if no matches have been found or the new [MatchResultInfo] with
     /// the pair ([SchemaVariable], [RustyProgramElement]) added
     public MatchResultInfo match(SolidityProgramElement instantiationCandidate,
-                                 MatchResultInfo mc,
-                                 LogicServices services) {
+            MatchResultInfo mc,
+            LogicServices services) {
         return null;
     }
 }

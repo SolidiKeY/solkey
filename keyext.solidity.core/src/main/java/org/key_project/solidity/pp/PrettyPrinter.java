@@ -3,9 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.pp;
 
-import org.jspecify.annotations.Nullable;
 import org.key_project.logic.op.sv.SchemaVariable;
-
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
@@ -28,6 +26,8 @@ import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.solidity.rule.metaconstruct.ProgramTransformer;
 import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.util.collection.ImmutableArray;
+
+import org.jspecify.annotations.Nullable;
 
 public class PrettyPrinter implements Visitor {
     private final PosTableLayouter layouter;

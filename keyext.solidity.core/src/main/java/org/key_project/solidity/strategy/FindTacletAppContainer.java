@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy;
 
-import org.jspecify.annotations.NonNull;
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Modality;
 import org.key_project.logic.op.Operator;
@@ -16,9 +15,9 @@ import org.key_project.prover.strategy.costbased.RuleAppCost;
 import org.key_project.solidity.logic.op.UpdateApplication;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.rule.NoPosTacletApp;
-
-import org.jspecify.annotations.Nullable;
 import org.key_project.util.collection.ImmutableList;
+
+import org.jspecify.annotations.NonNull;
 
 public class FindTacletAppContainer extends TacletAppContainer {
 
@@ -42,8 +41,8 @@ public class FindTacletAppContainer extends TacletAppContainer {
     /// @param goal the goal to apply the taclet on
     /// @param age the age
     public FindTacletAppContainer(NoPosTacletApp app, PosInOccurrence pio,
-                                  RuleAppCost cost, Goal goal,
-                                  long age) {
+            RuleAppCost cost, Goal goal,
+            long age) {
         super(app, cost, age);
         applicationPosition = pio;
 
@@ -58,7 +57,7 @@ public class FindTacletAppContainer extends TacletAppContainer {
     @Override
     protected boolean isStillApplicable(Goal p_goal) {
         PosInOccurrence topPos =
-                p_goal.getFormulaTagManager().getPosForTag(positionTag);
+            p_goal.getFormulaTagManager().getPosForTag(positionTag);
         return topPos != null && !subformulaOrPreceedingUpdateHasChanged(p_goal);
     }
 
@@ -67,7 +66,7 @@ public class FindTacletAppContainer extends TacletAppContainer {
     /// altered since the creation of this object or if a preceding update has changed
     private boolean subformulaOrPreceedingUpdateHasChanged(Goal goal) {
         ImmutableList<@NonNull FormulaChangeInfo> infoList =
-                goal.getFormulaTagManager().getModifications(positionTag);
+            goal.getFormulaTagManager().getModifications(positionTag);
 
         while (!infoList.isEmpty()) {
             final FormulaChangeInfo info = infoList.head();
@@ -100,7 +99,7 @@ public class FindTacletAppContainer extends TacletAppContainer {
     /// formulas) and no indirect relationship exists which is established by a modification
     /// that occurred inside an update
     private boolean independentSubformulas(PosInOccurrence changePos,
-                                           SequentFormula newFormula) {
+            SequentFormula newFormula) {
         final PIOPathIterator changePIO = changePos.iterator();
         final PIOPathIterator appPIO = applicationPosition.iterator();
 
@@ -123,12 +122,12 @@ public class FindTacletAppContainer extends TacletAppContainer {
                 // <code>TermTacletAppIndex.updateCompleteRebuild</code>
                 if (beforeChangeOp instanceof Modality beforeChangeMod) {
                     final PosInOccurrence afterChangePos =
-                            changePos.replaceSequentFormula(newFormula);
+                        changePos.replaceSequentFormula(newFormula);
                     final Term afterChangeTerm = afterChangePos.subTerm();
                     if (afterChangeTerm.op() instanceof Modality afterChangeMod) {
                         return beforeChangeMod.kind() == afterChangeMod.kind()
                                 && beforeChangeTerm.sub(0)
-                                .equals(afterChangeTerm.sub(0));
+                                        .equals(afterChangeTerm.sub(0));
                     } else {
                         return false;
                     }
@@ -160,7 +159,7 @@ public class FindTacletAppContainer extends TacletAppContainer {
     @Override
     protected PosInOccurrence getPosInOccurrence(Goal p_goal) {
         final PosInOccurrence topPos =
-                p_goal.getFormulaTagManager().getPosForTag(positionTag);
+            p_goal.getFormulaTagManager().getPosForTag(positionTag);
         assert topPos != null;
         return applicationPosition.replaceSequentFormula(topPos.sequentFormula());
     }

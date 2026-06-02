@@ -65,18 +65,18 @@ public class SymExStrategy extends AbstractFeatureStrategy implements ComponentS
         final Feature functionSpecF = longConst(0);
         final String methProp =
             strategyProperties.getProperty(StrategyProperties.FUNCTION_OPTIONS_KEY);
-        //TODO: comment in as soon as function contracts or expansions are supported
-//        switch (methProp) {
-//            case StrategyProperties.FUNCTION_CONTRACT ->
-//                functionSpecF = functionSpecFeature(longConst(-20));
-//            case StrategyProperties.FUNCTION_EXPAND, StrategyProperties.FUNCTION_NONE ->
-//                functionSpecF =
-//                    functionSpecFeature(inftyConst());
-//            default -> {
-//                functionSpecF = null;
-//                assert false;
-//            }
-//        }
+        // TODO: comment in as soon as function contracts or expansions are supported
+        // switch (methProp) {
+        // case StrategyProperties.FUNCTION_CONTRACT ->
+        // functionSpecF = functionSpecFeature(longConst(-20));
+        // case StrategyProperties.FUNCTION_EXPAND, StrategyProperties.FUNCTION_NONE ->
+        // functionSpecF =
+        // functionSpecFeature(inftyConst());
+        // default -> {
+        // functionSpecF = null;
+        // assert false;
+        // }
+        // }
 
         return SumFeature.createSum(functionSpecF, dispatcher);
     }

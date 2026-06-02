@@ -1253,7 +1253,7 @@ public abstract class TacletApp implements RuleApp {
 
     @Override
     public <G extends ProofGoal<G>> RuleAppContainer createRuleAppContainer(PosInOccurrence pos,
-                                                                            ProofGoal<G> goal, boolean initial) {
+            ProofGoal<G> goal, boolean initial) {
         throw new UnsupportedOperationException("Not supported for taclet app " + getClass());
     }
 

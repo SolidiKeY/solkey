@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.rule.matching.instructions;
 
+import java.util.Set;
+
 import org.key_project.logic.LogicServices;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.prover.rules.instantiation.MatchResultInfo;
@@ -10,8 +12,6 @@ import org.key_project.prover.rules.matcher.vm.instruction.MatchInstruction;
 import org.key_project.solidity.logic.op.SModality;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.solidity.rule.sv.ModalOperatorSV;
-
-import java.util.Set;
 
 public class MatchModalOperatorSVInstruction implements MatchInstruction {
     private final Set<SModality.SolidityModalityKind> modalityKinds;

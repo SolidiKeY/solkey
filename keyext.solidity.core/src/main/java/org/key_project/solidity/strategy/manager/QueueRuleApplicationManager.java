@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.manager;
 
-import org.jspecify.annotations.NullMarked;
-import org.jspecify.annotations.Nullable;
+import java.util.ArrayList;
+import java.util.Iterator;
+
 import org.key_project.prover.rules.RuleApp;
 import org.key_project.prover.sequent.PosInOccurrence;
 import org.key_project.prover.strategy.RuleApplicationManager;
@@ -15,12 +16,11 @@ import org.key_project.solidity.strategy.TacletAppContainer;
 import org.key_project.util.collection.ImmutableHeap;
 import org.key_project.util.collection.ImmutableLeftistHeap;
 import org.key_project.util.collection.ImmutableList;
-
-import org.jspecify.annotations.NonNull;
 import org.key_project.util.collection.ImmutableSLList;
 
-import java.util.ArrayList;
-import java.util.Iterator;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 @NullMarked
 public class QueueRuleApplicationManager implements RuleApplicationManager<Goal> {
@@ -82,7 +82,7 @@ public class QueueRuleApplicationManager implements RuleApplicationManager<Goal>
         // reports its contents to the rule manager of the goal, which is not
         // necessarily this object
         goal.ruleAppIndex().reportAutomatedRuleApps(goal.getRuleAppManager(),
-                goal.proof().getServices());
+            goal.proof().getServices());
     }
 
     /// Implementation of the method from <code>NewRuleListener</code>. The new rule app is added to
@@ -105,7 +105,7 @@ public class QueueRuleApplicationManager implements RuleApplicationManager<Goal>
     /// the heap
     @Override
     public void rulesAdded(ImmutableList<? extends RuleApp> rules,
-                           PosInOccurrence pos) {
+            PosInOccurrence pos) {
         if (queue == null) {
             // then the heap has to be rebuilt completely anyway, and the new
             // rule app is not of interest for us
@@ -113,7 +113,7 @@ public class QueueRuleApplicationManager implements RuleApplicationManager<Goal>
         }
 
         final ImmutableList<RuleAppContainer> containers =
-                RuleAppContainer.createAppContainers(rules, pos, goal);
+            RuleAppContainer.createAppContainers(rules, pos, goal);
         ensureQueueExists();
         for (RuleAppContainer rac : containers) {
             addRuleApp(rac);
@@ -126,7 +126,7 @@ public class QueueRuleApplicationManager implements RuleApplicationManager<Goal>
 
     /// Add a number of new rule apps to the heap
     private static ImmutableHeap<RuleAppContainer> push(Iterator<RuleAppContainer> it,
-                                                        ImmutableHeap<RuleAppContainer> sourceQueue) {
+            ImmutableHeap<RuleAppContainer> sourceQueue) {
         while (it.hasNext()) {
             sourceQueue = push(it.next(), sourceQueue);
         }
@@ -135,7 +135,7 @@ public class QueueRuleApplicationManager implements RuleApplicationManager<Goal>
 
     /// Add a new rule app to the heap, provided that the rule app is not infinitely expensive
     private static ImmutableHeap<RuleAppContainer> push(RuleAppContainer c,
-                                                        ImmutableHeap<RuleAppContainer> sourceQueue) {
+            ImmutableHeap<RuleAppContainer> sourceQueue) {
         if (c.getCost() == TopRuleAppCost.INSTANCE) {
             return sourceQueue;
         } else {
@@ -188,7 +188,7 @@ public class QueueRuleApplicationManager implements RuleApplicationManager<Goal>
          * previous round.
          */
         ImmutableHeap<@NonNull RuleAppContainer> furtherAppsQueue =
-                createFurtherApps(previousMinimum, goal);
+            createFurtherApps(previousMinimum, goal);
         previousMinimum = null;
 
         computeNextRuleApp(furtherAppsQueue);
@@ -277,8 +277,8 @@ public class QueueRuleApplicationManager implements RuleApplicationManager<Goal>
                      * be considered during the current round.
                      */
                     furtherAppsQueue =
-                            push(minRuleAppContainer.createFurtherApps(goal).iterator(),
-                                    furtherAppsQueue);
+                        push(minRuleAppContainer.createFurtherApps(goal).iterator(),
+                            furtherAppsQueue);
                 }
             } else {
                 /*

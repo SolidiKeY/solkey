@@ -17,7 +17,6 @@ import org.key_project.solidity.parser.SolidityToKeyConverter;
 import org.key_project.solidity.program.ast.Context;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.program.parser.SolcParser;
-import org.key_project.solidity.rule.sv.ProgramSV;
 
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;

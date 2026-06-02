@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.rule.matching.instructions;
 
-import org.jspecify.annotations.Nullable;
 import org.key_project.logic.LogicServices;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.Term;
@@ -14,6 +13,8 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.BoundVariable;
 import org.key_project.solidity.rule.matching.inst.MatchConditions;
 import org.key_project.solidity.rule.sv.VariableSV;
+
+import org.jspecify.annotations.Nullable;
 
 /// This instruction matches the variable below a binder (e.g. a quantifier).
 public class BindVariablesInstruction {

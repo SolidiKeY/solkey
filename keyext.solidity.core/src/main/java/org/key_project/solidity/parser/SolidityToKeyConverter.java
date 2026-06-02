@@ -6,7 +6,6 @@ package org.key_project.solidity.parser;
 import java.math.BigInteger;
 import java.util.List;
 
-import org.antlr.v4.runtime.Token;
 import org.key_project.logic.Name;
 import org.key_project.logic.Namespace;
 import org.key_project.logic.SyntaxElement;
@@ -27,8 +26,9 @@ import org.key_project.solidity.program.ast.ghost.*;
 import org.key_project.solidity.program.ast.references.FunctionReference;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.program.parser.ParserUtils;
-import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.util.collection.ImmutableArray;
+
+import org.antlr.v4.runtime.Token;
 
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Default;
 
@@ -83,7 +83,8 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         return sv;
     }
 
-    private void reportError(String errorMsg, Token tokenWithPos) throws PositionedConverterException {
+    private void reportError(String errorMsg, Token tokenWithPos)
+            throws PositionedConverterException {
         int line = tokenWithPos != null ? tokenWithPos.getLine() : -1;
         int column = tokenWithPos != null ? tokenWithPos.getCharPositionInLine() : -1;
         throw new PositionedConverterException(errorMsg, line, column);
@@ -101,10 +102,10 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     @Override
     public SyntaxElement visitTupleExpression(TupleExpressionContext ctx) {
         throw new RuntimeException("Not implemented yet");
-//        List<Expression> exps = parseExps(ctx.expression());
-//        TupleType tupleType = services.getSolidityInfo().getTupleTypeMap(
-//            exps.stream().map(Expression::getType).toList());
-//        return new TupleExpression(tupleType, exps);
+        // List<Expression> exps = parseExps(ctx.expression());
+        // TupleType tupleType = services.getSolidityInfo().getTupleTypeMap(
+        // exps.stream().map(Expression::getType).toList());
+        // return new TupleExpression(tupleType, exps);
     }
 
     List<Expression> parseExps(List<ExpressionContext> exps) {
@@ -205,9 +206,9 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     public SyntaxElement visitTypeDefined(TypeNameContext ctx) {
         throw new RuntimeException("Not implemented yet");
-//        Type type = services.getSolidityInfo().getType(new Name(ctx.getText()));
-//        final Sort sort = type.getSort(services);
-//        return new KeYSolidityType(type, sort);
+        // Type type = services.getSolidityInfo().getType(new Name(ctx.getText()));
+        // final Sort sort = type.getSort(services);
+        // return new KeYSolidityType(type, sort);
     }
 
     @Override
@@ -224,16 +225,16 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     @Override
     public SyntaxElement visitArrayType(ArrayTypeContext ctx) {
         throw new RuntimeException("Not implemented yet");
-//        Type primaryType = (Type) visitTypeName(ctx.typeName());
-//        if (ctx.expression() == null) {
-//            Type type = services.getSolidityInfo().getDynamicTypeMap(primaryType.name());
-//            final Sort sort = type.getSort(services);
-//            return new KeYSolidityType(type, sort);
-//        }
-//        Expression sizeExp = visitExpression(ctx.expression());
-//        Type type = services.getSolidityInfo().getStaticTypeMap(primaryType.name(), sizeExp);
-//        final Sort sort = type.getSort(services);
-//        return new KeYSolidityType(type, sort);
+        // Type primaryType = (Type) visitTypeName(ctx.typeName());
+        // if (ctx.expression() == null) {
+        // Type type = services.getSolidityInfo().getDynamicTypeMap(primaryType.name());
+        // final Sort sort = type.getSort(services);
+        // return new KeYSolidityType(type, sort);
+        // }
+        // Expression sizeExp = visitExpression(ctx.expression());
+        // Type type = services.getSolidityInfo().getStaticTypeMap(primaryType.name(), sizeExp);
+        // final Sort sort = type.getSort(services);
+        // return new KeYSolidityType(type, sort);
     }
 
     @Override
@@ -366,7 +367,8 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitElementaryTypeName(ElementaryTypeNameContext ctx) {
-        return services.getSolidityInfo().getKeYSolidityType(SolidityInfo.getPrimitiveType(ctx.getText()));
+        return services.getSolidityInfo()
+                .getKeYSolidityType(SolidityInfo.getPrimitiveType(ctx.getText()));
     }
 
     @Override

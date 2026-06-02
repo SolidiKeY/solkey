@@ -61,7 +61,8 @@ public class SolJsonParserTest {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         assertEquals(1, contractDeclaration.getFieldDeclarations().size());
         assertEquals(Storage,
-            contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getDataLocation());
+            contractDeclaration.getFieldDeclarations().get(0).getProgramVariable()
+                    .getDataLocation());
         assertSame(UINT256,
             contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getType());
         StateVariableDeclaration balanceDecl = contractDeclaration.getFieldDeclarations().get(0);
@@ -481,7 +482,8 @@ public class SolJsonParserTest {
         String structName = contractDeclaration.getStructs().get(0).name().toString();
         assertEquals("SimpleContract.Person", structName);
         assertEquals(Memory,
-            contractDeclaration.getFunctions().get(0).getInputParameters().get(0).getDataLocation());
+            contractDeclaration.getFunctions().get(0).getInputParameters().get(0)
+                    .getDataLocation());
     }
 
     @Test
@@ -500,7 +502,8 @@ public class SolJsonParserTest {
         StructDeclaration struct = structs.getFirst();
         assertEquals(1, struct.getFields().size());
         assertEquals(Storage,
-            contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getDataLocation());
+            contractDeclaration.getFieldDeclarations().get(0).getProgramVariable()
+                    .getDataLocation());
         assertEquals(1, struct.getChildCount());
         assertInstanceOf(FieldDeclaration.class, struct.getChild(0));
         FieldDeclaration field = struct.getFields().get(0);

@@ -7,11 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.key_project.logic.Name;
-import org.key_project.logic.Namespace;
 import org.key_project.logic.SyntaxElement;
-import org.key_project.logic.sort.Sort;
-import org.key_project.solidity.common.Services;
-import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.util.collection.ImmutableArray;
 

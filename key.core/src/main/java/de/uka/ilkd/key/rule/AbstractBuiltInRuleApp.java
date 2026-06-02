@@ -8,8 +8,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import de.uka.ilkd.key.logic.op.LocationVariable;
 import de.uka.ilkd.key.proof.Goal;
-
 import de.uka.ilkd.key.strategy.BuiltInRuleAppContainer;
+
 import org.key_project.logic.Namespace;
 import org.key_project.logic.op.Function;
 import org.key_project.prover.proof.ProofGoal;
@@ -133,7 +133,7 @@ public abstract class AbstractBuiltInRuleApp<T extends BuiltInRule> implements I
 
     @Override
     public <G extends ProofGoal<G>> RuleAppContainer createRuleAppContainer(PosInOccurrence pos,
-                                                                            ProofGoal<G> p_goal, boolean initial) {
+            ProofGoal<G> p_goal, boolean initial) {
         var goal = (Goal) p_goal;
         final RuleAppCost cost = goal.getGoalStrategy().computeCost(this, pio, goal);
         return new BuiltInRuleAppContainer(this, pio, cost, goal);

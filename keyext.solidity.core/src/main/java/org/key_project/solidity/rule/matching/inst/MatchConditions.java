@@ -9,7 +9,7 @@ import org.key_project.solidity.logic.op.BoundVariable;
 
 public class MatchConditions extends MatchResultInfo {
     public static final MatchConditions EMPTY_MATCHCONDITIONS =
-            new MatchConditions(SVInstantiations.EMPTY_SVINSTANTIATIONS, LogicVariableTable.EMPTY);
+        new MatchConditions(SVInstantiations.EMPTY_SVINSTANTIATIONS, LogicVariableTable.EMPTY);
 
     private final LogicVariableTable lvTable;
 

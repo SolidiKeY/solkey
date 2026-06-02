@@ -53,14 +53,14 @@ public class ParserForTesting {
         KeYSolidityType ksStructType = new KeYSolidityType(structDeclaration, sort);
         services.getSolidityInfo().put(ksStructType);
 
-//        Name enumName = new Name("State");
-//        EnumDeclaration stateEnum = new EnumDeclaration(enumName, List.of(
-//            new MemberEnumDeclaration(new Name("Begin")),
-//            new MemberEnumDeclaration(new Name("End"))));
-//        final Sort enumSort = stateEnum.getSort(services);
-//        KeYSolidityType ksEnumType = new KeYSolidityType(stateEnum, enumSort);
-//        services.getSolidityInfo().addType(enumSort, ksEnumType);
-//        services.getNamespaces().sorts().add(enumSort);
+        // Name enumName = new Name("State");
+        // EnumDeclaration stateEnum = new EnumDeclaration(enumName, List.of(
+        // new MemberEnumDeclaration(new Name("Begin")),
+        // new MemberEnumDeclaration(new Name("End"))));
+        // final Sort enumSort = stateEnum.getSort(services);
+        // KeYSolidityType ksEnumType = new KeYSolidityType(stateEnum, enumSort);
+        // services.getSolidityInfo().addType(enumSort, ksEnumType);
+        // services.getNamespaces().sorts().add(enumSort);
 
         Namespace<FunctionDeclaration> functions = new Namespace<>();
         FunctionDeclaration f = new FunctionDeclaration(new Name("f"),

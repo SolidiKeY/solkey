@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy;
 
+import java.util.Iterator;
+
 import org.key_project.logic.PosInTerm;
 import org.key_project.prover.caches.AssumesInstantiationCachePool;
 import org.key_project.prover.indexing.FormulaTagManager;
@@ -22,8 +24,6 @@ import org.key_project.util.collection.ImmutableArray;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
 
-import java.util.Iterator;
-
 /// This class implements custom instantiation of if-formulas.
 public class AssumesInstantiator {
     private final Goal goal;
@@ -40,8 +40,8 @@ public class AssumesInstantiator {
         this.goal = goal;
         this.tacletAppContainer = tacletAppContainer;
         this.assumesInstCache =
-                goal.proof().getServices().getCaches().getAssumesInstantiationCache()
-                        .getCache(goal.getNode());
+            goal.proof().getServices().getCaches().getAssumesInstantiationCache()
+                    .getCache(goal.getNode());
     }
 
     private void addResult(NoPosTacletApp app) {
@@ -71,11 +71,11 @@ public class AssumesInstantiator {
             allAntecFormulas = AssumesFormulaInstSeq.createList(p_seq, true, services);
             allSuccFormulas = AssumesFormulaInstSeq.createList(p_seq, false, services);
             findAssumesFormulaInstantiationsHelp(assumesSequent.succedent().asList().reverse(), //// Matching
-                    //// with the
-                    //// last
-                    //// formula
-                    assumesSequent.antecedent().asList().reverse(), ImmutableSLList.nil(),
-                    tacletAppContainer.getTacletApp().matchConditions(), false);
+                //// with the
+                //// last
+                //// formula
+                assumesSequent.antecedent().asList().reverse(), ImmutableSLList.nil(),
+                tacletAppContainer.getTacletApp().matchConditions(), false);
         }
     }
 
@@ -88,13 +88,13 @@ public class AssumesInstantiator {
     /// @return a list of potential if-formula instantiations (analogously to
     /// <code>IfFormulaInstSeq.createList</code>)
     private ImmutableArray<AssumesFormulaInstantiation> getSequentFormulas(boolean p_antec,
-                                                                           boolean p_all) {
+            boolean p_all) {
         if (p_all) {
             return getAllSequentFormulas(p_antec);
         }
 
         final ImmutableArray<AssumesFormulaInstantiation> cache =
-                getNewSequentFormulasFromCache(p_antec);
+            getNewSequentFormulasFromCache(p_antec);
         if (cache != null) {
             return cache;
         }
@@ -112,9 +112,9 @@ public class AssumesInstantiator {
     /// <code>true</code>
     private ImmutableArray<AssumesFormulaInstantiation> selectNewFormulas(boolean p_antec) {
         final ImmutableArray<AssumesFormulaInstantiation> allSequentFormulas =
-                getAllSequentFormulas(p_antec);
+            getAllSequentFormulas(p_antec);
         final AssumesFormulaInstantiation[] res =
-                new AssumesFormulaInstantiation[allSequentFormulas.size()];
+            new AssumesFormulaInstantiation[allSequentFormulas.size()];
 
         int i = 0;
         for (final AssumesFormulaInstantiation ifInstantiation : allSequentFormulas) {
@@ -133,7 +133,7 @@ public class AssumesInstantiator {
         final boolean antec = p_ifInstantiation.inAntecedent();
 
         final ImmutableArray<AssumesFormulaInstantiation> cache =
-                getNewSequentFormulasFromCache(antec);
+            getNewSequentFormulasFromCache(antec);
 
         if (cache != null) {
             return cache.contains(p_ifInstantiation);
@@ -149,9 +149,9 @@ public class AssumesInstantiator {
         final boolean antec = p_ifInstantiation.inAntecedent();
 
         final SequentFormula cfma =
-                p_ifInstantiation.getSequentFormula();
+            p_ifInstantiation.getSequentFormula();
         final PosInOccurrence pio =
-                new PosInOccurrence(cfma, PosInTerm.getTopLevel(), antec);
+            new PosInOccurrence(cfma, PosInTerm.getTopLevel(), antec);
 
         final FormulaTagManager tagManager = goal.getFormulaTagManager();
 
@@ -169,7 +169,7 @@ public class AssumesInstantiator {
     }
 
     private void addNewSequentFormulasToCache(ImmutableArray<AssumesFormulaInstantiation> p_list,
-                                              boolean p_antec) {
+            boolean p_antec) {
         assumesInstCache.put(p_antec, tacletAppContainer.getAge(), p_list);
     }
 
@@ -207,23 +207,23 @@ public class AssumesInstantiator {
         // Match the current formula
         final boolean antec = p_ifSeqTail2nd == null;
         final boolean lastIfFormula =
-                p_ifSeqTail.size() == 1 && (p_ifSeqTail2nd == null || p_ifSeqTail2nd.isEmpty());
+            p_ifSeqTail.size() == 1 && (p_ifSeqTail2nd == null || p_ifSeqTail2nd.isEmpty());
         final ImmutableArray<AssumesFormulaInstantiation> formulas =
-                getSequentFormulas(antec, !lastIfFormula || p_alreadyMatchedNewFor);
+            getSequentFormulas(antec, !lastIfFormula || p_alreadyMatchedNewFor);
         final AssumesMatchResult mr = getTaclet().getMatcher().matchAssumes(formulas,
-                p_ifSeqTail.head().formula(), p_matchCond, getServices());
+            p_ifSeqTail.head().formula(), p_matchCond, getServices());
 
         // For each matching formula call the method again to match
         // the remaining terms
         Iterator<? extends MatchResultInfo> itMC =
-                mr.matchConditions().iterator();
+            mr.matchConditions().iterator();
         p_ifSeqTail = p_ifSeqTail.tail();
         for (final AssumesFormulaInstantiation ifInstantiation : mr.candidates()) {
             final boolean nextAlreadyMatchedNewFor = lastIfFormula || p_alreadyMatchedNewFor
                     || isNewFormula((AssumesFormulaInstSeq) ifInstantiation);
             findAssumesFormulaInstantiationsHelp(p_ifSeqTail, p_ifSeqTail2nd,
-                    p_alreadyMatched.prepend(ifInstantiation), (MatchConditions) itMC.next(),
-                    nextAlreadyMatchedNewFor);
+                p_alreadyMatched.prepend(ifInstantiation), (MatchConditions) itMC.next(),
+                nextAlreadyMatchedNewFor);
         }
     }
 
@@ -232,9 +232,9 @@ public class AssumesInstantiator {
     }
 
     private NoPosTacletApp setAllInstantiations(MatchConditions p_matchCond,
-                                                ImmutableList<AssumesFormulaInstantiation> p_alreadyMatched) {
+            ImmutableList<AssumesFormulaInstantiation> p_alreadyMatched) {
         return NoPosTacletApp.createNoPosTacletApp(getTaclet(), p_matchCond.getInstantiations(),
-                p_alreadyMatched, getServices());
+            p_alreadyMatched, getServices());
     }
 
     /// @return Returns the results.

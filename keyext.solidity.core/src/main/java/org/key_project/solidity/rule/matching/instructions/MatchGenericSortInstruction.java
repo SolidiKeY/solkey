@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.rule.matching.instructions;
 
-import org.jspecify.annotations.Nullable;
 import org.key_project.logic.LogicServices;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
@@ -14,6 +13,8 @@ import org.key_project.solidity.logic.sort.GenericSort;
 import org.key_project.solidity.rule.matching.inst.GenericSortCondition;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.solidity.rule.matching.inst.SortException;
+
+import org.jspecify.annotations.Nullable;
 
 public class MatchGenericSortInstruction implements MatchInstruction {
     private final GenericSort genericSortOfOp;

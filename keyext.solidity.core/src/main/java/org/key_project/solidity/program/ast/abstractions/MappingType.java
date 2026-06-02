@@ -3,14 +3,9 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.abstractions;
 
-import java.util.Objects;
 
 import org.key_project.logic.Name;
-import org.key_project.logic.Namespace;
 import org.key_project.logic.SyntaxElement;
-import org.key_project.logic.sort.Sort;
-import org.key_project.solidity.common.Services;
-import org.key_project.solidity.logic.sort.MappingSort;
 
 import org.jspecify.annotations.NonNull;
 

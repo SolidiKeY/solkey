@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.rule.matching;
 
+import java.util.HashMap;
+
 import org.key_project.logic.LogicServices;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.Term;
@@ -27,8 +29,6 @@ import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
 import org.key_project.util.collection.ImmutableSet;
 import org.key_project.util.collection.Pair;
-
-import java.util.HashMap;
 
 import static org.key_project.solidity.logic.equality.RenamingTermProperty.RENAMING_TERM_PROPERTY;
 
@@ -68,7 +68,7 @@ public class VMTacletMatcher implements TacletMatcher {
             ignoreTopLevelUpdates = ft.ignoreTopLevelUpdates()
                     && !(findExp.op() instanceof UpdateApplication);
             findMatchProgram =
-                    new VMProgramInterpreter(SyntaxElementMatchProgramGenerator.createProgram(findExp));
+                new VMProgramInterpreter(SyntaxElementMatchProgramGenerator.createProgram(findExp));
 
         } else {
             ignoreTopLevelUpdates = false;
@@ -78,7 +78,7 @@ public class VMTacletMatcher implements TacletMatcher {
 
         for (var sf : assumesSequent) {
             assumesMatchPrograms.put(sf.formula(), new VMProgramInterpreter(
-                    SyntaxElementMatchProgramGenerator.createProgram(sf.formula())));
+                SyntaxElementMatchProgramGenerator.createProgram(sf.formula())));
         }
     }
 
@@ -92,7 +92,7 @@ public class VMTacletMatcher implements TacletMatcher {
         }
         if (ignoreTopLevelUpdates) {
             Pair</* term below updates */Term, MatchResultInfo> resultUpdateMatch =
-                    matchAndIgnoreUpdatePrefix(term, matchCond);
+                matchAndIgnoreUpdatePrefix(term, matchCond);
             term = resultUpdateMatch.first;
             matchCond = resultUpdateMatch.second;
         }
@@ -135,9 +135,9 @@ public class VMTacletMatcher implements TacletMatcher {
     /// {@inheritDoc}
     @Override
     public final MatchConditions checkVariableConditions(SchemaVariable var,
-                                                         SyntaxElement instantiationCandidate,
-                                                         MatchResultInfo matchCond,
-                                                         LogicServices services) {
+            SyntaxElement instantiationCandidate,
+            MatchResultInfo matchCond,
+            LogicServices services) {
         if (matchCond != null) {
             if (instantiationCandidate instanceof Term term) {
                 if (!(term.op() instanceof QuantifiableVariable)) {
@@ -177,7 +177,7 @@ public class VMTacletMatcher implements TacletMatcher {
     /// updates
     /// (Which have been added to the update context in the match conditions)
     private Pair<Term, MatchResultInfo> matchAndIgnoreUpdatePrefix(final Term term,
-                                                                   MatchResultInfo matchCond) {
+            MatchResultInfo matchCond) {
         final Operator sourceOp = term.op();
 
         if (sourceOp instanceof UpdateApplication) {
@@ -185,7 +185,7 @@ public class VMTacletMatcher implements TacletMatcher {
             Term update = UpdateApplication.getUpdate(term);
             var instantiations = ((MatchConditions) matchCond).getInstantiations();
             matchCond = matchCond.setInstantiations(
-                    instantiations.addUpdate(update));
+                instantiations.addUpdate(update));
             return matchAndIgnoreUpdatePrefix(UpdateApplication.getTarget(term), matchCond);
         } else {
             return new Pair<>(term, matchCond);
@@ -194,21 +194,21 @@ public class VMTacletMatcher implements TacletMatcher {
 
     @Override
     public final AssumesMatchResult matchAssumes(Iterable<AssumesFormulaInstantiation> toMatch,
-                                                 org.key_project.logic.Term p_template,
-                                                 MatchResultInfo p_matchCond,
-                                                 LogicServices p_services) {
+            org.key_project.logic.Term p_template,
+            MatchResultInfo p_matchCond,
+            LogicServices p_services) {
         VMProgramInterpreter prg = assumesMatchPrograms.get(p_template);
         MatchConditions matchCond = (MatchConditions) p_matchCond;
 
         ImmutableList<AssumesFormulaInstantiation> resFormulas =
-                ImmutableSLList.nil();
+            ImmutableSLList.nil();
         ImmutableList<MatchResultInfo> resMC =
-                ImmutableSLList.nil();
+            ImmutableSLList.nil();
 
         final boolean updateContextPresent =
-                !matchCond.getInstantiations().getUpdateContext().isEmpty();
+            !matchCond.getInstantiations().getUpdateContext().isEmpty();
         ImmutableList<Term> context =
-                ImmutableSLList.nil();
+            ImmutableSLList.nil();
 
         if (updateContextPresent) {
             context = matchCond.getInstantiations().getUpdateContext();
@@ -222,7 +222,7 @@ public class VMTacletMatcher implements TacletMatcher {
             }
             if (formula != null) {// update context not present or update context match succeeded
                 final MatchConditions newMC =
-                        checkConditions(prg.match(formula, matchCond, p_services), p_services);
+                    checkConditions(prg.match(formula, matchCond, p_services), p_services);
 
                 if (newMC != null) {
                     resFormulas = resFormulas.prepend(cf);
@@ -277,9 +277,9 @@ public class VMTacletMatcher implements TacletMatcher {
                     // Only IfFormulaInstSeq has inAntec() property ...
                     && (((AssumesFormulaInstSeq) candidateInst).inAntecedent())
                     || !(candidateInst instanceof AssumesFormulaInstSeq)
-                    // ... and it seems we don't need the check for other implementations.
-                    // Default: just take the next ante formula, else succ formula
-                    && anteIterator.hasNext();
+                            // ... and it seems we don't need the check for other implementations.
+                            // Default: just take the next ante formula, else succ formula
+                            && anteIterator.hasNext();
 
             var itIfSequent = candidateInAntec ? anteIterator : succIterator;
             // Fix end
@@ -287,8 +287,8 @@ public class VMTacletMatcher implements TacletMatcher {
             assert itIfSequent.hasNext()
                     : "toMatch and assumes sequent must have same number of elements";
             newMC = matchAssumes(
-                    ImmutableSLList.<AssumesFormulaInstantiation>nil().prepend(candidateInst),
-                    itIfSequent.next().formula(), p_matchCond, p_services).matchConditions();
+                ImmutableSLList.<AssumesFormulaInstantiation>nil().prepend(candidateInst),
+                itIfSequent.next().formula(), p_matchCond, p_services).matchConditions();
 
             if (newMC.isEmpty()) {
                 return null;
@@ -305,12 +305,12 @@ public class VMTacletMatcher implements TacletMatcher {
     /// {@inheritDoc}
     @Override
     public MatchConditions matchSV(SchemaVariable sv,
-                                   SyntaxElement syntaxElement,
-                                   MatchResultInfo matchCond,
-                                   LogicServices services) {
+            SyntaxElement syntaxElement,
+            MatchResultInfo matchCond,
+            LogicServices services) {
 
         final MatchSchemaVariableInstruction instr =
-                SolidityDLMatchInstructionSet.getMatchInstructionForSV(sv);
+            SolidityDLMatchInstructionSet.getMatchInstructionForSV(sv);
 
         if (syntaxElement instanceof Term term) {
             matchCond = instr.match(term, matchCond, services);

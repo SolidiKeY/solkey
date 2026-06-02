@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.pp;
 
-import org.jspecify.annotations.NonNull;
-
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Queue;
 import java.util.StringTokenizer;
+
+import org.jspecify.annotations.NonNull;
 
 public class Layouter<M> {
     /// The Printer used for output.

@@ -6,7 +6,7 @@ package org.key_project.solidity.program;
 import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 
 public class ProgramPrefixUtil {
-    public record ProgramPrefixInfo(int length/* , @Nullable MethodFrame innermostMethodFrame*/) {
+    public record ProgramPrefixInfo(int length/* , @Nullable MethodFrame innermostMethodFrame */) {
     }
 
     public static ProgramPrefixInfo computeEssentials(

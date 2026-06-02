@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.rule.sv;
 
+import java.util.ArrayList;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.Term;
@@ -22,8 +24,6 @@ import org.key_project.util.collection.ImmutableArray;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
 
 public class ProgramSV extends OperatorSV implements Expression, UpdateableOperator {
     public static final Logger LOGGER = LoggerFactory.getLogger(ProgramSV.class);
@@ -74,17 +74,18 @@ public class ProgramSV extends OperatorSV implements Expression, UpdateableOpera
 
     /**
      * adds a found mapping from schema variable <code>var</code> to program element <code>pe</code>
-            * and returns the updated match conditions or null if mapping is not possible because of
+     * and returns the updated match conditions or null if mapping is not possible because of
      * violating some variable condition
      *
-             * @param pe the ProgramElement <code>var</code> is mapped to
+     * @param pe the ProgramElement <code>var</code> is mapped to
      * @param matchCond the MatchConditions to be updated
      * @param services the Services provide access to the Java model
      * @return the updated match conditions including mapping <code>var</code> to <code>pe</code> or
      *         null if some variable condition would be hurt by the mapping
      */
-    private MatchConditions addProgramInstantiation(SolidityProgramElement pe, MatchConditions matchCond,
-                                                    Services services) {
+    private MatchConditions addProgramInstantiation(SolidityProgramElement pe,
+            MatchConditions matchCond,
+            Services services) {
         if (matchCond == null) {
             return null;
         }
@@ -124,8 +125,8 @@ public class ProgramSV extends OperatorSV implements Expression, UpdateableOpera
      *         or null if some variable condition would be hurt by the mapping
      */
     private MatchConditions addProgramInstantiation(ImmutableArray<SolidityProgramElement> list,
-                                                    MatchConditions matchCond,
-                                                    Services services) {
+            MatchConditions matchCond,
+            Services services) {
         if (matchCond == null) {
             return null;
         }
@@ -187,7 +188,7 @@ public class ProgramSV extends OperatorSV implements Expression, UpdateableOpera
             }
         } else {
             LOGGER.debug("Match failed: Former match of "
-                    + " SchemaVariable incompatible with " + " the current match.");
+                + " SchemaVariable incompatible with " + " the current match.");
             return null; // FAILED mismatch
         }
         source.next();
@@ -205,7 +206,7 @@ public class ProgramSV extends OperatorSV implements Expression, UpdateableOpera
         SVInstantiations instantiations = matchCond.getInstantiations();
 
         final ArrayList<SolidityProgramElement> matchedElements =
-                new ArrayList<>();
+            new ArrayList<>();
 
         while (src != null) {
             if (!check(src, services)) {

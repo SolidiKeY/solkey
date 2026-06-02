@@ -30,8 +30,8 @@ import org.key_project.solidity.logic.TermFactory;
 import org.key_project.solidity.logic.op.*;
 import org.key_project.solidity.parser.KeYSolidityDLLexer;
 import org.key_project.solidity.parser.KeYSolidityDLParser;
-import org.key_project.solidity.program.SoliditySchemaReader;
 import org.key_project.solidity.program.SolidityReader;
+import org.key_project.solidity.program.SoliditySchemaReader;
 import org.key_project.solidity.proof.calculus.SoliditySequentKit;
 import org.key_project.solidity.rule.sv.ModalOperatorSV;
 import org.key_project.solidity.rule.sv.VariableSV;
@@ -178,7 +178,8 @@ public class ExpressionBuilder extends DefaultBuilder {
                 }
             }
         } catch (Exception e) {
-            throw new BuildingException(t, "Could not parse Solidity code: '" + cleanSolidity + "'", e);
+            throw new BuildingException(t, "Could not parse Solidity code: '" + cleanSolidity + "'",
+                e);
         }
         return sjb;
     }

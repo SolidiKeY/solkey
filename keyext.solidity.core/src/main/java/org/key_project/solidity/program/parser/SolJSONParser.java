@@ -168,14 +168,14 @@ public class SolJSONParser {
 
 
     private EnumDeclaration parseEnum(JsonNode node) {
-//        final int id = node.get("id").asInt();
-//        String name = node.get("name").asString();
-//        List<MemberEnumDeclaration> members =
-//            node.get("members").valueStream().map(this::parseMemberEnum).toList();
-//        EnumDeclaration enumDeclaration = new EnumDeclaration(new Name(name), members);
-//        addTypeToServices(enumDeclaration);
-//        id2Name.put(id, enumDeclaration);
-//        return enumDeclaration;
+        // final int id = node.get("id").asInt();
+        // String name = node.get("name").asString();
+        // List<MemberEnumDeclaration> members =
+        // node.get("members").valueStream().map(this::parseMemberEnum).toList();
+        // EnumDeclaration enumDeclaration = new EnumDeclaration(new Name(name), members);
+        // addTypeToServices(enumDeclaration);
+        // id2Name.put(id, enumDeclaration);
+        // return enumDeclaration;
         throw new RuntimeException("Not implemented yet");
     }
 
@@ -238,7 +238,7 @@ public class SolJSONParser {
         List<ProgramVariable> returnParameters = parameters.map(this::parseParam).toList();
         Type returnType = returnParameters.isEmpty() ? VOID
                 : null;
-//                : getTupleType(returnParameters.stream().map(ProgramVariable::getType).toList());
+        // : getTupleType(returnParameters.stream().map(ProgramVariable::getType).toList());
         functionId2Type.put(id, returnType);
         List<ProgramVariable> inputParamenters =
             node.get("parameters").get("parameters").valueStream()
@@ -379,15 +379,15 @@ public class SolJSONParser {
 
     }
 
-//    private @NonNull DynamicArrayType getDynamicArrayType(Type primitiveType) {
-//        return (DynamicArrayType) services.getSolidityInfo()
-//                .getDynamicTypeMap(primitiveType.name());
-//    }
-//
-//    private @NonNull ArrayType getStaticArrayType(Type primitiveType, int size) {
-//        return (ArrayType) services.getSolidityInfo().getStaticTypeMap(primitiveType.name(), size);
-//    }
-//
+    // private @NonNull DynamicArrayType getDynamicArrayType(Type primitiveType) {
+    // return (DynamicArrayType) services.getSolidityInfo()
+    // .getDynamicTypeMap(primitiveType.name());
+    // }
+    //
+    // private @NonNull ArrayType getStaticArrayType(Type primitiveType, int size) {
+    // return (ArrayType) services.getSolidityInfo().getStaticTypeMap(primitiveType.name(), size);
+    // }
+    //
     private ProgramVariable parseParam(JsonNode node) {
         final int id = node.get("id").asInt();
         final String fieldName = node.get("name").asString();
@@ -417,12 +417,12 @@ public class SolJSONParser {
             case "ElementaryTypeName" -> getPrimitiveType(node.get("name").asString());
             case "ArrayTypeName" -> {
                 throw new RuntimeException("Not yet supported expression type");
-//                Type baseType = parseType(node.get("baseType"));
-//                if (node.has("length")) {
-//                    int size = node.get("length").get("value").asInt();
-//                    yield getStaticArrayType(baseType, size);
-//                } else
-//                    yield getDynamicArrayType(baseType);
+                // Type baseType = parseType(node.get("baseType"));
+                // if (node.has("length")) {
+                // int size = node.get("length").get("value").asInt();
+                // yield getStaticArrayType(baseType, size);
+                // } else
+                // yield getDynamicArrayType(baseType);
             }
             case "Mapping" -> throw new RuntimeException("Not yet supported expression type");
             // getMappingType(parseType(node.get("keyType")), parseType(node.get("valueType")));
@@ -434,9 +434,9 @@ public class SolJSONParser {
         };
     }
 
-//    private @NonNull MappingType getMappingType(Type keyType, Type valueType) {
-//        return services.getSolidityInfo().getMappingTypeMap(keyType, valueType);
-//    }
+    // private @NonNull MappingType getMappingType(Type keyType, Type valueType) {
+    // return services.getSolidityInfo().getMappingTypeMap(keyType, valueType);
+    // }
 
     private StateVariableDeclaration parseVariableField(JsonNode fieldNode) {
         final int id = fieldNode.get("id").asInt();
@@ -462,7 +462,8 @@ public class SolJSONParser {
 
         KeYSolidityType type = getOrCreateKeYSolidityType(expType);
 
-        ProgramVariable programVariable = new ProgramVariable(new Name(fieldName), type, DataLocation.Storage);
+        ProgramVariable programVariable =
+            new ProgramVariable(new Name(fieldName), type, DataLocation.Storage);
         StateVariableDeclaration field =
             new StateVariableDeclaration(programVariable, initializerExp, visibility);
         id2Name.put(id, field);
@@ -543,11 +544,11 @@ public class SolJSONParser {
     }
 
     private Expression parseTuple(JsonNode initializer) {
-          throw new RuntimeException("Not yet supported expression type");
-//        List<Expression> components =
-//            initializer.get("components").valueStream().map(this::parseExpression).toList();
-//        List<Type> types = components.stream().map(Expression::getType).toList();
-//        return new TupleExpression(getTupleType(types), components);
+        throw new RuntimeException("Not yet supported expression type");
+        // List<Expression> components =
+        // initializer.get("components").valueStream().map(this::parseExpression).toList();
+        // List<Type> types = components.stream().map(Expression::getType).toList();
+        // return new TupleExpression(getTupleType(types), components);
     }
 
     private Expression parseConditional(JsonNode initializer) {
@@ -674,29 +675,31 @@ public class SolJSONParser {
         return statement.has(field) ? parseExpression(statement.get(field)) : null;
     }
 
-//    private void addTypeToServices(Type type) {
-//        final Sort sort = type.getSort(services);
-//        KeYSolidityType ksType = new KeYSolidityType(type, sort);
-//        services.getSolidityInfo().addType(sort, type);
-//        services.getNamespaces().sorts().add(sort);
-//    }
-//
-//    private @NonNull KeYSolidityType getUndeclaredSolidityType(@NonNull Type type) {
-//        final Sort sort = type.getSort(services);
-//        KeYSolidityType ksType = new KeYSolidityType(type, sort);
-//        services.getSolidityInfo().addType(sort, ksType);
-//        services.getNamespaces().sorts().add(sort);
-//        return ksType;
-//    }
+    // private void addTypeToServices(Type type) {
+    // final Sort sort = type.getSort(services);
+    // KeYSolidityType ksType = new KeYSolidityType(type, sort);
+    // services.getSolidityInfo().addType(sort, type);
+    // services.getNamespaces().sorts().add(sort);
+    // }
+    //
+    // private @NonNull KeYSolidityType getUndeclaredSolidityType(@NonNull Type type) {
+    // final Sort sort = type.getSort(services);
+    // KeYSolidityType ksType = new KeYSolidityType(type, sort);
+    // services.getSolidityInfo().addType(sort, ksType);
+    // services.getNamespaces().sorts().add(sort);
+    // return ksType;
+    // }
 
     private KeYSolidityType getOrCreateKeYSolidityType(Type type) {
-        assert(type != null && ! (type instanceof KeYSolidityType));
+        assert (type != null && !(type instanceof KeYSolidityType));
         KeYSolidityType kst = services.getSolidityInfo().getKeYSolidityType(type);
         if (kst == null) {
             assert !(type instanceof PrimitiveType); // Primitive types should be already present
             if (type instanceof TupleType tuple) {
-                List<KeYSolidityType> componentTypes = tuple.getTypes().stream().map(this::getOrCreateKeYSolidityType).toList();
-                // TODO need to decide how to represent tuple sorts (in particular, for triples etc.)
+                List<KeYSolidityType> componentTypes =
+                    tuple.getTypes().stream().map(this::getOrCreateKeYSolidityType).toList();
+                // TODO need to decide how to represent tuple sorts (in particular, for triples
+                // etc.)
                 throw new RuntimeException("Tuples not yet supported.");
             } else if (type instanceof DynamicArrayType dynamicArrayType) {
                 throw new RuntimeException("Tuples not yet supported.");

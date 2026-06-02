@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.pp;
 
+import java.util.Iterator;
+
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Operator;
 import org.key_project.logic.op.QuantifiableVariable;
@@ -18,8 +20,6 @@ import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.rule.sv.*;
 import org.key_project.util.collection.ImmutableArray;
 import org.key_project.util.collection.ImmutableList;
-
-import java.util.Iterator;
 
 /// Encapsulate the concrete syntax used to print a term. The [NotationInfo] class associates a
 /// Notation with every [Operator]. The various inner classes of this
@@ -288,7 +288,7 @@ public abstract class Notation {
 
     public static final class SchemaVariableNotation extends VariableNotation {
         public void printDeclaration(SchemaVariable v,
-                                     LogicPrinter sp) {
+                LogicPrinter sp) {
             String svType;
             String specificSort = "";
             if (v instanceof OperatorSV) {

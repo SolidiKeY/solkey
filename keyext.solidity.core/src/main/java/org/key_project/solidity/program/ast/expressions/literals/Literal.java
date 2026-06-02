@@ -8,9 +8,9 @@ import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.SourceData;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.SolidityExpression;
+import org.key_project.solidity.rule.matching.inst.MatchConditions;
 
 import org.jspecify.annotations.NonNull;
-import org.key_project.solidity.rule.matching.inst.MatchConditions;
 
 public abstract class Literal extends SolidityExpression {
     protected Literal(Type type) {

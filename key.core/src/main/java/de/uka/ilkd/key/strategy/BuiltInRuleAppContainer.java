@@ -41,8 +41,8 @@ public class BuiltInRuleAppContainer extends RuleAppContainer {
     // -------------------------------------------------------------------------
 
     public BuiltInRuleAppContainer(IBuiltInRuleApp bir,
-                                   PosInOccurrence pio, RuleAppCost cost,
-                                   Goal goal) {
+            PosInOccurrence pio, RuleAppCost cost,
+            Goal goal) {
         super(bir, cost);
         applicationPosition = pio;
         positionTag = pio == null ? null : goal.getFormulaTagManager().getTagForPos(pio.topLevel());

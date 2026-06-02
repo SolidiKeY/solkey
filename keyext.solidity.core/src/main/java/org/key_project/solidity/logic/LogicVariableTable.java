@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.logic;
 
-import org.jspecify.annotations.Nullable;
 import org.key_project.solidity.logic.op.BoundVariable;
+
+import org.jspecify.annotations.Nullable;
 
 public class LogicVariableTable {
     public static final LogicVariableTable EMPTY = new EmptyLogicVariableTable();

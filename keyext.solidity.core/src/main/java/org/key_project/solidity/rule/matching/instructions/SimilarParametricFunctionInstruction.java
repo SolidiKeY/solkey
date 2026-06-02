@@ -3,12 +3,13 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.rule.matching.instructions;
 
-import org.jspecify.annotations.Nullable;
 import org.key_project.logic.LogicServices;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.prover.rules.instantiation.MatchResultInfo;
 import org.key_project.prover.rules.matcher.vm.instruction.MatchInstruction;
 import org.key_project.solidity.logic.op.ParametricFunctionInstance;
+
+import org.jspecify.annotations.Nullable;
 
 public class SimilarParametricFunctionInstruction implements MatchInstruction {
     private final ParametricFunctionInstance pfi;

@@ -6,7 +6,6 @@ package org.key_project.solidity.program.ast.statement;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.PosInProgram;
 import org.key_project.solidity.program.ProgramPrefix;
@@ -15,6 +14,7 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
+import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 import org.jspecify.annotations.NonNull;
 
 public class Block implements Statement, ProgramPrefix {
@@ -115,6 +115,7 @@ public class Block implements Statement, ProgramPrefix {
 
         return new ImmutableArray<>(prefix);
     }
+
     public void visit(Visitor v) {
         v.performActionOnBlock(this);
     }
