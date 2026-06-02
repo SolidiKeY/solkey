@@ -6,6 +6,7 @@ package org.key_project.solidity.program;
 import java.io.IOException;
 
 import org.key_project.logic.Namespace;
+import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.NamespaceSet;
 import org.key_project.solidity.logic.SolidityBlock;
@@ -16,20 +17,23 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public class SoliditySchemaReader extends SolidityReader {
-    private @Nullable Namespace<@NonNull ProgramSV> svNS;
+    private @Nullable Namespace<@NonNull SchemaVariable> svNS;
 
     public SoliditySchemaReader(Services services, NamespaceSet nss) {
         super(services);
         svNS = null;
     }
 
-    public void setSVNamespace(Namespace<@NonNull ProgramSV> ns) {
+    public void setSVNamespace(Namespace<@NonNull SchemaVariable> ns) {
         this.svNS = ns;
     }
 
+
+    @Override
     public SolidityBlock readBlock(String block, Context context) throws IOException {
-        if (svNS == null)
+        if (svNS == null) {
             return super.readBlock(block, context);
+        }
         return super.readBlock(block, context, svNS);
     }
 }

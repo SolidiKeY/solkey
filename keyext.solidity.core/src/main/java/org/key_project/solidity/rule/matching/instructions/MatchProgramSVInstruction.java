@@ -32,7 +32,7 @@ public class MatchProgramSVInstruction extends MatchSchemaVariableInstruction {
             LogicServices services) {
         final ProgramSVSort svSort = (ProgramSVSort) op.sort();
 
-        // TODO: will need execution context when we add functions (in the Rust programs)
+        // TODO: will need execution context when we add functions (in programs)
         if (svSort.canStandFor(instantiationCandidate, (Services) services)) {
             return addInstantiation(instantiationCandidate, matchCond, (Services) services);
         }

@@ -6,17 +6,16 @@ package org.key_project.solidity.parser;
 import java.math.BigInteger;
 import java.util.List;
 
+import org.antlr.v4.runtime.Token;
 import org.key_project.logic.Name;
 import org.key_project.logic.Namespace;
 import org.key_project.logic.SyntaxElement;
-import org.key_project.logic.sort.Sort;
+import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.solidity.common.Services;
-import org.key_project.solidity.logic.SolidityBlock;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.SolidityInfo;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
-import org.key_project.solidity.program.ast.abstractions.TupleType;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
@@ -36,7 +35,7 @@ import static org.key_project.solidity.program.ast.declarations.FunctionEnums.Da
 public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     private Namespace<FunctionDeclaration> localFunctions;
     private Namespace<ProgramVariable> localVars;
-    final private Namespace<ProgramSV> schemaVariables;
+    final private Namespace<? extends SchemaVariable> schemaVariables;
     final private Services services;
 
     public SolidityToKeyConverter() {
@@ -48,7 +47,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     public SolidityToKeyConverter(Services services, Namespace<FunctionDeclaration> localFunctions,
             Namespace<ProgramVariable> localVars,
-            Namespace<ProgramSV> schemaVariables) {
+            Namespace<? extends SchemaVariable> schemaVariables) {
         this.services = services;
         this.localFunctions = localFunctions;
         this.localVars = localVars;
@@ -75,8 +74,19 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitSchemaVariable(SchemaVariableContext ctx) {
-        String variableName = ctx.getText();
-        return schemaVariables.lookup(variableName);
+        String variableName = ctx.getText().substring(2);
+        // remove s# prefix from name
+        SchemaVariable sv = schemaVariables.lookup(variableName);
+        if (sv == null) {
+            reportError("Schema Variable " + variableName + " not declared.", ctx.start);
+        }
+        return sv;
+    }
+
+    private void reportError(String errorMsg, Token tokenWithPos) throws PositionedConverterException {
+        int line = tokenWithPos != null ? tokenWithPos.getLine() : -1;
+        int column = tokenWithPos != null ? tokenWithPos.getCharPositionInLine() : -1;
+        throw new PositionedConverterException(errorMsg, line, column);
     }
 
     @Override
@@ -365,5 +375,25 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
             return Default;
         String location = ctx.getText();
         return DataLocation.fromString(location);
+    }
+
+    private static class PositionedConverterException extends RuntimeException {
+        private final int line;
+        private final int column;
+
+        public PositionedConverterException(String errorMessage, int line, int column) {
+            super(errorMessage + " at line " + line + ", column " + column);
+            this.line = line;
+            this.column = column;
+        }
+
+        public int line() {
+            return line;
+        }
+
+        public int column() {
+            return column;
+        }
+
     }
 }

@@ -6,6 +6,7 @@ package org.key_project.solidity.program;
 import java.io.IOException;
 
 import org.key_project.logic.Namespace;
+import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.NamespaceSet;
 import org.key_project.solidity.logic.SolidityBlock;
@@ -48,7 +49,7 @@ public class SolidityReader {
     }
 
     public SolidityBlock readBlock(String block, Context context,
-            Namespace<ProgramSV> schemaVariables) throws IOException {
+            Namespace<SchemaVariable> schemaVariables) throws IOException {
         SolcParser solcParser = new SolcParser(services);
         if (context.getSolidityPath() != null)
             solcParser.getDeclStrJsonParser(context.getSolidityPath());

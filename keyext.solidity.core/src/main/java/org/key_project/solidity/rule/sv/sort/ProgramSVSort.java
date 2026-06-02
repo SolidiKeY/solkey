@@ -20,7 +20,7 @@ public abstract class ProgramSVSort extends SortImpl {
         return NAME2SORT;
     }
 
-    public static final ProgramSVSort VARIABLE = null;
+    public static final ProgramSVSort VARIABLE = new ProgramVariableSVSort(new Name("Variable"));
     public static final ProgramSVSort TYPE = null;
     public static final ProgramSVSort EXPRESSION = null;
     public static final ProgramSVSort NON_SIMPLE_EXPRESSION = null;
