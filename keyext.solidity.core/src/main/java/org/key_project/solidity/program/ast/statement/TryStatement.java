@@ -8,8 +8,6 @@ import java.util.stream.Collectors;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.op.ProgramVariable;
-import org.key_project.solidity.program.PosInProgram;
-import org.key_project.solidity.program.ProgramPrefix;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
@@ -17,7 +15,9 @@ import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
 
-public class TryStatement implements Statement, ProgramPrefix {
+/// At the moment TryStatement is not a ProgramPrefix as it works different to
+/// Java and we may not want it to disappear in the prefix, this has to be checked
+public class TryStatement implements Statement {
 
     private final @NonNull Expression expression;
     private final @NonNull ImmutableArray<@NonNull ProgramVariable> returnDeclaration;
@@ -132,40 +132,5 @@ public class TryStatement implements Statement, ProgramPrefix {
         String returnsString = returnDeclaration.size() == 0 ? "" : "returns (" + params + ") ";
         return "try " + expression + " " + returnsString + body + " " +
             catchClauses.stream().map(CatchClause::toString).collect(Collectors.joining());
-    }
-
-    @Override
-    public boolean isPrefix() {
-        throw new RuntimeException("Not implemented yet");
-    }
-
-    @Override
-    public boolean hasNextPrefixElement() {
-        throw new RuntimeException("Not implemented yet");
-    }
-
-    @Override
-    public ProgramPrefix getNextPrefixElement() {
-        throw new RuntimeException("Not implemented yet");
-    }
-
-    @Override
-    public ProgramPrefix getLastPrefixElement() {
-        throw new RuntimeException("Not implemented yet");
-    }
-
-    @Override
-    public ImmutableArray<ProgramPrefix> getPrefixElements() {
-        throw new RuntimeException("Not implemented yet");
-    }
-
-    @Override
-    public PosInProgram getFirstActiveChildPos() {
-        throw new RuntimeException("Not implemented yet");
-    }
-
-    @Override
-    public int getPrefixLength() {
-        throw new RuntimeException("Not implemented yet");
     }
 }

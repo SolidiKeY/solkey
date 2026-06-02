@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.rule.matching;
 
-import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Operator;
 import org.key_project.logic.op.sv.SchemaVariable;
@@ -16,7 +15,6 @@ import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.op.SModality;
 import org.key_project.solidity.logic.sort.GenericSort;
 import org.key_project.solidity.logic.sort.ParametricSortInstance;
-import org.key_project.solidity.rule.matching.instructions.SimilarParametricFunctionInstruction;
 import org.key_project.solidity.rule.sv.ModalOperatorSV;
 
 import java.util.ArrayList;
@@ -116,10 +114,4 @@ public class SyntaxElementMatchProgramGenerator {
         if (!boundVars.isEmpty())
             program.add(unbindVariables(boundVars.size()));
     }
-
-    public static SimilarParametricFunctionInstruction getSimilarParametricFunctionInstruction(
-            ParametricFunctionInstance psi) {
-        return new SimilarParametricFunctionInstruction(psi);
-    }
-
 }

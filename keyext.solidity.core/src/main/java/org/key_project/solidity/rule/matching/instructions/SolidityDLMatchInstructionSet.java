@@ -12,6 +12,7 @@ import org.key_project.prover.rules.matcher.vm.instruction.GotoNextInstruction;
 import org.key_project.prover.rules.matcher.vm.instruction.GotoNextSiblingInstruction;
 import org.key_project.prover.rules.matcher.vm.instruction.MatchIdentityInstruction;
 import org.key_project.prover.rules.matcher.vm.instruction.MatchInstruction;
+import org.key_project.solidity.logic.op.ParametricFunctionInstance;
 import org.key_project.solidity.logic.sort.GenericSort;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.rule.sv.ModalOperatorSV;
@@ -66,15 +67,10 @@ public class SolidityDLMatchInstructionSet {
         };
     }
 
-//    public static SimilarParametricFunctionInstruction getSimilarParametricFunctionInstruction(
-//            ParametricFunctionInstance psi) {
-//        return new SimilarParametricFunctionInstruction(psi);
-//    }
-//
-//    public static SimilarParametricSortInstruction getSimilarParametricSortInstruction(
-//            ParametricSortInstance psi) {
-//        return new SimilarParametricSortInstruction(psi);
-//    }
+    public static SimilarParametricFunctionInstruction getSimilarParametricFunctionInstruction(
+            ParametricFunctionInstance psi) {
+        return new SimilarParametricFunctionInstruction(psi);
+    }
 
     public static MatchIdentityInstruction getMatchIdentityInstruction(
             SyntaxElement syntaxElement) {
