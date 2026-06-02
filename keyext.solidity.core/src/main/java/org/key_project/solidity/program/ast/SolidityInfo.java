@@ -8,20 +8,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import org.key_project.logic.Name;
 import org.key_project.logic.op.Function;
-import org.key_project.logic.sort.Sort;
-import org.key_project.solidity.parser.SolidityParser;
-import org.key_project.solidity.program.ast.abstractions.ArrayType;
-import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
+import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
-import org.key_project.solidity.program.ast.abstractions.MappingType;
-import org.key_project.solidity.program.ast.abstractions.TupleType;
 import org.key_project.solidity.program.ast.abstractions.Type;
-import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
-import org.key_project.solidity.program.ast.expressions.Expression;
 
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.*;
 
@@ -43,7 +34,7 @@ public class SolidityInfo {
     // carefull sort name to KST is not unique and has to be solved differently
     private final Map<String, KeYSolidityType> solidityTypeName2KeYSolidityType = new HashMap<>();
 
-    public SolidityInfo() {
+    public SolidityInfo(Services services) {
         registerPrimitiveTypes();
     }
 

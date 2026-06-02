@@ -9,14 +9,19 @@ import java.util.LinkedHashMap;
 
 import org.key_project.logic.LogicServices;
 import org.key_project.logic.Name;
+import org.key_project.logic.Namespace;
 import org.key_project.logic.Term;
+import org.key_project.logic.op.Function;
+import org.key_project.logic.sort.Sort;
 import org.key_project.prover.proof.ProofServices;
 import org.key_project.solidity.common.naming.NameRecorder;
 import org.key_project.solidity.common.naming.VariableNamer;
 import org.key_project.solidity.logic.NamespaceSet;
+import org.key_project.solidity.logic.SFunction;
 import org.key_project.solidity.logic.TermBuilder;
 import org.key_project.solidity.logic.TermFactory;
 import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.SolidityInfo;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.proof.Counter;
@@ -59,8 +64,9 @@ public class Services implements LogicServices, ProofServices {
         specificationRepository = new SpecificationRepository(this);
         counters = new LinkedHashMap<>();
         caches = new ServiceCaches();
-        solidityInfo = new SolidityInfo();
         nameRecorder = new NameRecorder();
+        initTheories();
+        solidityInfo = new SolidityInfo(this);
     }
 
     public Services(Services services) {
@@ -217,6 +223,14 @@ public class Services implements LogicServices, ProofServices {
     }
 
     public void initTheories() {
+        Namespace<@NonNull Sort> sorts = namespaces.sorts();
+        SortImpl boolSort = new SortImpl(new Name("bool"));
+        sorts.add(boolSort);
+
+        Namespace<@NonNull Function> functions = namespaces.functions();
+        functions.add(new SFunction(new Name("TRUE"), boolSort));
+        functions.add(new SFunction(new Name("FALSE"), boolSort));
+
         theoryInfo = new TheoryInfo(this);
     }
 

@@ -8,9 +8,13 @@ import java.util.List;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.logic.sort.Sort;
+import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.program.ast.SolidityInfo;
 import org.key_project.solidity.program.ast.abstractions.ArrayType;
 import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
+import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.MappingType;
 import org.key_project.solidity.program.ast.abstractions.TupleType;
 import org.key_project.solidity.program.ast.abstractions.Type;
@@ -82,6 +86,28 @@ public class SolJsonParserTest {
             contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getType());
         assertSame(BOOL,
             contractDeclaration.getFieldDeclarations().get(1).getProgramVariable().getType());
+    }
+
+    @Test
+    void initializedSolidityInfoRegistersOnlySupportedPrimitiveTypes() {
+        Services services = new Services();
+        SolidityInfo info = services.getSolidityInfo();
+        Sort intSort = services.getTheoryInfo().getIntLDT().targetSort();
+        Sort boolSort = services.getTheoryInfo().getBoolLDT().targetSort();
+
+        assertCompleteType(info.getKeYSolidityType(UINT256), UINT256, intSort);
+        assertCompleteType(info.getKeYSolidityType(INT8), INT8, intSort);
+        assertCompleteType(info.getKeYSolidityType(BOOL), BOOL, boolSort);
+        assertNull(info.getKeYSolidityType(ADDRESS));
+        assertNull(info.getKeYSolidityType(BYTES32));
+    }
+
+
+    private static void assertCompleteType(KeYSolidityType actual, Type expectedType,
+            Sort expectedSort) {
+        assertNotNull(actual);
+        assertSame(expectedType, actual.getSolidityType());
+        assertSame(expectedSort, actual.getSort());
     }
 
     @Test
