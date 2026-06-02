@@ -95,7 +95,7 @@ public class KeYUserProblemFile extends KeYFile implements ProofOblInput {
             warnings = warnings.union(read);
 
         // read taclets
-        // TODO: warnings = warnings.add(getPositionedStrings(readRules()));
+        warnings = warnings.add(getPositionedStrings(readRules()));
 
         return warnings;
     }
