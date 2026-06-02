@@ -13,7 +13,7 @@ import org.key_project.solidity.logic.op.ProgramVariable;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-public class Context {
+public final class Context {
     public static final String TMP_FN_NAME = "__SOLIDITY_KEY_CTX_FN_NAME__";
     private final Namespace<@NonNull ProgramVariable> varNS;
     private final @Nullable Path solidityPath;

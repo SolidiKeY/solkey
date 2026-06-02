@@ -6,6 +6,7 @@ package org.key_project.solidity.reader;
 import java.io.IOException;
 
 import org.key_project.logic.*;
+import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.SoliditySchemaReader;
 import org.key_project.solidity.program.ast.Context;
@@ -22,7 +23,7 @@ public class SchemaReaderTest {
 
     @Test
     void schemaStatement() throws IOException {
-        Namespace<@NonNull ProgramSV> ns = new Namespace<>();
+        Namespace<@NonNull SchemaVariable> ns = new Namespace<>();
         ProgramSV sv = createProgramSV(new Name("s#v"), null, false);
         ns.add(sv);
 
