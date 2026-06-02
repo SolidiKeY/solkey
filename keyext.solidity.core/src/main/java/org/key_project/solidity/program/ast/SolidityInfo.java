@@ -152,15 +152,10 @@ public class SolidityInfo {
         BYTES30,
         BYTES31,
         BYTES32,
-        STRUCT,
         BOOL,
-        ADDRESS,
-        STRING,
         FIXED,
         UFIXED,
-        TUPLE,
-        FUNCTION,
-        CONTRACT,
+        ADDRESS,
         VOID);
 
     public void put(KeYSolidityType kst) {
@@ -341,15 +336,11 @@ public class SolidityInfo {
             case "bytes32" -> BYTES32;
 
             case "rational" -> INT256;
-            case "struct" -> STRUCT;
             case "bool" -> BOOL;
             case "address" -> ADDRESS;
             case "string" -> STRING;
             case "fixed" -> FIXED;
             case "ufixed" -> UFIXED;
-            case "tuple" -> TUPLE;
-            case "function" -> FUNCTION;
-            case "contract" -> CONTRACT;
             case "void" -> VOID;
 
             default -> null;

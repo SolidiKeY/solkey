@@ -170,17 +170,12 @@ public class PrimitiveType implements Type, SyntaxElement {
     public static final @NonNull PrimitiveType BYTES31 = newPrimitiveType("bytes31");
     public static final @NonNull PrimitiveType BYTES32 = newPrimitiveType("bytes32");
 
-    public static final @NonNull PrimitiveType ADDRESS = newPrimitiveType("address");
     public static final @NonNull PrimitiveType BOOL = newPrimitiveType("bool");
     public static final @NonNull PrimitiveType STRING = newPrimitiveType("string");
     public static final @NonNull PrimitiveType BYTES = newPrimitiveType("bytes");
     public static final @NonNull PrimitiveType FIXED = newPrimitiveType("fixed");
     public static final @NonNull PrimitiveType UFIXED = newPrimitiveType("ufixed");
-
-    public static final @NonNull PrimitiveType STRUCT = newPrimitiveType("struct");
-    public static final @NonNull PrimitiveType TUPLE = newPrimitiveType("tuple");
-    public static final @NonNull PrimitiveType FUNCTION = newPrimitiveType("function");
-    public static final @NonNull PrimitiveType CONTRACT = newPrimitiveType("contract");
+    public static final @NonNull PrimitiveType ADDRESS = newPrimitiveType("address");
     public static final @NonNull PrimitiveType VOID = newPrimitiveType("void");
 
 
