@@ -1,3 +1,6 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.taclets;
 
 import java.io.File;
@@ -9,17 +12,15 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.key_project.solidity.CLI;
 import org.key_project.solidity.control.KeYEnvironment;
-import org.key_project.solidity.pp.LogicPrinter;
-import org.key_project.solidity.pp.PrettyPrinter;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.io.OutputStreamProofSaver;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
 import org.key_project.solidity.proof.io.ProofSaver;
+
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -43,20 +44,23 @@ public class RulesTest {
     public void exampleLoads(String exampleName, Path exampleFile) throws ProblemLoaderException {
         Proof proof = prove(exampleFile.toFile(), -1, 10000);
 
-        if (!proof.closed()) {
-            try {
-                String filename = exampleFile.getFileName().toString() + ".proof";
-                ProofSaver.saveToFile(new File(filename), proof);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
+// For debugging to inspect the saved proof
+//        if (!proof.closed()) {
+//            try {
+//                String filename = exampleFile.getFileName().toString() + ".proof";
+//                ProofSaver.saveToFile(new File(filename), proof);
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
+//        }
 
         assertEquals(0, proof.closed(),
             () -> exampleName + " should be verified, but the following goals are open " +
-                    proof.getOpenGoals().stream().map(g ->
-                            OutputStreamProofSaver.printSequent(g.sequent(), g.getOverlayServices())).toList()
-                    + "\n" + proof.getStatistics());
+                proof.getOpenGoals().stream()
+                        .map(g -> OutputStreamProofSaver.printSequent(g.sequent(),
+                            g.getOverlayServices()))
+                        .toList()
+                + "\n" + proof.getStatistics());
 
 
     }
@@ -66,10 +70,11 @@ public class RulesTest {
         File examplesDirectory = Path.of(resource.toURI()).toFile();
 
         List<Path> exampleFiles = Files.list(examplesDirectory.toPath())
-            .filter(Files::isRegularFile)
-            .filter(path -> path.getFileName().toString().endsWith(".key") && hasProofObligation(path))
-            .sorted(Comparator.comparing(path -> path.getFileName().toString()))
-            .toList();
+                .filter(Files::isRegularFile)
+                .filter(path -> path.getFileName().toString().endsWith(".key")
+                        && hasProofObligation(path))
+                .sorted(Comparator.comparing(path -> path.getFileName().toString()))
+                .toList();
 
         return selectRequestedExample(exampleFiles).stream()
                 .map(path -> Arguments.of(path.getFileName().toString(), path));

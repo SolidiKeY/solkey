@@ -81,7 +81,7 @@ public class OutputStreamProofSaver {
     public void save(OutputStream out) throws IOException {
         try (var ps = new PrintWriter(out, true, StandardCharsets.UTF_8)) {
             final ProofOblInput po =
-                    proof.getServices().getSpecificationRepository().getProofOblInput(proof);
+                proof.getServices().getSpecificationRepository().getProofOblInput(proof);
             LogicPrinter printer = createLogicPrinter(proof.getServices(), false);
 
             // profile
@@ -163,7 +163,7 @@ public class OutputStreamProofSaver {
     /// @param output the writer in which the rule is printed
     /// @throws IOException an exception thrown when printing fails
     private void printSingleTacletApp(TacletApp appliedRuleApp, Node node, String prefix,
-                                      Appendable output) throws IOException {
+            Appendable output) throws IOException {
         output.append(prefix);
         output.append("(rule \"");
         output.append(appliedRuleApp.rule().name().toString());
@@ -172,7 +172,7 @@ public class OutputStreamProofSaver {
         output.append(newNames2Proof(node));
         output.append(getInteresting(appliedRuleApp.instantiations()));
         final ImmutableList<AssumesFormulaInstantiation> l =
-                appliedRuleApp.assumesFormulaInstantiations();
+            appliedRuleApp.assumesFormulaInstantiations();
         if (l != null) {
             output.append(ifFormulaInsts(node, l));
         }
@@ -192,14 +192,14 @@ public class OutputStreamProofSaver {
                                 .formulaNumberInSequent(assumesIS.inAntecedent(), f))
                         .append("\")");
             } /*
-             * else if (aL instanceof IfFormulaInstDirect) {
-             * final String directInstantiation =
-             * printTerm(aL.getConstrainedFormula().formula(), node.proof().getServices());
-             *
-             * s.append(" (ifdirectformula \"").append(escapeCharacters(directInstantiation))
-             * .append("\")");
-             * }
-             */ else {
+               * else if (aL instanceof IfFormulaInstDirect) {
+               * final String directInstantiation =
+               * printTerm(aL.getConstrainedFormula().formula(), node.proof().getServices());
+               *
+               * s.append(" (ifdirectformula \"").append(escapeCharacters(directInstantiation))
+               * .append("\")");
+               * }
+               */ else {
                 throw new IllegalArgumentException("Unknown Assumes-Seq-Formula type");
             }
         }
@@ -275,13 +275,13 @@ public class OutputStreamProofSaver {
     }
 
     public static String posInOccurrence2Proof(Sequent seq,
-                                               PosInOccurrence pos) {
+            PosInOccurrence pos) {
         if (pos == null) {
             return "";
         }
         return " (formula \""
-                + seq.formulaNumberInSequent(pos.isInAntec(), pos.sequentFormula())
-                + "\")" + posInTerm2Proof(pos.posInTerm());
+            + seq.formulaNumberInSequent(pos.isInAntec(), pos.sequentFormula())
+            + "\")" + posInTerm2Proof(pos.posInTerm());
     }
 
     public static String posInTerm2Proof(PosInTerm pos) {
@@ -332,7 +332,7 @@ public class OutputStreamProofSaver {
     }
 
     public static String printAnything(Object val, Services services,
-                                       boolean shortAttrNotation) {
+            boolean shortAttrNotation) {
         if (val instanceof SolidityProgramElement pe) {
             return printProgramElement(pe);
         } else if (val instanceof Term) {
@@ -378,11 +378,11 @@ public class OutputStreamProofSaver {
             if (!(value instanceof Term || value instanceof SolidityProgramElement
                     || value instanceof Name)) {
                 throw new IllegalStateException("Saving failed.\n"
-                        + "FIXME: Unhandled instantiation type: " + value.getClass());
+                    + "FIXME: Unhandled instantiation type: " + value.getClass());
             }
 
             String singleInstantiation =
-                    var.name() + "=" + printAnything(value, proof.getServices(), false);
+                var.name() + "=" + printAnything(value, proof.getServices(), false);
             s.add(singleInstantiation);
         }
 
@@ -390,7 +390,7 @@ public class OutputStreamProofSaver {
     }
 
     public static String printSequent(Sequent val,
-                                       Services services) {
+            Services services) {
         final LogicPrinter printer = createLogicPrinter(services, services == null);
         printer.printSequent(val);
         return printer.result();
@@ -409,7 +409,7 @@ public class OutputStreamProofSaver {
     /// @param output the writer in which the rule is printed
     /// @throws IOException an exception thrown when printing fails
     private void printSingleBuiltInRuleApp(IBuiltInRuleApp appliedRuleApp, Node node, String prefix,
-                                           Appendable output) throws IOException {
+            Appendable output) throws IOException {
         output.append(prefix);
         output.append(" (builtin \"");
         output.append(appliedRuleApp.rule().name().toString());
@@ -420,20 +420,20 @@ public class OutputStreamProofSaver {
         output.append(builtinRuleAssumesInsts(node, appliedRuleApp.assumesInsts()));
 
         // TODO: below just kept as an example how to save the contract rule app
-//        if (appliedRuleApp.rule() instanceof UseOperationContractRule) {
-//            printRuleJustification(appliedRuleApp, output);
-//
-//            // for operation contract rules we add the modality under which the rule was applied
-//            // -> needed for proof management tool
-//            if (appliedRuleApp.rule() instanceof UseOperationContractRule) {
-//                if (appliedRuleApp instanceof ContractRuleApp app) {
-//                    Modality modality = (Modality) app.programTerm().op();
-//                    output.append(" (modality \"");
-//                    output.append(modality.toString());
-//                    output.append("\")");
-//                }
-//            }
-//        }
+        // if (appliedRuleApp.rule() instanceof UseOperationContractRule) {
+        // printRuleJustification(appliedRuleApp, output);
+        //
+        // // for operation contract rules we add the modality under which the rule was applied
+        // // -> needed for proof management tool
+        // if (appliedRuleApp.rule() instanceof UseOperationContractRule) {
+        // if (appliedRuleApp instanceof ContractRuleApp app) {
+        // Modality modality = (Modality) app.programTerm().op();
+        // output.append(" (modality \"");
+        // output.append(modality.toString());
+        // output.append("\")");
+        // }
+        // }
+        // }
 
         output.append("");
         // userInteraction2Proof(node, output);
@@ -461,7 +461,7 @@ public class OutputStreamProofSaver {
     }
 
     public String builtinRuleAssumesInsts(Node node,
-                                          ImmutableList<PosInOccurrence> assumesInstantiations) {
+            ImmutableList<PosInOccurrence> assumesInstantiations) {
         StringBuilder s = new StringBuilder();
         for (final PosInOccurrence posOfAssumesInstatiation : assumesInstantiations) {
             s.append(" (assumesInst \"\" ");
