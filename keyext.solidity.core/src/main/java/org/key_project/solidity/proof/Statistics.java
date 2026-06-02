@@ -9,4 +9,13 @@ public class Statistics {
     public Statistics(Proof proof) {
         this.proof = proof;
     }
+
+    public String toString() {
+        String stats = "Statistics for " + proof.name() + "\n";
+
+        stats += "Nodes: " + proof.countNodes() + "\n";
+        stats += "Branches: " + proof.root().getLeaves().size() + "\n";
+        stats += "Automode Time (in ms): " + proof.getAutoModeTime() + "\n";
+        return stats;
+    }
 }

@@ -332,10 +332,12 @@ public class Proof implements ProofObject<Goal>, Named {
         fstGoal.makeLocalNamespacesFrom(ns);
     }
 
+    /// returns the time spent in automatic proof search (in ms)
     public long getAutoModeTime() {
         return autoModeTime;
     }
 
+    /// @param time auto mode time in ms
     public void addAutoModeTime(long time) {
         autoModeTime += time;
     }
