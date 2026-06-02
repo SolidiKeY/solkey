@@ -188,27 +188,30 @@ public class TacletIndex {
     private static Object getIndexObj(SolFindTaclet tac) {
         Object indexObj;
         final Term indexTerm = tac.find();
-        if (indexTerm.op() instanceof SModality mod) {
-            final SolidityProgramElement prg = mod.programBlock().program();
-            if (prg.getChildCount() == 0) {
-                indexObj = SModality.class;
-            } else {
-                indexObj = prg.getChild(0);
-                if (!(indexObj instanceof SchemaVariable)) {
-                    indexObj = indexObj.getClass();
+        switch (indexTerm.op()) {
+            case SModality mod -> {
+                final SolidityProgramElement prg = mod.programBlock().program();
+                if (prg.getChildCount() == 0) {
+                    indexObj = SModality.class;
+                } else {
+                    indexObj = prg.getChild(0);
+                    if (!(indexObj instanceof SchemaVariable)) {
+                        indexObj = indexObj.getClass();
+                    }
                 }
             }
-        } else {
-            indexObj = indexTerm.op();
-            if (indexObj instanceof ElementaryUpdate) {
-                indexObj = ElementaryUpdate.class;
-            } else if (indexObj instanceof SModality) {
-                indexObj = SModality.class;
+            default -> {
+                indexObj = indexTerm.op();
+                if (indexObj instanceof ElementaryUpdate) {
+                    indexObj = ElementaryUpdate.class;
+                } else if (indexObj instanceof SModality) {
+                    indexObj = SModality.class;
+                }
             }
         }
 
         if (indexObj instanceof SchemaVariable) {
-            if ((indexObj instanceof TermSV && ((TermSV) indexObj).isStrict())
+            if ((indexObj instanceof TermSV indexTermSV && indexTermSV.isStrict())
                     || indexObj instanceof FormulaSV || indexObj instanceof UpdateSV) {
 
                 indexObj = ((OperatorSV) indexObj).sort();

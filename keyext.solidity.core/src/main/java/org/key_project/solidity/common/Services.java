@@ -60,8 +60,7 @@ public class Services implements LogicServices, ProofServices {
         counters = new LinkedHashMap<>();
         caches = new ServiceCaches();
         nameRecorder = new NameRecorder();
-        initTheories();
-        solidityInfo = new SolidityInfo(this);
+        solidityInfo = new SolidityInfo();
     }
 
     public Services(Services services) {
@@ -218,7 +217,12 @@ public class Services implements LogicServices, ProofServices {
     }
 
     public void initTheories() {
-        theoryInfo = new TheoryInfo(this);
+        if (theoryInfo == null) {
+            theoryInfo = new TheoryInfo(this);
+            solidityInfo.initialize(this);
+        } else {
+            throw new IllegalStateException("Tried to initialize theories twice");
+        }
     }
 
 }

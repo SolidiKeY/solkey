@@ -13,6 +13,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.key_project.solidity.CLI;
+import org.key_project.solidity.control.KeYEnvironment;
+import org.key_project.solidity.pp.LogicPrinter;
+import org.key_project.solidity.pp.PrettyPrinter;
+import org.key_project.solidity.proof.Proof;
+import org.key_project.solidity.proof.io.OutputStreamProofSaver;
+import org.key_project.solidity.proof.io.ProblemLoaderException;
+import org.key_project.solidity.proof.io.ProofSaver;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -20,11 +27,38 @@ public class RulesTest {
 
     private static final String EXAMPLES_RESOURCE = "org/key_project/solidity/examples";
 
+    private static Proof prove(File f, long timeout, int maxSteps) throws ProblemLoaderException {
+        var env = KeYEnvironment.load(f);
+        var loadedProof = env.getLoadedProof();
+        var stratSettings = loadedProof.getSettings().getStrategySettings();
+        stratSettings.setTimeout(timeout);
+        stratSettings.setMaxSteps(maxSteps);
+        env.getProofControl().startAndWaitForAutoMode(loadedProof);
+        return loadedProof;
+    }
+
+
     @ParameterizedTest(name = "{0}")
     @MethodSource("exampleFiles")
-    public void exampleLoads(String exampleName, Path exampleFile) {
-        assertEquals(0, CLI.execute(exampleFile.toAbsolutePath().toString()),
-            () -> exampleName + " should be verified");
+    public void exampleLoads(String exampleName, Path exampleFile) throws ProblemLoaderException {
+        Proof proof = prove(exampleFile.toFile(), -1, 10000);
+
+        if (!proof.closed()) {
+            try {
+                String filename = exampleFile.getFileName().toString() + ".proof";
+                ProofSaver.saveToFile(new File(filename), proof);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        assertEquals(0, proof.closed(),
+            () -> exampleName + " should be verified, but the following goals are open " +
+                    proof.getOpenGoals().stream().map(g ->
+                            OutputStreamProofSaver.printSequent(g.sequent(), g.getOverlayServices())).toList()
+                    + "\n" + proof.getStatistics());
+
+
     }
 
     static Stream<Arguments> exampleFiles() throws Exception {

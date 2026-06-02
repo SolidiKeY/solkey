@@ -10,9 +10,12 @@ import java.util.Map;
 import java.util.Set;
 
 import org.key_project.logic.op.Function;
+import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.Type;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.*;
 
@@ -23,6 +26,8 @@ import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.*;
  * providing the type and KeYSolidityType by name etc.
  */
 public class SolidityInfo {
+    private static Logger LOGGER = LoggerFactory.getLogger(SolidityInfo.class);
+
     // This map mixes several kinds of types leading to class cast expressions
     // Kep the information strictly separate
     // have one mapping for Solidity types to KeYSolidityTypes and vice versa
@@ -33,14 +38,34 @@ public class SolidityInfo {
     // caches solidity type name to KST, e.g. uint256 -> (uint256, int)
     // carefull sort name to KST is not unique and has to be solved differently
     private final Map<String, KeYSolidityType> solidityTypeName2KeYSolidityType = new HashMap<>();
+    private boolean initialized;
 
-    public SolidityInfo(Services services) {
-        registerPrimitiveTypes();
+    public SolidityInfo() {
     }
 
-    private void registerPrimitiveTypes() {
-        for (Type primitiveType : PRIMITIVE_TYPES)
-            put(new KeYSolidityType(primitiveType));
+    public void initialize(Services services) {
+        if (!initialized) {
+            registerPrimitiveTypes(services);
+            initialized = true;
+        } else {
+            throw new IllegalStateException("SolidityInfo already initialized");
+        }
+
+    }
+
+
+    private void registerPrimitiveTypes(Services services) {
+        Sort intSort = services.getTheoryInfo().getIntLDT().targetSort();
+        Sort boolSort = services.getTheoryInfo().getBoolLDT().targetSort();
+        for (Type primitiveType : PRIMITIVE_TYPES) {
+            if (primitiveType.name().toString().contains("int")) {
+                put(new KeYSolidityType(primitiveType, intSort));
+            } else if (primitiveType.name().toString().equals("bool")) {
+                put (new KeYSolidityType(primitiveType, boolSort));
+            } else {
+                LOGGER.info(primitiveType.name() + " not yet supported. Type skipped");
+            }
+        }
     }
 
     private static final List<Type> PRIMITIVE_TYPES = List.of(
