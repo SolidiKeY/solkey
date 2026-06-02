@@ -167,9 +167,9 @@ public final class ApplyUpdateOnRigidCondition implements VariableCondition {
             MatchResultInfo mc,
             LogicServices services) {
         var svInst = (SVInstantiations) mc.getInstantiations();
-        Term uInst = (Term) svInst.getInstantiation(u);
-        Term phiInst = (Term) svInst.getInstantiation(phi);
-        Term resultInst = (Term) svInst.getInstantiation(result);
+        Term uInst = svInst.getInstantiation(u);
+        Term phiInst = svInst.getInstantiation(phi);
+        Term resultInst = svInst.getInstantiation(result);
         if (uInst == null || phiInst == null) {
             return mc;
         }

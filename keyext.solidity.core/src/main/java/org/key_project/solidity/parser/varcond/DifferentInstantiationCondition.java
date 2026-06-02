@@ -4,8 +4,10 @@
 package org.key_project.solidity.parser.varcond;
 
 import org.key_project.logic.SyntaxElement;
+import org.key_project.logic.Term;
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.rule.VariableConditionAdapter;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 
@@ -21,13 +23,36 @@ public class DifferentInstantiationCondition extends VariableConditionAdapter {
     public boolean check(SchemaVariable var, SyntaxElement instCandidate, SVInstantiations svInst,
             Services services) {
         if (var == var1) {
-            final Object inst2 = svInst.getInstantiation(var2);
-            return inst2 == null || !inst2.equals(instCandidate);
+            final SyntaxElement inst2 = svInst.getInstantiation(var2);
+            return inst2 == null || !equalInst(inst2, instCandidate);
         } else if (var == var2) {
-            final Object inst1 = svInst.getInstantiation(var1);
-            return inst1 == null || !inst1.equals(instCandidate);
+            final SyntaxElement inst1 = svInst.getInstantiation(var1);
+            return inst1 == null || !equalInst(inst1, instCandidate);
         } else {
             return true;
         }
+    }
+
+    private boolean equalInst(SyntaxElement inst1, SyntaxElement inst2) {
+        if (inst1 == inst2) {
+            return true;
+        }
+
+        if (inst1.getClass() != inst2.getClass()) {
+            if (inst1 instanceof ProgramVariable pv && inst2 instanceof Term t) {
+                return pv == t.op();
+            } else if (inst2 instanceof ProgramVariable pv && inst1 instanceof Term t) {
+                return pv == t.op();
+            }
+            return false;
+        } else {
+            return inst1.equals(inst2);
+        }
+
+    }
+
+    @Override
+    public String toString() {
+        return "\\different(" + var1 + ", " + var2 + ")";
     }
 }
