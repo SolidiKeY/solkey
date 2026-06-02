@@ -30,7 +30,7 @@ import org.key_project.solidity.logic.TermFactory;
 import org.key_project.solidity.logic.op.*;
 import org.key_project.solidity.parser.KeYSolidityDLLexer;
 import org.key_project.solidity.parser.KeYSolidityDLParser;
-import org.key_project.solidity.program.SchemaSolidityReader;
+import org.key_project.solidity.program.SoliditySchemaReader;
 import org.key_project.solidity.program.SolidityReader;
 import org.key_project.solidity.proof.calculus.SoliditySequentKit;
 import org.key_project.solidity.rule.sv.ModalOperatorSV;
@@ -150,8 +150,8 @@ public class ExpressionBuilder extends DefaultBuilder {
         try {
             try {
                 if (soliditySchemaModeAllowed) {// TEST
-                    final SchemaSolidityReader schemaSolidityReader =
-                        new SchemaSolidityReader(services, nss);
+                    final SoliditySchemaReader schemaSolidityReader =
+                        new SoliditySchemaReader(services, nss);
                     schemaSolidityReader.setSVNamespace(schemaVariables());
                     try {
                         sjb.solidityBlock =
@@ -178,7 +178,7 @@ public class ExpressionBuilder extends DefaultBuilder {
                 }
             }
         } catch (Exception e) {
-            throw new BuildingException(t, "Could not parse java: '" + cleanSolidity + "'", e);
+            throw new BuildingException(t, "Could not parse Solidity code: '" + cleanSolidity + "'", e);
         }
         return sjb;
     }
