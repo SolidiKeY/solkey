@@ -22,6 +22,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class RulesTest {
 
@@ -53,7 +54,7 @@ public class RulesTest {
         // }
         // }
 
-        assertEquals(0, proof.closed(),
+        assertTrue(proof.closed(),
             () -> exampleName + " should be verified, but the following goals are open " +
                 proof.getOpenGoals().stream()
                         .map(g -> OutputStreamProofSaver.printSequent(g.sequent(),
