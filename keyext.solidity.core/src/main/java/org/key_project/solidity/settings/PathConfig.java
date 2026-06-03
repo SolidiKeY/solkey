@@ -26,7 +26,7 @@ public final class PathConfig {
     public static final String DISREGARD_SETTINGS_PROPERTY = "key.disregardSettings";
 
     /// The default name of the directory that contains KeY settings.
-    public static final String KEY_DIRECTORY_NAME = ".rusty-key";
+    public static final String KEY_DIRECTORY_NAME = ".keyther";
 
     /// In which file to store the recent files.
     private static @Nullable String recentFileStorage = null;
