@@ -78,7 +78,7 @@ public class ProgVarReplaceVisitorTest {
 
         Block result = runOnBlock(body);
         assertSame(replacement, getDeclaredVar(result));
-        assertSame(replacement, ((BinaryOperator) getExpression(result, 1)).getLeft());
+        assertSame(replacement, ((BinaryExpression) getExpression(result, 1)).getLeft());
     }
 
     @Test
@@ -89,7 +89,8 @@ public class ProgVarReplaceVisitorTest {
         Block result = runOnBlock(body);
         assertEquals(replacement, getDeclaredVar(result));
         assertEquals(replacement,
-            ((IndexExpression) ((BinaryOperator) getExpression(result, 1)).getLeft()).getLeftExp());
+            ((IndexExpression) ((BinaryExpression) getExpression(result, 1)).getLeft())
+                    .getLeftExp());
     }
 
     @Test
@@ -113,7 +114,7 @@ public class ProgVarReplaceVisitorTest {
 
         Block result = runOnBlock(body);
         assertEquals(replacement, getDeclaredVar(result));
-        assertEquals(replacement, ((BinaryOperator) getExpression(result, 1)).getLeft());
+        assertEquals(replacement, ((BinaryExpression) getExpression(result, 1)).getLeft());
     }
 
     @Test
@@ -125,11 +126,11 @@ public class ProgVarReplaceVisitorTest {
         assertSame(replacement, getDeclaredVar(result));
         Statement forLoop = result.getStatements().get(1);
         assertSame(replacement,
-            ((BinaryOperator) ((ForStatement) forLoop).getInit().getInit()).getLeft());
+            ((BinaryExpression) ((ForStatement) forLoop).getInit().getInit()).getLeft());
         assertSame(replacement,
-            ((BinaryOperator) ((ForStatement) forLoop).getCondition()).getLeft());
+            ((BinaryExpression) ((ForStatement) forLoop).getCondition()).getLeft());
         assertSame(replacement,
-            ((UnaryOperator) ((ForStatement) forLoop).getUpdate().getUpdate()).getExp());
+            ((UnaryExpression) ((ForStatement) forLoop).getUpdate().getUpdate()).getExp());
     }
 
     @Test
@@ -141,12 +142,12 @@ public class ProgVarReplaceVisitorTest {
         Block result = runOnBlock(body);
         assertSame(replacement, getDeclaredVar(result));
         ConditionStatement ifStmt = (ConditionStatement) result.getStatements().get(1);
-        assertSame(replacement, ((BinaryOperator) ifStmt.getCondition()).getLeft());
+        assertSame(replacement, ((BinaryExpression) ifStmt.getCondition()).getLeft());
         assertSame(replacement,
-            ((BinaryOperator) ((ExpressionStatement) ifStmt.getTrueBody()).getExpression())
+            ((BinaryExpression) ((ExpressionStatement) ifStmt.getTrueBody()).getExpression())
                     .getLeft());
         assertSame(replacement,
-            ((BinaryOperator) ((ExpressionStatement) ifStmt.getFalseBody()).getExpression())
+            ((BinaryExpression) ((ExpressionStatement) ifStmt.getFalseBody()).getExpression())
                     .getLeft());
     }
 
@@ -158,9 +159,9 @@ public class ProgVarReplaceVisitorTest {
         Block result = runOnBlock(body);
         assertSame(replacement, getDeclaredVar(result));
         WhileStatement whileStmt = (WhileStatement) result.getStatements().get(1);
-        assertSame(replacement, ((BinaryOperator) whileStmt.getCondition()).getLeft());
+        assertSame(replacement, ((BinaryExpression) whileStmt.getCondition()).getLeft());
         assertSame(replacement,
-            ((BinaryOperator) ((ExpressionStatement) whileStmt.getBody()).getExpression())
+            ((BinaryExpression) ((ExpressionStatement) whileStmt.getBody()).getExpression())
                     .getLeft());
     }
 
@@ -171,7 +172,7 @@ public class ProgVarReplaceVisitorTest {
 
         Block result = runOnBlock(body);
         assertSame(replacement, getDeclaredVar(result));
-        assertSame(replacement, ((UnaryOperator) getExpression(result, 1)).getExp());
+        assertSame(replacement, ((UnaryExpression) getExpression(result, 1)).getExp());
     }
 
     @Test
@@ -181,7 +182,7 @@ public class ProgVarReplaceVisitorTest {
 
         Block result = runOnBlock(body);
         assertSame(replacement, getDeclaredVar(result));
-        assertSame(replacement, ((BinaryOperator) getExpression(result, 1)).getLeft());
+        assertSame(replacement, ((BinaryExpression) getExpression(result, 1)).getLeft());
     }
 
     @Test
@@ -192,9 +193,10 @@ public class ProgVarReplaceVisitorTest {
         Block result = runOnBlock(body);
         assertSame(replacement, getDeclaredVar(result));
         DoWhileStatement doWhileStmt = (DoWhileStatement) result.getStatements().get(1);
-        assertSame(replacement, ((BinaryOperator) doWhileStmt.getCondition()).getLeft());
+        assertSame(replacement, ((BinaryExpression) doWhileStmt.getCondition()).getLeft());
         assertSame(replacement,
-            ((UnaryOperator) ((ExpressionStatement) ((Block) doWhileStmt.getBody()).getStatements()
+            ((UnaryExpression) ((ExpressionStatement) ((Block) doWhileStmt.getBody())
+                    .getStatements()
                     .get(0)).getExpression()).getExp());
     }
 
@@ -226,8 +228,8 @@ public class ProgVarReplaceVisitorTest {
         extractAndMap(body);
         Block result = runOnBlock(body);
         assertSame(replacement, getDeclaredVar(result));
-        TernaryOperator ternary = (TernaryOperator) getExpression(result, 1);
-        assertSame(replacement, ((BinaryOperator) ternary.getCondition()).getLeft());
+        TernaryExpression ternary = (TernaryExpression) getExpression(result, 1);
+        assertSame(replacement, ((BinaryExpression) ternary.getCondition()).getLeft());
         assertSame(replacement, ternary.getTrueExpression());
     }
 
@@ -248,7 +250,7 @@ public class ProgVarReplaceVisitorTest {
         Block result = runOnBlock(body);
         assertSame(replacement, getDeclaredVar(result));
         WhileStatement whileStmt = (WhileStatement) result.getStatements().get(1);
-        assertSame(replacement, ((BinaryOperator) whileStmt.getCondition()).getLeft());
+        assertSame(replacement, ((BinaryExpression) whileStmt.getCondition()).getLeft());
     }
 
     @Test
@@ -258,7 +260,7 @@ public class ProgVarReplaceVisitorTest {
         Block result = runOnBlock(body);
         assertSame(replacement, getDeclaredVar(result));
         WhileStatement whileStmt = (WhileStatement) result.getStatements().get(1);
-        assertSame(replacement, ((BinaryOperator) whileStmt.getCondition()).getLeft());
+        assertSame(replacement, ((BinaryExpression) whileStmt.getCondition()).getLeft());
     }
 
     @Test
@@ -316,7 +318,7 @@ public class ProgVarReplaceVisitorTest {
         Block result = runOnBlock(body);
         ImmutableArray<Statement> stmRes = result.getStatements();
         assertSame(replacement, getDeclaredVar(result));
-        assertSame(replacement, ((BinaryOperator) getExpression(result, 1)).getLeft());
+        assertSame(replacement, ((BinaryExpression) getExpression(result, 1)).getLeft());
         noReplacement(stmRes.get(2));
         noReplacement(stmRes.get(3));
     }
@@ -333,7 +335,7 @@ public class ProgVarReplaceVisitorTest {
         ImmutableArray<Statement> stmRes = result.getStatements();
         assertSame(replacement, getDeclaredVar((Block) result.getStatements().get(2)));
         assertSame(replacement,
-            ((BinaryOperator) getExpression((Block) result.getStatements().get(2), 1)).getLeft());
+            ((BinaryExpression) getExpression((Block) result.getStatements().get(2), 1)).getLeft());
         noReplacement(stmRes.get(0));
         noReplacement(stmRes.get(1));
         noReplacement(((Block) stmRes.get(2)).getStatements().get(2));
@@ -352,7 +354,7 @@ public class ProgVarReplaceVisitorTest {
         ImmutableArray<Statement> stmRes = result.getStatements();
         Block innerResult = (Block) ((Block) result.getStatements().get(2)).getStatements().get(2);
         assertSame(replacement, getDeclaredVar(innerResult));
-        assertSame(replacement, ((BinaryOperator) getExpression(innerResult, 1)).getLeft());
+        assertSame(replacement, ((BinaryExpression) getExpression(innerResult, 1)).getLeft());
         noReplacement(stmRes.get(0));
         noReplacement(stmRes.get(1));
         noReplacement(((Block) stmRes.get(2)).getStatements().get(0));
@@ -372,7 +374,7 @@ public class ProgVarReplaceVisitorTest {
         ImmutableArray<Statement> stmRes = result.getStatements();
         assertSame(replacement, getDeclaredVar((Block) stmRes.get(3)));
         assertSame(replacement,
-            ((BinaryOperator) getExpression((Block) stmRes.get(3), 1)).getLeft());
+            ((BinaryExpression) getExpression((Block) stmRes.get(3), 1)).getLeft());
         noReplacement(stmRes.get(0));
         noReplacement(stmRes.get(1));
         noReplacement(stmRes.get(2));

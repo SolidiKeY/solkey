@@ -34,7 +34,8 @@ public class SolidityToKeyConverterTest {
             ((StatementVariableDeclaration) ((DeclarationStatement) block.getStatements().get(0))
                     .getDeclarations().get(0)).getProgramVariable();
         ProgramVariable p2 =
-            (ProgramVariable) ((BinaryOperator) ((ExpressionStatement) block.getStatements().get(1))
+            (ProgramVariable) ((BinaryExpression) ((ExpressionStatement) block.getStatements()
+                    .get(1))
                     .getExpression()).getLeft();
         assertEquals("x", p1.toString());
         assertSame(p1, p2);
@@ -65,8 +66,8 @@ public class SolidityToKeyConverterTest {
     }
 
     @Test
-    void addiction() {
-        AddOperator exp = (AddOperator) parseExpression("1 + 2");
+    void addition() {
+        BinaryExpression exp = (BinaryExpression) parseExpression("1 + 2");
         assertEquals(1, ((Uint256Literal) exp.getLeft()).getValue().intValue());
     }
 
@@ -78,16 +79,19 @@ public class SolidityToKeyConverterTest {
 
     @Test
     void plusPlusLeft() {
-        PlusPlusOperator exp = (PlusPlusOperator) parseExpression("++1");
+        UnaryExpression exp = (UnaryExpression) parseExpression("++1");
         assertEquals(1, ((Uint256Literal) exp.getExp()).getValue().intValue());
-        assertTrue(exp.isPrefix());
+        assertTrue(exp.getOperator().isPrefix());
+        assertTrue(exp.getOperator() == Operator.PRE_INC);
     }
 
     @Test
     void plusPlusRight() {
-        PlusPlusOperator exp = (PlusPlusOperator) parseExpression("1++");
+        UnaryExpression exp = (UnaryExpression) parseExpression("1++");
         assertEquals(1, ((Uint256Literal) exp.getExp()).getValue().intValue());
-        assertFalse(exp.isPrefix());
+        assertFalse(exp.getOperator().isPostfix());
+        assertTrue(exp.getOperator() == Operator.POST_INC);
+
     }
 
     @Test
@@ -99,7 +103,7 @@ public class SolidityToKeyConverterTest {
     @Test
     void variableAssignment() {
         Expression exp = parseExpression("x = 1");
-        assertEquals("x", ((BinaryOperator) exp).getLeft().toString());
+        assertEquals("x", ((BinaryExpression) exp).getLeft().toString());
     }
 
     @Test
@@ -200,7 +204,7 @@ public class SolidityToKeyConverterTest {
         assertFalse(((BoolLiteral) stm.getExpression()).getValue());
         assertEquals(1, stm.getReturnCount());
         ProgramVariable ra = stm.getReturnParameter(0);
-        ProgramVariable ba = (ProgramVariable) ((BinaryOperator) ((ExpressionStatement) stm
+        ProgramVariable ba = (ProgramVariable) ((BinaryExpression) ((ExpressionStatement) stm
                 .getBody().getStatements().get(0)).getExpression()).getLeft();
         assertSame(ra, ba);
     }
@@ -320,7 +324,7 @@ public class SolidityToKeyConverterTest {
 
     @Test
     void ternary() {
-        TernaryOperator exp = (TernaryOperator) parseExpression("true ? true : false");
+        TernaryExpression exp = (TernaryExpression) parseExpression("true ? true : false");
         assertTrue(((BoolLiteral) exp.getCondition()).getValue());
         assertTrue(((BoolLiteral) exp.getTrueExpression()).getValue());
         assertFalse(((BoolLiteral) exp.getFalseExpression()).getValue());

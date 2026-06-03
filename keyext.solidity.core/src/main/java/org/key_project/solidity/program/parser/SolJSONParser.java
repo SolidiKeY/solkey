@@ -556,7 +556,7 @@ public class SolJSONParser {
         Expression falseExpression = parseExpression(initializer.get("falseExpression"));
         Expression trueExpression = parseExpression(initializer.get("trueExpression"));
 
-        return new TernaryOperator(BOOL, cond, falseExpression, trueExpression);
+        return new TernaryExpression(BOOL, cond, falseExpression, trueExpression);
     }
 
     private Expression parseIndexAccess(JsonNode initializer) {

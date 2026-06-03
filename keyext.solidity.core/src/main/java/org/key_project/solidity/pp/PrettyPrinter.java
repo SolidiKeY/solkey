@@ -148,184 +148,52 @@ public class PrettyPrinter implements Visitor {
     }
 
     @Override
-    public void performActionOnAssignmentExpression(AssignmentExpression x) {
-        x.getLeft().visit(this);
-        layouter.print(" = ");
-        x.getRight().visit(this);
+    public void performActionOnBinaryExpression(BinaryExpression x) {
+        Expression left = x.getLeft();
+        Expression right = x.getRight();
+
+        maybeParens(left, x.getOperator().precedence());
+
+        layouter.print(" ");
+
+        x.getOperator().visit(this);
+
+        layouter.print(" ");
+
+        maybeParens(right, x.getOperator().precedence());
     }
 
     @Override
-    public void performActionOnBitwiseAndOperator(BitwiseAndOperator x) {
-
+    public void performActionOnOperator(Operator x) {
+        layouter.print(x.symbol());
     }
 
     @Override
-    public void performActionOnBitwiseEqualOperator(BitwiseEqualOperator x) {
+    public void performActionOnUnaryExpression(UnaryExpression x) {
+        if (x.getOperator().isPrefix()) {
+            layouter.print(x.getOperator().symbol());
+        }
+        maybeParens(x.getExp(), x.getOperator().precedence());
+        if (x.getOperator().isPostfix()) {
+            layouter.print(x.getOperator().symbol());
+        }
+    }
 
+    private void maybeParens(Expression left, int precedence) {
+        boolean closeParens = false;
+        if (left instanceof BinaryExpression bexp &&
+                bexp.getOperator().precedence() < precedence) {
+            layouter.print("(");
+            closeParens = true;
+        }
+        left.visit(this);
+        if (closeParens) {
+            layouter.print(")");
+        }
     }
 
     @Override
-    public void performActionOnBitwiseNotOperator(BitwiseNotOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnBitwiseOrOperator(BitwiseOrOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnDeleteOperator(DeleteOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnDivOperator(DivOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnDivisionEqualOperator(DivisionEqualOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnEqualOperator(EqualOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnExponentialOperator(ExponentialOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnGreaterEqualOperator(GreaterEqualOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnGreaterOperator(GreaterOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnLeftShiftEqualOperator(LeftShiftEqualOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnLeftShiftOperator(LeftShiftOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnLessEqualOperator(LessEqualOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnLessOperator(LessOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnLogicalRightShiftEqualOperator(LogicalRightShiftEqualOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnLogicalRightShiftOperator(LogicalRightShiftOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnMinusEqualOperator(MinusEqualOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnMinusMinusOperator(MinusMinusOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnModEqualOperator(ModEqualOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnModOperator(ModOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnMultiplicationEqualOperator(MultiplicationEqualOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnMultiplicationOperator(MultiplicationOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnNegateOperator(NegateOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnNotOperator(NotOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnOrEqualOperator(OrEqualOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnOrOperator(OrOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnPlusEqualOperator(PlusEqualOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnPlusPlusOperator(PlusPlusOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnRightShiftEqualOperator(RightShiftEqualOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnRightShiftOperator(RightShiftOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnSubtractionOperator(SubtractionOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnTernaryOperator(TernaryOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnUnequalOperator(UnequalOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnXorEqualOperator(XorEqualOperator x) {
+    public void performActionOnTernaryOperator(TernaryExpression x) {
 
     }
 
@@ -396,22 +264,7 @@ public class PrettyPrinter implements Visitor {
 
     @Override
     public void performActionOnUint256Literal(Uint256Literal x) {
-
-    }
-
-    @Override
-    public void performActionOnAddOperator(AddOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnAndEqualOperator(AndEqualOperator x) {
-
-    }
-
-    @Override
-    public void performActionOnAndOperator(AndOperator x) {
-
+        layouter.print(x.getValue().toString());
     }
 
     @Override
@@ -457,7 +310,8 @@ public class PrettyPrinter implements Visitor {
 
     @Override
     public void performActionOnExpressionStatement(ExpressionStatement x) {
-
+        x.getExpression().visit(this);
+        layouter.print(";");
     }
 
     @Override

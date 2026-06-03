@@ -104,197 +104,22 @@ public abstract class SolidityASTVisitor extends SolidityASTWalker implements Vi
     }
 
     @Override
-    public void performActionOnAddOperator(AddOperator x) {
+    public void performActionOnUnaryExpression(UnaryExpression x) {
         doDefaultAction(x);
     }
 
     @Override
-    public void performActionOnAndEqualOperator(AndEqualOperator x) {
+    public void performActionOnBinaryExpression(BinaryExpression x) {
         doDefaultAction(x);
     }
 
     @Override
-    public void performActionOnAndOperator(AndOperator x) {
+    public void performActionOnOperator(Operator x) {
         doDefaultAction(x);
     }
 
     @Override
-    public void performActionOnAssignmentExpression(AssignmentExpression x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnBitwiseAndOperator(BitwiseAndOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnBitwiseEqualOperator(BitwiseEqualOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnBitwiseNotOperator(BitwiseNotOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnBitwiseOrOperator(BitwiseOrOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnDeleteOperator(DeleteOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnDivOperator(DivOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnDivisionEqualOperator(DivisionEqualOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnEqualOperator(EqualOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnExponentialOperator(ExponentialOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnGreaterEqualOperator(GreaterEqualOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnGreaterOperator(GreaterOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnLeftShiftEqualOperator(LeftShiftEqualOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnLeftShiftOperator(LeftShiftOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnLessEqualOperator(LessEqualOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnLessOperator(LessOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnLogicalRightShiftEqualOperator(LogicalRightShiftEqualOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnLogicalRightShiftOperator(LogicalRightShiftOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnMinusEqualOperator(MinusEqualOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnMinusMinusOperator(MinusMinusOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnModEqualOperator(ModEqualOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnModOperator(ModOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnMultiplicationEqualOperator(MultiplicationEqualOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnMultiplicationOperator(MultiplicationOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnNegateOperator(NegateOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnNotOperator(NotOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnOrEqualOperator(OrEqualOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnOrOperator(OrOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnPlusEqualOperator(PlusEqualOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnPlusPlusOperator(PlusPlusOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnRightShiftEqualOperator(RightShiftEqualOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnRightShiftOperator(RightShiftOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnSubtractionOperator(SubtractionOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnTernaryOperator(TernaryOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnUnequalOperator(UnequalOperator x) {
-        doDefaultAction(x);
-    }
-
-    @Override
-    public void performActionOnXorEqualOperator(XorEqualOperator x) {
+    public void performActionOnTernaryOperator(TernaryExpression x) {
         doDefaultAction(x);
     }
 

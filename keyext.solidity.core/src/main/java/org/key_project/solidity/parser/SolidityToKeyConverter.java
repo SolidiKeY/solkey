@@ -21,7 +21,7 @@ import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocat
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.*;
 import org.key_project.solidity.program.ast.expressions.literals.*;
-import org.key_project.solidity.program.ast.expressions.operators.TernaryOperator;
+import org.key_project.solidity.program.ast.expressions.operators.TernaryExpression;
 import org.key_project.solidity.program.ast.ghost.*;
 import org.key_project.solidity.program.ast.references.FunctionReference;
 import org.key_project.solidity.program.ast.statement.*;
@@ -182,7 +182,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         Expression falseExp = visitExpression(ctx.false_);
         Expression trueExp = visitExpression(ctx.true_);
 
-        return new TernaryOperator(falseExp.getType(), condition, falseExp, trueExp);
+        return new TernaryExpression(falseExp.getType(), condition, falseExp, trueExp);
     }
 
     @Override

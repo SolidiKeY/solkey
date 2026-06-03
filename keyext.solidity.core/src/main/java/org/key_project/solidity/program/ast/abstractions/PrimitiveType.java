@@ -16,16 +16,17 @@ public class PrimitiveType implements Type, SyntaxElement {
 
     private static final HashMap<String, PrimitiveType> primitives = new HashMap<>();
 
-    private static @NonNull PrimitiveType newPrimitiveType(String name) {
+    private static @NonNull PrimitiveType newPrimitiveType(@NonNull String name) {
         synchronized (primitives) {
-            assert !primitives.containsKey(name.toString());
+            assert !primitives.containsKey(name);
             PrimitiveType pt = new PrimitiveType(new Name(name));
-            primitives.put(name.toString(), pt);
+            primitives.put(name, pt);
             return pt;
         }
     }
 
-    public static PrimitiveType getPrimitiveType(String name) throws NoSuchElementException {
+    public static PrimitiveType getPrimitiveType(@NonNull String name)
+            throws NoSuchElementException {
         PrimitiveType primitive;
         synchronized (primitives) {
             primitive = primitives.get(name);

@@ -9,27 +9,27 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.SolidityExpression;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.NonNull;
 
-public abstract class UnaryOperator extends SolidityExpression {
-    protected final Expression exp;
+public class UnaryExpression extends SolidityExpression {
 
-    protected UnaryOperator(Expression exp, Type type) {
+    private final Operator operator;
+    private final Expression exp;
+
+    public UnaryExpression(Operator operator, Expression exp, Type type) {
         super(type);
         assert type != null;
+        this.operator = operator;
         this.exp = exp;
     }
 
-    public UnaryOperator(ExtList children, Type type) {
+    public UnaryExpression(ExtList children, Type type) {
         super(type);
         assert type != null;
-        this.exp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
-    }
-
-    public UnaryOperator(ExtList children) {
-        super(getTypeFromExpression(children));
+        this.operator = Objects.requireNonNull(children.removeFirstOccurrence(Operator.class));
         this.exp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
     }
 
@@ -50,6 +50,8 @@ public abstract class UnaryOperator extends SolidityExpression {
     public @NonNull SyntaxElement getChild(int n) {
         switch (n) {
             case 0:
+                return operator;
+            case 1:
                 return exp;
             default:
                 throw new IndexOutOfBoundsException(
@@ -59,19 +61,28 @@ public abstract class UnaryOperator extends SolidityExpression {
 
     @Override
     public int getChildCount() {
-        return 1;
+        return 2;
+    }
+
+    @Override
+    public void visit(Visitor v) {
+        v.performActionOnUnaryExpression(this);
+    }
+
+    public Operator getOperator() {
+        return operator;
     }
 
     public Expression getExp() { return exp; }
 
-    public abstract String getName();
-
-    public abstract boolean isPrefix();
-
     public String toString() {
-        if (isPrefix())
-            return getName() + " " + exp;
-        else
-            return exp + " " + getName();
+        switch (operator) {
+            case POST_INC, POST_DEC:
+                return exp + operator.name();
+            case PRE_INC, PRE_DEC, LOGICAL_NOT, BITWISE_NOT, UNARY_MINUS:
+                return operator.name() + exp;
+            default:
+                throw new IllegalStateException("Unknown unary operator: " + operator);
+        }
     }
 }

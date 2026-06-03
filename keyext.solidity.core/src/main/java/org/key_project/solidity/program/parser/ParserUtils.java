@@ -13,29 +13,15 @@ public class ParserUtils {
 
     static public Optional<Expression> parseBinaryOperationMaybe(Expression left, Expression right,
             String operator, Type expType) {
-        Expression exp = switch (operator) {
-            case "+" -> new AddOperator(left, right, expType);
-            case "-" -> new SubtractionOperator(left, right, expType);
-            case "*" -> new MultiplicationOperator(left, right, expType);
-            case "/" -> new DivOperator(left, right, expType);
-            case "%" -> new ModOperator(left, right, expType);
-            case "^" -> new ExponentialOperator(left, right, expType);
-            case "&&" -> new AndOperator(left, right);
-            case "&" -> new BitwiseAndOperator(left, right, expType);
-            case "||" -> new OrOperator(left, right);
-            case "|" -> new BitwiseOrOperator(left, right, expType);
-            case "!=" -> new UnequalOperator(left, right);
-            case "==" -> new EqualOperator(left, right);
-            case ">=" -> new GreaterEqualOperator(left, right);
-            case ">" -> new GreaterOperator(left, right);
-            case "<=" -> new LessEqualOperator(left, right);
-            case "<" -> new LessOperator(left, right);
-            case "<<" -> new LeftShiftOperator(left, right);
-            case ">>" -> new RightShiftOperator(left, right);
-            case ">>>" -> new LogicalRightShiftOperator(left, right);
-            default -> null;
-        };
-        return exp == null ? Optional.empty() : Optional.of(exp);
+        Operator op = null;
+        for (var val : Operator.values()) {
+            if (operator.equals(val.symbol())) {
+                op = val;
+                break;
+            }
+        }
+        return op == null ? Optional.empty()
+                : Optional.of(new BinaryExpression(op, left, right, expType));
     }
 
     static public Expression parseBinaryOperation(Expression left, Expression right,
@@ -47,22 +33,15 @@ public class ParserUtils {
 
     static public Optional<Expression> parseAssignmentMaybe(Expression left, Expression right,
             String operator) {
-        Expression exp = switch (operator) {
-            case "=" -> new AssignmentExpression(left, right);
-            case "|=" -> new OrEqualOperator(left, right);
-            case "^=" -> new XorEqualOperator(left, right);
-            case "&=" -> new AndEqualOperator(left, right);
-            case "<<=" -> new LeftShiftEqualOperator(left, right);
-            case ">>=" -> new RightShiftEqualOperator(left, right);
-            case ">>>=" -> new LogicalRightShiftEqualOperator(left, right);
-            case "+=" -> new PlusEqualOperator(left, right);
-            case "-=" -> new MinusEqualOperator(left, right);
-            case "*=" -> new MultiplicationEqualOperator(left, right);
-            case "/=" -> new DivisionEqualOperator(left, right);
-            case "%=" -> new ModEqualOperator(left, right);
-            default -> null;
-        };
-        return exp == null ? Optional.empty() : Optional.of(exp);
+        Operator op = null;
+        for (var val : Operator.values()) {
+            if (operator.equals(val.symbol())) {
+                op = val;
+                break;
+            }
+        }
+        return op == null ? Optional.empty()
+                : Optional.of(new BinaryExpression(op, left, right, left.getType()));
     }
 
     static public Expression parseAssignment(Expression left, Expression right, String operator) {
@@ -86,16 +65,15 @@ public class ParserUtils {
 
     static public Optional<Expression> parseUnaryOperationMaybe(Expression uExp, String operator,
             boolean prefix) {
-        Expression exp = switch (operator) {
-            case "++" -> new PlusPlusOperator(uExp, prefix);
-            case "--" -> new MinusMinusOperator(uExp, prefix);
-            case "~" -> new BitwiseNotOperator(uExp);
-            case "!" -> new NotOperator(uExp);
-            case "-" -> new NegateOperator(uExp);
-            case "delete" -> new DeleteOperator(uExp);
-            default -> null;
-        };
-        return exp == null ? Optional.empty() : Optional.of(exp);
+        Operator op = null;
+        for (var val : Operator.values()) {
+            if (operator.equals(val.symbol()) && prefix == val.isPrefix()) {
+                op = val;
+                break;
+            }
+        }
+        return op == null ? Optional.empty()
+                : Optional.of(new UnaryExpression(op, uExp, uExp.getType()));
     }
 
     static public Expression parseUnaryOperation(Expression uExp, String operator,

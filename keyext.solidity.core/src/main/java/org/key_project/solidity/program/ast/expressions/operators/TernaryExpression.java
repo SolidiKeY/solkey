@@ -14,18 +14,23 @@ import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.NonNull;
 
-public class TernaryOperator extends SolidityExpression {
+public class TernaryExpression extends SolidityExpression {
 
     protected final Expression condition;
     protected final Expression falseExpression;
     protected final Expression trueExpression;
 
-    public TernaryOperator(Type expType, Expression condition, Expression falseExpression,
+    public TernaryExpression(Type expType, Expression condition, Expression falseExpression,
             Expression trueExpression) {
         super(expType);
         this.condition = condition;
         this.falseExpression = falseExpression;
         this.trueExpression = trueExpression;
+    }
+
+    public int getPrecedence() {
+        return Operator.COPY_ASSIGN.precedence(); // according to
+                                                  // https://docs.soliditylang.org/en/latest/cheatsheet.html
     }
 
     @Override
@@ -55,7 +60,7 @@ public class TernaryOperator extends SolidityExpression {
         v.performActionOnTernaryOperator(this);
     }
 
-    public TernaryOperator(ExtList children, Type type) {
+    public TernaryExpression(ExtList children, Type type) {
         super(type);
         this.condition = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
         this.falseExpression =

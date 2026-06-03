@@ -159,8 +159,9 @@ public class SolJsonParserTest {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         assertEquals(2, contractDeclaration.getFieldDeclarations().size());
         Expression initializer = contractDeclaration.getFieldDeclarations().get(1).getInitializer();
-        assertInstanceOf(AddOperator.class, initializer);
-        AddOperator addOp = (AddOperator) initializer;
+        assertInstanceOf(BinaryExpression.class, initializer);
+        BinaryExpression addOp = (BinaryExpression) initializer;
+        assertSame(Operator.ADD, addOp.getOperator());
         assertInstanceOf(ProgramVariable.class, addOp.getLeft());
         assertInstanceOf(Uint256Literal.class, addOp.getRight());
         assertSame(UINT256, initializer.getType());
@@ -264,11 +265,13 @@ public class SolJsonParserTest {
         assertEquals(1, block.getStatements().size());
         Statement exprStmnt = block.getStatements().get(0);
         assertInstanceOf(ExpressionStatement.class, exprStmnt);
-        assertInstanceOf(AssignmentExpression.class,
+        assertInstanceOf(ExpressionStatement.class,
             ((ExpressionStatement) exprStmnt).getExpression());
         ExpressionStatement exprStatement = (ExpressionStatement) exprStmnt;
         assertEquals(1, exprStatement.getChildCount());
-        assertInstanceOf(AssignmentExpression.class, exprStatement.getChild(0));
+        assertInstanceOf(BinaryExpression.class, exprStatement.getChild(0));
+        BinaryExpression assignment = (BinaryExpression) exprStatement.getChild(0);
+        assertSame(Operator.COPY_ASSIGN, assignment.getOperator());
         assertThrows(IndexOutOfBoundsException.class, () -> exprStatement.getChild(1));
     }
 
@@ -346,8 +349,10 @@ public class SolJsonParserTest {
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         assertEquals(1, contractDeclaration.getFieldDeclarations().size());
         Expression expOpSynt = contractDeclaration.getFieldDeclarations().get(0).getInitializer();
-        assertInstanceOf(ExponentialOperator.class, expOpSynt);
-        ExponentialOperator expOp = (ExponentialOperator) expOpSynt;
+
+        assertInstanceOf(BinaryExpression.class, expOpSynt);
+        BinaryExpression expOp = (BinaryExpression) expOpSynt;
+        assertSame(Operator.EXPO, expOp.getOperator());
         assertEquals(INT256, expOp.getType());
     }
 
@@ -361,8 +366,9 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         assertEquals(2, contractDeclaration.getFieldDeclarations().size());
-        assertInstanceOf(OrOperator.class,
-            contractDeclaration.getFieldDeclarations().get(0).getInitializer());
+        Expression initializer = contractDeclaration.getFieldDeclarations().get(0).getInitializer();
+        assertInstanceOf(BinaryExpression.class, initializer);
+        assertSame(Operator.LOGICAL_OR, ((BinaryExpression) initializer).getOperator());
         assertSame(BOOL,
             contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getType());
         assertSame(INT,
@@ -378,14 +384,14 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         assertEquals(1, contractDeclaration.getFieldDeclarations().size());
-        assertInstanceOf(TernaryOperator.class,
+        assertInstanceOf(TernaryExpression.class,
             contractDeclaration.getFieldDeclarations().get(0).getInitializer());
         assertSame(BOOL,
             contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getType());
         assertSame(BOOL,
             contractDeclaration.getFieldDeclarations().get(0).getInitializer().getType());
-        TernaryOperator ternary =
-            (TernaryOperator) contractDeclaration.getFieldDeclarations().get(0).getInitializer();
+        TernaryExpression ternary =
+            (TernaryExpression) contractDeclaration.getFieldDeclarations().get(0).getInitializer();
         assertEquals(3, ternary.getChildCount());
         assertSame(TRUE, ternary.getChild(0)); // condition = true
         assertSame(TRUE, ternary.getChild(1)); // falseExpression = true (value after :)
@@ -403,8 +409,9 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         assertEquals(1, contractDeclaration.getFieldDeclarations().size());
-        assertInstanceOf(AndOperator.class,
-            contractDeclaration.getFieldDeclarations().get(0).getInitializer());
+        Expression initializer = contractDeclaration.getFieldDeclarations().get(0).getInitializer();
+        assertInstanceOf(BinaryExpression.class, initializer);
+        assertSame(Operator.LOGICAL_AND, ((BinaryExpression) initializer).getOperator());
     }
 
     @Test
@@ -420,17 +427,20 @@ public class SolJsonParserTest {
         ImmutableArray<StateVariableDeclaration> fieldDeclarations =
             contractDeclaration.getFieldDeclarations();
         assertEquals(3, fieldDeclarations.size());
-        BinaryOperator addOp =
-            (BinaryOperator) contractDeclaration.getFieldDeclarations().get(2).getInitializer();
-        SyntaxElement exp = addOp.getLeft();
-        assertInstanceOf(PlusPlusOperator.class, exp);
+
+
+        Expression initializer = contractDeclaration.getFieldDeclarations().get(2).getInitializer();
+        checkExpressionForBinary(Operator.COPY_ASSIGN, initializer);
+        SyntaxElement exp = ((BinaryExpression) initializer).getLeft();
+
+        assertInstanceOf(UnaryExpression.class, exp);
+        assertSame(Operator.POST_INC, ((UnaryExpression) exp).getOperator());
         assertSame(UINT256, fieldDeclarations.get(0).getProgramVariable().getType());
         assertSame(UINT256, fieldDeclarations.get(1).getProgramVariable().getType());
         assertSame(UINT256, fieldDeclarations.get(2).getProgramVariable().getType());
-        PlusPlusOperator ppOp = (PlusPlusOperator) exp;
-        assertEquals(1, ppOp.getChildCount());
-        assertInstanceOf(ProgramVariable.class, ppOp.getChild(0));
-        assertThrows(IndexOutOfBoundsException.class, () -> ppOp.getChild(1));
+        assertEquals(2, exp.getChildCount());
+        assertInstanceOf(ProgramVariable.class, exp.getChild(1));
+        assertThrows(IndexOutOfBoundsException.class, () -> exp.getChild(2));
     }
 
     @Test
@@ -444,9 +454,10 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract);
         assertEquals(1, contractDeclaration.getFunctions().size());
-        assertInstanceOf(PlusEqualOperator.class,
-            ((ExpressionStatement) contractDeclaration.getFunctions()
-                    .getFirst().getBody().getStatements().get(0)).getExpression());
+        Expression expression = ((ExpressionStatement) contractDeclaration.getFunctions()
+                .getFirst().getBody().getStatements().get(0)).getExpression();
+        assertInstanceOf(BinaryExpression.class, expression);
+        assertSame(Operator.ADD_ASSIGN, ((BinaryExpression) expression).getOperator());
         FunctionDeclaration func = contractDeclaration.getFunctions().getFirst();
         ImmutableArray<ProgramVariable> inputParameters = func.getInputParameters();
         assertSame(UINT256, inputParameters.get(0).getType());
@@ -610,7 +621,9 @@ public class SolJsonParserTest {
         IndexExpression idxExp = (IndexExpression) retStmt.getReturnExp();
         assertEquals(2, idxExp.getChildCount());
         assertInstanceOf(ProgramVariable.class, idxExp.getChild(0)); // v
-        assertInstanceOf(AddOperator.class, idxExp.getChild(1)); // 1+1
+
+        assertInstanceOf(BinaryExpression.class, idxExp.getChild(1)); // 1+1
+        assertSame(Operator.ADD, ((BinaryExpression) idxExp.getChild(1)).getOperator());
         assertThrows(IndexOutOfBoundsException.class, () -> idxExp.getChild(2));
     }
 
@@ -769,7 +782,10 @@ public class SolJsonParserTest {
         ConditionStatement ifElseStmt = (ConditionStatement) contractDec.getFunctions().getFirst()
                 .getBody().getStatements().get(0);
         assertEquals(3, ifElseStmt.getChildCount());
-        assertInstanceOf(EqualOperator.class, ifElseStmt.getChild(0));
+
+        assertInstanceOf(BinaryExpression.class, ifElseStmt.getChild(0));
+        assertSame(Operator.EQUAL, ((BinaryExpression) ifElseStmt.getChild(0)).getOperator());
+
         assertInstanceOf(ExpressionStatement.class, ifElseStmt.getChild(1));
         assertInstanceOf(ExpressionStatement.class, ifElseStmt.getChild(2));
         assertThrows(IndexOutOfBoundsException.class, () -> ifElseStmt.getChild(3));
@@ -837,10 +853,23 @@ public class SolJsonParserTest {
                 .getBody().getStatements().get(0);
         assertEquals(4, forStmt.getChildCount());
         assertThrows(IndexOutOfBoundsException.class, () -> forStmt.getChild(4));
-        assertInstanceOf(AssignmentExpression.class, forStmt.getInit().getInit());
+        checkExpressionForBinary(Operator.COPY_ASSIGN, forStmt.getInit().getInit());
         assertEquals(1, forStmt.getInit().getChildCount());
-        assertInstanceOf(PlusPlusOperator.class, forStmt.getUpdate().getUpdate());
+        checkExpressionForBinary(Operator.COPY_ASSIGN, forStmt.getInit().getInit());
+        checkExpressionForUnary(Operator.POST_INC, forStmt.getUpdate().getUpdate());
         assertEquals(1, forStmt.getUpdate().getChildCount());
+    }
+
+    private void checkExpressionForBinary(Operator op, Expression expr) {
+        assertInstanceOf(BinaryExpression.class, expr.getClass());
+        BinaryExpression binaryExpr = (BinaryExpression) expr;
+        assertEquals(op, binaryExpr.getOperator());
+    }
+
+    private void checkExpressionForUnary(Operator op, Expression expr) {
+        assertInstanceOf(UnaryExpression.class, expr.getClass());
+        UnaryExpression unaryExpr = (UnaryExpression) expr;
+        assertEquals(op, unaryExpr.getOperator());
     }
 
     @Test
@@ -1407,7 +1436,9 @@ public class SolJsonParserTest {
         // ExpressionStatement -> AssignmentExpression
         var stmt = functionF.getBody().getStatements().get(0);
         ExpressionStatement exprStatement = (ExpressionStatement) stmt;
-        AssignmentExpression assignExpr = (AssignmentExpression) exprStatement.getExpression();
+
+        checkExpressionForBinary(Operator.COPY_ASSIGN, exprStatement.getExpression());
+        BinaryExpression assignExpr = (BinaryExpression) exprStatement.getExpression();
 
         assertInstanceOf(Uint256Literal.class, assignExpr.getRight());
 

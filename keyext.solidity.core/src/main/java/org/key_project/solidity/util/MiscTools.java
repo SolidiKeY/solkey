@@ -6,7 +6,8 @@ package org.key_project.solidity.util;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
-import org.key_project.solidity.program.ast.expressions.operators.AssignmentExpression;
+import org.key_project.solidity.program.ast.expressions.operators.Operator;
+import org.key_project.solidity.program.ast.expressions.operators.OperatorExpression;
 import org.key_project.solidity.program.ast.visitor.SolidityASTVisitor;
 import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableSet;
@@ -83,8 +84,8 @@ public final class MiscTools {
 
         @Override
         protected void doDefaultAction(SolidityProgramElement node) {
-            if (node instanceof AssignmentExpression ae) {
-                var lhs = ae.getChild(0);
+            if (node instanceof OperatorExpression e && Operator.isAssignment(e)) {
+                var lhs = e.getChild(0);
                 if (lhs instanceof ProgramVariable pv) {
                     if (!declaredPVs.contains(pv)) {
                         writtenPVs = writtenPVs.add(pv);

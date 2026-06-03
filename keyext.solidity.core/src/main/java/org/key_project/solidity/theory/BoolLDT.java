@@ -9,7 +9,7 @@ import org.key_project.logic.op.Function;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Literal;
-import org.key_project.solidity.program.ast.expressions.operators.BinaryOperator;
+import org.key_project.solidity.program.ast.expressions.operators.BinaryExpression;
 
 import org.jspecify.annotations.Nullable;
 
@@ -72,12 +72,12 @@ public class BoolLDT extends LDT {
     }
 
     @Override
-    public Function getFunctionFor(BinaryOperator op, Services services) {
+    public Function getFunctionFor(BinaryExpression op, Services services) {
         throw new UnsupportedOperationException("No bool functions");
     }
 
     @Override
-    public boolean isResponsible(BinaryOperator op, Term[] subs,
+    public boolean isResponsible(BinaryExpression op, Term[] subs,
             Services services) {
         if (subs.length == 1) {
             return isResponsible(op, subs[0], services);
@@ -88,14 +88,14 @@ public class BoolLDT extends LDT {
     }
 
     @Override
-    public boolean isResponsible(BinaryOperator op, Term left, Term right,
+    public boolean isResponsible(BinaryExpression op, Term left, Term right,
             Services services) {
         return false;
 
     }
 
     @Override
-    public boolean isResponsible(BinaryOperator op, Term sub,
+    public boolean isResponsible(BinaryExpression op, Term sub,
             Services services) {
         return false;
     }

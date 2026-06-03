@@ -44,83 +44,7 @@ public interface Visitor {
 
     void performActionOnUint256Literal(Uint256Literal x);
 
-    void performActionOnAddOperator(AddOperator x);
-
-    void performActionOnAndEqualOperator(AndEqualOperator x);
-
-    void performActionOnAndOperator(AndOperator x);
-
-    void performActionOnAssignmentExpression(AssignmentExpression x);
-
-    void performActionOnBitwiseAndOperator(BitwiseAndOperator x);
-
-    void performActionOnBitwiseEqualOperator(BitwiseEqualOperator x);
-
-    void performActionOnBitwiseNotOperator(BitwiseNotOperator x);
-
-    void performActionOnBitwiseOrOperator(BitwiseOrOperator x);
-
-    void performActionOnDeleteOperator(DeleteOperator x);
-
-    void performActionOnDivOperator(DivOperator x);
-
-    void performActionOnDivisionEqualOperator(DivisionEqualOperator x);
-
-    void performActionOnEqualOperator(EqualOperator x);
-
-    void performActionOnExponentialOperator(ExponentialOperator x);
-
-    void performActionOnGreaterEqualOperator(GreaterEqualOperator x);
-
-    void performActionOnGreaterOperator(GreaterOperator x);
-
-    void performActionOnLeftShiftEqualOperator(LeftShiftEqualOperator x);
-
-    void performActionOnLeftShiftOperator(LeftShiftOperator x);
-
-    void performActionOnLessEqualOperator(LessEqualOperator x);
-
-    void performActionOnLessOperator(LessOperator x);
-
-    void performActionOnLogicalRightShiftEqualOperator(LogicalRightShiftEqualOperator x);
-
-    void performActionOnLogicalRightShiftOperator(LogicalRightShiftOperator x);
-
-    void performActionOnMinusEqualOperator(MinusEqualOperator x);
-
-    void performActionOnMinusMinusOperator(MinusMinusOperator x);
-
-    void performActionOnModEqualOperator(ModEqualOperator x);
-
-    void performActionOnModOperator(ModOperator x);
-
-    void performActionOnMultiplicationEqualOperator(MultiplicationEqualOperator x);
-
-    void performActionOnMultiplicationOperator(MultiplicationOperator x);
-
-    void performActionOnNegateOperator(NegateOperator x);
-
-    void performActionOnNotOperator(NotOperator x);
-
-    void performActionOnOrEqualOperator(OrEqualOperator x);
-
-    void performActionOnOrOperator(OrOperator x);
-
-    void performActionOnPlusEqualOperator(PlusEqualOperator x);
-
-    void performActionOnPlusPlusOperator(PlusPlusOperator x);
-
-    void performActionOnRightShiftEqualOperator(RightShiftEqualOperator x);
-
-    void performActionOnRightShiftOperator(RightShiftOperator x);
-
-    void performActionOnSubtractionOperator(SubtractionOperator x);
-
-    void performActionOnTernaryOperator(TernaryOperator x);
-
-    void performActionOnUnequalOperator(UnequalOperator x);
-
-    void performActionOnXorEqualOperator(XorEqualOperator x);
+    void performActionOnTernaryOperator(TernaryExpression x);
 
     void performActionOnContractReference(ContractReference x);
 
@@ -168,4 +92,9 @@ public interface Visitor {
 
     void performActionOnDataLocation(DataLocation x);
 
+    void performActionOnBinaryExpression(BinaryExpression x);
+
+    void performActionOnOperator(Operator x);
+
+    void performActionOnUnaryExpression(UnaryExpression x);
 }
