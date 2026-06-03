@@ -59,7 +59,13 @@ stateMutability
   : PureKeyword | ConstantKeyword | ViewKeyword | PayableKeyword ;
 
 block
-  : '{' statement* '}' ;
+  : normalBlock | contextBlock;
+
+normalBlock
+  : '{' statement* '}';
+
+contextBlock
+  : '{c#' statement* '#c}';
 
 statement
   : schemaVariable

@@ -25,8 +25,10 @@ import org.key_project.solidity.program.ast.expressions.operators.TernaryOperato
 import org.key_project.solidity.program.ast.ghost.*;
 import org.key_project.solidity.program.ast.references.FunctionReference;
 import org.key_project.solidity.program.ast.statement.*;
+import org.key_project.solidity.program.ext.ContextStatementBlock;
 import org.key_project.solidity.program.parser.ParserUtils;
 import org.key_project.util.collection.ImmutableArray;
+import org.key_project.util.collection.ImmutableList;
 
 import org.antlr.v4.runtime.Token;
 
@@ -57,10 +59,14 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     @Override
     public SyntaxElement visitBlock(BlockContext ctx) {
         localVars = new Namespace<>(localVars);
-        List<Statement> stms = ctx.statement().stream()
+        boolean isContextBlock = ctx.contextBlock() != null;
+        var statements =
+            isContextBlock ? ctx.contextBlock().statement() : ctx.normalBlock().statement();
+        List<Statement> stms = statements.stream()
                 .map(this::visitStatement).map(Statement.class::cast).toList();
         localVars = localVars.parent();
-        return new Block(stms);
+        return isContextBlock ? new ContextStatementBlock(ImmutableList.fromList(stms))
+                : new Block(stms);
     }
 
     @Override
@@ -312,6 +318,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         return new ForStatement(initial, condition, loopExp, body);
 
     }
+
 
     @Override
     public SyntaxElement visitCatchClause(CatchClauseContext ctx) {

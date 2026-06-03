@@ -50,8 +50,9 @@ public class SolidityReader {
     public SolidityBlock readBlock(String block, Context context,
             Namespace<SchemaVariable> schemaVariables) throws IOException {
         SolcParser solcParser = new SolcParser(services);
-        if (context.getSolidityPath() != null)
+        if (context.getSolidityPath() != null) {
             solcParser.getDeclStrJsonParser(context.getSolidityPath());
+        }
         SolidityToKeyConverter stk =
             new SolidityToKeyConverter(services, new Namespace<>(), context.getVarNS(),
                 schemaVariables);
