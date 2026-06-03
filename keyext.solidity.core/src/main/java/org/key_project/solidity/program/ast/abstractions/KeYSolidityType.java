@@ -93,4 +93,9 @@ public class KeYSolidityType implements Type, Resolver {
         if (solidityType == null)
             solidityType = (Type) id2Name.get(typeId);
     }
+
+    @Override
+    public String toString() {
+        return "KeYSolidityType(" + solidityType + "," + sort + ")[" + typeId + "]";
+    }
 }

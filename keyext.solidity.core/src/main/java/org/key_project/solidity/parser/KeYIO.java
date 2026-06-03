@@ -23,6 +23,7 @@ import org.key_project.solidity.parser.builder.ExpressionBuilder;
 import org.key_project.solidity.parser.builder.FunctionPredicateBuilder;
 import org.key_project.solidity.parser.builder.ProblemFinder;
 import org.key_project.solidity.parser.builder.TacletPBuilder;
+import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.util.parsing.BuildingException;
 import org.key_project.solidity.util.parsing.BuildingIssue;
 
@@ -157,11 +158,13 @@ public class KeYIO {
      * return visitor.getTopLevelTaclets();
      * }
      */
-    public List<BuildingIssue> evalDeclarations(KeYAst.File ctx) {
+    public UnresolvedTypesAndIssues evalDeclarations(KeYAst.File ctx) {
         DeclarationBuilder declBuilder = new DeclarationBuilder(services, nss);
         ctx.accept(declBuilder);
         warnings.addAll(declBuilder.getBuildingIssues());
-        return declBuilder.getBuildingIssues();
+
+        return new UnresolvedTypesAndIssues(declBuilder.getBuildingIssues(),
+            declBuilder.unresolvedTypes());
     }
 
     public List<BuildingIssue> evalFuncAndPred(KeYAst.File ctx) {
@@ -220,7 +223,7 @@ public class KeYIO {
         }
 
         public Loader activateLDTs() {
-            services.initTheories();
+            services.initTheories(new ArrayList<>());
             return this;
         }
 
@@ -297,5 +300,9 @@ public class KeYIO {
             // TODO weigl tbd
             return null;
         }
+    }
+    /// Unresolved types are incomplete KeYSolidityTypes
+    public record UnresolvedTypesAndIssues(List<BuildingIssue> issues,
+            List<KeYSolidityType> unresolvedTypes) {
     }
 }

@@ -46,9 +46,15 @@ public class DefaultBuilder extends AbstractBuilder<@Nullable Object> {
     protected final NamespaceSet nss;
     private Namespace<@NonNull SchemaVariable> schemaVariablesNamespace = new Namespace<>();
 
+    private List<KeYSolidityType> unresolvedTypes = new ArrayList<>();
+
     public DefaultBuilder(Services services, NamespaceSet nss) {
         this.services = services;
         this.nss = nss;
+    }
+
+    public List<KeYSolidityType> unresolvedTypes() {
+        return unresolvedTypes;
     }
 
     private ImmutableList<GenericArgument> getGenericArgs(
@@ -298,6 +304,7 @@ public class DefaultBuilder extends AbstractBuilder<@Nullable Object> {
             Sort sort = lookupSort(type);
             if (sort != null) {
                 kst = new KeYSolidityType(null, sort);
+                unresolvedTypes.add(kst);
             }
         }
 

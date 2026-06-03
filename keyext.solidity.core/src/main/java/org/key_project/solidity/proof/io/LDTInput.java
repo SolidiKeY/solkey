@@ -9,9 +9,11 @@ import java.util.ArrayList;
 
 import org.key_project.logic.Name;
 import org.key_project.solidity.common.Profile;
+import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.proof.init.Includes;
 import org.key_project.solidity.proof.init.InitConfig;
 import org.key_project.solidity.proof.init.ProofInputException;
+import org.key_project.solidity.util.parsing.BuildingIssue;
 import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableSet;
 
@@ -74,21 +76,24 @@ public class LDTInput implements EnvInput {
     @Override
     public ImmutableSet<String> read() {
         var warnings = new ArrayList<String>();
+        var unresolvedTypes = new ArrayList<KeYSolidityType>();
 
         if (initConfig == null) {
             throw new IllegalStateException("LDTInput: InitConfig not set.");
         }
 
         for (KeYFile keYFile : keyFiles) {
-            var w = keYFile.readSorts();
-            warnings.addAll(w);
+            var pending = keYFile.readSorts();
+            warnings.addAll(pending.issues().stream().map(BuildingIssue::message).toList());
+            unresolvedTypes.addAll(pending.unresolvedTypes());
         }
+
         for (KeYFile file : keyFiles) {
             var w = file.readFuncAndPred();
             warnings.addAll(w);
         }
         // create LDT objects to have them available for parsing
-        initConfig.getServices().initTheories();
+        initConfig.getServices().initTheories(unresolvedTypes);
 
         // TODO read rules once they are added
         for (KeYFile keyFile : keyFiles) {

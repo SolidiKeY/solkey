@@ -6,6 +6,7 @@ package org.key_project.solidity.theory;
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Function;
+import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.expressions.literals.Literal;
@@ -18,9 +19,11 @@ public class MemoryLDT extends LDT {
 
     private final Function mtMem;
     private final ProgramVariable memory;
+    private final Sort identitySort;
 
     public MemoryLDT(Services services) {
         super(NAME, services);
+        identitySort = services.getNamespaces().sorts().lookup("Identity");
         mtMem = addFunction(services, "mtMem");
         memory = services.getNamespaces().programVariables().lookup(new Name("memory"));
     }
@@ -75,5 +78,9 @@ public class MemoryLDT extends LDT {
             case "mtMem" -> getEmptyMemory();
             default -> null;
         };
+    }
+
+    public Sort getIdentitySort() {
+        return identitySort;
     }
 }

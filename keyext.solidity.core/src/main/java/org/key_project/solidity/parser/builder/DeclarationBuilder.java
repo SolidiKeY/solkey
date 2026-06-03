@@ -86,7 +86,6 @@ public class DeclarationBuilder extends DefaultBuilder {
                                 .add(new ProgramVariable(pvName, kst, DataLocation.Default));
                     }
                 } else {
-                    System.out.println(kst);
                     programVariables().add(new ProgramVariable(pvName, kst, DataLocation.Default));
                 }
             }

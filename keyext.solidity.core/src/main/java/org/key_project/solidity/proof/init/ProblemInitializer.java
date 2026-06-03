@@ -121,6 +121,7 @@ public final class ProblemInitializer {
             throw new ProofInputException("Problem initialization without JavaInfo!");
         }
 
+
         // read envInput
         readEnvInput(envInput, initConfig);
 

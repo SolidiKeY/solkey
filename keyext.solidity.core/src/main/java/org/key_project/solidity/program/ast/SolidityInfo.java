@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -13,8 +14,11 @@ import org.key_project.logic.op.Function;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
+import org.key_project.solidity.program.ast.abstractions.PseudoType;
 import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.solidity.theory.TheoryInfo;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,9 +48,9 @@ public class SolidityInfo {
     public SolidityInfo() {
     }
 
-    public void initialize(Services services) {
+    public void initialize(Services services, ArrayList<KeYSolidityType> unresolvedTypes) {
         if (!initialized) {
-            registerPrimitiveTypes(services);
+            registerPredefinedTypes(services, unresolvedTypes);
             initialized = true;
         } else {
             throw new IllegalStateException("SolidityInfo already initialized");
@@ -54,10 +58,10 @@ public class SolidityInfo {
 
     }
 
-
-    private void registerPrimitiveTypes(Services services) {
-        Sort intSort = services.getTheoryInfo().getIntLDT().targetSort();
-        Sort boolSort = services.getTheoryInfo().getBoolLDT().targetSort();
+    private void registerPredefinedTypes(Services services, List<KeYSolidityType> unresolvedTypes) {
+        TheoryInfo theoryInfo = services.getTheoryInfo();
+        Sort intSort = theoryInfo.getIntLDT().targetSort();
+        Sort boolSort = theoryInfo.getBoolLDT().targetSort();
         for (Type primitiveType : PRIMITIVE_TYPES) {
             if (primitiveType.name().toString().contains("int")) {
                 put(new KeYSolidityType(primitiveType, intSort));
@@ -67,7 +71,56 @@ public class SolidityInfo {
                 LOGGER.info(primitiveType.name() + " not yet supported. Type skipped");
             }
         }
+
+        for (Type pseudoType : PSEUDO_TYPES) {
+            KeYSolidityType solidityType = unresolvedTypes.stream()
+                    .filter(t -> t.name().equals(pseudoType.name())).findFirst().orElse(null);
+            Sort sort;
+            switch (pseudoType.name().toString()) {
+                case "Memory":
+                    sort = theoryInfo.getMemoryLDT().targetSort();
+                    solidityType = createOrResolveKeYSolidityType(pseudoType, solidityType, sort);
+                    put(solidityType);
+                    unresolvedTypes.remove(solidityType);
+                    break;
+                case "Identity":
+                    sort = theoryInfo.getMemoryLDT().getIdentitySort();
+                    solidityType = createOrResolveKeYSolidityType(pseudoType, solidityType, sort);
+                    put(solidityType);
+                    unresolvedTypes.remove(solidityType);
+                    break;
+                case "Struct":
+                    sort = theoryInfo.getStructLDT().targetSort();
+                    solidityType = createOrResolveKeYSolidityType(pseudoType, solidityType, sort);
+                    put(solidityType);
+                    unresolvedTypes.remove(solidityType);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown pseudoType " + pseudoType.name());
+            }
+        }
+        if (!unresolvedTypes.isEmpty()) {
+            throw new IllegalStateException(
+                "The following KeYSolidityTypes could not be resolved " + unresolvedTypes);
+        }
     }
+
+    private @NonNull KeYSolidityType createOrResolveKeYSolidityType(Type pseudoType,
+            KeYSolidityType solidityType,
+            Sort sort) {
+        if (solidityType == null) {
+            solidityType = new KeYSolidityType(pseudoType, sort);
+        } else {
+            assert solidityType.getSolidityType() == null;
+            solidityType.setSolidityType(pseudoType);
+        }
+        return solidityType;
+    }
+
+    // PSEUDO types do not exist in Solidity, but there are program variables of that 'type' on
+    // the logic side, like memory or storage
+    private static final List<Type> PSEUDO_TYPES = List.of(
+        PseudoType.MEMORY, PseudoType.STRUCT, PseudoType.IDENTITY);
 
     private static final List<Type> PRIMITIVE_TYPES = List.of(
         INT,

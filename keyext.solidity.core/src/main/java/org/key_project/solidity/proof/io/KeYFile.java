@@ -8,7 +8,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -228,7 +227,12 @@ public class KeYFile implements EnvInput {
         initConfig.addCategory2DefaultChoices(ci.getDefaultOptions());
 
         var warnings = new ArrayList<String>();
-        warnings.addAll(readSorts());
+        KeYIO.UnresolvedTypesAndIssues pending = readSorts();
+        warnings.addAll(pending.issues().stream().map(BuildingIssue::message).toList());
+        if (!pending.unresolvedTypes().isEmpty()) {
+            throw new IllegalStateException(
+                "KeYFile: Unresolved types found." + pending.unresolvedTypes());
+        }
         warnings.addAll(readFuncAndPred());
 
         return DefaultImmutableSet.fromCollection(warnings);
@@ -260,15 +264,16 @@ public class KeYFile implements EnvInput {
 
     /// reads the sorts declaration of the .key file only, modifying the sort namespace of the
     /// initial configuration
-    public Collection<String> readSorts() {
+    public KeYIO.UnresolvedTypesAndIssues readSorts() {
         KeYAst.File ctx = getParseContext();
         KeYIO io = new KeYIO(initConfig.getServices(), initConfig.namespaces());
-        io.evalDeclarations(ctx);
+        KeYIO.UnresolvedTypesAndIssues pending = io.evalDeclarations(ctx);
+
         ChoiceInformation choice = getParseContext().getChoices();
         // we ignore the namespace of choice finder.
         initConfig.addCategory2DefaultChoices(choice.getDefaultOptions());
 
-        return io.getWarnings().stream().map(BuildingIssue::message).toList();
+        return pending;
     }
 
     /// reads the functions and predicates declared in the .key file only, modifying the function

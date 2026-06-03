@@ -4,6 +4,7 @@
 package org.key_project.solidity.common;
 
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
@@ -19,6 +20,7 @@ import org.key_project.solidity.logic.TermFactory;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityInfo;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.proof.Counter;
 import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.proof.Proof;
@@ -124,7 +126,7 @@ public class Services implements LogicServices, ProofServices {
         return theoryInfo;
     }
 
-    public void setTheoryInfo(TheoryInfo theoryInfo) {
+    private void setTheoryInfo(TheoryInfo theoryInfo) {
         this.theoryInfo = theoryInfo;
     }
 
@@ -204,6 +206,7 @@ public class Services implements LogicServices, ProofServices {
         s.setNamespaces(namespaces.copy());
         s.setTheoryInfo(theoryInfo.copy(s));
         s.setSolidityModel(getSolidityModel());
+        s.getSolidityInfo().initialize(s, new ArrayList<>());
         nameRecorder = nameRecorder.copy();
         return s;
     }
@@ -213,13 +216,14 @@ public class Services implements LogicServices, ProofServices {
         Services s = new Services(getProfile());
         s.setNamespaces(namespaces.copy());
         s.setTheoryInfo(theoryInfo);
+        s.getSolidityInfo().initialize(s, new ArrayList<>());
         return s;
     }
 
-    public void initTheories() {
+    public void initTheories(ArrayList<KeYSolidityType> unresolvedTypes) {
         if (theoryInfo == null) {
             theoryInfo = new TheoryInfo(this);
-            solidityInfo.initialize(this);
+            solidityInfo.initialize(this, unresolvedTypes);
         } else {
             throw new IllegalStateException("Tried to initialize theories twice");
         }
