@@ -19,7 +19,7 @@ public class TermProgramVariableCollector implements Visitor<@NonNull Term> {
 
     private final HashSet<ProgramVariable> result = new LinkedHashSet<>();
     private final Services services;
-
+    private boolean containsModality;
 
     public TermProgramVariableCollector(Services services) {
         this.services = services;
@@ -40,7 +40,12 @@ public class TermProgramVariableCollector implements Visitor<@NonNull Term> {
                 new ProgramVariableCollector(mod.programBlock().program(), services);
             pvc.start();
             result.addAll(pvc.result());
+            containsModality = true;
         }
+    }
+
+    public boolean containsModality() {
+        return containsModality;
     }
 
     public HashSet<ProgramVariable> result() {

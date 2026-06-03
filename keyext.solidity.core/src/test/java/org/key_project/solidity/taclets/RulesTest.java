@@ -16,7 +16,6 @@ import org.key_project.solidity.control.KeYEnvironment;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.io.OutputStreamProofSaver;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
-import org.key_project.solidity.proof.io.ProofSaver;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -44,15 +43,15 @@ public class RulesTest {
     public void exampleLoads(String exampleName, Path exampleFile) throws ProblemLoaderException {
         Proof proof = prove(exampleFile.toFile(), -1, 10000);
 
-// For debugging to inspect the saved proof
-//        if (!proof.closed()) {
-//            try {
-//                String filename = exampleFile.getFileName().toString() + ".proof";
-//                ProofSaver.saveToFile(new File(filename), proof);
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//        }
+        // For debugging to inspect the saved proof
+        // if (!proof.closed()) {
+        // try {
+        // String filename = exampleFile.getFileName().toString() + ".proof";
+        // ProofSaver.saveToFile(new File(filename), proof);
+        // } catch (IOException e) {
+        // throw new RuntimeException(e);
+        // }
+        // }
 
         assertEquals(0, proof.closed(),
             () -> exampleName + " should be verified, but the following goals are open " +

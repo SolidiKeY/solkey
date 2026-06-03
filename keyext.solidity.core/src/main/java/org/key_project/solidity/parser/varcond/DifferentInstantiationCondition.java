@@ -24,31 +24,56 @@ public class DifferentInstantiationCondition extends VariableConditionAdapter {
             Services services) {
         if (var == var1) {
             final SyntaxElement inst2 = svInst.getInstantiation(var2);
-            return inst2 == null || !equalInst(inst2, instCandidate);
+            return inst2 == null || differentInstantiations(inst2, instCandidate);
         } else if (var == var2) {
             final SyntaxElement inst1 = svInst.getInstantiation(var1);
-            return inst1 == null || !equalInst(inst1, instCandidate);
+            return inst1 == null || differentInstantiations(inst1, instCandidate);
         } else {
             return true;
         }
     }
 
-    private boolean equalInst(SyntaxElement inst1, SyntaxElement inst2) {
+    private boolean differentInstantiations(SyntaxElement inst1, SyntaxElement inst2) {
         if (inst1 == inst2) {
-            return true;
-        }
-
-        if (inst1.getClass() != inst2.getClass()) {
-            if (inst1 instanceof ProgramVariable pv && inst2 instanceof Term t) {
-                return pv == t.op();
-            } else if (inst2 instanceof ProgramVariable pv && inst1 instanceof Term t) {
-                return pv == t.op();
-            }
             return false;
-        } else {
-            return inst1.equals(inst2);
         }
 
+        ProgramVariable var1 = null;
+        ProgramVariable var2 = null;
+
+        if (inst1 instanceof ProgramVariable) {
+            var1 = (ProgramVariable) inst1;
+        }
+        if (inst2 instanceof ProgramVariable) {
+            var2 = (ProgramVariable) inst2;
+        }
+        boolean hasConstant = false;
+        if (var1 == null && inst1 instanceof Term t) {
+            if (t.op() instanceof ProgramVariable pv) {
+                var1 = pv;
+            } else if (t.arity() != 0) {
+                return false;
+            }
+        }
+        if (var2 == null && inst2 instanceof Term t) {
+            if (t.op() instanceof ProgramVariable pv) {
+                var2 = pv;
+            } else if (t.arity() != 0) {
+                return false;
+            }
+        }
+
+        if (var1 instanceof ProgramVariable && var2 instanceof ProgramVariable) {
+            return var1 != var2;
+        } else if (var1 == null && var2 == null) {
+            return false;
+        } else if (inst1 instanceof Term && inst2 instanceof Term) {
+            return false;
+        } else if (inst1 instanceof Term || inst2 instanceof Term) {
+            return true; // one of them is a constant
+        } else {
+            return false; // safe out
+        }
     }
 
     @Override

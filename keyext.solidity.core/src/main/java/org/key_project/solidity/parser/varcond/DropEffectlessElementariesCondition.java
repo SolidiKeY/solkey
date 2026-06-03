@@ -33,7 +33,6 @@ public final class DropEffectlessElementariesCondition implements VariableCondit
         this.result = x2;
     }
 
-
     private static Term dropEffectlessElementariesHelper(Term update,
             Set<ProgramVariable> relevantVars, Services services) {
         if (update.op() instanceof ElementaryUpdate eu) {
@@ -73,6 +72,12 @@ public final class DropEffectlessElementariesCondition implements VariableCondit
         TermProgramVariableCollector collector = new TermProgramVariableCollector(services);
         target.execPostOrder(collector);
         Set<ProgramVariable> varsInTarget = collector.result();
+        // add protected variables
+        if (collector.containsModality()) {
+            varsInTarget.add(services.getTheoryInfo().getMemoryLDT().getBaseMemory());
+            varsInTarget.add(services.getTheoryInfo().getStructLDT().getStorage());
+        }
+
         Term simplifiedUpdate = dropEffectlessElementariesHelper(update, varsInTarget, services);
         return simplifiedUpdate == null ? null
                 : services.getTermBuilder().apply(simplifiedUpdate, target);
@@ -83,9 +88,9 @@ public final class DropEffectlessElementariesCondition implements VariableCondit
             MatchResultInfo mc,
             LogicServices services) {
         SVInstantiations svInst = (SVInstantiations) mc.getInstantiations();
-        Term uInst = (Term) svInst.getInstantiation(u);
-        Term xInst = (Term) svInst.getInstantiation(x);
-        Term resultInst = (Term) svInst.getInstantiation(result);
+        Term uInst = svInst.getInstantiation(u);
+        Term xInst = svInst.getInstantiation(x);
+        Term resultInst = svInst.getInstantiation(result);
         if (uInst == null || xInst == null) {
             return mc;
         }

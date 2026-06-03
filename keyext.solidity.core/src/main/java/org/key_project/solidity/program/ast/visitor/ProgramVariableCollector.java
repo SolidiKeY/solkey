@@ -16,6 +16,7 @@ public class ProgramVariableCollector extends SolidityASTVisitor {
     /// collects all program variables occurring in the AST <tt>root</tt> using this constructor is
     /// equivalent to <tt>ProggramVariableCollector(root, false)</tt>
     ///
+    ///
     /// @param root the ProgramElement which is the root of the AST
     /// @param services the Services object
     public ProgramVariableCollector(SolidityProgramElement root, Services services) {
