@@ -19,16 +19,19 @@ public class TheoryInfo implements Iterable<LDT> {
     private final BoolLDT boolLDT;
     private final IntLDT intLDT;
     private final StructLDT structLDT;
+    private final MemoryLDT memoryLDT;
     private final Map<Name, LDT> map;
 
     public TheoryInfo(Services services) {
         boolLDT = new BoolLDT(services);
         intLDT = new IntLDT(services);
         structLDT = new StructLDT(services);
+        memoryLDT = new MemoryLDT(services);
         map = new HashMap<>();
         map.put(boolLDT.name(), boolLDT);
         map.put(intLDT.name(), intLDT);
         map.put(structLDT.name(), structLDT);
+        map.put(memoryLDT.name(), memoryLDT);
     }
 
     public BoolLDT getBoolLDT() {
@@ -37,6 +40,14 @@ public class TheoryInfo implements Iterable<LDT> {
 
     public IntLDT getIntLDT() {
         return intLDT;
+    }
+
+    public StructLDT getStructLDT() {
+        return structLDT;
+    }
+
+    public MemoryLDT getMemoryLDT() {
+        return memoryLDT;
     }
 
     public @Nullable LDT get(Name name) {
@@ -58,9 +69,5 @@ public class TheoryInfo implements Iterable<LDT> {
 
     public TheoryInfo copy(Services services) {
         return new TheoryInfo(services);
-    }
-
-    public StructLDT getStructLDT() {
-        return structLDT;
     }
 }
