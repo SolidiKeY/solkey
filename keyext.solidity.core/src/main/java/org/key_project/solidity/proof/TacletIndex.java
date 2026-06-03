@@ -15,6 +15,7 @@ import org.key_project.prover.sequent.PosInOccurrence;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.SolidityBlock;
 import org.key_project.solidity.logic.op.ElementaryUpdate;
+import org.key_project.solidity.logic.op.ParametricFunctionInstance;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.op.SModality;
 import org.key_project.solidity.logic.op.UpdateApplication;
@@ -200,6 +201,7 @@ public class TacletIndex {
                     }
                 }
             }
+            case ParametricFunctionInstance pfi -> indexObj = pfi.getBase();
             default -> {
                 indexObj = indexTerm.op();
                 if (indexObj instanceof ElementaryUpdate) {
@@ -384,19 +386,12 @@ public class TacletIndex {
             res = merge(res, map.get(DEFAULT_PROGSV_KEY));
         }
 
-        final ImmutableList<NoPosTacletApp> inMap;
-
-        /*
-         * if (op instanceof SortDependingFunction) {
-         * inMap = map.get(((SortDependingFunction) op).getKind());
-         * } else
-         */ if (op instanceof ElementaryUpdate) {
-            inMap = map.get(ElementaryUpdate.class);
-        } else if (op instanceof SModality) {
-            inMap = map.get(SModality.class);
-        } else {
-            inMap = map.get(op);
-        }
+        final ImmutableList<NoPosTacletApp> inMap = switch (op) {
+            case ParametricFunctionInstance pfi -> map.get(pfi.getBase());
+            case ElementaryUpdate elementaryUpdate -> map.get(ElementaryUpdate.class);
+            case SModality sModality -> map.get(SModality.class);
+            default -> map.get(op);
+        };
 
         res = merge(res, inMap);
 
