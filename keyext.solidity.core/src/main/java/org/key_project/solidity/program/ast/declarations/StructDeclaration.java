@@ -46,7 +46,7 @@ public class StructDeclaration implements Declaration, Type, Resolver {
 
     @Override
     public Name name() {
-        return new Name(contract.name() + "." + name);
+        return name;
     }
 
     @Override

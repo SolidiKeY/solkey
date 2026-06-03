@@ -37,7 +37,7 @@ public class ParsingFacadeTest {
 
     @BeforeEach
     void setup() {
-        services = new Services();
+        services = ParserForTesting.load().getServices();
 
         SortImpl mySort = new SortImpl(new Name("MySort"));
         services.getNamespaces().sorts().addSafely(mySort);

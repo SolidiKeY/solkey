@@ -3,11 +3,15 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser;
 
+import java.io.File;
+import java.net.URISyntaxException;
 import java.util.List;
 
 import org.key_project.logic.*;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.control.DefaultUserInterfaceControl;
+import org.key_project.solidity.control.KeYEnvironment;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.parser.SolidityParser.*;
@@ -15,7 +19,9 @@ import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.declarations.*;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.statement.*;
+import org.key_project.solidity.proof.io.ProblemLoaderException;
 import org.key_project.solidity.rule.sv.ProgramSV;
+import org.key_project.solidity.util.KeYResourceManager;
 
 import org.antlr.v4.runtime.*;
 
@@ -26,8 +32,22 @@ public class ParserForTesting {
 
     static SolidityToKeyConverter stk = solConverter();
 
+    public static KeYEnvironment<DefaultUserInterfaceControl> load() {
+        try {
+            File file = new File(KeYResourceManager.getManager()
+                    .getResourceFile(ParserForTesting.class, "simpleForTestInit.key").toURI());
+            return KeYEnvironment.load(file);
+        } catch (ProblemLoaderException e) {
+            throw new RuntimeException(e);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
     private static SolidityToKeyConverter solConverter() {
-        Services services = new Services();
+        KeYEnvironment<DefaultUserInterfaceControl> env = load();
+        Services services = env.getServices();
 
         KeYSolidityType ksType =
             new KeYSolidityType(UINT, new SortImpl(new Name("UINT")));

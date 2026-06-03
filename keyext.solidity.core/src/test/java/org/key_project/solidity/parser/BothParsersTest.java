@@ -28,7 +28,7 @@ public class BothParsersTest {
     SolcParser solcParser;
 
     public BothParsersTest() throws IOException {
-        services = new Services();
+        services = ParserForTesting.load().getServices();
         stk = new SolidityToKeyConverter(services, new Namespace<>(), new Namespace<>(),
             new Namespace<>());
         solcParser = new SolcParser(services);

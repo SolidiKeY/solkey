@@ -218,7 +218,6 @@ public class KeYIO {
             }
             loadDeclarations();
             loadSndDegreeDeclarations();
-            activateLDTs();
             return loadTaclets();
         }
 
