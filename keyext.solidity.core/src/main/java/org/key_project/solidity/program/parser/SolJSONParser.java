@@ -16,6 +16,7 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.logic.op.SFunction;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.SolidityInfo;
@@ -53,10 +54,6 @@ public class SolJSONParser {
 
     private final Services services;
     private final HashMap<String, KeYSolidityType> partialKSTMap = new LinkedHashMap<>();
-
-    public SolJSONParser() {
-        services = new Services();
-    }
 
     public SolJSONParser(Services services) {
         this.services = services;
@@ -440,7 +437,7 @@ public class SolJSONParser {
 
     private StateVariableDeclaration parseVariableField(JsonNode fieldNode) {
         final int id = fieldNode.get("id").asInt();
-        final String fieldName = fieldNode.get("name").asString();
+        final String fieldNameAsString = fieldNode.get("name").asString();
         JsonNode typeName = fieldNode.get("typeName");
         Type expType = null;
         int idRef = -1;
@@ -462,13 +459,27 @@ public class SolJSONParser {
 
         KeYSolidityType type = getOrCreateKeYSolidityType(expType);
 
+
+        final Name fieldName = new Name(fieldNameAsString);
+
         ProgramVariable programVariable =
-            new ProgramVariable(new Name(fieldName), type, DataLocation.Storage);
+            new ProgramVariable(fieldName, type, DataLocation.Storage);
         StateVariableDeclaration field =
             new StateVariableDeclaration(programVariable, initializerExp, visibility);
         id2Name.put(id, field);
 
+        createFieldConstantAndRegisterField(field, fieldName, type);
+
         return field;
+    }
+
+    private void createFieldConstantAndRegisterField(StateVariableDeclaration field, Name fieldName,
+            KeYSolidityType type) {
+        // TODO should we make the unique field names parametric with the contract type as
+        // parameter?
+        services.getSolidityInfo().addStateVariable(field);
+        services.getNamespaces().functions()
+                .addSafely(new SFunction(fieldName, type.getSort(), true, true));
     }
 
     Type parseReferenceTypeDeclaration(JsonNode expNode) {

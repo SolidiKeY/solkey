@@ -12,8 +12,9 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 
 import org.jspecify.annotations.NonNull;
 
+// what is the difference between a TypeReference and an ElemnaryExpression?
 public class TypeReference implements SolidityProgramElement {
-
+    // TODO: Fix. No public fields.
     public Type referencedType;
     public final Name typeName;
 
@@ -44,6 +45,11 @@ public class TypeReference implements SolidityProgramElement {
     @Override
     public int getChildCount() {
         return 0;
+    }
+
+    @Override
+    public int computeHashCode() {
+        return 7 * typeName.hashCode();
     }
 
     public void visit(Visitor v) {

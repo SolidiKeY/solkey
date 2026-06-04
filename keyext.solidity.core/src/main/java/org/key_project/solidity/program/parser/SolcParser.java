@@ -18,10 +18,6 @@ public class SolcParser {
     static Services services;
     static SolJSONParser jsonParser;
 
-    public SolcParser() {
-        this(new Services());
-    }
-
     public SolcParser(Services services) {
         this.services = services;
         jsonParser = new SolJSONParser(services);

@@ -14,6 +14,8 @@ import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.NonNull;
 
+/// TODO: Unclear what an enumreference is? Is it the name of a member or of the type
+/// In the first case, why is it a variable reference?
 public class EnumReference extends SolidityExpression implements VariableReference {
     private final EnumDeclaration enumDeclaration;
 

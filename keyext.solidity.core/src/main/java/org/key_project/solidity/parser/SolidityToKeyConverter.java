@@ -56,6 +56,26 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         this.schemaVariables = schemaVariables;
     }
 
+    public SolidityToKeyConverter(Services services) {
+        this(services, new Namespace<>(), new Namespace<>(), new Namespace<>());
+    }
+
+    public Namespace<FunctionDeclaration> localFunctions() {
+        return localFunctions;
+    }
+
+    public Namespace<ProgramVariable> localVars() {
+        return localVars;
+    }
+
+    public Namespace<? extends SchemaVariable> schemaVariables() {
+        return schemaVariables;
+    }
+
+    public Services services() {
+        return services;
+    }
+
     @Override
     public SyntaxElement visitBlock(BlockContext ctx) {
         localVars = new Namespace<>(localVars);

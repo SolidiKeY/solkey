@@ -57,7 +57,7 @@ public class TernaryExpression extends SolidityExpression {
     }
 
     public void visit(Visitor v) {
-        v.performActionOnTernaryOperator(this);
+        v.performActionOnTernaryExpression(this);
     }
 
     public TernaryExpression(ExtList children, Type type) {

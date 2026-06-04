@@ -270,7 +270,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
     }
 
     @Override
-    public void performActionOnTernaryOperator(TernaryExpression x) {
+    public void performActionOnTernaryExpression(TernaryExpression x) {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {

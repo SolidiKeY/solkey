@@ -15,6 +15,9 @@ import static org.key_project.solidity.logic.SolidityDLTheory.UPDATE;
 
 /// This class represents a function or predicate symbol in the logic
 public class SFunction extends Function {
+
+    public static final ImmutableArray<Sort> NO_ARGUMENTS = new ImmutableArray<>();
+
     public SFunction(Name name, Sort sort, ImmutableArray<Sort> argSorts,
             @Nullable ImmutableArray<Boolean> whereToBind, boolean isRigid, boolean unique,
             boolean isSkolemConstant) {
@@ -40,7 +43,7 @@ public class SFunction extends Function {
 
     public SFunction(Name name, Sort sort, Sort[] argSorts, boolean isRigid, boolean unique) {
         this(name, sort,
-            argSorts == null ? new ImmutableArray<>() : new ImmutableArray<>(argSorts),
+            argSorts == null ? NO_ARGUMENTS : new ImmutableArray<>(argSorts),
             null, isRigid, unique, false);
     }
 
@@ -59,7 +62,11 @@ public class SFunction extends Function {
     }
 
     public SFunction(Name name, Sort sort) {
-        this(name, sort, null, true, false, false);
+        this(name, sort, /* argSorts */ new ImmutableArray<>(), true, false, false);
+    }
+
+    public SFunction(Name name, Sort sort, boolean isRigid, boolean unique) {
+        this(name, sort, /* argSorts */ new ImmutableArray<>(), isRigid, unique, false);
     }
 
     public SFunction(Name name, Sort sort, Sort... argSorts) {

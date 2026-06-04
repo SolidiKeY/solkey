@@ -3,19 +3,16 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
+import org.key_project.logic.Name;
 import org.key_project.logic.op.Function;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.PseudoType;
 import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.solidity.program.ast.declarations.StateVariableDeclaration;
 import org.key_project.solidity.theory.TheoryInfo;
 
 import org.jspecify.annotations.NonNull;
@@ -44,6 +41,7 @@ public class SolidityInfo {
     // carefull sort name to KST is not unique and has to be solved differently
     private final Map<String, KeYSolidityType> solidityTypeName2KeYSolidityType = new HashMap<>();
     private boolean initialized;
+    private final LinkedHashSet<StateVariableDeclaration> stateVariables = new LinkedHashSet<>();
 
     public SolidityInfo() {
     }
@@ -416,4 +414,25 @@ public class SolidityInfo {
             default -> null;
         };
     }
+
+    // Knowledge about state variables
+
+    public void addStateVariable(StateVariableDeclaration stateVariable) {
+        if (stateVariables.contains(stateVariable) ||
+                getStateVariableDeclaration(stateVariable.getProgramVariable().name()) != null) {
+            throw new RuntimeException(
+                "State variable " + stateVariable.getProgramVariable().name() + " already exists");
+        }
+        stateVariables.add(stateVariable);
+    }
+
+    public StateVariableDeclaration getStateVariableDeclaration(Name name) {
+        for (StateVariableDeclaration stateVariable : stateVariables) {
+            if (stateVariable.getProgramVariable().name().equals(name)) {
+                return stateVariable;
+            }
+        }
+        return null;
+    }
+
 }

@@ -119,7 +119,7 @@ public abstract class SolidityASTVisitor extends SolidityASTWalker implements Vi
     }
 
     @Override
-    public void performActionOnTernaryOperator(TernaryExpression x) {
+    public void performActionOnTernaryExpression(TernaryExpression x) {
         doDefaultAction(x);
     }
 

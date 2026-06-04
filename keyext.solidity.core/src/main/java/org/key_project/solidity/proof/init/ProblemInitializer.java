@@ -6,6 +6,9 @@ package org.key_project.solidity.proof.init;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -22,12 +25,14 @@ import org.key_project.solidity.logic.op.ElementaryUpdate;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.op.SModality;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.parser.SolcParser;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.SolidityModel;
 import org.key_project.solidity.proof.io.*;
 import org.key_project.solidity.proof.io.consistency.FileRepo;
 import org.key_project.solidity.proof.mgt.AxiomJustification;
+import org.key_project.solidity.prover.impl.PerfScope;
 import org.key_project.solidity.rule.BuiltInRule;
 import org.key_project.solidity.util.MiscTools;
 import org.key_project.util.collection.DefaultImmutableSet;
@@ -155,10 +160,16 @@ public final class ProblemInitializer {
         if (solidityPath != null) {
             try {
                 var beforeConversion = System.nanoTime();
-                // TODO: read in solidity code and convert to KeY structures
-                throw new RuntimeException("Not implemented yet");
-                // LOGGER.debug("Solidity conversion took {}",
-                // PerfScope.formatTime(System.nanoTime() - beforeConversion));
+                Path path = Paths.get(solidityPath);
+                if (Files.isRegularFile(path)) {
+                    SolcParser solcParser = new SolcParser(initConfig.getServices());
+                    solcParser.getSolidityFromStrJsonParser(path);
+                    LOGGER.info("Solidity conversion took {}",
+                        PerfScope.formatTime(System.nanoTime() - beforeConversion));
+                } else {
+                    throw new RuntimeException(
+                        "Solidity source paths must specify one single file");
+                }
             } catch (Exception e) {
                 throw new ProofInputException("Failed to convert Solidity code", e);
             }

@@ -173,56 +173,65 @@ public class PrettyPrinter implements Visitor {
 
     @Override
     public void performActionOnUnaryExpression(UnaryExpression x) {
-        if (x.getOperator().isPrefix()) {
-            layouter.print(x.getOperator().symbol());
+        final Operator operator = x.getOperator();
+        if (operator.isPrefix()) {
+            layouter.print(operator.symbol());
         }
-        maybeParens(x.getExp(), x.getOperator().precedence());
-        if (x.getOperator().isPostfix()) {
-            layouter.print(x.getOperator().symbol());
+        maybeParens(x.getExp(), operator.precedence());
+        if (operator.isPostfix()) {
+            layouter.print(operator.symbol());
         }
     }
 
-    private void maybeParens(Expression left, int precedence) {
+    private void maybeParens(Expression exp, int precedence) {
         boolean closeParens = false;
-        if (left instanceof BinaryExpression bexp &&
-                bexp.getOperator().precedence() < precedence) {
+        if (exp instanceof BinaryExpression bexp &&
+                bexp.getOperator().precedence() <= precedence) {
             layouter.print("(");
             closeParens = true;
         }
-        left.visit(this);
+        exp.visit(this);
         if (closeParens) {
             layouter.print(")");
         }
     }
 
     @Override
-    public void performActionOnTernaryOperator(TernaryExpression x) {
-
+    public void performActionOnTernaryExpression(TernaryExpression x) {
+        maybeParens(x.getCondition(), x.getPrecedence());
+        layouter.brk().print("?").brk();
+        maybeParens(x.getTrueExpression(), x.getPrecedence());
+        layouter.brk().print(":").brk();
+        maybeParens(x.getFalseExpression(), x.getPrecedence());
     }
 
     @Override
     public void performActionOnContractReference(ContractReference x) {
-
+        layouter.print(x.getType().name().toString());
     }
 
     @Override
     public void performActionOnEnumReference(EnumReference x) {
-
+        layouter.print(
+            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
     }
 
     @Override
     public void performActionOnFunctionReference(FunctionReference x) {
-
+        layouter.print(
+            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
     }
 
     @Override
     public void performActionOnModifierReference(ModifierReference x) {
-
+        layouter.print(
+            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
     }
 
     @Override
     public void performActionOnTypeReference(TypeReference x) {
-
+        layouter.print(
+            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
     }
 
     @Override

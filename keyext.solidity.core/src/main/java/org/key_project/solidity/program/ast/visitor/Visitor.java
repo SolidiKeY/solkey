@@ -44,7 +44,7 @@ public interface Visitor {
 
     void performActionOnUint256Literal(Uint256Literal x);
 
-    void performActionOnTernaryOperator(TernaryExpression x);
+    void performActionOnTernaryExpression(TernaryExpression x);
 
     void performActionOnContractReference(ContractReference x);
 

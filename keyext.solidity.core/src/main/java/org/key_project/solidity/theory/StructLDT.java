@@ -6,6 +6,7 @@ package org.key_project.solidity.theory;
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Function;
+import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.expressions.literals.Literal;
@@ -17,12 +18,15 @@ public class StructLDT extends LDT {
     public static final Name NAME = new Name("Struct");
 
     private final Function mt;
+    private final Sort fieldSort;
     private final ProgramVariable storage;
 
     public StructLDT(Services services) {
         super(NAME, services);
+
         mt = addFunction(services, "mt");
         storage = services.getNamespaces().programVariables().lookup(new Name("storage"));
+        fieldSort = services.getNamespaces().sorts().lookup(new Name("Field"));
     }
 
     // -------------------------------------------------------------------------
@@ -44,6 +48,9 @@ public class StructLDT extends LDT {
         return storage;
     }
 
+    public Sort getFieldSort() {
+        return fieldSort;
+    }
 
 
     @Override
@@ -80,4 +87,5 @@ public class StructLDT extends LDT {
             default -> null;
         };
     }
+
 }
