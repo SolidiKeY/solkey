@@ -3,6 +3,36 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.keyproject.key.api;
 
+
+import org.eclipse.lsp4j.jsonrpc.CompletableFutures;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
+import org.key_project.prover.engine.ProverTaskListener;
+import org.key_project.prover.engine.TaskFinishedInfo;
+import org.key_project.solidity.control.DefaultUserInterfaceControl;
+import org.key_project.solidity.control.KeYEnvironment;
+import org.key_project.solidity.pp.IdentitySequentPrintFilter;
+import org.key_project.solidity.pp.LogicPrinter;
+import org.key_project.solidity.pp.NotationInfo;
+import org.key_project.solidity.pp.PosTableLayouter;
+import org.key_project.solidity.proof.Goal;
+import org.key_project.solidity.proof.Node;
+import org.key_project.solidity.proof.Proof;
+import org.key_project.solidity.proof.init.IPersistablePO;
+import org.key_project.solidity.proof.init.InitConfig;
+import org.key_project.solidity.proof.init.ProofAggregate;
+import org.key_project.solidity.proof.init.ProofOblInput;
+import org.key_project.solidity.proof.init.SolidityProfile;
+import org.key_project.solidity.proof.io.AbstractProblemLoader;
+import org.key_project.solidity.proof.io.ProblemLoaderException;
+import org.key_project.solidity.strategy.StrategyProperties;
+import org.key_project.solidity.util.KeYtherConstants;
+import org.key_project.util.collection.ImmutableList;
+import org.keyproject.key.api.data.*;
+import org.keyproject.key.api.data.KeyIdentifications.*;
+import org.keyproject.key.api.remoteapi.KeyApi;
+import org.keyproject.key.api.remoteclient.ClientApi;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -13,50 +43,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
-import de.uka.ilkd.key.control.AbstractUserInterfaceControl;
-import de.uka.ilkd.key.control.DefaultUserInterfaceControl;
-import de.uka.ilkd.key.control.KeYEnvironment;
-import de.uka.ilkd.key.gui.ExampleChooser;
-import de.uka.ilkd.key.macros.ProofMacro;
-import de.uka.ilkd.key.macros.ProofMacroFinishedInfo;
-import de.uka.ilkd.key.nparser.ParsingFacade;
-import de.uka.ilkd.key.pp.IdentitySequentPrintFilter;
-import de.uka.ilkd.key.pp.LogicPrinter;
-import de.uka.ilkd.key.pp.NotationInfo;
-import de.uka.ilkd.key.pp.PosTableLayouter;
-import de.uka.ilkd.key.proof.Goal;
-import de.uka.ilkd.key.proof.Node;
-import de.uka.ilkd.key.proof.Proof;
-import de.uka.ilkd.key.proof.ProofAggregate;
-import de.uka.ilkd.key.proof.init.*;
-import de.uka.ilkd.key.proof.io.AbstractProblemLoader;
-import de.uka.ilkd.key.proof.io.ProblemLoaderException;
-import de.uka.ilkd.key.scripts.ProofScriptCommand;
-import de.uka.ilkd.key.scripts.ProofScriptEngine;
-import de.uka.ilkd.key.scripts.ScriptException;
-import de.uka.ilkd.key.speclang.PositionedString;
-import de.uka.ilkd.key.strategy.StrategyProperties;
-import de.uka.ilkd.key.util.KeYConstants;
+import static org.key_project.solidity.proof.ProofNodeDescription.collectPathInformation;
+import static org.keyproject.key.api.data.TaskFinishedInfo.*;
 
-import org.key_project.prover.engine.ProverTaskListener;
-import org.key_project.prover.engine.TaskFinishedInfo;
-import org.key_project.util.collection.ImmutableList;
-import org.key_project.util.collection.ImmutableSet;
-import org.key_project.util.reflection.ClassLoaderUtil;
 
-import org.eclipse.lsp4j.jsonrpc.CompletableFutures;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
-import org.keyproject.key.api.data.*;
-import org.keyproject.key.api.data.KeyIdentifications.*;
-import org.keyproject.key.api.remoteapi.KeyApi;
-import org.keyproject.key.api.remoteclient.ClientApi;
-
-import static de.uka.ilkd.key.proof.ProofNodeDescription.collectPathInformation;
-
-public final class KeyApiImpl implements KeyApi {
+public final class KeYtherApiImpl implements KeyApi {
     private final KeyIdentifications data = new KeyIdentifications();
 
     private Function<Void, Boolean> exitHandler;
@@ -65,7 +57,7 @@ public final class KeyApiImpl implements KeyApi {
     private final ProverTaskListener clientListener = new ProverTaskListener() {
         @Override
         public void taskStarted(org.key_project.prover.engine.TaskStartedInfo info) {
-            clientApi.taskStarted(org.keyproject.key.api.data.TaskStartedInfo.from(info));
+            clientApi.taskStarted(TaskStartedInfo.from(info));
         }
 
         @Override
@@ -75,21 +67,14 @@ public final class KeyApiImpl implements KeyApi {
 
         @Override
         public void taskFinished(TaskFinishedInfo info) {
-            clientApi.taskFinished(org.keyproject.key.api.data.TaskFinishedInfo.from(info));
+            clientApi.taskFinished(from(info));
         }
     };
     private final AtomicInteger uniqueCounter = new AtomicInteger();
 
-    public KeyApiImpl() {
+    public KeYtherApiImpl() {
     }
 
-    @Override
-    @JsonRequest
-    public CompletableFuture<List<ExampleDesc>> examples() {
-        return CompletableFutures
-                .computeAsync((c) -> ExampleChooser.listExamples(ExampleChooser.lookForExamples())
-                        .stream().map(ExampleDesc::from).toList());
-    }
 
     @Override
     public CompletableFuture<Boolean> shutdown() {
@@ -112,63 +97,7 @@ public final class KeyApiImpl implements KeyApi {
 
     @Override
     public CompletableFuture<String> getVersion() {
-        return CompletableFuture.completedFuture(KeYConstants.VERSION);
-    }
-
-    @Override
-    public CompletableFuture<List<ProofMacroDesc>> getAvailableMacros() {
-        return CompletableFuture.completedFuture(
-            StreamSupport
-                    .stream(ClassLoaderUtil.loadServices(ProofMacro.class).spliterator(), false)
-                    .map(ProofMacroDesc::from).toList());
-    }
-
-    @Override
-    public CompletableFuture<List<ProofScriptCommandDesc>> getAvailableScriptCommands() {
-        return CompletableFuture.completedFuture(
-            StreamSupport
-                    .stream(ClassLoaderUtil.loadServices(ProofScriptCommand.class).spliterator(),
-                        false)
-                    .map(ProofScriptCommandDesc::from).toList());
-    }
-
-    @Override
-    public CompletableFuture<MacroStatistic> script(ProofId proofId, String scriptLine,
-            StrategyOptions options) {
-        return CompletableFuture.supplyAsync(() -> {
-            var proof = data.find(proofId);
-            var env = data.find(proofId.env());
-            var script = ParsingFacade.parseScript(scriptLine);
-            var pe = new ProofScriptEngine(script);
-
-            try {
-                pe.execute((AbstractUserInterfaceControl) env.getProofControl(), proof);
-                return new MacroStatistic(proofId, scriptLine, -1, -1);
-            } catch (IOException | InterruptedException | ScriptException e) {
-                throw new RuntimeException(e);
-            }
-        });
-    }
-
-    @Override
-    public CompletableFuture<MacroStatistic> macro(ProofId proofId, String macroName,
-            StrategyOptions options) {
-        return CompletableFuture.supplyAsync(() -> {
-            var proof = data.find(proofId);
-            var env = data.find(proofId.env());
-            var macro = StreamSupport
-                    .stream(ClassLoaderUtil.loadServices(ProofMacro.class).spliterator(), false)
-                    .filter(it -> it.getName().equals(macroName)).findFirst().orElseThrow();
-
-            try {
-                var info =
-                    macro.applyTo(env.getUi(), proof, proof.openGoals(), null, clientListener);
-                return MacroStatistic.from(proofId, info);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        });
-
+        return CompletableFuture.completedFuture(KeYtherConstants.VERSION);
     }
 
     @Override
@@ -199,7 +128,7 @@ public final class KeyApiImpl implements KeyApi {
 
     @Override
     public CompletableFuture<List<NodeDesc>> goals(ProofId proofId, boolean onlyOpened,
-            boolean onlyEnabled) {
+                                                   boolean onlyEnabled) {
         return CompletableFuture.supplyAsync(() -> {
             var proof = data.find(proofId);
             if (onlyOpened && !onlyEnabled) {
@@ -207,13 +136,13 @@ public final class KeyApiImpl implements KeyApi {
             } else if (onlyEnabled && onlyOpened) {
                 return asNodeDesc(proofId, proof.openEnabledGoals());
             } else {
-                return asNodeDesc(proofId, proof.allGoals());
+                return asNodeDesc(proofId, proof.openGoals().append(proof.openEnabledGoals()));
             }
         });
     }
 
     private List<NodeDesc> asNodeDesc(ProofId proofId, ImmutableList<Goal> goals) {
-        return asNodeDesc(proofId, goals.stream().map(Goal::node));
+        return asNodeDesc(proofId, goals.stream().map(Goal::getNode));
     }
 
     private List<NodeDesc> asNodeDesc(ProofId proofId, Stream<Node> nodes) {
@@ -221,8 +150,8 @@ public final class KeyApiImpl implements KeyApi {
     }
 
     private NodeDesc asNodeDesc(ProofId proofId, Node it) {
-        return new NodeDesc(proofId, it.serialNr(), it.getNodeInfo().getBranchLabel(),
-            it.getNodeInfo().getScriptRuleApplication(), collectPathInformation(it));
+        return new NodeDesc(proofId, it.getSerialNr(), it.getNodeInfo().getBranchLabel(),
+            false, collectPathInformation(it));
     }
 
     @Override
@@ -236,9 +165,9 @@ public final class KeyApiImpl implements KeyApi {
     private NodeDesc asNodeDescRecursive(ProofId proofId, Node root) {
         final List<NodeDesc> list =
             root.childrenStream().map(it -> asNodeDescRecursive(proofId, it)).toList();
-        return new NodeDesc(new NodeId(proofId, "" + root.serialNr()),
+        return new NodeDesc(new NodeId(proofId, "" + root.getSerialNr()),
             root.getNodeInfo().getBranchLabel(),
-            root.getNodeInfo().getScriptRuleApplication(),
+            false,
             list, collectPathInformation(root));
     }
 
@@ -311,34 +240,12 @@ public final class KeyApiImpl implements KeyApi {
 
     @Override
     public CompletableFuture<List<ContractDesc>> contracts(EnvironmentId envId) {
-        return CompletableFuture.supplyAsync(() -> {
-            var env = data.find(envId);
-            var contracts = env.getProofContracts();
-            return contracts.stream().map(it -> ContractDesc.from(envId, env.getServices(), it))
-                    .toList();
-        });
+        return CompletableFuture.completedFuture(List.of());
     }
 
     @Override
     public CompletableFuture<ProofId> openContract(ContractId contractId) {
-        return CompletableFuture.supplyAsync(() -> {
-            var env = data.find(contractId.envId());
-            var contracts = env.getProofContracts();
-            var contract =
-                contracts.stream()
-                        .filter(it -> Objects.equals(it.getName(), contractId.contractId()))
-                        .findFirst();
-            if (contract.isPresent()) {
-                try {
-                    var proof = env.createProof(contract.get().createProofObl(env.getInitConfig()));
-                    return data.register(contractId.envId(), proof);
-                } catch (ProofInputException e) {
-                    throw new RuntimeException(e);
-                }
-            } else {
-                return null;
-            }
-        });
+        return null;
     }
 
     @Override
@@ -400,38 +307,6 @@ public final class KeyApiImpl implements KeyApi {
     private final DefaultUserInterfaceControl control = new MyDefaultUserInterfaceControl();
 
     @Override
-    public CompletableFuture<ProofId> loadExample(String name) {
-        return CompletableFutures.computeAsync((c) -> {
-            var examples = ExampleChooser.listExamples(ExampleChooser.lookForExamples())
-                    .stream().filter(it -> it.getName().equals(name)).findFirst();
-            if (examples.isPresent()) {
-                var ex = examples.get();
-                Proof proof = null;
-                KeYEnvironment<?> env = null;
-                try {
-                    var loader = control.load(JavaProfile.getDefaultProfile(),
-                        ex.getObligationFile(),
-                        null, null, null, null, true, null);
-                    InitConfig initConfig = loader.getInitConfig();
-
-                    env = new KeYEnvironment<>(control, initConfig, loader.getProof(),
-                        loader.getProofScript(), loader.getResult());
-                    var envId = new EnvironmentId(env.toString());
-                    data.register(envId, env);
-                    proof = Objects.requireNonNull(env.getLoadedProof());
-                    var proofId = new ProofId(envId, proof.name().toString());
-                    return data.register(proofId, proof);
-                } catch (ProblemLoaderException e) {
-                    if (env != null)
-                        env.dispose();
-                    throw new RuntimeException(e);
-                }
-            }
-            throw new IllegalArgumentException("Unknown example");
-        });
-    }
-
-    @Override
     public CompletableFuture<ProofId> loadProblem(ProblemDefinition problem) {
         return CompletableFutures.computeAsync((c) -> {
             Proof proof = null;
@@ -462,11 +337,10 @@ public final class KeyApiImpl implements KeyApi {
             try {
                 final var tempFile = File.createTempFile("json-rpc-", ".key");
                 Files.writeString(tempFile.toPath(), content);
-                var loader = control.load(JavaProfile.getDefaultProfile(),
-                    tempFile.toPath(), null, null, null, null, true, null);
+                var loader = control.load(SolidityProfile.getDefaultInstance(),
+                    tempFile.toPath(), null, null, true, null);
                 InitConfig initConfig = loader.getInitConfig();
-                env = new KeYEnvironment<>(control, initConfig, loader.getProof(),
-                    loader.getProofScript(), loader.getResult());
+                env = new KeYEnvironment<>(control, initConfig, loader.getProof(), loader.getResult());
                 var envId = new EnvironmentId(env.toString());
                 data.register(envId, env);
                 proof = Objects.requireNonNull(env.getLoadedProof());
@@ -491,20 +365,15 @@ public final class KeyApiImpl implements KeyApi {
             Proof proof;
             KeYEnvironment<?> env;
             try {
-                var loader = control.load(JavaProfile.getDefaultProfile(),
+                var loader = control.load(SolidityProfile.getDefaultInstance(),
                     params.problemFile() != null ? params.problemFile().asPath() : null,
-                    params.classPath() != null
-                            ? params.classPath().stream().map(Uri::asPath).toList()
-                            : null,
-                    params.bootClassPath() != null ? params.bootClassPath().asPath() : null,
                     params.includes() != null ? params.includes().stream().map(Uri::asPath).toList()
                             : null,
                     null,
                     true,
                     null);
                 InitConfig initConfig = loader.getInitConfig();
-                env = new KeYEnvironment<>(control, initConfig, loader.getProof(),
-                    loader.getProofScript(), loader.getResult());
+                env = new KeYEnvironment<>(control, initConfig, loader.getProof(), loader.getResult());
                 var envId = new EnvironmentId(env.toString());
                 data.register(envId, env);
                 if ((proof = env.getLoadedProof()) != null) {
@@ -522,7 +391,7 @@ public final class KeyApiImpl implements KeyApi {
     private class MyDefaultUserInterfaceControl extends DefaultUserInterfaceControl {
         @Override
         public void taskStarted(org.key_project.prover.engine.TaskStartedInfo info) {
-            clientApi.taskStarted(org.keyproject.key.api.data.TaskStartedInfo.from(info));
+            clientApi.taskStarted(TaskStartedInfo.from(info));
         }
 
         @Override
@@ -531,18 +400,8 @@ public final class KeyApiImpl implements KeyApi {
         }
 
         @Override
-        public void taskFinished(org.key_project.prover.engine.TaskFinishedInfo info) {
-            clientApi.taskFinished(org.keyproject.key.api.data.TaskFinishedInfo.from(info));
-        }
-
-        @Override
-        protected void macroStarted(org.key_project.prover.engine.TaskStartedInfo info) {
-            clientApi.taskStarted(org.keyproject.key.api.data.TaskStartedInfo.from(info));
-        }
-
-        @Override
-        protected synchronized void macroFinished(ProofMacroFinishedInfo info) {
-            clientApi.taskFinished(org.keyproject.key.api.data.TaskFinishedInfo.from(info));
+        public void taskFinished(TaskFinishedInfo info) {
+            clientApi.taskFinished(from(info));
         }
 
         @Override
@@ -552,59 +411,9 @@ public final class KeyApiImpl implements KeyApi {
 
         @Override
         public void loadingFinished(AbstractProblemLoader loader,
-                IPersistablePO.LoadedPOContainer poContainer, ProofAggregate proofList,
-                AbstractProblemLoader.ReplayResult result) throws ProblemLoaderException {
+                                    IPersistablePO.LoadedPOContainer poContainer, ProofAggregate proofList,
+                                    AbstractProblemLoader.ReplayResult result) throws ProblemLoaderException {
             super.loadingFinished(loader, poContainer, proofList, result);
-        }
-
-        @Override
-        public void progressStarted(Object sender) {
-            super.progressStarted(sender);
-        }
-
-        @Override
-        public void progressStopped(Object sender) {
-            super.progressStopped(sender);
-        }
-
-        @Override
-        public void reportStatus(Object sender, String status, int progress) {
-            super.reportStatus(sender, status, progress);
-        }
-
-        @Override
-        public void reportStatus(Object sender, String status) {
-            super.reportStatus(sender, status);
-        }
-
-        @Override
-        public void resetStatus(Object sender) {
-            super.resetStatus(sender);
-        }
-
-        @Override
-        public void reportException(Object sender, ProofOblInput input, Exception e) {
-            super.reportException(sender, input, e);
-        }
-
-        @Override
-        public void setProgress(int progress) {
-            super.setProgress(progress);
-        }
-
-        @Override
-        public void setMaximum(int maximum) {
-            super.setMaximum(maximum);
-        }
-
-        @Override
-        public void reportWarnings(ImmutableSet<PositionedString> warnings) {
-            super.reportWarnings(warnings);
-        }
-
-        @Override
-        public void showIssueDialog(Collection<PositionedString> issues) {
-            super.showIssueDialog(issues);
         }
     }
 }

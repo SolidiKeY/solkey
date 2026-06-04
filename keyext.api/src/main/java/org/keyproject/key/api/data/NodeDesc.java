@@ -3,21 +3,21 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.keyproject.key.api.data;
 
-import java.util.List;
-
 import org.jspecify.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Alexander Weigl
  * @version 1 (13.10.23)
  */
 public record NodeDesc(KeyIdentifications.NodeId nodeid,
-        String branchLabel,
-        boolean scriptRuleApplication,
-        @Nullable List<NodeDesc> children,
-        String description) implements KeYDataTransferObject {
+                       String branchLabel,
+                       boolean scriptRuleApplication,
+                       @Nullable List<NodeDesc> children,
+                       String description) implements KeYDataTransferObject {
     public NodeDesc(KeyIdentifications.ProofId proofId, int serialNr, String branchLabel,
-            boolean scriptRuleApplication, String description) {
+                    boolean scriptRuleApplication, String description) {
         this(new KeyIdentifications.NodeId(proofId, "" + serialNr), branchLabel,
             scriptRuleApplication,
             null, description);

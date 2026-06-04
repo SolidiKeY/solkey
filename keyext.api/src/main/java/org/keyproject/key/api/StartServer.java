@@ -12,11 +12,11 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Function;
-import javax.annotation.Nullable;
 
 import com.google.gson.GsonBuilder;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.websocket.jakarta.WebSocketLauncherBuilder;
+import org.jspecify.annotations.Nullable;
 import org.keyproject.key.api.adapters.KeyAdapter;
 import org.keyproject.key.api.remoteclient.ClientApi;
 import org.slf4j.Logger;
@@ -155,7 +155,7 @@ public class StartServer implements Runnable {
         }
 
         try {
-            final var keyApi = new KeyApiImpl();
+            final var keyApi = new KeYtherApiImpl();
 
             if (websocket) {
                 var launcherBuilder = new WebSocketLauncherBuilder<ClientApi>()
@@ -205,7 +205,7 @@ public class StartServer implements Runnable {
         gsonBuilder.serializeNulls();
     }
 
-    public static Launcher<ClientApi> launch(OutputStream out, InputStream in, KeyApiImpl keyApi) {
+    public static Launcher<ClientApi> launch(OutputStream out, InputStream in, KeYtherApiImpl keyApi) {
         // var localServices = getLocalServices();
         // var remoteInterfaces = getRemoteInterfaces();
         var launcherBuilder = new Launcher.Builder<ClientApi>()

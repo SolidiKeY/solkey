@@ -7,15 +7,12 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 
-import de.uka.ilkd.key.macros.ProofMacro;
-
 import org.key_project.logic.op.Function;
 
 import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
-import org.keyproject.key.api.data.MacroDescription;
 
 /**
  * @author Alexander Weigl
@@ -47,13 +44,13 @@ public class KeyAdapter {
      * //endregion
      */
 
-    static class MacroSerializer implements JsonSerializer<ProofMacro> {
-        @Override
-        public JsonElement serialize(ProofMacro src, Type typeOfSrc,
-                JsonSerializationContext context) {
-            return context.serialize(MacroDescription.from(src));
-        }
-    }
+//    static class MacroSerializer implements JsonSerializer<ProofMacro> {
+//        @Override
+//        public JsonElement serialize(ProofMacro src, Type typeOfSrc,
+//                JsonSerializationContext context) {
+//            return context.serialize(MacroDescription.from(src));
+//        }
+//    }
 
     public static class FileTypeAdapter extends TypeAdapter<File> {
         @Override

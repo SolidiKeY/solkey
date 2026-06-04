@@ -12,21 +12,22 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javafx.geometry.Orientation;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.FileChooser;
-
-import de.uka.ilkd.key.proof.io.ProblemLoaderException;
 
 import edu.kit.iti.formal.keyextclientjava.rpc.KeyRemote;
 import edu.kit.iti.formal.keyextclientjava.rpc.RPCLayer;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.jsonrpc.json.StreamMessageProducer;
 import org.jspecify.annotations.NullMarked;
-import org.keyproject.key.api.KeyApiImpl;
+import org.key_project.solidity.proof.io.ProblemLoaderException;
+import org.keyproject.key.api.KeYtherApiImpl;
 import org.keyproject.key.api.StartServer;
 import org.keyproject.key.api.data.*;
+import org.keyproject.key.api.data.KeyIdentifications;
 import org.keyproject.key.api.remoteapi.KeyApi;
 import org.keyproject.key.api.remoteclient.*;
 import org.kordamp.ikonli.fontawesome5.FontAwesomeRegular;
@@ -68,7 +69,7 @@ public class MyKeyClient {
         inClient.connect(outServer);
         outClient.connect(inServer);
 
-        KeyApiImpl impl = new KeyApiImpl();
+        KeYtherApiImpl impl = new KeYtherApiImpl();
         Launcher<ClientApi> serverLauncher = StartServer.launch(outServer, inServer, impl);
         impl.setClientApi(serverLauncher.getRemoteProxy());
 
@@ -107,7 +108,7 @@ public class MyKeyClient {
                     keyApi.print(root.nodeid(), new PrintOptions(true, 80, 4, true, false))
                             .get();
                 txtSequentView.setText(sequent.result());
-            } catch (ProblemLoaderException | ExecutionException | InterruptedException e) {
+            } catch (ExecutionException | InterruptedException | ProblemLoaderException e) {
                 throw new RuntimeException(e);
             }
         }

@@ -5,11 +5,11 @@ package org.keyproject.key.api.remoteapi;
 
 import java.util.concurrent.CompletableFuture;
 
-import de.uka.ilkd.key.proof.io.ProblemLoaderException;
 
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.jsonrpc.services.JsonSegment;
+import org.key_project.solidity.proof.io.ProblemLoaderException;
 import org.keyproject.key.api.data.KeyIdentifications.EnvironmentId;
 import org.keyproject.key.api.data.KeyIdentifications.ProofId;
 import org.keyproject.key.api.data.LoadParams;

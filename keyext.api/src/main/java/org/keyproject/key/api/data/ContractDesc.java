@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.keyproject.key.api.data;
 
-import de.uka.ilkd.key.java.Services;
-import de.uka.ilkd.key.speclang.Contract;
+import org.key_project.solidity.common.Services;
+import org.key_project.solidity.speclang.Contract;
 
 /**
- * Description of a loadable contract in KeY.
+ * Description of a loadable function contract in KeY.
  *
  * Contracts can be arbitrary objects, representing a functional, dependency, information flow, etc.
  * contract.
@@ -24,12 +24,12 @@ import de.uka.ilkd.key.speclang.Contract;
  * @version 1 (13.10.23)
  */
 public record ContractDesc(KeyIdentifications.ContractId contractId, String name,
-        String displayName, String typeName, String htmlText, String plainText)
+                           String displayName, String typeName, String htmlText, String plainText)
         implements KeYDataTransferObject {
     public static ContractDesc from(KeyIdentifications.EnvironmentId envId,
-            Services services, Contract it) {
+                                    Services services, Contract it) {
         return new ContractDesc(new KeyIdentifications.ContractId(envId, it.getName()),
-            it.getName(), it.getDisplayName(), it.getTypeName(),
+            it.getName(), it.getDisplayName(), null /* needs to be the contract technical name it.getTypeName() */,
             it.getHTMLText(services), it.getPlainText(services));
     }
 }

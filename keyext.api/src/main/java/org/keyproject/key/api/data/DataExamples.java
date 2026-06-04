@@ -10,13 +10,10 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 
-import de.uka.ilkd.key.macros.FinishSymbolicExecutionMacro;
-import de.uka.ilkd.key.scripts.RuleCommand;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.jspecify.annotations.Nullable;
-import org.keyproject.key.api.KeyApiImpl;
+import org.keyproject.key.api.KeYtherApiImpl;
 import org.keyproject.key.api.data.KeyIdentifications.EnvironmentId;
 import org.keyproject.key.api.data.KeyIdentifications.ProofId;
 import org.keyproject.key.api.remoteapi.ServerManagement;
@@ -24,7 +21,7 @@ import org.keyproject.key.api.remoteclient.ShowDocumentParams;
 import org.keyproject.key.api.remoteclient.ShowDocumentResult;
 
 public class DataExamples {
-    private final KeyApiImpl impl = new KeyApiImpl();
+    private final KeYtherApiImpl impl = new KeYtherApiImpl();
     // private final KeyIdentifications.ProofId proof;
 
     public DataExamples() throws ExecutionException, InterruptedException {
@@ -116,17 +113,10 @@ public class DataExamples {
         return new KeyIdentifications.NodeId(getProofId(), "01010102");
     }
 
-    public MacroDescription getMacroDescription() {
-        return MacroDescription.from(new FinishSymbolicExecutionMacro());
-    }
-
     public PrintOptions getPrintingOptions() {
         return new PrintOptions(true, 80, 4, true, false);
     }
 
-    public ProofScriptCommandDesc getPSCDesc() throws ExecutionException, InterruptedException {
-        return ProofScriptCommandDesc.from(new RuleCommand());
-    }
 
     /*
      * public NodeTextDesc getNodeText() throws ExecutionException, InterruptedException {

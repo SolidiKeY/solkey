@@ -3,14 +3,13 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.keyproject.key.api.data;
 
-import java.util.Objects;
-
-import de.uka.ilkd.key.control.KeYEnvironment;
-import de.uka.ilkd.key.proof.Node;
-import de.uka.ilkd.key.proof.Proof;
-
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import org.key_project.solidity.control.KeYEnvironment;
+import org.key_project.solidity.proof.Node;
+import org.key_project.solidity.proof.Proof;
+
+import java.util.Objects;
 
 /**
  * @author Alexander Weigl
@@ -64,7 +63,7 @@ public class KeyIdentifications {
     public Node find(NodeId nodeId) {
         Proof p = find(nodeId.proofId);
         var id = Integer.parseInt(nodeId.nodeId());
-        var opt = p.findAny(it -> it.serialNr() == id);
+        var opt = p.findAny(it -> it.getSerialNr() == id);
         return Objects.requireNonNull(opt, "Could not find node with serialNr  " + nodeId.nodeId);
     }
 

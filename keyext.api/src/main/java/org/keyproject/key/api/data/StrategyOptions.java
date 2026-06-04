@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.keyproject.key.api.data;
 
-import java.lang.reflect.Field;
+import org.key_project.solidity.proof.Proof;
+import org.key_project.solidity.settings.StrategySettings;
+import org.key_project.solidity.strategy.StrategyProperties;
 
-import de.uka.ilkd.key.proof.Proof;
-import de.uka.ilkd.key.settings.StrategySettings;
-import de.uka.ilkd.key.strategy.StrategyProperties;
+import java.lang.reflect.Field;
 
 /**
  * @author Alexander Weigl
@@ -15,17 +15,13 @@ import de.uka.ilkd.key.strategy.StrategyProperties;
  */
 public record StrategyOptions(
         String method,
-        String dep,
-        String query,
         String nonLinArith,
         String stopMode,
         int maxSteps) implements KeYDataTransferObject {
     public static StrategyOptions defaultOptions() {
         return new StrategyOptions(
-            "METHOD_CONTRACT",
-            "DEP_ON",
-            "QUERY_ON",
-            "NON_LIN_ARITH_DEF_OPS",
+            StrategyProperties.FUNCTION_CONTRACT,
+            StrategyProperties.NON_LIN_ARITH_DEF_OPS,
             "STOPMODE_NONCLOSE",
             1000);
     }
@@ -33,9 +29,7 @@ public record StrategyOptions(
     public static StrategyOptions from(StrategySettings settings) {
         var sp = settings.getActiveStrategyProperties();
         return new StrategyOptions(
-            sp.getProperty(StrategyProperties.METHOD_OPTIONS_KEY),
-            sp.getProperty(StrategyProperties.DEP_OPTIONS_KEY),
-            sp.getProperty(StrategyProperties.QUERY_OPTIONS_KEY),
+            sp.getProperty(StrategyProperties.FUNCTION_OPTIONS_KEY),
             sp.getProperty(StrategyProperties.NON_LIN_ARITH_OPTIONS_KEY),
             sp.getProperty(StrategyProperties.STOPMODE_OPTIONS_KEY),
             settings.getMaxSteps());
@@ -65,19 +59,9 @@ public record StrategyOptions(
         StrategyProperties sp = proof.getSettings().getStrategySettings()
                 .getActiveStrategyProperties();
         if (method != null) {
-            sp.setProperty(StrategyProperties.METHOD_OPTIONS_KEY, getVal(method));
+            sp.setProperty(StrategyProperties.FUNCTION_OPTIONS_KEY, getVal(method));
         } else {
-            sp.setProperty(StrategyProperties.METHOD_OPTIONS_KEY, defaultOptions.method());
-        }
-        if (dep != null) {
-            sp.setProperty(StrategyProperties.DEP_OPTIONS_KEY, getVal(dep));
-        } else {
-            sp.setProperty(StrategyProperties.DEP_OPTIONS_KEY, defaultOptions.dep());
-        }
-        if (query != null) {
-            sp.setProperty(StrategyProperties.QUERY_OPTIONS_KEY, getVal(query));
-        } else {
-            sp.setProperty(StrategyProperties.QUERY_OPTIONS_KEY, defaultOptions.query());
+            sp.setProperty(StrategyProperties.FUNCTION_OPTIONS_KEY, defaultOptions.method());
         }
         if (nonLinArith != null) {
             sp.setProperty(StrategyProperties.NON_LIN_ARITH_OPTIONS_KEY, getVal(nonLinArith));

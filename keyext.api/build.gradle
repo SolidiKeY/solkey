@@ -14,8 +14,7 @@ application {
 }
 
 dependencies {
-    api(project(":key.core"))
-    api(project(":key.ui"))
+    api(project(":keyext.solidity.core"))
 
     api("org.eclipse.lsp4j:org.eclipse.lsp4j.jsonrpc:0.23.1")
     implementation("org.eclipse.lsp4j:org.eclipse.lsp4j.websocket.jakarta:0.23.1")

@@ -35,7 +35,7 @@ public class TestRpc {
         inClient.connect(outServer);
         outClient.connect(inServer);
 
-        KeyApiImpl impl = new KeyApiImpl();
+        KeYtherApiImpl impl = new KeYtherApiImpl();
         Launcher<ClientApi> serverLauncher = StartServer.launch(outServer, inServer, impl);
         impl.setClientApi(serverLauncher.getRemoteProxy());
 
@@ -70,15 +70,15 @@ public class TestRpc {
 
     }
 
-    @Test
-    public void listMacros() throws ExecutionException, InterruptedException {
-        var examples = keyApi.getAvailableMacros().get();
-        System.out.println(examples);
-    }
-
-    @Test
-    public void listExamples() throws ExecutionException, InterruptedException {
-        var examples = keyApi.examples().get();
-        System.out.println(examples);
-    }
+//    @Test
+//    public void listMacros() throws ExecutionException, InterruptedException {
+//        var examples = keyApi.getAvailableMacros().get();
+//        System.out.println(examples);
+//    }
+//
+//    @Test
+//    public void listExamples() throws ExecutionException, InterruptedException {
+//        var examples = keyApi.examples().get();
+//        System.out.println(examples);
+//    }
 }

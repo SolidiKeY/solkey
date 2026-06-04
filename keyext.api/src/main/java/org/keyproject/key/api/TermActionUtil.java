@@ -7,18 +7,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import de.uka.ilkd.key.control.KeYEnvironment;
-import de.uka.ilkd.key.control.ProofControl;
-import de.uka.ilkd.key.macros.ProofMacro;
-import de.uka.ilkd.key.pp.PosInSequent;
-import de.uka.ilkd.key.proof.Goal;
-import de.uka.ilkd.key.rule.*;
-
 import org.key_project.logic.Name;
+import org.key_project.prover.rules.Taclet;
 import org.key_project.prover.sequent.PosInOccurrence;
+import org.key_project.solidity.control.KeYEnvironment;
+import org.key_project.solidity.control.ProofControl;
+import org.key_project.solidity.pp.PosInSequent;
+import org.key_project.solidity.proof.Goal;
+import org.key_project.solidity.rule.BuiltInRule;
+import org.key_project.solidity.rule.TacletApp;
+import org.key_project.solidity.rule.taclets.SolRewriteTaclet;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSLList;
-import org.key_project.util.reflection.ClassLoaderUtil;
 
 import org.jspecify.annotations.NonNull;
 import org.keyproject.key.api.data.KeyIdentifications;
@@ -80,14 +80,7 @@ public class TermActionUtil {
         occ = pos.getPosInOccurrence();
         ProofControl c = env.getUi().getProofControl();
         final ImmutableList<BuiltInRule> builtInRules = c.getBuiltInRule(goal, occ);
-        var macros = ClassLoaderUtil.loadServices(ProofMacro.class);
-        for (ProofMacro macro : macros) {
-            var id = new KeyIdentifications.TermActionId(nodeTextId.nodeId(), pos.toString(),
-                "macro:" + macro.getScriptCommandName());
-            TermActionDesc ta = new TermActionDesc(id, macro.getName(), macro.getDescription(),
-                macro.getCategory(), TermActionKind.Macro);
-            add(ta);
-        }
+
         ImmutableList<TacletApp> findTaclet = c.getFindTaclet(goal, occ);
         var find = removeRewrites(findTaclet)
                 .prepend(c.getRewriteTaclet(goal, occ));
@@ -126,7 +119,7 @@ public class TermActionUtil {
         ImmutableList<TacletApp> result = ImmutableSLList.nil();
         for (TacletApp tacletApp : list) {
             Taclet taclet = tacletApp.taclet();
-            result = (taclet instanceof RewriteTaclet ? result : result.prepend(tacletApp));
+            result = (taclet instanceof SolRewriteTaclet ? result : result.prepend(tacletApp));
         }
         return result;
     }

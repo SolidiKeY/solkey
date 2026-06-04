@@ -9,7 +9,6 @@ import java.util.concurrent.CompletableFuture;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.jsonrpc.services.JsonSegment;
 import org.keyproject.key.api.data.KeyIdentifications.*;
-import org.keyproject.key.api.data.MacroStatistic;
 import org.keyproject.key.api.data.NodeDesc;
 import org.keyproject.key.api.data.ProofStatus;
 import org.keyproject.key.api.data.StrategyOptions;
@@ -29,29 +28,29 @@ public interface ProofApi {
     @JsonRequest
     CompletableFuture<NodeDesc> root(ProofId proofId);
 
-    /**
-     * Executes the given {@code script} against the proof using the given {@code options}.
-     *
-     * @param proof handle of a proof
-     * @param script proof script
-     * @param options options towards the proof strategy
-     * @return the run-time statistics
-     */
-    @JsonRequest
-    CompletableFuture<MacroStatistic> script(ProofId proof, String script, StrategyOptions options);
-
-    /**
-     * Executes the macro given by {@code macroName} against the proof
-     * using the given {@code options}.
-     *
-     * @param proof handle of a proof
-     * @param macroName proof script
-     * @param options options towards the proof strategy
-     * @return the run-time statistics
-     */
-    @JsonRequest
-    CompletableFuture<MacroStatistic> macro(ProofId proof, String macroName,
-            StrategyOptions options);
+//    /**
+//     * Executes the given {@code script} against the proof using the given {@code options}.
+//     *
+//     * @param proof handle of a proof
+//     * @param script proof script
+//     * @param options options towards the proof strategy
+//     * @return the run-time statistics
+//     */
+//    @JsonRequest
+//    CompletableFuture<MacroStatistic> script(ProofId proof, String script, StrategyOptions options);
+//
+//    /**
+//     * Executes the macro given by {@code macroName} against the proof
+//     * using the given {@code options}.
+//     *
+//     * @param proof handle of a proof
+//     * @param macroName proof script
+//     * @param options options towards the proof strategy
+//     * @return the run-time statistics
+//     */
+//    @JsonRequest
+//    CompletableFuture<MacroStatistic> macro(ProofId proof, String macroName,
+//            StrategyOptions options);
 
     /**
      * Auto against the proof

@@ -14,8 +14,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
-import de.uka.ilkd.key.proof.Proof;
-
 import org.key_project.key.api.doc.Metamodel.HelpText;
 import org.key_project.key.api.doc.Metamodel.HelpTextEntry;
 
@@ -25,6 +23,7 @@ import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.jsonrpc.services.JsonSegment;
 import org.jspecify.annotations.Nullable;
+import org.key_project.solidity.proof.Proof;
 import org.keyproject.key.api.remoteapi.KeyApi;
 import org.keyproject.key.api.remoteclient.ClientApi;
 
