@@ -88,7 +88,7 @@ public interface SolidityProgramElement extends SyntaxElement {
         // Cache for hashcode computation would be of advantage as it is for instance recomputed
         // for each modality
         // creation and can be rather expensive as the whole AST is repeatedly traversed
-        // at the mmoment this has to be cached at each subclass
+        // at the moment this has to be cached at each subclass
         /*
          * if (hashcode != -1) {
          * return hashcode;

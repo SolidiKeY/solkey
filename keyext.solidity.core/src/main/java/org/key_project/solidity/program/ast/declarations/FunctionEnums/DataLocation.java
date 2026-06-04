@@ -27,6 +27,10 @@ public enum DataLocation implements Modifier {
         throw new RuntimeException("Datalocation " + text + " does not exists");
     }
 
+    public String getLabel() {
+        return label;
+    }
+
     @Override
     public String toString() {
         return label;

@@ -28,8 +28,11 @@ import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PrettyPrinter implements Visitor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PrettyPrinter.class.getName());
     private final PosTableLayouter layouter;
 
     private boolean startAlreadyMarked;
@@ -154,11 +157,11 @@ public class PrettyPrinter implements Visitor {
 
         maybeParens(left, x.getOperator().precedence());
 
-        layouter.print(" ");
+        layouter.brk();
 
         x.getOperator().visit(this);
 
-        layouter.print(" ");
+        layouter.brk();
 
         maybeParens(right, x.getOperator().precedence());
     }
@@ -312,7 +315,8 @@ public class PrettyPrinter implements Visitor {
 
     @Override
     public void performActionOnDeclarationStatement(DeclarationStatement x) {
-        layouter.print("NOT YET PRETTY PRINTED");
+        layouter.print(
+            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
     }
 
     @Override
@@ -323,17 +327,20 @@ public class PrettyPrinter implements Visitor {
 
     @Override
     public void performActionOnForStatement(ForStatement x) {
-
+        layouter.print(
+            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
     }
 
     @Override
     public void performActionOnForInit(ForInit x) {
-
+        layouter.print(
+            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
     }
 
     @Override
     public void performActionOnForUpdate(ForUpdate x) {
-
+        layouter.print(
+            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
     }
 
 
@@ -343,7 +350,7 @@ public class PrettyPrinter implements Visitor {
         layouter.beginRelativeC().brk(1);
         x.getBody().visit(this);
         layouter.end();
-        layouter.print("while").print(" ");
+        layouter.print("while").brk();
         layouter.print("(");
         x.getCondition().visit(this);
         layouter.print(")");
@@ -351,7 +358,7 @@ public class PrettyPrinter implements Visitor {
 
     @Override
     public void performActionOnWhileStatement(WhileStatement x) {
-        layouter.print("while").print(" ");
+        layouter.print("while").brk();
         layouter.print("(");
         x.getCondition().visit(this);
         layouter.print(")");
@@ -363,23 +370,28 @@ public class PrettyPrinter implements Visitor {
 
     @Override
     public void performActionOnPlaceholdStatement(PlaceholdStatement x) {
-
+        layouter.print("_").print(";");
     }
 
     @Override
     public void performActionOnReturnStatment(ReturnStatement x) {
-
+        layouter.print("return").brk();
+        if (x.getChildCount() > 0) {
+            x.getReturnExp().visit(this);
+        }
+        layouter.print(";");
     }
 
     @Override
     public void performActionOnTryStatement(TryStatement x) {
-
+        layouter.print(
+            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
     }
 
 
     @Override
     public void performActionOnDataLocation(DataLocation x) {
-
+        layouter.print(x.getLabel());
     }
 
     @Override
@@ -391,68 +403,85 @@ public class PrettyPrinter implements Visitor {
 
         Object o = instantiations.getInstantiation(x);
         if (o == null) {
-            layouter.print(x.name().toString());
+            layouter.print("s#" + x.name());
         } else {
             if (o instanceof SolidityProgramElement pe) {
                 pe.visit(this);
             } else if (o instanceof ImmutableArray) {
-                for (SolidityProgramElement e : ((ImmutableArray<SolidityProgramElement>) o)) {
+                // noinspection unchecked
+                for (SolidityProgramElement e : (ImmutableArray<SolidityProgramElement>) o) {
                     e.visit(this);
                 }
             } else {
-                // LOGGER.warn("No PrettyPrinting available for {}", o.getClass().getName());
+                LOGGER.warn("No PrettyPrinting available for {}", o.getClass().getName());
             }
         }
     }
 
     @Override
     public void performActionOnProgramMetaConstruct(ProgramTransformer programTransformer) {
-
+        layouter.print(programTransformer.toString());
     }
 
     @Override
     public void performActionOnStatementVariableDeclaration(StatementVariableDeclaration x) {
-
+        layouter.print(
+            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
     }
 
     @Override
     public void performActionOnElementaryExpression(ElementaryExpression x) {
-
+        layouter.print(x.getType().name().toString());
     }
 
     @Override
     public void performActionOnFunctionCallExpression(FunctionCallExpression x) {
-
+        x.functionExp.visit(this);
+        layouter.print("(");
+        for (int i = 0; i < x.getArguments().size(); i++) {
+            final Expression arg = x.getArguments().get(i);
+            arg.visit(this);
+            if (i < x.getArguments().size() - 1) {
+                layouter.print(",").brk();
+            }
+        }
+        layouter.print(")");
     }
 
     @Override
     public void performActionOnIndexExpression(IndexExpression x) {
-
+        layouter.print(
+            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
     }
 
     @Override
     public void performActionOnIndexRangeExpression(IndexRangeExpression x) {
-
+        layouter.print(
+            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
     }
 
     @Override
     public void performActionOnMemberExp(MemberExp x) {
-
+        layouter.print(
+            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
     }
 
     @Override
     public void performActionOnTupleExpression(TupleExpression x) {
-
+        layouter.print(
+            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
     }
 
     @Override
     public void performActionOnNewExpression(NewExpression x) {
-
+        layouter.print(
+            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
     }
 
     @Override
     public void performActionOnUnresolvedTypeException(UnresolvedTypeException x) {
-
+        layouter.print(
+            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
     }
 
     @Override

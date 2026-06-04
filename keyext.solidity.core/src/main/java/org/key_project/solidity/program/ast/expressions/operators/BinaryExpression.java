@@ -81,4 +81,5 @@ public final class BinaryExpression extends SolidityExpression implements Operat
     public String toString() {
         return left + " " + getName() + " " + right;
     }
+
 }

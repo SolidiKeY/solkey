@@ -11,12 +11,18 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 
 import org.jspecify.annotations.NonNull;
 
+
+/// TODO: fix new expression:
+/// Constructor arguments are missing
+/// The type name (called function here?) should not be stored and not be static
 public class NewExpression extends SolidityExpression {
     static String function;
 
     public NewExpression(String function, Type type) {
         super(type);
         this.function = function;
+        /// The implementation of new expression must be fixed first before using it. See comments
+        throw new RuntimeException("Not implemented yet");
     }
 
     @Override
