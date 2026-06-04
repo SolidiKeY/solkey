@@ -232,45 +232,50 @@ public class SolidityInfo {
     }
 
 
-     public Type getType(Name typeName) {
-         if (typeMap.containsKey(typeName))
-             return typeMap.get(typeName);
-         return getPrimitiveType(typeName.toString());
-     }
+    public Type getType(Name typeName) {
+        KeYSolidityType kst = solidityTypeName2KeYSolidityType.get(typeName.toString());
+        if (kst != null)
+            return kst.getSolidityType();
+        return getPrimitiveType(typeName.toString());
+    }
 
-     public Type getDynamicTypeMap(Name primaryTypeName) {
-         Name typeName = new Name(primaryTypeName + "[]");
-         return typeMap.get(typeName);
-     }
+    public Type getDynamicTypeMap(Name primaryTypeName) {
+        Name typeName = new Name(primaryTypeName + "[]");
+        return getType(typeName);
+    }
 
-     public Type getStaticTypeMap(Name primaryTypeName, Expression expression) {
-         return getStaticTypeMap(primaryTypeName, Integer.parseInt(expression.toString()));
-     }
+    public Type getStaticTypeMap(Name primaryTypeName, Expression expression) {
+        return getStaticTypeMap(primaryTypeName, Integer.parseInt(expression.toString()));
+    }
 
-     public Type getStaticTypeMap(Name primaryTypeName, int size) {
-         Name typeName = new Name(primaryTypeName + "[" + size + "]");
-         return typeMap.get(typeName);
-     }
+    public Type getStaticTypeMap(Name primaryTypeName, int size) {
+        Name typeName = new Name(primaryTypeName + "[" + size + "]");
+        return getType(typeName);
+    }
 
-     public Type getMappingTypeMap(Type keyType, Type valueType) {
-         MappingType mapping = new MappingType(keyType, valueType);
-         return typeMap.get(mapping.name());
-     }
+    public Type getMappingTypeMap(Type keyType, Type valueType) {
+        MappingType mapping = new MappingType(keyType, valueType);
+        return getType(mapping.name());
+    }
 
-//     public TupleType getTupleTypeMap(List<Type> types) {
-//     // TODO: Fix no type creation in this class.
-//     Name typeName = new Name("(" + types.stream().map(Object::toString)
-//     .collect(Collectors.joining(", "))
-//     + ")");
-//     if (typeMap.containsKey(typeName))
-//     return (TupleType) typeMap.get(typeName);
-//     TupleType type = new TupleType(types);
-//     typeMap.put(typeName, type);
-//     return type;
-//     }
+    // public TupleType getTupleTypeMap(List<Type> types) {
+    // // TODO: Fix no type creation in this class.
+    // Name typeName = new Name("(" + types.stream().map(Object::toString)
+    // .collect(Collectors.joining(", "))
+    // + ")");
+    // if (typeMap.containsKey(typeName))
+    // return (TupleType) typeMap.get(typeName);
+    // TupleType type = new TupleType(types);
+    // typeMap.put(typeName, type);
+    // return type;
+    // }
 
     public KeYSolidityType getKeYSolidityType(Type type) {
         return typeMap.get(type);
+    }
+
+    public Type getType(KeYSolidityType kst) {
+        return revTypeMap.get(kst);
     }
 
     public KeYSolidityType getKeYSolidityType(String typeName) {

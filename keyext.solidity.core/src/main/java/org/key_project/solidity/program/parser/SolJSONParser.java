@@ -92,9 +92,18 @@ public class SolJSONParser {
     /// @return the KeY AST representation of {@code root}
     private List<SyntaxElement> json2SolidityAST(JsonNode root) {
         if ("SourceUnit".equals(root.get("nodeType").asString())) {
-            return parseSourceUnit(root.get("nodes").valueStream().toList());
+            List<SyntaxElement> ast = parseSourceUnit(root.get("nodes").valueStream().toList());
+            registerCreatedTypes();
+            return ast;
         }
         return new ArrayList<>();
+    }
+
+    private void registerCreatedTypes() {
+        SolidityInfo info = services.getSolidityInfo();
+        dynamicArrayKSTs.values().forEach(info::put);
+        arrayKSTs.values().forEach(info::put);
+        mappingKSTs.values().forEach(info::put);
     }
 
     private List<SyntaxElement> parseSourceUnit(List<JsonNode> nodes) {
@@ -763,10 +772,10 @@ public class SolJSONParser {
             return kst;
 
         Sort sort =
-            new DynamicArraySort(getElementSort(dynamicArrayType, dynamicArrayType.getElementType()));
+            new DynamicArraySort(
+                getElementSort(dynamicArrayType, dynamicArrayType.getElementType()));
         sort = getOrAddSort(sort);
         kst = new KeYSolidityType(dynamicArrayType, sort);
-        services.getSolidityInfo().put(kst);
         dynamicArrayKSTs.put(arrayName, kst);
         return kst;
     }
@@ -781,7 +790,6 @@ public class SolJSONParser {
             arrayType.length());
         sort = getOrAddSort(sort);
         kst = new KeYSolidityType(arrayType, sort);
-        services.getSolidityInfo().put(kst);
         arrayKSTs.put(arrayName, kst);
         return kst;
     }
@@ -804,7 +812,6 @@ public class SolJSONParser {
             new MappingSort(componentTypes.get(0).getSort(), componentTypes.get(1).getSort());
         sort = getOrAddSort(sort);
         kst = new KeYSolidityType(mappingType, sort);
-        services.getSolidityInfo().put(kst);
         mappingKSTs.put(mappingName, kst);
         return kst;
     }

@@ -118,6 +118,16 @@ public class SolJsonParserTest {
         assertSame(expectedSort, actual.getSort());
     }
 
+    private void assertRegisteredSolidityInfoType(Type expectedType) {
+        SolidityInfo info = services.getSolidityInfo();
+        KeYSolidityType kst = info.getKeYSolidityType(expectedType);
+        assertNotNull(kst);
+        assertSame(expectedType, kst.getSolidityType());
+        assertNotNull(kst.getSort());
+        assertSame(kst, info.getKeYSolidityType(expectedType.name().toString()));
+        assertSame(expectedType, info.getType(kst));
+    }
+
     @Test
     void parseContractWithIntAndBoolSet() throws IOException {
         // language=solidity
@@ -623,6 +633,8 @@ public class SolJsonParserTest {
         assertInstanceOf(DynamicArrayType.class, vType);
         DynamicArrayType arrayType = (DynamicArrayType) vType;
         assertSame(INT, arrayType.getElementType());
+        assertRegisteredSolidityInfoType(arrayType);
+        assertSame(arrayType, services.getSolidityInfo().getDynamicTypeMap(INT.name()));
         ReturnStatement retStmt = (ReturnStatement) contractDec.getFunctions().getFirst()
                 .getBody().getStatements().get(0);
         IndexExpression idxExp = (IndexExpression) retStmt.getReturnExp();
@@ -632,6 +644,24 @@ public class SolJsonParserTest {
         assertInstanceOf(BinaryExpression.class, idxExp.getChild(1)); // 1+1
         assertSame(Operator.ADD, ((BinaryExpression) idxExp.getChild(1)).getOperator());
         assertThrows(IndexOutOfBoundsException.class, () -> idxExp.getChild(2));
+    }
+
+    @Test
+    void fixedArrayTypeIsRegisteredInSolidityInfo() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    bool[3] values;
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract, services);
+        Type valuesType =
+            contractDec.getFieldDeclarations().get(0).getProgramVariable().getType();
+        assertInstanceOf(ArrayType.class, valuesType);
+        ArrayType arrayType = (ArrayType) valuesType;
+        assertEquals(3, arrayType.length());
+        assertSame(BOOL, arrayType.getElementType());
+        assertRegisteredSolidityInfoType(arrayType);
+        assertSame(arrayType, services.getSolidityInfo().getStaticTypeMap(BOOL.name(), 3));
     }
 
     @Test
@@ -699,6 +729,8 @@ public class SolJsonParserTest {
         assertInstanceOf(DynamicArrayType.class, vType);
         DynamicArrayType arrayType = (DynamicArrayType) vType;
         assertSame(BOOL, arrayType.getElementType());
+        assertRegisteredSolidityInfoType(arrayType);
+        assertSame(arrayType, services.getSolidityInfo().getDynamicTypeMap(BOOL.name()));
     }
 
     @Test
@@ -1127,6 +1159,8 @@ public class SolJsonParserTest {
         MappingType mappingType = (MappingType) bType;
         assertSame(BOOL, mappingType.keyType());
         assertSame(INT256, mappingType.valueType());
+        assertRegisteredSolidityInfoType(mappingType);
+        assertSame(mappingType, services.getSolidityInfo().getMappingTypeMap(BOOL, INT256));
     }
 
     @Test
@@ -1145,6 +1179,10 @@ public class SolJsonParserTest {
         MappingType innerMapping = (MappingType) outerMapping.valueType();
         assertSame(BOOL, innerMapping.keyType());
         assertSame(INT256, innerMapping.valueType());
+        assertRegisteredSolidityInfoType(innerMapping);
+        assertRegisteredSolidityInfoType(outerMapping);
+        assertSame(innerMapping, services.getSolidityInfo().getMappingTypeMap(BOOL, INT256));
+        assertSame(outerMapping, services.getSolidityInfo().getMappingTypeMap(BOOL, innerMapping));
     }
 
     @Test
@@ -1418,6 +1456,8 @@ public class SolJsonParserTest {
         Type m1Type = contractDec.getFieldDeclarations().get(0).getProgramVariable().getType();
         Type m2Type = contractDec.getFieldDeclarations().get(1).getProgramVariable().getType();
         assertSame(m1Type, m2Type);
+        assertRegisteredSolidityInfoType(m1Type);
+        assertSame(m1Type, services.getSolidityInfo().getMappingTypeMap(BOOL, INT));
     }
 
     @Test
