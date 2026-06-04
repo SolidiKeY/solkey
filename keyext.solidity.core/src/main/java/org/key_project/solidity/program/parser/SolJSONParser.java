@@ -17,6 +17,9 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.op.SFunction;
+import org.key_project.solidity.logic.sort.ArraySort;
+import org.key_project.solidity.logic.sort.DynamicArraySort;
+import org.key_project.solidity.logic.sort.MappingSort;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.SolidityInfo;
@@ -51,10 +54,16 @@ public class SolJSONParser {
     private final HashMap<Integer, Type> functionId2Type = new HashMap<>();
     private final HashMap<String, TupleType> tupleTypes = new HashMap<>();
     private final Set<Integer> contractIds = new HashSet<>();
+    private final HashMap<String, DynamicArrayType> dynamicArrayTypes = new HashMap<>();
+    private final HashMap<String, ArrayType> arrayTypes = new HashMap<>();
 
 
     private final Services services;
     private final HashMap<String, KeYSolidityType> partialKSTMap = new LinkedHashMap<>();
+    private final HashMap<String, KeYSolidityType> dynamicArrayKSTs = new HashMap<>();
+    private final HashMap<String, KeYSolidityType> arrayKSTs = new HashMap<>();
+    private final HashMap<String, MappingType> mappingTypes = new HashMap<>();
+    private final HashMap<String, KeYSolidityType> mappingKSTs = new HashMap<>();
 
     public SolJSONParser(Services services) {
         this.services = services;
@@ -414,16 +423,14 @@ public class SolJSONParser {
         return switch (typeName) {
             case "ElementaryTypeName" -> getPrimitiveType(node.get("name").asString());
             case "ArrayTypeName" -> {
-                throw new RuntimeException("Not yet supported expression type");
-                // Type baseType = parseType(node.get("baseType"));
-                // if (node.has("length")) {
-                // int size = node.get("length").get("value").asInt();
-                // yield getStaticArrayType(baseType, size);
-                // } else
-                // yield getDynamicArrayType(baseType);
+                Type baseType = parseType(node.get("baseType"));
+                JsonNode length = node.get("length");
+                if (length == null || length.isNull())
+                    yield getDynamicArrayType(baseType);
+                yield getArrayType(baseType, parseArrayLength(length));
             }
-            case "Mapping" -> throw new RuntimeException("Not yet supported expression type");
-            // getMappingType(parseType(node.get("keyType")), parseType(node.get("valueType")));
+            case "Mapping" ->
+                getMappingType(parseType(node.get("keyType")), parseType(node.get("valueType")));
             case "UserDefinedTypeName" ->
                 (Type) id2Name.get(node.get("referencedDeclaration").asInt());
             case "Identifier" -> SolidityInfo
@@ -432,9 +439,27 @@ public class SolJSONParser {
         };
     }
 
-    // private @NonNull MappingType getMappingType(Type keyType, Type valueType) {
-    // return services.getSolidityInfo().getMappingTypeMap(keyType, valueType);
-    // }
+    private @NonNull MappingType getMappingType(Type keyType, Type valueType) {
+        MappingType mapping = new MappingType(keyType, valueType);
+        return mappingTypes.computeIfAbsent(mapping.name().toString(), ignored -> mapping);
+    }
+
+    private @NonNull DynamicArrayType getDynamicArrayType(Type elementType) {
+        DynamicArrayType array = new DynamicArrayType(elementType);
+        return dynamicArrayTypes.computeIfAbsent(array.name().toString(), ignored -> array);
+    }
+
+    private @NonNull ArrayType getArrayType(Type elementType, int length) {
+        ArrayType array = new ArrayType(elementType, length);
+        return arrayTypes.computeIfAbsent(array.name().toString(), ignored -> array);
+    }
+
+    private int parseArrayLength(JsonNode length) {
+        Expression expression = parseExpression(length);
+        if (expression instanceof Uint256Literal literal)
+            return literal.getValue().intValueExact();
+        throw new RuntimeException("Array length " + expression + " is not supported");
+    }
 
     private StateVariableDeclaration parseVariableField(String contractName, JsonNode fieldNode) {
         final int id = fieldNode.get("id").asInt();
@@ -715,9 +740,11 @@ public class SolJSONParser {
                 // etc.)
                 throw new RuntimeException("Tuples not yet supported.");
             } else if (type instanceof DynamicArrayType dynamicArrayType) {
-                throw new RuntimeException("Tuples not yet supported.");
+                kst = getOrCreateDynamicArrayKeYSolidityType(dynamicArrayType);
             } else if (type instanceof ArrayType arrayType) {
-                throw new RuntimeException("Tuples not yet supported.");
+                kst = getOrCreateArrayKeYSolidityType(arrayType);
+            } else if (type instanceof MappingType mappingType) {
+                kst = getOrCreateMappingKeYSolidityType(mappingType);
             } else if (type instanceof StructDeclaration structDecl) {
                 Sort structSort = services.getTheoryInfo().getStructLDT().targetSort();
                 assert structSort != null;
@@ -726,5 +753,78 @@ public class SolJSONParser {
             }
         }
         return kst;
+    }
+
+    private KeYSolidityType getOrCreateDynamicArrayKeYSolidityType(
+            DynamicArrayType dynamicArrayType) {
+        String arrayName = dynamicArrayType.name().toString();
+        KeYSolidityType kst = dynamicArrayKSTs.get(arrayName);
+        if (kst != null)
+            return kst;
+
+        Sort sort =
+            new DynamicArraySort(getElementSort(dynamicArrayType, dynamicArrayType.getElementType()));
+        sort = getOrAddSort(sort);
+        kst = new KeYSolidityType(dynamicArrayType, sort);
+        services.getSolidityInfo().put(kst);
+        dynamicArrayKSTs.put(arrayName, kst);
+        return kst;
+    }
+
+    private KeYSolidityType getOrCreateArrayKeYSolidityType(ArrayType arrayType) {
+        String arrayName = arrayType.name().toString();
+        KeYSolidityType kst = arrayKSTs.get(arrayName);
+        if (kst != null)
+            return kst;
+
+        Sort sort = new ArraySort(getElementSort(arrayType, arrayType.getElementType()),
+            arrayType.length());
+        sort = getOrAddSort(sort);
+        kst = new KeYSolidityType(arrayType, sort);
+        services.getSolidityInfo().put(kst);
+        arrayKSTs.put(arrayName, kst);
+        return kst;
+    }
+
+    private KeYSolidityType getOrCreateMappingKeYSolidityType(MappingType mappingType) {
+        String mappingName = mappingType.name().toString();
+        KeYSolidityType kst = mappingKSTs.get(mappingName);
+        if (kst != null)
+            return kst;
+
+        List<KeYSolidityType> componentTypes =
+            List.of(mappingType.keyType(), mappingType.valueType()).stream()
+                    .map(this::getOrCreateKeYSolidityType).toList();
+        if (componentTypes.stream().anyMatch(
+            componentType -> componentType == null || componentType.getSort() == null)) {
+            throw new RuntimeException("Mapping type " + mappingType + " contains an "
+                + "unsupported component type");
+        }
+        Sort sort =
+            new MappingSort(componentTypes.get(0).getSort(), componentTypes.get(1).getSort());
+        sort = getOrAddSort(sort);
+        kst = new KeYSolidityType(mappingType, sort);
+        services.getSolidityInfo().put(kst);
+        mappingKSTs.put(mappingName, kst);
+        return kst;
+    }
+
+    private Sort getElementSort(Type arrayType, Type elementType) {
+        List<KeYSolidityType> componentTypes = List.of(elementType).stream()
+                .map(this::getOrCreateKeYSolidityType).toList();
+        KeYSolidityType componentType = componentTypes.getFirst();
+        if (componentType == null || componentType.getSort() == null) {
+            throw new RuntimeException("Array type " + arrayType + " contains an "
+                + "unsupported component type");
+        }
+        return componentType.getSort();
+    }
+
+    private Sort getOrAddSort(Sort sort) {
+        Sort existingSort = services.getNamespaces().sorts().lookup(sort.name());
+        if (existingSort != null)
+            return existingSort;
+        services.getNamespaces().sorts().addSafely(sort);
+        return sort;
     }
 }
