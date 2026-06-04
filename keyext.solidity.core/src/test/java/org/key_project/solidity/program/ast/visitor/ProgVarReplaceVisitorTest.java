@@ -305,7 +305,7 @@ public class ProgVarReplaceVisitorTest {
                     }
                 }""";
 
-        ContractDeclaration contractDeclaration = getDeclStr(contract);
+        ContractDeclaration contractDeclaration = getDeclStr(contract, services);
         Block body = parseBlock("{ try false { } catch { } }");
         runOnBlock(body);
     }

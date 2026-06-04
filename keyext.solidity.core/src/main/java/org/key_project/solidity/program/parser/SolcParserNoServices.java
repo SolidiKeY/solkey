@@ -10,13 +10,15 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
 
 public class SolcParserNoServices {
-    public static ContractDeclaration getDeclStrJson(Path contract) throws IOException {
-        SolcParser solcParser = new SolcParser(new Services());
+    public static ContractDeclaration getDeclStrJson(Path contract, Services services)
+            throws IOException {
+        SolcParser solcParser = new SolcParser(services);
         return solcParser.getDeclStrJsonParser(contract);
     }
 
-    public static ContractDeclaration getDeclStr(String contract) throws IOException {
-        SolcParser solcParser = new SolcParser(new Services());
+    public static ContractDeclaration getDeclStr(String contract, Services services)
+            throws IOException {
+        SolcParser solcParser = new SolcParser(services);
         return solcParser.getDeclStrJsonParser(contract);
     }
 }

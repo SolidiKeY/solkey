@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.key_project.solidity.common.Services;
+import org.key_project.solidity.parser.ParserForTesting;
 import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
 
 import org.junit.jupiter.api.Test;
@@ -19,13 +21,14 @@ public class SolcTest {
 
     @Test
     void withPath(@TempDir Path tempDir) throws IOException {
+        Services services = ParserForTesting.load().getServices();
         Path file = tempDir.resolve("contract.sol");
         // language=solidity
         String contract = """
                 contract SimpleContract { }""";
         Files.writeString(file, contract);
 
-        ContractDeclaration ctrl = getDeclStrJson(file);
+        ContractDeclaration ctrl = getDeclStrJson(file, services);
         assertNotNull(ctrl);
     }
 }
