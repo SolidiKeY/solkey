@@ -74,12 +74,8 @@ public final class BinaryExpression extends SolidityExpression implements Operat
         return type;
     }
 
-    public String getName() {
-        return operator.symbol();
-    }
-
     public String toString() {
-        return left + " " + getName() + " " + right;
+        return left + " " + operator.symbol() + " " + right;
     }
 
 }

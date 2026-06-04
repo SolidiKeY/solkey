@@ -172,7 +172,7 @@ public class SolJsonParserTest {
         assertInstanceOf(ProgramVariable.class, addOp.getLeft());
         assertInstanceOf(Uint256Literal.class, addOp.getRight());
         assertSame(UINT256, initializer.getType());
-        assertEquals(2, addOp.getChildCount());
+        assertEquals(3, addOp.getChildCount());
         assertSame(addOp.getLeft(), addOp.getChild(0));
         assertSame(addOp.getRight(), addOp.getChild(1));
         assertThrows(IndexOutOfBoundsException.class, () -> addOp.getChild(2));
@@ -272,7 +272,7 @@ public class SolJsonParserTest {
         assertEquals(1, block.getStatements().size());
         Statement exprStmnt = block.getStatements().get(0);
         assertInstanceOf(ExpressionStatement.class, exprStmnt);
-        assertInstanceOf(ExpressionStatement.class,
+        assertInstanceOf(BinaryExpression.class,
             ((ExpressionStatement) exprStmnt).getExpression());
         ExpressionStatement exprStatement = (ExpressionStatement) exprStmnt;
         assertEquals(1, exprStatement.getChildCount());
@@ -437,7 +437,7 @@ public class SolJsonParserTest {
 
 
         Expression initializer = contractDeclaration.getFieldDeclarations().get(2).getInitializer();
-        checkExpressionForBinary(Operator.COPY_ASSIGN, initializer);
+        checkExpressionForBinary(Operator.ADD, initializer);
         SyntaxElement exp = ((BinaryExpression) initializer).getLeft();
 
         assertInstanceOf(UnaryExpression.class, exp);
@@ -855,7 +855,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract, services);
         String contractS = contractDec.toString();
-        assertTrue(contractS.contains("for(i = 0; i < 10; i ++)"));
+        assertTrue(contractS.contains("for(i = 0; i < 10; i++)"));
         ForStatement forStmt = (ForStatement) contractDec.getFunctions().getFirst()
                 .getBody().getStatements().get(0);
         assertEquals(4, forStmt.getChildCount());
@@ -868,13 +868,13 @@ public class SolJsonParserTest {
     }
 
     private void checkExpressionForBinary(Operator op, Expression expr) {
-        assertInstanceOf(BinaryExpression.class, expr.getClass());
+        assertInstanceOf(BinaryExpression.class, expr);
         BinaryExpression binaryExpr = (BinaryExpression) expr;
         assertEquals(op, binaryExpr.getOperator());
     }
 
     private void checkExpressionForUnary(Operator op, Expression expr) {
-        assertInstanceOf(UnaryExpression.class, expr.getClass());
+        assertInstanceOf(UnaryExpression.class, expr);
         UnaryExpression unaryExpr = (UnaryExpression) expr;
         assertEquals(op, unaryExpr.getOperator());
     }

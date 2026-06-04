@@ -33,14 +33,6 @@ public class UnaryExpression extends SolidityExpression {
         this.exp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
     }
 
-    private static Type getTypeFromExpression(ExtList children) {
-        Expression exp = children.get(Expression.class);
-        if (exp == null) {
-            throw new IllegalArgumentException("ExtList must contain an Expression");
-        }
-        return exp.getType();
-    }
-
     @Override
     public Type getType() {
         return type;
@@ -78,9 +70,9 @@ public class UnaryExpression extends SolidityExpression {
     public String toString() {
         switch (operator) {
             case POST_INC, POST_DEC:
-                return exp + operator.name();
+                return exp + operator.symbol();
             case PRE_INC, PRE_DEC, LOGICAL_NOT, BITWISE_NOT, UNARY_MINUS:
-                return operator.name() + exp;
+                return operator.symbol() + exp;
             default:
                 throw new IllegalStateException("Unknown unary operator: " + operator);
         }
