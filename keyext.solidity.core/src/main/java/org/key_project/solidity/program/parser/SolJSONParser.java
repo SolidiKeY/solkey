@@ -28,6 +28,7 @@ import org.key_project.solidity.program.ast.expressions.literals.*;
 import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.references.*;
 import org.key_project.solidity.program.ast.statement.*;
+import org.key_project.solidity.theory.StructLDT;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.*;
@@ -114,7 +115,7 @@ public class SolJSONParser {
         for (JsonNode node : contractNode.get("nodes").values()) {
             final String nodeType = node.get("nodeType").asString();
             switch (nodeType) {
-                case "VariableDeclaration" -> fields.add(parseVariableField(node));
+                case "VariableDeclaration" -> fields.add(parseVariableField(contractName, node));
                 case "FunctionDefinition" -> functions.add(parseFunction(node));
                 case "StructDefinition" -> structs.add(parseStruct(node, contractId));
                 case "ModifierDefinition" -> modifiers.add(parseModifier(node));
@@ -435,7 +436,7 @@ public class SolJSONParser {
     // return services.getSolidityInfo().getMappingTypeMap(keyType, valueType);
     // }
 
-    private StateVariableDeclaration parseVariableField(JsonNode fieldNode) {
+    private StateVariableDeclaration parseVariableField(String contractName, JsonNode fieldNode) {
         final int id = fieldNode.get("id").asInt();
         final String fieldNameAsString = fieldNode.get("name").asString();
         JsonNode typeName = fieldNode.get("typeName");
@@ -459,27 +460,28 @@ public class SolJSONParser {
 
         KeYSolidityType type = getOrCreateKeYSolidityType(expType);
 
-
-        final Name fieldName = new Name(fieldNameAsString);
-
         ProgramVariable programVariable =
-            new ProgramVariable(fieldName, type, DataLocation.Storage);
+            new ProgramVariable(new Name(fieldNameAsString), type, DataLocation.Storage);
+
+        SFunction fieldConstant =
+            createFieldConstantAndRegisterField(fieldNameAsString, contractName, type);
+
         StateVariableDeclaration field =
             new StateVariableDeclaration(programVariable, initializerExp, visibility);
+        services.getSolidityInfo().addStateVariable(field);
         id2Name.put(id, field);
-
-        createFieldConstantAndRegisterField(field, fieldName, type);
 
         return field;
     }
 
-    private void createFieldConstantAndRegisterField(StateVariableDeclaration field, Name fieldName,
+    private SFunction createFieldConstantAndRegisterField(String strFieldName, String contractName,
             KeYSolidityType type) {
         // TODO should we make the unique field names parametric with the contract type as
         // parameter?
-        services.getSolidityInfo().addStateVariable(field);
-        services.getNamespaces().functions()
-                .addSafely(new SFunction(fieldName, type.getSort(), true, true));
+        Name fieldName = new Name(contractName + StructLDT.FIELD_SEPARATOR + strFieldName);
+        SFunction fieldConstant = new SFunction(fieldName, type.getSort(), true, true);
+        services.getNamespaces().functions().addSafely(fieldConstant);
+        return fieldConstant;
     }
 
     Type parseReferenceTypeDeclaration(JsonNode expNode) {

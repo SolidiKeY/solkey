@@ -16,6 +16,7 @@ import org.jspecify.annotations.Nullable;
 
 public class StructLDT extends LDT {
     public static final Name NAME = new Name("Struct");
+    public static final String FIELD_SEPARATOR = "$";
 
     private final Function mt;
     private final Sort fieldSort;
