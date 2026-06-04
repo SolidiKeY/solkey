@@ -4,6 +4,7 @@
 package org.key_project.solidity.speclang;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 import org.key_project.solidity.common.Profile;
@@ -19,8 +20,8 @@ public final class SLEnvInput extends AbstractEnvInput {
     // constructors
     // -------------------------------------------------------------------------
 
-    public SLEnvInput(String solidityPath, Profile profile,
-            List<File> includes) {
+    public SLEnvInput(Path solidityPath, Profile profile,
+            List<Path> includes) {
         super(getLanguage() + " specifications", solidityPath, profile,
             includes);
     }
@@ -57,7 +58,7 @@ public final class SLEnvInput extends AbstractEnvInput {
     }
 
     @Override
-    public File getInitialFile() {
+    public Path getInitialFile() {
         throw new UnsupportedOperationException("Not implemented yet.");
     }
 

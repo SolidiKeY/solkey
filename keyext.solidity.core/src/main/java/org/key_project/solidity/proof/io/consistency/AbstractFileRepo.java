@@ -13,7 +13,6 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
-import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -43,8 +42,8 @@ public abstract class AbstractFileRepo implements FileRepo {
     /// When the method [#saveProof(Path)] is called, all files registered here will be saved.
     private Set<Path> files = new HashSet<>();
 
-    /// The original Rust source path (absolute and normalized).
-    private Path rustPath;
+    /// The original Solidity source path (absolute and normalized).
+    private Path solidityPath;
 
     /// Variation of the method IOUtil.copy(): Copies the content of InputStream to OutputStream
     /// **without closing any of them**.
@@ -124,12 +123,12 @@ public abstract class AbstractFileRepo implements FileRepo {
     }
 
     @Override
-    public void setRustyPath(String path) throws IllegalStateException {
-        if (rustPath != null) {
-            throw new IllegalStateException("Rust path is already set!");
+    public void setSolidityPath(Path path) throws IllegalStateException {
+        if (solidityPath != null) {
+            throw new IllegalStateException("Solidity path is already set!");
         }
         if (path != null) {
-            rustPath = Paths.get(path).toAbsolutePath().normalize();
+            solidityPath = path.toAbsolutePath().normalize();
         }
     }
 
@@ -165,16 +164,16 @@ public abstract class AbstractFileRepo implements FileRepo {
     /// opened
     protected abstract InputStream getInputStreamInternal(Path p) throws FileNotFoundException;
 
-    protected Path getRustPath() {
-        return rustPath;
+    protected Path getSolidityPath() {
+        return solidityPath;
     }
 
     /// Checks if the given path is inside the Java path
     ///
     /// @param path the path to check
     /// @return true if the path is inside the Java path and false if not
-    protected boolean isInRustPath(Path path) {
-        return rustPath != null && path.startsWith(rustPath);
+    protected boolean isInSolidityPath(Path path) {
+        return solidityPath != null && path.startsWith(solidityPath);
     }
 
 }

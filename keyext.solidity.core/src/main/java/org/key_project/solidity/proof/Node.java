@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.key_project.logic.op.Function;
 import org.key_project.prover.rules.RuleApp;
@@ -339,5 +340,14 @@ public class Node implements Iterable<Node> {
 
     public NodeInfo getNodeInfo() {
         return nodeInfo;
+    }
+
+    public Stream<Node> childrenStream() {
+        return children.stream();
+    }
+
+    public String name() {
+        return ""+(appliedRuleApp != null ? appliedRuleApp.rule().name().toString() :
+                sequent().size() > 0 ? sequent().getFormulaByNr(1).formula() : "==>");
     }
 }

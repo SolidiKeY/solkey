@@ -5,6 +5,7 @@ package org.key_project.solidity;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
@@ -79,7 +80,7 @@ public class CLI {
         try {
             if (cli.verbose)
                 System.out.println("Loading...");
-            File f = cli.file.getAbsoluteFile();
+            Path f = cli.file.toPath();
             var env = KeYEnvironment.load(f);
             var loadedProof = env.getLoadedProof();
             if (loadedProof.closed()) {

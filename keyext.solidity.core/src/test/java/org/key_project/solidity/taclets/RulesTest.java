@@ -27,7 +27,7 @@ public class RulesTest {
 
     private static final String EXAMPLES_RESOURCE = "org/key_project/solidity/examples";
 
-    private static Proof prove(File f, long timeout, int maxSteps) throws ProblemLoaderException {
+    private static Proof prove(Path f, long timeout, int maxSteps) throws ProblemLoaderException {
         var env = KeYEnvironment.load(f);
         var loadedProof = env.getLoadedProof();
         var stratSettings = loadedProof.getSettings().getStrategySettings();
@@ -41,7 +41,7 @@ public class RulesTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource("exampleFiles")
     public void exampleLoads(String exampleName, Path exampleFile) throws ProblemLoaderException {
-        Proof proof = prove(exampleFile.toFile(), -1, 10000);
+        Proof proof = prove(exampleFile, -1, 10000);
 
         // For debugging to inspect the saved proof
         // if (!proof.closed()) {

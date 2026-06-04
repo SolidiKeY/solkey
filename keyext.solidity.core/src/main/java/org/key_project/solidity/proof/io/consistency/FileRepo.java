@@ -54,11 +54,11 @@ public interface FileRepo {
     /// @param proof the proof to register
     // void registerProof(Proof proof);
 
-    /// Sets the Rust path (where the source files are located).
+    /// Sets the Solidity path (where the source files are located).
     ///
-    /// @param rustyPath the java path to set (the method does nothing if null is given)
+    /// @param solidityPath the java path to set (the method does nothing if null is given)
     /// @throws IllegalStateException if the Rust path is already set
-    void setRustyPath(String rustyPath) throws IllegalStateException;
+    void setSolidityPath(Path solidityPath) throws IllegalStateException;
 
     /// Sets the base directory of the proof, i.e. the main directory where the proof is loaded
     /// from.

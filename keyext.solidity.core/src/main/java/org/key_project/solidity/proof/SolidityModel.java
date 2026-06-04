@@ -4,6 +4,7 @@
 package org.key_project.solidity.proof;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.text.DateFormat;
 import java.util.Date;
 
@@ -12,15 +13,15 @@ import org.key_project.solidity.proof.init.Includes;
 public final class SolidityModel {
     /// Directory of Solidity source files. May be null if the proof doesn't refer to any Solidity
     /// code.
-    private final String modelDir;
+    private final Path modelDir;
     private final String modelTag;
     private final String descr;
     private final String includedFiles;
-    private final File initialFile;
+    private final Path initialFile;
 
     public static final SolidityModel NO_MODEL = new SolidityModel();
 
-    public static SolidityModel create(String solidityPath, Includes includes, File initialFile) {
+    public static SolidityModel create(Path solidityPath, Includes includes, Path initialFile) {
         SolidityModel result = null;
         if (solidityPath == null) {
             result = NO_MODEL;
@@ -38,19 +39,18 @@ public final class SolidityModel {
         this.initialFile = null;
     }
 
-    private SolidityModel(String rustPath, Includes includes, File initialFile) {
-        File file = new File(rustPath);
-        modelDir = file.getAbsolutePath();
+    private SolidityModel(Path path, Includes includes, Path initialFile) {
+        modelDir = path.toAbsolutePath();
         Date date = new Date();
         modelTag = "KeY_" + date.getTime();
-        descr = "model " + file.getName() + "@"
+        descr = "model " + path.getFileName() + "@"
             + DateFormat.getTimeInstance(DateFormat.MEDIUM).format(date);
         var sb = new StringBuilder();
         if (includes != null) {
             var includeList = includes.getFiles();
             if (!includeList.isEmpty()) {
-                for (File f : includeList) {
-                    sb.append("\"").append(f.getAbsolutePath()).append("\", ");
+                for (Path f : includeList) {
+                    sb.append("\"").append(f.toAbsolutePath()).append("\", ");
                 }
                 sb.setLength(sb.length() - 2);
             }
@@ -59,7 +59,7 @@ public final class SolidityModel {
         this.initialFile = initialFile;
     }
 
-    public String getModelDir() {
+    public Path getModelDir() {
         return modelDir;
     }
 
@@ -67,7 +67,7 @@ public final class SolidityModel {
         return modelTag;
     }
 
-    public File getInitialFile() {
+    public Path getInitialFile() {
         return initialFile;
     }
 

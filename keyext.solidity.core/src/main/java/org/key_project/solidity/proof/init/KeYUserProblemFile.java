@@ -5,6 +5,7 @@ package org.key_project.solidity.proof.init;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 import org.key_project.logic.Name;
 import org.key_project.prover.sequent.Sequent;
@@ -61,8 +62,8 @@ public class KeYUserProblemFile extends KeYFile implements ProofOblInput {
     /// @param fileRepo the fileRepo which will store the file
     /// @param profile the KeY profile under which to load
     /// @param compressed `true` iff the file is compressed
-    public KeYUserProblemFile(String name, File file, FileRepo fileRepo, Profile profile,
-            boolean compressed) {
+    public KeYUserProblemFile(String name, Path file, FileRepo fileRepo, Profile profile,
+                              boolean compressed) {
         super(name, file, fileRepo, profile, compressed);
     }
 

@@ -170,7 +170,7 @@ public class StrategySettings extends AbstractSettings {
     /// By default, it is an [AppliedRuleStopCondition] used which stops the auto mode if the given
     /// maximal number of rule applications or a defined timeout is reached. If a customized
     /// implementation is defined for the current proof via
-    /// [#setCustomApplyStrategyStopCondition(StopCondition)] this instance is returned
+    /// [#customApplyStrategyStopCondition] this instance is returned
     /// instead.
     ///
     ///

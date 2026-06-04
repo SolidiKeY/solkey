@@ -4,6 +4,7 @@
 package org.key_project.solidity.proof.init;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -22,7 +23,7 @@ public class Includes {
     private final List<String> ldtIncludes;
     /// contains mappings from filenames to RuleSources
     private final HashMap<String, RuleSource> name2Source;
-    private final List<File> files;
+    private final List<Path> files;
 
     public Includes() {
         includes = new LinkedList<>();
@@ -54,7 +55,7 @@ public class Includes {
         return name2Source.get(name);
     }
 
-    public List<File> getFiles() {
+    public List<Path> getFiles() {
         return files;
     }
 

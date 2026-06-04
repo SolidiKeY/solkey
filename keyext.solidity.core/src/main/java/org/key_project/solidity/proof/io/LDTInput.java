@@ -5,6 +5,7 @@ package org.key_project.solidity.proof.io;
 
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 
 import org.key_project.logic.Name;
@@ -63,8 +64,8 @@ public class LDTInput implements EnvInput {
     }
 
     @Override
-    public String readSolidityPath() throws ProofInputException {
-        return "";
+    public Path readSolidityPath() throws ProofInputException {
+        return null;
     }
 
     /// reads all LDTs, i.e., all associated .key files with respect to the given modification
@@ -109,7 +110,7 @@ public class LDTInput implements EnvInput {
     }
 
     @Override
-    public File getInitialFile() {
+    public Path getInitialFile() {
         return null;
     }
 

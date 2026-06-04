@@ -4,6 +4,7 @@
 package org.key_project.solidity.control;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Properties;
 import java.util.function.Consumer;
@@ -47,13 +48,13 @@ public interface UserInterfaceControl {
     /// `AbstractProblemLoader.profileOfNewProofs` will be used as [Profile] of
     /// new proofs, `false` [Profile] specified by problem file will be used for
     /// new proofs.
-    /// @param callbackProofLoaded receives the proof after it is loaded, but before it is replayed
+    /// @param callback receives the proof after it is loaded, but before it is replayed
     /// @return The opened [AbstractProblemLoader].
     /// @throws ProblemLoaderException Occurred Exception.
-    AbstractProblemLoader load(Profile profile, File file, List<File> includes,
-            Properties poPropertiesToForce,
-            boolean forceNewProfileOfNewProofs,
-            Consumer<Proof> callbackProofLoaded) throws ProblemLoaderException;
+    public AbstractProblemLoader load(Profile profile, Path file, List<Path> includes,
+                                      Properties poPropertiesToForce,
+                                      boolean forceNewProfileOfNewProofs,
+                                      Consumer<Proof> callback) throws ProblemLoaderException;
 
     /// Instantiates a new [Proof] in this [UserInterfaceControl] for the given
     /// [ProofOblInput] based on the [InitConfig].

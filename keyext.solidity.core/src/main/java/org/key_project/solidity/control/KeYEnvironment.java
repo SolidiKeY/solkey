@@ -4,6 +4,7 @@
 package org.key_project.solidity.control;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Properties;
 import java.util.function.Consumer;
@@ -110,8 +111,8 @@ public class KeYEnvironment<U extends UserInterfaceControl> {
     /// @return The [KeYEnvironment] which contains all references to the loaded location.
     /// @throws ProblemLoaderException Occurred Exception
     public static KeYEnvironment<DefaultUserInterfaceControl> load(@Nullable Profile profile,
-            File location,
-            @Nullable List<File> includes,
+            Path location,
+            @Nullable List<Path> includes,
             @Nullable Properties poPropertiesToForce,
             @Nullable Consumer<Proof> callbackProofLoaded,
             boolean forceNewProfileOfNewProofs) throws ProblemLoaderException {
@@ -138,8 +139,8 @@ public class KeYEnvironment<U extends UserInterfaceControl> {
     /// @return The [KeYEnvironment] which contains all references to the loaded location.
     /// @throws ProblemLoaderException Occurred Exception
     public static KeYEnvironment<DefaultUserInterfaceControl> load(@Nullable Profile profile,
-            File location,
-            @Nullable List<File> includes,
+            Path location,
+            @Nullable List<Path> includes,
             @Nullable Properties poPropertiesToForce,
             boolean forceNewProfileOfNewProofs) throws ProblemLoaderException {
         return load(profile, location, includes, poPropertiesToForce,
@@ -159,8 +160,8 @@ public class KeYEnvironment<U extends UserInterfaceControl> {
     /// @return The [KeYEnvironment] which contains all references to the loaded location.
     /// @throws ProblemLoaderException Occurred Exception
     public static KeYEnvironment<DefaultUserInterfaceControl> load(@Nullable Profile profile,
-            File location,
-            @Nullable List<File> includes,
+            Path location,
+            @Nullable List<Path> includes,
             boolean forceNewProfileOfNewProofs) throws ProblemLoaderException {
         return load(profile, location, includes, null,
             forceNewProfileOfNewProofs);
@@ -173,13 +174,13 @@ public class KeYEnvironment<U extends UserInterfaceControl> {
     /// @param includes Optional includes to consider.
     /// @return The [KeYEnvironment] which contains all references to the loaded location.
     /// @throws ProblemLoaderException Occurred Exception
-    public static KeYEnvironment<DefaultUserInterfaceControl> load(File location,
-            @Nullable List<File> includes)
+    public static KeYEnvironment<DefaultUserInterfaceControl> load(Path location,
+            @Nullable List<Path> includes)
             throws ProblemLoaderException {
         return load(null, location, includes, false);
     }
 
-    public static KeYEnvironment<DefaultUserInterfaceControl> load(File keyFile)
+    public static KeYEnvironment<DefaultUserInterfaceControl> load(Path keyFile)
             throws ProblemLoaderException {
         return load(keyFile, null);
     }

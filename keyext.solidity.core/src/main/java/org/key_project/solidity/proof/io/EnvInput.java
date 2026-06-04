@@ -4,6 +4,7 @@
 package org.key_project.solidity.proof.io;
 
 import java.io.File;
+import java.nio.file.Path;
 
 import org.key_project.logic.Named;
 import org.key_project.solidity.common.Profile;
@@ -26,10 +27,10 @@ public interface EnvInput extends Named {
     Includes readIncludes() throws ProofInputException;
 
     /// Reads the Rust path.
-    String readSolidityPath() throws ProofInputException;
+    Path readSolidityPath() throws ProofInputException;
 
     /// Returns the file path to specific requested Rust file.
-    default @Nullable String getRustFile() throws ProofInputException {
+    default Path getSolidityFile() throws ProofInputException {
         return null;
     }
 
@@ -49,5 +50,5 @@ public interface EnvInput extends Named {
     /// Returns the initial [File] which is loaded if available.
     ///
     /// @return The initial [File] which is loaded or `null` otherwise.
-    File getInitialFile();
+    Path getInitialFile();
 }
