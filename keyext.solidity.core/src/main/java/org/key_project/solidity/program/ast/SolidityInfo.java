@@ -9,10 +9,9 @@ import org.key_project.logic.Name;
 import org.key_project.logic.op.Function;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
-import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
-import org.key_project.solidity.program.ast.abstractions.PseudoType;
-import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.solidity.program.ast.abstractions.*;
 import org.key_project.solidity.program.ast.declarations.StateVariableDeclaration;
+import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.theory.TheoryInfo;
 
 import org.jspecify.annotations.NonNull;
@@ -232,58 +231,43 @@ public class SolidityInfo {
         revTypeMap.put(kst, kst.getSolidityType());
     }
 
-    //
-    // public Type getType(Name typeName) {
-    // if (typeMap.containsKey(typeName))
-    // return typeMap.get(typeName);
-    // return getPrimitiveType(typeName.toString());
-    // }
-    //
-    // public Type getDynamicTypeMap(Name primaryTypeName) {
-    // Name typeName = new Name(primaryTypeName + "[]");
-    // if (typeMap.containsKey(typeName))
-    // return typeMap.get(typeName);
-    // Type primaryType = getType(primaryTypeName);
-    // Type type = new DynamicArrayType(primaryType);
-    // typeMap.put(typeName, type);
-    // return type;
-    // }
 
-    // public Type getStaticTypeMap(Name primaryTypeName, Expression expression) {
-    // return getStaticTypeMap(primaryTypeName, Integer.parseInt(expression.toString()));
-    // }
+     public Type getType(Name typeName) {
+         if (typeMap.containsKey(typeName))
+             return typeMap.get(typeName);
+         return getPrimitiveType(typeName.toString());
+     }
 
-    // public Type getStaticTypeMap(Name primaryTypeName, int size) {
-    // // TODO: Fix no type creation in this class.
-    // Name typeName = new Name(primaryTypeName + "[" + size + "]");
-    // if (typeMap.containsKey(typeName))
-    // return typeMap.get(typeName);
-    // Type primaryType = getType(primaryTypeName);
-    // Type type = new ArrayType(primaryType, size);
-    // typeMap.put(typeName, type);
-    // return type;
-    // }
-    //
-    // public MappingType getMappingTypeMap(Type keyType, Type valueType) {
-    // // TODO: Fix no type creation in this class.
-    // MappingType mapping = new MappingType(keyType, valueType);
-    // if (typeMap.containsKey(mapping.name()))
-    // return (MappingType) typeMap.get(mapping.name());
-    // typeMap.put(mapping.name(), mapping);
-    // return mapping;
-    // }
+     public Type getDynamicTypeMap(Name primaryTypeName) {
+         Name typeName = new Name(primaryTypeName + "[]");
+         return typeMap.get(typeName);
+     }
 
-    // public TupleType getTupleTypeMap(List<Type> types) {
-    // // TODO: Fix no type creation in this class.
-    // Name typeName = new Name("(" + types.stream().map(Object::toString)
-    // .collect(Collectors.joining(", "))
-    // + ")");
-    // if (typeMap.containsKey(typeName))
-    // return (TupleType) typeMap.get(typeName);
-    // TupleType type = new TupleType(types);
-    // typeMap.put(typeName, type);
-    // return type;
-    // }
+     public Type getStaticTypeMap(Name primaryTypeName, Expression expression) {
+         return getStaticTypeMap(primaryTypeName, Integer.parseInt(expression.toString()));
+     }
+
+     public Type getStaticTypeMap(Name primaryTypeName, int size) {
+         Name typeName = new Name(primaryTypeName + "[" + size + "]");
+         return typeMap.get(typeName);
+     }
+
+     public Type getMappingTypeMap(Type keyType, Type valueType) {
+         MappingType mapping = new MappingType(keyType, valueType);
+         return typeMap.get(mapping.name());
+     }
+
+//     public TupleType getTupleTypeMap(List<Type> types) {
+//     // TODO: Fix no type creation in this class.
+//     Name typeName = new Name("(" + types.stream().map(Object::toString)
+//     .collect(Collectors.joining(", "))
+//     + ")");
+//     if (typeMap.containsKey(typeName))
+//     return (TupleType) typeMap.get(typeName);
+//     TupleType type = new TupleType(types);
+//     typeMap.put(typeName, type);
+//     return type;
+//     }
 
     public KeYSolidityType getKeYSolidityType(Type type) {
         return typeMap.get(type);
