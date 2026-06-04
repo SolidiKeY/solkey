@@ -316,17 +316,6 @@ public class PrettyPrinter implements Visitor {
     }
 
     @Override
-    public void performActionOnDoWhileStatement(DoWhileStatement x) {
-        layouter.print("while").print(" ");
-        layouter.print("(");
-        x.getCondition().visit(this);
-        layouter.print(")");
-        layouter.beginRelativeC().brk(1);
-        x.getBody().visit(this);
-        layouter.end();
-    }
-
-    @Override
     public void performActionOnExpressionStatement(ExpressionStatement x) {
         x.getExpression().visit(this);
         layouter.print(";");
@@ -347,6 +336,31 @@ public class PrettyPrinter implements Visitor {
 
     }
 
+
+    @Override
+    public void performActionOnDoWhileStatement(DoWhileStatement x) {
+        layouter.print("do");
+        layouter.beginRelativeC().brk(1);
+        x.getBody().visit(this);
+        layouter.end();
+        layouter.print("while").print(" ");
+        layouter.print("(");
+        x.getCondition().visit(this);
+        layouter.print(")");
+    }
+
+    @Override
+    public void performActionOnWhileStatement(WhileStatement x) {
+        layouter.print("while").print(" ");
+        layouter.print("(");
+        x.getCondition().visit(this);
+        layouter.print(")");
+        layouter.beginRelativeC().brk(1);
+        x.getBody().visit(this);
+        layouter.end();
+    }
+
+
     @Override
     public void performActionOnPlaceholdStatement(PlaceholdStatement x) {
 
@@ -362,10 +376,6 @@ public class PrettyPrinter implements Visitor {
 
     }
 
-    @Override
-    public void performActionOnWhileStatement(WhileStatement x) {
-
-    }
 
     @Override
     public void performActionOnDataLocation(DataLocation x) {
