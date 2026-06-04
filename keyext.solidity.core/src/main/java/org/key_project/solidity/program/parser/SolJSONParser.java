@@ -54,16 +54,16 @@ public class SolJSONParser {
     private final HashMap<Integer, Type> functionId2Type = new HashMap<>();
     private final HashMap<String, TupleType> tupleTypes = new HashMap<>();
     private final Set<Integer> contractIds = new HashSet<>();
-    private final HashMap<String, DynamicArrayType> dynamicArrayTypes = new HashMap<>();
-    private final HashMap<String, ArrayType> arrayTypes = new HashMap<>();
+    private final HashMap<Name, DynamicArrayType> dynamicArrayTypes = new HashMap<>();
+    private final HashMap<Name, ArrayType> arrayTypes = new HashMap<>();
 
 
     private final Services services;
     private final HashMap<String, KeYSolidityType> partialKSTMap = new LinkedHashMap<>();
-    private final HashMap<String, KeYSolidityType> dynamicArrayKSTs = new HashMap<>();
-    private final HashMap<String, KeYSolidityType> arrayKSTs = new HashMap<>();
-    private final HashMap<String, MappingType> mappingTypes = new HashMap<>();
-    private final HashMap<String, KeYSolidityType> mappingKSTs = new HashMap<>();
+    private final HashMap<Name, KeYSolidityType> dynamicArrayKSTs = new HashMap<>();
+    private final HashMap<Name, KeYSolidityType> arrayKSTs = new HashMap<>();
+    private final HashMap<Name, MappingType> mappingTypes = new HashMap<>();
+    private final HashMap<Name, KeYSolidityType> mappingKSTs = new HashMap<>();
 
     public SolJSONParser(Services services) {
         this.services = services;
@@ -441,17 +441,17 @@ public class SolJSONParser {
 
     private @NonNull MappingType getMappingType(Type keyType, Type valueType) {
         MappingType mapping = new MappingType(keyType, valueType);
-        return mappingTypes.computeIfAbsent(mapping.name().toString(), ignored -> mapping);
+        return mappingTypes.computeIfAbsent(mapping.name(), ignored -> mapping);
     }
 
     private @NonNull DynamicArrayType getDynamicArrayType(Type elementType) {
         DynamicArrayType array = new DynamicArrayType(elementType);
-        return dynamicArrayTypes.computeIfAbsent(array.name().toString(), ignored -> array);
+        return dynamicArrayTypes.computeIfAbsent(array.name(), ignored -> array);
     }
 
     private @NonNull ArrayType getArrayType(Type elementType, int length) {
         ArrayType array = new ArrayType(elementType, length);
-        return arrayTypes.computeIfAbsent(array.name().toString(), ignored -> array);
+        return arrayTypes.computeIfAbsent(array.name(), ignored -> array);
     }
 
     private int parseArrayLength(JsonNode length) {
@@ -757,7 +757,7 @@ public class SolJSONParser {
 
     private KeYSolidityType getOrCreateDynamicArrayKeYSolidityType(
             DynamicArrayType dynamicArrayType) {
-        String arrayName = dynamicArrayType.name().toString();
+        Name arrayName = dynamicArrayType.name();
         KeYSolidityType kst = dynamicArrayKSTs.get(arrayName);
         if (kst != null)
             return kst;
@@ -772,7 +772,7 @@ public class SolJSONParser {
     }
 
     private KeYSolidityType getOrCreateArrayKeYSolidityType(ArrayType arrayType) {
-        String arrayName = arrayType.name().toString();
+        Name arrayName = arrayType.name();
         KeYSolidityType kst = arrayKSTs.get(arrayName);
         if (kst != null)
             return kst;
@@ -787,7 +787,7 @@ public class SolJSONParser {
     }
 
     private KeYSolidityType getOrCreateMappingKeYSolidityType(MappingType mappingType) {
-        String mappingName = mappingType.name().toString();
+        Name mappingName = mappingType.name();
         KeYSolidityType kst = mappingKSTs.get(mappingName);
         if (kst != null)
             return kst;
