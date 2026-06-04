@@ -144,10 +144,10 @@ public class ProgVarReplaceVisitorTest {
         ConditionStatement ifStmt = (ConditionStatement) result.getStatements().get(1);
         assertSame(replacement, ((BinaryExpression) ifStmt.getCondition()).getLeft());
         assertSame(replacement,
-            ((BinaryExpression) ((ExpressionStatement) ifStmt.getTrueBody()).getExpression())
+            ((BinaryExpression) ((ExpressionStatement) ifStmt.getThenBody()).getExpression())
                     .getLeft());
         assertSame(replacement,
-            ((BinaryExpression) ((ExpressionStatement) ifStmt.getFalseBody()).getExpression())
+            ((BinaryExpression) ((ExpressionStatement) ifStmt.getElseBody()).getExpression())
                     .getLeft());
     }
 

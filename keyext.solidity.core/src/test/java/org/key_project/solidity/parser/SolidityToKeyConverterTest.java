@@ -128,7 +128,7 @@ public class SolidityToKeyConverterTest {
         ConditionStatement stm = (ConditionStatement) parseStatement("if(false) true;");
         assertFalse(((BoolLiteral) stm.getCondition()).getValue());
         assertTrue(
-            ((BoolLiteral) ((ExpressionStatement) stm.getTrueBody()).getExpression()).getValue());
+            ((BoolLiteral) ((ExpressionStatement) stm.getThenBody()).getExpression()).getValue());
     }
 
     @Test
@@ -136,9 +136,9 @@ public class SolidityToKeyConverterTest {
         ConditionStatement stm = (ConditionStatement) parseStatement("if(false) true; else false;");
         assertFalse(((BoolLiteral) stm.getCondition()).getValue());
         assertTrue(
-            ((BoolLiteral) ((ExpressionStatement) stm.getTrueBody()).getExpression()).getValue());
+            ((BoolLiteral) ((ExpressionStatement) stm.getThenBody()).getExpression()).getValue());
         assertFalse(
-            ((BoolLiteral) ((ExpressionStatement) stm.getFalseBody()).getExpression()).getValue());
+            ((BoolLiteral) ((ExpressionStatement) stm.getElseBody()).getExpression()).getValue());
     }
 
     @Test

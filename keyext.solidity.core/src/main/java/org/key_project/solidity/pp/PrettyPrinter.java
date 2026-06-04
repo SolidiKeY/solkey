@@ -285,27 +285,45 @@ public class PrettyPrinter implements Visitor {
 
     @Override
     public void performActionOnBreakStatement(BreakStatement x) {
-
+        layouter.print("break;");
     }
 
     @Override
     public void performActionOnConditionStatement(ConditionStatement x) {
-
+        layouter.print("if");
+        layouter.print("(");
+        x.getCondition().visit(this);
+        layouter.print(")");
+        layouter.beginRelativeC().brk(1);
+        x.getThenBody().visit(this);
+        layouter.end();
+        if (x.getElseBody() != null) {
+            layouter.print("else");
+            layouter.beginRelativeC().brk(1);
+            x.getElseBody().visit(this);
+            layouter.end();
+        }
     }
 
     @Override
     public void performActionOnContinueStatement(ContinueStatement x) {
-
+        layouter.print("continue;");
     }
 
     @Override
     public void performActionOnDeclarationStatement(DeclarationStatement x) {
-
+        layouter.print("NOT YET PRETTY PRINTED");
     }
 
     @Override
     public void performActionOnDoWhileStatement(DoWhileStatement x) {
-
+        layouter.print("while").print(" ");
+        layouter.print("(");
+        x.getCondition().visit(this);
+        layouter.print(")");
+        layouter.beginRelativeC().brk(1);
+        x.getBody().visit(this);
+        layouter.end();
     }
 
     @Override

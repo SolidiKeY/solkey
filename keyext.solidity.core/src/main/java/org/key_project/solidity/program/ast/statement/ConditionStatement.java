@@ -15,35 +15,35 @@ import org.jspecify.annotations.Nullable;
 
 public class ConditionStatement implements Statement {
     Expression condition;
-    Statement trueBody;
+    Statement thenBody;
     @Nullable
-    Statement falseBody;
+    Statement elseBody;
 
-    public ConditionStatement(Expression condition, Statement trueBody) {
+    public ConditionStatement(Expression condition, Statement thenBody) {
         this.condition = condition;
-        this.trueBody = trueBody;
+        this.thenBody = thenBody;
     }
 
-    public ConditionStatement(Expression condition, Statement trueBody, Statement falseBody) {
+    public ConditionStatement(Expression condition, Statement thenBody, Statement elseBody) {
         this.condition = condition;
-        this.trueBody = trueBody;
-        this.falseBody = falseBody;
+        this.thenBody = thenBody;
+        this.elseBody = elseBody;
     }
 
     public ConditionStatement(ExtList children) {
         this.condition = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
-        this.trueBody = Objects.requireNonNull(children.removeFirstOccurrence(Statement.class));
-        this.falseBody = Objects.requireNonNull(children.removeFirstOccurrence(Statement.class));
+        this.thenBody = Objects.requireNonNull(children.removeFirstOccurrence(Statement.class));
+        this.elseBody = Objects.requireNonNull(children.removeFirstOccurrence(Statement.class));
     }
 
     @Override
     public @NonNull SyntaxElement getChild(int n) {
         return switch (n) {
             case 0 -> condition;
-            case 1 -> trueBody;
+            case 1 -> thenBody;
             default -> {
                 if (getChildCount() == 3 && n == 2)
-                    yield falseBody;
+                    yield elseBody;
                 throw new IndexOutOfBoundsException(
                     "Index should be 0 <= " + n + " < " + getChildCount());
             }
@@ -52,16 +52,16 @@ public class ConditionStatement implements Statement {
 
     @Override
     public int getChildCount() {
-        if (falseBody == null)
+        if (elseBody == null)
             return 2;
         return 3;
     }
 
     @Override
     public String toString() {
-        String s = "if(" + condition + ") " + trueBody;
-        if (falseBody != null)
-            s += " else " + falseBody;
+        String s = "if(" + condition + ") " + thenBody;
+        if (elseBody != null)
+            s += " else " + elseBody;
         return s;
     }
 
@@ -73,11 +73,11 @@ public class ConditionStatement implements Statement {
         return condition;
     }
 
-    public Statement getTrueBody() {
-        return trueBody;
+    public Statement getThenBody() {
+        return thenBody;
     }
 
-    public @Nullable Statement getFalseBody() {
-        return falseBody;
+    public @Nullable Statement getElseBody() {
+        return elseBody;
     }
 }
