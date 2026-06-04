@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.keyproject.key.api.remoteapi;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
@@ -22,15 +21,15 @@ public interface MetaApi {
     @JsonRequest("version")
     CompletableFuture<String> getVersion();
 
-//    /**
-//     * @return a list of available proof macros
-//     */
-//    @JsonRequest("available_macros")
-//    CompletableFuture<List<ProofMacroDesc>> getAvailableMacros();
-//
-//    /**
-//     * @return a list of available proof script commands
-//     */
-//    @JsonRequest("available_script_commands")
-//    CompletableFuture<List<ProofScriptCommandDesc>> getAvailableScriptCommands();
+    // /**
+    // * @return a list of available proof macros
+    // */
+    // @JsonRequest("available_macros")
+    // CompletableFuture<List<ProofMacroDesc>> getAvailableMacros();
+    //
+    // /**
+    // * @return a list of available proof script commands
+    // */
+    // @JsonRequest("available_script_commands")
+    // CompletableFuture<List<ProofScriptCommandDesc>> getAvailableScriptCommands();
 }

@@ -4,9 +4,16 @@
 package org.keyproject.key.api;
 
 
-import org.eclipse.lsp4j.jsonrpc.CompletableFutures;
-import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.stream.Stream;
+
 import org.key_project.prover.engine.ProverTaskListener;
 import org.key_project.prover.engine.TaskFinishedInfo;
 import org.key_project.solidity.control.DefaultUserInterfaceControl;
@@ -21,28 +28,19 @@ import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.init.IPersistablePO;
 import org.key_project.solidity.proof.init.InitConfig;
 import org.key_project.solidity.proof.init.ProofAggregate;
-import org.key_project.solidity.proof.init.ProofOblInput;
 import org.key_project.solidity.proof.init.SolidityProfile;
 import org.key_project.solidity.proof.io.AbstractProblemLoader;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
 import org.key_project.solidity.strategy.StrategyProperties;
 import org.key_project.solidity.util.KeYtherConstants;
 import org.key_project.util.collection.ImmutableList;
+
+import org.eclipse.lsp4j.jsonrpc.CompletableFutures;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.keyproject.key.api.data.*;
 import org.keyproject.key.api.data.KeyIdentifications.*;
 import org.keyproject.key.api.remoteapi.KeyApi;
 import org.keyproject.key.api.remoteclient.ClientApi;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
-import java.util.stream.Stream;
 
 import static org.key_project.solidity.proof.ProofNodeDescription.collectPathInformation;
 import static org.keyproject.key.api.data.TaskFinishedInfo.*;
@@ -50,9 +48,10 @@ import static org.keyproject.key.api.data.TaskFinishedInfo.*;
 
 public final class KeYtherApiImpl implements KeyApi {
     private final KeyIdentifications data = new KeyIdentifications();
-
+    private final AtomicInteger uniqueCounter = new AtomicInteger();
+    private final IdentitySequentPrintFilter filter = new IdentitySequentPrintFilter();
+    private final DefaultUserInterfaceControl control = new MyDefaultUserInterfaceControl();
     private Function<Void, Boolean> exitHandler;
-
     private ClientApi clientApi;
     private final ProverTaskListener clientListener = new ProverTaskListener() {
         @Override
@@ -70,11 +69,9 @@ public final class KeYtherApiImpl implements KeyApi {
             clientApi.taskFinished(from(info));
         }
     };
-    private final AtomicInteger uniqueCounter = new AtomicInteger();
 
     public KeYtherApiImpl() {
     }
-
 
     @Override
     public CompletableFuture<Boolean> shutdown() {
@@ -128,7 +125,7 @@ public final class KeYtherApiImpl implements KeyApi {
 
     @Override
     public CompletableFuture<List<NodeDesc>> goals(ProofId proofId, boolean onlyOpened,
-                                                   boolean onlyEnabled) {
+            boolean onlyEnabled) {
         return CompletableFuture.supplyAsync(() -> {
             var proof = data.find(proofId);
             if (onlyOpened && !onlyEnabled) {
@@ -185,16 +182,6 @@ public final class KeYtherApiImpl implements KeyApi {
         return null;
     }
 
-    /*
-     * @Override
-     * public CompletableFuture<Statistics> statistics(ProofId proofId) {
-     * return CompletableFuture.supplyAsync(() -> {
-     * var proof = data.find(proofId);
-     * return proof.getStatistics();
-     * });
-     * }
-     */
-
     @Override
     public CompletableFuture<TreeNodeDesc> treeRoot(ProofId proof) {
         return CompletableFuture.completedFuture(
@@ -208,7 +195,6 @@ public final class KeYtherApiImpl implements KeyApi {
             return asNodeDesc(proofId, proof.root());
         });
     }
-
 
     @Override
     public CompletableFuture<List<TreeNodeDesc>> treeChildren(ProofId proof, TreeNodeId nodeId) {
@@ -273,8 +259,6 @@ public final class KeYtherApiImpl implements KeyApi {
         });
     }
 
-    private final IdentitySequentPrintFilter filter = new IdentitySequentPrintFilter();
-
     @Override
     public CompletableFuture<List<TermActionDesc>> actions(NodeTextId printId, int caretPos) {
         return CompletableFuture.supplyAsync(() -> {
@@ -304,13 +288,9 @@ public final class KeYtherApiImpl implements KeyApi {
         clientApi = remoteProxy;
     }
 
-    private final DefaultUserInterfaceControl control = new MyDefaultUserInterfaceControl();
-
     @Override
     public CompletableFuture<ProofId> loadProblem(ProblemDefinition problem) {
         return CompletableFutures.computeAsync((c) -> {
-            Proof proof = null;
-            KeYEnvironment<?> env = null;
             /*
              * var loader = control.load(JavaProfile.getDefaultProfile(),
              * ex.getObligationFile(), null, null, null, null, true, null);
@@ -340,7 +320,8 @@ public final class KeYtherApiImpl implements KeyApi {
                 var loader = control.load(SolidityProfile.getDefaultInstance(),
                     tempFile.toPath(), null, null, true, null);
                 InitConfig initConfig = loader.getInitConfig();
-                env = new KeYEnvironment<>(control, initConfig, loader.getProof(), loader.getResult());
+                env = new KeYEnvironment<>(control, initConfig, loader.getProof(),
+                    loader.getResult());
                 var envId = new EnvironmentId(env.toString());
                 data.register(envId, env);
                 proof = Objects.requireNonNull(env.getLoadedProof());
@@ -373,7 +354,8 @@ public final class KeYtherApiImpl implements KeyApi {
                     true,
                     null);
                 InitConfig initConfig = loader.getInitConfig();
-                env = new KeYEnvironment<>(control, initConfig, loader.getProof(), loader.getResult());
+                env = new KeYEnvironment<>(control, initConfig, loader.getProof(),
+                    loader.getResult());
                 var envId = new EnvironmentId(env.toString());
                 data.register(envId, env);
                 if ((proof = env.getLoadedProof()) != null) {
@@ -411,8 +393,8 @@ public final class KeYtherApiImpl implements KeyApi {
 
         @Override
         public void loadingFinished(AbstractProblemLoader loader,
-                                    IPersistablePO.LoadedPOContainer poContainer, ProofAggregate proofList,
-                                    AbstractProblemLoader.ReplayResult result) throws ProblemLoaderException {
+                IPersistablePO.LoadedPOContainer poContainer, ProofAggregate proofList,
+                AbstractProblemLoader.ReplayResult result) throws ProblemLoaderException {
             super.loadingFinished(loader, poContainer, proofList, result);
         }
     }

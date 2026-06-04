@@ -44,13 +44,13 @@ public class KeyAdapter {
      * //endregion
      */
 
-//    static class MacroSerializer implements JsonSerializer<ProofMacro> {
-//        @Override
-//        public JsonElement serialize(ProofMacro src, Type typeOfSrc,
-//                JsonSerializationContext context) {
-//            return context.serialize(MacroDescription.from(src));
-//        }
-//    }
+    // static class MacroSerializer implements JsonSerializer<ProofMacro> {
+    // @Override
+    // public JsonElement serialize(ProofMacro src, Type typeOfSrc,
+    // JsonSerializationContext context) {
+    // return context.serialize(MacroDescription.from(src));
+    // }
+    // }
 
     public static class FileTypeAdapter extends TypeAdapter<File> {
         @Override

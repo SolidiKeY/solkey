@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 
 import org.key_project.key.api.doc.Metamodel.HelpText;
 import org.key_project.key.api.doc.Metamodel.HelpTextEntry;
+import org.key_project.solidity.proof.Proof;
 
 import com.github.therapi.runtimejavadoc.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -23,7 +24,6 @@ import org.eclipse.lsp4j.jsonrpc.services.JsonNotification;
 import org.eclipse.lsp4j.jsonrpc.services.JsonRequest;
 import org.eclipse.lsp4j.jsonrpc.services.JsonSegment;
 import org.jspecify.annotations.Nullable;
-import org.key_project.solidity.proof.Proof;
 import org.keyproject.key.api.remoteapi.KeyApi;
 import org.keyproject.key.api.remoteclient.ClientApi;
 

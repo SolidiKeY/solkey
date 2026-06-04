@@ -205,7 +205,8 @@ public class StartServer implements Runnable {
         gsonBuilder.serializeNulls();
     }
 
-    public static Launcher<ClientApi> launch(OutputStream out, InputStream in, KeYtherApiImpl keyApi) {
+    public static Launcher<ClientApi> launch(OutputStream out, InputStream in,
+            KeYtherApiImpl keyApi) {
         // var localServices = getLocalServices();
         // var remoteInterfaces = getRemoteInterfaces();
         var launcherBuilder = new Launcher.Builder<ClientApi>()

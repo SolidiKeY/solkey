@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.keyproject.key.api.data;
 
+import java.lang.reflect.Field;
+
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.settings.StrategySettings;
 import org.key_project.solidity.strategy.StrategyProperties;
-
-import java.lang.reflect.Field;
 
 /**
  * @author Alexander Weigl

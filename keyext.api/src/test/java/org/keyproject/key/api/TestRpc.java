@@ -8,7 +8,6 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintWriter;
 import java.util.Collections;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -70,15 +69,15 @@ public class TestRpc {
 
     }
 
-//    @Test
-//    public void listMacros() throws ExecutionException, InterruptedException {
-//        var examples = keyApi.getAvailableMacros().get();
-//        System.out.println(examples);
-//    }
-//
-//    @Test
-//    public void listExamples() throws ExecutionException, InterruptedException {
-//        var examples = keyApi.examples().get();
-//        System.out.println(examples);
-//    }
+    // @Test
+    // public void listMacros() throws ExecutionException, InterruptedException {
+    // var examples = keyApi.getAvailableMacros().get();
+    // System.out.println(examples);
+    // }
+    //
+    // @Test
+    // public void listExamples() throws ExecutionException, InterruptedException {
+    // var examples = keyApi.examples().get();
+    // System.out.println(examples);
+    // }
 }

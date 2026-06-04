@@ -12,18 +12,18 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javafx.geometry.Orientation;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.FileChooser;
+
+import org.key_project.solidity.proof.io.ProblemLoaderException;
 
 import edu.kit.iti.formal.keyextclientjava.rpc.KeyRemote;
 import edu.kit.iti.formal.keyextclientjava.rpc.RPCLayer;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.jsonrpc.json.StreamMessageProducer;
 import org.jspecify.annotations.NullMarked;
-import org.key_project.solidity.proof.io.ProblemLoaderException;
 import org.keyproject.key.api.KeYtherApiImpl;
 import org.keyproject.key.api.StartServer;
 import org.keyproject.key.api.data.*;

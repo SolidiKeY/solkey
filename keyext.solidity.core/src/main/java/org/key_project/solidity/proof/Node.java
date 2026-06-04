@@ -80,7 +80,6 @@ public class Node implements Iterable<Node> {
 
     private String cachedName = null;
 
-
     /// creates an empty node that is root and leaf.
     private Node(Proof proof) {
         this.proof = proof;

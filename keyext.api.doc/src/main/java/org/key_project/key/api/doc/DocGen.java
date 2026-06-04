@@ -9,14 +9,15 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.key_project.solidity.util.KeYResourceManager;
+import org.key_project.solidity.util.KeYtherConstants;
+
 import freemarker.core.HTMLOutputFormat;
 import freemarker.ext.beans.ZeroArgumentNonVoidMethodPolicy;
 import freemarker.template.Configuration;
 import freemarker.template.DefaultObjectWrapper;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
-import org.key_project.solidity.util.KeYResourceManager;
-import org.key_project.solidity.util.KeYtherConstants;
 
 /**
  * Generation of Markdown documentation.

@@ -3,13 +3,14 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.keyproject.key.api.data;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
+import java.util.Objects;
+
 import org.key_project.solidity.control.KeYEnvironment;
 import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.proof.Proof;
 
-import java.util.Objects;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 
 /**
  * @author Alexander Weigl
