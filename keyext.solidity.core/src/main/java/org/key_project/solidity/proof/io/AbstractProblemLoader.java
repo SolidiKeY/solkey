@@ -219,7 +219,7 @@ public abstract class AbstractProblemLoader {
         fileRepo.setBaseDir(file);
 
         if (filename.endsWith(".sol")) {
-            // rust file, probably enriched by specifications
+            // solidity file, probably enriched by specifications
             SLEnvInput ret = null;
             if (file.getParent() == null) {
                 ret = new SLEnvInput(Paths.get("."), profileOfNewProofs, includes);
@@ -291,7 +291,7 @@ public abstract class AbstractProblemLoader {
             return new KeYUserProblemFile(filename, file, fileRepo, profileOfNewProofs,
                 filename.endsWith(".proof.gz"));
         } else if (Files.isDirectory(file)) {
-            // directory containing java sources, probably enriched
+            // directory containing Java sources, probably enriched
             // by specifications
             return new SLEnvInput(file, profileOfNewProofs, includes);
         } else {

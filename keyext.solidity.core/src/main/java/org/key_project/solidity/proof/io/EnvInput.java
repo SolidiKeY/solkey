@@ -25,10 +25,10 @@ public interface EnvInput extends Named {
     /// Reads the include section and returns an Includes object.
     Includes readIncludes() throws ProofInputException;
 
-    /// Reads the Rust path.
+    /// Reads the Solidity path.
     Path readSolidityPath() throws ProofInputException;
 
-    /// Returns the file path to specific requested Rust file.
+    /// Returns the file path to specific requested Solidity file.
     default Path getSolidityFile() throws ProofInputException {
         return null;
     }
