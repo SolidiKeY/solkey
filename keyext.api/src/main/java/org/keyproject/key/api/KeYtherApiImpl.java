@@ -5,10 +5,13 @@ package org.keyproject.key.api;
 
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Stack;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -22,6 +25,7 @@ import org.key_project.solidity.pp.IdentitySequentPrintFilter;
 import org.key_project.solidity.pp.LogicPrinter;
 import org.key_project.solidity.pp.NotationInfo;
 import org.key_project.solidity.pp.PosTableLayouter;
+import org.key_project.solidity.pp.PositionTable;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.proof.Proof;
@@ -30,8 +34,9 @@ import org.key_project.solidity.proof.init.InitConfig;
 import org.key_project.solidity.proof.init.ProofAggregate;
 import org.key_project.solidity.proof.init.SolidityProfile;
 import org.key_project.solidity.proof.io.AbstractProblemLoader;
+import org.key_project.solidity.proof.io.OutputStreamProofSaver;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
-import org.key_project.solidity.strategy.StrategyProperties;
+import org.key_project.solidity.rule.TacletApp;
 import org.key_project.solidity.util.KeYtherConstants;
 import org.key_project.util.collection.ImmutableList;
 
@@ -104,9 +109,6 @@ public final class KeYtherApiImpl implements KeyApi {
             var env = data.find(proofId.env());
             options.configure(proof);
             try {
-                System.out.println("Starting proof with setting "
-                    + proof.getSettings().getStrategySettings().getActiveStrategyProperties()
-                            .getProperty(StrategyProperties.STOPMODE_OPTIONS_KEY));
                 env.getProofControl().startAndWaitForAutoMode(proof);
                 // clientListener);
                 return ProofStatus.from(proofId, proof);
@@ -179,7 +181,37 @@ public final class KeYtherApiImpl implements KeyApi {
 
     @Override
     public CompletableFuture<List<NodeDesc>> pruneTo(NodeId nodeId) {
-        return null;
+        // return CompletableFuture.supplyAsync(() -> {
+        // var proof = data.find(nodeId.proofId());
+        // var node = data.find(nodeId);
+        //
+        // var nodes = proof.pruneProof(node);
+        // // Undocumented
+        // if (nodes == null) {
+        // return new ArrayList<>();
+        // }
+        //
+        // return asNodeDesc(nodeId.proofId(), nodes.stream());
+        // });
+        return CompletableFuture.completedFuture(List.of());
+    }
+
+    @Override
+    public CompletableFuture<Boolean> save(ProofId proofId, String path) {
+        return CompletableFuture.supplyAsync(() -> {
+            var proof = data.find(proofId);
+            var saver = new OutputStreamProofSaver(proof);
+
+            try {
+                var file = new File(path);
+                var writer = new FileOutputStream(file);
+                saver.save(writer);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            return true;
+        });
     }
 
     @Override
@@ -198,7 +230,36 @@ public final class KeYtherApiImpl implements KeyApi {
 
     @Override
     public CompletableFuture<List<TreeNodeDesc>> treeChildren(ProofId proof, TreeNodeId nodeId) {
-        return null;
+        return CompletableFuture.supplyAsync(() -> {
+            var serial = Integer.parseInt(nodeId.id());
+
+            Node root = data.find(proof).root();
+            var stack = new Stack<Node>();
+            stack.push(root);
+
+            while (!stack.empty()) {
+                var node = stack.pop();
+                if (node.getSerialNr() == serial) {
+                    var children = new ArrayList<TreeNodeDesc>();
+
+                    var iter = node.childrenIterator();
+                    while (iter.hasNext()) {
+                        var child_node = iter.next();
+                        children.add(TreeNodeDesc.from(proof, child_node));
+                    }
+
+                    return children;
+                }
+
+                var iter = node.childrenIterator();
+                while (iter.hasNext()) {
+                    var child_node = iter.next();
+                    stack.push(child_node);
+                }
+            }
+
+            return List.of();
+        });
     }
 
     @Override
@@ -255,8 +316,41 @@ public final class KeYtherApiImpl implements KeyApi {
             var id = new NodeTextId(nodeId, uniqueCounter.getAndIncrement());
             var t = new NodeText(lp.result(), layouter.getInitialPositionTable());
             data.register(id, t);
-            return new NodeTextDesc(id, lp.result());
+
+            String tacletApplicationInfo = null;
+            var rule = node.getAppliedRuleApp();
+            if (rule instanceof TacletApp tapp) {
+                var taclet = tapp.taclet();
+                tacletApplicationInfo = taclet.toString();
+            }
+
+            var terms = expandTermsForTable(layouter.getInitialPositionTable());
+            return new NodeTextDesc(id, lp.result(), terms, tacletApplicationInfo);
         });
+    }
+
+    private NodeTextSpan[] expandTermsForTable(PositionTable table) {
+        int nonEmptyRanges = 0;
+        for (int i = 0; i < table.getRows(); i++) {
+            if (table.getRange(i).length() != 0) {
+                nonEmptyRanges++;
+            }
+        }
+
+        var terms = new NodeTextSpan[nonEmptyRanges];
+        int j = 0;
+        for (int i = 0; i < table.getRows(); i++) {
+            var range = table.getRange(i);
+            if (range.length() == 0) {
+                continue;
+            }
+
+            var children = expandTermsForTable(table.getChild(i));
+            terms[j] = new NodeTextSpan(range.start(), range.end(), children);
+            j++;
+        }
+
+        return terms;
     }
 
     @Override
@@ -266,17 +360,36 @@ public final class KeYtherApiImpl implements KeyApi {
             var proof = data.find(printId.nodeId().proofId());
             var goal = proof.getOpenGoal(node);
             var nodeText = data.find(printId);
+
+            var filter = new IdentitySequentPrintFilter();
+            filter.setSequent(node.sequent());
+
             var pis = nodeText.table().getPosInSequent(caretPos, filter);
             return new TermActionUtil(printId, data.find(printId.nodeId().proofId().env()), pis,
-                goal)
+                goal, caretPos)
                     .getActions();
         });
-
     }
 
     @Override
     public CompletableFuture<Boolean> applyAction(TermActionId id) {
-        return CompletableFuture.completedFuture(false);
+        // FIXME: We can probably cache this work in `actions`.
+        return CompletableFuture.supplyAsync(() -> {
+            var node = data.find(id.nodeTextId().nodeId());
+            var proof = data.find(id.nodeTextId().nodeId().proofId());
+            var goal = proof.getOpenGoal(node);
+            var nodeText = data.find(id.nodeTextId());
+
+            var filter = new IdentitySequentPrintFilter();
+            filter.setSequent(node.sequent());
+
+            var pis = nodeText.table().getPosInSequent(id.caretPos(), filter);
+            var util = new TermActionUtil(id.nodeTextId(),
+                data.find(id.nodeTextId().nodeId().proofId().env()), pis, goal, id.caretPos());
+
+            var env = data.find(id.nodeTextId().nodeId().proofId().env());
+            return util.applyAction(id, env.getServices());
+        });
     }
 
     @Override
@@ -312,8 +425,9 @@ public final class KeYtherApiImpl implements KeyApi {
     @Override
     public CompletableFuture<ProofId> loadKey(String content) {
         return CompletableFutures.computeAsync((c) -> {
-            Proof proof = null;
+            Proof proof;
             KeYEnvironment<?> env = null;
+            System.out.println("A");
             try {
                 final var tempFile = File.createTempFile("json-rpc-", ".key");
                 Files.writeString(tempFile.toPath(), content);

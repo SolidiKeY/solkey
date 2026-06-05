@@ -128,9 +128,10 @@ public class KeyIdentifications {
      * @author Alexander Weigl
      * @version 1 (13.10.23)
      */
-    public record TermActionId(NodeId nodeId, String pio, String id)
+    public record TermActionId(NodeTextId nodeTextId, String pio, String id, int caretPos)
             implements KeYDataTransferObject {
     }
+
 
     /**
      * @author Alexander Weigl

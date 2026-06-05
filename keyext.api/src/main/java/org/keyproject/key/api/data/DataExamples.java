@@ -100,14 +100,14 @@ public class DataExamples {
         return new ShowDocumentResult(true);
     }
 
-    public TermActionDesc getTermActionDesc() {
-        return new TermActionDesc(getTermActionId(), "andLeft", "Apply taclet 'andLeft'.",
-            "rules", TermActionKind.Taclet);
-    }
-
-    private KeyIdentifications.TermActionId getTermActionId() {
-        return new KeyIdentifications.TermActionId(getNodeId(), "0.1.0", "taclet-andLeft-010");
-    }
+    // public TermActionDesc getTermActionDesc() {
+    // return new TermActionDesc(getTermActionId(), "andLeft", "Apply taclet 'andLeft'.",
+    // "rules", TermActionKind.Taclet);
+    // }
+    //
+    // private KeyIdentifications.TermActionId getTermActionId() {
+    // return new KeyIdentifications.TermActionId(getNodeId(), "0.1.0", "taclet-andLeft-010");
+    // }
 
     private KeyIdentifications.NodeId getNodeId() {
         return new KeyIdentifications.NodeId(getProofId(), "01010102");

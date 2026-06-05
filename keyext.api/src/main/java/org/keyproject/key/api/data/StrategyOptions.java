@@ -22,7 +22,7 @@ public record StrategyOptions(
         return new StrategyOptions(
             StrategyProperties.FUNCTION_CONTRACT,
             StrategyProperties.NON_LIN_ARITH_DEF_OPS,
-            "STOPMODE_NONCLOSE",
+            StrategyProperties.STOPMODE_NONCLOSE,
             1000);
     }
 
