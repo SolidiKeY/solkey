@@ -190,18 +190,6 @@ public abstract class Notation {
         }
     }
 
-    /// The standard concrete syntax for mutating updates.
-    public static final class MutatingUpdateNotation extends Notation {
-        public MutatingUpdateNotation() {
-            super(120);
-        }
-
-        public void print(Term t, LogicPrinter sp) {
-            sp.printMutatingUpdate("*->", t, 0);
-        }
-    }
-
-
     /// The standard concrete syntax for parallel updates
     public static final class ParallelUpdateNotation extends Notation {
         public ParallelUpdateNotation() {

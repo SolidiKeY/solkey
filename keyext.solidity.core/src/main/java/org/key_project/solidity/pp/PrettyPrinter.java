@@ -157,11 +157,11 @@ public class PrettyPrinter implements Visitor {
 
         maybeParens(left, x.getOperator().precedence());
 
-        layouter.brk();
+        layouter.print(" ");
 
         x.getOperator().visit(this);
 
-        layouter.brk();
+        layouter.print(" ");
 
         maybeParens(right, x.getOperator().precedence());
     }
@@ -199,9 +199,9 @@ public class PrettyPrinter implements Visitor {
     @Override
     public void performActionOnTernaryExpression(TernaryExpression x) {
         maybeParens(x.getCondition(), x.getPrecedence());
-        layouter.brk().print("?").brk();
+        layouter.print(" ").print("?").brk();
         maybeParens(x.getTrueExpression(), x.getPrecedence());
-        layouter.brk().print(":").brk();
+        layouter.print(" ").print(":").brk();
         maybeParens(x.getFalseExpression(), x.getPrecedence());
     }
 
@@ -384,7 +384,7 @@ public class PrettyPrinter implements Visitor {
 
     @Override
     public void performActionOnReturnStatment(ReturnStatement x) {
-        layouter.print("return").brk();
+        layouter.print("return").print(" ");
         if (x.getChildCount() > 0) {
             x.getReturnExp().visit(this);
         }
