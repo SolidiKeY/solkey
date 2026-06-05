@@ -75,10 +75,8 @@ public class DataExamples {
     }
 
     public LoadParams getLoadParams() {
-        return new LoadParams(Uri.from(new File("/home/weigl/test.key")),
-            List.of(), null, List.of());
+        return new LoadParams(Uri.from(new File("/home/weigl/test.key")), List.of());
     }
-
 
     public ProofId getProofId() {
         return new ProofId(getEnvId(), "proof-5");

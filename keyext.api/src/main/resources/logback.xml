@@ -29,11 +29,11 @@
                 TRACE = 4
         -->
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
+            <level>ERROR</level>
         </filter>
     </appender>
 
-    <root level="INFO">
+    <root level="ERROR">
         <appender-ref ref="STDERR"/>
         <!-- <appender-ref ref="FILE"/> -->
     </root>
@@ -52,7 +52,7 @@
         </filter>
     </appender>
 
-    <logger name="key.devel" level="DEBUG">
+    <logger name="key.devel" level="ERROR">
         <appender-ref ref="STDERR"/>
     </logger>
 

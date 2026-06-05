@@ -10,13 +10,8 @@ import org.jspecify.annotations.Nullable;
 /**
  *
  * @param problemFile URI to the problem file to be loaded
- * @param classPath optional
- * @param bootClassPath xxx
  * @param includes xxx
  */
-public record LoadParams(@Nullable Uri problemFile,
-        @Nullable List<Uri> classPath,
-        @Nullable Uri bootClassPath,
-        @Nullable List<Uri> includes)
+public record LoadParams(@Nullable Uri problemFile, @Nullable List<Uri> includes)
         implements KeYDataTransferObject {
 }

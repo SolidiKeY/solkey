@@ -27,7 +27,6 @@ import org.jspecify.annotations.NullMarked;
 import org.keyproject.key.api.KeYtherApiImpl;
 import org.keyproject.key.api.StartServer;
 import org.keyproject.key.api.data.*;
-import org.keyproject.key.api.data.KeyIdentifications;
 import org.keyproject.key.api.remoteapi.KeyApi;
 import org.keyproject.key.api.remoteclient.*;
 import org.kordamp.ikonli.fontawesome5.FontAwesomeRegular;
@@ -101,7 +100,7 @@ public class MyKeyClient {
         if (sel != null) {
             try {
                 loadedProof = keyApi.load(
-                    new LoadParams(Uri.from(sel), null, null, null))
+                    new LoadParams(Uri.from(sel), null))
                         .get().getRight();
                 var root = keyApi.root(loadedProof).get();
                 var sequent =

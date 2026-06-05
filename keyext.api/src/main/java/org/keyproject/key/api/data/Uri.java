@@ -19,14 +19,10 @@ import org.jspecify.annotations.Nullable;
  */
 public record Uri(String uri) {
     public static @Nullable Uri from(File sel) {
-        return new Uri(sel.toURI().toString());
+        return new Uri(sel.toPath().toAbsolutePath().toString());
     }
 
     public Path asPath() {
-        if (uri.startsWith("file://")) {
-            return Paths.get(uri.substring("file://".length()));
-        }
-
         try {
             return Paths.get(uri);
         } catch (Exception ignored) {

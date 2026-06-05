@@ -296,7 +296,7 @@ public final class KeYtherApiImpl implements KeyApi {
     }
 
     @Override
-    public CompletableFuture<Boolean> dispose(EnvironmentId environmentId) {
+    public CompletableFuture<Boolean> disposeEnv(EnvironmentId environmentId) {
         data.dispose(environmentId);
         return CompletableFuture.completedFuture(
             true);
@@ -427,7 +427,6 @@ public final class KeYtherApiImpl implements KeyApi {
         return CompletableFutures.computeAsync((c) -> {
             Proof proof;
             KeYEnvironment<?> env = null;
-            System.out.println("A");
             try {
                 final var tempFile = File.createTempFile("json-rpc-", ".key");
                 Files.writeString(tempFile.toPath(), content);
