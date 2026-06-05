@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.taclets;
 
-import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -60,23 +60,29 @@ public class RulesTest {
                             g.getOverlayServices()))
                         .toList()
                 + "\n" + proof.getStatistics());
-
-
     }
 
     static Stream<Arguments> exampleFiles() throws Exception {
         URL resource = RulesTest.class.getClassLoader().getResource(EXAMPLES_RESOURCE);
-        File examplesDirectory = Path.of(resource.toURI()).toFile();
 
-        List<Path> exampleFiles = Files.list(examplesDirectory.toPath())
-                .filter(Files::isRegularFile)
-                .filter(path -> path.getFileName().toString().endsWith(".key")
-                        && hasProofObligation(path))
-                .sorted(Comparator.comparing(path -> path.getFileName().toString()))
-                .toList();
+        if (resource == null) {
+            throw new FileNotFoundException(
+                "Could not find resource with examples: " + EXAMPLES_RESOURCE);
+        }
 
-        return selectRequestedExample(exampleFiles).stream()
-                .map(path -> Arguments.of(path.getFileName().toString(), path));
+        try (var examples = Files.list(Path.of(resource.toURI()))) {
+            List<Path> exampleFiles = examples
+                    .filter(Files::isRegularFile)
+                    .filter(path -> path.getFileName().toString().endsWith(".key")
+                            && hasProofObligation(path))
+                    .sorted(Comparator.comparing(path -> path.getFileName().toString()))
+                    .toList();
+
+            return selectRequestedExample(exampleFiles).stream()
+                    .map(path -> Arguments.of(path.getFileName().toString(), path));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static List<Path> selectRequestedExample(List<Path> exampleFiles) {
