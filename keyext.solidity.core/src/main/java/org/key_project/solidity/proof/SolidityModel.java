@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.text.DateFormat;
 import java.util.Date;

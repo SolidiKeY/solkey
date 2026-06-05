@@ -10,9 +10,10 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.nio.file.Path;
 
+import org.key_project.solidity.proof.event.ProofDisposedListener;
 import org.key_project.solidity.proof.io.RuleSource;
 
-public interface FileRepo {
+public interface FileRepo extends ProofDisposedListener {
     /// Provides access to a file on disk.
     /// May return <code>null</code> if the path cannot be handled by this repository.
     ///

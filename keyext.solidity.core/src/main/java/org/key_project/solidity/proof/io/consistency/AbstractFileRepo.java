@@ -16,6 +16,8 @@ import java.nio.file.PathMatcher;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.key_project.solidity.proof.Proof;
+import org.key_project.solidity.proof.event.ProofDisposedEvent;
 import org.key_project.solidity.proof.io.RuleSource;
 
 public abstract class AbstractFileRepo implements FileRepo {
@@ -44,6 +46,12 @@ public abstract class AbstractFileRepo implements FileRepo {
 
     /// The original Solidity source path (absolute and normalized).
     private Path solidityPath;
+
+    /**
+     * This flag indicates that the repo and all data in it have been deleted.
+     */
+    private boolean disposed = false;
+
 
     /// Variation of the method IOUtil.copy(): Copies the content of InputStream to OutputStream
     /// **without closing any of them**.
@@ -176,4 +184,30 @@ public abstract class AbstractFileRepo implements FileRepo {
         return solidityPath != null && path.startsWith(solidityPath);
     }
 
+
+    /**
+     * Clears all data in the FileRepo and marks it as disposed.
+     */
+    protected void dispose() {
+        if (disposed) {
+            return;
+        }
+
+        // delete all references
+        solidityPath = null;
+        baseDir = null;
+
+        files.clear();
+        files = null;
+        disposed = true;
+    }
+
+    @Override
+    public void proofDisposing(ProofDisposedEvent e) {}
+
+    @Override
+    public void proofDisposed(ProofDisposedEvent e) {
+        Proof source = e.getSource();
+        source.removeProofDisposedListener(this);
+    }
 }

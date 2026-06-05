@@ -10,6 +10,7 @@ import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.prover.rules.RuleApp;
 import org.key_project.prover.rules.Taclet;
+import org.key_project.prover.sequent.SequentChangeInfo;
 import org.key_project.solidity.logic.TermBuilder;
 import org.key_project.solidity.logic.op.SModality;
 import org.key_project.solidity.program.ProgramPrefix;
@@ -44,6 +45,9 @@ public class NodeInfo {
     private @Nullable SolidityProgramElement firstExpr = null;
 
     private String firstExprString = null;
+
+    /// Information about changes respective to the parent of this node.
+    private SequentChangeInfo sequentChangeInfo;
 
     public NodeInfo(Node node) {
         this.node = node;
@@ -212,5 +216,13 @@ public class NodeInfo {
             }
         }
         return activeStatement;
+    }
+
+    public void updateNoteInfo() {
+        determinedFstAndActiveExpr = false;
+        firstExpr = null;
+        firstExprString = null;
+        activeStatement = null;
+        determineFirstAndActiveExpr();
     }
 }

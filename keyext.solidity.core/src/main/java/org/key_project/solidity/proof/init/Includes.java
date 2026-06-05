@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.init;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;

@@ -63,7 +63,7 @@ public class KeYUserProblemFile extends KeYFile implements ProofOblInput {
     /// @param profile the KeY profile under which to load
     /// @param compressed `true` iff the file is compressed
     public KeYUserProblemFile(String name, Path file, FileRepo fileRepo, Profile profile,
-                              boolean compressed) {
+            boolean compressed) {
         super(name, file, fileRepo, profile, compressed);
     }
 

@@ -12,6 +12,7 @@ import org.key_project.solidity.logic.op.ProgramFunction;
 import org.key_project.solidity.logic.op.SModality;
 import org.key_project.solidity.program.ast.statement.LoopStatement;
 import org.key_project.solidity.proof.Proof;
+import org.key_project.solidity.proof.init.ContractPO;
 import org.key_project.solidity.proof.init.ProofOblInput;
 import org.key_project.solidity.speclang.Contract;
 import org.key_project.solidity.speclang.FunctionalOperationContract;
@@ -20,6 +21,9 @@ import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableSet;
 
 public class SpecificationRepository {
+
+    public static final String CONTRACT_COMBINATION_MARKER = "§";
+
     private final Services services;
     private final TermBuilder tb;
 
@@ -115,6 +119,27 @@ public class SpecificationRepository {
         return result;
     }
 
+    /**
+     * Returns all proofs registered for the passed atomic contract, or for combined contracts
+     * including the passed atomic contract
+     */
+    public ImmutableSet<Proof> getProofs(Contract atomicContract) {
+        assert !atomicContract.getName().contains(CONTRACT_COMBINATION_MARKER)
+                : "Contract must be atomic";
+
+        ImmutableSet<Proof> result = DefaultImmutableSet.nil();
+        for (Map.Entry<ProofOblInput, ImmutableSet<Proof>> entry : proofs.entrySet()) {
+            final ProofOblInput po = entry.getKey();
+            if (po instanceof ContractPO) {
+                final Contract poContract = ((ContractPO) po).getContract();
+                if (splitContract(poContract).contains(atomicContract)) {
+                    result = result.union(entry.getValue());
+                }
+            }
+        }
+        return result;
+    }
+
     /// Returns all proofs registered for the passed PO (or stronger POs).
     public ImmutableSet<Proof> getProofs(ProofOblInput po) {
         ImmutableSet<Proof> result = DefaultImmutableSet.nil();
@@ -167,5 +192,18 @@ public class SpecificationRepository {
                 return;
             }
         }
+    }
+
+    public ImmutableSet<Contract> splitContract(Contract contract) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    public ImmutableSet<Contract> getInheritedContracts(ImmutableSet<Contract> atomicContracts) {
+        throw new RuntimeException("Not implemented");
+    }
+
+    public ImmutableSet<Proof> getAllProofs() {
+        throw new RuntimeException("Not implemented");
+
     }
 }

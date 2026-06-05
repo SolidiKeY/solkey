@@ -11,6 +11,7 @@ import org.key_project.prover.engine.StopCondition;
 import org.key_project.prover.engine.impl.AppliedRuleStopCondition;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Proof;
+import org.key_project.solidity.prover.impl.ApplyStrategy;
 import org.key_project.solidity.strategy.ModularSolidityDLStrategy;
 import org.key_project.solidity.strategy.StrategyProperties;
 
@@ -194,5 +195,29 @@ public class StrategySettings extends AbstractSettings {
         var old = strategyProperties;
         strategyProperties = props;
         firePropertyChange(PROP_STRATEGY_PROPERTIES, old, strategyProperties);
+    }
+
+    /**
+     * Returns a customized {@link StopCondition} which is used in an {@link ApplyStrategy} to
+     * determine after each applied rule if more rules should be applied or not.
+     *
+     * @return The customized {@link StopCondition} or {@code null} if the default one should be
+     *         used.
+     */
+    public StopCondition<Goal> getCustomApplyStrategyStopCondition() {
+        return customApplyStrategyStopCondition;
+    }
+
+
+    /**
+     * Sets the customized {@link GoalChooser} which is used in an {@link ApplyStrategy} instance to
+     * select the next {@link Goal} to apply a rule on. If no one is defined the default one of the
+     * {@link ApplyStrategy}, which is defined by the user interface, is used.
+     *
+     * @param customGoalChooser The customized {@link GoalChooser} to use or {@code null} to use the
+     *        default one of the {@link ApplyStrategy}.
+     */
+    public void setCustomApplyStrategyGoalChooser(GoalChooser<Proof, Goal> customGoalChooser) {
+        this.customApplyStrategyGoalChooser = customGoalChooser;
     }
 }

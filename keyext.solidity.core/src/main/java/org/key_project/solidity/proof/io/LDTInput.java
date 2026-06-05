@@ -4,7 +4,6 @@
 package org.key_project.solidity.proof.io;
 
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 

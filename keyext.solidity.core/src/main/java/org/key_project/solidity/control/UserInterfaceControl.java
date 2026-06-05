@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.control;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Properties;
@@ -52,9 +51,9 @@ public interface UserInterfaceControl {
     /// @return The opened [AbstractProblemLoader].
     /// @throws ProblemLoaderException Occurred Exception.
     public AbstractProblemLoader load(Profile profile, Path file, List<Path> includes,
-                                      Properties poPropertiesToForce,
-                                      boolean forceNewProfileOfNewProofs,
-                                      Consumer<Proof> callback) throws ProblemLoaderException;
+            Properties poPropertiesToForce,
+            boolean forceNewProfileOfNewProofs,
+            Consumer<Proof> callback) throws ProblemLoaderException;
 
     /// Instantiates a new [Proof] in this [UserInterfaceControl] for the given
     /// [ProofOblInput] based on the [InitConfig].

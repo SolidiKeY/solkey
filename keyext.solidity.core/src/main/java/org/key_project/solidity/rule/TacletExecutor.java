@@ -136,7 +136,8 @@ public abstract class TacletExecutor extends
 
     protected void applyAddProgVars(ImmutableSet<SchemaVariable> pvs,
             SequentChangeInfo currentSequent, Goal goal, PosInOccurrence posOfFind,
-            Services services, MatchConditions matchCond) {
+            LogicServices l_services, MatchResultInfo matchCond) {
+        final var services = goal.getOverlayServices();
         ImmutableList<RenamingTable> renamings = ImmutableSLList.nil();
         for (final SchemaVariable sv : pvs) {
             final var inst = (ProgramVariable) matchCond.getInstantiations().getInstantiation(sv);
@@ -214,15 +215,6 @@ public abstract class TacletExecutor extends
             return goal.getOverlayServices().getTermBuilder()
                     .applyUpdatePairsSequential(svInst.getUpdateContext(), formula);
         }
-    }
-
-    protected void applyAddProgVars(ImmutableSet<SchemaVariable> pvs,
-            SequentChangeInfo currentSequent,
-            Goal goal,
-            PosInOccurrence posOfFind,
-            LogicServices p_services,
-            MatchResultInfo matchCond) {
-        // TODO
     }
 
 

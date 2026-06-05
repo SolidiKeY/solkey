@@ -30,7 +30,7 @@ public class RuleSourceFactory {
 
     public static RuleSource fromBuiltInRule(final String ruleFileName) {
         final URL u = KeYResourceManager.getManager().getResourceFile(Proof.class,
-                PATH_TO_RULES + ruleFileName);
+            PATH_TO_RULES + ruleFileName);
         if (u == null) {
             // a more specific exception type would probably be better
             throw new RuntimeException("Could not find rule file " + PATH_TO_RULES + ruleFileName);

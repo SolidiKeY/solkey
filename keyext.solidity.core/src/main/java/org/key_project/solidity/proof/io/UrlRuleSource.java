@@ -20,9 +20,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 
+import org.key_project.util.java.StringUtil;
+
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
-import org.key_project.util.java.StringUtil;
 
 public class UrlRuleSource extends RuleSource {
     private final URL url;
