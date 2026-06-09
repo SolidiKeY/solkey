@@ -170,9 +170,6 @@ public class NodeInfo {
             RuleApp ruleApp) {
         SolidityProgramElement firstExpr = null;
         if (ruleApp instanceof PosTacletApp pta) {
-            if (!isSymbolicExecution(pta.taclet())) {
-                return null;
-            }
             Term t = TermBuilder.goBelowUpdates(pta.posInOccurrence().subTerm());
             if (t.op() instanceof SModality mod) {
                 final SolidityProgramElement pe = mod.programBlock().program();
@@ -180,10 +177,6 @@ public class NodeInfo {
             }
         }
         return firstExpr;
-    }
-
-    private static boolean isSymbolicExecution(Taclet taclet) {
-        throw new RuntimeException("Not implemented yet");
     }
 
     /// Computes the active statement in the given [RuleApp].

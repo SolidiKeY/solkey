@@ -90,6 +90,7 @@ public class Node implements Iterable<Node> {
     public Node(Proof proof, Sequent seq) {
         this(proof);
         this.seq = seq;
+        nodeInfo = new NodeInfo(this);
     }
 
     /// creates a node with the given contents, the given collection of children (all elements must

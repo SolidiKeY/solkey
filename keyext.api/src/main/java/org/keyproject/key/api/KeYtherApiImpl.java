@@ -181,19 +181,18 @@ public final class KeYtherApiImpl implements KeyApi {
 
     @Override
     public CompletableFuture<List<NodeDesc>> pruneTo(NodeId nodeId) {
-        // return CompletableFuture.supplyAsync(() -> {
-        // var proof = data.find(nodeId.proofId());
-        // var node = data.find(nodeId);
-        //
-        // var nodes = proof.pruneProof(node);
-        // // Undocumented
-        // if (nodes == null) {
-        // return new ArrayList<>();
-        // }
-        //
-        // return asNodeDesc(nodeId.proofId(), nodes.stream());
-        // });
-        return CompletableFuture.completedFuture(List.of());
+        return CompletableFuture.supplyAsync(() -> {
+            var proof = data.find(nodeId.proofId());
+            var node = data.find(nodeId);
+
+            var nodes = proof.pruneProof(node);
+            // Undocumented
+            if (nodes == null) {
+                return new ArrayList<>();
+            }
+
+            return asNodeDesc(nodeId.proofId(), nodes.stream());
+        });
     }
 
     @Override
