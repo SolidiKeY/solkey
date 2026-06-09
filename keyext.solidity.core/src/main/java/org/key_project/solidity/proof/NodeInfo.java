@@ -9,7 +9,6 @@ import java.util.regex.Pattern;
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.prover.rules.RuleApp;
-import org.key_project.prover.rules.Taclet;
 import org.key_project.prover.sequent.SequentChangeInfo;
 import org.key_project.solidity.logic.TermBuilder;
 import org.key_project.solidity.logic.op.SModality;

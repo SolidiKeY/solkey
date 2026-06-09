@@ -19,7 +19,6 @@ import org.key_project.solidity.pp.PosInSequent;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.rule.BuiltInRule;
 import org.key_project.solidity.rule.NoPosTacletApp;
-import org.key_project.solidity.rule.PosTacletApp;
 import org.key_project.solidity.rule.TacletApp;
 import org.key_project.solidity.rule.taclets.SolRewriteTaclet;
 import org.key_project.util.collection.ImmutableList;
@@ -89,19 +88,21 @@ public class TermActionUtil {
         final ImmutableList<BuiltInRule> builtInRules = c.getBuiltInRule(goal, occ);
 
 
-        ImmutableList<? extends TacletApp> findTaclets = occ != null ?
-                goal.ruleAppIndex().getTacletAppAt(occ, goal.getOverlayServices()) : ImmutableList.of();
-        ImmutableList<NoPosTacletApp> noFindTaclets = goal.ruleAppIndex().getNoFindTaclet(goal.getOverlayServices());
+        ImmutableList<? extends TacletApp> findTaclets =
+            occ != null ? goal.ruleAppIndex().getTacletAppAt(occ, goal.getOverlayServices())
+                    : ImmutableList.of();
+        ImmutableList<NoPosTacletApp> noFindTaclets =
+            goal.ruleAppIndex().getNoFindTaclet(goal.getOverlayServices());
 
         for (TacletApp tacletApp : findTaclets) {
-            if (tacletApp.complete() ) {
-            var id = new TermActionId(nodeTextId, pos.toString(),
-                "find:" + tacletApp.rule(), caretPos);
-            TermActionDesc ta = new TermActionDesc(id, tacletApp.rule().displayName(),
-                tacletApp.rule().toString(), "", TermActionKind.Taclet);
-            var index = add(ta);
+            if (tacletApp.complete()) {
+                var id = new TermActionId(nodeTextId, pos.toString(),
+                    "find:" + tacletApp.rule(), caretPos);
+                TermActionDesc ta = new TermActionDesc(id, tacletApp.rule().displayName(),
+                    tacletApp.rule().toString(), "", TermActionKind.Taclet);
+                var index = add(ta);
 
-            tacletRules.put(index, tacletApp);
+                tacletRules.put(index, tacletApp);
             }
         }
 
