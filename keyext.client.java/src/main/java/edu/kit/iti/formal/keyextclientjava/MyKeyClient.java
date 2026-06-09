@@ -106,7 +106,7 @@ public class MyKeyClient {
                 var sequent =
                     keyApi.print(root.nodeid(), new PrintOptions(true, 80, 4, true, false))
                             .get();
-                txtSequentView.setText(sequent.result());
+                txtSequentView.setText(sequent.tacletAppInfo());
             } catch (ExecutionException | InterruptedException | ProblemLoaderException e) {
                 throw new RuntimeException(e);
             }

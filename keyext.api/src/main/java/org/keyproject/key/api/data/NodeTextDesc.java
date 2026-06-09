@@ -7,14 +7,14 @@ package org.keyproject.key.api.data;
 /**
  * A printed sequent.
  *
- * @param id a handle identifying this print-out
- * @param resulted
+ * @param id            a handle identifying this print-out
+ * @param sequent
  * @param terms
- * @param result the plain textual notation of the sequent
+ * @param tacletAppInfo the plain textual notation of the sequent
  * @author Alexander Weigl
  * @version 1 (29.10.23)
  */
-public record NodeTextDesc(KeyIdentifications.NodeTextId id, String resulted, NodeTextSpan[] terms,
-        String result)
+public record NodeTextDesc(KeyIdentifications.NodeTextId id, String sequent, NodeTextSpan[] terms,
+                           String tacletAppInfo)
         implements KeYDataTransferObject {
 }

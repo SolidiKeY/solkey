@@ -15,7 +15,7 @@ public class InitialPositionTable extends PositionTable {
     /// Ranges of keywords
     private ImmutableList<Range> keywordRanges = ImmutableSLList.nil();
     /// Ranges of java blocks
-    private ImmutableList<Range> rustyBlockRanges = ImmutableSLList.nil();
+    private ImmutableList<Range> solidityBlockRanges = ImmutableSLList.nil();
 
     /// creates a new Initial PositionTable.
     public InitialPositionTable() {
@@ -134,12 +134,12 @@ public class InitialPositionTable extends PositionTable {
     ///
     /// @param r Range of keyword to be added
     public void addJavaBlockRange(Range r) {
-        rustyBlockRanges = rustyBlockRanges.prepend(r);
+        solidityBlockRanges = solidityBlockRanges.prepend(r);
     }
 
     /// @return ranges of java blocks printed
-    public Range[] getRustyBlockRanges() {
-        return rustyBlockRanges.toArray(new Range[rustyBlockRanges.size()]);
+    public Range[] getSolidityBlockRanges() {
+        return solidityBlockRanges.toArray(new Range[solidityBlockRanges.size()]);
     }
 
     public void addUpdateRange(Range r) {

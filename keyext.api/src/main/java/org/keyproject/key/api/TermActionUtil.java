@@ -18,6 +18,8 @@ import org.key_project.solidity.control.ProofControl;
 import org.key_project.solidity.pp.PosInSequent;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.rule.BuiltInRule;
+import org.key_project.solidity.rule.NoPosTacletApp;
+import org.key_project.solidity.rule.PosTacletApp;
 import org.key_project.solidity.rule.TacletApp;
 import org.key_project.solidity.rule.taclets.SolRewriteTaclet;
 import org.key_project.util.collection.ImmutableList;
@@ -85,13 +87,14 @@ public class TermActionUtil {
         occ = pos.getPosInOccurrence();
         ProofControl c = env.getUi().getProofControl();
         final ImmutableList<BuiltInRule> builtInRules = c.getBuiltInRule(goal, occ);
-        ImmutableList<TacletApp> findTaclet = c.getFindTaclet(goal, occ);
-        var find = removeRewrites(findTaclet)
-                .prepend(c.getRewriteTaclet(goal, occ));
-        var nofind = c.getNoFindTaclet(goal);
 
 
-        for (TacletApp tacletApp : find) {
+        ImmutableList<? extends TacletApp> findTaclets = occ != null ?
+                goal.ruleAppIndex().getTacletAppAt(occ, goal.getOverlayServices()) : ImmutableList.of();
+        ImmutableList<NoPosTacletApp> noFindTaclets = goal.ruleAppIndex().getNoFindTaclet(goal.getOverlayServices());
+
+        for (TacletApp tacletApp : findTaclets) {
+            if (tacletApp.complete() ) {
             var id = new TermActionId(nodeTextId, pos.toString(),
                 "find:" + tacletApp.rule(), caretPos);
             TermActionDesc ta = new TermActionDesc(id, tacletApp.rule().displayName(),
@@ -99,9 +102,10 @@ public class TermActionUtil {
             var index = add(ta);
 
             tacletRules.put(index, tacletApp);
+            }
         }
 
-        for (TacletApp tacletApp : nofind) {
+        for (TacletApp tacletApp : noFindTaclets) {
             var id = new TermActionId(nodeTextId, pos.toString(),
                 "nofind:" + tacletApp.rule(), caretPos);
             TermActionDesc ta = new TermActionDesc(id, tacletApp.rule().displayName(),

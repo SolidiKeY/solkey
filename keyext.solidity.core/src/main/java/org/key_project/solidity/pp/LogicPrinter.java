@@ -1145,9 +1145,9 @@ public class LogicPrinter {
         layouter.markModPosTbl();
         layouter.startTerm(phi.arity());
         layouter.print(left);
-        layouter.markStartRustyBlock();
+        layouter.markStartSolidityBlock();
         printSolidityBlock(jb);
-        layouter.markEndRustyBlock();
+        layouter.markEndSolidityBlock();
         layouter.print(right + " ");
         if (phi.arity() == 1) {
             maybeParens(phi.sub(0), ass);
