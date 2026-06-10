@@ -17,7 +17,6 @@ import org.key_project.solidity.control.KeYEnvironment;
 import org.key_project.solidity.control.ProofControl;
 import org.key_project.solidity.pp.PosInSequent;
 import org.key_project.solidity.proof.Goal;
-import org.key_project.solidity.rule.BuiltInRule;
 import org.key_project.solidity.rule.NoPosTacletApp;
 import org.key_project.solidity.rule.TacletApp;
 import org.key_project.solidity.rule.taclets.SolRewriteTaclet;
@@ -85,7 +84,7 @@ public class TermActionUtil {
         this.nodeTextId = nodeTextId;
         occ = pos.getPosInOccurrence();
         ProofControl c = env.getUi().getProofControl();
-//        final ImmutableList<BuiltInRule> builtInRules = c.getBuiltInRule(goal, occ);
+        // final ImmutableList<BuiltInRule> builtInRules = c.getBuiltInRule(goal, occ);
 
 
         ImmutableList<? extends TacletApp> findTaclets =
