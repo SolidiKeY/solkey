@@ -59,7 +59,14 @@ public class SolJSONParser {
 
 
     private final Services services;
-    private final HashMap<String, KeYSolidityType> partialKSTMap = new LinkedHashMap<>();
+    /// One KeYSolidityType per contract, created *before* the contract body is
+    /// parsed so that cyclic references (a function taking its own contract as
+    /// parameter, mutually referencing contracts, …) can share the instance.
+    /// The instance is completed exactly once at the end of [#parseContract]
+    /// and only then registered in [SolidityInfo]. Keyed both by name and by
+    /// the JSON node id (forward references arrive as ids).
+    private final HashMap<Name, KeYSolidityType> contractKSTs = new LinkedHashMap<>();
+    private final HashMap<Integer, KeYSolidityType> contractKSTById = new HashMap<>();
     private final HashMap<Name, KeYSolidityType> dynamicArrayKSTs = new HashMap<>();
     private final HashMap<Name, KeYSolidityType> arrayKSTs = new HashMap<>();
     private final HashMap<Name, MappingType> mappingTypes = new HashMap<>();
@@ -124,11 +131,7 @@ public class SolJSONParser {
         List<ModifierDeclaration> modifiers = new ArrayList<>();
         List<EnumDeclaration> enums = new ArrayList<>();
 
-        SolidityInfo info = services.getSolidityInfo();
-
-        KeYSolidityType contractType = createPartialContractKeYSolidityType(contractName);
-
-        assert contractType.getSolidityType() == null : "Contract has already been parsed";
+        KeYSolidityType contractType = pendingContractKST(contractName, contractId);
 
         for (JsonNode node : contractNode.get("nodes").values()) {
             final String nodeType = node.get("nodeType").asString();
@@ -146,21 +149,32 @@ public class SolJSONParser {
             new ContractDeclaration(new Name(contractName), fields, structs, modifiers,
                 functions, enums);
 
+        // Complete the shared KeYSolidityType (see pendingContractKST) and
+        // publish the finished results.
         contractType.setSolidityType(cDecl);
-
         id2Name.put(contractId, cDecl);
         completeReferences(cDecl);
+
+        SolidityInfo info = services.getSolidityInfo();
+        info.put(contractType);
+        info.registerContract(cDecl);
         return cDecl;
     }
 
-    private KeYSolidityType createPartialContractKeYSolidityType(String contractName) {
+    /// Creates the sort and a sort-only KeYSolidityType for a contract before
+    /// its body is parsed — the cycle breaker described in the
+    /// [KeYSolidityType] class doc. Everything parsed inside the contract that
+    /// refers back to it (by name or JSON id) receives this shared instance;
+    /// [#parseContract] completes it once the declaration exists.
+    private KeYSolidityType pendingContractKST(String contractName, int contractId) {
         Sort s = services.getNamespaces().sorts().lookup(contractName);
         if (s == null) {
             s = new SortImpl(new Name(contractName), false); // HACK, inheritance
             services.getNamespaces().sorts().addSafely(s);
         }
         KeYSolidityType contractKST = new KeYSolidityType(s);
-        partialKSTMap.put(contractName, contractKST);
+        contractKSTs.put(new Name(contractName), contractKST);
+        contractKSTById.put(contractId, contractKST);
         return contractKST;
     }
 
@@ -184,15 +198,7 @@ public class SolJSONParser {
 
 
     private EnumDeclaration parseEnum(JsonNode node) {
-        // final int id = node.get("id").asInt();
-        // String name = node.get("name").asString();
-        // List<MemberEnumDeclaration> members =
-        // node.get("members").valueStream().map(this::parseMemberEnum).toList();
-        // EnumDeclaration enumDeclaration = new EnumDeclaration(new Name(name), members);
-        // addTypeToServices(enumDeclaration);
-        // id2Name.put(id, enumDeclaration);
-        // return enumDeclaration;
-        throw new RuntimeException("Not implemented yet");
+        throw new RuntimeException("Enums are not implemented yet");
     }
 
     private MemberEnumDeclaration parseMemberEnum(JsonNode node) {
@@ -252,9 +258,13 @@ public class SolJSONParser {
         Stream<JsonNode> parameters =
             node.get("returnParameters").get("parameters").valueStream();
         List<ProgramVariable> returnParameters = parameters.map(this::parseParam).toList();
-        Type returnType = returnParameters.isEmpty() ? VOID
-                : null;
-        // : getTupleType(returnParameters.stream().map(ProgramVariable::getType).toList());
+        // void / the single return type; multiple returns would need tuple
+        // types, which are not supported yet (the type stays null then).
+        Type returnType = switch (returnParameters.size()) {
+            case 0 -> VOID;
+            case 1 -> returnParameters.getFirst().getType();
+            default -> null;
+        };
         functionId2Type.put(id, returnType);
         List<ProgramVariable> inputParamenters =
             node.get("parameters").get("parameters").valueStream()
@@ -395,15 +405,6 @@ public class SolJSONParser {
 
     }
 
-    // private @NonNull DynamicArrayType getDynamicArrayType(Type primitiveType) {
-    // return (DynamicArrayType) services.getSolidityInfo()
-    // .getDynamicTypeMap(primitiveType.name());
-    // }
-    //
-    // private @NonNull ArrayType getStaticArrayType(Type primitiveType, int size) {
-    // return (ArrayType) services.getSolidityInfo().getStaticTypeMap(primitiveType.name(), size);
-    // }
-    //
     private ProgramVariable parseParam(JsonNode node) {
         final int id = node.get("id").asInt();
         final String fieldName = node.get("name").asString();
@@ -415,7 +416,11 @@ public class SolJSONParser {
             int typeId = node.get("typeName").get("referencedDeclaration").asInt();
             Type typeRef = (Type) id2Name.get(typeId);
 
-            final KeYSolidityType kst = getOrCreateKeYSolidityType(typeRef);
+            // Reference to a contract that is still being parsed (self or
+            // forward reference): use its shared pending KeYSolidityType.
+            final KeYSolidityType kst = typeRef == null && contractKSTById.containsKey(typeId)
+                    ? contractKSTById.get(typeId)
+                    : getOrCreateKeYSolidityType(typeRef);
             programVariable = new ProgramVariable(new Name(fieldName), kst, dataLocation);
         } else {
             Type type = parseTypeName(node);
@@ -722,46 +727,39 @@ public class SolJSONParser {
         return statement.has(field) ? parseExpression(statement.get(field)) : null;
     }
 
-    // private void addTypeToServices(Type type) {
-    // final Sort sort = type.getSort(services);
-    // KeYSolidityType ksType = new KeYSolidityType(type, sort);
-    // services.getSolidityInfo().addType(sort, type);
-    // services.getNamespaces().sorts().add(sort);
-    // }
-    //
-    // private @NonNull KeYSolidityType getUndeclaredSolidityType(@NonNull Type type) {
-    // final Sort sort = type.getSort(services);
-    // KeYSolidityType ksType = new KeYSolidityType(type, sort);
-    // services.getSolidityInfo().addType(sort, ksType);
-    // services.getNamespaces().sorts().add(sort);
-    // return ksType;
-    // }
-
     private KeYSolidityType getOrCreateKeYSolidityType(Type type) {
         assert (type != null && !(type instanceof KeYSolidityType));
         KeYSolidityType kst = services.getSolidityInfo().getKeYSolidityType(type);
-        if (kst == null) {
-            assert !(type instanceof PrimitiveType); // Primitive types should be already present
-            if (type instanceof TupleType tuple) {
-                List<KeYSolidityType> componentTypes =
-                    tuple.getTypes().stream().map(this::getOrCreateKeYSolidityType).toList();
-                // TODO need to decide how to represent tuple sorts (in particular, for triples
-                // etc.)
-                throw new RuntimeException("Tuples not yet supported.");
-            } else if (type instanceof DynamicArrayType dynamicArrayType) {
-                kst = getOrCreateDynamicArrayKeYSolidityType(dynamicArrayType);
-            } else if (type instanceof ArrayType arrayType) {
-                kst = getOrCreateArrayKeYSolidityType(arrayType);
-            } else if (type instanceof MappingType mappingType) {
-                kst = getOrCreateMappingKeYSolidityType(mappingType);
-            } else if (type instanceof StructDeclaration structDecl) {
+        if (kst != null) {
+            return kst;
+        }
+        assert !(type instanceof PrimitiveType); // Primitive types should be already present
+        return switch (type) {
+            // TODO need to decide how to represent tuple sorts (in particular triples etc.)
+            case TupleType ignored -> throw new RuntimeException("Tuples not yet supported.");
+            case DynamicArrayType dynamicArrayType ->
+                getOrCreateDynamicArrayKeYSolidityType(dynamicArrayType);
+            case ArrayType arrayType -> getOrCreateArrayKeYSolidityType(arrayType);
+            case MappingType mappingType -> getOrCreateMappingKeYSolidityType(mappingType);
+            case StructDeclaration structDecl -> {
                 Sort structSort = services.getTheoryInfo().getStructLDT().targetSort();
                 assert structSort != null;
-                kst = new KeYSolidityType(structDecl, structSort);
-                services.getSolidityInfo().put(kst);
+                KeYSolidityType structKST = new KeYSolidityType(structDecl, structSort);
+                services.getSolidityInfo().put(structKST);
+                yield structKST;
             }
-        }
-        return kst;
+            // A contract currently being parsed: share its pending instance.
+            case ContractDeclaration contractDecl -> {
+                KeYSolidityType pendingKST = contractKSTs.get(contractDecl.name());
+                if (pendingKST == null) {
+                    throw new RuntimeException(
+                        "Unknown contract type " + contractDecl.name());
+                }
+                yield pendingKST;
+            }
+            default -> throw new RuntimeException(
+                "No KeYSolidityType for " + type + " (" + type.getClass().getSimpleName() + ")");
+        };
     }
 
     private KeYSolidityType getOrCreateDynamicArrayKeYSolidityType(

@@ -36,8 +36,8 @@ public class SimpleFileRepo extends AbstractFileRepo {
         // assumes that path is an actual *.rs file, path has to be absolute and normalized
         // return value: the path of the file relative to its proof bundle root
 
-        if (isInRustPath(path)) {
-            Path rel = getRustPath().relativize(path);
+        if (isInSolidityPath(path)) {
+            Path rel = getSolidityPath().relativize(path);
             return Paths.get("src").resolve(rel);
         }
         return null;

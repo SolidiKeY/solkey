@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.io;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 import org.key_project.logic.Name;
@@ -16,26 +16,26 @@ import org.jspecify.annotations.NonNull;
 
 public abstract class AbstractEnvInput implements EnvInput {
     protected final Name name;
-    protected final String rustPath;
+    protected final Path solidityPath;
     protected final Includes includes;
     protected final Profile profile;
 
     protected InitConfig initConfig;
-    private String rustFile;
+    private Path solidityFile;
 
     // -------------------------------------------------------------------------
     // constructors
     // -------------------------------------------------------------------------
 
-    protected AbstractEnvInput(String name, String rustPath,
-            Profile profile, List<File> includes) {
+    protected AbstractEnvInput(String name, Path solidityPath,
+            Profile profile, List<Path> includes) {
         assert profile != null;
         this.name = new Name(name);
-        this.rustPath = rustPath;
+        this.solidityPath = solidityPath;
         this.profile = profile;
         this.includes = new Includes();
         if (includes != null) {
-            for (File path : includes) {
+            for (Path path : includes) {
                 this.includes.put(path.toString(), RuleSourceFactory.initRuleFile(path));
             }
         }
@@ -68,8 +68,8 @@ public abstract class AbstractEnvInput implements EnvInput {
     }
 
     @Override
-    public final String readSolidityPath() throws ProofInputException {
-        return rustPath;
+    public final Path readSolidityPath() throws ProofInputException {
+        return solidityPath;
     }
 
     @Override
@@ -78,11 +78,11 @@ public abstract class AbstractEnvInput implements EnvInput {
     }
 
     @Override
-    public String getRustFile() {
-        return rustFile;
+    public Path getSolidityFile() {
+        return solidityFile;
     }
 
-    public void setRustFile(String rustFile) {
-        this.rustFile = rustFile;
+    public void setSolidityFile(Path solidityFile) {
+        this.solidityFile = solidityFile;
     }
 }

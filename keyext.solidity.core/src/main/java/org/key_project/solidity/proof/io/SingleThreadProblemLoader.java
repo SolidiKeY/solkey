@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.io;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 import org.key_project.solidity.common.Profile;
@@ -20,10 +20,9 @@ public class SingleThreadProblemLoader extends AbstractProblemLoader {
     /// @param includes Optional includes to consider.
     /// @param profileOfNewProofs The [Profile] to use for new [Proof]s.
     /// @param control The [ProblemLoaderControl] to use.
-    public SingleThreadProblemLoader(File file, @Nullable List<File> includes,
+    public SingleThreadProblemLoader(Path file, @Nullable List<Path> includes,
             @Nullable Profile profileOfNewProofs,
             @Nullable ProblemLoaderControl control) {
-        super(file, includes, profileOfNewProofs,
-            control);
+        super(file, includes, profileOfNewProofs, control);
     }
 }

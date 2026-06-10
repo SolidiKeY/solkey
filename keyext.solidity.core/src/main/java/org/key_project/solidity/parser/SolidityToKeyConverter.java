@@ -173,8 +173,15 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         if (functionExp instanceof NewExpression newExp) {
             return new FunctionCallExpression(newExp.getType(), newExp, args.getArgs());
         }
-        String nameS = functionExp.toString();
-        FunctionDeclaration functionDeclaration = localFunctions.lookup(new Name(nameS));
+        Name name = new Name(functionExp.toString());
+        FunctionDeclaration functionDeclaration = localFunctions.lookup(name);
+        if (functionDeclaration == null) {
+            // Not a locally declared function: look it up in the parsed contracts.
+            functionDeclaration = services.getSolidityInfo().getFunctionDeclaration(name);
+        }
+        if (functionDeclaration == null) {
+            reportError("Unknown function " + name, ctx.start);
+        }
         FunctionReference functionRef =
             new FunctionReference(functionDeclaration, functionDeclaration.getType());
         return new FunctionCallExpression(functionRef.getType(), functionRef, args.getArgs());
@@ -231,16 +238,27 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     }
 
     public SyntaxElement visitTypeDefined(TypeNameContext ctx) {
-        throw new RuntimeException("Not implemented yet");
-        // Type type = services.getSolidityInfo().getType(new Name(ctx.getText()));
-        // final Sort sort = type.getSort(services);
-        // return new KeYSolidityType(type, sort);
+        KeYSolidityType kst = services.getSolidityInfo().getKeYSolidityType(ctx.getText());
+        if (kst == null) {
+            reportError("Unknown type " + ctx.getText(), ctx.start);
+        }
+        return kst;
     }
 
     @Override
     public SyntaxElement visitElementaryType(ElementaryTypeContext ctx) {
-        Type type = SolidityInfo.getPrimitiveType(ctx.getText());
-        return services.getSolidityInfo().getKeYSolidityType(type);
+        return primitiveKST(ctx.getText(), ctx.start);
+    }
+
+    /// Resolves a primitive type name to its registered KeYSolidityType.
+    private KeYSolidityType primitiveKST(String name, Token pos) {
+        Type type = SolidityInfo.getPrimitiveType(name);
+        KeYSolidityType kst =
+            type == null ? null : services.getSolidityInfo().getKeYSolidityType(type);
+        if (kst == null) {
+            reportError("Unknown primitive type " + name, pos);
+        }
+        return kst;
     }
 
     @Override
@@ -250,17 +268,19 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitArrayType(ArrayTypeContext ctx) {
-        throw new RuntimeException("Not implemented yet");
-        // Type primaryType = (Type) visitTypeName(ctx.typeName());
-        // if (ctx.expression() == null) {
-        // Type type = services.getSolidityInfo().getDynamicTypeMap(primaryType.name());
-        // final Sort sort = type.getSort(services);
-        // return new KeYSolidityType(type, sort);
-        // }
-        // Expression sizeExp = visitExpression(ctx.expression());
-        // Type type = services.getSolidityInfo().getStaticTypeMap(primaryType.name(), sizeExp);
-        // final Sort sort = type.getSort(services);
-        // return new KeYSolidityType(type, sort);
+        // Array types are registered when the Solidity source is read; the
+        // .key side only looks them up by name (elem[] or elem[size]).
+        KeYSolidityType elementKST = (KeYSolidityType) visitTypeName(ctx.typeName());
+        String suffix = ctx.expression() == null
+                ? "[]"
+                : "[" + visitExpression(ctx.expression()) + "]";
+        String name = elementKST.name() + suffix;
+        KeYSolidityType kst = services.getSolidityInfo().getKeYSolidityType(name);
+        if (kst == null) {
+            reportError("Array type " + name + " is not used in the contract "
+                + "and therefore unknown", ctx.start);
+        }
+        return kst;
     }
 
     @Override
@@ -394,8 +414,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitElementaryTypeName(ElementaryTypeNameContext ctx) {
-        return services.getSolidityInfo()
-                .getKeYSolidityType(SolidityInfo.getPrimitiveType(ctx.getText()));
+        return primitiveKST(ctx.getText(), ctx.start);
     }
 
     @Override

@@ -3,12 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Stream;
 
 import org.key_project.logic.op.Function;
 import org.key_project.prover.rules.RuleApp;
@@ -27,6 +23,17 @@ import org.jspecify.annotations.Nullable;
 
 public class Node implements Iterable<Node> {
     private static final String NODES = "nodes";
+
+    private static final String OPEN_GOAL = "OPEN GOAL";
+
+    private static final String CLOSED_GOAL = "Closed goal";
+
+    private static final String INTERACTIVE_GOAL = "INTERACTIVE GOAL";
+
+    private static final String RULE_WITHOUT_NAME = "rule without name";
+
+    private static final String RULE_APPLICATION_WITHOUT_RULE = "rule application without rule";
+
 
     /// the proof the node belongs to
     private final Proof proof;
@@ -71,6 +78,8 @@ public class Node implements Iterable<Node> {
 
     private NameRecorder nameRecorder;
 
+    private String cachedName = null;
+
     /// creates an empty node that is root and leaf.
     private Node(Proof proof) {
         this.proof = proof;
@@ -81,6 +90,7 @@ public class Node implements Iterable<Node> {
     public Node(Proof proof, Sequent seq) {
         this(proof);
         this.seq = seq;
+        nodeInfo = new NodeInfo(this);
     }
 
     /// creates a node with the given contents, the given collection of children (all elements must
@@ -112,7 +122,7 @@ public class Node implements Iterable<Node> {
     public void setAppliedRuleApp(RuleApp ruleApp) {
         // this.nodeInfo.updateNoteInfo();
         this.appliedRuleApp = ruleApp;
-        // clearNameCache();
+        clearNameCache();
     }
 
     public Proof proof() {
@@ -130,6 +140,7 @@ public class Node implements Iterable<Node> {
         newChild.siblingNr = children.size();
         children.add(newChild);
         newChild.parent = this;
+        proof().fireProofExpanded(this);
     }
 
     /// Makes the given node children of this node.
@@ -144,6 +155,7 @@ public class Node implements Iterable<Node> {
 
         Collections.addAll(children, newChildren);
         children.trimToSize();
+        proof().fireProofExpanded(this);
     }
 
     /// @param i an index (starting at 0).
@@ -339,5 +351,88 @@ public class Node implements Iterable<Node> {
 
     public NodeInfo getNodeInfo() {
         return nodeInfo;
+    }
+
+    public String name() {
+        if (cachedName == null) {
+            RuleApp rap = getAppliedRuleApp();
+            if (rap == null) {
+                final Goal goal = proof().getOpenGoal(this);
+                if (this.isClosed()) {
+                    return CLOSED_GOAL; // don't cache this
+                } else if (goal == null) {
+                    // should never happen (please check)
+                    return "UNKNOWN GOAL KIND (Probably a bug)";
+                } else if (goal.isAutomatic()) {
+                    cachedName = OPEN_GOAL;
+                } else {
+                    cachedName = INTERACTIVE_GOAL;
+                }
+                return cachedName;
+            }
+
+            if (rap.rule() == null) {
+                cachedName = RULE_APPLICATION_WITHOUT_RULE;
+                return cachedName;
+            }
+
+            if (nodeInfo != null && nodeInfo.getFirstActiveExprString() != null) {
+                return nodeInfo.getFirstActiveExprString();
+            }
+
+            cachedName = rap.displayName();
+            if (cachedName == null) {
+                cachedName = RULE_WITHOUT_NAME;
+            }
+        }
+        return cachedName;
+    }
+
+    public Stream<Node> childrenStream() {
+        return children.stream();
+    }
+
+    public Iterable<NoPosTacletApp> getLocalIntroducedRules() {
+        return localIntroducedRules;
+    }
+
+    /// Opens a previously closed node and all its closed parents.
+    void reopen() {
+        closed = false;
+        Node tmp = parent;
+        while (tmp != null && tmp.isClosed()) {
+            tmp.closed = false;
+            tmp = tmp.parent();
+        }
+        clearNameCache();
+    }
+
+    public void clearNameCache() {
+        cachedName = null;
+    }
+
+    /// When pruning, data referring to future nodes has to be cleared; however, the sequent change
+    /// info and the relevant files are related to the parent node, and have to be preserved.
+    void clearNodeInfo() {
+        this.nodeInfo = new NodeInfo(this);
+    }
+
+    /// Removes child/parent relationship between the given node and this node; if the given node is
+    /// not child of this node, nothing happens and then and only then false is returned.
+    ///
+    /// @param child the child to remove.
+    /// @return false iff the given node was not child of this node and nothing has been done.
+    boolean remove(Node child) {
+        if (children.remove(child)) {
+            child.parent = null;
+            final ListIterator<Node> it = children.listIterator(child.siblingNr);
+            while (it.hasNext()) {
+                it.next().siblingNr--;
+            }
+            child.siblingNr = -1;
+            return true;
+        } else {
+            return false;
+        }
     }
 }

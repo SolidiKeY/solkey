@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser;
 
-import java.io.File;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import org.key_project.logic.*;
@@ -34,12 +35,10 @@ public class ParserForTesting {
 
     public static KeYEnvironment<DefaultUserInterfaceControl> load() {
         try {
-            File file = new File(KeYResourceManager.getManager()
+            Path file = Paths.get(KeYResourceManager.getManager()
                     .getResourceFile(ParserForTesting.class, "simpleForTestInit.key").toURI());
             return KeYEnvironment.load(file);
-        } catch (ProblemLoaderException e) {
-            throw new RuntimeException(e);
-        } catch (URISyntaxException e) {
+        } catch (ProblemLoaderException | URISyntaxException e) {
             throw new RuntimeException(e);
         }
     }

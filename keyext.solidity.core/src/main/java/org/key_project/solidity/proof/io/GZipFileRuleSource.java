@@ -3,14 +3,13 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.io;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.zip.GZIPInputStream;
 
 import org.antlr.v4.runtime.CharStream;
@@ -18,17 +17,17 @@ import org.antlr.v4.runtime.CharStreams;
 
 public class GZipFileRuleSource extends FileRuleSource {
     /// Instantiates a new file rule source.
-    /// This is only instantiated from [#initRuleFile(File,boolean)].
+    /// This is only instantiated from [#initRuleFile(Path,boolean)].
     ///
     /// @param ruleFile the file to read from.
-    GZipFileRuleSource(File ruleFile) {
+    GZipFileRuleSource(Path ruleFile) {
         super(ruleFile);
     }
 
     @Override
     public InputStream getNewStream() {
         try {
-            return new GZIPInputStream(new FileInputStream(ruleFile));
+            return new GZIPInputStream(ruleFile.toUri().toURL().openStream());
         } catch (IOException e) {
             throw new RuntimeException("Error while reading rules.", e);
         }

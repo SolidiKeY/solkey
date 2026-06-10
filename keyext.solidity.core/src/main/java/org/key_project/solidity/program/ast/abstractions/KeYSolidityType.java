@@ -15,6 +15,24 @@ import org.key_project.util.ExtList;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+/// Pairs a Solidity AST [Type] with its logic-side [Sort].
+///
+/// ### Life cycle
+/// Type graphs can be cyclic (a contract whose function takes the contract
+/// itself as a parameter, mutually referencing contracts, …), so a
+/// KeYSolidityType sometimes has to exist before the AST type it stands for
+/// is fully built. The protocol is:
+///
+/// 1. The creator allocates the instance with the sort only
+/// ([#KeYSolidityType(Sort)]) and hands the *same instance* to everyone
+/// who needs the type early.
+/// 2. Once the AST type is complete, the creator calls [#setSolidityType]
+/// **exactly once** — completing the shared instance for all holders.
+/// 3. Only complete instances may be registered in
+/// [org.key_project.solidity.program.ast.SolidityInfo].
+///
+/// [#setSolidityType] rejects a second completion, so an instance can never
+/// silently change its meaning.
 public class KeYSolidityType implements Type, Resolver {
     /// the AST type
     private @Nullable Type solidityType = null;
@@ -59,8 +77,19 @@ public class KeYSolidityType implements Type, Resolver {
         return solidityType;
     }
 
+    /// Completes this instance (see the class doc); may be called only once.
     public void setSolidityType(Type solidityType) {
+        if (this.solidityType != null && !this.solidityType.equals(solidityType)) {
+            throw new IllegalStateException(
+                "KeYSolidityType already completed with " + this.solidityType
+                    + "; cannot rebind to " + solidityType);
+        }
         this.solidityType = solidityType;
+    }
+
+    /// @return true iff both the AST type and the sort are set
+    public boolean isComplete() {
+        return solidityType != null && sort != null;
     }
 
     @Override

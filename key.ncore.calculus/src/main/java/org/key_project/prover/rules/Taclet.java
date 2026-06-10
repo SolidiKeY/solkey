@@ -234,7 +234,7 @@ public abstract class Taclet implements Rule {
     /// @return the display name of the taclet, or, if not specified -- the canonical name
     @Override
     public @NonNull String displayName() {
-        return displayName;
+        return displayName == null ? name.toString() : displayName;
     }
 
     /// @return the assumes-sequence of the application part of the Taclet.

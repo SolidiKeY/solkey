@@ -1102,15 +1102,15 @@ public class LogicPrinter {
         }
     }
 
-    /// Print a Rusty block. This is formatted using the ProgramPrinter given to the constructor.
+    /// Print a Solidity block. This is formatted using the ProgramPrinter given to the constructor.
     /// The
     /// result is indented according to the surrounding material. The first `executable' statement
     /// is
     /// marked for highlighting.
     ///
-    /// @param rb the Java block to be printed
-    public void printRustyBlock(SolidityBlock rb) {
-        printSourceElement(rb.program());
+    /// @param sb the SolidityBlock block to be printed
+    public void printSolidityBlock(SolidityBlock sb) {
+        printSourceElement(sb.program());
     }
 
     /// Print a DL modality formula. <code>phi</code> is the whole modality formula, not just the
@@ -1145,9 +1145,9 @@ public class LogicPrinter {
         layouter.markModPosTbl();
         layouter.startTerm(phi.arity());
         layouter.print(left);
-        layouter.markStartRustyBlock();
-        printRustyBlock(jb);
-        layouter.markEndRustyBlock();
+        layouter.markStartSolidityBlock();
+        printSolidityBlock(jb);
+        layouter.markEndSolidityBlock();
         layouter.print(right + " ");
         if (phi.arity() == 1) {
             maybeParens(phi.sub(0), ass);

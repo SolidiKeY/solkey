@@ -7,6 +7,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -82,7 +85,7 @@ public class KeYFile implements EnvInput {
     /// @param compressed <code>true</code> iff the file has compressed content
     public KeYFile(String name, File file, Profile profile,
             boolean compressed) {
-        this(name, RuleSourceFactory.initRuleFile(file, compressed), profile);
+        this(name, RuleSourceFactory.initRuleFile(file.toPath(), compressed), profile);
     }
 
     /// Creates a new representation for a given file by indicating a name and a file representing
@@ -93,7 +96,7 @@ public class KeYFile implements EnvInput {
     /// @param fileRepo the FileRepo which will store the file
     /// @param profile the KeY profile under which the file is to be load
     /// @param compressed <code>true</code> iff the file has compressed content
-    public KeYFile(String name, File file, FileRepo fileRepo,
+    public KeYFile(String name, Path file, FileRepo fileRepo,
             Profile profile, boolean compressed) {
         this(name, RuleSourceFactory.initRuleFile(file, compressed), profile);
         this.fileRepo = fileRepo;
@@ -170,7 +173,7 @@ public class KeYFile implements EnvInput {
             try {
                 KeYAst.File ctx = getParseContext();
                 includes =
-                    ctx.getIncludes(file.file().getAbsoluteFile().getParentFile().toURI().toURL());
+                    ctx.getIncludes(file.file().toAbsolutePath().getParent().toUri().toURL());
             } catch (Exception e) {
                 throw new ProofInputException(e);
             }
@@ -187,23 +190,23 @@ public class KeYFile implements EnvInput {
     }
 
     @Override
-    public String readSolidityPath() throws ProofInputException {
+    public Path readSolidityPath() throws ProofInputException {
         ProblemInformation pi = getProblemInformation();
         String solidityPath = pi.getSoliditySource();
         if (solidityPath != null) {
-            File absFile = new File(solidityPath);
+            Path absFile = Paths.get(solidityPath);
             if (!absFile.isAbsolute()) {
                 // convert to absolute by resolving against the parent path of the parsed file
-                File parent = file.file().getParentFile();
-                absFile = new File(parent, solidityPath);
+                Path parent = file.file().getParent();
+                absFile = parent.resolve(solidityPath);
             }
-            if (!absFile.exists()) {
+            if (!Files.exists(absFile)) {
                 throw new ProofInputException(
                     String.format("Declared Solidity source %s not found.", solidityPath));
             }
-            return absFile.getAbsolutePath();
+            return absFile.toAbsolutePath();
         }
-        return solidityPath;
+        return null;
     }
 
     @Override
@@ -360,7 +363,7 @@ public class KeYFile implements EnvInput {
     }
 
     @Override
-    public File getInitialFile() {
+    public Path getInitialFile() {
         return file != null ? file.file() : null;
     }
 }

@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.prover.rules.RuleApp;
-import org.key_project.prover.rules.Taclet;
+import org.key_project.prover.sequent.SequentChangeInfo;
 import org.key_project.solidity.logic.TermBuilder;
 import org.key_project.solidity.logic.op.SModality;
 import org.key_project.solidity.program.ProgramPrefix;
@@ -44,6 +44,9 @@ public class NodeInfo {
     private @Nullable SolidityProgramElement firstExpr = null;
 
     private String firstExprString = null;
+
+    /// Information about changes respective to the parent of this node.
+    private SequentChangeInfo sequentChangeInfo;
 
     public NodeInfo(Node node) {
         this.node = node;
@@ -166,9 +169,6 @@ public class NodeInfo {
             RuleApp ruleApp) {
         SolidityProgramElement firstExpr = null;
         if (ruleApp instanceof PosTacletApp pta) {
-            if (!isSymbolicExecution(pta.taclet())) {
-                return null;
-            }
             Term t = TermBuilder.goBelowUpdates(pta.posInOccurrence().subTerm());
             if (t.op() instanceof SModality mod) {
                 final SolidityProgramElement pe = mod.programBlock().program();
@@ -176,10 +176,6 @@ public class NodeInfo {
             }
         }
         return firstExpr;
-    }
-
-    private static boolean isSymbolicExecution(Taclet taclet) {
-        throw new RuntimeException("Not implemented yet");
     }
 
     /// Computes the active statement in the given [RuleApp].
@@ -212,5 +208,13 @@ public class NodeInfo {
             }
         }
         return activeStatement;
+    }
+
+    public void updateNoteInfo() {
+        determinedFstAndActiveExpr = false;
+        firstExpr = null;
+        firstExprString = null;
+        activeStatement = null;
+        determineFirstAndActiveExpr();
     }
 }

@@ -6,11 +6,21 @@ package org.key_project.solidity.proof.io;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
+
+import org.key_project.util.java.StringUtil;
 
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -48,8 +58,21 @@ public class UrlRuleSource extends RuleSource {
     }
 
     @Override
-    public File file() {
-        return new File(url.getFile());
+    public Path file() {
+        try {
+            var uri = url.toURI();
+            try {
+                return Paths.get(uri);
+            } catch (FileSystemNotFoundException e) {
+                URI rootFs = URI.create(StringUtil.takeUntil(uri.toString(), "!"));
+                String internal = StringUtil.takeAfter(uri.toString(), "!");
+                // keep the file system open.
+                FileSystem zipfs = FileSystems.newFileSystem(rootFs, new HashMap<>());
+                return zipfs.getPath(internal);
+            }
+        } catch (URISyntaxException | IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

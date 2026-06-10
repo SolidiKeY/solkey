@@ -4,11 +4,9 @@
 package org.key_project.solidity.proof.init;
 
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -143,27 +141,26 @@ public final class ProblemInitializer {
 
         // read Solidity source
         envInput.setInitConfig(initConfig);
-        final String solidityPath = envInput.readSolidityPath();
+        final Path solidityPath = envInput.readSolidityPath();
 
         final Includes includes = envInput.readIncludes();
 
         if (fileRepo != null) {
             // set the paths in the FileRepo
-            fileRepo.setRustyPath(solidityPath);
+            fileRepo.setSolidityPath(solidityPath);
         }
 
         for (var fileName : includes.getRuleSets()) {
-            KeYFile keyFile = new KeYFile(fileName.file().getName(), fileName,
+            KeYFile keyFile = new KeYFile(fileName.file().getFileName().toString(), fileName,
                 envInput.getProfile(), fileRepo);
             readEnvInput(keyFile, initConfig);
         }
         if (solidityPath != null) {
             try {
                 var beforeConversion = System.nanoTime();
-                Path path = Paths.get(solidityPath);
-                if (Files.isRegularFile(path)) {
+                if (Files.isRegularFile(solidityPath)) {
                     SolcParser solcParser = new SolcParser(initConfig.getServices());
-                    solcParser.getSolidityFromStrJsonParser(path);
+                    solcParser.getSolidityFromStrJsonParser(solidityPath);
                     LOGGER.info("Solidity conversion took {}",
                         PerfScope.formatTime(System.nanoTime() - beforeConversion));
                 } else {
@@ -174,7 +171,7 @@ public final class ProblemInitializer {
                 throw new ProofInputException("Failed to convert Solidity code", e);
             }
         }
-        File initialFile = envInput.getInitialFile();
+        Path initialFile = envInput.getInitialFile();
         initConfig.getServices().setSolidityModel(
             SolidityModel.create(solidityPath, includes, initialFile));
     }

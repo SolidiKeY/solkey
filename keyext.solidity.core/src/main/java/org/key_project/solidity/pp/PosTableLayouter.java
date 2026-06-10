@@ -121,12 +121,12 @@ public class PosTableLayouter extends Layouter<PosTableLayouter.Mark> {
     }
 
     /// Called before java block is printed and marks current position.
-    public void markStartRustyBlock() {
+    public void markStartSolidityBlock() {
         mark(MarkType.MARK_START_RUSTY_BLOCK);
     }
 
     /// Called after java block is printed and marks current position.
-    public void markEndRustyBlock() {
+    public void markEndSolidityBlock() {
         mark(MarkType.MARK_END_RUSTY_BLOCK);
     }
 

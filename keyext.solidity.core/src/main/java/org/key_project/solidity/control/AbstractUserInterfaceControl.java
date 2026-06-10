@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.control;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -64,14 +64,13 @@ public abstract class AbstractUserInterfaceControl
 
     /// {@inheritDoc}
     @Override
-    public AbstractProblemLoader load(Profile profile, File file, List<File> includes,
+    public AbstractProblemLoader load(Profile profile, Path file, List<Path> includes,
             Properties poPropertiesToForce,
             boolean forceNewProfileOfNewProofs,
             Consumer<Proof> callback) throws ProblemLoaderException {
         AbstractProblemLoader loader = null;
         try {
-            loader = new SingleThreadProblemLoader(file, includes,
-                profile, null);
+            loader = new SingleThreadProblemLoader(file, includes, profile, null);
             if (callback != null) {
                 loader.load(callback);
             } else {
@@ -88,7 +87,7 @@ public abstract class AbstractUserInterfaceControl
             if (loader != null && loader.getProof() != null) {
                 loader.getProof().dispose();
             }
-            throw new ProblemLoaderException(loader, e);
+            throw new ProblemLoaderException(loader, "Load failed", e);
         }
     }
 

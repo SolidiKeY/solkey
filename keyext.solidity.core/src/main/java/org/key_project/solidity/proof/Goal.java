@@ -430,4 +430,34 @@ public class Goal implements ProofGoal<@NonNull Goal> {
     public void removeGoalListener(GoalListener l) {
         listeners.remove(l);
     }
+
+    void pruneToParent() {
+        setNode(node.parent());
+        removeLastAppliedRuleApp();
+        resetLocalSymbols();
+    }
+
+    /*
+     * Set up the local namespaces table from the stored local symbols
+     */
+    private void resetLocalSymbols() {
+        NamespaceSet newNS = proof().getServices().getNamespaces().copyWithParent();
+        for (ProgramVariable pv : node.getLocalProgVars()) {
+            newNS.programVariables().add(pv);
+        }
+        for (Function op : node.getLocalFunctions()) {
+            newNS.functions().add(op);
+        }
+
+        localNamespaces = newNS.copyWithParent();
+    }
+
+    /**
+     * Rebuild all rule caches
+     */
+    public void clearAndDetachRuleAppIndex() {
+        getRuleAppManager().clearCache();
+        ruleAppIndex.clearAndDetachCache();
+    }
+
 }

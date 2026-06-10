@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.taclets;
 
-import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -27,7 +27,7 @@ public class RulesTest {
 
     private static final String EXAMPLES_RESOURCE = "org/key_project/solidity/examples";
 
-    private static Proof prove(File f, long timeout, int maxSteps) throws ProblemLoaderException {
+    private static Proof prove(Path f, long timeout, int maxSteps) throws ProblemLoaderException {
         var env = KeYEnvironment.load(f);
         var loadedProof = env.getLoadedProof();
         var stratSettings = loadedProof.getSettings().getStrategySettings();
@@ -41,7 +41,7 @@ public class RulesTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource("exampleFiles")
     public void exampleLoads(String exampleName, Path exampleFile) throws ProblemLoaderException {
-        Proof proof = prove(exampleFile.toFile(), -1, 10000);
+        Proof proof = prove(exampleFile, -1, 10000);
 
         // For debugging to inspect the saved proof
         // if (!proof.closed()) {
@@ -60,23 +60,29 @@ public class RulesTest {
                             g.getOverlayServices()))
                         .toList()
                 + "\n" + proof.getStatistics());
-
-
     }
 
     static Stream<Arguments> exampleFiles() throws Exception {
         URL resource = RulesTest.class.getClassLoader().getResource(EXAMPLES_RESOURCE);
-        File examplesDirectory = Path.of(resource.toURI()).toFile();
 
-        List<Path> exampleFiles = Files.list(examplesDirectory.toPath())
-                .filter(Files::isRegularFile)
-                .filter(path -> path.getFileName().toString().endsWith(".key")
-                        && hasProofObligation(path))
-                .sorted(Comparator.comparing(path -> path.getFileName().toString()))
-                .toList();
+        if (resource == null) {
+            throw new FileNotFoundException(
+                "Could not find resource with examples: " + EXAMPLES_RESOURCE);
+        }
 
-        return selectRequestedExample(exampleFiles).stream()
-                .map(path -> Arguments.of(path.getFileName().toString(), path));
+        try (var examples = Files.list(Path.of(resource.toURI()))) {
+            List<Path> exampleFiles = examples
+                    .filter(Files::isRegularFile)
+                    .filter(path -> path.getFileName().toString().endsWith(".key")
+                            && hasProofObligation(path))
+                    .sorted(Comparator.comparing(path -> path.getFileName().toString()))
+                    .toList();
+
+            return selectRequestedExample(exampleFiles).stream()
+                    .map(path -> Arguments.of(path.getFileName().toString(), path));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static List<Path> selectRequestedExample(List<Path> exampleFiles) {

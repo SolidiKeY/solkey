@@ -3,11 +3,9 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.beans.PropertyChangeListener;
+import java.util.*;
+import java.util.function.Predicate;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.Named;
@@ -19,6 +17,8 @@ import org.key_project.solidity.common.Profile;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.NamespaceSet;
 import org.key_project.solidity.proof.calculus.SoliditySequentKit;
+import org.key_project.solidity.proof.event.ProofDisposedEvent;
+import org.key_project.solidity.proof.event.ProofDisposedListener;
 import org.key_project.solidity.proof.init.InitConfig;
 import org.key_project.solidity.proof.mgt.ProofCorrectnessMgt;
 import org.key_project.solidity.proof.mgt.ProofEnvironment;
@@ -50,6 +50,13 @@ public class Proof implements ProofObject<Goal>, Named {
     private final List<RuleAppListener> ruleAppListenerList =
         Collections.synchronizedList(new ArrayList<>(10));
 
+    /**
+     * Contains all registered {@link ProofDisposedListener}.
+     */
+    private final List<ProofDisposedListener> proofDisposedListener = new LinkedList<>();
+
+    private PropertyChangeListener settingsListener;
+
     /// list with the open goals of the proof
     private ImmutableList<Goal> openGoals = ImmutableSLList.nil();
 
@@ -74,6 +81,8 @@ public class Proof implements ProofObject<Goal>, Named {
     /// the proof environment (optional)
     private @Nullable ProofEnvironment env;
 
+    private boolean disposed;
+
     /// constructs a new empty proof with name
     private Proof(Name name, InitConfig initConfig) {
         this.name = name;
@@ -84,8 +93,11 @@ public class Proof implements ProofObject<Goal>, Named {
             // if no settings have been assigned yet, take default settings
             initConfig.setSettings(new ProofSettings(ProofSettings.DEFAULT_SETTINGS));
         }
+        settingsListener = config -> updateStrategyOnGoals();
 
         localMgt = new ProofCorrectnessMgt(this);
+
+        initConfig.getSettings().getStrategySettings().addPropertyChangeListener(settingsListener);
 
         final Services services = this.initConfig.getServices();
         services.setProof(this);
@@ -134,7 +146,12 @@ public class Proof implements ProofObject<Goal>, Named {
     }
 
     public void setRoot(Node root) {
-        this.root = root;
+        if (this.root != null) {
+            throw new IllegalStateException("Tried to reset the root of the proof.");
+        } else {
+            this.root = root;
+            fireProofStructureChanged();
+        }
     }
 
     public String header() {
@@ -205,6 +222,9 @@ public class Proof implements ProofObject<Goal>, Named {
         if (openGoals != newOpenGoals) {
             openGoals = newOpenGoals;
         }
+        // For the moment it is necessary to fire the message ALWAYS
+        // in order to detect branch closing.
+        fireProofGoalsAdded(goals);
     }
 
     /// removes the given goal and adds the new goals in list
@@ -218,6 +238,9 @@ public class Proof implements ProofObject<Goal>, Named {
 
         if (!closed()) {
             add(newGoals);
+            fireProofGoalRemoved(oldGoal);
+        } else {
+            fireProofClosed();
         }
     }
 
@@ -236,9 +259,7 @@ public class Proof implements ProofObject<Goal>, Named {
             goal = getOpenGoal(it.next());
             if (goal != null) {
                 b = true;
-                // if (!GeneralSettings.noPruningClosed) {
                 closedGoals = closedGoals.prepend(goal);
-                // }
                 remove(goal);
             }
         }
@@ -246,7 +267,7 @@ public class Proof implements ProofObject<Goal>, Named {
         if (b) {
             // For the moment it is necessary to fire the message ALWAYS
             // in order to detect branch closing.
-            // fireProofGoalsAdded(ImmutableSLList.nil());
+            fireProofGoalsAdded(ImmutableSLList.nil());
         }
     }
 
@@ -270,12 +291,40 @@ public class Proof implements ProofObject<Goal>, Named {
         ImmutableList<Goal> newOpenGoals = openGoals.removeAll(goal);
         if (newOpenGoals != openGoals) {
             openGoals = newOpenGoals;
+            if (closed()) {
+                fireProofClosed();
+            } else {
+                fireProofGoalRemoved(goal);
+            }
         }
     }
 
     /// returns true if the root node is marked as closed and all goals have been removed
     public boolean closed() {
         return root.isClosed() && openGoals.isEmpty();
+    }
+
+    /**
+     * Opens a previously closed node (the one corresponding to p_goal) and all its closed parents.
+     *
+     * <p>
+     * This is, for instance, needed for the {@code MergeRule}: In a situation where a merge node
+     * and its associated partners have been closed and the merge node is then pruned away, the
+     * partners have to be reopened again. Otherwise, we have a soundness issue.
+     * <p>
+     * This will automatically add the goal to the list of open goals.
+     * </p>
+     *
+     * @param goal The goal to be opened again.
+     */
+    public void reOpenGoal(Goal goal) {
+        ImmutableList<Goal> newOpenGoals = openGoals.prepend(goal);
+        if (openGoals != newOpenGoals) {
+            openGoals = newOpenGoals;
+        }
+        goal.getNode().reopen();
+        closedGoals = closedGoals.removeAll(goal);
+        fireProofStructureChanged();
     }
 
     public ProofCorrectnessMgt mgt() {
@@ -312,9 +361,221 @@ public class Proof implements ProofObject<Goal>, Named {
         return result.toString();
     }
 
-    public void dispose() {
-        // TODO
+    /**
+     * Registers the given {@link ProofDisposedListener}.
+     *
+     * @param l The {@link ProofDisposedListener} to register.
+     */
+    public void addProofDisposedListener(ProofDisposedListener l) {
+        if (l != null) {
+            proofDisposedListener.add(l);
+        }
     }
+
+    /**
+     * Registers the given {@link ProofDisposedListener} to run before all previously registered
+     * listeners.
+     *
+     * @param l The {@link ProofDisposedListener} to register.
+     */
+    public void addProofDisposedListenerFirst(ProofDisposedListener l) {
+        if (l != null) {
+            proofDisposedListener.add(0, l);
+        }
+    }
+
+    /**
+     * Unregisters the given {@link ProofDisposedListener}.
+     *
+     * @param l The {@link ProofDisposedListener} to unregister.
+     */
+    public void removeProofDisposedListener(ProofDisposedListener l) {
+        if (l != null) {
+            proofDisposedListener.remove(l);
+        }
+    }
+
+    /**
+     * Returns all registered {@link ProofDisposedListener}.
+     *
+     * @return All registered {@link ProofDisposedListener}.
+     */
+    public ProofDisposedListener[] getProofDisposedListeners() {
+        return proofDisposedListener
+                .toArray(new ProofDisposedListener[0]);
+    }
+
+    /**
+     * fires the event that the proof has been expanded at the given node
+     */
+    public void fireProofExpanded(Node node) {
+        ProofTreeEvent e = new ProofTreeEvent(this, node);
+        synchronized (listenerList) {
+            for (ProofTreeListener listener : listenerList) {
+                listener.proofExpanded(e);
+            }
+        }
+    }
+
+    /**
+     * fires the event that the proof has been restructured
+     */
+    public void fireProofStructureChanged() {
+        ProofTreeEvent e = new ProofTreeEvent(this);
+        synchronized (listenerList) {
+            for (ProofTreeListener listener : listenerList) {
+                listener.proofStructureChanged(e);
+            }
+        }
+    }
+
+    /**
+     * fires the event that the proof has closed. This event fired instead of the proofGoalRemoved
+     * event when the last goal in list is removed.
+     */
+    protected void fireProofClosed() {
+        ProofTreeEvent e = new ProofTreeEvent(this);
+        synchronized (listenerList) {
+            for (ProofTreeListener listener : listenerList) {
+                listener.proofClosed(e);
+            }
+        }
+    }
+
+    /**
+     * fires the event that a goal has been removed from the list of goals
+     */
+    protected void fireProofGoalRemoved(Goal goal) {
+        ProofTreeEvent e = new ProofTreeEvent(this, goal);
+        synchronized (listenerList) {
+            for (ProofTreeListener listener : listenerList) {
+                listener.proofGoalRemoved(e);
+            }
+        }
+    }
+
+
+    /**
+     * fires the event that new goals have been added to the list of goals
+     */
+    protected void fireProofGoalsAdded(ImmutableList<Goal> goals) {
+        ProofTreeEvent e = new ProofTreeEvent(this, goals);
+        synchronized (listenerList) {
+            for (ProofTreeListener listener : listenerList) {
+                listener.proofGoalsAdded(e);
+            }
+        }
+    }
+
+
+    /**
+     * fires the event that new goals have been added to the list of goals
+     */
+    protected void fireProofGoalsAdded(Goal goal) {
+        fireProofGoalsAdded(ImmutableSLList.<Goal>nil().prepend(goal));
+    }
+
+
+    /**
+     * fires the event that the proof has been restructured
+     */
+    public void fireProofGoalsChanged() {
+        ProofTreeEvent e = new ProofTreeEvent(this, openGoals());
+        synchronized (listenerList) {
+            for (ProofTreeListener listener : listenerList) {
+                listener.proofGoalsChanged(e);
+            }
+        }
+    }
+
+    /**
+     * fires the event that the proof is being pruned at the given node
+     */
+    protected void fireProofIsBeingPruned(Node below) {
+        ProofTreeEvent e = new ProofTreeEvent(this, below);
+        synchronized (listenerList) {
+            for (ProofTreeListener listener : listenerList) {
+                listener.proofIsBeingPruned(e);
+            }
+        }
+    }
+
+    /**
+     * fires the event that the proof has been pruned at the given node
+     */
+    protected void fireProofPruned(Node below) {
+        ProofTreeEvent e = new ProofTreeEvent(this, below);
+        synchronized (listenerList) {
+            for (ProofTreeListener listener : listenerList) {
+                listener.proofPruned(e);
+            }
+        }
+    }
+
+    /**
+     * Fires the event {@link ProofDisposedListener#proofDisposed(ProofDisposedEvent)} to all
+     * listener.
+     *
+     * @param e The event to fire.
+     */
+    protected void fireProofDisposed(ProofDisposedEvent e) {
+        ProofDisposedListener[] listener = getProofDisposedListeners();
+        for (ProofDisposedListener l : listener) {
+            l.proofDisposed(e);
+        }
+    }
+
+    /**
+     * Fires the event {@link ProofDisposedListener#proofDisposing(ProofDisposedEvent)} to all
+     * listener.
+     *
+     * @param e The event to fire.
+     */
+    protected void fireProofDisposing(ProofDisposedEvent e) {
+        ProofDisposedListener[] listener = getProofDisposedListeners();
+        for (final ProofDisposedListener l : listener) {
+            l.proofDisposing(e);
+        }
+    }
+
+    /**
+     * Cut off all reference such that it does not lead to a big memory leak if someone still holds
+     * a reference to this proof object.
+     */
+    public void dispose() {
+        if (isDisposed()) {
+            return;
+        }
+        fireProofDisposing(new ProofDisposedEvent(this));
+        clearAndDetachRuleAppIndexes();
+
+        // Do required cleanup
+        if (getServices() != null) {
+            getServices().getSpecificationRepository().removeProof(this);
+        }
+        if (localMgt != null) {
+            localMgt.removeProofListener(); // This is strongly required because the listener is
+            // contained in a static List
+        }
+        // remove setting listener from settings
+        initConfig.getSettings().getStrategySettings()
+                .removePropertyChangeListener(settingsListener);
+        // set every reference (except the name) to null
+        root = null;
+        env = null;
+        openGoals = null;
+        closedGoals = null;
+        problemHeader = null;
+        initConfig = null;
+        localMgt = null;
+        activeStrategy = null;
+        settingsListener = null;
+        disposed = true;
+        fireProofDisposed(new ProofDisposedEvent(this));
+        // may now clean up proof disposed listeners too
+        proofDisposedListener.clear();
+    }
+
 
     /// returns a collection of the namespaces valid for this proof
     public NamespaceSet getNamespaces() {
@@ -421,6 +682,15 @@ public class Proof implements ProofObject<Goal>, Named {
         }
     }
 
+
+    public void clearAndDetachRuleAppIndexes() {
+        // Taclet indices of the particular goals have to
+        // be rebuilt
+        for (Goal goal : openGoals()) {
+            goal.clearAndDetachRuleAppIndex();
+        }
+    }
+
     /// return the list of open and enabled goals
     ///
     /// @return list of open and enabled goals, never null
@@ -492,6 +762,128 @@ public class Proof implements ProofObject<Goal>, Named {
         return result;
     }
 
+    void removeOpenGoals(Collection<Node> toBeRemoved) {
+        ImmutableList<Goal> newGoalList = ImmutableSLList.nil();
+        for (Goal openGoal : openGoals()) {
+            if (!toBeRemoved.contains(openGoal.getNode())) {
+                newGoalList = newGoalList.append(openGoal);
+            }
+        }
+        openGoals = newGoalList;
+    }
+
+    /**
+     * Removes the given collection of Nodes from the closedGoals. Nodes in the given collection
+     * which are not member of closedGoals are ignored. This method does not reopen the goals!
+     * This has to be done via the method reOpenGoal() if desired.
+     *
+     * @param toBeRemoved the goals to remove
+     */
+    void removeClosedGoals(Collection<Node> toBeRemoved) {
+        ImmutableList<Goal> newGoalList = ImmutableSLList.nil();
+        for (Goal closedGoal : closedGoals) {
+            if (!toBeRemoved.contains(closedGoal.getNode())) {
+                newGoalList = newGoalList.prepend(closedGoal);
+            }
+        }
+        closedGoals = newGoalList;
+    }
+
+    /**
+     * Performs an undo operation on the given goal. This is equivalent to a pruning of the parent
+     * node of the goal (if this parent node exists).
+     *
+     * @param goal the Goal where the last rule application gets undone
+     */
+    public synchronized void pruneProof(Goal goal) {
+        if (goal.getNode().parent() != null) {
+            pruneProof(goal.getNode().parent());
+        }
+    }
+
+    /**
+     * Prunes the subtree beneath the node <code>cuttingPoint</code>, i.e. the node
+     * <code>cuttingPoint</code> remains as the last node on the branch. As a result, an open goal
+     * is associated with this node.
+     *
+     * @param cuttingPoint node below which to prune
+     * @return the subtrees that have been pruned.
+     */
+    public synchronized ImmutableList<Node> pruneProof(Node cuttingPoint) {
+        return pruneProof(cuttingPoint, true);
+    }
+
+    public synchronized ImmutableList<Node> pruneProof(Node cuttingPoint, boolean fireChanges) {
+        assert cuttingPoint.proof() == this;
+        if (getOpenGoal(cuttingPoint) != null) {
+            return null;
+        }
+        // abort pruning if the node is closed and pruning in closed branches is disabled
+        if (cuttingPoint.isClosed()) {
+            return null;
+        }
+
+        ProofPruner pruner = new ProofPruner(this);
+        if (fireChanges) {
+            fireProofIsBeingPruned(cuttingPoint);
+        }
+        ImmutableList<Node> result = pruner.prune(cuttingPoint);
+        if (fireChanges) {
+            fireProofGoalsChanged();
+            fireProofPruned(cuttingPoint);
+        }
+        return result;
+    }
+
+
+    /**
+     * Makes a downwards directed breadth first search on the proof tree, starting with node
+     * <code>startNode</code>. The visited notes are reported to the object <code>visitor</code>.
+     * The first reported node is <code>startNode</code>.
+     */
+    public void breadthFirstSearch(Node startNode, ProofVisitor visitor) {
+        ArrayDeque<Node> queue = new ArrayDeque<>();
+        queue.add(startNode);
+        while (!queue.isEmpty()) {
+            Node currentNode = queue.poll();
+            Iterator<Node> it = currentNode.childrenIterator();
+            while (it.hasNext()) {
+                queue.add(it.next());
+            }
+            visitor.visit(this, currentNode);
+        }
+    }
+
+    /**
+     * Bread-first search for the first node, that matches the given predicate.
+     *
+     * @param pred non-null test function
+     * @return a node fulfilling {@code pred} or null
+     */
+    public @Nullable Node findAny(Predicate<Node> pred) {
+        Queue<Node> queue = new LinkedList<>();
+        queue.add(root);
+        while (!queue.isEmpty()) {
+            Node cur = queue.poll();
+            if (pred.test(cur)) {
+                return cur;
+            }
+            Iterator<Node> iter = cur.childrenIterator();
+            while (iter.hasNext()) {
+                queue.add(iter.next());
+            }
+        }
+        return null;
+    }
+
+    public void traverseFromChildToParent(Node child, Node parent, ProofVisitor visitor) {
+        do {
+            visitor.visit(this, child);
+            child = child.parent();
+        } while (child != parent);
+    }
+
+
     /// fires the event that a rule has been applied
     protected void fireRuleApplied(ProofEvent p_e) {
         synchronized (ruleAppListenerList) {
@@ -499,5 +891,35 @@ public class Proof implements ProofObject<Goal>, Named {
                 ral.ruleApplied(p_e);
             }
         }
+    }
+
+    public boolean isDisposed() {
+        return disposed;
+    }
+
+    /**
+     * @param node the Node which is checked for a corresponding closed goal
+     * @return true if the goal that belongs to the given node is closed and false if not or if
+     *         there is no such goal.
+     */
+    public boolean isClosedGoal(Node node) {
+        return getClosedGoal(node) != null;
+    }
+
+
+    /**
+     * Get the closed goal belonging to the given node if it exists.
+     *
+     * @param node the Node where a corresponding closed goal is searched
+     * @return the closed goal that belongs to the given node or null if the node is an inner one or
+     *         an open goal
+     */
+    public Goal getClosedGoal(Node node) {
+        for (final Goal result : closedGoals) {
+            if (result.getNode() == node) {
+                return result;
+            }
+        }
+        return null;
     }
 }

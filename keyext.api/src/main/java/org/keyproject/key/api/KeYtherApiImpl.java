@@ -1,0 +1,518 @@
+/* This file is part of KeY - https://key-project.org
+ * KeY is licensed under the GNU General Public License Version 2
+ * SPDX-License-Identifier: GPL-2.0-only */
+package org.keyproject.key.api;
+
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Stack;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.stream.Stream;
+
+import org.key_project.prover.engine.ProverTaskListener;
+import org.key_project.prover.engine.TaskFinishedInfo;
+import org.key_project.solidity.control.DefaultUserInterfaceControl;
+import org.key_project.solidity.control.KeYEnvironment;
+import org.key_project.solidity.pp.IdentitySequentPrintFilter;
+import org.key_project.solidity.pp.LogicPrinter;
+import org.key_project.solidity.pp.NotationInfo;
+import org.key_project.solidity.pp.PosTableLayouter;
+import org.key_project.solidity.pp.PositionTable;
+import org.key_project.solidity.proof.Goal;
+import org.key_project.solidity.proof.Node;
+import org.key_project.solidity.proof.Proof;
+import org.key_project.solidity.proof.init.IPersistablePO;
+import org.key_project.solidity.proof.init.InitConfig;
+import org.key_project.solidity.proof.init.ProofAggregate;
+import org.key_project.solidity.proof.init.SolidityProfile;
+import org.key_project.solidity.proof.io.AbstractProblemLoader;
+import org.key_project.solidity.proof.io.OutputStreamProofSaver;
+import org.key_project.solidity.proof.io.ProblemLoaderException;
+import org.key_project.solidity.rule.TacletApp;
+import org.key_project.solidity.util.KeYtherConstants;
+import org.key_project.util.collection.ImmutableList;
+
+import org.eclipse.lsp4j.jsonrpc.CompletableFutures;
+import org.eclipse.lsp4j.jsonrpc.messages.Either;
+import org.keyproject.key.api.data.*;
+import org.keyproject.key.api.data.KeyIdentifications.*;
+import org.keyproject.key.api.remoteapi.KeyApi;
+import org.keyproject.key.api.remoteclient.ClientApi;
+
+import static org.key_project.solidity.proof.ProofNodeDescription.collectPathInformation;
+import static org.keyproject.key.api.data.TaskFinishedInfo.*;
+
+
+public final class KeYtherApiImpl implements KeyApi {
+    private final KeyIdentifications data = new KeyIdentifications();
+    private final AtomicInteger uniqueCounter = new AtomicInteger();
+    private final IdentitySequentPrintFilter filter = new IdentitySequentPrintFilter();
+    private final DefaultUserInterfaceControl control = new MyDefaultUserInterfaceControl();
+    private Function<Void, Boolean> exitHandler;
+    private ClientApi clientApi;
+    private final ProverTaskListener clientListener = new ProverTaskListener() {
+        @Override
+        public void taskStarted(org.key_project.prover.engine.TaskStartedInfo info) {
+            clientApi.taskStarted(TaskStartedInfo.from(info));
+        }
+
+        @Override
+        public void taskProgress(int position) {
+            clientApi.taskProgress(position);
+        }
+
+        @Override
+        public void taskFinished(TaskFinishedInfo info) {
+            clientApi.taskFinished(from(info));
+        }
+    };
+
+    public KeYtherApiImpl() {
+    }
+
+    @Override
+    public CompletableFuture<Boolean> shutdown() {
+        return CompletableFuture.completedFuture(true);
+    }
+
+    @Override
+    public void exit() {
+        this.exitHandler.apply(null);
+    }
+
+    public void setExitHandler(Function<Void, Boolean> exitHandler) {
+        this.exitHandler = exitHandler;
+    }
+
+    @Override
+    public void setTrace(SetTraceParams params) {
+
+    }
+
+    @Override
+    public CompletableFuture<String> getVersion() {
+        return CompletableFuture.completedFuture(KeYtherConstants.VERSION);
+    }
+
+    @Override
+    public CompletableFuture<ProofStatus> auto(ProofId proofId, StrategyOptions options) {
+        return CompletableFuture.supplyAsync(() -> {
+            var proof = data.find(proofId);
+            var env = data.find(proofId.env());
+            options.configure(proof);
+            try {
+                env.getProofControl().startAndWaitForAutoMode(proof);
+                // clientListener);
+                return ProofStatus.from(proofId, proof);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+    }
+
+    @Override
+    public CompletableFuture<Boolean> dispose(ProofId id) {
+        data.dispose(id);
+        return CompletableFuture.completedFuture(true);
+    }
+
+    @Override
+    public CompletableFuture<List<NodeDesc>> goals(ProofId proofId, boolean onlyOpened,
+            boolean onlyEnabled) {
+        return CompletableFuture.supplyAsync(() -> {
+            var proof = data.find(proofId);
+            if (onlyOpened && !onlyEnabled) {
+                return asNodeDesc(proofId, proof.openGoals());
+            } else if (onlyEnabled && onlyOpened) {
+                return asNodeDesc(proofId, proof.openEnabledGoals());
+            } else {
+                return asNodeDesc(proofId, proof.openGoals().append(proof.openEnabledGoals()));
+            }
+        });
+    }
+
+    private List<NodeDesc> asNodeDesc(ProofId proofId, ImmutableList<Goal> goals) {
+        return asNodeDesc(proofId, goals.stream().map(Goal::getNode));
+    }
+
+    private List<NodeDesc> asNodeDesc(ProofId proofId, Stream<Node> nodes) {
+        return nodes.map(it -> asNodeDesc(proofId, it)).toList();
+    }
+
+    private NodeDesc asNodeDesc(ProofId proofId, Node it) {
+        return new NodeDesc(proofId, it.getSerialNr(), it.getNodeInfo().getBranchLabel(),
+            false, collectPathInformation(it));
+    }
+
+    @Override
+    public CompletableFuture<NodeDesc> tree(ProofId proofId) {
+        return CompletableFuture.supplyAsync(() -> {
+            var proof = data.find(proofId);
+            return asNodeDescRecursive(proofId, proof.root());
+        });
+    }
+
+    private NodeDesc asNodeDescRecursive(ProofId proofId, Node root) {
+        final List<NodeDesc> list =
+            root.childrenStream().map(it -> asNodeDescRecursive(proofId, it)).toList();
+        return new NodeDesc(new NodeId(proofId, "" + root.getSerialNr()),
+            root.getNodeInfo().getBranchLabel(),
+            false,
+            list, collectPathInformation(root));
+    }
+
+
+    @Override
+    public CompletableFuture<List<NodeDesc>> children(NodeId nodeId) {
+        return CompletableFuture.supplyAsync(() -> {
+            var node = data.find(nodeId);
+            return asNodeDesc(nodeId.proofId(), node.childrenStream());
+        });
+    }
+
+    @Override
+    public CompletableFuture<List<NodeDesc>> pruneTo(NodeId nodeId) {
+        return CompletableFuture.supplyAsync(() -> {
+            var proof = data.find(nodeId.proofId());
+            var node = data.find(nodeId);
+
+            var nodes = proof.pruneProof(node);
+            // Undocumented
+            if (nodes == null) {
+                return new ArrayList<>();
+            }
+
+            return asNodeDesc(nodeId.proofId(), nodes.stream());
+        });
+    }
+
+    @Override
+    public CompletableFuture<Boolean> save(ProofId proofId, String path) {
+        return CompletableFuture.supplyAsync(() -> {
+            var proof = data.find(proofId);
+            var saver = new OutputStreamProofSaver(proof);
+
+            try {
+                var file = new File(path);
+                var writer = new FileOutputStream(file);
+                saver.save(writer);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            return true;
+        });
+    }
+
+    @Override
+    public CompletableFuture<TreeNodeDesc> treeRoot(ProofId proof) {
+        return CompletableFuture.completedFuture(
+            TreeNodeDesc.from(proof, data.find(proof).root()));
+    }
+
+    @Override
+    public CompletableFuture<NodeDesc> root(ProofId proofId) {
+        return CompletableFuture.supplyAsync(() -> {
+            var proof = data.find(proofId);
+            return asNodeDesc(proofId, proof.root());
+        });
+    }
+
+    @Override
+    public CompletableFuture<List<ProofId>> list() {
+        return CompletableFuture.completedFuture(data.allProofIds());
+    }
+
+    @Override
+    public CompletableFuture<List<TreeNodeDesc>> treeChildren(ProofId proof, TreeNodeId nodeId) {
+        return CompletableFuture.supplyAsync(() -> {
+            var serial = Integer.parseInt(nodeId.id());
+
+            Node root = data.find(proof).root();
+            var stack = new Stack<Node>();
+            stack.push(root);
+
+            while (!stack.empty()) {
+                var node = stack.pop();
+                if (node.getSerialNr() == serial) {
+                    var children = new ArrayList<TreeNodeDesc>();
+
+                    var iter = node.childrenIterator();
+                    while (iter.hasNext()) {
+                        var child_node = iter.next();
+                        children.add(TreeNodeDesc.from(proof, child_node));
+                    }
+
+                    return children;
+                }
+
+                var iter = node.childrenIterator();
+                while (iter.hasNext()) {
+                    var child_node = iter.next();
+                    stack.push(child_node);
+                }
+            }
+
+            return List.of();
+        });
+    }
+
+    @Override
+    public CompletableFuture<List<TreeNodeDesc>> treeSubtree(ProofId proof, TreeNodeId nodeId) {
+        return null;
+    }
+
+    @Override
+    public CompletableFuture<List<SortDesc>> sorts(EnvironmentId envId) {
+        return CompletableFuture.supplyAsync(() -> {
+            var env = data.find(envId);
+            var sorts = env.getServices().getNamespaces().sorts().allElements();
+            return sorts.stream().map(SortDesc::from).toList();
+        });
+    }
+
+    @Override
+    public CompletableFuture<List<FunctionDesc>> functions(EnvironmentId envId) {
+        return CompletableFuture.supplyAsync(() -> {
+            var env = data.find(envId);
+            var functions = env.getServices().getNamespaces().functions().allElements();
+            return functions.stream().map(FunctionDesc::from).toList();
+        });
+    }
+
+    @Override
+    public CompletableFuture<List<ContractDesc>> contracts(EnvironmentId envId) {
+        return CompletableFuture.completedFuture(List.of());
+    }
+
+    @Override
+    public CompletableFuture<ProofId> openContract(ContractId contractId) {
+        return null;
+    }
+
+    @Override
+    public CompletableFuture<Boolean> disposeEnv(EnvironmentId environmentId) {
+        data.dispose(environmentId);
+        return CompletableFuture.completedFuture(
+            true);
+    }
+
+    @Override
+    public CompletableFuture<NodeTextDesc> print(NodeId nodeId, PrintOptions options) {
+        return CompletableFuture.supplyAsync(() -> {
+            var node = data.find(nodeId);
+            var env = data.find(nodeId.proofId().env());
+            var notInfo = new NotationInfo();
+            final var layouter =
+                new PosTableLayouter(options.width(), options.indentation(), options.pure());
+            var lp = new LogicPrinter(notInfo, env.getServices(), layouter);
+            lp.printSequent(node.sequent());
+
+            var id = new NodeTextId(nodeId, uniqueCounter.getAndIncrement());
+            var t = new NodeText(lp.result(), layouter.getInitialPositionTable());
+            data.register(id, t);
+
+            String tacletApplicationInfo = null;
+            var rule = node.getAppliedRuleApp();
+            if (rule instanceof TacletApp tapp) {
+                var taclet = tapp.taclet();
+                tacletApplicationInfo = taclet.toString();
+            }
+
+            var terms = expandTermsForTable(layouter.getInitialPositionTable());
+            return new NodeTextDesc(id, lp.result(), terms, tacletApplicationInfo);
+        });
+    }
+
+    private NodeTextSpan[] expandTermsForTable(PositionTable table) {
+        int nonEmptyRanges = 0;
+        for (int i = 0; i < table.getRows(); i++) {
+            if (table.getRange(i).length() != 0) {
+                nonEmptyRanges++;
+            }
+        }
+
+        var terms = new NodeTextSpan[nonEmptyRanges];
+        int j = 0;
+        for (int i = 0; i < table.getRows(); i++) {
+            var range = table.getRange(i);
+            if (range.length() == 0) {
+                continue;
+            }
+
+            var children = expandTermsForTable(table.getChild(i));
+            terms[j] = new NodeTextSpan(range.start(), range.end(), children);
+            j++;
+        }
+
+        return terms;
+    }
+
+    @Override
+    public CompletableFuture<List<TermActionDesc>> actions(NodeTextId printId, int caretPos) {
+        return CompletableFuture.supplyAsync(() -> {
+            var node = data.find(printId.nodeId());
+            var proof = data.find(printId.nodeId().proofId());
+            var goal = proof.getOpenGoal(node);
+            var nodeText = data.find(printId);
+
+            var filter = new IdentitySequentPrintFilter();
+            filter.setSequent(node.sequent());
+
+            var pis = nodeText.table().getPosInSequent(caretPos, filter);
+            return new TermActionUtil(printId, data.find(printId.nodeId().proofId().env()), pis,
+                goal, caretPos)
+                    .getActions();
+        });
+    }
+
+    @Override
+    public CompletableFuture<Boolean> applyAction(TermActionId id) {
+        // FIXME: We can probably cache this work in `actions`.
+        return CompletableFuture.supplyAsync(() -> {
+            var node = data.find(id.nodeTextId().nodeId());
+            var proof = data.find(id.nodeTextId().nodeId().proofId());
+            var goal = proof.getOpenGoal(node);
+            var nodeText = data.find(id.nodeTextId());
+
+            var filter = new IdentitySequentPrintFilter();
+            filter.setSequent(node.sequent());
+
+            var pis = nodeText.table().getPosInSequent(id.caretPos(), filter);
+            var util = new TermActionUtil(id.nodeTextId(),
+                data.find(id.nodeTextId().nodeId().proofId().env()), pis, goal, id.caretPos());
+
+            var env = data.find(id.nodeTextId().nodeId().proofId().env());
+            return util.applyAction(id, env.getServices());
+        });
+    }
+
+    @Override
+    public void freePrint(NodeTextId printId) {
+        CompletableFuture.runAsync(() -> data.dispose(printId));
+    }
+
+    public void setClientApi(ClientApi remoteProxy) {
+        clientApi = remoteProxy;
+    }
+
+    @Override
+    public CompletableFuture<ProofId> loadProblem(ProblemDefinition problem) {
+        return CompletableFutures.computeAsync((c) -> {
+            /*
+             * var loader = control.load(JavaProfile.getDefaultProfile(),
+             * ex.getObligationFile(), null, null, null, null, true, null);
+             * InitConfig initConfig = loader.getInitConfig();
+             *
+             * env = new KeYEnvironment<>(control, initConfig, loader.getProof(),
+             * loader.getProofScript(), loader.getResult());
+             * var envId = new EnvironmentId(env.toString());
+             * data.register(envId, env);
+             * proof = Objects.requireNonNull(env.getLoadedProof());
+             * var proofId = new ProofId(envId, proof.name().toString());
+             * return data.register(proofId, proof);
+             */
+            return null;
+        });
+
+    }
+
+    @Override
+    public CompletableFuture<ProofId> loadKey(String content) {
+        return CompletableFutures.computeAsync((c) -> {
+            Proof proof;
+            KeYEnvironment<?> env = null;
+            try {
+                final var tempFile = File.createTempFile("json-rpc-", ".key");
+                Files.writeString(tempFile.toPath(), content);
+                var loader = control.load(SolidityProfile.getDefaultInstance(),
+                    tempFile.toPath(), null, null, true, null);
+                InitConfig initConfig = loader.getInitConfig();
+                env = new KeYEnvironment<>(control, initConfig, loader.getProof(),
+                    loader.getResult());
+                var envId = new EnvironmentId(env.toString());
+                data.register(envId, env);
+                proof = Objects.requireNonNull(env.getLoadedProof());
+                var proofId = new ProofId(envId, proof.name().toString());
+                return data.register(proofId, proof);
+            } catch (ProblemLoaderException | IOException e) {
+                if (env != null)
+                    env.dispose();
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @Override
+    public CompletableFuture<ProofId> loadTerm(String term) {
+        return loadKey("\\problem{ " + term + " }");
+    }
+
+    @Override
+    public CompletableFuture<Either<EnvironmentId, ProofId>> load(LoadParams params) {
+        return CompletableFutures.computeAsync((c) -> {
+            Proof proof;
+            KeYEnvironment<?> env;
+            try {
+                var loader = control.load(SolidityProfile.getDefaultInstance(),
+                    params.problemFile() != null ? params.problemFile().asPath() : null,
+                    params.includes() != null ? params.includes().stream().map(Uri::asPath).toList()
+                            : null,
+                    null,
+                    true,
+                    null);
+                InitConfig initConfig = loader.getInitConfig();
+                env = new KeYEnvironment<>(control, initConfig, loader.getProof(),
+                    loader.getResult());
+                var envId = new EnvironmentId(env.toString());
+                data.register(envId, env);
+                if ((proof = env.getLoadedProof()) != null) {
+                    var proofId = new ProofId(envId, proof.name().toString());
+                    return Either.forRight(data.register(proofId, proof));
+                } else {
+                    return Either.forLeft(envId);
+                }
+            } catch (ProblemLoaderException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    private class MyDefaultUserInterfaceControl extends DefaultUserInterfaceControl {
+        @Override
+        public void taskStarted(org.key_project.prover.engine.TaskStartedInfo info) {
+            clientApi.taskStarted(TaskStartedInfo.from(info));
+        }
+
+        @Override
+        public void taskProgress(int position) {
+            clientApi.taskProgress(position);
+        }
+
+        @Override
+        public void taskFinished(TaskFinishedInfo info) {
+            clientApi.taskFinished(from(info));
+        }
+
+        @Override
+        public void loadingStarted(AbstractProblemLoader loader) {
+            super.loadingStarted(loader);
+        }
+
+        @Override
+        public void loadingFinished(AbstractProblemLoader loader,
+                IPersistablePO.LoadedPOContainer poContainer, ProofAggregate proofList,
+                AbstractProblemLoader.ReplayResult result) throws ProblemLoaderException {
+            super.loadingFinished(loader, poContainer, proofList, result);
+        }
+    }
+}

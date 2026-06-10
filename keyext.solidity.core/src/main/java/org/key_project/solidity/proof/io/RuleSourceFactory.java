@@ -3,15 +3,18 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.io;
 
-
-import java.io.File;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import org.key_project.solidity.proof.Proof;
+import org.key_project.solidity.util.KeYResourceManager;
 
 public class RuleSourceFactory {
 
-    /// Use this key to set a system property where rule resources have to be looked up.
+    /**
+     * Use this key to set a system property where rule resources have to be looked up.
+     */
     public static final String STD_TACLET_DIR_PROP_KEY = "org.key_project.stdTacletDirectory";
 
     private static final String PATH_TO_RULES = "rules/";
@@ -20,16 +23,13 @@ public class RuleSourceFactory {
         String stdTacletDir = System.getProperty(STD_TACLET_DIR_PROP_KEY);
         if (stdTacletDir == null) {
             return fromBuiltInRule(ruleFileName);
-
         } else {
-            return initRuleFile(new File(stdTacletDir, ruleFileName));
+            return initRuleFile(Paths.get(stdTacletDir, ruleFileName));
         }
     }
 
-
     public static RuleSource fromBuiltInRule(final String ruleFileName) {
-        // final URL u = KeYResourceManager.getManager().getResourceFile(Proof.class,
-        final URL u = getResourceFile(Proof.class,
+        final URL u = KeYResourceManager.getManager().getResourceFile(Proof.class,
             PATH_TO_RULES + ruleFileName);
         if (u == null) {
             // a more specific exception type would probably be better
@@ -38,31 +38,22 @@ public class RuleSourceFactory {
         return new UrlRuleSource(u);
     }
 
-    // TODO very hacky test; method from KeYResourceManager pasted here
-    public static URL getResourceFile(Class<?> cl, String resourcename) {
-        URL resourceURL = cl.getResource(resourcename);
-        if (resourceURL == null && cl.getSuperclass() != null) {
-            return getResourceFile(cl.getSuperclass(), resourcename);
-        } else if (resourceURL == null && cl.getSuperclass() == null) {
-            return null;
-        }
-        return resourceURL;
-    }
-
     public static RuleSource initRuleFile(final URL url) {
         return new UrlRuleSource(url);
     }
 
-    public static RuleSource initRuleFile(final File file) {
+    public static RuleSource initRuleFile(final Path file) {
         return initRuleFile(file, false);
     }
 
-    /// Initialise this object from a file
-    ///
-    /// @param file the non-<code>null</code> file reference
-    /// @param compressed <code>true</code> iff the file is gzip-compressed
-    /// @return the rule source read from the file.
-    public static RuleSource initRuleFile(final File file, boolean compressed) {
+    /**
+     * Initialise this object from a file
+     *
+     * @param file the non-<code>null</code> file reference
+     * @param compressed <code>true</code> iff the file is gzip-compressed
+     * @return the rule source read from the file.
+     */
+    public static RuleSource initRuleFile(final Path file, boolean compressed) {
         if (compressed) {
             return new GZipFileRuleSource(file);
         } else {

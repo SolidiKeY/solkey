@@ -7,6 +7,7 @@ import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.*;
@@ -157,11 +158,11 @@ public class PrettyPrinter implements Visitor {
 
         maybeParens(left, x.getOperator().precedence());
 
-        layouter.brk();
+        layouter.print(" ");
 
         x.getOperator().visit(this);
 
-        layouter.brk();
+        layouter.print(" ");
 
         maybeParens(right, x.getOperator().precedence());
     }
@@ -199,9 +200,9 @@ public class PrettyPrinter implements Visitor {
     @Override
     public void performActionOnTernaryExpression(TernaryExpression x) {
         maybeParens(x.getCondition(), x.getPrecedence());
-        layouter.brk().print("?").brk();
+        layouter.print(" ").print("?").brk();
         maybeParens(x.getTrueExpression(), x.getPrecedence());
-        layouter.brk().print(":").brk();
+        layouter.print(" ").print(":").brk();
         maybeParens(x.getFalseExpression(), x.getPrecedence());
     }
 
@@ -212,31 +213,32 @@ public class PrettyPrinter implements Visitor {
 
     @Override
     public void performActionOnEnumReference(EnumReference x) {
-        layouter.print(
-            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
+        layouter.print(x.mainProgramElement().name().toString());
     }
 
     @Override
     public void performActionOnFunctionReference(FunctionReference x) {
-        layouter.print(
-            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
+        if (x.referencedDeclaration != null) {
+            layouter.print(x.referencedDeclaration.name().toString());
+        } else {
+            // Not yet resolved; fall back to the numeric reference.
+            layouter.print("fn#" + x.id);
+        }
     }
 
     @Override
     public void performActionOnModifierReference(ModifierReference x) {
-        layouter.print(
-            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
+        layouter.print(x.name);
     }
 
     @Override
     public void performActionOnTypeReference(TypeReference x) {
-        layouter.print(
-            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
+        layouter.print(x.getTypeName().toString());
     }
 
     @Override
     public void performActionOnUnresolvedReferenceException(UnresolvedReferenceException x) {
-
+        layouter.print("<unresolved: " + x.getMessage() + ">");
     }
 
     private void beginBlock() {
@@ -265,8 +267,34 @@ public class PrettyPrinter implements Visitor {
     }
 
     @Override
-    public void performActionOnCatchClause(CatchClause catchClause) {
-
+    public void performActionOnCatchClause(CatchClause x) {
+        layouter.keyWord("catch");
+        // Derive the catch kind from the declared variable's type the same way the
+        // CatchClause constructor does (its Kind enum is not visible here):
+        // uint -> catch Panic(uint code)
+        // string-> catch Error(string memory reason)
+        // bytes -> catch (bytes memory data) (low-level)
+        // none -> catch
+        StatementVariableDeclaration decl = null;
+        try {
+            decl = x.getCatchDeclaration();
+        } catch (RuntimeException ignored) {
+            // no declaration -> catch-all
+        }
+        if (decl != null) {
+            var type = decl.getProgramVariable().getType();
+            String typeName = type != null ? type.toString() : "";
+            if ("uint".equals(typeName) || "uint256".equals(typeName)) {
+                layouter.print(" ").print("Panic");
+            } else if ("string".equals(typeName)) {
+                layouter.print(" ").print("Error");
+            }
+            layouter.print("(");
+            decl.visit(this);
+            layouter.print(")");
+        }
+        layouter.print(" ");
+        x.getBody().visit(this);
     }
 
     @Override
@@ -297,12 +325,16 @@ public class PrettyPrinter implements Visitor {
 
     @Override
     public void performActionOnBreakStatement(BreakStatement x) {
-        layouter.print("break;");
+        markStart(x);
+        layouter.keyWord("break");
+        layouter.print(";");
+        markEnd(x);
     }
 
     @Override
     public void performActionOnConditionStatement(ConditionStatement x) {
-        layouter.print("if");
+        markStart(x);
+        layouter.keyWord("if").print(" ");
         layouter.print("(");
         x.getCondition().visit(this);
         layouter.print(")");
@@ -310,91 +342,169 @@ public class PrettyPrinter implements Visitor {
         x.getThenBody().visit(this);
         layouter.end();
         if (x.getElseBody() != null) {
-            layouter.print("else");
+            layouter.brk(1);
+            layouter.keyWord("else");
             layouter.beginRelativeC().brk(1);
             x.getElseBody().visit(this);
             layouter.end();
         }
+        markEnd(x);
     }
 
     @Override
     public void performActionOnContinueStatement(ContinueStatement x) {
-        layouter.print("continue;");
+        markStart(x);
+        layouter.keyWord("continue");
+        layouter.print(";");
+        markEnd(x);
     }
 
     @Override
     public void performActionOnDeclarationStatement(DeclarationStatement x) {
-        layouter.print(
-            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
+        markStart(x);
+        var decls = x.getDeclarations();
+        boolean tuple = decls.size() > 1;
+        if (tuple) {
+            layouter.print("(");
+        }
+        for (int i = 0; i < decls.size(); i++) {
+            if (i != 0) {
+                layouter.print(",").brk();
+            }
+            if (decls.get(i) instanceof SolidityProgramElement pe) {
+                pe.visit(this);
+            } else {
+                layouter.print(decls.get(i).toString());
+            }
+        }
+        if (tuple) {
+            layouter.print(")");
+        }
+        if (x.getInitialValue() != null) {
+            layouter.print(" = ");
+            x.getInitialValue().visit(this);
+        }
+        layouter.print(";");
+        markEnd(x);
     }
 
     @Override
     public void performActionOnExpressionStatement(ExpressionStatement x) {
+        markStart(x);
         x.getExpression().visit(this);
         layouter.print(";");
+        markEnd(x);
     }
 
     @Override
     public void performActionOnForStatement(ForStatement x) {
-        layouter.print(
-            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
+        markStart(x);
+        layouter.keyWord("for").print(" ");
+        layouter.print("(");
+        if (x.getInit() != null) {
+            x.getInit().visit(this);
+        }
+        layouter.print(";");
+        if (x.getCondition() != null) {
+            layouter.brk();
+            x.getCondition().visit(this);
+        }
+        layouter.print(";");
+        if (x.getUpdate() != null) {
+            layouter.brk();
+            x.getUpdate().visit(this);
+        }
+        layouter.print(")");
+        layouter.beginRelativeC().brk(1);
+        x.getBody().visit(this);
+        layouter.end();
+        markEnd(x);
     }
 
     @Override
     public void performActionOnForInit(ForInit x) {
-        layouter.print(
-            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
+        x.getInit().visit(this);
     }
 
     @Override
     public void performActionOnForUpdate(ForUpdate x) {
-        layouter.print(
-            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
+        x.getUpdate().visit(this);
     }
 
 
     @Override
     public void performActionOnDoWhileStatement(DoWhileStatement x) {
-        layouter.print("do");
+        markStart(x);
+        layouter.keyWord("do");
         layouter.beginRelativeC().brk(1);
         x.getBody().visit(this);
         layouter.end();
-        layouter.print("while").brk();
+        layouter.brk(1);
+        layouter.keyWord("while").print(" ");
         layouter.print("(");
         x.getCondition().visit(this);
-        layouter.print(")");
+        layouter.print(")").print(";");
+        markEnd(x);
     }
 
     @Override
     public void performActionOnWhileStatement(WhileStatement x) {
-        layouter.print("while").brk();
+        markStart(x);
+        layouter.keyWord("while").print(" ");
         layouter.print("(");
         x.getCondition().visit(this);
         layouter.print(")");
         layouter.beginRelativeC().brk(1);
         x.getBody().visit(this);
         layouter.end();
+        markEnd(x);
     }
 
 
     @Override
     public void performActionOnPlaceholdStatement(PlaceholdStatement x) {
+        markStart(x);
         layouter.print("_").print(";");
+        markEnd(x);
     }
 
     @Override
     public void performActionOnReturnStatment(ReturnStatement x) {
-        layouter.print("return").brk();
+        markStart(x);
+        layouter.keyWord("return");
         if (x.getChildCount() > 0) {
+            layouter.print(" ");
             x.getReturnExp().visit(this);
         }
         layouter.print(";");
+        markEnd(x);
     }
 
     @Override
     public void performActionOnTryStatement(TryStatement x) {
-        layouter.print(
-            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
+        markStart(x);
+        layouter.keyWord("try").print(" ");
+        x.getExpression().visit(this);
+        if (x.getReturnCount() > 0) {
+            layouter.print(" ");
+            layouter.keyWord("returns");
+            layouter.print(" ").print("(");
+            var rets = x.getReturnDeclaration();
+            for (int i = 0; i < rets.size(); i++) {
+                if (i != 0) {
+                    layouter.print(",").brk();
+                }
+                rets.get(i).visit(this);
+            }
+            layouter.print(")");
+        }
+        layouter.print(" ");
+        x.getBody().visit(this);
+        for (CatchClause cc : x.getCatchClauses()) {
+            layouter.print(" ");
+            cc.visit(this);
+        }
+        markEnd(x);
     }
 
 
@@ -434,8 +544,14 @@ public class PrettyPrinter implements Visitor {
 
     @Override
     public void performActionOnStatementVariableDeclaration(StatementVariableDeclaration x) {
-        layouter.print(
-            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
+        var pv = x.getProgramVariable();
+        layouter.print(pv.getType().toString()).print(" ");
+        var loc = pv.getDataLocation();
+        if (loc != null && loc != DataLocation.Default) {
+            loc.visit(this);
+            layouter.print(" ");
+        }
+        pv.visit(this);
     }
 
     @Override
@@ -459,38 +575,62 @@ public class PrettyPrinter implements Visitor {
 
     @Override
     public void performActionOnIndexExpression(IndexExpression x) {
-        layouter.print(
-            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
+        x.getLeftExp().visit(this);
+        layouter.print("[");
+        x.getIndexExp().visit(this);
+        layouter.print("]");
     }
 
     @Override
     public void performActionOnIndexRangeExpression(IndexRangeExpression x) {
-        layouter.print(
-            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
+        x.getBaseExp().visit(this);
+        layouter.print("[");
+        if (x.getStartExp() != null) {
+            x.getStartExp().visit(this);
+        }
+        layouter.print(":");
+        if (x.getEndExp() != null) {
+            x.getEndExp().visit(this);
+        }
+        layouter.print("]");
     }
 
     @Override
     public void performActionOnMemberExp(MemberExp x) {
-        layouter.print(
-            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
+        x.getLeftExp().visit(this);
+        layouter.print(".");
+        var right = x.getRightExp();
+        if (right instanceof FunctionDeclaration fd) {
+            layouter.print(fd.name().toString());
+        } else if (right instanceof SolidityProgramElement pe) {
+            pe.visit(this);
+        } else {
+            layouter.print(String.valueOf(right));
+        }
     }
 
     @Override
     public void performActionOnTupleExpression(TupleExpression x) {
-        layouter.print(
-            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
+        layouter.print("(");
+        for (int i = 0; i < x.getChildCount(); i++) {
+            if (i != 0) {
+                layouter.print(",").brk();
+            }
+            x.getExpression(i).visit(this);
+        }
+        layouter.print(")");
     }
 
     @Override
     public void performActionOnNewExpression(NewExpression x) {
-        layouter.print(
-            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
+        layouter.keyWord("new").print(" ");
+        layouter.print(x.getFunction());
+        layouter.print("()");
     }
 
     @Override
     public void performActionOnUnresolvedTypeException(UnresolvedTypeException x) {
-        layouter.print(
-            "PRETTY PRINTING OF " + x.getClass() + " PROGRAM ELEMENTS NOT YET IMPLEMENTED.");
+        layouter.print("<unresolved type: " + x.getMessage() + ">");
     }
 
     @Override

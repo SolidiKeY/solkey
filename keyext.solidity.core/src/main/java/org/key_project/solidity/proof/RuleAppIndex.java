@@ -228,6 +228,15 @@ public class RuleAppIndex {
         automatedTacletAppIndex.removedNoPosTacletApp(tacletApp);
     }
 
+    /**
+     * Empties all caches
+     */
+    public void clearAndDetachCache() {
+        // Currently this only applies to the taclet index
+        interactiveTacletAppIndex.clearAndDetachCache();
+        automatedTacletAppIndex.clearAndDetachCache();
+    }
+
     /// Empties all caches
     public void clearIndexes() {
         // Currently this only applies to the taclet index
@@ -279,4 +288,5 @@ public class RuleAppIndex {
 
         return result;
     }
+
 }

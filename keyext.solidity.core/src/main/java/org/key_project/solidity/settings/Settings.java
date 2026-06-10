@@ -4,6 +4,10 @@
 package org.key_project.solidity.settings;
 
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.io.StringWriter;
+
 import org.jspecify.annotations.NonNull;
 
 /// This interface is implemented by classes that are used to store settings for different proposes
@@ -28,4 +32,50 @@ public interface Settings {
     /// accordingly to the local
     /// internal state.
     void writeSettings(@NonNull Configuration props);
+
+    /// Returns the JSON representation of this settings in a string.
+    default String writeSettingsToString() {
+        var config = new Configuration();
+        var out = new StringWriter();
+        writeSettings(config);
+        config.save(out, null);
+        return out.toString();
+    }
+
+
+    /**
+     * Register a new listener which is triggered for changes on properties.
+     *
+     * @param listener a non-null reference
+     * @see PropertyChangeSupport#addPropertyChangeListener(PropertyChangeListener)
+     */
+    void addPropertyChangeListener(@NonNull PropertyChangeListener listener);
+
+    /**
+     * Removes the given listener.
+     *
+     * @param listener a non-null reference
+     * @see PropertyChangeSupport#removePropertyChangeListener(PropertyChangeListener)
+     */
+    void removePropertyChangeListener(PropertyChangeListener listener);
+
+    /**
+     * Register a new listener which is triggered for changes on the specified property.
+     *
+     * @param propertyName the name for identification of the property
+     * @param listener the listener to be added
+     * @see PropertyChangeSupport#addPropertyChangeListener(String, PropertyChangeListener)
+     */
+    void addPropertyChangeListener(@NonNull String propertyName,
+            @NonNull PropertyChangeListener listener);
+
+    /**
+     * Removes the given listener from being triggered by changes of the specified property.
+     *
+     * @param propertyName the name for identification of the property
+     * @param listener the listener to be removed
+     * @see PropertyChangeSupport#removePropertyChangeListener(String, PropertyChangeListener)
+     */
+    void removePropertyChangeListener(@NonNull String propertyName,
+            @NonNull PropertyChangeListener listener);
 }

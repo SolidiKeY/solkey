@@ -36,13 +36,13 @@ import org.jspecify.annotations.Nullable;
 
 public abstract class AbstractProblemLoader {
     /// The file or folder to load.
-    private final File file;
+    private final Path file;
 
     /// The filename of the proof in the zipped file (null if file is not a proof bundle).
     private File proofFilename;
 
     /// The global includes to use.
-    private final @Nullable List<File> includes;
+    private final @Nullable List<Path> includes;
 
     /// The [ProblemLoaderControl] to use.
     private final @Nullable ProblemLoaderControl control;
@@ -79,8 +79,8 @@ public abstract class AbstractProblemLoader {
     /// [#selectProofObligation(InitConfig)] if no [Proof] is
     /// defined by the loaded proof or `false` otherwise which still allows to work with
     /// the loaded [InitConfig].
-    protected AbstractProblemLoader(File file,
-            @Nullable List<File> includes, @Nullable Profile profileOfNewProofs,
+    protected AbstractProblemLoader(Path file,
+            @Nullable List<Path> includes, @Nullable Profile profileOfNewProofs,
             @Nullable ProblemLoaderControl control) {
         this.file = file;
         this.control = control;
@@ -213,21 +213,21 @@ public abstract class AbstractProblemLoader {
     /// @return The created [EnvInput].
     /// @throws IOException Occurred Exception.
     protected EnvInput createEnvInput(FileRepo fileRepo) throws IOException {
-        final String filename = file.getName();
+        final String filename = file.toFile().getName();
 
         // set the root directory of the FileRepo (used for resolving paths)
-        fileRepo.setBaseDir(file.toPath());
+        fileRepo.setBaseDir(file);
 
         if (filename.endsWith(".sol")) {
-            // rust file, probably enriched by specifications
+            // solidity file, probably enriched by specifications
             SLEnvInput ret = null;
-            if (file.getParentFile() == null) {
-                ret = new SLEnvInput(".", profileOfNewProofs, includes);
+            if (file.getParent() == null) {
+                ret = new SLEnvInput(Paths.get("."), profileOfNewProofs, includes);
             } else {
-                ret = new SLEnvInput(file.getParentFile().getAbsolutePath(), profileOfNewProofs,
+                ret = new SLEnvInput(file.getParent().toAbsolutePath(), profileOfNewProofs,
                     includes);
             }
-            ret.setRustFile(file.getAbsolutePath());
+            ret.setSolidityFile(file.toAbsolutePath());
             return ret;
         } else if (filename.endsWith(".zproof")) { // zipped proof package
             /*
@@ -241,7 +241,7 @@ public abstract class AbstractProblemLoader {
             if (proofFilename == null) { // no proof to load given -> try to determine one
                 // create a list of all *.proof files (only top level in bundle)
                 List<Path> proofs;
-                try (ZipFile bundle = new ZipFile(file)) {
+                try (ZipFile bundle = new ZipFile(file.toFile())) {
                     proofs = bundle.stream().filter(e -> !e.isDirectory())
                             .filter(e -> e.getName().endsWith(".proof"))
                             .map(e -> Paths.get(e.getName())).collect(Collectors.toList());
@@ -260,7 +260,7 @@ public abstract class AbstractProblemLoader {
 
             // unzip to a temporary directory
             Path tmpDir = Files.createTempDirectory("KeYunzip");
-            IOUtil.extractZip(file.toPath(), tmpDir);
+            IOUtil.extractZip(file.toAbsolutePath(), tmpDir);
 
             // hook for deleting tmpDir + content at program exit
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -283,18 +283,17 @@ public abstract class AbstractProblemLoader {
             // construct the absolute path to the unzipped proof file
             Path unzippedProof = tmpDir.resolve(proofFilename.toPath());
 
-            return new KeYUserProblemFile(unzippedProof.toString(), unzippedProof.toFile(),
+            return new KeYUserProblemFile(unzippedProof.toString(), unzippedProof,
                 fileRepo, profileOfNewProofs, false);
         } else if (filename.endsWith(".key") || filename.endsWith(".proof")
                 || filename.endsWith(".proof.gz")) {
             // KeY problem specification or saved proof
             return new KeYUserProblemFile(filename, file, fileRepo, profileOfNewProofs,
                 filename.endsWith(".proof.gz"));
-        } else if (file.isDirectory()) {
-            // directory containing java sources, probably enriched
+        } else if (Files.isDirectory(file)) {
+            // directory containing Java sources, probably enriched
             // by specifications
-            return new SLEnvInput(file.getPath(), profileOfNewProofs,
-                includes);
+            return new SLEnvInput(file, profileOfNewProofs, includes);
         } else {
             if (filename.lastIndexOf('.') != -1) {
                 throw new IllegalArgumentException("Unsupported file extension '"
@@ -382,7 +381,7 @@ public abstract class AbstractProblemLoader {
     private LoadedPOContainer loadByProofObligation(Configuration proofObligation)
             throws Exception {
         // Load proof obligation settings
-        proofObligation.set("#key.filename", file.getAbsolutePath());
+        proofObligation.set("#key.filename", file.toAbsolutePath());
 
         /*
          * if (poPropertiesToForce != null) {
@@ -461,7 +460,7 @@ public abstract class AbstractProblemLoader {
     /// Returns the file or folder to load.
     ///
     /// @return The file or folder to load.
-    public File getFile() {
+    public Path getFile() {
         return file;
     }
 
