@@ -85,7 +85,7 @@ public class TermActionUtil {
         this.nodeTextId = nodeTextId;
         occ = pos.getPosInOccurrence();
         ProofControl c = env.getUi().getProofControl();
-        final ImmutableList<BuiltInRule> builtInRules = c.getBuiltInRule(goal, occ);
+//        final ImmutableList<BuiltInRule> builtInRules = c.getBuiltInRule(goal, occ);
 
 
         ImmutableList<? extends TacletApp> findTaclets =

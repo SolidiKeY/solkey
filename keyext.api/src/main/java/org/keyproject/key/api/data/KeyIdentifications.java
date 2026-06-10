@@ -90,6 +90,14 @@ public class KeyIdentifications {
         return proofId;
     }
 
+    /// All proofs currently registered (across all environments).
+    /// Used to let a reconnecting client resume existing proofs.
+    public java.util.List<ProofId> allProofIds() {
+        var result = new java.util.ArrayList<ProofId>();
+        mapEnv.forEach((envId, c) -> result.addAll(c.mapProof().keySet()));
+        return result;
+    }
+
 
     /**
      * @author Alexander Weigl

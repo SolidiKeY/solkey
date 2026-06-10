@@ -228,6 +228,11 @@ public final class KeYtherApiImpl implements KeyApi {
     }
 
     @Override
+    public CompletableFuture<List<ProofId>> list() {
+        return CompletableFuture.completedFuture(data.allProofIds());
+    }
+
+    @Override
     public CompletableFuture<List<TreeNodeDesc>> treeChildren(ProofId proof, TreeNodeId nodeId) {
         return CompletableFuture.supplyAsync(() -> {
             var serial = Integer.parseInt(nodeId.id());

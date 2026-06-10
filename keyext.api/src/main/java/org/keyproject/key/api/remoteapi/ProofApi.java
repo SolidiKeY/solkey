@@ -28,6 +28,14 @@ public interface ProofApi {
     @JsonRequest
     CompletableFuture<NodeDesc> root(ProofId proofId);
 
+    /**
+     * Lists the proofs currently loaded on the server. Since the server keeps
+     * its state across client connections, a reconnecting client can use this
+     * to resume an existing proof.
+     */
+    @JsonRequest
+    CompletableFuture<List<ProofId>> list();
+
     // /**
     // * Executes the given {@code script} against the proof using the given {@code options}.
     // *
