@@ -3,21 +3,20 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.keyproject.key.api.data;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 import org.key_project.solidity.control.KeYEnvironment;
 import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.proof.Proof;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
-
 /**
  * @author Alexander Weigl
  * @version 1 (29.10.23)
  */
 public class KeyIdentifications {
-    private final BiMap<EnvironmentId, KeyEnvironmentContainer> mapEnv = HashBiMap.create(16);
+    private final Map<EnvironmentId, KeyEnvironmentContainer> mapEnv = new HashMap<>(16);
 
     public KeyEnvironmentContainer getContainer(EnvironmentId environmentId) {
         return Objects.requireNonNull(mapEnv.get(environmentId),
@@ -154,10 +153,10 @@ public class KeyIdentifications {
      * @version 1 (28.10.23)
      */
     public record KeyEnvironmentContainer(KeYEnvironment<?> env,
-            BiMap<ProofId, ProofContainer> mapProof) {
+            Map<ProofId, ProofContainer> mapProof) {
 
         public KeyEnvironmentContainer(KeYEnvironment<?> env) {
-            this(env, HashBiMap.create(1));
+            this(env, new HashMap<>(1));
         }
 
         void dispose() {
@@ -167,11 +166,14 @@ public class KeyIdentifications {
     }
 
     private record ProofContainer(Proof wProof,
-            BiMap<NodeId, Node> mapNode,
-            BiMap<TreeNodeId, TreeNodeDesc> mapTreeNode,
-            BiMap<NodeTextId, NodeText> mapGoalText) {
+            Map<NodeId, Node> mapNode,
+            Map<TreeNodeId, TreeNodeDesc> mapTreeNode,
+            // A plain Map, NOT a BiMap: values are records with structural
+            // equality, and printing the same goal twice (e.g. pure prints,
+            // where the position table is null) yields equal values.
+            Map<NodeTextId, NodeText> mapGoalText) {
         public ProofContainer(Proof proof) {
-            this(proof, HashBiMap.create(16), HashBiMap.create(16), HashBiMap.create(16));
+            this(proof, new HashMap<>(16), new HashMap<>(16), new HashMap<>(16));
         }
 
         void dispose() {
