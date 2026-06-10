@@ -4,418 +4,235 @@
 package org.key_project.solidity.program.ast;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.op.Function;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.abstractions.*;
+import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
+import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.StateVariableDeclaration;
-import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.theory.TheoryInfo;
 
-import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.*;
+import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.INT256;
 
-/**
- * This class is responsible to answer queries about the solidity program model
- * Such queries are for instance: all declared and known contracts, all functions for
- * a contract, finding a contract by name or a function declaration by its signature,
- * providing the type and KeYSolidityType by name etc.
- */
+/// The queryable result of reading a Solidity program: declared contracts and
+/// their functions, the registered types, and the state variables.
+///
+/// SolidityInfo stores **final results only**. Partially built
+/// [KeYSolid ityType]s (which exist temporarily while cyclic type references
+/// are being resolved, see the [KeYSolidityType] class doc) live inside the
+/// parsers and may be registered here only once they are complete —
+/// [#put(KeYSolidityType)] enforces this.
 public class SolidityInfo {
-    private static Logger LOGGER = LoggerFactory.getLogger(SolidityInfo.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SolidityInfo.class);
 
-    // This map mixes several kinds of types leading to class cast expressions
-    // Kep the information strictly separate
-    // have one mapping for Solidity types to KeYSolidityTypes and vice versa
-    // not sure if we need a name to type mapping at all
+    /// Solidity AST type → KeYSolidityType (and the same by type name).
     private final Map<Type, KeYSolidityType> typeMap = new HashMap<>();
-    private final Map<KeYSolidityType, Type> revTypeMap = new HashMap<>();
+    private final Map<String, KeYSolidityType> typeByName = new HashMap<>();
 
-    // caches solidity type name to KST, e.g. uint256 -> (uint256, int)
-    // carefull sort name to KST is not unique and has to be solved differently
-    private final Map<String, KeYSolidityType> solidityTypeName2KeYSolidityType = new HashMap<>();
-    private boolean initialized;
+    /// Declared contracts in declaration order.
+    private final Map<Name, ContractDeclaration> contracts = new LinkedHashMap<>();
+
     private final LinkedHashSet<StateVariableDeclaration> stateVariables = new LinkedHashSet<>();
+
+    private boolean initialized;
 
     public SolidityInfo() {
     }
 
-    public void initialize(Services services, ArrayList<KeYSolidityType> unresolvedTypes) {
-        if (!initialized) {
-            registerPredefinedTypes(services, unresolvedTypes);
-            initialized = true;
-        } else {
+    // ── Initialisation ──────────────────────────────────────────────────────
+
+    /// Registers the predefined (primitive and pseudo) types. Called once by
+    /// [Services#initTheories] after the theory LDTs exist.
+    ///
+    /// @param unresolvedTypes sort-only [KeYSolidityType]s created while
+    /// parsing the LDT `.key` files before the theories were available;
+    /// each is completed here (the instances are shared with the taclets
+    /// that reference them). The list itself is not modified.
+    public void initialize(Services services, List<KeYSolidityType> unresolvedTypes) {
+        if (initialized) {
             throw new IllegalStateException("SolidityInfo already initialized");
         }
-
+        registerPredefinedTypes(services, unresolvedTypes);
+        initialized = true;
     }
 
-    private void registerPredefinedTypes(Services services, List<KeYSolidityType> unresolvedTypes) {
+    private void registerPredefinedTypes(Services services, List<KeYSolidityType> unresolved) {
         TheoryInfo theoryInfo = services.getTheoryInfo();
         Sort intSort = theoryInfo.getIntLDT().targetSort();
         Sort boolSort = theoryInfo.getBoolLDT().targetSort();
-        for (Type primitiveType : PRIMITIVE_TYPES) {
-            if (primitiveType.name().toString().contains("int")) {
+
+        for (PrimitiveType primitiveType : PrimitiveType.all()) {
+            String name = primitiveType.name().toString();
+            if (name.contains("int")) {
                 put(new KeYSolidityType(primitiveType, intSort));
-            } else if (primitiveType.name().toString().equals("bool")) {
+            } else if (name.equals("bool")) {
                 put(new KeYSolidityType(primitiveType, boolSort));
             } else {
-                LOGGER.info(primitiveType.name() + " not yet supported. Type skipped");
+                LOGGER.info("{} not yet supported. Type skipped", name);
             }
         }
 
-        for (Type pseudoType : PSEUDO_TYPES) {
-            KeYSolidityType solidityType = unresolvedTypes.stream()
-                    .filter(t -> t.name().equals(pseudoType.name())).findFirst().orElse(null);
-            Sort sort;
-            switch (pseudoType.name().toString()) {
-                case "Memory":
-                    sort = theoryInfo.getMemoryLDT().targetSort();
-                    solidityType = createOrResolveKeYSolidityType(pseudoType, solidityType, sort);
-                    put(solidityType);
-                    unresolvedTypes.remove(solidityType);
-                    break;
-                case "Identity":
-                    sort = theoryInfo.getMemoryLDT().getIdentitySort();
-                    solidityType = createOrResolveKeYSolidityType(pseudoType, solidityType, sort);
-                    put(solidityType);
-                    unresolvedTypes.remove(solidityType);
-                    break;
-                case "Struct":
-                    sort = theoryInfo.getStructLDT().targetSort();
-                    solidityType = createOrResolveKeYSolidityType(pseudoType, solidityType, sort);
-                    put(solidityType);
-                    unresolvedTypes.remove(solidityType);
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unknown pseudoType " + pseudoType.name());
-            }
+        // PSEUDO types do not exist in Solidity, but there are program
+        // variables of that 'type' on the logic side (memory, storage, …).
+        // Their sorts come from the theories:
+        Map<Type, Supplier<Sort>> pseudoSorts = Map.of(
+            PseudoType.MEMORY, () -> theoryInfo.getMemoryLDT().targetSort(),
+            PseudoType.IDENTITY, () -> theoryInfo.getMemoryLDT().getIdentitySort(),
+            PseudoType.STRUCT, () -> theoryInfo.getStructLDT().targetSort());
+
+        List<KeYSolidityType> pending = new ArrayList<>(unresolved);
+        for (var entry : pseudoSorts.entrySet()) {
+            Type pseudoType = entry.getKey();
+            Sort sort = entry.getValue().get();
+            // An LDT .key file may already have created a sort-only instance
+            // for this pseudo type; complete and reuse it so every holder of
+            // the instance sees the finished type.
+            KeYSolidityType kst = pending.stream()
+                    .filter(t -> t.name().equals(pseudoType.name())).findFirst()
+                    .orElseGet(() -> new KeYSolidityType(sort));
+            kst.setSolidityType(pseudoType);
+            put(kst);
+            pending.remove(kst);
         }
-        if (!unresolvedTypes.isEmpty()) {
+
+        if (!pending.isEmpty()) {
             throw new IllegalStateException(
-                "The following KeYSolidityTypes could not be resolved " + unresolvedTypes);
+                "The following KeYSolidityTypes could not be resolved: " + pending);
         }
     }
 
-    private @NonNull KeYSolidityType createOrResolveKeYSolidityType(Type pseudoType,
-            KeYSolidityType solidityType,
-            Sort sort) {
-        if (solidityType == null) {
-            solidityType = new KeYSolidityType(pseudoType, sort);
-        } else {
-            assert solidityType.getSolidityType() == null;
-            solidityType.setSolidityType(pseudoType);
-        }
-        return solidityType;
-    }
+    // ── Types ───────────────────────────────────────────────────────────────
 
-    // PSEUDO types do not exist in Solidity, but there are program variables of that 'type' on
-    // the logic side, like memory or storage
-    private static final List<Type> PSEUDO_TYPES = List.of(
-        PseudoType.MEMORY, PseudoType.STRUCT, PseudoType.IDENTITY);
-
-    private static final List<Type> PRIMITIVE_TYPES = List.of(
-        INT,
-        INT8,
-        INT16,
-        INT24,
-        INT32,
-        INT40,
-        INT48,
-        INT56,
-        INT64,
-        INT72,
-        INT80,
-        INT88,
-        INT96,
-        INT104,
-        INT112,
-        INT120,
-        INT128,
-        INT136,
-        INT144,
-        INT152,
-        INT160,
-        INT168,
-        INT176,
-        INT184,
-        INT192,
-        INT200,
-        INT208,
-        INT216,
-        INT224,
-        INT232,
-        INT240,
-        INT248,
-        INT256,
-        UINT,
-        UINT8,
-        UINT16,
-        UINT24,
-        UINT32,
-        UINT40,
-        UINT48,
-        UINT56,
-        UINT64,
-        UINT72,
-        UINT80,
-        UINT88,
-        UINT96,
-        UINT104,
-        UINT112,
-        UINT120,
-        UINT128,
-        UINT136,
-        UINT144,
-        UINT152,
-        UINT160,
-        UINT168,
-        UINT176,
-        UINT184,
-        UINT192,
-        UINT200,
-        UINT208,
-        UINT216,
-        UINT224,
-        UINT232,
-        UINT240,
-        UINT248,
-        UINT256,
-        BYTES,
-        BYTES1,
-        BYTES2,
-        BYTES3,
-        BYTES4,
-        BYTES5,
-        BYTES6,
-        BYTES7,
-        BYTES8,
-        BYTES9,
-        BYTES10,
-        BYTES11,
-        BYTES12,
-        BYTES13,
-        BYTES14,
-        BYTES15,
-        BYTES16,
-        BYTES17,
-        BYTES18,
-        BYTES19,
-        BYTES20,
-        BYTES21,
-        BYTES22,
-        BYTES23,
-        BYTES24,
-        BYTES25,
-        BYTES26,
-        BYTES27,
-        BYTES28,
-        BYTES29,
-        BYTES30,
-        BYTES31,
-        BYTES32,
-        BOOL,
-        FIXED,
-        UFIXED,
-        ADDRESS,
-        VOID);
-
+    /// Registers a **complete** KeYSolidityType.
     public void put(KeYSolidityType kst) {
-        solidityTypeName2KeYSolidityType.put(kst.getSolidityType().name().toString(), kst);
+        if (!kst.isComplete()) {
+            throw new IllegalArgumentException(
+                "SolidityInfo stores only complete results, got " + kst);
+        }
+        typeByName.put(kst.getSolidityType().name().toString(), kst);
         typeMap.put(kst.getSolidityType(), kst);
-        revTypeMap.put(kst, kst.getSolidityType());
     }
 
-
-    public Type getType(Name typeName) {
-        KeYSolidityType kst = solidityTypeName2KeYSolidityType.get(typeName.toString());
-        if (kst != null)
-            return kst.getSolidityType();
-        return getPrimitiveType(typeName.toString());
-    }
-
-    public Type getDynamicTypeMap(Name primaryTypeName) {
-        Name typeName = new Name(primaryTypeName + "[]");
-        return getType(typeName);
-    }
-
-    public Type getStaticTypeMap(Name primaryTypeName, Expression expression) {
-        return getStaticTypeMap(primaryTypeName, Integer.parseInt(expression.toString()));
-    }
-
-    public Type getStaticTypeMap(Name primaryTypeName, int size) {
-        Name typeName = new Name(primaryTypeName + "[" + size + "]");
-        return getType(typeName);
-    }
-
-    public Type getMappingTypeMap(Type keyType, Type valueType) {
-        MappingType mapping = new MappingType(keyType, valueType);
-        return getType(mapping.name());
-    }
-
-    // public TupleType getTupleTypeMap(List<Type> types) {
-    // // TODO: Fix no type creation in this class.
-    // Name typeName = new Name("(" + types.stream().map(Object::toString)
-    // .collect(Collectors.joining(", "))
-    // + ")");
-    // if (typeMap.containsKey(typeName))
-    // return (TupleType) typeMap.get(typeName);
-    // TupleType type = new TupleType(types);
-    // typeMap.put(typeName, type);
-    // return type;
-    // }
-
-    public KeYSolidityType getKeYSolidityType(Type type) {
+    public @Nullable KeYSolidityType getKeYSolidityType(Type type) {
         return typeMap.get(type);
     }
 
-    public Type getType(KeYSolidityType kst) {
-        return revTypeMap.get(kst);
+    public @Nullable KeYSolidityType getKeYSolidityType(String typeName) {
+        return typeByName.get(typeName);
     }
 
-    public KeYSolidityType getKeYSolidityType(String typeName) {
-        return solidityTypeName2KeYSolidityType.get(typeName);
+    /// Resolves a primitive type name ("uint256", "bool", …) to its [Type],
+    /// or null when the name is not a primitive type. The solc alias
+    /// "rational" maps to int256.
+    public static @Nullable Type getPrimitiveType(String name) {
+        if ("rational".equals(name)) {
+            return INT256;
+        }
+        try {
+            return PrimitiveType.getPrimitiveType(name);
+        } catch (NoSuchElementException e) {
+            return null;
+        }
     }
 
-    /** @ return all function symbols representing a solidity function (with return value) */
+    // ── Contracts and functions ─────────────────────────────────────────────
+
+    /// Registers a fully parsed contract. Called by the parser after all
+    /// references inside the contract are resolved.
+    public void registerContract(ContractDeclaration contract) {
+        ContractDeclaration previous = contracts.putIfAbsent(contract.name(), contract);
+        if (previous != null) {
+            throw new IllegalStateException(
+                "Contract " + contract.name() + " is already registered");
+        }
+    }
+
+    /// @return all registered contracts in declaration order
+    public Collection<ContractDeclaration> getContracts() {
+        return Collections.unmodifiableCollection(contracts.values());
+    }
+
+    public @Nullable ContractDeclaration getContract(Name name) {
+        return contracts.get(name);
+    }
+
+    /// @return the function declarations of the given contract (empty when the
+    /// contract is unknown)
+    public List<FunctionDeclaration> getFunctions(Name contractName) {
+        ContractDeclaration c = contracts.get(contractName);
+        return c == null ? List.of() : c.getFunctions();
+    }
+
+    /// Finds a function by contract, name, and parameter types (the signature).
+    /// Parameter types are compared by type name.
+    public @Nullable FunctionDeclaration getFunctionDeclaration(Name contractName,
+            Name functionName, List<? extends Type> parameterTypes) {
+        for (FunctionDeclaration fd : getFunctions(contractName)) {
+            if (fd.name().equals(functionName)
+                    && signatureMatches(fd, parameterTypes)) {
+                return fd;
+            }
+        }
+        return null;
+    }
+
+    /// Finds a function by name alone, searching all contracts in declaration
+    /// order. Returns the first match, or null.
+    public @Nullable FunctionDeclaration getFunctionDeclaration(Name functionName) {
+        for (ContractDeclaration c : contracts.values()) {
+            for (FunctionDeclaration fd : c.getFunctions()) {
+                if (fd.name().equals(functionName)) {
+                    return fd;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static boolean signatureMatches(FunctionDeclaration fd,
+            List<? extends Type> parameterTypes) {
+        var params = fd.getInputParameters();
+        if (params.size() != parameterTypes.size()) {
+            return false;
+        }
+        for (int i = 0; i < params.size(); i++) {
+            Type expected = parameterTypes.get(i);
+            Type actual = params.get(i).getType();
+            if (expected == null || actual == null
+                    || !expected.name().equals(actual.name())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /// @return all logic function symbols representing a Solidity function.
+    /// Currently none are created during parsing — the program model is
+    /// available via [#getContracts] / [#getFunctions] instead.
     public Set<Function> getAllSolidityFunctions() {
-        // TODO: Implement this method
-        return new HashSet<>();
+        return Set.of();
     }
 
-    public static Type getPrimitiveType(String typeS) {
-        return switch (typeS) {
-            case "int" -> INT;
-            case "int8" -> INT8;
-            case "int16" -> INT16;
-            case "int24" -> INT24;
-            case "int32" -> INT32;
-            case "int40" -> INT40;
-            case "int48" -> INT48;
-            case "int56" -> INT56;
-            case "int64" -> INT64;
-            case "int72" -> INT72;
-            case "int80" -> INT80;
-            case "int88" -> INT88;
-            case "int96" -> INT96;
-            case "int104" -> INT104;
-            case "int112" -> INT112;
-            case "int120" -> INT120;
-            case "int128" -> INT128;
-            case "int136" -> INT136;
-            case "int144" -> INT144;
-            case "int152" -> INT152;
-            case "int160" -> INT160;
-            case "int168" -> INT168;
-            case "int176" -> INT176;
-            case "int184" -> INT184;
-            case "int192" -> INT192;
-            case "int200" -> INT200;
-            case "int208" -> INT208;
-            case "int216" -> INT216;
-            case "int224" -> INT224;
-            case "int232" -> INT232;
-            case "int240" -> INT240;
-            case "int248" -> INT248;
-            case "int256" -> INT256;
-
-            case "uint" -> UINT;
-            case "uint8" -> UINT8;
-            case "uint16" -> UINT16;
-            case "uint24" -> UINT24;
-            case "uint32" -> UINT32;
-            case "uint40" -> UINT40;
-            case "uint48" -> UINT48;
-            case "uint56" -> UINT56;
-            case "uint64" -> UINT64;
-            case "uint72" -> UINT72;
-            case "uint80" -> UINT80;
-            case "uint88" -> UINT88;
-            case "uint96" -> UINT96;
-            case "uint104" -> UINT104;
-            case "uint112" -> UINT112;
-            case "uint120" -> UINT120;
-            case "uint128" -> UINT128;
-            case "uint136" -> UINT136;
-            case "uint144" -> UINT144;
-            case "uint152" -> UINT152;
-            case "uint160" -> UINT160;
-            case "uint168" -> UINT168;
-            case "uint176" -> UINT176;
-            case "uint184" -> UINT184;
-            case "uint192" -> UINT192;
-            case "uint200" -> UINT200;
-            case "uint208" -> UINT208;
-            case "uint216" -> UINT216;
-            case "uint224" -> UINT224;
-            case "uint232" -> UINT232;
-            case "uint240" -> UINT240;
-            case "uint248" -> UINT248;
-            case "uint256" -> UINT256;
-
-            case "bytes" -> BYTES;
-            case "bytes1" -> BYTES1;
-            case "bytes2" -> BYTES2;
-            case "bytes3" -> BYTES3;
-            case "bytes4" -> BYTES4;
-            case "bytes5" -> BYTES5;
-            case "bytes6" -> BYTES6;
-            case "bytes7" -> BYTES7;
-            case "bytes8" -> BYTES8;
-            case "bytes9" -> BYTES9;
-            case "bytes10" -> BYTES10;
-            case "bytes11" -> BYTES11;
-            case "bytes12" -> BYTES12;
-            case "bytes13" -> BYTES13;
-            case "bytes14" -> BYTES14;
-            case "bytes15" -> BYTES15;
-            case "bytes16" -> BYTES16;
-            case "bytes17" -> BYTES17;
-            case "bytes18" -> BYTES18;
-            case "bytes19" -> BYTES19;
-            case "bytes20" -> BYTES20;
-            case "bytes21" -> BYTES21;
-            case "bytes22" -> BYTES22;
-            case "bytes23" -> BYTES23;
-            case "bytes24" -> BYTES24;
-            case "bytes25" -> BYTES25;
-            case "bytes26" -> BYTES26;
-            case "bytes27" -> BYTES27;
-            case "bytes28" -> BYTES28;
-            case "bytes29" -> BYTES29;
-            case "bytes30" -> BYTES30;
-            case "bytes31" -> BYTES31;
-            case "bytes32" -> BYTES32;
-
-            case "rational" -> INT256;
-            case "bool" -> BOOL;
-            case "address" -> ADDRESS;
-            case "string" -> STRING;
-            case "fixed" -> FIXED;
-            case "ufixed" -> UFIXED;
-            case "void" -> VOID;
-
-            default -> null;
-        };
-    }
-
-    // Knowledge about state variables
+    // ── State variables ─────────────────────────────────────────────────────
 
     public void addStateVariable(StateVariableDeclaration stateVariable) {
-        if (stateVariables.contains(stateVariable) ||
-                getStateVariableDeclaration(stateVariable.getProgramVariable().name()) != null) {
-            throw new RuntimeException(
-                "State variable " + stateVariable.getProgramVariable().name() + " already exists");
+        Name name = stateVariable.getProgramVariable().name();
+        if (stateVariables.contains(stateVariable)
+                || getStateVariableDeclaration(name) != null) {
+            throw new IllegalStateException("State variable " + name + " already exists");
         }
         stateVariables.add(stateVariable);
     }
 
-    public StateVariableDeclaration getStateVariableDeclaration(Name name) {
+    public @Nullable StateVariableDeclaration getStateVariableDeclaration(Name name) {
         for (StateVariableDeclaration stateVariable : stateVariables) {
             if (stateVariable.getProgramVariable().name().equals(name)) {
                 return stateVariable;
@@ -423,5 +240,4 @@ public class SolidityInfo {
         }
         return null;
     }
-
 }

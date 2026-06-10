@@ -36,6 +36,13 @@ public class PrimitiveType implements Type, SyntaxElement {
         return primitive;
     }
 
+    /// @return all registered primitive types (snapshot)
+    public static java.util.List<PrimitiveType> all() {
+        synchronized (primitives) {
+            return java.util.List.copyOf(primitives.values());
+        }
+    }
+
     private final @NonNull Name name;
 
     private PrimitiveType(@NonNull Name name) {
