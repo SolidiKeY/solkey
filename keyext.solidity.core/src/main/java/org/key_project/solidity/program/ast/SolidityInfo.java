@@ -75,6 +75,8 @@ public class SolidityInfo {
                 put(new KeYSolidityType(primitiveType, intSort));
             } else if (name.equals("bool")) {
                 put(new KeYSolidityType(primitiveType, boolSort));
+            } else if (name.equals("address")) {
+                put(new KeYSolidityType(primitiveType, intSort));
             } else {
                 LOGGER.info("{} not yet supported. Type skipped", name);
             }
