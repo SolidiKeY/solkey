@@ -65,7 +65,7 @@ public class BothParsersTest {
         ProgramVariable programVariable =
             ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable();
         Sort sort = programVariable.sort();
-        assertEquals("Person", sort.toString());
+        assertEquals("Struct", sort.toString());
     }
 
     @Test

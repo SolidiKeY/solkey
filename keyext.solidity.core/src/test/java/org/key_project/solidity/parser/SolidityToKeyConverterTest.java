@@ -89,7 +89,7 @@ public class SolidityToKeyConverterTest {
     void plusPlusRight() {
         UnaryExpression exp = (UnaryExpression) parseExpression("1++");
         assertEquals(1, ((Uint256Literal) exp.getExp()).getValue().intValue());
-        assertFalse(exp.getOperator().isPostfix());
+        assertTrue(exp.getOperator().isPostfix());
         assertTrue(exp.getOperator() == Operator.POST_INC);
 
     }

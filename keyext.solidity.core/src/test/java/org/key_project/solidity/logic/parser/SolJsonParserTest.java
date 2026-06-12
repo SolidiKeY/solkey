@@ -48,6 +48,7 @@ import static org.key_project.solidity.program.ast.declarations.FunctionEnums.Da
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.StateMutability.*;
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility.*;
 import static org.key_project.solidity.program.ast.expressions.literals.BoolLiteral.*;
+import static org.key_project.solidity.program.ast.expressions.operators.Operator.BITWISE_XOR;
 import static org.key_project.solidity.program.parser.SolcParserNoServices.getDeclStr;
 
 public class SolJsonParserTest {
@@ -183,8 +184,8 @@ public class SolJsonParserTest {
         assertInstanceOf(Uint256Literal.class, addOp.getRight());
         assertSame(UINT256, initializer.getType());
         assertEquals(3, addOp.getChildCount());
-        assertSame(addOp.getLeft(), addOp.getChild(0));
-        assertSame(addOp.getRight(), addOp.getChild(1));
+        assertSame(addOp.getLeft(), addOp.getChild(1));
+        assertSame(addOp.getRight(), addOp.getChild(2));
         assertThrows(IndexOutOfBoundsException.class, () -> addOp.getChild(2));
     }
 
@@ -369,7 +370,7 @@ public class SolJsonParserTest {
 
         assertInstanceOf(BinaryExpression.class, expOpSynt);
         BinaryExpression expOp = (BinaryExpression) expOpSynt;
-        assertSame(Operator.EXPO, expOp.getOperator());
+        assertSame(BITWISE_XOR, expOp.getOperator());
         assertEquals(INT256, expOp.getType());
     }
 
@@ -508,7 +509,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract, services);
         String structName = contractDeclaration.getStructs().get(0).name().toString();
-        assertEquals("SimpleContract.Person", structName);
+        assertEquals("Person", structName);
         assertEquals(Memory,
             contractDeclaration.getFunctions().get(0).getInputParameters().get(0)
                     .getDataLocation());
@@ -1255,7 +1256,7 @@ public class SolJsonParserTest {
         assertEquals(Memory, bob.getDataLocation());
         assertEquals("bob", bob.name().toString());
         assertInstanceOf(StructDeclaration.class, bob.getType());
-        assertEquals("SimpleContract.Person", bob.getType().name().toString());
+        assertEquals("Person", bob.getType().name().toString());
     }
 
     @Test
@@ -1493,7 +1494,7 @@ public class SolJsonParserTest {
         assertEquals("alice", ((ProgramVariable) innerMember.getLeftExp()).name().toString());
         FieldDeclaration accountField = (FieldDeclaration) innerMember.getRightExp();
         assertEquals("account", accountField.name().toString());
-        assertEquals("SimpleContract.Account",
+        assertEquals("Account",
             accountField.getTypeReference().referencedType.name().toString());
 
         // Right-hand side literal value 10
