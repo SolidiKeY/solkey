@@ -56,7 +56,7 @@ public class SolidityToKeyConverterTest {
     @Test
     void schemaVariable() {
         ProgramSV exp = (ProgramSV) parseExpression("s#v");
-        assertEquals("s#v", exp.toString());
+        assertEquals("v", exp.toString());
     }
 
     @Test

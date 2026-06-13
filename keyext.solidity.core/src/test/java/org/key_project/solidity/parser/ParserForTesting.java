@@ -65,8 +65,8 @@ public class ParserForTesting {
         localVars.add(pv);
 
         Namespace<ProgramSV> schemaVariables = new Namespace<>();
-        ProgramSV sv = createProgramSV(new Name("s#v"), null, false, UINT);
-        ProgramSV svv = createProgramSV(new Name("s#vv"), null, false, UINT);
+        ProgramSV sv = createProgramSV(new Name("v"), null, false, UINT);
+        ProgramSV svv = createProgramSV(new Name("vv"), null, false, UINT);
         schemaVariables.add(sv);
         schemaVariables.add(svv);
 
