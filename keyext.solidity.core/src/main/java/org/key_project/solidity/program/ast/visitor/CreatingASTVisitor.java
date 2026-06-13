@@ -203,7 +203,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new NewExpression(x.getFunction(), x.getType());
+                return new NewExpression(x.getType());
             }
         };
         def.doAction(x);

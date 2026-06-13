@@ -568,10 +568,7 @@ public class SolJSONParser {
     }
 
     private Expression parseNewExpression(JsonNode initializer) {
-        String functionDef =
-            initializer.get("typeDescriptions").get("typeString").asString();
-        Type type = parseTypeName(initializer);
-        return new NewExpression(functionDef, type);
+        return new NewExpression(parseTypeName(initializer));
     }
 
     private Expression parseElementaryExpression(JsonNode initializer) {

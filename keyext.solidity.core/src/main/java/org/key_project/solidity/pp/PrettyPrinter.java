@@ -624,8 +624,7 @@ public class PrettyPrinter implements Visitor {
     @Override
     public void performActionOnNewExpression(NewExpression x) {
         layouter.keyWord("new").print(" ");
-        layouter.print(x.getFunction());
-        layouter.print("()");
+        layouter.print(x.getType().name().toString());
     }
 
     @Override

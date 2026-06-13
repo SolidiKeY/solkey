@@ -11,18 +11,10 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 
 import org.jspecify.annotations.NonNull;
 
-
-/// TODO: fix new expression:
-/// Constructor arguments are missing
-/// The type name (called function here?) should not be stored and not be static
 public class NewExpression extends SolidityExpression {
-    static String function;
 
-    public NewExpression(String function, Type type) {
+    public NewExpression(Type type) {
         super(type);
-        this.function = function;
-        /// The implementation of new expression must be fixed first before using it. See comments
-        throw new RuntimeException("Not implemented yet");
     }
 
     @Override
@@ -42,16 +34,12 @@ public class NewExpression extends SolidityExpression {
 
     @Override
     public String toString() {
-        return function;
-    }
-
-    public String getFunction() {
-        return function;
+        return "new " + type.name();
     }
 
     @Override
     public int computeHashCode() {
-        return 37 * super.computeHashCode() + function.hashCode();
+        return super.computeHashCode();
     }
 
     @Override
@@ -60,11 +48,11 @@ public class NewExpression extends SolidityExpression {
             return true;
         if (!(o instanceof NewExpression that))
             return false;
-        return Objects.equals(function, that.function) && Objects.equals(type, that.type);
+        return Objects.equals(type, that.type);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(function, type);
+        return Objects.hash(type);
     }
 }
