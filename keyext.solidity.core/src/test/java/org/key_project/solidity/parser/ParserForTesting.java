@@ -16,6 +16,10 @@ import org.key_project.solidity.control.KeYEnvironment;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.parser.SolidityParser.*;
+import org.key_project.solidity.logic.sort.ArraySort;
+import org.key_project.solidity.logic.sort.DynamicArraySort;
+import org.key_project.solidity.program.ast.abstractions.ArrayType;
+import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.declarations.*;
 import org.key_project.solidity.program.ast.expressions.Expression;
@@ -26,6 +30,7 @@ import org.key_project.solidity.util.KeYResourceManager;
 
 import org.antlr.v4.runtime.*;
 
+import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.BOOL;
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.UINT;
 import static org.key_project.solidity.rule.sv.SchemaVariableFactory.createProgramSV;
 
@@ -71,6 +76,16 @@ public class ParserForTesting {
         final Sort sort = services.getTheoryInfo().getStructLDT().targetSort();
         KeYSolidityType ksStructType = new KeYSolidityType(structDeclaration, sort);
         services.getSolidityInfo().put(ksStructType);
+
+        Sort boolSort = services.getTheoryInfo().getBoolLDT().targetSort();
+
+        KeYSolidityType ksDynArrayType =
+            new KeYSolidityType(new DynamicArrayType(BOOL), new DynamicArraySort(boolSort));
+        services.getSolidityInfo().put(ksDynArrayType);
+
+        KeYSolidityType ksStaticArrayType =
+            new KeYSolidityType(new ArrayType(BOOL, 10), new ArraySort(boolSort, 10));
+        services.getSolidityInfo().put(ksStaticArrayType);
 
         // Name enumName = new Name("State");
         // EnumDeclaration stateEnum = new EnumDeclaration(enumName, List.of(
