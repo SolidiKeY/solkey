@@ -108,6 +108,7 @@ public class SolJsonParserTest {
         assertCompleteType(info.getKeYSolidityType(INT8), INT8, intSort);
         assertCompleteType(info.getKeYSolidityType(BOOL), BOOL, boolSort);
         assertCompleteType(info.getKeYSolidityType(ADDRESS), ADDRESS, intSort);
+        assertCompleteType(info.getKeYSolidityType(STRING), STRING, intSort);
         assertNull(info.getKeYSolidityType(BYTES32));
     }
 
