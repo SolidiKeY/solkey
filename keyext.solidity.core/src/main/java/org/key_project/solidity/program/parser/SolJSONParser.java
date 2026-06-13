@@ -198,7 +198,12 @@ public class SolJSONParser {
 
 
     private EnumDeclaration parseEnum(JsonNode node) {
-        throw new RuntimeException("Enums are not implemented yet");
+        String name = node.get("name").asString();
+        List<MemberEnumDeclaration> members =
+            node.get("members").valueStream().map(this::parseMemberEnum).toList();
+        EnumDeclaration enumDeclaration = new EnumDeclaration(new Name(name), members);
+        id2Name.put(node.get("id").asInt(), enumDeclaration);
+        return enumDeclaration;
     }
 
     private MemberEnumDeclaration parseMemberEnum(JsonNode node) {
@@ -747,6 +752,12 @@ public class SolJSONParser {
                 KeYSolidityType structKST = new KeYSolidityType(structDecl, structSort);
                 services.getSolidityInfo().put(structKST);
                 yield structKST;
+            }
+            case EnumDeclaration enumDecl -> {
+                Sort intSort = services.getTheoryInfo().getIntLDT().targetSort();
+                KeYSolidityType enumKST = new KeYSolidityType(enumDecl, intSort);
+                services.getSolidityInfo().put(enumKST);
+                yield enumKST;
             }
             // A contract currently being parsed: share its pending instance.
             case ContractDeclaration contractDecl -> {
