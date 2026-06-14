@@ -133,7 +133,7 @@ Central singleton-like registry accessed via `Services`. Contains all registered
 
 ### `SolJSONParser`
 
-Parses the JSON AST produced by the `solc` compiler (`--ast-compact-json`) into the internal Solidity AST. When refactoring or extending `SolJSONParser`, refer to **`solidity-json-documentation.md`** (at the repository root) to understand the structure of `solc`'s JSON output — what node types exist, what fields each node has, and what the type descriptor format looks like.
+Parses the JSON AST produced by the `solc` compiler (`--ast-compact-json`) into the internal Solidity AST. When refactoring or extending `SolJSONParser`, refer to **`docs/solidity-json-documentation.md`** to understand the structure of `solc`'s JSON output — what node types exist, what fields each node has, and what the type descriptor format looks like.
 
 ## Code Style
 
