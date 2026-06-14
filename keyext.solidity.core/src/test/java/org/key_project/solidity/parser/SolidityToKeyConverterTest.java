@@ -6,6 +6,7 @@ package org.key_project.solidity.parser;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.abstractions.*;
 import org.key_project.solidity.program.ast.declarations.*;
+import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
 import org.key_project.solidity.program.ast.expressions.*;
 import org.key_project.solidity.program.ast.expressions.literals.*;
 import org.key_project.solidity.program.ast.expressions.operators.*;
@@ -334,6 +335,14 @@ public class SolidityToKeyConverterTest {
     void newExp() {
         NewExpression exp = (NewExpression) parseExpression("new bool");
         assertEquals("bool", exp.getType().name().toString());
+    }
+
+    @Test
+    void memberAccess() {
+        MemberExp exp = (MemberExp) parseExpression("v.age");
+        assertEquals("v", exp.getLeftExp().toString());
+        assertInstanceOf(FieldDeclaration.class, exp.getRightExp());
+        assertEquals("age", ((FieldDeclaration) exp.getRightExp()).name().toString());
     }
 
     @Test

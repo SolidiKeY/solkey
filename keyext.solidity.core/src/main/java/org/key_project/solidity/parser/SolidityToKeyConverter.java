@@ -19,11 +19,13 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
+import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
 import org.key_project.solidity.program.ast.expressions.*;
 import org.key_project.solidity.program.ast.expressions.literals.*;
 import org.key_project.solidity.program.ast.expressions.operators.TernaryExpression;
 import org.key_project.solidity.program.ast.ghost.*;
 import org.key_project.solidity.program.ast.references.FunctionReference;
+import org.key_project.solidity.program.ast.references.TypeReference;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.program.ext.ContextStatementBlock;
 import org.key_project.solidity.program.parser.ParserUtils;
@@ -201,6 +203,16 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         Expression end = visitExpression(ctx.end);
 
         return new IndexRangeExpression(base, start, end, base.getType());
+    }
+
+    @Override
+    public SyntaxElement visitMemberAccess(MemberAccessContext ctx) {
+        Expression leftExp = visitExpression(ctx.expression());
+        String fieldName = ctx.identifier().getText();
+        Type leftType = leftExp.getType();
+        FieldDeclaration field = new FieldDeclaration(
+            new Name(fieldName), new TypeReference(new Name(fieldName)));
+        return new MemberExp(leftExp, field, leftType);
     }
 
     @Override
