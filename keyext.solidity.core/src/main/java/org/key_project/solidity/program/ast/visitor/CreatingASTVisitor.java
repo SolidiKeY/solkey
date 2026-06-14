@@ -243,11 +243,22 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
     }
 
     @Override
+    public void performActionOnAssignExpression(AssignExpression x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new AssignExpression(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
     public void performActionOnBinaryExpression(BinaryExpression x) {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new BinaryExpression(changeList, x.getType());
+                return new BinaryExpression(changeList);
             }
         };
         def.doAction(x);
@@ -263,7 +274,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
-                return new UnaryExpression(changeList, x.getType());
+                return new UnaryExpression(changeList);
             }
         };
         def.doAction(x);

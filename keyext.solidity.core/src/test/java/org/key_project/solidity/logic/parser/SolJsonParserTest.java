@@ -284,12 +284,12 @@ public class SolJsonParserTest {
         assertEquals(1, block.getStatements().size());
         Statement exprStmnt = block.getStatements().get(0);
         assertInstanceOf(ExpressionStatement.class, exprStmnt);
-        assertInstanceOf(BinaryExpression.class,
+        assertInstanceOf(AssignExpression.class,
             ((ExpressionStatement) exprStmnt).getExpression());
         ExpressionStatement exprStatement = (ExpressionStatement) exprStmnt;
         assertEquals(1, exprStatement.getChildCount());
-        assertInstanceOf(BinaryExpression.class, exprStatement.getChild(0));
-        BinaryExpression assignment = (BinaryExpression) exprStatement.getChild(0);
+        assertInstanceOf(AssignExpression.class, exprStatement.getChild(0));
+        AssignExpression assignment = (AssignExpression) exprStatement.getChild(0);
         assertSame(Operator.COPY_ASSIGN, assignment.getOperator());
         assertThrows(IndexOutOfBoundsException.class, () -> exprStatement.getChild(1));
     }
@@ -475,8 +475,8 @@ public class SolJsonParserTest {
         assertEquals(1, contractDeclaration.getFunctions().size());
         Expression expression = ((ExpressionStatement) contractDeclaration.getFunctions()
                 .getFirst().getBody().getStatements().get(0)).getExpression();
-        assertInstanceOf(BinaryExpression.class, expression);
-        assertSame(Operator.ADD_ASSIGN, ((BinaryExpression) expression).getOperator());
+        assertInstanceOf(AssignExpression.class, expression);
+        assertSame(Operator.ADD_ASSIGN, ((AssignExpression) expression).getOperator());
         FunctionDeclaration func = contractDeclaration.getFunctions().getFirst();
         ImmutableArray<ProgramVariable> inputParameters = func.getInputParameters();
         assertSame(UINT256, inputParameters.get(0).getType());
@@ -891,11 +891,17 @@ public class SolJsonParserTest {
                 .getBody().getStatements().get(0);
         assertEquals(4, forStmt.getChildCount());
         assertThrows(IndexOutOfBoundsException.class, () -> forStmt.getChild(4));
-        checkExpressionForBinary(Operator.COPY_ASSIGN, forStmt.getInit().getInit());
+        checkExpressionForAssign(Operator.COPY_ASSIGN, forStmt.getInit().getInit());
         assertEquals(1, forStmt.getInit().getChildCount());
-        checkExpressionForBinary(Operator.COPY_ASSIGN, forStmt.getInit().getInit());
+        checkExpressionForAssign(Operator.COPY_ASSIGN, forStmt.getInit().getInit());
         checkExpressionForUnary(Operator.POST_INC, forStmt.getUpdate().getUpdate());
         assertEquals(1, forStmt.getUpdate().getChildCount());
+    }
+
+    private void checkExpressionForAssign(Operator op, Expression expr) {
+        assertInstanceOf(AssignExpression.class, expr);
+        AssignExpression assignExpr = (AssignExpression) expr;
+        assertEquals(op, assignExpr.getOperator());
     }
 
     private void checkExpressionForBinary(Operator op, Expression expr) {
@@ -1481,8 +1487,8 @@ public class SolJsonParserTest {
         var stmt = functionF.getBody().getStatements().get(0);
         ExpressionStatement exprStatement = (ExpressionStatement) stmt;
 
-        checkExpressionForBinary(Operator.COPY_ASSIGN, exprStatement.getExpression());
-        BinaryExpression assignExpr = (BinaryExpression) exprStatement.getExpression();
+        checkExpressionForAssign(Operator.COPY_ASSIGN, exprStatement.getExpression());
+        AssignExpression assignExpr = (AssignExpression) exprStatement.getExpression();
 
         assertInstanceOf(Uint256Literal.class, assignExpr.getRight());
 

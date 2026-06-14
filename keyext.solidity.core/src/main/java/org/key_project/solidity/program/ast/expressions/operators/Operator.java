@@ -66,6 +66,16 @@ public enum Operator implements SolidityProgramElement {
         };
     }
 
+    public static boolean isAssignmentOperator(Operator op) {
+        return switch (op) {
+            case COPY_ASSIGN, OR_ASSIGN, XOR_ASSIGN, AND_ASSIGN,
+                    BITWISE_SHIFT_LEFT_ASSIGN, BITWISE_SHIFT_RIGHT_ASSIGN,
+                    ADD_ASSIGN, SUB_ASSIGN, MULT_ASSIGN, DIV_ASSIGN, MOD_ASSIGN ->
+                true;
+            default -> false;
+        };
+    }
+
     private final String symbol;
     private final int precedence;
     private final int associativity;

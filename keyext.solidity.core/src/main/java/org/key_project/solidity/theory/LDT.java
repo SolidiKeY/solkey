@@ -14,7 +14,7 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ParametricFunctionDecl;
 import org.key_project.solidity.logic.sort.ParametricSortDecl;
 import org.key_project.solidity.program.ast.expressions.literals.Literal;
-import org.key_project.solidity.program.ast.expressions.operators.BinaryExpression;
+import org.key_project.solidity.program.ast.expressions.operators.OperatorExpression;
 
 import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 import org.jspecify.annotations.NonNull;
@@ -120,16 +120,16 @@ public abstract class LDT implements Named {
 
     public abstract @Nullable Term translateLiteral(Literal lit, Services services);
 
-    public abstract @Nullable Function getFunctionFor(BinaryExpression op,
+    public abstract @Nullable Function getFunctionFor(OperatorExpression op,
             Services services);
 
-    public abstract boolean isResponsible(BinaryExpression op, Term[] subs,
+    public abstract boolean isResponsible(OperatorExpression op, Term[] subs,
             Services services);
 
-    public abstract boolean isResponsible(BinaryExpression op, Term sub,
+    public abstract boolean isResponsible(OperatorExpression op, Term sub,
             Services services);
 
-    public abstract boolean isResponsible(BinaryExpression op, Term left, Term right,
+    public abstract boolean isResponsible(OperatorExpression op, Term left, Term right,
             Services services);
 
     public @Nullable Sort targetSort() {

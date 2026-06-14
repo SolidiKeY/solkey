@@ -5,28 +5,27 @@ package org.key_project.solidity.program.parser;
 
 import java.util.Optional;
 
-import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.operators.*;
 
 public class ParserUtils {
 
     static public Optional<Expression> parseBinaryOperationMaybe(Expression left, Expression right,
-            String operator, Type expType) {
+            String operator) {
         Operator op = null;
         for (var val : Operator.values()) {
-            if (operator.equals(val.symbol())) {
+            if (operator.equals(val.symbol()) && !Operator.isAssignmentOperator(val)) {
                 op = val;
                 break;
             }
         }
         return op == null ? Optional.empty()
-                : Optional.of(new BinaryExpression(op, left, right, expType));
+                : Optional.of(new BinaryExpression(op, left, right));
     }
 
     static public Expression parseBinaryOperation(Expression left, Expression right,
-            String operator, Type expType) {
-        return parseBinaryOperationMaybe(left, right, operator, expType)
+            String operator) {
+        return parseBinaryOperationMaybe(left, right, operator)
                 .orElseThrow(
                     () -> new RuntimeException("Not yet supported binary operation: " + operator));
     }
@@ -35,13 +34,13 @@ public class ParserUtils {
             String operator) {
         Operator op = null;
         for (var val : Operator.values()) {
-            if (operator.equals(val.symbol())) {
+            if (operator.equals(val.symbol()) && Operator.isAssignmentOperator(val)) {
                 op = val;
                 break;
             }
         }
         return op == null ? Optional.empty()
-                : Optional.of(new BinaryExpression(op, left, right, left.getType()));
+                : Optional.of(new AssignExpression(op, left, right));
     }
 
     static public Expression parseAssignment(Expression left, Expression right, String operator) {
@@ -51,14 +50,13 @@ public class ParserUtils {
     }
 
     static public Optional<Expression> parseAllBinaryMaybe(Expression left, Expression right,
-            String operator, Type expType) {
-        return parseBinaryOperationMaybe(left, right, operator, expType)
+            String operator) {
+        return parseBinaryOperationMaybe(left, right, operator)
                 .or(() -> parseAssignmentMaybe(left, right, operator));
     }
 
-    static public Expression parseAllBinary(Expression left, Expression right, String operator,
-            Type expType) {
-        return parseAllBinaryMaybe(left, right, operator, expType)
+    static public Expression parseAllBinary(Expression left, Expression right, String operator) {
+        return parseAllBinaryMaybe(left, right, operator)
                 .orElseThrow(
                     () -> new RuntimeException("Not yet supported binary operation: " + operator));
     }
@@ -73,7 +71,7 @@ public class ParserUtils {
             }
         }
         return op == null ? Optional.empty()
-                : Optional.of(new UnaryExpression(op, uExp, uExp.getType()));
+                : Optional.of(new UnaryExpression(op, uExp));
     }
 
     static public Expression parseUnaryOperation(Expression uExp, String operator,

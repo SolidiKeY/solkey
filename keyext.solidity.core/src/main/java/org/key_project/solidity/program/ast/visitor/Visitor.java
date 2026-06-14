@@ -92,6 +92,8 @@ public interface Visitor {
 
     void performActionOnDataLocation(DataLocation x);
 
+    void performActionOnAssignExpression(AssignExpression x);
+
     void performActionOnBinaryExpression(BinaryExpression x);
 
     void performActionOnOperator(Operator x);

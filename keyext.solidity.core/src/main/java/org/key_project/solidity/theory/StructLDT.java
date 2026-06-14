@@ -10,7 +10,7 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.expressions.literals.Literal;
-import org.key_project.solidity.program.ast.expressions.operators.BinaryExpression;
+import org.key_project.solidity.program.ast.expressions.operators.OperatorExpression;
 
 import org.jspecify.annotations.Nullable;
 
@@ -60,23 +60,23 @@ public class StructLDT extends LDT {
     }
 
     @Override
-    public @Nullable Function getFunctionFor(BinaryExpression op, Services services) {
+    public @Nullable Function getFunctionFor(OperatorExpression op, Services services) {
         return null;
     }
 
     @Override
-    public boolean isResponsible(BinaryExpression op, Term[] subs,
+    public boolean isResponsible(OperatorExpression op, Term[] subs,
             Services services) {
         return false;
     }
 
     @Override
-    public boolean isResponsible(BinaryExpression op, Term sub, Services services) {
+    public boolean isResponsible(OperatorExpression op, Term sub, Services services) {
         return false;
     }
 
     @Override
-    public boolean isResponsible(BinaryExpression op, Term left, Term right,
+    public boolean isResponsible(OperatorExpression op, Term left, Term right,
             Services services) {
         return false;
     }

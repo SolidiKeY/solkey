@@ -35,7 +35,7 @@ public class SolidityToKeyConverterTest {
             ((StatementVariableDeclaration) ((DeclarationStatement) block.getStatements().get(0))
                     .getDeclarations().get(0)).getProgramVariable();
         ProgramVariable p2 =
-            (ProgramVariable) ((BinaryExpression) ((ExpressionStatement) block.getStatements()
+            (ProgramVariable) ((AssignExpression) ((ExpressionStatement) block.getStatements()
                     .get(1))
                     .getExpression()).getLeft();
         assertEquals("x", p1.toString());
@@ -104,7 +104,7 @@ public class SolidityToKeyConverterTest {
     @Test
     void variableAssignment() {
         Expression exp = parseExpression("x = 1");
-        assertEquals("x", ((BinaryExpression) exp).getLeft().toString());
+        assertEquals("x", ((AssignExpression) exp).getLeft().toString());
     }
 
     @Test
@@ -205,7 +205,7 @@ public class SolidityToKeyConverterTest {
         assertFalse(((BoolLiteral) stm.getExpression()).getValue());
         assertEquals(1, stm.getReturnCount());
         ProgramVariable ra = stm.getReturnParameter(0);
-        ProgramVariable ba = (ProgramVariable) ((BinaryExpression) ((ExpressionStatement) stm
+        ProgramVariable ba = (ProgramVariable) ((AssignExpression) ((ExpressionStatement) stm
                 .getBody().getStatements().get(0)).getExpression()).getLeft();
         assertSame(ra, ba);
     }

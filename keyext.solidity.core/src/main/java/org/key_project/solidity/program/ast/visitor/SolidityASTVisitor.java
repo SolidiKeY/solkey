@@ -109,6 +109,11 @@ public abstract class SolidityASTVisitor extends SolidityASTWalker implements Vi
     }
 
     @Override
+    public void performActionOnAssignExpression(AssignExpression x) {
+        doDefaultAction(x);
+    }
+
+    @Override
     public void performActionOnBinaryExpression(BinaryExpression x) {
         doDefaultAction(x);
     }

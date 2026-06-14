@@ -6,31 +6,28 @@ package org.key_project.solidity.program.ast.expressions.operators;
 import java.util.Objects;
 
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
-import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
-public final class BinaryExpression extends SolidityExpression implements OperatorExpression {
+public final class BinaryExpression implements SolidityProgramElement, Expression, OperatorExpression {
 
     protected final @NonNull Operator operator;
     protected final @NonNull Expression left;
     protected final @NonNull Expression right;
 
-    public BinaryExpression(Operator operator, Expression left, Expression right, Type type) {
-        super(type);
-        assert type != null;
+    public BinaryExpression(Operator operator, Expression left, Expression right) {
         this.operator = operator;
         this.left = Objects.requireNonNull(left);
         this.right = Objects.requireNonNull(right);
     }
 
-    public BinaryExpression(ExtList children, Type type) {
-        super(type);
-        assert type != null;
+    public BinaryExpression(ExtList children) {
         this.operator = Objects.requireNonNull(children.removeFirstOccurrence(Operator.class));
         this.left = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
         this.right = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
@@ -70,8 +67,8 @@ public final class BinaryExpression extends SolidityExpression implements Operat
     }
 
     @Override
-    public Type getType() {
-        return type;
+    public @Nullable Type getType() {
+        return left.getType();
     }
 
     public String toString() {

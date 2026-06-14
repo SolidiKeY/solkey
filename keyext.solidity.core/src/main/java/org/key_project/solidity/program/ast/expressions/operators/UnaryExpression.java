@@ -6,36 +6,33 @@ package org.key_project.solidity.program.ast.expressions.operators;
 import java.util.Objects;
 
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
-import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
-public class UnaryExpression extends SolidityExpression {
+public class UnaryExpression implements SolidityProgramElement, Expression, OperatorExpression {
 
     private final Operator operator;
     private final Expression exp;
 
-    public UnaryExpression(Operator operator, Expression exp, Type type) {
-        super(type);
-        assert type != null;
+    public UnaryExpression(Operator operator, Expression exp) {
         this.operator = operator;
         this.exp = exp;
     }
 
-    public UnaryExpression(ExtList children, Type type) {
-        super(type);
-        assert type != null;
+    public UnaryExpression(ExtList children) {
         this.operator = Objects.requireNonNull(children.removeFirstOccurrence(Operator.class));
         this.exp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
     }
 
     @Override
-    public Type getType() {
-        return type;
+    public @Nullable Type getType() {
+        return exp.getType();
     }
 
     @Override

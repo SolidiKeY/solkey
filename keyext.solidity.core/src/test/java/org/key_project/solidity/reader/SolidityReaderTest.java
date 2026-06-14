@@ -14,7 +14,7 @@ import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.SolidityReader;
 import org.key_project.solidity.program.ast.*;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
-import org.key_project.solidity.program.ast.expressions.operators.BinaryExpression;
+import org.key_project.solidity.program.ast.expressions.operators.AssignExpression;
 import org.key_project.solidity.program.ast.statement.*;
 
 import org.junit.jupiter.api.Test;
@@ -58,7 +58,7 @@ public class SolidityReaderTest {
         varNS.add(x);
         Block block = (Block) hir.readBlockWithProgramVariables(varNS, "{ x = 1; }").program();
         ProgramVariable xTest =
-            (ProgramVariable) ((BinaryExpression) ((ExpressionStatement) block.getStatements()
+            (ProgramVariable) ((AssignExpression) ((ExpressionStatement) block.getStatements()
                     .get(0))
                     .getExpression()).getLeft();
         assertEquals(x, xTest);

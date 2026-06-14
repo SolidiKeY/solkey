@@ -146,7 +146,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         String operator = ctx.children.get(1).toString();
         Expression left = exps.get(0);
         Expression right = exps.get(1);
-        return ParserUtils.parseAllBinary(left, right, operator, left.getType());
+        return ParserUtils.parseAllBinary(left, right, operator);
     }
 
     public Expression visitExpression(ExpressionContext ctx) {

@@ -13,7 +13,7 @@ import org.key_project.solidity.logic.SolidityDLTheory;
 import org.key_project.solidity.logic.op.*;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
-import org.key_project.solidity.program.ast.expressions.operators.BinaryExpression;
+import org.key_project.solidity.program.ast.expressions.operators.AssignExpression;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.util.collection.ImmutableArray;
 
@@ -158,7 +158,7 @@ public class ParsingFacadeTest {
         assertEquals(1, block.getStatements().size());
 
         assertEquals(px,
-            ((BinaryExpression) ((ExpressionStatement) block.getStatements().get(0))
+            ((AssignExpression) ((ExpressionStatement) block.getStatements().get(0))
                     .getExpression())
                     .getLeft());
     }

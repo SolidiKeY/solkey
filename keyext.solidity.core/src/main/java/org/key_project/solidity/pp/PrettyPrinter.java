@@ -152,6 +152,22 @@ public class PrettyPrinter implements Visitor {
     }
 
     @Override
+    public void performActionOnAssignExpression(AssignExpression x) {
+        Expression left = x.getLeft();
+        Expression right = x.getRight();
+
+        maybeParens(left, x.getOperator().precedence());
+
+        layouter.print(" ");
+
+        x.getOperator().visit(this);
+
+        layouter.print(" ");
+
+        maybeParens(right, x.getOperator().precedence());
+    }
+
+    @Override
     public void performActionOnBinaryExpression(BinaryExpression x) {
         Expression left = x.getLeft();
         Expression right = x.getRight();
@@ -186,8 +202,9 @@ public class PrettyPrinter implements Visitor {
 
     private void maybeParens(Expression exp, int precedence) {
         boolean closeParens = false;
-        if (exp instanceof BinaryExpression bexp &&
-                bexp.getOperator().precedence() <= precedence) {
+        if (exp instanceof OperatorExpression opExp &&
+                (exp instanceof BinaryExpression || exp instanceof AssignExpression) &&
+                opExp.getOperator().precedence() <= precedence) {
             layouter.print("(");
             closeParens = true;
         }

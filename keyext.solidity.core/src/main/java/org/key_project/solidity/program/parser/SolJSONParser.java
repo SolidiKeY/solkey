@@ -664,15 +664,7 @@ public class SolJSONParser {
         Expression rightExpression = parseExpression(initializer.get("rightExpression"));
 
         final String operator = initializer.get("operator").asString();
-        Type type = getTypeFromDescription(initializer);
-        return ParserUtils.parseBinaryOperation(leftExpression, rightExpression, operator, type);
-    }
-
-    private Type getTypeFromDescription(JsonNode initializer) {
-        String typeIdentifier =
-            initializer.get("typeDescriptions").get("typeIdentifier").stringValue();
-        return SolidityInfo
-                .getPrimitiveType(typeIdentifier.split("\\$")[0].substring(2).split("_")[0]);
+        return ParserUtils.parseBinaryOperation(leftExpression, rightExpression, operator);
     }
 
     private Expression parseIdentifier(JsonNode literal) {
