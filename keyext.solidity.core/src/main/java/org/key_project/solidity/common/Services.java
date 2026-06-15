@@ -7,6 +7,7 @@ package org.key_project.solidity.common;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Objects;
 
 import org.key_project.logic.LogicServices;
 import org.key_project.logic.Name;
@@ -21,11 +22,13 @@ import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityInfo;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
+import org.key_project.solidity.program.ast.expressions.literals.Literal;
 import org.key_project.solidity.proof.Counter;
 import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.SolidityModel;
 import org.key_project.solidity.proof.mgt.SpecificationRepository;
+import org.key_project.solidity.theory.LDT;
 import org.key_project.solidity.theory.TheoryInfo;
 
 import org.jspecify.annotations.NonNull;
@@ -91,6 +94,12 @@ public class Services implements LogicServices, ProofServices {
         var tb = services.getTermBuilder();
         if (pe instanceof ProgramVariable pv) {
             return tb.var(pv);
+        }
+        if (pe instanceof Literal lit) {
+            LDT ldt = services.getTheoryInfo().get(lit.getLDTName());
+            if (ldt != null) {
+                return Objects.requireNonNull(ldt.translateLiteral(lit, services));
+            }
         }
         throw new IllegalArgumentException(
             "Unknown or not convertible ProgramElement " + pe + " of type "

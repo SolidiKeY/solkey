@@ -5,11 +5,16 @@ package org.key_project.solidity.program.ast.expressions.literals;
 
 import java.util.Objects;
 
+import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.solidity.theory.BoolLDT;
 import org.key_project.util.ExtList;
 
 public class BoolLiteral extends Literal {
+
+    @Override
+    public Name getLDTName() { return BoolLDT.NAME; }
 
     public static final BoolLiteral TRUE = new BoolLiteral(true);
     public static final BoolLiteral FALSE = new BoolLiteral(false);

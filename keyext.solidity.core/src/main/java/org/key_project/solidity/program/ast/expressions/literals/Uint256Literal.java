@@ -6,11 +6,16 @@ package org.key_project.solidity.program.ast.expressions.literals;
 import java.math.BigInteger;
 import java.util.Objects;
 
+import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.solidity.theory.IntLDT;
 import org.key_project.util.ExtList;
 
 public class Uint256Literal extends Literal {
+
+    @Override
+    public Name getLDTName() { return IntLDT.NAME; }
 
     private final BigInteger value;
 

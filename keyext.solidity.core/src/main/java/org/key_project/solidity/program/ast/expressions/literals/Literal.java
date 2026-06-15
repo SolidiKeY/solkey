@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions.literals;
 
+import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.SourceData;
@@ -13,6 +14,8 @@ import org.key_project.solidity.rule.matching.inst.MatchConditions;
 import org.jspecify.annotations.NonNull;
 
 public abstract class Literal extends SolidityExpression {
+
+    public abstract Name getLDTName();
     protected Literal(Type type) {
         super(type);
     }
