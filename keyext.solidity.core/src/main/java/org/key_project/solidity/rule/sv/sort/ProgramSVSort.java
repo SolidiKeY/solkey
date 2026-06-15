@@ -21,10 +21,10 @@ public abstract class ProgramSVSort extends SortImpl {
     }
 
     public static final ProgramSVSort VARIABLE = new ProgramVariableSVSort(new Name("Variable"));
-    public static final ProgramSVSort TYPE = null;
-    public static final ProgramSVSort EXPRESSION = null;
-    public static final ProgramSVSort NON_SIMPLE_EXPRESSION = null;
-    public static final ProgramSVSort SIMPLE_EXPRESSION = null;
+    public static final ProgramSVSort SIMPLE_EXPRESSION = new SimpleExpressionSVSort();
+    public static final ProgramSVSort EXPRESSION = new ExpressionSVSort();
+    public static final ProgramSVSort NON_SIMPLE_EXPRESSION = new NonSimpleExpressionSVSort();
+    public static final ProgramSVSort TYPE = null;  // Not yet implemented
 
 
     @SuppressWarnings("argument.type.incompatible")
