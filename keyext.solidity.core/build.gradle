@@ -187,11 +187,11 @@ def solidityExamplesDir = rootProject.file("keyext.solidity.core/src/test/resour
 
 tasks.register('solidityCli', JavaExec) {
     group = "application"
-    description = "Run the Solidity CLI"
+    description = "Run the Solidity CLI. Use -PkeyFile=filename.key to specify file."
     mainClass.set(solidityCliMainClass)
     classpath = sourceSets.main.runtimeClasspath
     workingDir = solidityExamplesDir
-    args "problem2.key"
+    args project.findProperty('keyFile') ?: "problem2.key"
 }
 
 shadowJar {

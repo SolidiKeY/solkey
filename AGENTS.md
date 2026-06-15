@@ -13,9 +13,10 @@
 ./gradlew spotlessCheck              # Check formatting
 ./gradlew spotlessApply              # Apply formatting
 ./gradlew :key.ui:shadowJar          # Build fat JAR
-./gradlew :keyext.solidity.core:solidityCli                        # Run CLI on default problem2.key
-./gradlew :keyext.solidity.core:solidityCli --args="problem1.key"  # Run on specific .key file
+./gradlew :keyext.solidity.core:solidityCli                           # Run CLI on default problem2.key
+./gradlew :keyext.solidity.core:solidityCli -PkeyFile=problem1.key    # Run on specific .key file
 ./gradlew :keyext.solidity.core:solidityCli --args="--no-prove -m 20000 problem1.key"
+./run-key.sh problem1.key            # Wrapper script (same as above)
 ```
 
 Java 21 required. Test max heap: 4GB, max parallel forks: 1.
