@@ -372,7 +372,7 @@ public class SolJsonParserTest {
         assertInstanceOf(BinaryExpression.class, expOpSynt);
         BinaryExpression expOp = (BinaryExpression) expOpSynt;
         assertSame(BITWISE_XOR, expOp.getOperator());
-        assertEquals(INT256, expOp.getType());
+        assertEquals(UINT256, expOp.getType());
     }
 
     @Test
