@@ -63,6 +63,15 @@ Gradle's `--args` is not an extra argument appended to the existing `args "probl
 
 Relative `.key` paths are resolved from `keyext.solidity.core/src/test/resources/org/key_project/solidity/examples`, so example files can be passed by name, such as `problem1.key`. Use an absolute path only when the problem file is outside that working directory. Useful CLI options include `--no-prove` to only load the problem, `--no-replay` to skip replaying an embedded proof, `-m/--max` to set the maximum rule applications, `-t/--timeout` for the prover timeout in milliseconds, and `-s/--print-stats` or `-v/--verbose` for diagnostics. Verified examples: `--args="--help"` prints the CLI usage, and `--args="--no-prove problem2.key"` loads the default example problem successfully.
 
+## File Locations
+
+| Purpose | Location |
+|---|---|
+| **Problem files (`.key`)** for testing/verification | `keyext.solidity.core/src/test/resources/org/key_project/solidity/examples/` |
+| **Proof rules (`.key`)** for the prover | `keyext.solidity.core/src/main/resources/org/key_project/solidity/proof/rules/` |
+
+When asked to create a `.key` file to test something, place it in the examples directory. When asked to add a new KeY rule, place it in the proof/rules directory.
+
 ## Module Architecture
 
 The project uses a layered, modular Gradle structure:
