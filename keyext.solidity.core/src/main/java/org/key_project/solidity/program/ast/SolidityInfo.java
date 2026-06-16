@@ -28,8 +28,8 @@ import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.IN
 /// SolidityInfo stores **final results only**. Partially built
 /// [KeYSolid ityType]s (which exist temporarily while cyclic type references
 /// are being resolved, see the [KeYSolidityType] class doc) live inside the
-/// parsers and may be registered here only once they are complete —
-/// [#put(KeYSolidityType)] enforces this.
+/// parsers and may be registered here only once they are complete, this is enforced by
+/// [#put(KeYSolidityType)].
 public class SolidityInfo {
     private static final Logger LOGGER = LoggerFactory.getLogger(SolidityInfo.class);
 
@@ -133,13 +133,9 @@ public class SolidityInfo {
         return typeByName.get(typeName);
     }
 
-    /// Resolves a primitive type name ("uint256", "bool", …) to its [Type],
-    /// or null when the name is not a primitive type. The solc alias
-    /// "rational" maps to int256.
+    /// Resolves a primitive type name ("uint256", "bool", ...) to its [Type],
+    /// or null when the name is not a primitive type.
     public static @Nullable Type getPrimitiveType(String name) {
-        if ("rational".equals(name)) {
-            return INT256;
-        }
         try {
             return PrimitiveType.getPrimitiveType(name);
         } catch (NoSuchElementException e) {
@@ -188,8 +184,8 @@ public class SolidityInfo {
         return null;
     }
 
-    /// Finds a function by name alone, searching all contracts in declaration
-    /// order. Returns the first match, or null.
+    /// Finds a function by name (signature is not considered) in declaration
+    /// order. The first match is returned otherwise null.
     public @Nullable FunctionDeclaration getFunctionDeclaration(Name functionName) {
         for (ContractDeclaration c : contracts.values()) {
             for (FunctionDeclaration fd : c.getFunctions()) {
@@ -219,8 +215,8 @@ public class SolidityInfo {
     }
 
     /// @return all logic function symbols representing a Solidity function.
-    /// Currently none are created during parsing — the program model is
-    /// available via [#getContracts] / [#getFunctions] instead.
+    /// Currently none are created during parsing. The program model is
+    /// available via [#getContracts] / [#getFunctions].
     public Set<Function> getAllSolidityFunctions() {
         return Set.of();
     }

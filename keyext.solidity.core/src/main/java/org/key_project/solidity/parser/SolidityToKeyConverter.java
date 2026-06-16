@@ -279,8 +279,6 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitArrayType(ArrayTypeContext ctx) {
-        // Array types are registered when the Solidity source is read; the
-        // .key side only looks them up by name (elem[] or elem[size]).
         KeYSolidityType elementKST = (KeYSolidityType) visitTypeName(ctx.typeName());
         String suffix = ctx.expression() == null
                 ? "[]"

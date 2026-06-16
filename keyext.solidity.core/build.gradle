@@ -47,7 +47,7 @@ sourceSets.main.java.srcDirs(String.valueOf(projectDir) + '/build/generated-src/
 tasks.register('runAntlr4Key', JavaExec) {
     //see incremental task api, prevents rerun if nothing has changed.
     inputs.files "src/main/antlr/KeYSolidityDLLexer.g4", "src/main/antlr/KeYSolidityDLParser.g4",
-            "src/main/antlr/Soldity.g4"
+            "src/main/antlr/Solidity.g4", "src/main/antlr/SchemaLexer.g4"
     outputs.dir antlr4OutputKey
     classpath = configurations.antlr4
     mainClass.set("org.antlr.v4.Tool")
