@@ -140,7 +140,7 @@ public class SolJSONParser {
             switch (nodeType) {
                 case "VariableDeclaration" -> fields.add(parseVariableField(contractName, node));
                 case "FunctionDefinition" -> functions.add(parseFunction(node));
-                case "StructDefinition" -> structs.add(parseStruct(node, contractId));
+                case "StructDefinition" -> structs.add(parseStruct(node, contractName, contractId));
                 case "ModifierDefinition" -> modifiers.add(parseModifier(node));
                 case "EnumDefinition" -> enums.add(parseEnum(node));
                 default -> throw new RuntimeException("Unknown node type " + nodeType);
@@ -229,10 +229,13 @@ public class SolJSONParser {
         return modifier;
     }
 
-    private StructDeclaration parseStruct(JsonNode structNode, int contractId) {
+    private StructDeclaration parseStruct(JsonNode structNode, String contractName,
+            int contractId) {
         String name = structNode.get("name").asString();
+        // unique field constants are namespaced by the full enclosing name: contract$struct
+        String fieldPrefix = contractName + StructLDT.FIELD_SEPARATOR + name;
         List<FieldDeclaration> fields =
-            structNode.get("members").valueStream().map(this::parseField).toList();
+            structNode.get("members").valueStream().map(m -> parseField(m, fieldPrefix)).toList();
 
         StructDeclaration stDecl = new StructDeclaration(new Name(name), fields, contractId);
         getOrCreateKeYSolidityType(stDecl);
@@ -241,8 +244,9 @@ public class SolJSONParser {
         return stDecl;
     }
 
-    private FieldDeclaration parseField(JsonNode fieldNode) {
+    private FieldDeclaration parseField(JsonNode fieldNode, String fieldPrefix) {
         final String fieldName = fieldNode.get("name").asString();
+        registerStructFieldConstant(fieldPrefix + StructLDT.FIELD_SEPARATOR + fieldName);
         JsonNode typeName = fieldNode.get("typeName");
 
         TypeReference typeReference;
@@ -518,6 +522,21 @@ public class SolJSONParser {
         id2Name.put(id, field);
 
         return field;
+    }
+
+    /// Registers a unique `Field`-sorted constant for a struct member. The name is namespaced by
+    /// the full enclosing name (contract$struct$member), mirroring the contract state-variable
+    /// scheme in [#createFieldConstantAndRegisterField]. Struct members are accessed in the logic
+    /// via `selectSt`/`storeSt`, whose field argument is of sort `Field` (unlike contract state
+    /// variables, whose constant carries the field's value sort). No-op if the struct theory (and
+    /// thus the `Field` sort) is not loaded.
+    private void registerStructFieldConstant(String fullFieldName) {
+        Sort fieldSort = services.getNamespaces().sorts().lookup(new Name("Field"));
+        if (fieldSort == null) {
+            return;
+        }
+        SFunction fieldConstant = new SFunction(new Name(fullFieldName), fieldSort, true, true);
+        services.getNamespaces().functions().addSafely(fieldConstant);
     }
 
     private SFunction createFieldConstantAndRegisterField(String strFieldName, String contractName,

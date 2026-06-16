@@ -540,6 +540,13 @@ public class SolJsonParserTest {
         assertEquals("int", field.getTypeReference().getTypeName().toString());
         assertNull(field.getInitializer());
         assertEquals(1, field.getChildCount());
+
+        // a unique Field-sorted constant is registered for the member, namespaced by the full
+        // enclosing name: contract$struct$member
+        var ageField = services.getNamespaces().functions()
+                .lookup(new Name("SimpleContract$Person$age"));
+        assertNotNull(ageField, "struct member field constant should be registered");
+        assertEquals("Field", ageField.sort().name().toString());
     }
 
     @Test
