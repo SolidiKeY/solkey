@@ -62,6 +62,10 @@ public abstract class RuleAppContainer implements Comparable<RuleAppContainer> {
      * @return container for the currently applicable RuleApp, the cost may be an instance of
      *         <code>TopRuleAppCost</code>.
      */
+    // createRuleAppContainer has the F-bounded self type <G extends ProofGoal<G>>, which the
+    // Checker Framework cannot infer from the ProofGoal<?> wildcard used here (the code is correct
+    // under javac). Suppress the resulting inference diagnostics.
+    @SuppressWarnings("type.arguments.not.inferred")
     public static @NonNull RuleAppContainer createAppContainer(
             RuleApp p_app,
             PosInOccurrence p_pio,
@@ -76,6 +80,9 @@ public abstract class RuleAppContainer implements Comparable<RuleAppContainer> {
      * @return list of containers for the currently applicable RuleApps, the cost may be an instance
      *         of <code>TopRuleAppCost</code>.
      */
+    // See createAppContainer: the F-bounded self type of createRuleAppContainer cannot be inferred
+    // from the ProofGoal<?> wildcard.
+    @SuppressWarnings({ "type.arguments.not.inferred", "argument.type.incompatible" })
     public static ImmutableList<RuleAppContainer> createAppContainers(
             ImmutableList<? extends RuleApp> rules,
             PosInOccurrence pos, ProofGoal<?> goal) {

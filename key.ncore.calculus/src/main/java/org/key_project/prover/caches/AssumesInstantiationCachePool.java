@@ -14,6 +14,7 @@ import org.key_project.util.LRUCache;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /// Direct-mapped cache of lists of formulas (potential instantiations of if-formulas of taclets)
 /// that were modified after a certain point of time
@@ -27,7 +28,7 @@ public class AssumesInstantiationCachePool<Node> {
     public final LRUCache<@NonNull Node, @NonNull AssumesInstantiationCache> cacheMgr =
         new LRUCache<>(10);
 
-    public AssumesInstantiationCache getCache(Node n) {
+    public AssumesInstantiationCache getCache(@NonNull Node n) {
         AssumesInstantiationCache cache;
         synchronized (cacheMgr) {
             cache = cacheMgr.get(n);
@@ -78,7 +79,7 @@ public class AssumesInstantiationCachePool<Node> {
         private final ReadLock readLock = lock.readLock();
         private final WriteLock writeLock = lock.writeLock();
 
-        public ImmutableArray<AssumesFormulaInstantiation> get(boolean antec, Long key) {
+        public @Nullable ImmutableArray<AssumesFormulaInstantiation> get(boolean antec, Long key) {
             try {
                 readLock.lock();
                 final HashMap<Long, ImmutableArray<AssumesFormulaInstantiation>> cache =
