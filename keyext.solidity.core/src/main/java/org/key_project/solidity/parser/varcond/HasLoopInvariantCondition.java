@@ -41,7 +41,7 @@ public class HasLoopInvariantCondition implements VariableCondition {
             return null;
         }
 
-        final var rb = new SolidityBlock(svInst.getContextInstantiation().contextProgram());
+        final var sb = new SolidityBlock(svInst.getContextInstantiation().contextProgram());
 
         var modKind = (SModality.SolidityModalityKind) svInst.getInstantiation(modalitySV);
 

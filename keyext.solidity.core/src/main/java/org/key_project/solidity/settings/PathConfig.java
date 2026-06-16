@@ -12,7 +12,7 @@ import org.jspecify.annotations.Nullable;
 /// Keeps some central paths to files and directories.
 ///
 ///
-/// By default, all KeY configurations are stored in a directory named ".rusty-key" inside the
+/// By default, all KeY configurations are stored in a directory named ".keyther" inside the
 /// user's
 /// home
 /// directory. In Microsoft Windows operating systems this is directly the hard disc that contains

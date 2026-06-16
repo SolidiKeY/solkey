@@ -1379,8 +1379,9 @@ public class SolJsonParserTest {
         List<SyntaxElement> elements = solcParser.getDeclsJsonParser(contracts);
         assertEquals(2, elements.size());
         ContractDeclaration ctrl = (ContractDeclaration) elements.get(1);
-        NewExpression newExpA = (NewExpression) ((FunctionCallExpression) ctrl.getFieldDeclarations()
-                .get(0).getInitializer()).getFunctionExp();
+        NewExpression newExpA =
+            (NewExpression) ((FunctionCallExpression) ctrl.getFieldDeclarations()
+                    .get(0).getInitializer()).getFunctionExp();
         assertInstanceOf(ContractDeclaration.class, newExpA.getType());
         assertEquals("A", newExpA.getType().name().toString());
         NewExpression newExp = (NewExpression) ((FunctionCallExpression) ctrl.getFieldDeclarations()
@@ -1405,8 +1406,9 @@ public class SolJsonParserTest {
         assertEquals(2, elements.size());
         ContractDeclaration ctrl = (ContractDeclaration) elements.get(1);
         String ctrlStr = ctrl.toString();
-        NewExpression newExpA = (NewExpression) ((FunctionCallExpression) ctrl.getFieldDeclarations()
-                .get(0).getInitializer()).getFunctionExp();
+        NewExpression newExpA =
+            (NewExpression) ((FunctionCallExpression) ctrl.getFieldDeclarations()
+                    .get(0).getInitializer()).getFunctionExp();
         assertInstanceOf(ContractDeclaration.class, newExpA.getType());
         assertEquals("A", newExpA.getType().name().toString());
         assertTrue(ctrlStr.contains("A a"));

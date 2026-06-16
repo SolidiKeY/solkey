@@ -21,22 +21,22 @@ public class SymExStrategyFactory implements StrategyFactory {
             + "after arbitrarily many loop iterations (body preserves invariant).</li>"
             + "<li>Invariant holds after the loop terminates (use case).</li>" + "</ul>"
             + "<p>The last two are combined into a single goal or split into two<br>"
-            + "goals based on the 'rustLoopTreatment' strategy option.</p>" + "</html>";
+            + "goals based on the Solidity loop-treatment strategy option.</p>" + "</html>";
     public static final String TOOL_TIP_LOOP_EXPAND =
         "<html>" + "Unroll loop body, but with the loop scope technology.<br>"
             + "This requires less program transformation for irregular<br>"
             + "termination behavior." + "</html>";
     public static final String TOOL_TIP_LOOP_NONE = "<html>" + "Leave loops untouched." + "</html>";
     public static final String TOOL_TIP_FUNCTION_CONTRACT =
-        "<html>Replace method calls by contracts. In some cases<br>"
-            + "a method call may also be replaced by its method body.<br>"
+        "<html>Replace function calls by contracts. In some cases<br>"
+            + "a function call may also be replaced by its function body.<br>"
             + "If query treatment is activated, this behavior applies<br>"
             + "to queries as well.</html>";
     public static final String TOOL_TIP_FUNCTION_EXPAND =
-        "<html>Replace method calls by their bodies, i.e. by their<br>"
-            + "implementation. Method contracts are strictly deactivated.</html>";
+        "<html>Replace function calls by their bodies, i.e. by their<br>"
+            + "implementation. Function contracts are strictly deactivated.</html>";
     public static final String TOOL_TIP_FUNCTION_NONE =
-        "<html>" + "Stop when encountering a method" + "</html>";
+        "<html>" + "Stop when encountering a function" + "</html>";
 
     @Override
     public SymExStrategy create(Proof proof, StrategyProperties strategyProperties) {
@@ -56,7 +56,7 @@ public class SymExStrategyFactory implements StrategyFactory {
 
     private static OneOfStrategyPropertyDefinition getFunctionTreatment() {
         return new OneOfStrategyPropertyDefinition(StrategyProperties.FUNCTION_OPTIONS_KEY,
-            "Method treatment",
+            "Function treatment",
             new StrategyPropertyValueDefinition(StrategyProperties.FUNCTION_CONTRACT, "Contract",
                 TOOL_TIP_FUNCTION_CONTRACT),
             new StrategyPropertyValueDefinition(StrategyProperties.FUNCTION_EXPAND, "Expand",
@@ -68,9 +68,9 @@ public class SymExStrategyFactory implements StrategyFactory {
     @Override
     public StrategySettingsDefinition getSettingsDefinition() {
         final OneOfStrategyPropertyDefinition loopTreatment = getLoopTreatment();
-        final OneOfStrategyPropertyDefinition methodTreatment = getFunctionTreatment();
+        final OneOfStrategyPropertyDefinition functionTreatment = getFunctionTreatment();
         return new StrategySettingsDefinition("Symbolic Execution Options",
-            loopTreatment, methodTreatment);
+            loopTreatment, functionTreatment);
     }
 
     @Override

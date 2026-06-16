@@ -20,7 +20,6 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.INT256;
 
 /// The queryable result of reading a Solidity program: declared contracts and
 /// their functions, the registered types, and the state variables.

@@ -21,7 +21,7 @@ import org.key_project.solidity.speclang.FunctionalOperationContract;
 /// <pre>
 ///
 /// `==><generalAssumptions>
-/// &<preconditions>-><updatesToStoreInitialValues><modalityStart>exc=null;try{<methodBodyExpand>}catch(java.lang.Throwable
+/// &<preconditions>-><updatesToStoreInitialValues><modalityStart>exc=null;try{<functionBodyExpand>}catch(java.lang.Throwable
 /// e){exc = e}<modalityEnd>(exc = null & <postconditions > & <optionalUninterpretedPredicate>)`
 /// </pre>
 ///

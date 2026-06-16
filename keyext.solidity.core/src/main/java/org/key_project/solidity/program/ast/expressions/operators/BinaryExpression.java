@@ -15,7 +15,8 @@ import org.key_project.util.ExtList;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-public final class BinaryExpression implements SolidityProgramElement, Expression, OperatorExpression {
+public final class BinaryExpression
+        implements SolidityProgramElement, Expression, OperatorExpression {
 
     protected final @NonNull Operator operator;
     protected final @NonNull Expression left;

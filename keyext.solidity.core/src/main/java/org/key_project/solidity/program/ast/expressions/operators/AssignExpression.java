@@ -15,7 +15,8 @@ import org.key_project.util.ExtList;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-public final class AssignExpression implements SolidityProgramElement, Expression, OperatorExpression {
+public final class AssignExpression
+        implements SolidityProgramElement, Expression, OperatorExpression {
 
     private final @NonNull Operator operator;
     private final @NonNull Expression lhs;

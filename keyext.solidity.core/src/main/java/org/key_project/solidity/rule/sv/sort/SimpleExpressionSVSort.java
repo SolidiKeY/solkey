@@ -8,10 +8,7 @@ import org.key_project.logic.Term;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
-import org.key_project.solidity.program.ast.expressions.ElementaryExpression;
 import org.key_project.solidity.program.ast.expressions.literals.Literal;
-import org.key_project.solidity.program.ast.expressions.operators.Operator;
-import org.key_project.solidity.program.ast.expressions.operators.UnaryExpression;
 
 public class SimpleExpressionSVSort extends ProgramSVSort {
 
@@ -27,10 +24,12 @@ public class SimpleExpressionSVSort extends ProgramSVSort {
     @Override
     public boolean canStandFor(SolidityProgramElement pe, Services services) {
         // Literals (BoolLiteral, Uint256Literal, etc.)
-        if (pe instanceof Literal) return true;
+        if (pe instanceof Literal)
+            return true;
 
         // Program variables
-        if (pe instanceof ProgramVariable) return true;
+        if (pe instanceof ProgramVariable)
+            return true;
 
         return false;
     }

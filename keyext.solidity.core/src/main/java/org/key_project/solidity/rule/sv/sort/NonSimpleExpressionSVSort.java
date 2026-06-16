@@ -18,12 +18,13 @@ public class NonSimpleExpressionSVSort extends ProgramSVSort {
     @Override
     public boolean canStandFor(Term t) {
         return t.op() instanceof Expression
-            && !ProgramSVSort.SIMPLE_EXPRESSION.canStandFor(t);
+                && !ProgramSVSort.SIMPLE_EXPRESSION.canStandFor(t);
     }
 
     @Override
     public boolean canStandFor(SolidityProgramElement pe, Services services) {
-        if (!(pe instanceof Expression)) return false;
+        if (!(pe instanceof Expression))
+            return false;
         return !ProgramSVSort.SIMPLE_EXPRESSION.canStandFor(pe, services);
     }
 }

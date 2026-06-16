@@ -339,13 +339,13 @@ public class SyntacticalReplaceVisitor implements Visitor<Term> {
         }
     }
 
-    private Operator instantiateModality(SModality op, SolidityBlock rb) {
+    private Operator instantiateModality(SModality op, SolidityBlock sb) {
         SModality.SolidityModalityKind kind = op.kind();
         if (op.kind() instanceof ModalOperatorSV) {
             kind = (SModality.SolidityModalityKind) svInst.getInstantiation(op.kind());
         }
-        if (rb != op.programBlock() || kind != op.kind()) {
-            return SModality.getModality(kind, rb);
+        if (sb != op.programBlock() || kind != op.kind()) {
+            return SModality.getModality(kind, sb);
         }
         return op;
     }

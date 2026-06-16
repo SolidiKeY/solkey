@@ -37,7 +37,7 @@ public class ProgramFunction extends ObserverFunction implements SolidityProgram
     // internal methods
     // -------------------------------------------------------------------------
 
-    /// Get the rusty types of the parameters required by the function fn.
+    /// Get the Solidity types of the parameters required by the function fn.
     ///
     /// @param fn some function declaration
     /// @return java types of the parameters required by fn

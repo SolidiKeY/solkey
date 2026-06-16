@@ -406,7 +406,7 @@ public abstract class AbstractProblemLoader {
     }
 
     private ReplayResult replayProof(Proof proof) {
-        // TODO: rework, when we load rust files
+        // TODO: rework, when we load Solidity files
         List<Throwable> errors = new LinkedList<>();
         String status = "";
 

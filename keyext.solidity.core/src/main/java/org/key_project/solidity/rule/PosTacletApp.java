@@ -28,7 +28,7 @@ import org.key_project.util.collection.ImmutableSet;
 /// the sequent the taclet is attached. The position information has been determined by matching the
 /// find-part of the corresponding taclet against the term described by the position information. If
 /// such a match has not been performed or a taclet is a no find taclet, a no position taclet object
-/// ([org.key_project.rusty.rule.NoPosTacletApp]) is used to keep track of the (partial)
+/// ([org.key_project.solidity.rule.NoPosTacletApp]) is used to keep track of the (partial)
 /// instantiation information.
 public class PosTacletApp extends TacletApp {
     /// stores the information where the Taclet is to be applied. This means where the find section
