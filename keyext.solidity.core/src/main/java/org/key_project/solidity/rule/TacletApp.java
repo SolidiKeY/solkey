@@ -12,6 +12,8 @@ import java.util.LinkedHashSet;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.Namespace;
+import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Function;
 import org.key_project.logic.op.QuantifiableVariable;
@@ -860,9 +862,9 @@ public abstract class TacletApp implements RuleApp {
                     kst = (KeYSolidityType) o;
                 }
                 assert kst != null : "could not find kst for: " + o;
-                throw new RuntimeException("Not implemented yet");
-                // TODO: find out what correct data location is
-                // return new ProgramVariable(new Name(instantiation), kst, dataLocation);
+                // A freshly introduced local variable (\new(v, ...) / \addprogvars) has no own
+                // declared data location, so it defaults like a plain local declaration.
+                return new ProgramVariable(new Name(instantiation), kst, DataLocation.Default);
             }
         }
         return null;
