@@ -16,6 +16,7 @@ import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.references.ContractReference;
 import org.key_project.solidity.program.ast.references.EnumReference;
+import org.key_project.solidity.program.ast.references.FieldReference;
 import org.key_project.solidity.program.ast.references.FunctionReference;
 import org.key_project.solidity.program.ast.references.ModifierReference;
 import org.key_project.solidity.program.ast.references.TypeReference;
@@ -231,6 +232,11 @@ public class PrettyPrinter implements Visitor {
     @Override
     public void performActionOnEnumReference(EnumReference x) {
         layouter.print(x.mainProgramElement().name().toString());
+    }
+
+    @Override
+    public void performActionOnFieldReference(FieldReference x) {
+        layouter.print(x.mainProgramElement().getName().toString());
     }
 
     @Override

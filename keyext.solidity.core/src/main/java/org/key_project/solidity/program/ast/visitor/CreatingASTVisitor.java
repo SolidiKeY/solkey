@@ -314,6 +314,17 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
     }
 
     @Override
+    public void performActionOnFieldReference(FieldReference x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new FieldReference(changeList, x.getType());
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
     public void performActionOnFunctionReference(FunctionReference x) {
         DefaultAction def = new DefaultAction(x) {
             @Override

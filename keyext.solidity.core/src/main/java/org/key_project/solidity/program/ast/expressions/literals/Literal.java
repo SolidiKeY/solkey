@@ -16,6 +16,7 @@ import org.jspecify.annotations.NonNull;
 public abstract class Literal extends SolidityExpression {
 
     public abstract Name getLDTName();
+
     protected Literal(Type type) {
         super(type);
     }

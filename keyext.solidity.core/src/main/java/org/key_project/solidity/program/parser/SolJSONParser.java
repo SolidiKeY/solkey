@@ -246,7 +246,7 @@ public class SolJSONParser {
 
     private FieldDeclaration parseField(JsonNode fieldNode, String fieldPrefix) {
         final String fieldName = fieldNode.get("name").asString();
-        registerStructFieldConstant(fieldPrefix + StructLDT.FIELD_SEPARATOR + fieldName);
+        registerFieldConstant(new Name(fieldPrefix + StructLDT.FIELD_SEPARATOR + fieldName));
         JsonNode typeName = fieldNode.get("typeName");
 
         TypeReference typeReference;
@@ -510,43 +510,35 @@ public class SolJSONParser {
 
         KeYSolidityType type = getOrCreateKeYSolidityType(expType);
 
-        ProgramVariable programVariable =
-            new ProgramVariable(new Name(fieldNameAsString), type, DataLocation.Storage);
-
-        SFunction fieldConstant =
-            createFieldConstantAndRegisterField(fieldNameAsString, contractName, type);
+        Name fieldConstantName = registerFieldConstant(
+            new Name(contractName + StructLDT.FIELD_SEPARATOR + fieldNameAsString));
 
         StateVariableDeclaration field =
-            new StateVariableDeclaration(programVariable, initializerExp, visibility);
+            new StateVariableDeclaration(new Name(fieldNameAsString), type,
+                fieldConstantName, initializerExp, visibility);
         services.getSolidityInfo().addStateVariable(field);
         id2Name.put(id, field);
 
         return field;
     }
 
-    /// Registers a unique `Field`-sorted constant for a struct member. The name is namespaced by
-    /// the full enclosing name (contract$struct$member), mirroring the contract state-variable
-    /// scheme in [#createFieldConstantAndRegisterField]. Struct members are accessed in the logic
-    /// via `selectSt`/`storeSt`, whose field argument is of sort `Field` (unlike contract state
-    /// variables, whose constant carries the field's value sort). No-op if the struct theory (and
-    /// thus the `Field` sort) is not loaded.
-    private void registerStructFieldConstant(String fullFieldName) {
+    /// Registers a unique `Field`-sorted constant under the given namespaced name. Both contract
+    /// state variables (`Contract$field`) and struct members (`Contract$Struct$member`) use the
+    /// same scheme, so a single `selectSt`/`storeSt` theory (whose field argument is of sort
+    /// `Field`) covers both. No-op if the struct theory — and thus the `Field` sort — is not
+    /// loaded; the name is still returned so callers can record it. Idempotent: a constant that is
+    /// already registered is left untouched.
+    ///
+    /// @param fullFieldName the namespaced constant name (e.g. `Contract$balance`)
+    /// @return the same name, for the caller to record on the declaration
+    private Name registerFieldConstant(Name fullFieldName) {
         Sort fieldSort = services.getNamespaces().sorts().lookup(new Name("Field"));
-        if (fieldSort == null) {
-            return;
+        if (fieldSort != null
+                && services.getNamespaces().functions().lookup(fullFieldName) == null) {
+            services.getNamespaces().functions()
+                    .addSafely(new SFunction(fullFieldName, fieldSort, true, true));
         }
-        SFunction fieldConstant = new SFunction(new Name(fullFieldName), fieldSort, true, true);
-        services.getNamespaces().functions().addSafely(fieldConstant);
-    }
-
-    private SFunction createFieldConstantAndRegisterField(String strFieldName, String contractName,
-            KeYSolidityType type) {
-        // TODO should we make the unique field names parametric with the contract type as
-        // parameter?
-        Name fieldName = new Name(contractName + StructLDT.FIELD_SEPARATOR + strFieldName);
-        SFunction fieldConstant = new SFunction(fieldName, type.getSort(), true, true);
-        services.getNamespaces().functions().addSafely(fieldConstant);
-        return fieldConstant;
+        return fullFieldName;
     }
 
     Type parseReferenceTypeDeclaration(JsonNode expNode) {
@@ -638,20 +630,23 @@ public class SolJSONParser {
         int idLeftRef =
             initializer.get("baseExpression").get("referencedDeclaration").asInt();
         Expression indexExp = parseExpression(initializer.get("indexExpression"));
-        ProgramVariable leftExp = getProgramVariable(idLeftRef);
+        Expression leftExp = getVariableExpression(idLeftRef);
         return new IndexExpression(leftExp, indexExp);
     }
 
-    private ProgramVariable getProgramVariable(int idLeftRef) {
+    /// Resolves a referenced declaration to the expression denoting a read/write of it: a
+    /// [FieldReference] for a contract state variable, or the local [ProgramVariable] for a
+    /// statement-local variable.
+    private Expression getVariableExpression(int idLeftRef) {
         Declaration declaration = (Declaration) id2Name.get(idLeftRef);
 
         return switch (declaration) {
             case StateVariableDeclaration stateVarDeclaration ->
-                stateVarDeclaration.getProgramVariable();
+                new FieldReference(stateVarDeclaration, stateVarDeclaration.getType());
             case StatementVariableDeclaration stmVarDeclaration ->
                 stmVarDeclaration.getProgramVariable();
             default -> throw new RuntimeException(
-                "Declaration " + declaration + " does not have program variable");
+                "Declaration " + declaration + " does not denote a variable");
         };
     }
 
@@ -694,7 +689,7 @@ public class SolJSONParser {
         Type type = parseReferenceTypeDeclaration(literal);
         return switch (declaration) {
             case StateVariableDeclaration stateVarDeclaration ->
-                stateVarDeclaration.getProgramVariable();
+                new FieldReference(stateVarDeclaration, type);
             case FunctionDeclaration ignored ->
                 new FunctionReference(idDecl, type);
             case StatementVariableDeclaration stmVarDeclaration ->

@@ -30,6 +30,7 @@ import org.key_project.solidity.program.ast.expressions.literals.*;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.references.ContractReference;
+import org.key_project.solidity.program.ast.references.FieldReference;
 import org.key_project.solidity.program.ast.references.FunctionReference;
 import org.key_project.solidity.program.ast.references.ModifierReference;
 import org.key_project.solidity.program.ast.statement.*;
@@ -69,15 +70,21 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract, services);
         assertEquals(1, contractDeclaration.getFieldDeclarations().size());
-        assertEquals(Storage,
-            contractDeclaration.getFieldDeclarations().get(0).getProgramVariable()
-                    .getDataLocation());
         assertSame(UINT256,
-            contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getType());
+            contractDeclaration.getFieldDeclarations().get(0).getType());
         StateVariableDeclaration balanceDecl = contractDeclaration.getFieldDeclarations().get(0);
-        assertEquals(1, balanceDecl.getChildCount());
-        assertInstanceOf(ProgramVariable.class, balanceDecl.getChild(0));
-        assertThrows(IndexOutOfBoundsException.class, () -> balanceDecl.getChild(1));
+        assertEquals("balance", balanceDecl.getName().toString());
+        // the field's logic symbol is registered under the namespaced constant name ...
+        assertEquals("SimpleContract$balance", balanceDecl.getFieldConstantName().toString());
+        // ... as a Field-sorted constant, so the selectSt/storeSt theory covers it uniformly
+        // with struct members (phase 2 unification).
+        var fieldConstant =
+            services.getNamespaces().functions().lookup(balanceDecl.getFieldConstantName());
+        assertNotNull(fieldConstant, "field constant should be registered");
+        assertEquals("Field", fieldConstant.sort().name().toString());
+        // no initializer -> the declaration has no syntactic children
+        assertEquals(0, balanceDecl.getChildCount());
+        assertThrows(IndexOutOfBoundsException.class, () -> balanceDecl.getChild(0));
         assertTrue(balanceDecl.toString().contains("balance"));
         assertEquals("SimpleContract", contractDeclaration.name().toString());
     }
@@ -93,9 +100,9 @@ public class SolJsonParserTest {
         ContractDeclaration contractDeclaration = getDeclStr(contract, services);
         assertEquals(2, contractDeclaration.getFieldDeclarations().size());
         assertSame(UINT256,
-            contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getType());
+            contractDeclaration.getFieldDeclarations().get(0).getType());
         assertSame(BOOL,
-            contractDeclaration.getFieldDeclarations().get(1).getProgramVariable().getType());
+            contractDeclaration.getFieldDeclarations().get(1).getType());
     }
 
     @Test
@@ -147,12 +154,12 @@ public class SolJsonParserTest {
         StateVariableDeclaration secondField = contractDeclaration.getFieldDeclarations().get(1);
         assertInstanceOf(BoolLiteral.class, secondField.getInitializer());
         assertSame(TRUE, secondField.getInitializer());
-        assertSame(UINT256, firstField.getProgramVariable().getType());
-        assertSame(BOOL, secondField.getProgramVariable().getType());
-        assertEquals(2, firstField.getChildCount());
-        assertInstanceOf(ProgramVariable.class, firstField.getChild(0));
-        assertInstanceOf(Uint256Literal.class, firstField.getChild(1));
-        assertThrows(IndexOutOfBoundsException.class, () -> firstField.getChild(2));
+        assertSame(UINT256, firstField.getType());
+        assertSame(BOOL, secondField.getType());
+        // the only syntactic child is the initializer
+        assertEquals(1, firstField.getChildCount());
+        assertInstanceOf(Uint256Literal.class, firstField.getChild(0));
+        assertThrows(IndexOutOfBoundsException.class, () -> firstField.getChild(1));
     }
 
     @Test
@@ -389,9 +396,9 @@ public class SolJsonParserTest {
         assertInstanceOf(BinaryExpression.class, initializer);
         assertSame(Operator.LOGICAL_OR, ((BinaryExpression) initializer).getOperator());
         assertSame(BOOL,
-            contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getType());
+            contractDeclaration.getFieldDeclarations().get(0).getType());
         assertSame(INT,
-            contractDeclaration.getFieldDeclarations().get(1).getProgramVariable().getType());
+            contractDeclaration.getFieldDeclarations().get(1).getType());
     }
 
     @Test
@@ -406,7 +413,7 @@ public class SolJsonParserTest {
         assertInstanceOf(TernaryExpression.class,
             contractDeclaration.getFieldDeclarations().get(0).getInitializer());
         assertSame(BOOL,
-            contractDeclaration.getFieldDeclarations().get(0).getProgramVariable().getType());
+            contractDeclaration.getFieldDeclarations().get(0).getType());
         assertSame(BOOL,
             contractDeclaration.getFieldDeclarations().get(0).getInitializer().getType());
         TernaryExpression ternary =
@@ -454,11 +461,11 @@ public class SolJsonParserTest {
 
         assertInstanceOf(UnaryExpression.class, exp);
         assertSame(Operator.POST_INC, ((UnaryExpression) exp).getOperator());
-        assertSame(UINT256, fieldDeclarations.get(0).getProgramVariable().getType());
-        assertSame(UINT256, fieldDeclarations.get(1).getProgramVariable().getType());
-        assertSame(UINT256, fieldDeclarations.get(2).getProgramVariable().getType());
+        assertSame(UINT256, fieldDeclarations.get(0).getType());
+        assertSame(UINT256, fieldDeclarations.get(1).getType());
+        assertSame(UINT256, fieldDeclarations.get(2).getType());
         assertEquals(2, exp.getChildCount());
-        assertInstanceOf(ProgramVariable.class, exp.getChild(1));
+        assertInstanceOf(FieldReference.class, exp.getChild(1));
         assertThrows(IndexOutOfBoundsException.class, () -> exp.getChild(2));
     }
 
@@ -531,9 +538,6 @@ public class SolJsonParserTest {
         assertEquals(1, structs.size());
         StructDeclaration struct = structs.getFirst();
         assertEquals(1, struct.getFields().size());
-        assertEquals(Storage,
-            contractDeclaration.getFieldDeclarations().get(0).getProgramVariable()
-                    .getDataLocation());
         assertEquals(1, struct.getChildCount());
         assertInstanceOf(FieldDeclaration.class, struct.getChild(0));
         FieldDeclaration field = struct.getFields().get(0);
@@ -574,7 +578,7 @@ public class SolJsonParserTest {
         assertInstanceOf(MemberExp.class, retExp);
         MemberExp memberExp = (MemberExp) retExp;
         assertEquals(2, memberExp.getChildCount());
-        assertInstanceOf(ProgramVariable.class, memberExp.getLeftExp()); // alice
+        assertInstanceOf(FieldReference.class, memberExp.getLeftExp()); // alice
         assertInstanceOf(FieldDeclaration.class, memberExp.getRightExp());
         assertThrows(IndexOutOfBoundsException.class, () -> memberExp.getChild(2));
     }
@@ -638,7 +642,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract, services);
         assertTrue(contractDec.toString().contains("v[1 + 1]"));
-        Type vType = contractDec.getFieldDeclarations().get(0).getProgramVariable().getType();
+        Type vType = contractDec.getFieldDeclarations().get(0).getType();
         assertInstanceOf(DynamicArrayType.class, vType);
         DynamicArrayType arrayType = (DynamicArrayType) vType;
         assertSame(INT, arrayType.getElementType());
@@ -647,7 +651,7 @@ public class SolJsonParserTest {
                 .getBody().getStatements().get(0);
         IndexExpression idxExp = (IndexExpression) retStmt.getReturnExp();
         assertEquals(2, idxExp.getChildCount());
-        assertInstanceOf(ProgramVariable.class, idxExp.getChild(0)); // v
+        assertInstanceOf(FieldReference.class, idxExp.getChild(0)); // v
 
         assertInstanceOf(BinaryExpression.class, idxExp.getChild(1)); // 1+1
         assertSame(Operator.ADD, ((BinaryExpression) idxExp.getChild(1)).getOperator());
@@ -663,7 +667,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract, services);
         Type valuesType =
-            contractDec.getFieldDeclarations().get(0).getProgramVariable().getType();
+            contractDec.getFieldDeclarations().get(0).getType();
         assertInstanceOf(ArrayType.class, valuesType);
         ArrayType arrayType = (ArrayType) valuesType;
         assertEquals(3, arrayType.length());
@@ -795,7 +799,7 @@ public class SolJsonParserTest {
         String contractS = contractDec.toString();
         assertTrue(contractS.contains("if"));
         assertTrue(contractS.contains("i = 0;"));
-        assertSame(INT, contractDec.getFieldDeclarations().get(0).getProgramVariable().getType());
+        assertSame(INT, contractDec.getFieldDeclarations().get(0).getType());
         ConditionStatement ifStmt = (ConditionStatement) contractDec.getFunctions().getFirst()
                 .getBody().getStatements().get(0);
         assertEquals(2, ifStmt.getChildCount());
@@ -1166,7 +1170,7 @@ public class SolJsonParserTest {
                     mapping(bool => int256) public b;
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract, services);
-        Type bType = contractDec.getFieldDeclarations().get(0).getProgramVariable().getType();
+        Type bType = contractDec.getFieldDeclarations().get(0).getType();
         assertInstanceOf(MappingType.class, bType);
         MappingType mappingType = (MappingType) bType;
         assertSame(BOOL, mappingType.keyType());
@@ -1182,7 +1186,7 @@ public class SolJsonParserTest {
                     mapping(bool => mapping(bool => int256)) public b;
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract, services);
-        Type bType = contractDec.getFieldDeclarations().get(0).getProgramVariable().getType();
+        Type bType = contractDec.getFieldDeclarations().get(0).getType();
         assertInstanceOf(MappingType.class, bType);
         MappingType outerMapping = (MappingType) bType;
         assertSame(BOOL, outerMapping.keyType());
@@ -1430,7 +1434,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract, services);
         Type contractType =
-            contractDec.getFieldDeclarations().get(0).getProgramVariable().getType();
+            contractDec.getFieldDeclarations().get(0).getType();
         assertInstanceOf(ContractDeclaration.class, contractType);
         assertEquals("SimpleContract", contractType.name().toString());
         String contractS = contractDec.toString();
@@ -1466,8 +1470,8 @@ public class SolJsonParserTest {
                     mapping(bool => int) public m2;
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract, services);
-        Type m1Type = contractDec.getFieldDeclarations().get(0).getProgramVariable().getType();
-        Type m2Type = contractDec.getFieldDeclarations().get(1).getProgramVariable().getType();
+        Type m1Type = contractDec.getFieldDeclarations().get(0).getType();
+        Type m2Type = contractDec.getFieldDeclarations().get(1).getType();
         assertSame(m1Type, m2Type);
         assertRegisteredSolidityInfoType(m1Type);
     }
@@ -1509,7 +1513,8 @@ public class SolJsonParserTest {
 
         // Inner MemberExp: alice.account
         MemberExp innerMember = (MemberExp) outerMember.getLeftExp();
-        assertEquals("alice", ((ProgramVariable) innerMember.getLeftExp()).name().toString());
+        assertEquals("alice",
+            ((FieldReference) innerMember.getLeftExp()).mainProgramElement().getName().toString());
         FieldDeclaration accountField = (FieldDeclaration) innerMember.getRightExp();
         assertEquals("account", accountField.name().toString());
         assertEquals("Account",

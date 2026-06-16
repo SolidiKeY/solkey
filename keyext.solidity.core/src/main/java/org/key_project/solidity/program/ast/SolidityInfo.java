@@ -223,7 +223,7 @@ public class SolidityInfo {
     // ── State variables ─────────────────────────────────────────────────────
 
     public void addStateVariable(StateVariableDeclaration stateVariable) {
-        Name name = stateVariable.getProgramVariable().name();
+        Name name = stateVariable.getName();
         if (stateVariables.contains(stateVariable)
                 || getStateVariableDeclaration(name) != null) {
             throw new IllegalStateException("State variable " + name + " already exists");
@@ -233,7 +233,7 @@ public class SolidityInfo {
 
     public @Nullable StateVariableDeclaration getStateVariableDeclaration(Name name) {
         for (StateVariableDeclaration stateVariable : stateVariables) {
-            if (stateVariable.getProgramVariable().name().equals(name)) {
+            if (stateVariable.getName().equals(name)) {
                 return stateVariable;
             }
         }

@@ -50,6 +50,8 @@ public interface Visitor {
 
     void performActionOnEnumReference(EnumReference x);
 
+    void performActionOnFieldReference(FieldReference x);
+
     void performActionOnFunctionReference(FunctionReference x);
 
     void performActionOnModifierReference(ModifierReference x);

@@ -94,7 +94,7 @@ public class ExpandFunctionBody extends ProgramTransformer {
         stmts.add(newBody);
 
         // connect the (single, named) return value to the call's result variable, if any:
-        //   <resultVar> = <freshReturn0>;
+        // <resultVar> = <freshReturn0>;
         final ProgramVariable resultVar = fbs.getResultVar();
         if (resultVar != null && !freshReturns.isEmpty()) {
             stmts.add(new ExpressionStatement(new AssignExpression(

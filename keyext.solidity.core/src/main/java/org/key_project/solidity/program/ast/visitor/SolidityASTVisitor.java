@@ -139,6 +139,11 @@ public abstract class SolidityASTVisitor extends SolidityASTWalker implements Vi
     }
 
     @Override
+    public void performActionOnFieldReference(FieldReference x) {
+        doDefaultAction(x);
+    }
+
+    @Override
     public void performActionOnFunctionReference(FunctionReference x) {
         doDefaultAction(x);
     }

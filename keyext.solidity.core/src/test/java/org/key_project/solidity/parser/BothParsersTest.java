@@ -113,7 +113,7 @@ public class BothParsersTest {
                 }""";
         ContractDeclaration contractDec = solcParser.getDeclStrJsonParser(contract);
         StateVariableDeclaration field = contractDec.getFieldDeclarations().get(0);
-        ArrayType contractArrayType = (ArrayType) field.getProgramVariable().getType();
+        ArrayType contractArrayType = (ArrayType) field.getType();
 
         DeclarationStatement stm = (DeclarationStatement) parseStatement("bool[2] x;");
         ArrayType parsedArrayType =
@@ -133,7 +133,7 @@ public class BothParsersTest {
         ContractDeclaration contractDec = solcParser.getDeclStrJsonParser(contract);
         StateVariableDeclaration field = contractDec.getFieldDeclarations().get(0);
         DynamicArrayType contractArrayType =
-            (DynamicArrayType) field.getProgramVariable().getType();
+            (DynamicArrayType) field.getType();
 
         DeclarationStatement stm = (DeclarationStatement) parseStatement("bool[] x;");
         DynamicArrayType parsedArrayType =
