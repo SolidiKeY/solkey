@@ -16,6 +16,7 @@ import org.key_project.util.collection.ImmutableArray;
 
 import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class Block implements Statement, ProgramPrefix {
 
@@ -66,17 +67,23 @@ public class Block implements Statement, ProgramPrefix {
 
     public @NonNull ImmutableArray<Statement> getStatements() { return statements; }
 
+    // These prefix queries run via computeEssentials(this) from the constructor, where the receiver
+    // is only @UnknownInitialization; `statements` is already assigned at that point, so the calls
+    // to getChildCount()/getChild() are safe even though the checker cannot prove it.
     @Override
+    @SuppressWarnings("method.invocation.invalid")
     public boolean isPrefix(@UnknownInitialization Block this) {
         return getChildCount() != 0;
     }
 
     @Override
+    @SuppressWarnings("method.invocation.invalid")
     public boolean hasNextPrefixElement(@UnknownInitialization Block this) {
         return getChildCount() != 0 && getChild(0) instanceof ProgramPrefix;
     }
 
     @Override
+    @SuppressWarnings("method.invocation.invalid")
     public ProgramPrefix getNextPrefixElement(@UnknownInitialization Block this) {
         if (hasNextPrefixElement()) {
             return (ProgramPrefix) getChild(0);
@@ -122,7 +129,7 @@ public class Block implements Statement, ProgramPrefix {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         if (this == o)
             return true;
         if (!(o instanceof Block that))

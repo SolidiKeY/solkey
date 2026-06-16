@@ -71,7 +71,7 @@ public class ForStatement extends LoopStatement {
         return update;
     }
 
-    public String nullOrEmpty(SolidityProgramElement e) {
+    public String nullOrEmpty(@Nullable SolidityProgramElement e) {
         return e == null ? "" : e.toString();
     }
 

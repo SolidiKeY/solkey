@@ -12,6 +12,7 @@ import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.rule.matching.inst.MatchConditions;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public abstract class Literal extends SolidityExpression {
 
@@ -32,7 +33,7 @@ public abstract class Literal extends SolidityExpression {
     }
 
     @Override
-    public MatchConditions match(SourceData source, MatchConditions matchCond) {
+    public @Nullable MatchConditions match(SourceData source, @Nullable MatchConditions matchCond) {
         final SolidityProgramElement src = source.getSource();
         if (this.equals(src)) {
             source.next();
