@@ -12,6 +12,7 @@ import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.*;
 import org.key_project.solidity.rule.sv.ModalOperatorSV;
+import org.key_project.solidity.theory.IntLDT;
 
 public class NotationInfo {
     // Priorities of operators (roughly corresponding to the grammatical structure in the parser.
@@ -44,6 +45,11 @@ public class NotationInfo {
     /// look whether the operator has a Notation registered. Otherwise, we see if there is one for
     /// the _class_ of the operator.
     private HashMap<Object, Notation> notationTable;
+
+    /// Notation for integer literals (`Z(d(..(#)))`). Held separately because it is selected by
+    /// operator name, so that it takes precedence over the generic function notation registered
+    /// for the `SFunction` class.
+    private final Notation numLiteral = new Notation.NumLiteral();
 
 
     /// Maps terms to abbreviations and reverse.
@@ -150,6 +156,12 @@ public class NotationInfo {
         Notation result = notationTable.get(op);
         if (result != null) {
             return result;
+        }
+
+        // Integer literals are SFunctions named "Z"; catch them before the generic SFunction
+        // notation so they print in decimal instead of as Z(2(3(#))).
+        if (op.name().equals(IntLDT.NUMBERS_NAME)) {
+            return numLiteral;
         }
 
         result = notationTable.get(op.getClass());

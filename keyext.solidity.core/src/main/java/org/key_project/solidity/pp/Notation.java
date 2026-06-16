@@ -18,6 +18,7 @@ import org.key_project.solidity.logic.op.UpdateApplication;
 import org.key_project.solidity.logic.op.UpdateJunctor;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.rule.sv.*;
+import org.key_project.solidity.theory.IntLDT;
 import org.key_project.util.collection.ImmutableArray;
 import org.key_project.util.collection.ImmutableList;
 
@@ -240,6 +241,59 @@ public abstract class Notation {
 
         public void print(Term t, LogicPrinter sp) {
             sp.printFunctionTerm(t);
+        }
+    }
+
+    /// Concrete syntax for integer literals, which are encoded as `Z(d(..(#)))` with the digits
+    /// stored least-significant first. This prints them in decimal, e.g. `Z(2(3(#)))` as `32`.
+    ///
+    /// The whole literal is emitted as a single nullary token via [LogicPrinter#printConstant],
+    /// so the position table relates the printed number to the `Z` term and does not expose the
+    /// digit subterms for selection (matching the KeY-Java logic printer).
+    public static final class NumLiteral extends Notation {
+        public NumLiteral() {
+            super(120);
+        }
+
+        /// @param numberTerm a `Z`-headed (or bare) numeral term
+        /// @return the decimal rendering, or `null` if `numberTerm` is not a numeral
+        public static String printNumberTerm(Term numberTerm) {
+            Term t = numberTerm;
+
+            // skip the Z number symbol (this method may also be called on a bare numeral)
+            if (t.op().name().equals(IntLDT.NUMBERS_NAME)) {
+                t = t.sub(0);
+            }
+
+            final StringBuilder number = new StringBuilder();
+            int offset = 0;
+
+            if (t.op().name().toString().equals(IntLDT.NEGATIVE_LITERAL_STRING)) {
+                number.append("-");
+                t = t.sub(0);
+                offset = 1;
+            }
+
+            do {
+                final String opName = String.valueOf(t.op().name());
+                if (t.arity() != 1 || opName.length() != 1
+                        || !Character.isDigit(opName.charAt(0))) {
+                    return null; // not a number
+                }
+                number.insert(offset, opName);
+                t = t.sub(0);
+            } while (t.arity() != 0);
+
+            return number.toString();
+        }
+
+        public void print(Term t, LogicPrinter sp) {
+            final String number = printNumberTerm(t);
+            if (number != null) {
+                sp.printConstant(number);
+            } else {
+                sp.printFunctionTerm(t);
+            }
         }
     }
 
