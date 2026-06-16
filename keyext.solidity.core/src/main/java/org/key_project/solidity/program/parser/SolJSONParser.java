@@ -115,7 +115,9 @@ public class SolJSONParser {
 
     private List<SyntaxElement> parseSourceUnit(List<JsonNode> nodes) {
         return nodes.stream()
-                .filter(n -> "contract".equals(n.get("contractKind").asString()))
+                // skip non-contract top-level nodes (e.g. PragmaDirective, ImportDirective)
+                .filter(n -> n.get("contractKind") != null
+                        && "contract".equals(n.get("contractKind").asString()))
                 .map(this::parseContract)
                 .collect(Collectors.toList());
     }
