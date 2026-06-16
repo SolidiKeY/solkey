@@ -5,6 +5,7 @@ package org.key_project.solidity.program.ast.visitor;
 
 
 import java.rmi.UnexpectedException;
+import java.util.Objects;
 
 import org.key_project.logic.IntIterator;
 import org.key_project.solidity.program.PosInProgram;
@@ -14,8 +15,6 @@ import org.key_project.solidity.program.ast.statement.Statement;
 import org.key_project.solidity.program.ext.ContextStatementBlock;
 import org.key_project.solidity.rule.matching.inst.ContextBlockExpressionInstantiation;
 import org.key_project.util.collection.ImmutableArray;
-
-import org.jspecify.annotations.Nullable;
 
 /// Wraps the prefix/suffix context recorded in a [ContextBlockExpressionInstantiation] around the
 /// statements of the replacement [ContextStatementBlock] (the `c# ... #c` block of a taclet's
@@ -42,20 +41,25 @@ public class ProgramContextAdder {
     protected SolidityProgramElement wrap(SolidityProgramElement context,
             ContextStatementBlock putIn, IntIterator prefixPos, PosInProgram suffix) {
 
+        // peek: consume the next prefix index (if any) and descend into that child, then test
+        // whether further prefix elements remain. The consumption order matters: it determines at
+        // which context level createWrapperBody is invoked.
         final SolidityProgramElement next =
             prefixPos.hasNext() ? (SolidityProgramElement) context.getChild(prefixPos.next())
                     : null;
 
         if (!prefixPos.hasNext()) {
             return createWrapperBody(context, putIn, suffix);
+        }
+
+        // in this branch the ternary above descended into a child, so next is non-null
+        final SolidityProgramElement body =
+            wrap(Objects.requireNonNull(next), putIn, prefixPos, suffix);
+        if (context instanceof Block block) {
+            return createBlockWrapper(block, body);
         } else {
-            final SolidityProgramElement body = wrap(next, putIn, prefixPos, suffix);
-            if (context instanceof Block block) {
-                return createBlockWrapper(block, body);
-            } else {
-                throw new RuntimeException(
-                    new UnexpectedException("Unexpected block type: " + context.getClass()));
-            }
+            throw new RuntimeException(
+                new UnexpectedException("Unexpected block type: " + context.getClass()));
         }
     }
 
@@ -87,8 +91,7 @@ public class ProgramContextAdder {
     /// Replaces the first statement of a block by the (already wrapped) replacement. Optimised: if
     /// the block had a single statement and the replacement is itself a block, the replacement is
     /// returned directly.
-    protected Block createBlockWrapper(Block wrapper,
-            @Nullable SolidityProgramElement replacement) {
+    protected Block createBlockWrapper(Block wrapper, SolidityProgramElement replacement) {
         final int childrenCount = wrapper.getChildCount();
         if (childrenCount <= 1 && replacement instanceof Block block) {
             return block;

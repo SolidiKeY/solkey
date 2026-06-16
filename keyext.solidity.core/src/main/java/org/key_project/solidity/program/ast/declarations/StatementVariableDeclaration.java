@@ -88,7 +88,11 @@ public class StatementVariableDeclaration implements Declaration, SolidityProgra
         v.performActionOnStatementVariableDeclaration(this);
     }
 
-    public @Nullable ProgramVariable getProgramVariable() {
-        return programVariable;
+    /// @return the declared program variable for a concrete declaration; `null` for a schematic
+    /// declaration (taclet pattern). Callers that only handle concrete programs may treat this as
+    /// non-null.
+    public ProgramVariable getProgramVariable() {
+        return Objects.requireNonNull(programVariable,
+            "schematic declaration has no concrete program variable");
     }
 }
