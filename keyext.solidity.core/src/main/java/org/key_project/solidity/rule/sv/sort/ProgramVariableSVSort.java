@@ -16,12 +16,19 @@ public class ProgramVariableSVSort extends ProgramSVSort {
     }
 
     @Override
+    public boolean canStandFor(SolidityProgramElement pe, Services services) {
+        return pe instanceof ProgramVariable;
+    }
+
+    /// A program variable is itself a logic term, so it may match in term position (the update
+    /// calculus relies on this, e.g. `{pv := t}pv`).
+    @Override
     public boolean canStandFor(Term t) {
         return t.op() instanceof ProgramVariable;
     }
 
     @Override
-    public boolean canStandFor(SolidityProgramElement pe, Services services) {
-        return pe instanceof ProgramVariable;
+    public boolean mayOccurInTermPosition() {
+        return true;
     }
 }

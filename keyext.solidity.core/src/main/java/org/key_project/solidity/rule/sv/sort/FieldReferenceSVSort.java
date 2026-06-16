@@ -4,24 +4,19 @@
 package org.key_project.solidity.rule.sv.sort;
 
 import org.key_project.logic.Name;
-import org.key_project.logic.Term;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.references.FieldReference;
 
 /// Program schema variable sort matching a [FieldReference], i.e. an in-program access to a
-/// contract state variable. A taclet can bind such a schema variable and then resolve the field's
-/// logic symbol with the `#fieldSymbol` term transformer
-/// ([org.key_project.solidity.rule.metaconstruct.MetaFieldSymbol]).
+/// contract state variable. A taclet binds such a schema variable inside a modality; the field's
+/// logic symbol is then resolved when the program element is converted to a term (see
+/// [org.key_project.solidity.common.Services#convertToLogicElement]), e.g. via the
+/// `\sameAsTerm` variable condition.
 public class FieldReferenceSVSort extends ProgramSVSort {
 
     public FieldReferenceSVSort() {
         super(new Name("FieldReference"));
-    }
-
-    @Override
-    public boolean canStandFor(Term t) {
-        return t.op() instanceof FieldReference;
     }
 
     @Override

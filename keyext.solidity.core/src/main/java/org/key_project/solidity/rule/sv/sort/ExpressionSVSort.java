@@ -4,7 +4,6 @@
 package org.key_project.solidity.rule.sv.sort;
 
 import org.key_project.logic.Name;
-import org.key_project.logic.Term;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
@@ -13,11 +12,6 @@ public class ExpressionSVSort extends ProgramSVSort {
 
     public ExpressionSVSort() {
         super(new Name("Expression"));
-    }
-
-    @Override
-    public boolean canStandFor(Term t) {
-        return t.op() instanceof Expression;
     }
 
     @Override

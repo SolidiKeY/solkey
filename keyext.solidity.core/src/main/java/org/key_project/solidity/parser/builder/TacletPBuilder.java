@@ -27,6 +27,7 @@ import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.proof.calculus.SoliditySequentKit;
 import org.key_project.solidity.rule.sv.OperatorSV;
+import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.solidity.rule.sv.SchemaVariableFactory;
 import org.key_project.solidity.rule.sv.sort.ProgramSVSort;
 import org.key_project.solidity.rule.taclets.TacletGoalTemplate;
@@ -183,6 +184,10 @@ public class TacletPBuilder extends ExpressionBuilder {
         @Nullable
         Object find = accept(ctx.find);
         Sequent seq = find instanceof Sequent ? (Sequent) find : null;
+
+        // program schema variables may only occur inside a modality in \find / \assumes
+        checkNoProgramSVInTermPosition(find, "\\find", ctx);
+        checkNoProgramSVInTermPosition(ifSeq, "\\assumes", ctx);
 
         var applicationRestriction = ApplicationRestriction.NONE;
         if (!ctx.SAMEUPDATELEVEL().isEmpty()) {
@@ -1001,6 +1006,37 @@ public class TacletPBuilder extends ExpressionBuilder {
                 mods);
         }
         return null;
+    }
+
+    /// Enforces that a program schema variable only occurs inside a modality in `\find` /
+    /// `\assumes`: it must not appear as a term operator (outside a modality), unless its sort
+    /// stands for a program variable (which is itself a logic term). The argument may be a
+    /// [Term] (rewrite find), a [Sequent] (sequent find / assumes) or `null`.
+    private void checkNoProgramSVInTermPosition(Object findOrSeq, String clause,
+            ParserRuleContext ctx) {
+        if (findOrSeq instanceof Term term) {
+            checkNoProgramSVInTermPosition(term, clause, ctx);
+        } else if (findOrSeq instanceof Sequent sequent) {
+            for (SequentFormula sf : sequent) {
+                checkNoProgramSVInTermPosition(sf.formula(), clause, ctx);
+            }
+        }
+    }
+
+    private void checkNoProgramSVInTermPosition(Term term, String clause, ParserRuleContext ctx) {
+        if (term.op() instanceof ProgramSV psv
+                && psv.sort() instanceof ProgramSVSort psvSort
+                && !psvSort.mayOccurInTermPosition()) {
+            semanticError(ctx,
+                "Program schema variable '%s' (of sort '%s') may only occur inside a modality "
+                    + "in %s, not in a term position. To refer to its value as a term there, "
+                    + "declare a '\\term <Sort> s;' schema variable, use 's' in the term "
+                    + "position, and add '\\varcond(\\sameAsTerm(%s, s))'.",
+                psv.name(), psvSort.name(), clause, psv.name());
+        }
+        for (int i = 0; i < term.arity(); i++) {
+            checkNoProgramSVInTermPosition(term.sub(i), clause, ctx);
+        }
     }
 
     /// The names of all registered program schema variable sorts, sorted and comma separated.

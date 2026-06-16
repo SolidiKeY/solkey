@@ -39,10 +39,29 @@ public abstract class ProgramSVSort extends SortImpl {
         throw new UnsupportedOperationException();
     }
 
+    /// Whether this sort may stand for the given program element (inside a modality).
+    public abstract boolean canStandFor(SolidityProgramElement pe, Services services);
+
+    /// Whether this sort may stand for the given *term* in a term position of `\find`/`\assumes`.
+    ///
+    /// This is intentionally `false` by default: a program schema variable may not occur in a
+    /// term position. The sole exception is a schema variable standing for a program *variable*,
+    /// because a program variable is itself a logic term (an updateable operator) — the update
+    /// calculus relies on matching e.g. `{pv := t}pv`. Such sorts override this method.
+    ///
+    /// To relate any other program schema variable to a term outside a modality, use a `\term`
+    /// schema variable together with the `\sameAsTerm` variable condition.
     public boolean canStandFor(Term t) {
-        return true;
+        return false;
     }
 
-    public abstract boolean canStandFor(SolidityProgramElement pe, Services services);
+    /// Whether a schema variable of this sort may legitimately appear in a *term* position
+    /// (outside a modality) of `\find`/`\assumes`. Only program-variable sorts may, because a
+    /// program variable is itself a logic term (needed by the update calculus). Kept consistent
+    /// with [#canStandFor(Term)]. Defaults to `false`; the taclet builder reports a clear error
+    /// for any other program schema variable used in a term position there.
+    public boolean mayOccurInTermPosition() {
+        return false;
+    }
 
 }

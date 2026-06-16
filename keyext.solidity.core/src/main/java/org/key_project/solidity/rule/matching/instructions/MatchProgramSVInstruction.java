@@ -76,15 +76,20 @@ public class MatchProgramSVInstruction extends MatchSchemaVariableInstruction {
     @Override
     public @Nullable MatchResultInfo match(SyntaxElement actualElement, MatchResultInfo mc,
             LogicServices services) {
-        MatchResultInfo result = null;
         if (actualElement instanceof SolidityProgramElement programElement) {
-            result = match(programElement, mc, services);
-        } else if (actualElement instanceof Term term) {
+            return match(programElement, mc, services);
+        }
+        // A program schema variable may match a term only when its sort permits it, i.e. only
+        // a program-*variable* sort (a program variable is itself a logic term, needed by the
+        // update calculus, e.g. {pv := t}pv). All other program SV sorts return false here, so
+        // they cannot occur in a term position of \find/\assumes; use a \term schema variable
+        // with the \sameAsTerm variable condition instead.
+        if (actualElement instanceof Term term) {
             final ProgramSVSort svSort = (ProgramSVSort) op.sort();
             if (svSort.canStandFor(term)) {
                 return addInstantiation(term, mc, services);
             }
         }
-        return result;
+        return null;
     }
 }

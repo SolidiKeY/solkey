@@ -7,6 +7,7 @@ import KeYLexer;
 package org.key_project.solidity.parser;
 }
 
+SAME_AS_TERM  : '\\sameAsTerm';
 NEW_LOCAL_VARS: '\\newLocalVars';
 STORE_TERM_IN : '\\storeTermIn';
 STORE_EXPR_IN : '\\storeExprIn';

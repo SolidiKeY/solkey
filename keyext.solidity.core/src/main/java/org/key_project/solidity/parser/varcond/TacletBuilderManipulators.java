@@ -185,6 +185,26 @@ public class TacletBuilderManipulators {
     public static final TacletBuilderCommand NEW_LOCAL_VARS =
         new ConstructorBasedBuilder("newLocalVars", NewLocalVarsCondition.class, SV, SV, SV, SV);
 
+    /// `\sameAsTerm(v, s)` — ties a program schema variable `v` to a term schema variable `s`
+    /// (`s` equals the logic conversion of `v`). See [SameAsTermCondition].
+    public static final AbstractConditionBuilder SAME_AS_TERM =
+        new AbstractConditionBuilder("sameAsTerm", SV, SV) {
+            @Override
+            public VariableCondition build(Object[] arguments, List<String> parameters,
+                    boolean negated) {
+                if (negated) {
+                    throw new IllegalArgumentException(
+                        "\\sameAsTerm does not support negation");
+                }
+                if (!(arguments[0] instanceof ProgramSV programSV)) {
+                    throw new IllegalArgumentException(
+                        "\\sameAsTerm expects a program schema variable as its first argument, "
+                            + "but got: " + arguments[0]);
+                }
+                return new SameAsTermCondition(programSV, (SchemaVariable) arguments[1]);
+            }
+        };
+
     private static final List<TacletBuilderCommand> tacletBuilderCommands = new ArrayList<>(2);
 
     static {
@@ -194,7 +214,7 @@ public class TacletBuilderManipulators {
             DROP_EFFECTLESS_ELEMENTARIES, SIMPLIFY_ITE_UPDATE,
             NEW_TYPE_OF, NEW_RUSTY_TYPE,
             IS_SUBTYPE, SAME, HAS_SORT,
-            NEW_LOCAL_VARS, HAS_INVARIANT, GET_INVARIANT, GET_VARIANT);
+            NEW_LOCAL_VARS, HAS_INVARIANT, GET_INVARIANT, GET_VARIANT, SAME_AS_TERM);
     }
 
     /// Announce a [TacletBuilderCommand] for the use during the interpretation of asts. This

@@ -4,7 +4,6 @@
 package org.key_project.solidity.rule.sv.sort;
 
 import org.key_project.logic.Name;
-import org.key_project.logic.Term;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.statement.FunctionBodyStatement;
@@ -15,11 +14,6 @@ public class FunctionBodySVSort extends ProgramSVSort {
 
     public FunctionBodySVSort() {
         super(new Name("FunctionBody"));
-    }
-
-    @Override
-    public boolean canStandFor(Term t) {
-        return t.op() instanceof FunctionBodyStatement;
     }
 
     @Override

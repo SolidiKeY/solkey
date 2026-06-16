@@ -54,6 +54,17 @@ public class ErrorMessageTest {
     }
 
     @Test
+    void programSVInTermPositionGivesHelpfulMessage() {
+        String msg = loadExpectingFailure(
+            "org/key_project/solidity/errors/programSVInTermPosition.key");
+        assertTrue(msg.contains("fr"), "should name the offending schema variable, was:\n" + msg);
+        assertTrue(msg.contains("only occur inside a modality"),
+            "should explain the modality-only rule, was:\n" + msg);
+        assertTrue(msg.contains("\\sameAsTerm"),
+            "should point the developer at the \\sameAsTerm work-around, was:\n" + msg);
+    }
+
+    @Test
     void unknownIdentifierGivesLocatedMessage() {
         String msg = loadExpectingFailure(
             "org/key_project/solidity/errors/unknownIdentifier.key");
