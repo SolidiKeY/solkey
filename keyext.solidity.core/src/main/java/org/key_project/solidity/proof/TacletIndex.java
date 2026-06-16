@@ -13,7 +13,6 @@ import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.prover.rules.Taclet;
 import org.key_project.prover.sequent.PosInOccurrence;
 import org.key_project.solidity.common.Services;
-import org.key_project.solidity.logic.SolidityBlock;
 import org.key_project.solidity.logic.op.ElementaryUpdate;
 import org.key_project.solidity.logic.op.ParametricFunctionInstance;
 import org.key_project.solidity.logic.op.ProgramVariable;
@@ -501,10 +500,10 @@ public class TacletIndex {
     private static class PrefixOccurrences {
         /// the classes that represent prefix elements of a Rust block
         static final Class<?>[] prefixClasses =
-            new Class<?>[] { SolidityBlock.class, /*
-                                                   * LoopScope.class,
-                                                   * FunctionFrame.class
-                                                   */ };
+            new Class<?>[] { Block.class, /*
+                                           * LoopScope.class,
+                                           * FunctionFrame.class
+                                           */ };
 
         /// number of prefix types
         static final int PREFIXTYPES = prefixClasses.length;
