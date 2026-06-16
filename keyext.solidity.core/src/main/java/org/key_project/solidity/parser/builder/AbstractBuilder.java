@@ -48,7 +48,7 @@ public class AbstractBuilder<T> extends KeYSolidityDLParserBaseVisitor<T> {
         }
     }
 
-    protected <T> T acceptFirst(Collection<? extends RuleContext> seq) {
+    protected <T> @Nullable T acceptFirst(Collection<? extends RuleContext> seq) {
         if (seq.isEmpty()) {
             return null;
         }
@@ -76,18 +76,19 @@ public class AbstractBuilder<T> extends KeYSolidityDLParserBaseVisitor<T> {
         if (parameters == null) {
             parameters = new Stack<>();
         }
-        int stackSize = parameters.size();
+        final Stack<Object> params = parameters;
+        int stackSize = params.size();
         push(args);
         T t = accept(ctx);
         // Stack hygiene
-        while (parameters.size() > stackSize) {
-            parameters.pop();
+        while (params.size() > stackSize) {
+            params.pop();
         }
         return t;
     }
 
     // TODO ask about generics; should this be parameterized?
-    protected <S> S oneOf(ParserRuleContext... ctxs) {
+    protected <S> @Nullable S oneOf(ParserRuleContext... ctxs) {
         for (ParserRuleContext ctx : ctxs) {
             if (ctx != null) {
                 return (S) ctx.accept(this);
