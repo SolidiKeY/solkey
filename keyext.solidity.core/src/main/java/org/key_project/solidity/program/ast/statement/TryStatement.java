@@ -14,6 +14,7 @@ import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /// At the moment TryStatement is not a ProgramPrefix as it works different to
 /// Java and we may not want it to disappear in the prefix, this has to be checked
@@ -113,7 +114,7 @@ public class TryStatement implements Statement {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
         if (this == obj)
             return true;
         if (obj == null || getClass() != obj.getClass())

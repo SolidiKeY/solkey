@@ -43,7 +43,7 @@ public class ConditionStatement implements Statement {
             case 1 -> thenBody;
             default -> {
                 if (getChildCount() == 3 && n == 2)
-                    yield elseBody;
+                    yield Objects.requireNonNull(elseBody);
                 throw new IndexOutOfBoundsException(
                     "Index should be 0 <= " + n + " < " + getChildCount());
             }

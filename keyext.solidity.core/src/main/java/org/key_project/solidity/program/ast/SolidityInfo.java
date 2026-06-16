@@ -4,6 +4,7 @@
 package org.key_project.solidity.program.ast;
 
 import java.util.*;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 import org.key_project.logic.Name;
@@ -65,8 +66,8 @@ public class SolidityInfo {
 
     private void registerPredefinedTypes(Services services, List<KeYSolidityType> unresolved) {
         TheoryInfo theoryInfo = services.getTheoryInfo();
-        Sort intSort = theoryInfo.getIntLDT().targetSort();
-        Sort boolSort = theoryInfo.getBoolLDT().targetSort();
+        Sort intSort = Objects.requireNonNull(theoryInfo.getIntLDT().targetSort());
+        Sort boolSort = Objects.requireNonNull(theoryInfo.getBoolLDT().targetSort());
 
         for (PrimitiveType primitiveType : PrimitiveType.all()) {
             String name = primitiveType.name().toString();
@@ -87,9 +88,11 @@ public class SolidityInfo {
         // variables of that 'type' on the logic side (memory, storage, …).
         // Their sorts come from the theories:
         Map<Type, Supplier<Sort>> pseudoSorts = Map.of(
-            PseudoType.MEMORY, () -> theoryInfo.getMemoryLDT().targetSort(),
-            PseudoType.IDENTITY, () -> theoryInfo.getMemoryLDT().getIdentitySort(),
-            PseudoType.STRUCT, () -> theoryInfo.getStructLDT().targetSort());
+            PseudoType.MEMORY, () -> Objects.requireNonNull(theoryInfo.getMemoryLDT().targetSort()),
+            PseudoType.IDENTITY,
+            () -> Objects.requireNonNull(theoryInfo.getMemoryLDT().getIdentitySort()),
+            PseudoType.STRUCT,
+            () -> Objects.requireNonNull(theoryInfo.getStructLDT().targetSort()));
 
         List<KeYSolidityType> pending = new ArrayList<>(unresolved);
         for (var entry : pseudoSorts.entrySet()) {
@@ -120,8 +123,9 @@ public class SolidityInfo {
             throw new IllegalArgumentException(
                 "SolidityInfo stores only complete results, got " + kst);
         }
-        typeByName.put(kst.getSolidityType().name().toString(), kst);
-        typeMap.put(kst.getSolidityType(), kst);
+        Type st = Objects.requireNonNull(kst.getSolidityType());
+        typeByName.put(st.name().toString(), kst);
+        typeMap.put(st, kst);
     }
 
     public @Nullable KeYSolidityType getKeYSolidityType(Type type) {

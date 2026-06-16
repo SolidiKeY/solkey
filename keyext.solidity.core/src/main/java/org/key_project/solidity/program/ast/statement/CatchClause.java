@@ -14,7 +14,7 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public class CatchClause implements SolidityProgramElement {
     enum Kind {
@@ -22,13 +22,14 @@ public class CatchClause implements SolidityProgramElement {
     }
 
     private final Kind kind;
-    private final ImmutableArray<StatementVariableDeclaration> declarations;
+    private final @Nullable ImmutableArray<StatementVariableDeclaration> declarations;
     private final Block body;
 
     // TODO: Make this field protected and in SolidityProgramElement
     private int hashCode = -1;
 
-    public CatchClause(ImmutableArray<StatementVariableDeclaration> declarations, Block body) {
+    public CatchClause(@Nullable ImmutableArray<StatementVariableDeclaration> declarations,
+            Block body) {
         this.declarations = declarations;
         this.body = body;
         if (declarations == null)
@@ -53,7 +54,7 @@ public class CatchClause implements SolidityProgramElement {
 
     public CatchClause(ExtList children) {
         this(new ImmutableArray<>(children.collect(StatementVariableDeclaration.class)),
-            children.get(Block.class));
+            Objects.requireNonNull(children.get(Block.class)));
     }
 
     public Kind getKind() {
@@ -61,7 +62,7 @@ public class CatchClause implements SolidityProgramElement {
     }
 
     public StatementVariableDeclaration getCatchDeclaration() {
-        return declarations.get(0);
+        return Objects.requireNonNull(declarations).get(0);
     }
 
     public Block getBody() {
@@ -85,7 +86,7 @@ public class CatchClause implements SolidityProgramElement {
         if (declarations != null)
             index -= 1;
         if (index == -1)
-            return declarations.get(0);
+            return Objects.requireNonNull(declarations).get(0);
         return body.getStatements().get(index);
     }
 

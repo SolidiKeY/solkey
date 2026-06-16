@@ -99,7 +99,8 @@ public class ProgramReplaceVisitor extends CreatingASTVisitor {
 
         assert body != null : "A program transformer without program to transform?";
 
-        final SolidityProgramElement[] result = x.transform(body, services, svinsts);
+        final SolidityProgramElement[] result =
+            x.transform(Objects.requireNonNull(body), services, svinsts);
         if (result == null) {
             addChild(null);
         } else {

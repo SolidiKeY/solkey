@@ -13,7 +13,6 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 public class UnaryExpression implements SolidityProgramElement, Expression, OperatorExpression {
 
@@ -31,7 +30,7 @@ public class UnaryExpression implements SolidityProgramElement, Expression, Oper
     }
 
     @Override
-    public @Nullable Type getType() {
+    public Type getType() {
         return exp.getType();
     }
 

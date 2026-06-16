@@ -14,6 +14,7 @@ import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class FunctionCallExpression extends SolidityExpression {
 
@@ -81,7 +82,7 @@ public class FunctionCallExpression extends SolidityExpression {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         if (this == o)
             return true;
         if (!(o instanceof FunctionCallExpression that))

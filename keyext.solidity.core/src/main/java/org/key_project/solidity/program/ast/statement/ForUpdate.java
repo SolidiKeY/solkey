@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.statement;
 
+import java.util.Objects;
+
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
@@ -19,7 +21,7 @@ public class ForUpdate implements SolidityProgramElement {
     }
 
     public ForUpdate(@NonNull ExtList children) {
-        this.update = children.get(Expression.class);
+        this.update = Objects.requireNonNull(children.get(Expression.class));
     }
 
     public Expression getUpdate() {

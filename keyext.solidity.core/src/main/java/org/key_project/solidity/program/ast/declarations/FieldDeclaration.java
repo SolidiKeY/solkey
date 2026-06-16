@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.declarations;
 
+import java.util.Objects;
+
 import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
@@ -50,7 +52,7 @@ public class FieldDeclaration implements Declaration {
         if (i == 0) {
             return typeReference;
         }
-        return initializer;
+        return Objects.requireNonNull(initializer);
     }
 
 

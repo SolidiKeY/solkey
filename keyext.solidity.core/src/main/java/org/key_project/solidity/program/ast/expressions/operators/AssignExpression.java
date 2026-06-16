@@ -36,7 +36,7 @@ public final class AssignExpression
     }
 
     @Override
-    public @Nullable Type getType() {
+    public Type getType() {
         return lhs.getType();
     }
 

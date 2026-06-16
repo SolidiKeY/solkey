@@ -4,6 +4,7 @@
 package org.key_project.solidity.program.ast.statement;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.key_project.logic.SyntaxElement;
@@ -37,7 +38,7 @@ public class DeclarationStatement implements Statement {
                 "Index should be 0 <= " + n + " < " + getChildCount());
         if (n < declarations.size())
             return declarations.get(n);
-        return initialValue;
+        return Objects.requireNonNull(initialValue);
     }
 
     @Override

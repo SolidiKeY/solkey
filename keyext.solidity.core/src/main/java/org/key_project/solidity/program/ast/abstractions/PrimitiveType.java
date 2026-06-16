@@ -11,6 +11,7 @@ import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class PrimitiveType implements Type, SyntaxElement {
 
@@ -51,7 +52,7 @@ public class PrimitiveType implements Type, SyntaxElement {
 
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         if (o == null || getClass() != o.getClass())
             return false;
         PrimitiveType type = (PrimitiveType) o;

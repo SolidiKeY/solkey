@@ -12,13 +12,14 @@ import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.util.collection.ImmutableArray;
 
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class StructDeclaration implements Declaration, Type, Resolver {
     public final @NonNull Name name;
     private final @NonNull ImmutableArray<@NonNull FieldDeclaration> fields;
     private final int contractId;
+    @Nullable
     ContractDeclaration contract;
 
 
@@ -55,7 +56,7 @@ public class StructDeclaration implements Declaration, Type, Resolver {
     }
 
     @Override
-    public void resolve(@MonotonicNonNull HashMap<Integer, SyntaxElement> id2Name) {
+    public void resolve(HashMap<Integer, SyntaxElement> id2Name) {
         contract = (ContractDeclaration) id2Name.get(contractId);
     }
 }

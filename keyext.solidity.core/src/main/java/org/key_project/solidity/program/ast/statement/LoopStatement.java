@@ -29,7 +29,7 @@ public abstract class LoopStatement implements Statement {
     @Override
     public @NonNull SyntaxElement getChild(int n) {
         return switch (n) {
-            case 0 -> condition;
+            case 0 -> Objects.requireNonNull(condition);
             case 1 -> body;
             default -> throw new IndexOutOfBoundsException(
                 "Index should be 0 <= " + n + " < " + getChildCount());

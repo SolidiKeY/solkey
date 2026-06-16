@@ -18,6 +18,8 @@ import org.key_project.solidity.program.ast.references.*;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.util.ExtList;
 
+import org.jspecify.annotations.Nullable;
+
 public class CreatingASTVisitor extends SolidityASTVisitor {
     protected static final Boolean CHANGED = Boolean.TRUE;
     protected final Deque<ExtList> stack = new ArrayDeque<>();
@@ -56,14 +58,14 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         return Objects.requireNonNull(stack.peek());
     }
 
-    protected void addToTopOfStack(SolidityProgramElement x) {
+    protected void addToTopOfStack(@Nullable SolidityProgramElement x) {
         if (x != null) {
             ExtList list = getTop();
             list.add(x);
         }
     }
 
-    protected void addChild(SolidityProgramElement x) {
+    protected void addChild(@Nullable SolidityProgramElement x) {
         stack.pop();
         addToTopOfStack(x);
     }
@@ -85,8 +87,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         abstract SolidityProgramElement createNewElement(ExtList changeList);
 
         public void doAction(SolidityProgramElement x) {
-            ExtList changeList = stack.peek();
-            assert changeList != null;
+            ExtList changeList = Objects.requireNonNull(stack.peek());
             if (changeList.isEmpty()) {
                 doDefaultAction(x);
                 return;

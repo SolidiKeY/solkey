@@ -11,6 +11,7 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class ExpressionStatement implements Statement {
     final @NonNull Expression expression;
@@ -50,7 +51,7 @@ public class ExpressionStatement implements Statement {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         if (this == o)
             return true;
         if (!(o instanceof ExpressionStatement that))

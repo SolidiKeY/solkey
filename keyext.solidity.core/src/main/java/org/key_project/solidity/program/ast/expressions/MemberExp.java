@@ -13,12 +13,12 @@ import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class MemberExp extends SolidityExpression implements Resolver {
     final Expression leftExp;
-    @MonotonicNonNull
+    @Nullable
     SyntaxElement rightExp;
     final int id;
 
@@ -44,7 +44,7 @@ public class MemberExp extends SolidityExpression implements Resolver {
 
     public Expression getLeftExp() { return leftExp; }
 
-    public SyntaxElement getRightExp() {
+    public @Nullable SyntaxElement getRightExp() {
         return rightExp;
     }
 
@@ -53,7 +53,7 @@ public class MemberExp extends SolidityExpression implements Resolver {
         if (n == 0)
             return leftExp;
         if (n == 1)
-            return rightExp;
+            return Objects.requireNonNull(rightExp);
         throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 

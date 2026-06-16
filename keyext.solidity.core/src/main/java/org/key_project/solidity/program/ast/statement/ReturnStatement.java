@@ -42,7 +42,7 @@ public class ReturnStatement implements Statement {
 
     @Override
     public String toString() {
-        return "return " + getReturnExp().toString() + ";";
+        return getReturnExp() == null ? "return;" : "return " + getReturnExp() + ";";
     }
 
     public void visit(Visitor v) {

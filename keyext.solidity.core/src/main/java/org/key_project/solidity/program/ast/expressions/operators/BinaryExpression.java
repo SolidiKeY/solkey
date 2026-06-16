@@ -69,7 +69,7 @@ public final class BinaryExpression
     }
 
     @Override
-    public @Nullable Type getType() {
+    public Type getType() {
         return left.getType();
     }
 
