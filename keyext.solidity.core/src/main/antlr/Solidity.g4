@@ -23,7 +23,7 @@ functionTypeParameter
   : typeName storageLocation? ;
 
 variableDeclaration
-  : typeName storageLocation? identifier ;
+  : typeName storageLocation? ( identifier | schemaVariable ) ;
 
 typeName
   : schemaVariable                # SchemaType

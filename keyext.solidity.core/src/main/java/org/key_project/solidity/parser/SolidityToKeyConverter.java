@@ -378,10 +378,24 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     public SyntaxElement visitVariableDeclarationWithInitialValue(VariableDeclarationContext ctx,
             Expression initial) {
-        KeYSolidityType ksType = (KeYSolidityType) visitTypeName(ctx.typeName());
+        SyntaxElement type = visitTypeName(ctx.typeName());
+
+        // Taclet pattern: the variable position is a program schema variable (e.g. `T s#v = e;`).
+        // Matching binds the schema variable to the concrete declared variable.
+        if (ctx.schemaVariable() != null) {
+            String svName = ctx.schemaVariable().getText().substring(2);
+            SchemaVariable sv = schemaVariables.lookup(svName);
+            if (sv == null) {
+                reportError("Schema Variable " + svName + " not declared.", ctx.start);
+            }
+            StatementVariableDeclaration schematic =
+                new StatementVariableDeclaration(type, (ProgramSV) sv);
+            return new DeclarationStatement(List.of(schematic), initial);
+        }
+
         ProgramVariable programVariable =
             new ProgramVariable(new Name(ctx.identifier().Identifier().getText()),
-                ksType, (DataLocation) visitStorageLocation(ctx.storageLocation()));
+                (KeYSolidityType) type, (DataLocation) visitStorageLocation(ctx.storageLocation()));
         localVars.add(programVariable);
         StatementVariableDeclaration stmDecl =
             new StatementVariableDeclaration(programVariable);
