@@ -149,6 +149,37 @@ public class ParsingFacadeTest {
     }
 
     @Test
+    void shadowedQuantifiedVariableBindsInnermost() {
+        // both occurrences of x in q(x, x) bind to the *inner* \forall (de Bruijn index 1),
+        // not the outer one, even though the binders share the name x
+        KeYIO io = new KeYIO(services);
+        Term term = io.parseExpression("\\forall MySort x;\\forall MySort x; q(x, x)");
+        Term q = term.sub(0).sub(0);
+        assertEquals(1, ((LogicVariable) q.sub(0).op()).getIndex());
+        assertEquals(1, ((LogicVariable) q.sub(1).op()).getIndex());
+    }
+
+    @Test
+    void parseConcreteSubstitution() {
+        Sort mySort = services.getNamespaces().sorts().lookup(new Name("MySort"));
+        SFunction cc = new SFunction(new Name("cc"), mySort, true, false);
+        services.getNamespaces().functions().addSafely(cc);
+
+        KeYIO io = new KeYIO(services);
+        Term term = io.parseExpression("{\\subst MySort x; cc} p(x)");
+        assertInstanceOf(SubstOp.class, term.op());
+        // the body p(x) references x as a de Bruijn LogicVariable of index 1
+        Term body = term.sub(1);
+        assertSame(predicates.get("p"), body.op());
+        assertEquals(1, ((LogicVariable) body.sub(0).op()).getIndex());
+
+        // applying the substitution (cc is rigid) replaces x by cc: p(cc)
+        Term applied = WarySubstOp.SUBST.apply(term, services.getTermBuilder());
+        assertSame(predicates.get("p"), applied.op());
+        assertSame(cc, applied.sub(0).op());
+    }
+
+    @Test
     void parseEmptyDiamondFormula() {
         KeYIO io = new KeYIO(services);
         final Term term = io.parseExpression("\\<{ }\\>true");
