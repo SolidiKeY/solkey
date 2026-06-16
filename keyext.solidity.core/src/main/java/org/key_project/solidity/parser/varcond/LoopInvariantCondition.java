@@ -47,7 +47,7 @@ public class LoopInvariantCondition implements VariableCondition {
         }
 
         if (services.getProof().getInitConfig().getActivatedChoices().stream()
-                .anyMatch(c -> c.name().toString().equals("intRules:rustSemantics"))) {
+                .anyMatch(c -> c.name().toString().equals("intRules:soliditySemantics"))) {
             loopSpec = loopSpec.withInRangePredicates(services);
         }
 

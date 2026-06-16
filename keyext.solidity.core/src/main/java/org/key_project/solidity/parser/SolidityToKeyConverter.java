@@ -16,10 +16,10 @@ import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.SolidityInfo;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
-import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
 import org.key_project.solidity.program.ast.expressions.*;
 import org.key_project.solidity.program.ast.expressions.literals.*;
 import org.key_project.solidity.program.ast.expressions.operators.TernaryExpression;
@@ -29,6 +29,8 @@ import org.key_project.solidity.program.ast.references.TypeReference;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.program.ext.ContextStatementBlock;
 import org.key_project.solidity.program.parser.ParserUtils;
+import org.key_project.solidity.rule.metaconstruct.ExpandFunctionBody;
+import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.util.collection.ImmutableArray;
 import org.key_project.util.collection.ImmutableList;
 
@@ -111,6 +113,18 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         return sv;
     }
 
+    @Override
+    public SyntaxElement visitExpandFunctionBodyTransformer(
+            ExpandFunctionBodyTransformerContext ctx) {
+        // strip the "s#" prefix from the schema variable name
+        String variableName = ctx.schemaVariable().getText().substring(2);
+        SchemaVariable sv = schemaVariables.lookup(variableName);
+        if (sv == null) {
+            reportError("Schema Variable " + variableName + " not declared.", ctx.start);
+        }
+        return new ExpandFunctionBody((ProgramSV) sv);
+    }
+
     private void reportError(String errorMsg, Token tokenWithPos)
             throws PositionedConverterException {
         int line = tokenWithPos != null ? tokenWithPos.getLine() : -1;
@@ -165,6 +179,27 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         String operator = ctx.children.get(1).toString();
         Expression uExp = visitExpression(ctx.expression());
         return ParserUtils.parseUnaryOperation(uExp, operator, false);
+    }
+
+    @Override
+    public SyntaxElement visitFunctionBodyStatement(FunctionBodyStatementContext ctx) {
+        Name functionName = new Name(ctx.fn.getText());
+        Name contractName = new Name(ctx.contract.getText());
+        FunctionCallArguments args =
+            (FunctionCallArguments) visitFunctionCallArguments(ctx.functionCallArguments());
+
+        FunctionDeclaration function = null;
+        for (FunctionDeclaration fd : services.getSolidityInfo().getFunctions(contractName)) {
+            if (fd.name().equals(functionName)) {
+                function = fd;
+                break;
+            }
+        }
+        if (function == null) {
+            reportError("Unknown function " + functionName + " in contract " + contractName,
+                ctx.start);
+        }
+        return new FunctionBodyStatement(null, function, args.getArgs());
     }
 
     @Override

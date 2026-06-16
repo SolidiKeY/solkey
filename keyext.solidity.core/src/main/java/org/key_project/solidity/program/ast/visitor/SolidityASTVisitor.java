@@ -224,6 +224,11 @@ public abstract class SolidityASTVisitor extends SolidityASTWalker implements Vi
     }
 
     @Override
+    public void performActionOnFunctionBodyStatement(FunctionBodyStatement x) {
+        doDefaultAction(x);
+    }
+
+    @Override
     public void performActionOnReturnStatment(ReturnStatement x) {
         doDefaultAction(x);
     }

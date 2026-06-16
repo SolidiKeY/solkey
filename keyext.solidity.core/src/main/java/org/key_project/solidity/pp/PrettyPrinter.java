@@ -486,6 +486,13 @@ public class PrettyPrinter implements Visitor {
     }
 
     @Override
+    public void performActionOnFunctionBodyStatement(FunctionBodyStatement x) {
+        markStart(x);
+        layouter.print(x.toString());
+        markEnd(x);
+    }
+
+    @Override
     public void performActionOnReturnStatment(ReturnStatement x) {
         markStart(x);
         layouter.keyWord("return");

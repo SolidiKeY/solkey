@@ -84,6 +84,8 @@ public interface Visitor {
 
     void performActionOnPlaceholdStatement(PlaceholdStatement x);
 
+    void performActionOnFunctionBodyStatement(FunctionBodyStatement x);
+
     void performActionOnReturnStatment(ReturnStatement x);
 
     void performActionOnTryStatement(TryStatement x);

@@ -69,6 +69,8 @@ contextBlock
 
 statement
   : schemaVariable
+  | programTransformer
+  | functionBodyStatement
   | ifStatement
   | tryStatement
   | whileStatement
@@ -355,3 +357,13 @@ LINE_COMMENT
 schemaVariable
    : Schema
    ;
+
+// program transformers (meta constructs) appearing in the replacewith of taclets
+programTransformer
+   : ExpandFunctionBody '(' schemaVariable ')'   # ExpandFunctionBodyTransformer
+   ;
+
+// a call annotated with the declaring contract, standing for the (not yet inlined)
+// body of that function, e.g.  withdraw(a)@Contract;
+functionBodyStatement
+   : fn=identifier '(' functionCallArguments ')' '@' contract=identifier ';' ;
