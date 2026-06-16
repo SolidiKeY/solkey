@@ -13,20 +13,20 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/// Loads the `keyext.solidity.examples/freshVar/freshTemp.key` showcase: a rule introduces a fresh
-/// program variable with `\new` and executes two assignments one at a time through a context block,
-/// proving `q = 42`. Exercises ProgramContextAdder (per-statement execution) and the fresh-variable
-/// mechanism together (closes via automode).
-public class FreshTempExampleTest {
+/// Loads the `keyext.solidity.examples/newVariable/newVariable.key` showcase: a rule introduces a
+/// fresh program variable with `\new` and executes two assignments one at a time through a context
+/// block, proving `q = 42`. Exercises ProgramContextAdder (per-statement execution) and the
+/// fresh-variable mechanism together (closes via automode).
+public class NewVariableExampleTest {
 
     private static Path example() {
-        Path p = Path.of("keyext.solidity.examples/freshVar/freshTemp.key");
+        Path p = Path.of("keyext.solidity.examples/newVariable/newVariable.key");
         return Files.exists(p) ? p
-                : Path.of("../keyext.solidity.examples/freshVar/freshTemp.key");
+                : Path.of("../keyext.solidity.examples/newVariable/newVariable.key");
     }
 
     @Test
-    void freshTempExampleCloses() throws Exception {
+    void newVariableExampleCloses() throws Exception {
         Path file = example();
         assertTrue(Files.exists(file), "example must exist: " + file.toAbsolutePath());
 
