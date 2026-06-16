@@ -692,7 +692,7 @@ public class ExpressionBuilder extends DefaultBuilder {
 
     @Override
     public Object visitSubstitution_term(KeYSolidityDLParser.Substitution_termContext ctx) {
-        SubstOp op = SubstOp.SUBST;
+        SubstOp op = WarySubstOp.SUBST;
         Namespace<QuantifiableVariable> orig = variables();
         AbstractSortedOperator v = accept(ctx.bv);
         unbindVars(orig);
