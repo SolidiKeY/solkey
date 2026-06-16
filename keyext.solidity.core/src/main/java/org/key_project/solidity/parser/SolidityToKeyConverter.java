@@ -124,6 +124,13 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         if (sv == null) {
             reportError("Schema Variable " + variableName + " not declared.", ctx.start);
         }
+        if (!(sv instanceof ProgramSV)) {
+            reportError("Schema variable '" + variableName
+                + "' used in s#expand_function_body must be a program schema variable, e.g. "
+                + "'\\program FunctionBody " + variableName + ";', but is "
+                + sv.getClass().getSimpleName() + ". Check its \\schemaVariables declaration and "
+                + "its ProgramSVSort.", ctx.start);
+        }
         return new ExpandFunctionBody((ProgramSV) sv);
     }
 
@@ -145,7 +152,9 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitTupleExpression(TupleExpressionContext ctx) {
-        throw new RuntimeException("Not implemented yet");
+        reportError("Tuple expressions are not implemented yet.", ctx.start);
+        return null; // unreachable: reportError always throws
+        // TODO: implement (see disabled body below)
         // List<Expression> exps = parseExps(ctx.expression());
         // TupleType tupleType = services.getSolidityInfo().getTupleTypeMap(
         // exps.stream().map(Expression::getType).toList());
@@ -296,7 +305,11 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         if (field != null) {
             return new FieldReference(field, field.getType());
         }
-        throw new RuntimeException("Variable " + variableName + " out of the scope");
+        reportError("Identifier '" + variableName + "' is out of scope: it is neither a local "
+            + "variable/parameter nor a contract state variable. Check that it is declared "
+            + "(e.g. in a \\programVariables block) or that the contract field exists in the "
+            + "loaded \\programSource.", ctx.start);
+        return null; // unreachable: reportError always throws
     }
 
     public SyntaxElement visitTypeName(TypeNameContext ctx) {

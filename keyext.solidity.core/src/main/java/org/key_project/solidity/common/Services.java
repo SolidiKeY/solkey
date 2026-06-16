@@ -115,8 +115,12 @@ public class Services implements LogicServices, ProofServices {
             }
         }
         throw new IllegalArgumentException(
-            "Unknown or not convertible ProgramElement " + pe + " of type "
-                + pe.getClass());
+            "Cannot convert program element '" + pe + "' of type '"
+                + pe.getClass().getSimpleName()
+                + "' into a logic term. If this is a new AST node, add a case to "
+                + "Services.convertToLogicElement. If it is an (uninstantiated) schema variable, "
+                + "check that the taclet binds it and that its ProgramSVSort matches the program "
+                + "position it should stand for.");
     }
 
     public @NonNull NamespaceSet getNamespaces() {

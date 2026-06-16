@@ -935,9 +935,19 @@ public class TacletPBuilder extends ExpressionBuilder {
                 semanticError(ctx, "Unrecognized token '%s', expected 'name'", nameString);
             }
             ProgramSVSort psv = ProgramSVSort.name2sort().get(new Name(id));
+            if (psv == null) {
+                semanticError(ctx,
+                    "Unknown program schema variable sort '%s' (in '\\program %s ...'). "
+                        + "Known sorts are: %s. If you added a new AST node, register a "
+                        + "ProgramSVSort for it in ProgramSVSort and make sure its name matches "
+                        + "the one used here.",
+                    id, id, knownProgramSVSortNames());
+            }
             s = parameter != null ? psv.createInstance(parameter) : psv;
             if (s == null) {
-                semanticError(ctx, "Program SchemaVariable of type '%s' not found.", id);
+                semanticError(ctx,
+                    "Could not instantiate program schema variable sort '%s' with parameter '%s'.",
+                    id, parameter);
             }
         }
         // TODO ask: Do we also need SchemaVariableModifiers?
@@ -991,6 +1001,15 @@ public class TacletPBuilder extends ExpressionBuilder {
                 mods);
         }
         return null;
+    }
+
+    /// The names of all registered program schema variable sorts, sorted and comma separated.
+    /// Used to give developers a helpful list when an unknown `\program` sort is referenced.
+    private static String knownProgramSVSortNames() {
+        return ProgramSVSort.name2sort().keySet().stream()
+                .map(Name::toString)
+                .sorted()
+                .collect(Collectors.joining(", "));
     }
 
     @Override

@@ -6,7 +6,6 @@ package org.key_project.solidity;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 
 import org.key_project.solidity.control.KeYEnvironment;
@@ -141,19 +140,27 @@ public class CLI {
                 }
             }
         } catch (ProblemLoaderException e) {
-            System.err.println("Error while loading: " + e.getMessage());
-            e.printStackTrace();
+            // surface the most specific (root) cause: parser/builder/converter exceptions carry
+            // the helpful, location-annotated message, while the outer exception is generic.
+            Throwable root = rootCause(e);
+            System.err.println("Error while loading " + cli.file + ":");
+            System.err.println("  " + root.getMessage());
             if (cli.verbose) {
-                System.err.println(e);
-                System.err.println(Arrays.toString(e.getStackTrace()));
-                Throwable t = e;
-                while (t.getCause() != null) {
-                    System.err.println(t);
-                    System.err.println(Arrays.toString(t.getCause().getStackTrace()));
-                    t = t.getCause();
-                }
+                e.printStackTrace();
+            } else {
+                System.err.println("(run with --verbose for the full stack trace)");
             }
             return false;
         }
+    }
+
+    /// Returns the innermost cause of a throwable, whose message is usually the most specific
+    /// (and, for parser/converter errors, location-annotated).
+    private static Throwable rootCause(Throwable t) {
+        Throwable cur = t;
+        while (cur.getCause() != null && cur.getCause() != cur) {
+            cur = cur.getCause();
+        }
+        return cur;
     }
 }
