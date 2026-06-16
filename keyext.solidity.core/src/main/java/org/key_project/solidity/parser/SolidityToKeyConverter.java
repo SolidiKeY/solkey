@@ -219,7 +219,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
                 reportError("Result variable " + resultName + " out of the scope", ctx.start);
             }
         }
-        return new FunctionBodyStatement(resultVar, function, args.getArgs());
+        return new FunctionBodyStatement(resultVar, function, args.getArgs(), contractName);
     }
 
     @Override

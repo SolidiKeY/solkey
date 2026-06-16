@@ -6,6 +6,7 @@ package org.key_project.solidity.program.ast.statement;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
@@ -34,19 +35,28 @@ public class FunctionBodyStatement implements Statement {
     private final @Nullable ProgramVariable resultVar;
     /// the function whose body this statement stands for
     private final @NonNull FunctionDeclaration function;
+    /// the name of the contract declaring the function (for display), or `null` if unknown
+    private final @Nullable Name contractName;
     /// the actual arguments passed at the call site
     private final @NonNull ImmutableArray<Expression> arguments;
 
     public FunctionBodyStatement(@Nullable ProgramVariable resultVar,
             @NonNull FunctionDeclaration function, List<Expression> arguments) {
-        this(resultVar, function, new ImmutableArray<>(arguments));
+        this(resultVar, function, new ImmutableArray<>(arguments), null);
     }
 
     public FunctionBodyStatement(@Nullable ProgramVariable resultVar,
             @NonNull FunctionDeclaration function, @NonNull ImmutableArray<Expression> arguments) {
+        this(resultVar, function, arguments, null);
+    }
+
+    public FunctionBodyStatement(@Nullable ProgramVariable resultVar,
+            @NonNull FunctionDeclaration function, @NonNull ImmutableArray<Expression> arguments,
+            @Nullable Name contractName) {
         this.resultVar = resultVar;
         this.function = function;
         this.arguments = arguments;
+        this.contractName = contractName;
     }
 
     public @Nullable ProgramVariable getResultVar() {
@@ -98,7 +108,7 @@ public class FunctionBodyStatement implements Statement {
         }
         sb.append(function.name()).append("(")
                 .append(arguments.stream().map(Object::toString).collect(Collectors.joining(", ")))
-                .append(")@;");
+                .append(")@").append(contractName == null ? "" : contractName).append(";");
         return sb.toString();
     }
 
