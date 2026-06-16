@@ -18,6 +18,8 @@ public class StructLDT extends LDT {
     public static final Name NAME = new Name("Struct");
     /// The sort of struct field constants, declared in the struct theory `.key` files.
     public static final Name FIELD_SORT_NAME = new Name("Field");
+    /// The contract-storage program variable, declared in the struct theory `.key` files.
+    public static final Name STORAGE_NAME = new Name("storage");
     public static final String FIELD_SEPARATOR = "$";
 
     private final Function mt;
@@ -28,7 +30,7 @@ public class StructLDT extends LDT {
         super(NAME, services);
 
         mt = addFunction(services, "mt");
-        storage = services.getNamespaces().programVariables().lookup(new Name("storage"));
+        storage = services.getNamespaces().programVariables().lookup(STORAGE_NAME);
         fieldSort = services.getNamespaces().sorts().lookup(FIELD_SORT_NAME);
     }
 
