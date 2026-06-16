@@ -13,15 +13,16 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/// Loads the user-visible `examples/functionBody/archive.key` showcase: a contract function that
+/// Loads the user-visible `keyext.solidity.examples/functionBody/archive.key` showcase: a contract
+/// function that
 /// copies one field into another is inlined via function-body expansion and the resulting field
 /// relation is proved (closes via automode).
 public class ArchiveExampleTest {
 
     private static Path example() {
-        Path p = Path.of("examples/functionBody/archive.key");
+        Path p = Path.of("keyext.solidity.examples/functionBody/archive.key");
         return Files.exists(p) ? p
-                : Path.of("keyext.solidity.core").resolve("examples/functionBody/archive.key");
+                : Path.of("../keyext.solidity.examples/functionBody/archive.key");
     }
 
     @Test

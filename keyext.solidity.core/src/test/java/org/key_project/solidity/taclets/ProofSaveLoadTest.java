@@ -26,9 +26,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class ProofSaveLoadTest {
 
     private static Path example() {
-        Path p = Path.of("examples/fieldAccess/fieldAccess.key");
+        Path p = Path.of("keyext.solidity.examples/fieldAccess/fieldAccess.key");
         return Files.exists(p) ? p
-                : Path.of("keyext.solidity.core").resolve("examples/fieldAccess/fieldAccess.key");
+                : Path.of("../keyext.solidity.examples/fieldAccess/fieldAccess.key");
     }
 
     @Test

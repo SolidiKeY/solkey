@@ -21,18 +21,19 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/// Loads the user-visible `examples/fieldAccess/fieldAccess.key` showcase and exercises the
+/// Loads the user-visible `keyext.solidity.examples/fieldAccess/fieldAccess.key` showcase and
+/// exercises the
 /// `#fieldSymbol` infrastructure: a contract field access resolves to its registered
 /// `Field`-sorted constant `Bank$balance`.
 public class FieldAccessExampleTest {
 
     private static Path exampleDir() {
         // tests run with the module directory as working directory
-        Path p = Path.of("examples/fieldAccess/fieldAccess.key");
+        Path p = Path.of("keyext.solidity.examples/fieldAccess/fieldAccess.key");
         if (Files.exists(p)) {
             return p;
         }
-        return Path.of("keyext.solidity.core").resolve("examples/fieldAccess/fieldAccess.key");
+        return Path.of("../keyext.solidity.examples/fieldAccess/fieldAccess.key");
     }
 
     @Test

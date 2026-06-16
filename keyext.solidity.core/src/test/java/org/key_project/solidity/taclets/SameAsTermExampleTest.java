@@ -21,16 +21,17 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/// Loads the user-visible `examples/fieldAccess/sameAsTerm.key` showcase and checks that the
+/// Loads the user-visible `keyext.solidity.examples/fieldAccess/sameAsTerm.key` showcase and checks
+/// that the
 /// `\sameAsTerm` variable condition binds the term schema variable to the program field access:
 /// applying the rule introduces the field constant `Bank$balance`, and the store-then-read
 /// round-trip then closes.
 public class SameAsTermExampleTest {
 
     private static Path example() {
-        Path p = Path.of("examples/fieldAccess/sameAsTerm.key");
+        Path p = Path.of("keyext.solidity.examples/fieldAccess/sameAsTerm.key");
         return Files.exists(p) ? p
-                : Path.of("keyext.solidity.core").resolve("examples/fieldAccess/sameAsTerm.key");
+                : Path.of("../keyext.solidity.examples/fieldAccess/sameAsTerm.key");
     }
 
     @Test
