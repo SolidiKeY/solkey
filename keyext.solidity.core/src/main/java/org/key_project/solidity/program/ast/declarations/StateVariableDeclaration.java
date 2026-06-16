@@ -22,7 +22,7 @@ public class StateVariableDeclaration implements Declaration {
         return programVariable;
     }
 
-    private ProgramVariable programVariable;
+    private final ProgramVariable programVariable;
 
     public StateVariableDeclaration(ProgramVariable programVariable,
             @Nullable Expression initializer, Visibility visibility) {

@@ -17,13 +17,13 @@ import org.jspecify.annotations.NonNull;
 
 public class ContractReference extends SolidityExpression implements Resolver, VariableReference {
 
-    public int id;
+    public final int id;
 
     public ContractDeclaration getContractDeclaration() {
         return contractDeclaration;
     }
 
-    private ContractDeclaration contractDeclaration;
+    private @MonotonicNonNull ContractDeclaration contractDeclaration;
 
     public ContractReference(int id, Type type) {
         super(type);
@@ -53,7 +53,11 @@ public class ContractReference extends SolidityExpression implements Resolver, V
 
     @Override
     public void resolve(@MonotonicNonNull HashMap<Integer, SyntaxElement> id2Name) {
-        this.contractDeclaration = (ContractDeclaration) id2Name.get(id);
+        if (this.contractDeclaration == null)
+            this.contractDeclaration = (ContractDeclaration) id2Name.get(id);
+        else
+            throw new IllegalStateException(
+                "contract " + contractDeclaration.name() + " has already been resolved");
     }
 
     @Override

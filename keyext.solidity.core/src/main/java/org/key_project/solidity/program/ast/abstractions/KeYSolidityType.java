@@ -36,41 +36,45 @@ import org.jspecify.annotations.Nullable;
 public class KeYSolidityType implements Type, Resolver {
     /// the AST type
     private @Nullable Type solidityType = null;
-    /// the logic sort
-    private @Nullable Sort sort = null;
-    private int typeId;
+    /// the logic sort; set once at allocation (see class doc) and never changed
+    private final @Nullable Sort sort;
+    private final int typeId;
 
     public KeYSolidityType() {
+        this.sort = null;
+        this.typeId = 0;
     }
 
     public KeYSolidityType(Type solidityType, Sort sort) {
         this.solidityType = solidityType;
         this.sort = sort;
+        this.typeId = 0;
     }
 
     public KeYSolidityType(int typeId) {
+        this.sort = null;
         this.typeId = typeId;
     }
 
     public KeYSolidityType(ExtList children) {
-        this.solidityType = Objects.requireNonNull(children.removeFirstOccurrence(Type.class));;
-        this.sort = Objects.requireNonNull(children.removeFirstOccurrence(Sort.class));;
+        this.solidityType = Objects.requireNonNull(children.removeFirstOccurrence(Type.class));
+        this.sort = Objects.requireNonNull(children.removeFirstOccurrence(Sort.class));
+        this.typeId = 0;
     }
 
     public KeYSolidityType(Type solidityType) {
         this.solidityType = solidityType;
+        this.sort = null;
+        this.typeId = 0;
     }
 
     public KeYSolidityType(Sort sort) {
         this.sort = sort;
+        this.typeId = 0;
     }
 
     public @Nullable Sort getSort() {
         return sort;
-    }
-
-    public void setSort(Sort sort) {
-        this.sort = sort;
     }
 
     public @Nullable Type getSolidityType() {
