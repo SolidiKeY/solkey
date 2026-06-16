@@ -5,12 +5,14 @@ package org.key_project.solidity.logic;
 
 import java.util.Iterator;
 
+import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.logic.TermCreationException;
 import org.key_project.logic.op.Function;
 import org.key_project.logic.op.QuantifiableVariable;
 import org.key_project.logic.op.UpdateableOperator;
 import org.key_project.logic.op.sv.SchemaVariable;
+import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.*;
 import org.key_project.solidity.strategy.quantifierHeuristics.Metavariable;
@@ -44,6 +46,26 @@ public class TermBuilder {
 
     public TermFactory tf() {
         return tf;
+    }
+
+    private static final Name CAST_NAME = new Name("cast");
+
+    /// Builds `cast<[sort]>(term)`, reinterpreting `term` as `sort` via the parametric `cast`
+    /// function (see cast.key). Returns `term` unchanged when it already has that sort, or when the
+    /// `cast` operator is not declared.
+    public Term cast(Sort sort, Term term) {
+        if (term.sort() == sort) {
+            return term;
+        }
+        ParametricFunctionDecl decl =
+            services.getNamespaces().parametricFunctions().lookup(CAST_NAME);
+        if (decl == null) {
+            return term;
+        }
+        ImmutableList<GenericArgument> args =
+            ImmutableSLList.<GenericArgument>nil().prepend(new GenericArgument(sort));
+        ParametricFunctionInstance castFn = ParametricFunctionInstance.get(decl, args, services);
+        return tf.createTerm(castFn, term);
     }
 
     // -------------------------------------------------------------------------
