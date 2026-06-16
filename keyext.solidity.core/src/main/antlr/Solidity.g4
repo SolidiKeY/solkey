@@ -26,7 +26,8 @@ variableDeclaration
   : typeName storageLocation? identifier ;
 
 typeName
-  : elementaryTypeName            # ElementaryType
+  : schemaVariable                # SchemaType
+  | elementaryTypeName            # ElementaryType
   | userDefinedTypeName           # UserDefinedType
   | mapping                       # MappingType
   | typeName '[' expression? ']'  # ArrayType

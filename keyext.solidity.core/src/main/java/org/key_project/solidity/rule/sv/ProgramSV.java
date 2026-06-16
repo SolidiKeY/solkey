@@ -26,7 +26,8 @@ import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ProgramSV extends OperatorSV implements Expression, Statement, UpdateableOperator {
+public class ProgramSV extends OperatorSV
+        implements Expression, Statement, Type, UpdateableOperator {
     public static final Logger LOGGER = LoggerFactory.getLogger(ProgramSV.class);
 
     private final boolean isListSV;

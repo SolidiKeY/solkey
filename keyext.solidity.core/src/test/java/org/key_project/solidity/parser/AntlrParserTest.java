@@ -23,8 +23,10 @@ public class AntlrParserTest {
 
     @Test
     void simpleBlock() {
-        SolidityParser.BlockContext block = parseBlockContext("{}");
-        assertEquals("([221] { })", block.normalBlock().toStringTree());
+        SolidityParser parser = parse("{}");
+        SolidityParser.BlockContext block = parser.block();
+        // use rule names (parser-aware) so the assertion is robust to rule-index shifts
+        assertEquals("(normalBlock { })", block.normalBlock().toStringTree(parser));
     }
 
     @Test

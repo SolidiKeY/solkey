@@ -157,8 +157,8 @@ public class TacletBuilderManipulators {
             }
         };
 
-    static class RustTypeToSortConditionBuilder extends AbstractConditionBuilder {
-        public RustTypeToSortConditionBuilder(@NonNull String triggerName) {
+    static class SolidityTypeToSortConditionBuilder extends AbstractConditionBuilder {
+        public SolidityTypeToSortConditionBuilder(@NonNull String triggerName) {
             super(triggerName, SV, SORT);
         }
 
@@ -180,7 +180,7 @@ public class TacletBuilderManipulators {
     }
 
     public static final AbstractConditionBuilder HAS_SORT =
-        new RustTypeToSortConditionBuilder("hasSort");
+        new SolidityTypeToSortConditionBuilder("hasSort");
 
     public static final TacletBuilderCommand NEW_LOCAL_VARS =
         new ConstructorBasedBuilder("newLocalVars", NewLocalVarsCondition.class, SV, SV, SV, SV);

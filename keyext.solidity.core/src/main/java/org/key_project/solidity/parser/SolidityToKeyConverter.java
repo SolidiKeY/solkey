@@ -261,8 +261,10 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitNewInstance(NewInstanceContext ctx) {
-        KeYSolidityType keyType = (KeYSolidityType) visitTypeName(ctx.typeName());
-        return new NewExpression(keyType.getSolidityType());
+        SyntaxElement type = visitTypeName(ctx.typeName());
+        // a Type schema variable stands directly for the type; otherwise unwrap the KeYSolidityType
+        Type newType = type instanceof KeYSolidityType kst ? kst.getSolidityType() : (Type) type;
+        return new NewExpression(newType);
     }
 
     @Override
@@ -281,6 +283,17 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     public SyntaxElement visitTypeName(TypeNameContext ctx) {
         return ctx.accept(this);
+    }
+
+    @Override
+    public SyntaxElement visitSchemaType(SchemaTypeContext ctx) {
+        // strip the "s#" prefix and look up the (Type-sorted) schema variable
+        String variableName = ctx.schemaVariable().getText().substring(2);
+        SchemaVariable sv = schemaVariables.lookup(variableName);
+        if (sv == null) {
+            reportError("Schema Variable " + variableName + " not declared.", ctx.start);
+        }
+        return sv;
     }
 
     public SyntaxElement visitTypeDefined(TypeNameContext ctx) {
