@@ -53,7 +53,7 @@ public class TermImpl implements Term {
     /// A cached value for computing the term's rigidness.
     private ThreeValuedTruth rigid = ThreeValuedTruth.UNKNOWN;
     private ThreeValuedTruth containsCodeBlockRecursive = ThreeValuedTruth.UNKNOWN;
-    private @MonotonicNonNull ImmutableSet<QuantifiableVariable> freeVars = null;
+    private @MonotonicNonNull ImmutableSet<LogicVariable> freeVars = null;
 
     /// Constructs a term for the given operator, with the given sub terms, bounded variables and
     /// (if applicable) the code block on this term.
@@ -73,20 +73,26 @@ public class TermImpl implements Term {
 
     // TODO Remove
     @Deprecated
-    private ImmutableSet<QuantifiableVariable> determineFreeVars() {
-        ImmutableSet<QuantifiableVariable> localFreeVars =
+    private ImmutableSet<LogicVariable> determineFreeVars() {
+        ImmutableSet<LogicVariable> localFreeVars =
             DefaultImmutableSet.nil();
 
-        if (op instanceof QuantifiableVariable) {
-            localFreeVars = localFreeVars.add((QuantifiableVariable) op);
-        }
-        for (int i = 0, ar = arity(); i < ar; i++) {
-            ImmutableSet<QuantifiableVariable> subFreeVars =
-                (ImmutableSet<QuantifiableVariable>) sub(i).freeVars();
-            for (int j = 0, sz = varsBoundHere(i).size(); j < sz; j++) {
-                subFreeVars = subFreeVars.remove(varsBoundHere(i).get(j));
+        // Free variables are tracked by their de Bruijn index. A variable occurrence is free iff
+        // its index exceeds the number of variables bound by the enclosing binder; when crossing
+        // that binder its index is shifted down accordingly.
+        if (op instanceof LogicVariable lv) {
+            localFreeVars = localFreeVars.add(lv);
+        } else {
+            for (int i = 0, ar = arity(); i < ar; i++) {
+                var subFreeVars = (ImmutableSet<LogicVariable>) sub(i).freeVars();
+                var sz = varsBoundHere(i).size();
+                for (var fv : subFreeVars) {
+                    if (fv.getIndex() > sz) {
+                        localFreeVars =
+                            localFreeVars.add(LogicVariable.create(fv.getIndex() - sz, fv.sort()));
+                    }
+                }
             }
-            localFreeVars = localFreeVars.union(subFreeVars);
         }
         return localFreeVars;
     }
@@ -185,7 +191,7 @@ public class TermImpl implements Term {
     }
 
     @Override
-    public ImmutableSet<QuantifiableVariable> freeVars() {
+    public ImmutableSet<LogicVariable> freeVars() {
         if (freeVars == null) {
             freeVars = determineFreeVars();
         }

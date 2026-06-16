@@ -98,6 +98,32 @@ public class ParsingFacadeTest {
     }
 
     @Test
+    void quantifiedVariablesAreNotFree() {
+        KeYIO io = new KeYIO(services);
+
+        // a closed quantified formula has no free variables (the bound occurrence of x must not
+        // leak out, despite being represented by a de Bruijn LogicVariable)
+        final Term closed = io.parseExpression("\\forall MySort x; p(x)");
+        assertTrue(closed.freeVars().isEmpty(),
+            "\\forall x; p(x) has no free variables, but got: " + closed.freeVars());
+
+        // ... while the body p(x), taken on its own, has x free (de Bruijn index 1)
+        final Term body = closed.sub(0);
+        assertEquals(1, body.freeVars().size());
+        assertEquals(1, ((LogicVariable) body.freeVars().iterator().next()).getIndex());
+
+        // nested: \forall x; \forall y; q(x,y) is closed, and its inner \forall y; q(x,y) has x
+        // free, shifted to index 1 after crossing the y-binder
+        final Term nested =
+            io.parseExpression("\\forall MySort x;\\forall MySort y; q(x, y)");
+        assertTrue(nested.freeVars().isEmpty(),
+            "nested closed formula has no free variables, but got: " + nested.freeVars());
+        final Term inner = nested.sub(0); // \forall y; q(x, y)
+        assertEquals(1, inner.freeVars().size());
+        assertEquals(1, ((LogicVariable) inner.freeVars().iterator().next()).getIndex());
+    }
+
+    @Test
     void parseNestedQuantifiedFormula() {
         KeYIO io = new KeYIO(services);
         final Term term = io.parseExpression("\\forall MySort x;\\forall MySort y; q(x, y)");
