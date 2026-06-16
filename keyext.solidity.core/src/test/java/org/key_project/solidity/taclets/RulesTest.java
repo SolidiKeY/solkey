@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.taclets;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
@@ -13,14 +14,17 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import org.key_project.solidity.control.KeYEnvironment;
+import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.io.OutputStreamProofSaver;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
+import org.key_project.solidity.proof.io.ProofSaver;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class RulesTest {
@@ -60,6 +64,51 @@ public class RulesTest {
                             g.getOverlayServices()))
                         .toList()
                 + "\n" + proof.getStatistics());
+    }
+
+    /// Saves the proved example and reloads it, checking that the replay reproduces a
+    /// structurally equivalent proof (same closed-ness, node count and tree of applied rules).
+    /// Gives the proof save/load machinery coverage over the whole example set.
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("exampleFiles")
+    public void exampleSavesAndReloads(String exampleName, Path exampleFile) throws Exception {
+        Proof original = prove(exampleFile, -1, 10000);
+
+        // save as a sibling of the example so any relative \include / \programSource resolves
+        File out = exampleFile.resolveSibling(exampleFile.getFileName() + ".roundtrip.proof")
+                .toFile();
+        try {
+            ProofSaver.saveToFile(out, original);
+
+            Proof reloaded = KeYEnvironment.load(out.toPath()).getLoadedProof();
+            assertEquals(original.closed(), reloaded.closed(),
+                () -> exampleName + ": reloaded proof closed-ness differs");
+            assertEquals(original.countNodes(), reloaded.countNodes(),
+                () -> exampleName + ": reloaded proof has a different number of nodes");
+            assertEquals(treeSignature(original.root()), treeSignature(reloaded.root()),
+                () -> exampleName + ": reloaded proof tree differs from the original");
+        } finally {
+            out.delete();
+        }
+    }
+
+    /// Canonical preorder rendering of a proof tree: each node's applied rule name (or `*` for an
+    /// open leaf) followed by its children in parentheses.
+    private static String treeSignature(Node node) {
+        StringBuilder sb = new StringBuilder();
+        var app = node.getAppliedRuleApp();
+        sb.append(app == null ? "*" : app.rule().name().toString());
+        if (node.childrenCount() > 0) {
+            sb.append('(');
+            for (int i = 0; i < node.childrenCount(); i++) {
+                if (i > 0) {
+                    sb.append(',');
+                }
+                sb.append(treeSignature(node.child(i)));
+            }
+            sb.append(')');
+        }
+        return sb.toString();
     }
 
     static Stream<Arguments> exampleFiles() throws Exception {
