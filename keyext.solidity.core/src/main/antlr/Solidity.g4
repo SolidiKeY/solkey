@@ -365,6 +365,7 @@ programTransformer
    ;
 
 // a call annotated with the declaring contract, standing for the (not yet inlined)
-// body of that function, e.g.  withdraw(a)@Contract;
+// body of that function, e.g.  withdraw(a)@Contract;  or  r = balanceOf()@Contract;
+// the optional left-hand side binds the function's (named) return value.
 functionBodyStatement
-   : fn=identifier '(' functionCallArguments ')' '@' contract=identifier ';' ;
+   : (lhs=identifier '=')? fn=identifier '(' functionCallArguments ')' '@' contract=identifier ';' ;

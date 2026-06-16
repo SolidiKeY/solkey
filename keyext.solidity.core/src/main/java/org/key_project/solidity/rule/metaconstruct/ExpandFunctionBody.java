@@ -16,8 +16,11 @@ import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.expressions.operators.AssignExpression;
+import org.key_project.solidity.program.ast.expressions.operators.Operator;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.program.ast.statement.DeclarationStatement;
+import org.key_project.solidity.program.ast.statement.ExpressionStatement;
 import org.key_project.solidity.program.ast.statement.FunctionBodyStatement;
 import org.key_project.solidity.program.ast.statement.Statement;
 import org.key_project.solidity.program.ast.visitor.ProgVarReplaceVisitor;
@@ -50,10 +53,11 @@ public class ExpandFunctionBody extends ProgramTransformer {
         final var fbs = (FunctionBodyStatement) pe;
         final FunctionDeclaration fn = fbs.getFunction();
         final ImmutableArray<ProgramVariable> formals = fn.getInputParameters();
+        final ImmutableArray<ProgramVariable> returns = fn.getReturnParameters();
         final ImmutableArray<Expression> args = fbs.getArguments();
 
         final Map<ProgramVariable, ProgramVariable> replaceMap = new HashMap<>();
-        final List<Statement> paramDecls = new ArrayList<>(formals.size());
+        final List<Statement> stmts = new ArrayList<>(formals.size() + returns.size() + 2);
 
         for (int i = 0; i < formals.size(); i++) {
             final ProgramVariable formal = formals.get(i);
@@ -64,21 +68,39 @@ public class ExpandFunctionBody extends ProgramTransformer {
 
             final Declaration decl = new StatementVariableDeclaration(fresh);
             final Expression arg = args.get(i);
-            paramDecls.add(new DeclarationStatement(List.of(decl), arg));
+            stmts.add(new DeclarationStatement(List.of(decl), arg));
         }
 
-        // rewrite the body so its parameter references point at the fresh variables
+        // declare a fresh, uninitialised variable for each (named) return parameter so the body
+        // can assign to it; remember the first one to connect to the call's result variable.
+        final List<ProgramVariable> freshReturns = new ArrayList<>(returns.size());
+        for (int i = 0; i < returns.size(); i++) {
+            final ProgramVariable ret = returns.get(i);
+            final ProgramVariable fresh = new ProgramVariable(ret.name(),
+                ret.getKeYSolidityType(), ret.getDataLocation());
+            replaceMap.put(ret, fresh);
+            freshReturns.add(fresh);
+
+            final Declaration decl = new StatementVariableDeclaration(fresh);
+            stmts.add(new DeclarationStatement(List.of(decl), null));
+        }
+
+        // rewrite the body so its parameter and named-return references point at the fresh
+        // variables
         final ProgVarReplaceVisitor repl =
             new ProgVarReplaceVisitor(fbs.getBody(), replaceMap, true, services);
         repl.start();
         final Block newBody = (Block) repl.result();
+        stmts.add(newBody);
 
-        final SolidityProgramElement[] result =
-            new SolidityProgramElement[paramDecls.size() + 1];
-        for (int i = 0; i < paramDecls.size(); i++) {
-            result[i] = paramDecls.get(i);
+        // connect the (single, named) return value to the call's result variable, if any:
+        //   <resultVar> = <freshReturn0>;
+        final ProgramVariable resultVar = fbs.getResultVar();
+        if (resultVar != null && !freshReturns.isEmpty()) {
+            stmts.add(new ExpressionStatement(new AssignExpression(
+                Operator.COPY_ASSIGN, resultVar, freshReturns.get(0))));
         }
-        result[paramDecls.size()] = newBody;
-        return result;
+
+        return stmts.toArray(new SolidityProgramElement[0]);
     }
 }

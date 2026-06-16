@@ -199,7 +199,16 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
             reportError("Unknown function " + functionName + " in contract " + contractName,
                 ctx.start);
         }
-        return new FunctionBodyStatement(null, function, args.getArgs());
+        // optional left-hand side binds the function's return value
+        ProgramVariable resultVar = null;
+        if (ctx.lhs != null) {
+            String resultName = ctx.lhs.getText();
+            resultVar = localVars.lookup(resultName);
+            if (resultVar == null) {
+                reportError("Result variable " + resultName + " out of the scope", ctx.start);
+            }
+        }
+        return new FunctionBodyStatement(resultVar, function, args.getArgs());
     }
 
     @Override
