@@ -21,6 +21,7 @@ public final class BinaryExpression
     protected final @NonNull Operator operator;
     protected final @NonNull Expression left;
     protected final @NonNull Expression right;
+    private int hashcode = -1;
 
     public BinaryExpression(Operator operator, Expression left, Expression right) {
         this.operator = operator;
@@ -76,4 +77,22 @@ public final class BinaryExpression
         return left + " " + operator.symbol() + " " + right;
     }
 
+    @Override
+    public boolean equals(@Nullable Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof BinaryExpression that))
+            return false;
+        return operator.equals(that.operator) && left.equals(that.left)
+                && right.equals(that.right);
+    }
+
+    @Override
+    public int hashCode() {
+        if (hashcode == -1) {
+            int hash = computeHashCode();
+            hashcode = hash == -1 ? 0 : hash;
+        }
+        return hashcode;
+    }
 }

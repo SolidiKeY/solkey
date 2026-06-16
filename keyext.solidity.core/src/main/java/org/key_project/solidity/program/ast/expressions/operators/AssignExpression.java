@@ -21,6 +21,7 @@ public final class AssignExpression
     private final @NonNull Operator operator;
     private final @NonNull Expression lhs;
     private final @NonNull Expression rhs;
+    private int hashcode = -1;
 
     public AssignExpression(Operator operator, Expression lhs, Expression rhs) {
         this.operator = Objects.requireNonNull(operator);
@@ -72,5 +73,23 @@ public final class AssignExpression
     @Override
     public String toString() {
         return lhs + " " + operator.symbol() + " " + rhs;
+    }
+
+    @Override
+    public boolean equals(@Nullable Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof AssignExpression that))
+            return false;
+        return operator.equals(that.operator) && lhs.equals(that.lhs) && rhs.equals(that.rhs);
+    }
+
+    @Override
+    public int hashCode() {
+        if (hashcode == -1) {
+            int hash = computeHashCode();
+            hashcode = hash == -1 ? 0 : hash;
+        }
+        return hashcode;
     }
 }

@@ -14,6 +14,7 @@ import org.jspecify.annotations.NonNull;
 
 public class ExpressionStatement implements Statement {
     final @NonNull Expression expression;
+    private int hashcode = -1;
 
     public ExpressionStatement(Expression expression) {
         this.expression = Objects.requireNonNull(expression);
@@ -46,5 +47,23 @@ public class ExpressionStatement implements Statement {
 
     public @NonNull Expression getExpression() {
         return expression;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof ExpressionStatement that))
+            return false;
+        return expression.equals(that.expression);
+    }
+
+    @Override
+    public int hashCode() {
+        if (hashcode == -1) {
+            int hash = computeHashCode();
+            hashcode = hash == -1 ? 0 : hash;
+        }
+        return hashcode;
     }
 }

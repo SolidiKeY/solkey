@@ -21,6 +21,7 @@ public class Block implements Statement, ProgramPrefix {
 
     private final @NonNull ImmutableArray<Statement> statements;
     private final int prefixLength;
+    private int hashcode = -1;
 
     public Block(ImmutableArray<Statement> statements) {
         this.statements = statements;
@@ -118,5 +119,23 @@ public class Block implements Statement, ProgramPrefix {
 
     public void visit(Visitor v) {
         v.performActionOnBlock(this);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof Block that))
+            return false;
+        return statements.equals(that.statements);
+    }
+
+    @Override
+    public int hashCode() {
+        if (hashcode == -1) {
+            int hash = computeHashCode();
+            hashcode = hash == -1 ? 0 : hash;
+        }
+        return hashcode;
     }
 }
