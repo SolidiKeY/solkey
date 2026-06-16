@@ -175,7 +175,7 @@ public class SyntacticalReplaceVisitor implements Visitor<Term> {
         }
     }
 
-    private ContextStatementBlock addContext(ContextStatementBlock pe) {
+    private SolidityProgramElement addContext(ContextStatementBlock pe) {
         final ContextInstantiationEntry cie = svInst.getContextInstantiation();
         if (cie == null) {
             throw new IllegalStateException("Context should also be instantiated");

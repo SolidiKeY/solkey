@@ -38,7 +38,7 @@ public class RulesTest {
     /// close. They are still run, but an open proof is reported as aborted (a warning) instead
     /// of failing the suite, so genuine regressions in the other examples stay visible. Once an
     /// example here starts closing, remove it from this set.
-    private static final Set<String> KNOWN_UNSUPPORTED = Set.of("contextAssignTest.key");
+    private static final Set<String> KNOWN_UNSUPPORTED = Set.of();
 
     private static Proof prove(Path f, long timeout, int maxSteps) throws ProblemLoaderException {
         var env = KeYEnvironment.load(f);
