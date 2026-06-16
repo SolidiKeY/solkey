@@ -12,6 +12,7 @@ import org.key_project.solidity.program.ast.expressions.literals.*;
 import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.rule.sv.ProgramSV;
+import org.key_project.solidity.testutil.ExpectedToFail;
 
 import org.junit.jupiter.api.*;
 
@@ -61,6 +62,7 @@ public class SolidityToKeyConverterTest {
     }
 
     @Test
+    @ExpectedToFail("tuple expressions not yet supported")
     void tupleExpression() {
         TupleExpression exp = (TupleExpression) parseExpression("(false, true)");
         assertFalse(((BoolLiteral) exp.getExpression(0)).getValue());

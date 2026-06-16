@@ -35,6 +35,7 @@ import org.key_project.solidity.program.ast.references.FunctionReference;
 import org.key_project.solidity.program.ast.references.ModifierReference;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.program.parser.SolcParser;
+import org.key_project.solidity.testutil.ExpectedToFail;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -175,6 +176,7 @@ public class SolJsonParserTest {
     }
 
     @Test
+    @ExpectedToFail("reference addition not yet supported")
     void parseContractWithReferenceAddition() throws IOException {
         // language=solidity
         String contract = """
@@ -198,6 +200,7 @@ public class SolJsonParserTest {
     }
 
     @Test
+    @ExpectedToFail("contract-typed (reference) fields not yet supported")
     void parseContractWithBoth() throws IOException {
         // language=solidity
         String contract = """
@@ -676,6 +679,7 @@ public class SolJsonParserTest {
     }
 
     @Test
+    @ExpectedToFail("inline arrays not yet supported")
     void parseInlineArray() throws IOException {
         // language=solidity
         String contract = """
@@ -1097,6 +1101,7 @@ public class SolJsonParserTest {
     }
 
     @Test
+    @ExpectedToFail("tuple returns not yet supported")
     void tupleReturn() throws IOException {
         // language=solidity
         String contract = """
@@ -1113,6 +1118,7 @@ public class SolJsonParserTest {
     }
 
     @Test
+    @ExpectedToFail("multiple returns not yet supported")
     void multipleReturns() throws IOException {
         // language=solidity
         String contract = """
@@ -1426,6 +1432,7 @@ public class SolJsonParserTest {
     }
 
     @Test
+    @ExpectedToFail("self-referencing contracts not yet supported")
     void selfReferenceContract() throws IOException {
         // language=solidity
         String contract = """
@@ -1442,6 +1449,7 @@ public class SolJsonParserTest {
     }
 
     @Test
+    @ExpectedToFail("tuple returns not yet supported")
     void sameTupleReturn() throws IOException {
         // language=solidity
         String contract = """

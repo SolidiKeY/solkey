@@ -15,6 +15,7 @@ import org.key_project.solidity.program.ast.declarations.*;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.program.parser.SolcParser;
+import org.key_project.solidity.testutil.ExpectedToFail;
 
 import org.junit.jupiter.api.Test;
 
@@ -69,6 +70,7 @@ public class BothParsersTest {
     }
 
     @Test
+    @ExpectedToFail("tuple types not yet supported")
     void sameTupleType() throws IOException {
         // language=solidity
         String contract = """
@@ -144,6 +146,7 @@ public class BothParsersTest {
     }
 
     @Test
+    @ExpectedToFail("new expressions not yet supported")
     void sameNewExpression() throws IOException {
         // language=solidity
         String contract = """

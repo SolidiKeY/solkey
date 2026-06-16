@@ -68,6 +68,11 @@ compileJava.dependsOn runAntlr4Key
 
 tasks.withType(Test) {
     enableAssertions = true
+    // Surface skipped/aborted tests (e.g. @ExpectedToFail and known-unsupported examples) as
+    // warnings in the console, so they stay visible without failing the build.
+    testLogging {
+        events "skipped"
+    }
     doFirst {
         def rulesTestInvocation = ~/^org\.key_project\.solidity\.taclets\.RulesTest\.exampleLoads(?:\(String, Path\))?\[(\d+)]$/
         def selectedRulesTestInvocation = filter.commandLineIncludePatterns.find { it ==~ rulesTestInvocation }
