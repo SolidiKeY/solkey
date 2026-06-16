@@ -16,10 +16,36 @@ import org.key_project.solidity.rule.matching.inst.MatchConditions;
 import org.key_project.solidity.rule.taclets.SolNoFindTaclet;
 import org.key_project.solidity.rule.taclets.TacletGoalTemplate;
 import org.key_project.util.collection.ImmutableList;
+import org.key_project.util.collection.ImmutableSLList;
 
 public class NoFindTacletExecutor extends TacletExecutor {
     public NoFindTacletExecutor(SolNoFindTaclet taclet) {
         super(taclet);
+    }
+
+    @Override
+    public ImmutableList<SequentChangeInfo> getResultSequentChanges(Goal goal,
+            org.key_project.prover.rules.RuleApp ruleApp) {
+        final var services = goal.getOverlayServices();
+        final var tacletApp = (TacletApp) ruleApp;
+        final MatchConditions mc = tacletApp.matchConditions();
+
+        final ImmutableList<SequentChangeInfo> newSequentsForGoals = checkAssumesGoals(goal,
+            tacletApp.assumesFormulaInstantiations(), mc, taclet.goalTemplates().size());
+
+        ImmutableList<SequentChangeInfo> result = ImmutableSLList.nil();
+        final Iterator<SequentChangeInfo> it = newSequentsForGoals.iterator();
+        for (var nextGT : taclet.goalTemplates()) {
+            final TacletGoalTemplate gt = (TacletGoalTemplate) nextGT;
+            final SequentChangeInfo currentSequent = it.next();
+            // Side-effect-free: build the would-be sequent only, no split / setSequent / add-rule.
+            applyAdd(gt.sequent(), currentSequent, services, mc, goal, tacletApp);
+            result = result.append(currentSequent);
+        }
+        while (it.hasNext()) {
+            result = result.append(it.next());
+        }
+        return result;
     }
 
     /// the rule is applied on the given goal using the information of rule application.

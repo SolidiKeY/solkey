@@ -222,4 +222,17 @@ public abstract class TacletExecutor extends
     protected SequentFormula createSequentFormula(Term form) {
         return new SequentFormula(form);
     }
+
+    /// Computes the sequent changes that applying this taclet with the given (complete) application
+    /// *would* produce, **without** modifying the proof (no [Goal#split]/[Goal#setSequent]). This
+    /// is
+    /// the side-effect-free basis for a result preview; the find/no-find executors override it, the
+    /// default returns no changes.
+    ///
+    /// @param goal the goal the taclet would be applied to
+    /// @param ruleApp the (complete) taclet application
+    /// @return one [SequentChangeInfo] per resulting goal
+    public ImmutableList<SequentChangeInfo> getResultSequentChanges(Goal goal, RuleApp ruleApp) {
+        return ImmutableSLList.nil();
+    }
 }

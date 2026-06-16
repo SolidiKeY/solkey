@@ -34,6 +34,7 @@ include 'keyext.api.doc'
 include 'keyext.client.java'
 
 include 'keyext.solidity.core'
+include 'keyext.solidity.gui'
 
 // ENABLE NULLNESS here or on the CLI
 // This flag is activated to enable the checker framework.

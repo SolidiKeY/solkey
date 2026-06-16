@@ -18,6 +18,7 @@ import org.key_project.solidity.rule.TacletExecutor;
 import org.key_project.solidity.rule.matching.inst.MatchConditions;
 import org.key_project.solidity.rule.taclets.TacletGoalTemplate;
 import org.key_project.util.collection.ImmutableList;
+import org.key_project.util.collection.ImmutableSLList;
 
 public abstract class FindTacletExecutor
         extends TacletExecutor {
@@ -86,6 +87,37 @@ public abstract class FindTacletExecutor
         assert !goalIt.hasNext();
 
         return newGoals;
+    }
+
+    @Override
+    public ImmutableList<SequentChangeInfo> getResultSequentChanges(Goal goal,
+            org.key_project.prover.rules.RuleApp ruleApp) {
+        final Services services = goal.getOverlayServices();
+        final var tacletApp = (TacletApp) ruleApp;
+        final MatchConditions mc = tacletApp.matchConditions();
+
+        final ImmutableList<SequentChangeInfo> newSequentsForGoals = checkAssumesGoals(goal,
+            tacletApp.assumesFormulaInstantiations(), mc, taclet.goalTemplates().size());
+
+        ImmutableList<SequentChangeInfo> result = ImmutableSLList.nil();
+        final Iterator<SequentChangeInfo> it = newSequentsForGoals.iterator();
+        for (var nextGT : taclet.goalTemplates()) {
+            final var gt = (TacletGoalTemplate) nextGT;
+            final SequentChangeInfo currentSequent = it.next();
+            // Mirrors apply(...) but never splits the goal or sets its sequent, and skips the
+            // goal-mutating add-rule / add-progvar steps: this only builds the would-be sequents.
+            applyReplacewith(gt, currentSequent, tacletApp.posInOccurrence(), mc, goal, tacletApp,
+                services);
+            final PosInOccurrence posWhereToAdd =
+                updatePositionInformation(tacletApp, gt, currentSequent);
+            applyAdd(gt.sequent(), currentSequent, posWhereToAdd, tacletApp.posInOccurrence(), mc,
+                goal, tacletApp, services);
+            result = result.append(currentSequent);
+        }
+        while (it.hasNext()) {
+            result = result.append(it.next());
+        }
+        return result;
     }
 
     /// applies the `add`-expressions of taclet goal descriptions
