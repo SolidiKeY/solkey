@@ -27,15 +27,24 @@ public abstract class SolidityASTWalker {
     }
 
     protected void walk(SolidityProgramElement node) {
+        if (done()) {
+            return;
+        }
         if (node.getChildCount() > 0) {
             depth++;
-            for (int i = 0; i < node.getChildCount(); i++) {
+            for (int i = 0; i < node.getChildCount() && !done(); i++) {
                 walk((SolidityProgramElement) node.getChild(i));
             }
             depth--;
         }
         // Otherwise, the node is left, so perform the action
         doAction(node);
+    }
+
+    /// Hook for subclasses to short-circuit the walk early (e.g. once a collector has found
+    /// everything it cares about). The default never stops early.
+    protected boolean done() {
+        return false;
     }
 
     public void run() {
