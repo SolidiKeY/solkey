@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.keyproject.key.api;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
@@ -17,8 +18,13 @@ import org.eclipse.lsp4j.jsonrpc.json.StreamMessageProducer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.keyproject.key.api.data.LoadParams;
+import org.keyproject.key.api.data.Uri;
 import org.keyproject.key.api.remoteapi.KeyApi;
 import org.keyproject.key.api.remoteclient.ClientApi;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TestRpc {
     private Future<Void> clientListening, serverListening;
@@ -67,6 +73,28 @@ public class TestRpc {
     @Test
     public void hello() {
 
+    }
+
+    /// Exercises the load and save support over the JSON-RPC boundary: load a problem,
+    /// save the proof to a file and load it back. A saved `.proof` file must reload as a
+    /// proof (the right side of the {@code Either}), not just an environment.
+    @Test
+    public void saveAndLoadRoundTrip() throws Exception {
+        var proofId = keyApi.loadTerm("true").get();
+        assertNotNull(proofId);
+
+        File saved = File.createTempFile("keyext-api-roundtrip-", ".proof");
+        try {
+            Boolean ok = keyApi.save(proofId, saved.getAbsolutePath()).get();
+            assertTrue(ok, "save should report success");
+            assertTrue(saved.length() > 0, "saved proof file should not be empty");
+
+            var loaded = keyApi.load(new LoadParams(Uri.from(saved), null)).get();
+            assertTrue(loaded.isRight(), "a saved .proof should reload as a proof");
+            assertNotNull(loaded.getRight());
+        } finally {
+            saved.delete();
+        }
     }
 
     // @Test

@@ -5,7 +5,6 @@ package org.keyproject.key.api;
 
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -34,8 +33,8 @@ import org.key_project.solidity.proof.init.InitConfig;
 import org.key_project.solidity.proof.init.ProofAggregate;
 import org.key_project.solidity.proof.init.SolidityProfile;
 import org.key_project.solidity.proof.io.AbstractProblemLoader;
-import org.key_project.solidity.proof.io.OutputStreamProofSaver;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
+import org.key_project.solidity.proof.io.ProofSaver;
 import org.key_project.solidity.rule.TacletApp;
 import org.key_project.solidity.util.KeYtherConstants;
 import org.key_project.util.collection.ImmutableList;
@@ -199,16 +198,13 @@ public final class KeYtherApiImpl implements KeyApi {
     public CompletableFuture<Boolean> save(ProofId proofId, String path) {
         return CompletableFuture.supplyAsync(() -> {
             var proof = data.find(proofId);
-            var saver = new OutputStreamProofSaver(proof);
-
-            try {
-                var file = new File(path);
-                var writer = new FileOutputStream(file);
-                saver.save(writer);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            // Use the file-aware ProofSaver so that the proof directory is known and any
+            // relative \programSource header is rebased relative to the saved file.
+            var saver = new ProofSaver(proof, new File(path));
+            String error = saver.save();
+            if (error != null) {
+                throw new RuntimeException(error);
             }
-
             return true;
         });
     }
@@ -268,7 +264,44 @@ public final class KeYtherApiImpl implements KeyApi {
 
     @Override
     public CompletableFuture<List<TreeNodeDesc>> treeSubtree(ProofId proof, TreeNodeId nodeId) {
-        return null;
+        return CompletableFuture.supplyAsync(() -> {
+            var serial = Integer.parseInt(nodeId.id());
+
+            Node root = data.find(proof).root();
+            var search = new Stack<Node>();
+            search.push(root);
+
+            while (!search.empty()) {
+                var node = search.pop();
+                if (node.getSerialNr() == serial) {
+                    // collect the whole subtree rooted at the node in preorder
+                    var subtree = new ArrayList<TreeNodeDesc>();
+                    var stack = new Stack<Node>();
+                    stack.push(node);
+                    while (!stack.empty()) {
+                        var n = stack.pop();
+                        subtree.add(TreeNodeDesc.from(proof, n));
+                        // push children in reverse so they are visited left-to-right
+                        var children = new ArrayList<Node>();
+                        var it = n.childrenIterator();
+                        while (it.hasNext()) {
+                            children.add(it.next());
+                        }
+                        for (int i = children.size() - 1; i >= 0; i--) {
+                            stack.push(children.get(i));
+                        }
+                    }
+                    return subtree;
+                }
+
+                var iter = node.childrenIterator();
+                while (iter.hasNext()) {
+                    search.push(iter.next());
+                }
+            }
+
+            return List.of();
+        });
     }
 
     @Override
@@ -296,7 +329,10 @@ public final class KeYtherApiImpl implements KeyApi {
 
     @Override
     public CompletableFuture<ProofId> openContract(ContractId contractId) {
-        return null;
+        // Not implemented: there is no contract layer for Solidity yet. Complete exceptionally
+        // rather than returning a null future, which would NPE in the JSON-RPC endpoint.
+        return CompletableFuture.failedFuture(
+            new UnsupportedOperationException("openContract is not implemented"));
     }
 
     @Override
@@ -312,8 +348,18 @@ public final class KeYtherApiImpl implements KeyApi {
             var node = data.find(nodeId);
             var env = data.find(nodeId.proofId().env());
             var notInfo = new NotationInfo();
+            // Fall back to sensible defaults when the client leaves width/indentation unset
+            // (i.e. 0): a zero indentation collapses the relative program blocks so that nested
+            // statement blocks are printed flush left instead of indented.
+            int width = options.width() > 0 ? options.width()
+                    : PosTableLayouter.DEFAULT_LINE_WIDTH;
+            int indentation = options.indentation() > 0 ? options.indentation()
+                    : PosTableLayouter.INDENT;
+            // This method returns term spans and registers a position table for later caret
+            // lookups (see actions()), so it always needs the table: a pure layouter produces
+            // none, which would NPE in expandTermsForTable. Force non-pure regardless of options.
             final var layouter =
-                new PosTableLayouter(options.width(), options.indentation(), options.pure());
+                new PosTableLayouter(width, indentation, false);
             var lp = new LogicPrinter(notInfo, env.getServices(), layouter);
             lp.printSequent(node.sequent());
 
