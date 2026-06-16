@@ -532,7 +532,10 @@ public class SolJSONParser {
     /// @param fullFieldName the namespaced constant name (e.g. `Contract$balance`)
     /// @return the same name, for the caller to record on the declaration
     private Name registerFieldConstant(Name fullFieldName) {
-        Sort fieldSort = services.getNamespaces().sorts().lookup(new Name("Field"));
+        // The struct theory is loaded by the time programs are parsed, so query the LDT for the
+        // field sort instead of looking it up by a hard-coded name (getFieldSort() is null exactly
+        // when the struct theory / Field sort is not loaded, keeping this a no-op in that case).
+        Sort fieldSort = services.getTheoryInfo().getStructLDT().getFieldSort();
         if (fieldSort != null
                 && services.getNamespaces().functions().lookup(fullFieldName) == null) {
             services.getNamespaces().functions()
