@@ -38,7 +38,7 @@ public class SchemaVariableVisitorTest {
         visitor.start();
         ImmutableList<SchemaVariable> schemaVars = visitor.getSchemaVariables();
         assertEquals(1, schemaVars.size());
-        assertEquals("s#v", schemaVars.get(0).toString());
+        assertEquals("v", schemaVars.get(0).toString());
     }
 
     @Test
@@ -49,7 +49,7 @@ public class SchemaVariableVisitorTest {
         visitor.start();
         ImmutableList<SchemaVariable> schemaVars = visitor.getSchemaVariables();
         assertEquals(1, schemaVars.size());
-        assertEquals("s#v", schemaVars.get(0).toString());
+        assertEquals("v", schemaVars.get(0).toString());
     }
 
     @Test
@@ -60,8 +60,8 @@ public class SchemaVariableVisitorTest {
         visitor.start();
         ImmutableList<SchemaVariable> schemaVars = visitor.getSchemaVariables();
         assertEquals(2, schemaVars.size());
-        assertEquals("s#vv", schemaVars.get(0).toString());
-        assertEquals("s#v", schemaVars.get(1).toString());
+        assertEquals("vv", schemaVars.get(0).toString());
+        assertEquals("v", schemaVars.get(1).toString());
     }
 
 }

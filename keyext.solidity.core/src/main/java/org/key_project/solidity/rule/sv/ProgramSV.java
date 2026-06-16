@@ -14,6 +14,7 @@ import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.SourceData;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.statement.Statement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.solidity.rule.matching.inst.MatchConditions;
 import org.key_project.solidity.rule.matching.inst.ProgramList;
@@ -25,7 +26,7 @@ import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ProgramSV extends OperatorSV implements Expression, UpdateableOperator {
+public class ProgramSV extends OperatorSV implements Expression, Statement, UpdateableOperator {
     public static final Logger LOGGER = LoggerFactory.getLogger(ProgramSV.class);
 
     private final boolean isListSV;
@@ -63,6 +64,7 @@ public class ProgramSV extends OperatorSV implements Expression, UpdateableOpera
 
     @Override
     public void visit(Visitor v) {
+        v.performActionOnSchemaVariable(this);
     }
 
     @Override

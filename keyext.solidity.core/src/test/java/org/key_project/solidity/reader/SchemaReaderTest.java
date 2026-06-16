@@ -24,7 +24,7 @@ public class SchemaReaderTest {
     @Test
     void schemaStatement() throws IOException {
         Namespace<@NonNull SchemaVariable> ns = new Namespace<>();
-        ProgramSV sv = createProgramSV(new Name("s#v"), null, false);
+        ProgramSV sv = createProgramSV(new Name("v"), null, false);
         ns.add(sv);
 
         Services services = new Services();
