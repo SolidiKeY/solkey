@@ -74,6 +74,12 @@ public class ProofSaver extends OutputStreamProofSaver {
     /// @param file the file to write to
     /// @throws IOException if I/O fails
     protected void save(File file) throws IOException {
+        // remember where the proof is written, so a relative \programSource can be rewritten
+        // relative to that location
+        File parent = file.getAbsoluteFile().getParentFile();
+        if (parent != null) {
+            proofDirectory = parent.toPath();
+        }
         save(new FileOutputStream(file));
     }
 

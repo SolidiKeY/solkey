@@ -48,6 +48,13 @@ public class OutputStreamProofSaver {
     protected final String internalVersion;
     /// Whether the proof steps should be output (usually true).
     protected final boolean saveProofSteps;
+    /// The directory the proof is being written to, if known. Used to rewrite a relative
+    /// `\programSource` relative to the proof file's location.
+    protected java.nio.file.@org.jspecify.annotations.Nullable Path proofDirectory = null;
+
+    /// Pattern matching a `\programSource "..."` directive; group 2 is the path value.
+    private static final java.util.regex.Pattern PROGRAM_SOURCE =
+        java.util.regex.Pattern.compile("(\\\\programSource\\s*\")([^\"]*)(\")");
 
     public OutputStreamProofSaver(Proof proof) {
         this(proof, "2.12.3 (Rusty)");
@@ -68,6 +75,51 @@ public class OutputStreamProofSaver {
         this.proof = proof;
         this.internalVersion = internalVersion;
         this.saveProofSteps = saveProofSteps;
+    }
+
+    /// Rewrites the `\programSource "..."` path in the header for saving:
+    ///
+    /// * an absolute path is kept as the user wrote it;
+    /// * a relative path is rewritten relative to the directory the proof is saved into (so the
+    /// source and proof can be relocated together), using the proof's resolved absolute
+    /// source [Proof#getSoliditySource].
+    ///
+    /// If the proof directory or the resolved source is unknown, the header is left unchanged.
+    protected String rewriteProgramSourcePath(String header) {
+        java.nio.file.Path src = proof.getSoliditySource();
+        if (src == null || proofDirectory == null) {
+            return header;
+        }
+        var m = PROGRAM_SOURCE.matcher(header);
+        if (!m.find()) {
+            return header;
+        }
+        String original = m.group(2);
+        if (original.isBlank() || java.nio.file.Paths.get(original).isAbsolute()) {
+            return header; // keep absolute (or empty) paths as-is
+        }
+        // relativize using real (symlink-resolved) paths so the result resolves correctly on
+        // reload even when the proof directory is reached through a symlink (e.g. macOS /var)
+        java.nio.file.Path proofDir = toRealPathOrAbsolute(proofDirectory);
+        java.nio.file.Path source = toRealPathOrAbsolute(src);
+        java.nio.file.Path rebased;
+        try {
+            rebased = proofDir.relativize(source);
+        } catch (IllegalArgumentException e) {
+            // e.g. different roots (Windows): fall back to the absolute source
+            rebased = source;
+        }
+        // proof files use '/' as path separator regardless of platform
+        String replacement = rebased.toString().replace(java.io.File.separatorChar, '/');
+        return header.substring(0, m.start(2)) + replacement + header.substring(m.end(2));
+    }
+
+    private static java.nio.file.Path toRealPathOrAbsolute(java.nio.file.Path p) {
+        try {
+            return p.toRealPath();
+        } catch (IOException e) {
+            return p.toAbsolutePath();
+        }
     }
 
     public String writeProfile(Profile profile) {
@@ -91,8 +143,7 @@ public class OutputStreamProofSaver {
             ps.println(writeSettings(proof.getSettings()));
 
             // declarations of symbols, sorts
-            String header = proof.header();
-            // header = makePathsRelative(header);
+            String header = rewriteProgramSourcePath(proof.header());
             ps.print(header);
 
             // \problem or \proofObligation

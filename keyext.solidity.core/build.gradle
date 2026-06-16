@@ -192,6 +192,11 @@ tasks.register('solidityCli', JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     workingDir = solidityExamplesDir
     args project.findProperty('keyFile') ?: "problem2.key"
+    // forward extra CLI arguments, e.g. -PcliArgs="--output=/tmp/p.proof --verbose"
+    def extra = project.findProperty('cliArgs')
+    if (extra) {
+        args(*extra.toString().split("\\s+"))
+    }
 }
 
 shadowJar {

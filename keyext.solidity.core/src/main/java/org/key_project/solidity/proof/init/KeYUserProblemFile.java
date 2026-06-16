@@ -5,6 +5,7 @@ package org.key_project.solidity.proof.init;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 
 import org.key_project.logic.Name;
@@ -12,6 +13,7 @@ import org.key_project.prover.sequent.Sequent;
 import org.key_project.solidity.common.Profile;
 import org.key_project.solidity.parser.ChoiceInformation;
 import org.key_project.solidity.parser.KeYAst;
+import org.key_project.solidity.parser.ProofReplayer;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.io.IProofFileParser;
 import org.key_project.solidity.proof.io.KeYFile;
@@ -133,9 +135,17 @@ public class KeYUserProblemFile extends KeYFile implements ProofOblInput {
         Name name = name();
         ProofSettings settings = getPreferences();
         initConfig.setSettings(settings);
-        return ProofAggregate.createProofAggregate(
-            new Proof(name, problem, getParseContext().getProblemHeader() + "\n", initConfig),
-            name.toString());
+        // keep the problem header verbatim (preserving the user's relative/absolute
+        // \programSource), but remember the resolved absolute source so the saver can rewrite a
+        // relative path relative to the proof file's location.
+        Proof proof = new Proof(name, problem, getParseContext().getProblemHeader() + "\n",
+            initConfig);
+        try {
+            proof.setSoliditySource(readSolidityPath());
+        } catch (ProofInputException e) {
+            // leave unset; saving will then keep the header as-is
+        }
+        return ProofAggregate.createProofAggregate(proof, name.toString());
     }
 
     /// {@inheritDoc}
@@ -158,9 +168,8 @@ public class KeYUserProblemFile extends KeYFile implements ProofOblInput {
             CharStream stream = file.getCharStream();
             // also pass the file to be able to produce exceptions with locations
             try {
-                /// ProofReplayer.run(token, stream, prl, file.url().toURI());
-                throw new RuntimeException("Not implemented yet");
-            } catch (Exception e) { /// URISyntaxException e) {
+                ProofReplayer.run(token, stream, prl, file.url().toURI());
+            } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
             }
         }

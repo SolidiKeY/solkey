@@ -4,6 +4,7 @@
 package org.key_project.solidity.proof;
 
 import java.beans.PropertyChangeListener;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -70,6 +71,11 @@ public class Proof implements ProofObject<Goal>, Named {
 
     /// declarations &c, read from a problem file or otherwise
     private String problemHeader = "";
+
+    /// the resolved absolute path of the Solidity source (`\programSource`) this proof was loaded
+    /// with, or `null` if none. Used when saving to rewrite a relative `\programSource` relative
+    /// to the proof file's location.
+    private @Nullable Path soliditySource = null;
 
     /// the environment of the proof with specs and java model
     private ProofCorrectnessMgt localMgt;
@@ -156,6 +162,16 @@ public class Proof implements ProofObject<Goal>, Named {
 
     public String header() {
         return problemHeader;
+    }
+
+    /// @return the resolved absolute Solidity source path, or `null` if the proof has no
+    /// `\programSource`
+    public @Nullable Path getSoliditySource() {
+        return soliditySource;
+    }
+
+    public void setSoliditySource(@Nullable Path source) {
+        this.soliditySource = source;
     }
 
     public ImmutableList<Goal> getOpenGoals() {
