@@ -36,5 +36,12 @@ public class ExpFctBdyExampleTest {
 
         assertTrue(proof.closed(),
             "expFctBdy expansion proof should close; open goals: " + proof.openGoals().size());
+
+        // Per-statement execution produces intermediate empty blocks; computing a node's name
+        // (as the API / tree view does) must not fail on those. Regression guard for
+        // NodeInfo.computeFirstStatement on an empty program block.
+        for (var it = proof.root().subtreeIterator(); it.hasNext();) {
+            it.next().name();
+        }
     }
 }

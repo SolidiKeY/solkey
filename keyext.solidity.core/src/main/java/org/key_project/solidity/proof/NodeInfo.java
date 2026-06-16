@@ -172,7 +172,11 @@ public class NodeInfo {
             Term t = TermBuilder.goBelowUpdates(pta.posInOccurrence().subTerm());
             if (t.op() instanceof SModality mod) {
                 final SolidityProgramElement pe = mod.programBlock().program();
-                firstExpr = (SolidityProgramElement) pe.getChild(0);
+                // the program may be an empty block (e.g. an emptied statement block during
+                // symbolic execution), in which case there is no first statement
+                if (pe.getChildCount() > 0) {
+                    firstExpr = (SolidityProgramElement) pe.getChild(0);
+                }
             }
         }
         return firstExpr;
