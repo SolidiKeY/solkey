@@ -37,8 +37,10 @@ public class TypeReference implements SolidityProgramElement {
     }
 
     public String toString() {
-        return typeName == null ? Objects.requireNonNull(referencedType).name().toString()
-                : typeName.toString();
+        if (typeName != null) {
+            return typeName.toString();
+        }
+        return referencedType == null ? "<unknown type>" : referencedType.name().toString();
     }
 
     @Override

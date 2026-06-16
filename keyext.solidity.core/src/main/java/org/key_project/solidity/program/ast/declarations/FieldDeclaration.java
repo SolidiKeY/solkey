@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.declarations;
 
-import java.util.Objects;
 
 import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
@@ -52,7 +51,10 @@ public class FieldDeclaration implements Declaration {
         if (i == 0) {
             return typeReference;
         }
-        return Objects.requireNonNull(initializer);
+        if (initializer != null) {
+            return initializer;
+        }
+        throw new IndexOutOfBoundsException("Index should be 0 <= " + i + " < " + getChildCount());
     }
 
 

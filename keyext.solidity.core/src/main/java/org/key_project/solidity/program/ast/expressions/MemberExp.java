@@ -52,8 +52,8 @@ public class MemberExp extends SolidityExpression implements Resolver {
     public @NonNull SyntaxElement getChild(int n) {
         if (n == 0)
             return leftExp;
-        if (n == 1)
-            return Objects.requireNonNull(rightExp);
+        if (n == 1 && rightExp != null)
+            return rightExp;
         throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
     }
 
