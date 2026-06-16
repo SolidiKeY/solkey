@@ -12,6 +12,7 @@ import java.util.Objects;
 import org.key_project.logic.LogicServices;
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
+import org.key_project.logic.op.Function;
 import org.key_project.prover.proof.ProofServices;
 import org.key_project.solidity.common.naming.NameRecorder;
 import org.key_project.solidity.common.naming.VariableNamer;
@@ -23,6 +24,7 @@ import org.key_project.solidity.program.ast.SolidityInfo;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.expressions.literals.Literal;
+import org.key_project.solidity.program.ast.references.FieldReference;
 import org.key_project.solidity.proof.Counter;
 import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.proof.Proof;
@@ -94,6 +96,17 @@ public class Services implements LogicServices, ProofServices {
         var tb = services.getTermBuilder();
         if (pe instanceof ProgramVariable pv) {
             return tb.var(pv);
+        }
+        if (pe instanceof FieldReference fieldRef) {
+            // a contract field access resolves, lazily and by name, to the field's
+            // registered Field-sorted constant — no logic operator is stored on the AST node
+            Name constantName = fieldRef.getFieldConstantName();
+            Function constant = services.getNamespaces().functions().lookup(constantName);
+            if (constant == null) {
+                throw new IllegalStateException(
+                    "no field constant registered under name " + constantName);
+            }
+            return tb.func(constant);
         }
         if (pe instanceof Literal lit) {
             LDT ldt = services.getTheoryInfo().get(lit.getLDTName());

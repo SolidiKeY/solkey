@@ -19,11 +19,13 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
+import org.key_project.solidity.program.ast.declarations.StateVariableDeclaration;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.*;
 import org.key_project.solidity.program.ast.expressions.literals.*;
 import org.key_project.solidity.program.ast.expressions.operators.TernaryExpression;
 import org.key_project.solidity.program.ast.ghost.*;
+import org.key_project.solidity.program.ast.references.FieldReference;
 import org.key_project.solidity.program.ast.references.FunctionReference;
 import org.key_project.solidity.program.ast.references.TypeReference;
 import org.key_project.solidity.program.ast.statement.*;
@@ -285,9 +287,16 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     public SyntaxElement visitIdentifier(IdentifierContext ctx) {
         String variableName = ctx.Identifier().getText();
         ProgramVariable res = localVars.lookup(variableName);
-        if (res == null)
-            throw new RuntimeException("Variable " + variableName + " out of the scope");
-        return res;
+        if (res != null) {
+            return res;
+        }
+        // not a local variable: it may be a contract state variable, which denotes a field access
+        StateVariableDeclaration field =
+            services.getSolidityInfo().getStateVariableDeclaration(new Name(variableName));
+        if (field != null) {
+            return new FieldReference(field, field.getType());
+        }
+        throw new RuntimeException("Variable " + variableName + " out of the scope");
     }
 
     public SyntaxElement visitTypeName(TypeNameContext ctx) {
