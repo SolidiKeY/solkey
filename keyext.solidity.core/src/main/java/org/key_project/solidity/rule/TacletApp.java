@@ -12,8 +12,6 @@ import java.util.LinkedHashSet;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.Namespace;
-import org.key_project.solidity.logic.op.ProgramVariable;
-import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Function;
 import org.key_project.logic.op.QuantifiableVariable;
@@ -40,6 +38,7 @@ import org.key_project.solidity.logic.op.*;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.proof.naming.VariableNameProposer;
 import org.key_project.solidity.rule.matching.inst.GenericSortCondition;
