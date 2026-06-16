@@ -4,6 +4,7 @@
 package org.key_project.solidity.program.ast.references;
 
 import java.util.HashMap;
+import java.util.Objects;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.Resolver;
@@ -13,11 +14,12 @@ import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class FunctionReference extends SolidityExpression implements Resolver, VariableReference {
 
     public final int id;
-    public FunctionDeclaration referencedDeclaration;
+    public @Nullable FunctionDeclaration referencedDeclaration;
 
     public FunctionReference(int id, Type type) {
         super(type);
@@ -33,13 +35,15 @@ public class FunctionReference extends SolidityExpression implements Resolver, V
 
     @Override
     public String toString() {
-        return referencedDeclaration.name().toString();
+        return referencedDeclaration == null ? "<unresolved function>"
+                : referencedDeclaration.name().toString();
     }
 
     @Override
     public void resolve(HashMap<Integer, SyntaxElement> id2Name) {
         if (this.referencedDeclaration == null)
-            this.referencedDeclaration = (FunctionDeclaration) id2Name.get(id);
+            this.referencedDeclaration =
+                Objects.requireNonNull((FunctionDeclaration) id2Name.get(id));
         else
             throw new IllegalStateException(
                 "function " + referencedDeclaration.name() + " has already been resolved");
@@ -57,7 +61,7 @@ public class FunctionReference extends SolidityExpression implements Resolver, V
 
     @Override
     public FunctionDeclaration mainProgramElement() {
-        return referencedDeclaration;
+        return Objects.requireNonNull(referencedDeclaration, "function reference is not resolved");
     }
 
     public void visit(Visitor v) {

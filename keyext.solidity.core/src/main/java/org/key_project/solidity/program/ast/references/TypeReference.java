@@ -4,6 +4,8 @@
 package org.key_project.solidity.program.ast.references;
 
 
+import java.util.Objects;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
@@ -11,12 +13,13 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 // what is the difference between a TypeReference and an ElemnaryExpression?
 public class TypeReference implements SolidityProgramElement {
     // TODO: Fix. No public fields.
-    public Type referencedType;
-    public final Name typeName;
+    public @Nullable Type referencedType;
+    public final @Nullable Name typeName;
 
     public TypeReference(Name typeName) {
         this.typeName = typeName;
@@ -29,12 +32,13 @@ public class TypeReference implements SolidityProgramElement {
         this.typeName = null;
     }
 
-    public Name getTypeName() {
+    public @Nullable Name getTypeName() {
         return typeName;
     }
 
     public String toString() {
-        return typeName == null ? referencedType.name().toString() : typeName.toString();
+        return typeName == null ? Objects.requireNonNull(referencedType).name().toString()
+                : typeName.toString();
     }
 
     @Override
@@ -49,7 +53,7 @@ public class TypeReference implements SolidityProgramElement {
 
     @Override
     public int computeHashCode() {
-        return 7 * typeName.hashCode();
+        return 7 * Objects.hashCode(typeName);
     }
 
     public void visit(Visitor v) {

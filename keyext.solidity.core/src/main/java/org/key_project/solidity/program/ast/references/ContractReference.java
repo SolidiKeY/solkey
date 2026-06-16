@@ -4,6 +4,7 @@
 package org.key_project.solidity.program.ast.references;
 
 import java.util.HashMap;
+import java.util.Objects;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.Resolver;
@@ -20,7 +21,7 @@ public class ContractReference extends SolidityExpression implements Resolver, V
     public final int id;
 
     public ContractDeclaration getContractDeclaration() {
-        return contractDeclaration;
+        return Objects.requireNonNull(contractDeclaration, "contract reference is not resolved");
     }
 
     private @MonotonicNonNull ContractDeclaration contractDeclaration;
@@ -48,13 +49,15 @@ public class ContractReference extends SolidityExpression implements Resolver, V
 
     @Override
     public String toString() {
-        return contractDeclaration.name().toString();
+        return contractDeclaration == null ? "<unresolved contract>"
+                : contractDeclaration.name().toString();
     }
 
     @Override
-    public void resolve(@MonotonicNonNull HashMap<Integer, SyntaxElement> id2Name) {
+    public void resolve(HashMap<Integer, SyntaxElement> id2Name) {
         if (this.contractDeclaration == null)
-            this.contractDeclaration = (ContractDeclaration) id2Name.get(id);
+            this.contractDeclaration =
+                Objects.requireNonNull((ContractDeclaration) id2Name.get(id));
         else
             throw new IllegalStateException(
                 "contract " + contractDeclaration.name() + " has already been resolved");
@@ -62,7 +65,7 @@ public class ContractReference extends SolidityExpression implements Resolver, V
 
     @Override
     public ContractDeclaration mainProgramElement() {
-        return contractDeclaration;
+        return Objects.requireNonNull(contractDeclaration, "contract reference is not resolved");
     }
 
     public void visit(Visitor v) {
