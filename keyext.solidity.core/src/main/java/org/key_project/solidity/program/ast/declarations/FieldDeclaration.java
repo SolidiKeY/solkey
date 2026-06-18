@@ -8,11 +8,12 @@ import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.references.TypeReference;
+import org.key_project.solidity.program.ast.visitor.Visitor;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-public class FieldDeclaration implements Declaration {
+public class FieldDeclaration implements Declaration, SolidityProgramElement {
 
     private final @NonNull TypeReference typeReference;
     private final @Nullable Expression initializer;
@@ -34,6 +35,11 @@ public class FieldDeclaration implements Declaration {
 
     public @Nullable Expression getInitializer() {
         return initializer;
+    }
+
+    @Override
+    public void visit(Visitor v) {
+        v.performActionOnFieldDeclaration(this);
     }
 
     // Syntax Element interface

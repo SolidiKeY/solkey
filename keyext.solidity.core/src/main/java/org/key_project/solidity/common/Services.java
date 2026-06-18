@@ -23,6 +23,8 @@ import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityInfo;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
+import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
+import org.key_project.solidity.program.ast.expressions.MemberExp;
 import org.key_project.solidity.program.ast.expressions.literals.Literal;
 import org.key_project.solidity.program.ast.references.FieldReference;
 import org.key_project.solidity.proof.Counter;
@@ -100,13 +102,12 @@ public class Services implements LogicServices, ProofServices {
         if (pe instanceof FieldReference fieldRef) {
             // a contract field access resolves, lazily and by name, to the field's
             // registered Field-sorted constant — no logic operator is stored on the AST node
-            Name constantName = fieldRef.getFieldConstantName();
-            Function constant = services.getNamespaces().functions().lookup(constantName);
-            if (constant == null) {
-                throw new IllegalStateException(
-                    "no field constant registered under name " + constantName);
-            }
-            return tb.func(constant);
+            return tb.func(fieldTerm(fieldRef.getFieldConstantName(), services));
+        }
+        if (pe instanceof MemberExp member) {
+            Term basePath = convertToLogicElement(member.getLeftExp(), services);
+            Term field = memberFieldTerm(member, services);
+            return appendPathSegment(basePath, field, services);
         }
         if (pe instanceof Literal lit) {
             LDT ldt = services.getTheoryInfo().get(lit.getLDTName());
@@ -121,6 +122,41 @@ public class Services implements LogicServices, ProofServices {
                 + "Services.convertToLogicElement. If it is an (uninstantiated) schema variable, "
                 + "check that the taclet binds it and that its ProgramSVSort matches the program "
                 + "position it should stand for.");
+    }
+
+    private static Function fieldTerm(Name constantName, Services services) {
+        Function constant = services.getNamespaces().functions().lookup(constantName);
+        if (constant == null) {
+            throw new IllegalStateException(
+                "no field constant registered under name " + constantName);
+        }
+        return constant;
+    }
+
+    private static Term memberFieldTerm(MemberExp member, Services services) {
+        if (member.getRightExp() instanceof FieldDeclaration field) {
+            return services.getTermBuilder().func(fieldTerm(field.name(), services));
+        }
+        throw new IllegalArgumentException(
+            "Cannot convert member access '" + member + "' into a logic path: member '"
+                + member.getRightExp() + "' is not a field declaration.");
+    }
+
+    private static Term appendPathSegment(Term basePath, Term field, Services services) {
+        var tb = services.getTermBuilder();
+        Function cons = services.getNamespaces().functions().lookup(new Name("cons"));
+        Function consr = services.getNamespaces().functions().lookup(new Name("consr"));
+        Function nil = services.getNamespaces().functions().lookup(new Name("nil"));
+        if (cons == null || consr == null || nil == null) {
+            throw new IllegalStateException("list constructors are not available");
+        }
+        if ("List".equals(basePath.sort().name().toString())) {
+            return tb.func(consr, basePath, field);
+        }
+        if ("Struct".equals(basePath.sort().name().toString())) {
+            return tb.func(cons, field, tb.func(nil));
+        }
+        return tb.func(cons, basePath, tb.func(cons, field, tb.func(nil)));
     }
 
     public @NonNull NamespaceSet getNamespaces() {

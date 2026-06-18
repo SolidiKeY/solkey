@@ -54,6 +54,11 @@ public abstract class SolidityASTVisitor extends SolidityASTWalker implements Vi
     }
 
     @Override
+    public void performActionOnFieldDeclaration(FieldDeclaration x) {
+        doDefaultAction(x);
+    }
+
+    @Override
     public void performActionOnElementaryExpression(ElementaryExpression x) {
         doDefaultAction(x);
     }

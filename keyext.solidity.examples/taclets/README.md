@@ -14,6 +14,9 @@ parser, program schema-variable sorts, and logic bridge can already handle.
   copying one contract storage field into another.
 - `storage-root-paths.key` demonstrates the same root-level storage paper
   rules using the path-aware `SimpleStoragePath` program schema-variable sort.
+- `storage-field-path-read-write.key` demonstrates the first path-lowering
+  bridge for source-level member paths such as `st.age`, using `\sameAsTerm` to
+  bind the program path to the `List` consumed by `save` and `find`.
 - `commonFields.key` provides shared field constants, program variables, and
   default-value simplification rules for the examples.
 
@@ -60,18 +63,22 @@ the Java side can classify and lower Solidity paths faithfully.
 
 3. Lower full program paths to logic paths.
 
-   `\sameAsTerm` currently bridges supported program elements, especially
-   `FieldReference`, to logic terms. Full paper rules need a bridge from paths
-   such as `alice.account.balance`, `tokens[i]`, and `ledger.balances[k]` to
-   the `List` and `Field` terms consumed by `save`, `find`, `storeSt`, and
-   `selectSt`. This can be done by extending `Services.convertToLogicElement`
-   or by adding path-specific varconds such as `\sameAsPath(path, listTerm)`.
+   `\sameAsTerm` now bridges supported program elements, especially
+   `FieldReference` and member paths such as `st.age`, to logic terms. The
+   member-path bridge lowers `Struct`-rooted paths relative to the storage
+   struct, so `st.age` becomes `cons(age, nil)` for `save` and `find`.
 
-   There is also a current member-access AST issue: a parsed expression such as
-   `st.age` can leave a `FieldDeclaration` below the expression tree even though
-   the AST walker expects `SolidityProgramElement` children. That must be fixed
-   before examples for `storageFieldWriteSave` and `storageFieldReadFind` can
-   use source-level member paths directly.
+   Full paper rules still need a bridge from paths such as
+   `alice.account.balance`, `tokens[i]`, and `ledger.balances[k]` to the `List`
+   and `Field` terms consumed by `save`, `find`, `storeSt`, and `selectSt`.
+   This can continue in `Services.convertToLogicElement` or move to
+   path-specific varconds such as `\sameAsPath(path, listTerm)`.
+
+   The old member-access AST walker issue for `st.age` is fixed for
+   `FieldDeclaration` leaves. Broader source-level path examples still need
+   nested struct field resolution and indexed path lowering before
+   `storageFieldWriteSave` and `storageFieldReadFind` can cover the full paper
+   shapes directly.
 
 4. Add normalization meta-constructs for complex paths.
 
