@@ -3,18 +3,26 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.rule;
 
+import java.util.List;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Function;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.op.SFunction;
 import org.key_project.solidity.parser.ParserForTesting;
 import org.key_project.solidity.parser.varcond.SameAsTermCondition;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
+import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
+import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.declarations.StateVariableDeclaration;
+import org.key_project.solidity.program.ast.declarations.StructDeclaration;
+import org.key_project.solidity.program.ast.expressions.MemberExp;
 import org.key_project.solidity.program.ast.references.FieldReference;
+import org.key_project.solidity.program.ast.references.TypeReference;
 import org.key_project.solidity.rule.matching.inst.MatchConditions;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.solidity.rule.sv.ProgramSV;
@@ -44,6 +52,10 @@ public class SameAsTermConditionTest {
     private SameAsTermCondition condition;
 
     private Function registerFieldConstant(String name) {
+        Function existing = services.getNamespaces().functions().lookup(new Name(name));
+        if (existing != null) {
+            return existing;
+        }
         SFunction c = new SFunction(new Name(name), fieldSort, true, true);
         services.getNamespaces().functions().addSafely(c);
         return c;
@@ -106,5 +118,41 @@ public class SameAsTermConditionTest {
             MatchConditions.EMPTY_MATCHCONDITIONS, services);
         assertSame(MatchConditions.EMPTY_MATCHCONDITIONS, result,
             "the condition should not react to unrelated schema variables");
+    }
+
+    @Test
+    void bindsStructMemberPathToLogicList() {
+        Sort listSort = services.getNamespaces().sorts().lookup(new Name("List"));
+        assertNotNull(listSort, "the List sort must be available");
+        Sort structSort = services.getNamespaces().sorts().lookup(new Name("Struct"));
+        assertNotNull(structSort, "the Struct sort must be available");
+
+        Function age = registerFieldConstant("age");
+        Function cons = services.getNamespaces().functions().lookup(new Name("cons"));
+        Function nil = services.getNamespaces().functions().lookup(new Name("nil"));
+        assertNotNull(cons, "the cons list constructor must be available");
+        assertNotNull(nil, "the nil list constructor must be available");
+
+        FieldDeclaration ageField =
+            new FieldDeclaration(new Name("age"), new TypeReference(new Name("uint")));
+        StructDeclaration structType =
+            new StructDeclaration(new Name("Person"), List.of(ageField), -1);
+        ProgramVariable st = new ProgramVariable(new Name("st"),
+            new KeYSolidityType(structType, structSort), DataLocation.Default);
+        MemberExp memberPath = new MemberExp(st, ageField, st.getType());
+
+        ProgramSV pathSV = SchemaVariableFactory.createProgramSV(new Name("path"),
+            ProgramSVSort.EXPRESSION, false);
+        TermSV pathTermSV = SchemaVariableFactory.createTermSV(new Name("pathTerm"), listSort);
+        SameAsTermCondition pathCondition = new SameAsTermCondition(pathSV, pathTermSV);
+
+        MatchConditions result = (MatchConditions) pathCondition.check(pathSV, memberPath,
+            MatchConditions.EMPTY_MATCHCONDITIONS, services);
+        assertNotNull(result, "member path should lower to a logic list");
+        Object pathTerm =
+            ((SVInstantiations) result.getInstantiations()).getInstantiation(pathTermSV);
+        Term expectedPath = services.getTermBuilder().func(cons,
+            services.getTermBuilder().func(age), services.getTermBuilder().func(nil));
+        assertEquals(expectedPath, pathTerm, "st.age should lower to cons(age, nil)");
     }
 }

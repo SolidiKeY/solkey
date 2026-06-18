@@ -12,27 +12,16 @@ parser, program schema-variable sorts, and logic bridge can already handle.
   plus `\sameAsTerm`.
 - `storage-root-copy-source.key` demonstrates `storageRootWriteCopySource` for
   copying one contract storage field into another.
+- `storage-root-paths.key` demonstrates the same root-level storage paper
+  rules using the path-aware `SimpleStoragePath` program schema-variable sort.
+- `storage-field-path-read-write.key` demonstrates the first path-lowering
+  bridge for source-level member paths such as `st.age`, using `\sameAsTerm` to
+  bind the program path to the `List` consumed by `save` and `find`.
 - `commonFields.key` provides shared field constants, program variables, and
   default-value simplification rules for the examples.
 
-Related runnable examples outside this directory exercise infrastructure that
-the paper-style taclets can already rely on:
-
-- `keyext.solidity.examples/fieldAccess/fieldAccess.key` resolves source-level
-  contract field accesses to registered `Field` constants.
-- `keyext.solidity.examples/fieldAccess/sameAsTerm.key` demonstrates
-  `\sameAsTerm` for bridging a program `FieldReference` to a term schema
-  variable.
-- `keyext.solidity.examples/functionBody/expFctBdy.key` and
-  `keyext.solidity.examples/functionBody/archive.key` demonstrate the
-  `FunctionBody` program schema-variable sort and `s#expand_function_body`.
-- `keyext.solidity.examples/newVariable/newVariable.key` demonstrates fresh
-  program-variable creation with `\new`.
-- `keyext.solidity.core/src/test/resources/org/key_project/solidity/examples/hasSortVarcondTest.key`
-  demonstrates `\hasSort` for expression/type schema variables.
-
-Run these through the focused JUnit tests in `keyext.solidity.core`, or load an
-individual file with the Solidity CLI from the repository root.
+Run these through the focused JUnit test added in `keyext.solidity.core`, or
+load an individual file with the Solidity CLI from the repository root.
 
 ## Java Work Needed For The Full Paper Rule Set
 

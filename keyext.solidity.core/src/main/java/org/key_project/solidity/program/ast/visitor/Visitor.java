@@ -24,6 +24,8 @@ public interface Visitor {
 
     void performActionOnStatementVariableDeclaration(StatementVariableDeclaration x);
 
+    default void performActionOnFieldDeclaration(FieldDeclaration x) {}
+
     void performActionOnElementaryExpression(ElementaryExpression x);
 
     void performActionOnFunctionCallExpression(FunctionCallExpression x);

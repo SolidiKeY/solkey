@@ -7,6 +7,7 @@ import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
@@ -582,6 +583,11 @@ public class PrettyPrinter implements Visitor {
             layouter.print(" ");
         }
         pv.visit(this);
+    }
+
+    @Override
+    public void performActionOnFieldDeclaration(FieldDeclaration x) {
+        layouter.print(x.name().toString());
     }
 
     @Override
