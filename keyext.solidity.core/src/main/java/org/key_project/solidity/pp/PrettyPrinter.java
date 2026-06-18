@@ -195,6 +195,9 @@ public class PrettyPrinter implements Visitor {
         final Operator operator = x.getOperator();
         if (operator.isPrefix()) {
             layouter.print(operator.symbol());
+            if (operator == Operator.DELETE) {
+                layouter.print(" ");
+            }
         }
         maybeParens(x.getExp(), operator.precedence());
         if (operator.isPostfix()) {

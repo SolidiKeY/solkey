@@ -23,7 +23,9 @@ import org.key_project.solidity.program.ast.declarations.StateVariableDeclaratio
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.*;
 import org.key_project.solidity.program.ast.expressions.literals.*;
+import org.key_project.solidity.program.ast.expressions.operators.Operator;
 import org.key_project.solidity.program.ast.expressions.operators.TernaryExpression;
+import org.key_project.solidity.program.ast.expressions.operators.UnaryExpression;
 import org.key_project.solidity.program.ast.ghost.*;
 import org.key_project.solidity.program.ast.references.FieldReference;
 import org.key_project.solidity.program.ast.references.FunctionReference;
@@ -183,6 +185,12 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         String operator = ctx.children.getFirst().toString();
         Expression uExp = visitExpression(ctx.expression());
         return ParserUtils.parseUnaryOperation(uExp, operator, true);
+    }
+
+    @Override
+    public SyntaxElement visitDelete(DeleteContext ctx) {
+        Expression target = visitExpression(ctx.expression());
+        return new UnaryExpression(Operator.DELETE, target);
     }
 
     @Override

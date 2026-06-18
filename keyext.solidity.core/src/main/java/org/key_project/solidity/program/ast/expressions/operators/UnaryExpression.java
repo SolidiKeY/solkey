@@ -67,6 +67,8 @@ public class UnaryExpression implements SolidityProgramElement, Expression, Oper
         switch (operator) {
             case POST_INC, POST_DEC:
                 return exp + operator.symbol();
+            case DELETE:
+                return operator.symbol() + " " + exp;
             case PRE_INC, PRE_DEC, LOGICAL_NOT, BITWISE_NOT, UNARY_MINUS:
                 return operator.symbol() + exp;
             default:

@@ -4,6 +4,7 @@
 package org.key_project.solidity.parser;
 
 import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.pp.PrettyPrinter;
 import org.key_project.solidity.program.ast.abstractions.*;
 import org.key_project.solidity.program.ast.declarations.*;
 import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
@@ -95,6 +96,27 @@ public class SolidityToKeyConverterTest {
         assertTrue(exp.getOperator().isPostfix());
         assertTrue(exp.getOperator() == Operator.POST_INC);
 
+    }
+
+    @Test
+    void deleteExpression() {
+        UnaryExpression exp = (UnaryExpression) parseExpression("delete v");
+        assertEquals("v", exp.getExp().toString());
+        assertTrue(exp.getOperator().isPrefix());
+        assertSame(Operator.DELETE, exp.getOperator());
+        assertEquals("delete v", exp.toString());
+
+        PrettyPrinter printer = PrettyPrinter.purePrinter();
+        printer.printFragment(exp);
+        assertEquals("delete v", printer.result());
+    }
+
+    @Test
+    void deleteStatement() {
+        ExpressionStatement stm = (ExpressionStatement) parseStatement("delete v;");
+        UnaryExpression exp = (UnaryExpression) stm.getExpression();
+        assertSame(Operator.DELETE, exp.getOperator());
+        assertEquals("v", exp.getExp().toString());
     }
 
     @Test
