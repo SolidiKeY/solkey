@@ -14,11 +14,13 @@ import org.key_project.prover.sequent.*;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.NamespaceSet;
 import org.key_project.solidity.proof.calculus.SoliditySequentKit;
+import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.solidity.rule.taclets.builder.*;
 import org.key_project.util.collection.ImmutableSLList;
 
 import org.junit.jupiter.api.*;
 
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TacletParserTest {
@@ -98,6 +100,27 @@ public class TacletParserTest {
         }
     }
 
+
+    @Test
+    public void testPathAwareProgramSVSortDeclarations() throws IOException {
+        parseDecls("""
+                \\schemaVariables {
+                  \\program StoragePath storagePath;
+                  \\program SimpleStoragePath simpleStoragePath;
+                  \\program ComplexStoragePath complexStoragePath;
+                  \\program MemoryPath memoryPath;
+                  \\program SimpleMemoryPath simpleMemoryPath;
+                  \\program ComplexMemoryPath complexMemoryPath;
+                }
+                """);
+
+        assertInstanceOf(ProgramSV.class, lookup_schemavar("storagePath"));
+        assertInstanceOf(ProgramSV.class, lookup_schemavar("simpleStoragePath"));
+        assertInstanceOf(ProgramSV.class, lookup_schemavar("complexStoragePath"));
+        assertInstanceOf(ProgramSV.class, lookup_schemavar("memoryPath"));
+        assertInstanceOf(ProgramSV.class, lookup_schemavar("simpleMemoryPath"));
+        assertInstanceOf(ProgramSV.class, lookup_schemavar("complexMemoryPath"));
+    }
 
     @Test
     public void testImpLeft() {

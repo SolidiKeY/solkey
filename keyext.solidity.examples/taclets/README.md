@@ -12,6 +12,8 @@ parser, program schema-variable sorts, and logic bridge can already handle.
   plus `\sameAsTerm`.
 - `storage-root-copy-source.key` demonstrates `storageRootWriteCopySource` for
   copying one contract storage field into another.
+- `storage-root-paths.key` demonstrates the same root-level storage paper
+  rules using the path-aware `SimpleStoragePath` program schema-variable sort.
 - `commonFields.key` provides shared field constants, program variables, and
   default-value simplification rules for the examples.
 
@@ -34,12 +36,26 @@ the Java side can classify and lower Solidity paths faithfully.
 
 2. Add path-aware program schema-variable sorts or varconds.
 
-   The paper rules depend on predicates such as simple/complex, storage/memory,
-   root/field/index, array/mapping, primitive/reference, and local/global. Today
-   `ProgramSVSort` has only coarse sorts such as `SimpleExpression`,
-   `NonSimpleExpression`, `FieldReference`, `Variable`, `FunctionBody`, and
-   `Type`. Add either dedicated sorts or variable conditions such as
-   `\isSimpleStoragePath`, `\isComplexStoragePath`, `\isSimpleMemoryPath`, and
+   The first Java step is implemented with dedicated program schema-variable
+   sorts, following the Java/rustkey `ProgramSVSort` style of specializing
+   syntactic matcher categories. The available source-level path sorts are
+   `StoragePath`, `SimpleStoragePath`, `ComplexStoragePath`, `MemoryPath`,
+   `SimpleMemoryPath`, and `ComplexMemoryPath`.
+
+   These sorts classify conservative path shapes only: contract state fields
+   and explicit `storage`/`memory` program variables are simple paths; member
+   paths inherit the base location and simplicity; index paths inherit the base
+   location and are simple only when the index expression is simple. Unknown
+   roots, default-location locals, function calls, tuple/range expressions,
+   `new`, and operator expressions are not treated as paths. This gives taclets
+   a safe first matcher for paper predicates such as simple/complex and
+   storage/memory.
+
+   The remaining path predicates are not yet represented here: root/field/index,
+   array/mapping, primitive/reference, local/global, and the delete-specific
+   predicates from the Lean model still need either more sorts or explicit
+   variable conditions such as `\isSimpleStoragePath`,
+   `\isComplexStoragePath`, `\isSimpleMemoryPath`, and
    `\isComplexMemoryPath`.
 
 3. Lower full program paths to logic paths.
