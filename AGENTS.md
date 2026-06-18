@@ -34,14 +34,15 @@ Java 21 required. Test max heap: 4GB, max parallel forks: 1.
 
 ## Module Architecture
 
-| Module | Role |
-|---|---|
-| `key.util` | Foundation utilities |
-| `key.ncore` | Language-independent AST/logic (`Term`, `Sort`, `Operator`) |
-| `key.ncore.calculus` | Proof rule infrastructure |
-| `key.core` | Java-specific logic, parsers, proof management |
-| `key.ui` | GUI + CLI entry point |
-| `keyext.solidity.core` | **Solidity verification** — main focus |
+| Module                             | Role |
+|------------------------------------|---|
+| `key.util`                         | Foundation utilities |
+| `key.ncore`                        | Language-independent AST/logic (`Term`, `Sort`, `Operator`) |
+| `key.ncore.calculus`               | Proof rule infrastructure |
+| `key.core`                         | Java-specific logic, parsers, proof management |
+| `key.ui`                           | GUI + CLI entry point |
+| `keyext.solidity.core`             | **Solidity verification** — main focus |
+| `keyext.solidity.examples.taclets` | **Main taclets examples** |
 
 Dependencies: `keyext.*` → `key.core` → `key.ncore` → `key.util`.
 
@@ -78,6 +79,10 @@ Grammars in `keyext.solidity.core/src/main/antlr/`: `Solidity.g4`, `KeYSolidityD
 ## Code Style
 
 Spotless enforces formatting (`scripts/tools/checkstyle/keyCodeStyle.xml`). Run `./gradlew spotlessApply` before committing. Fields `@NonNull` by default.
+
+## Taclets examples
+Read `keyext.solidity.examples.taclets.README.md` to see which features are missing.
+Develop them in `keyext.solidity.examples.taclets` and update `keyext.solidity.examples.taclets.README.md` after you implement the feature, so it will be already known what was already implemented.
 
 ## Testing
 

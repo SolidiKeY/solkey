@@ -15,8 +15,24 @@ parser, program schema-variable sorts, and logic bridge can already handle.
 - `commonFields.key` provides shared field constants, program variables, and
   default-value simplification rules for the examples.
 
-Run these through the focused JUnit test added in `keyext.solidity.core`, or
-load an individual file with the Solidity CLI from the repository root.
+Related runnable examples outside this directory exercise infrastructure that
+the paper-style taclets can already rely on:
+
+- `keyext.solidity.examples/fieldAccess/fieldAccess.key` resolves source-level
+  contract field accesses to registered `Field` constants.
+- `keyext.solidity.examples/fieldAccess/sameAsTerm.key` demonstrates
+  `\sameAsTerm` for bridging a program `FieldReference` to a term schema
+  variable.
+- `keyext.solidity.examples/functionBody/expFctBdy.key` and
+  `keyext.solidity.examples/functionBody/archive.key` demonstrate the
+  `FunctionBody` program schema-variable sort and `s#expand_function_body`.
+- `keyext.solidity.examples/newVariable/newVariable.key` demonstrates fresh
+  program-variable creation with `\new`.
+- `keyext.solidity.core/src/test/resources/org/key_project/solidity/examples/hasSortVarcondTest.key`
+  demonstrates `\hasSort` for expression/type schema variables.
+
+Run these through the focused JUnit tests in `keyext.solidity.core`, or load an
+individual file with the Solidity CLI from the repository root.
 
 ## Java Work Needed For The Full Paper Rule Set
 
@@ -35,27 +51,23 @@ the Java side can classify and lower Solidity paths faithfully.
 2. Add path-aware program schema-variable sorts or varconds.
 
    The paper rules depend on predicates such as simple/complex, storage/memory,
-   root/field/index, array/mapping, primitive/reference, and local/global. Today
-   `ProgramSVSort` has only coarse sorts such as `SimpleExpression`,
+   root/field/index, array/mapping, primitive/reference, and local/global.
+   The current program sorts (`Expression`, `SimpleExpression`,
    `NonSimpleExpression`, `FieldReference`, `Variable`, `FunctionBody`, and
-   `Type`. Add either dedicated sorts or variable conditions such as
+   `Type`) cover the examples above, but they do not encode those path
+   categories. Add either dedicated sorts or variable conditions such as
    `\isSimpleStoragePath`, `\isComplexStoragePath`, `\isSimpleMemoryPath`, and
    `\isComplexMemoryPath`.
 
 3. Lower full program paths to logic paths.
 
-   `\sameAsTerm` currently bridges supported program elements, especially
-   `FieldReference`, to logic terms. Full paper rules need a bridge from paths
-   such as `alice.account.balance`, `tokens[i]`, and `ledger.balances[k]` to
-   the `List` and `Field` terms consumed by `save`, `find`, `storeSt`, and
-   `selectSt`. This can be done by extending `Services.convertToLogicElement`
-   or by adding path-specific varconds such as `\sameAsPath(path, listTerm)`.
-
-   There is also a current member-access AST issue: a parsed expression such as
-   `st.age` can leave a `FieldDeclaration` below the expression tree even though
-   the AST walker expects `SolidityProgramElement` children. That must be fixed
-   before examples for `storageFieldWriteSave` and `storageFieldReadFind` can
-   use source-level member paths directly.
+   `\sameAsTerm` currently bridges supported program elements to logic terms:
+   program variables, literals, and contract `FieldReference`s. Full paper
+   rules need a bridge from nested and indexed paths such as
+   `alice.account.balance`, `tokens[i]`, and `ledger.balances[k]` to the `List`
+   and `Field` terms consumed by `save`, `find`, `storeSt`, and `selectSt`.
+   This can be done by extending `Services.convertToLogicElement` or by adding
+   path-specific varconds such as `\sameAsPath(path, listTerm)`.
 
 4. Add normalization meta-constructs for complex paths.
 
