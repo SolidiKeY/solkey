@@ -6,9 +6,11 @@ package org.key_project.solidity.program.ast.declarations;
 
 import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.SourceData;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.references.TypeReference;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.solidity.rule.matching.inst.MatchConditions;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -35,6 +37,23 @@ public class FieldDeclaration implements Declaration, SolidityProgramElement {
 
     public @Nullable Expression getInitializer() {
         return initializer;
+    }
+
+    @Override
+    public @Nullable MatchConditions match(SourceData sourceData, @Nullable MatchConditions mc) {
+        if (!(sourceData.getSource() instanceof FieldDeclaration source)
+                || !name.equals(source.name())) {
+            return null;
+        }
+
+        SourceData newSource = new SourceData(source, 0, sourceData.getServices());
+        mc = matchChildren(newSource, mc, 0);
+        if (mc == null) {
+            return null;
+        }
+
+        sourceData.next();
+        return mc;
     }
 
     @Override

@@ -30,7 +30,8 @@ public class TacletStarterExamplesTest {
         env.getProofControl().startAndWaitForAutoMode(proof);
 
         assertTrue(proof.closed(),
-            () -> name + " should close; open goals: " + proof.openGoals().size());
+            () -> name + " should close; open goals: " + proof.openGoals().size()
+                + "; first open goal: " + proof.openGoals().head().sequent());
     }
 
     static Stream<Arguments> examples() {
@@ -38,7 +39,8 @@ public class TacletStarterExamplesTest {
             example("storage-root-read-write.key"),
             example("storage-root-copy-source.key"),
             example("storage-root-paths.key"),
-            example("storage-field-path-read-write.key"));
+            example("storage-field-path-read-write.key"),
+            example("storage-field-decomposition.key"));
     }
 
     private static Arguments example(String name) {

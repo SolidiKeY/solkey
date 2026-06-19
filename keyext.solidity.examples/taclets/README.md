@@ -17,6 +17,12 @@ parser, program schema-variable sorts, and logic bridge can already handle.
 - `storage-field-path-read-write.key` demonstrates the first path-lowering
   bridge for source-level member paths such as `st.age`, using `\sameAsTerm` to
   bind the program path to the `List` consumed by `save` and `find`.
+- `storage-field-decomposition.key` demonstrates pattern-based path
+  decomposition for a literal terminal field: rules with source patterns such
+  as `s#a.balance` match `alice.account.balance`, bind `a` to
+  `alice.account`, and append the literal `balance` segment in the replacement.
+  This implements the first complex-path step directly in `.key` patterns,
+  without a Java normalization meta-construct or generated alias block.
 - `commonFields.key` provides shared field constants, program variables, and
   default-value simplification rules for the examples.
 - Solidity `delete target` now parses to `UnaryExpression(Operator.DELETE,
@@ -38,19 +44,17 @@ parser, program schema-variable sorts, and logic bridge can already handle.
 Run these through the focused JUnit test added in `keyext.solidity.core`, or
 load an individual file with the Solidity CLI from the repository root.
 
-## Java Work Needed For The Full Paper Rule Set
+## Work Needed For The Full Paper Rule Set
 
-The remaining paper taclets should not be added as broad `.key` patterns until
-the Java side can normalize and preserve Solidity paths faithfully.
+The remaining paper taclets should be added as focused `.key` patterns only
+when the matcher can preserve the relevant Solidity path shape faithfully.
 
-1. Add normalization meta-constructs for complex paths.
+1. Continue direct complex-path pattern support.
 
-   Rules such as `storageDeleteComplexTarget`, index capture, field/index base
-   unfolding, and storage/memory copy rules synthesize fresh aliases and replace
-   one statement with multiple statements. Implement Java helpers similar in
-   spirit to `ExpandFunctionBody`, so taclets can create blocks like
-   `T storage sp = nsp; delete sp;` without hard-coding every source shape in
-   `.key`.
+   Member-field decomposition is implemented for patterns such as
+   `s#a.field`. The same direction should be extended to indexed paths such as
+   `s#a[s#i]`, keeping field/index base unfolding in structural `.key`
+   patterns where possible.
 
 2. Preserve storage vs. memory delete semantics.
 
@@ -64,9 +68,8 @@ the Java side can normalize and preserve Solidity paths faithfully.
 
 - `storage-delete.key`: `storageDeleteSimpleTarget` and
   `storageDeleteComplexTarget`.
-- `storage-field-read-write.key`: `storageFieldWriteSave` and
-  `storageFieldReadFind` for source-level member paths such as
-  `alice.account.balance`.
+- `storage-field-read-write.key`: broader `storageFieldWriteSave` and
+  `storageFieldReadFind` variants for additional source-level member paths.
 - `memory-delete.key`: `memoryDeleteSimpleTarget` and
   `memoryDeleteComplexTarget`.
 - `storage-index-read-write.key`: indexed array/mapping read and write rules.
