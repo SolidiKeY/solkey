@@ -158,12 +158,16 @@ public class ExpressionBuilder extends DefaultBuilder {
                             schemaSolidityReader.readBlockWithProgramVariables(programVariables(),
                                 cleanSolidity);
                     } catch (Exception e) {
+                        if (cleanSolidity.contains("s#")) {
+                            throw e;
+                        }
                         sjb.solidityBlock =
                             schemaSolidityReader.readBlockWithEmptyContext(cleanSolidity);
                     }
                 }
             } catch (Exception e) {
-                if (cleanSolidity.startsWith("{..")) {// do not fallback
+                if (cleanSolidity.startsWith("{..") || cleanSolidity.contains("s#")) {
+                    // do not fallback
                     throw e;
                 }
             }

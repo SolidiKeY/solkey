@@ -10,5 +10,6 @@ contract PaperStore {
 
     uint age;
     uint balance;
+    uint[][] matrix;
     Person alice;
 }

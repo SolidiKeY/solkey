@@ -266,6 +266,21 @@ public class SolidityToKeyConverterTest {
     }
 
     @Test
+    void nestedArrayIndexKeepsIndexBaseExpression() {
+        IndexExpression exp = (IndexExpression) parseExpression("v[1][2]");
+        assertInstanceOf(IndexExpression.class, exp.getLeftExp());
+        assertEquals("v[1][2]", exp.toString());
+    }
+
+    @Test
+    void indexedSchemaVariableCanStartAssignmentStatement() {
+        ExpressionStatement statement =
+            (ExpressionStatement) parseStatement("s#v[1] = 2;");
+        AssignExpression assignment = (AssignExpression) statement.getExpression();
+        assertInstanceOf(IndexExpression.class, assignment.getLeft());
+    }
+
+    @Test
     void indexExpressionGetChildOutOfBounds() {
         IndexExpression exp = (IndexExpression) parseExpression("v[1]");
         assertThrows(IndexOutOfBoundsException.class, () -> exp.getChild(2));

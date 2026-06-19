@@ -630,10 +630,11 @@ public class SolJSONParser {
     }
 
     private Expression parseIndexAccess(JsonNode initializer) {
-        int idLeftRef =
-            initializer.get("baseExpression").get("referencedDeclaration").asInt();
+        JsonNode baseExpression = initializer.get("baseExpression");
+        Expression leftExp = baseExpression.has("referencedDeclaration")
+                ? getVariableExpression(baseExpression.get("referencedDeclaration").asInt())
+                : parseExpression(baseExpression);
         Expression indexExp = parseExpression(initializer.get("indexExpression"));
-        Expression leftExp = getVariableExpression(idLeftRef);
         return new IndexExpression(leftExp, indexExp);
     }
 

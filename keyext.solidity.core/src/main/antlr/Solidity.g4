@@ -69,7 +69,8 @@ contextBlock
   : '{c#' statement* '#c}';
 
 statement
-  : schemaVariable
+  : simpleStatement
+  | schemaVariable
   | programTransformer
   | functionBodyStatement
   | ifStatement
@@ -83,7 +84,6 @@ statement
   | returnStatement
   | throwStatement
   | emitStatement
-  | simpleStatement
   | uncheckedStatement
   | revertStatement;
 

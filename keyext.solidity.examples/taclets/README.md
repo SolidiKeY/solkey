@@ -23,6 +23,10 @@ parser, program schema-variable sorts, and logic bridge can already handle.
   `alice.account`, and append the literal `balance` segment in the replacement.
   This implements the first complex-path step directly in `.key` patterns,
   without a Java normalization meta-construct or generated alias block.
+- `storage-index-decomposition.key` demonstrates the indexed counterpart:
+  rules with source patterns such as `s#a[s#i]` match nested indexed paths like
+  `matrix[2][3]`, bind `a` to `matrix[2]` and `i` to `3`, and append the index
+  segment in the replacement.
 - `commonFields.key` provides shared field constants, program variables, and
   default-value simplification rules for the examples.
 - Solidity `delete target` now parses to `UnaryExpression(Operator.DELETE,
@@ -49,12 +53,13 @@ load an individual file with the Solidity CLI from the repository root.
 The remaining paper taclets should be added as focused `.key` patterns only
 when the matcher can preserve the relevant Solidity path shape faithfully.
 
-1. Continue direct complex-path pattern support.
+1. Continue direct complex-path pattern support. Implemented for member-field
+   and indexed-path decomposition.
 
    Member-field decomposition is implemented for patterns such as
-   `s#a.field`. The same direction should be extended to indexed paths such as
-   `s#a[s#i]`, keeping field/index base unfolding in structural `.key`
-   patterns where possible.
+   `s#a.field`; indexed-path decomposition is implemented for patterns such as
+   `s#a[s#i]`. Further work in this direction should keep field/index base
+   unfolding in structural `.key` patterns where possible.
 
 2. Preserve storage vs. memory delete semantics.
 
@@ -72,6 +77,7 @@ when the matcher can preserve the relevant Solidity path shape faithfully.
   `storageFieldReadFind` variants for additional source-level member paths.
 - `memory-delete.key`: `memoryDeleteSimpleTarget` and
   `memoryDeleteComplexTarget`.
-- `storage-index-read-write.key`: indexed array/mapping read and write rules.
+- `storage-index-read-write.key`: broader indexed array/mapping read and write
+  rules beyond the starter decomposition pattern.
 - `memory-field-index.key`: memory field/index write, read, and alias-root
   cases.
