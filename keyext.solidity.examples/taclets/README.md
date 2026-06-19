@@ -30,6 +30,10 @@ parser, program schema-variable sorts, and logic bridge can already handle.
   and indexed paths such as `alice.account` are complex. Storage paths may be
   `local` or `global`; memory paths are always local. Field/index paths lower
   to the `List` sort consumed by `save` and `find` in `structRules.key`.
+- `\sameAsTerm` lowers full program paths to logic path terms. Root contract
+  fields still lower to `Field` constants for `storeSt` and `selectSt`; nested
+  member and indexed paths such as `alice.account.balance`, `tokens[i]`, and
+  `ledger.balances[k]` lower to `List` terms for `save` and `find`.
 
 Run these through the focused JUnit test added in `keyext.solidity.core`, or
 load an individual file with the Solidity CLI from the repository root.
@@ -37,19 +41,9 @@ load an individual file with the Solidity CLI from the repository root.
 ## Java Work Needed For The Full Paper Rule Set
 
 The remaining paper taclets should not be added as broad `.key` patterns until
-the Java side can classify and lower Solidity paths faithfully.
+the Java side can normalize and preserve Solidity paths faithfully.
 
-1. Lower full program paths to logic paths.
-
-   `\sameAsTerm` currently bridges supported program elements to logic terms:
-   program variables, literals, and contract `FieldReference`s. Full paper
-   rules need a bridge from nested and indexed paths such as
-   `alice.account.balance`, `tokens[i]`, and `ledger.balances[k]` to the `List`
-   and `Field` terms consumed by `save`, `find`, `storeSt`, and `selectSt`.
-   This can be done by extending `Services.convertToLogicElement` or by adding
-   path-specific varconds such as `\sameAsPath(path, listTerm)`.
-
-2. Add normalization meta-constructs for complex paths.
+1. Add normalization meta-constructs for complex paths.
 
    Rules such as `storageDeleteComplexTarget`, index capture, field/index base
    unfolding, and storage/memory copy rules synthesize fresh aliases and replace
@@ -58,7 +52,7 @@ the Java side can classify and lower Solidity paths faithfully.
    `T storage sp = nsp; delete sp;` without hard-coding every source shape in
    `.key`.
 
-3. Preserve storage vs. memory delete semantics.
+2. Preserve storage vs. memory delete semantics.
 
    The paper/Lean model distinguishes storage delete targets from memory delete
    targets, and distinguishes simple from complex targets. Do not collapse this

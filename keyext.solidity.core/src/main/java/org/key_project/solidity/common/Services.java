@@ -24,6 +24,7 @@ import org.key_project.solidity.program.ast.SolidityInfo;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
+import org.key_project.solidity.program.ast.expressions.IndexExpression;
 import org.key_project.solidity.program.ast.expressions.MemberExp;
 import org.key_project.solidity.program.ast.expressions.literals.Literal;
 import org.key_project.solidity.program.ast.references.FieldReference;
@@ -108,6 +109,11 @@ public class Services implements LogicServices, ProofServices {
             Term basePath = convertToLogicElement(member.getLeftExp(), services);
             Term field = memberFieldTerm(member, services);
             return appendPathSegment(basePath, field, services);
+        }
+        if (pe instanceof IndexExpression index) {
+            Term basePath = convertToLogicElement(index.getLeftExp(), services);
+            Term indexTerm = convertToLogicElement(index.getIndexExp(), services);
+            return appendPathSegment(basePath, indexTerm, services);
         }
         if (pe instanceof Literal lit) {
             LDT ldt = services.getTheoryInfo().get(lit.getLDTName());

@@ -14,12 +14,17 @@ import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.op.SFunction;
 import org.key_project.solidity.parser.ParserForTesting;
 import org.key_project.solidity.parser.varcond.SameAsTermCondition;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.abstractions.ArrayType;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
+import org.key_project.solidity.program.ast.abstractions.MappingType;
+import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.declarations.StateVariableDeclaration;
 import org.key_project.solidity.program.ast.declarations.StructDeclaration;
+import org.key_project.solidity.program.ast.expressions.IndexExpression;
 import org.key_project.solidity.program.ast.expressions.MemberExp;
 import org.key_project.solidity.program.ast.references.FieldReference;
 import org.key_project.solidity.program.ast.references.TypeReference;
@@ -79,9 +84,74 @@ public class SameAsTermConditionTest {
         condition = new SameAsTermCondition(progSV, termSV);
     }
 
+    private Function function(String name) {
+        Function result = services.getNamespaces().functions().lookup(new Name(name));
+        assertNotNull(result, "function must be available: " + name);
+        return result;
+    }
+
+    private Sort sort(String name) {
+        Sort result = services.getNamespaces().sorts().lookup(new Name(name));
+        assertNotNull(result, "sort must be available: " + name);
+        return result;
+    }
+
+    private Term fieldTerm(String name) {
+        return services.getTermBuilder().func(registerFieldConstant(name));
+    }
+
+    private Term nil() {
+        return services.getTermBuilder().func(function("nil"));
+    }
+
+    private Term cons(Term head, Term tail) {
+        return services.getTermBuilder().func(function("cons"), head, tail);
+    }
+
+    private Term consr(Term list, Term last) {
+        return services.getTermBuilder().func(function("consr"), list, last);
+    }
+
+    private Term list(Term... segments) {
+        Term result = nil();
+        for (int i = segments.length - 1; i >= 0; i--) {
+            result = cons(segments[i], result);
+        }
+        return result;
+    }
+
+    private KeYSolidityType uintType() {
+        return new KeYSolidityType(PrimitiveType.UINT256,
+            services.getTheoryInfo().getIntLDT().targetSort());
+    }
+
+    private FieldDeclaration field(String name) {
+        return new FieldDeclaration(new Name(name), new TypeReference(new Name("uint")));
+    }
+
+    private FieldReference stateField(String name, KeYSolidityType type) {
+        registerFieldConstant(name);
+        StateVariableDeclaration decl = new StateVariableDeclaration(new Name(name), type,
+            new Name(name), null, Visibility.Public);
+        return new FieldReference(decl, decl.getType());
+    }
+
+    private Term bindPath(SolidityProgramElement path) {
+        Sort listSort = sort("List");
+        ProgramSV pathSV = SchemaVariableFactory.createProgramSV(new Name("path"),
+            ProgramSVSort.EXPRESSION, false);
+        TermSV pathTermSV = SchemaVariableFactory.createTermSV(new Name("pathTerm"), listSort);
+        SameAsTermCondition pathCondition = new SameAsTermCondition(pathSV, pathTermSV);
+
+        MatchConditions result = (MatchConditions) pathCondition.check(pathSV, path,
+            MatchConditions.EMPTY_MATCHCONDITIONS, services);
+        assertNotNull(result, "path should lower to a logic list");
+        return result.getInstantiations().getInstantiation(pathTermSV);
+    }
+
     private MatchConditions bind(MatchConditions mc, org.key_project.logic.op.sv.SchemaVariable sv,
             Term t) {
-        SVInstantiations inst = (SVInstantiations) mc.getInstantiations();
+        SVInstantiations inst = mc.getInstantiations();
         return mc.setInstantiations(inst.add(sv, t, services));
     }
 
@@ -90,7 +160,7 @@ public class SameAsTermConditionTest {
         MatchConditions result = (MatchConditions) condition.check(progSV, fieldRef,
             MatchConditions.EMPTY_MATCHCONDITIONS, services);
         assertNotNull(result, "condition should hold and bind the term variable");
-        Object sInst = ((SVInstantiations) result.getInstantiations()).getInstantiation(termSV);
+        Object sInst = result.getInstantiations().getInstantiation(termSV);
         assertEquals(expectedValue, sInst,
             "s must be instantiated with the field's logic constant");
     }
@@ -122,37 +192,77 @@ public class SameAsTermConditionTest {
 
     @Test
     void bindsStructMemberPathToLogicList() {
-        Sort listSort = services.getNamespaces().sorts().lookup(new Name("List"));
-        assertNotNull(listSort, "the List sort must be available");
-        Sort structSort = services.getNamespaces().sorts().lookup(new Name("Struct"));
-        assertNotNull(structSort, "the Struct sort must be available");
+        Sort structSort = sort("Struct");
 
-        Function age = registerFieldConstant("age");
-        Function cons = services.getNamespaces().functions().lookup(new Name("cons"));
-        Function nil = services.getNamespaces().functions().lookup(new Name("nil"));
-        assertNotNull(cons, "the cons list constructor must be available");
-        assertNotNull(nil, "the nil list constructor must be available");
-
-        FieldDeclaration ageField =
-            new FieldDeclaration(new Name("age"), new TypeReference(new Name("uint")));
+        registerFieldConstant("age");
+        FieldDeclaration ageField = field("age");
         StructDeclaration structType =
             new StructDeclaration(new Name("Person"), List.of(ageField), -1);
         ProgramVariable st = new ProgramVariable(new Name("st"),
             new KeYSolidityType(structType, structSort), DataLocation.Default);
         MemberExp memberPath = new MemberExp(st, ageField, st.getType());
 
-        ProgramSV pathSV = SchemaVariableFactory.createProgramSV(new Name("path"),
-            ProgramSVSort.EXPRESSION, false);
-        TermSV pathTermSV = SchemaVariableFactory.createTermSV(new Name("pathTerm"), listSort);
-        SameAsTermCondition pathCondition = new SameAsTermCondition(pathSV, pathTermSV);
+        assertEquals(list(fieldTerm("age")), bindPath(memberPath),
+            "st.age should lower to cons(age, nil)");
+    }
 
-        MatchConditions result = (MatchConditions) pathCondition.check(pathSV, memberPath,
-            MatchConditions.EMPTY_MATCHCONDITIONS, services);
-        assertNotNull(result, "member path should lower to a logic list");
-        Object pathTerm =
-            ((SVInstantiations) result.getInstantiations()).getInstantiation(pathTermSV);
-        Term expectedPath = services.getTermBuilder().func(cons,
-            services.getTermBuilder().func(age), services.getTermBuilder().func(nil));
-        assertEquals(expectedPath, pathTerm, "st.age should lower to cons(age, nil)");
+    @Test
+    void keepsRootFieldReferencesAsFieldTerms() {
+        assertEquals(expectedValue, Services.convertToLogicElement(fieldRef, services),
+            "root storage fields must keep lowering to Field terms");
+    }
+
+    @Test
+    void bindsNestedMemberPathToLogicList() {
+        Sort structSort = sort("Struct");
+        KeYSolidityType personType = new KeYSolidityType(
+            new StructDeclaration(new Name("Person"), List.of(field("account")), -1),
+            structSort);
+        FieldReference alice = stateField("alice", personType);
+        FieldDeclaration account = field("account");
+        FieldDeclaration balance = field("balance");
+        registerFieldConstant("account");
+        registerFieldConstant("balance");
+
+        MemberExp accountPath = new MemberExp(alice, account, personType);
+        MemberExp balancePath = new MemberExp(accountPath, balance, uintType());
+
+        Term aliceAccount = list(fieldTerm("alice"), fieldTerm("account"));
+        assertEquals(consr(aliceAccount, fieldTerm("balance")), bindPath(balancePath),
+            "alice.account.balance should append fields in source order");
+    }
+
+    @Test
+    void bindsIndexedPathToLogicList() {
+        KeYSolidityType uintType = uintType();
+        ProgramVariable tokens = new ProgramVariable(new Name("tokens"),
+            new KeYSolidityType(new ArrayType(PrimitiveType.UINT256, 3), uintType.getSort()),
+            DataLocation.Storage);
+        ProgramVariable i = new ProgramVariable(new Name("i"), uintType, DataLocation.Default);
+        IndexExpression indexedPath = new IndexExpression(tokens, i);
+
+        assertEquals(list(services.getTermBuilder().var(tokens), services.getTermBuilder().var(i)),
+            bindPath(indexedPath), "tokens[i] should lower to a path list with the index segment");
+    }
+
+    @Test
+    void bindsMixedFieldAndIndexPathToLogicList() {
+        Sort structSort = sort("Struct");
+        KeYSolidityType mappingType = new KeYSolidityType(
+            new MappingType(PrimitiveType.UINT256, PrimitiveType.UINT256), structSort);
+        KeYSolidityType ledgerType = new KeYSolidityType(
+            new StructDeclaration(new Name("Ledger"), List.of(field("balances")), -1),
+            structSort);
+        FieldReference ledger = stateField("ledger", ledgerType);
+        FieldDeclaration balances = field("balances");
+        registerFieldConstant("balances");
+        ProgramVariable k = new ProgramVariable(new Name("k"), uintType(), DataLocation.Default);
+
+        MemberExp balancesPath = new MemberExp(ledger, balances, mappingType);
+        IndexExpression indexedPath = new IndexExpression(balancesPath, k);
+
+        Term ledgerBalances = list(fieldTerm("ledger"), fieldTerm("balances"));
+        assertEquals(consr(ledgerBalances, services.getTermBuilder().var(k)), bindPath(indexedPath),
+            "ledger.balances[k] should preserve field and index order");
     }
 }
