@@ -21,6 +21,15 @@ parser, program schema-variable sorts, and logic bridge can already handle.
   default-value simplification rules for the examples.
 - Solidity `delete target` now parses to `UnaryExpression(Operator.DELETE,
   target)` and prints as `delete target`.
+- Path-aware program schema-variable sorts are available. The fixed names
+  `StoragePath`, `SimpleStoragePath`, `ComplexStoragePath`, `MemoryPath`,
+  `SimpleMemoryPath`, and `ComplexMemoryPath` cover common cases. More precise
+  filters use `Path[name=...]`, with dotted flags such as `storage`, `memory`,
+  `simple`, `complex`, `root`, `field`, `index`, `array`, `mapping`,
+  `primitive`, `reference`, `local`, and `global`. Roots are simple; member
+  and indexed paths such as `alice.account` are complex. Storage paths may be
+  `local` or `global`; memory paths are always local. Field/index paths lower
+  to the `List` sort consumed by `save` and `find` in `structRules.key`.
 
 Run these through the focused JUnit test added in `keyext.solidity.core`, or
 load an individual file with the Solidity CLI from the repository root.
@@ -30,18 +39,7 @@ load an individual file with the Solidity CLI from the repository root.
 The remaining paper taclets should not be added as broad `.key` patterns until
 the Java side can classify and lower Solidity paths faithfully.
 
-1. Add path-aware program schema-variable sorts or varconds.
-
-   The paper rules depend on predicates such as simple/complex, storage/memory,
-   root/field/index, array/mapping, primitive/reference, and local/global.
-   The current program sorts (`Expression`, `SimpleExpression`,
-   `NonSimpleExpression`, `FieldReference`, `Variable`, `FunctionBody`, and
-   `Type`) cover the examples above, but they do not encode those path
-   categories. Add either dedicated sorts or variable conditions such as
-   `\isSimpleStoragePath`, `\isComplexStoragePath`, `\isSimpleMemoryPath`, and
-   `\isComplexMemoryPath`.
-
-2. Lower full program paths to logic paths.
+1. Lower full program paths to logic paths.
 
    `\sameAsTerm` currently bridges supported program elements to logic terms:
    program variables, literals, and contract `FieldReference`s. Full paper
@@ -51,7 +49,7 @@ the Java side can classify and lower Solidity paths faithfully.
    This can be done by extending `Services.convertToLogicElement` or by adding
    path-specific varconds such as `\sameAsPath(path, listTerm)`.
 
-3. Add normalization meta-constructs for complex paths.
+2. Add normalization meta-constructs for complex paths.
 
    Rules such as `storageDeleteComplexTarget`, index capture, field/index base
    unfolding, and storage/memory copy rules synthesize fresh aliases and replace
@@ -60,7 +58,7 @@ the Java side can classify and lower Solidity paths faithfully.
    `T storage sp = nsp; delete sp;` without hard-coding every source shape in
    `.key`.
 
-4. Preserve storage vs. memory delete semantics.
+3. Preserve storage vs. memory delete semantics.
 
    The paper/Lean model distinguishes storage delete targets from memory delete
    targets, and distinguishes simple from complex targets. Do not collapse this

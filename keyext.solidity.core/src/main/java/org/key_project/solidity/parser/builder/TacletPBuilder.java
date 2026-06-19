@@ -948,7 +948,14 @@ public class TacletPBuilder extends ExpressionBuilder {
                         + "the one used here.",
                     id, id, knownProgramSVSortNames());
             }
-            s = parameter != null ? psv.createInstance(parameter) : psv;
+            try {
+                s = parameter != null ? psv.createInstance(parameter) : psv;
+            } catch (IllegalArgumentException e) {
+                semanticError(ctx,
+                    "Could not instantiate program schema variable sort '%s' with parameter "
+                        + "'%s': %s",
+                    id, parameter, e.getMessage());
+            }
             if (s == null) {
                 semanticError(ctx,
                     "Could not instantiate program schema variable sort '%s' with parameter '%s'.",

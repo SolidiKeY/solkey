@@ -26,6 +26,8 @@ public abstract class ProgramSVSort extends SortImpl {
     public static final ProgramSVSort NON_SIMPLE_EXPRESSION = new NonSimpleExpressionSVSort();
     public static final ProgramSVSort FUNCTION_BODY = new FunctionBodySVSort();
     public static final ProgramSVSort FIELD_REFERENCE = new FieldReferenceSVSort();
+    public static final ProgramSVSort PATH =
+        new PathSVSort("Path", PathSVSort.Location.ANY, PathSVSort.Simplicity.ANY);
     public static final ProgramSVSort STORAGE_PATH =
         new PathSVSort("StoragePath", PathSVSort.Location.STORAGE, PathSVSort.Simplicity.ANY);
     public static final ProgramSVSort SIMPLE_STORAGE_PATH =
