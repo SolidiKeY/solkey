@@ -1,15 +1,24 @@
 # Pre-licenciate-paper Taclet Starters
 
-This directory contains small, runnable taclet examples inspired by the
-Pre-licenciate-paper storage rules. They are intentionally narrower than the
-paper rules: each example uses a concrete path shape that the current Java
-parser, program schema-variable sorts, and logic bridge can already handle.
+This directory contains the runnable taclet subset inspired by the
+Pre-licenciate-paper storage rules. `storageRules.key` is the authoritative
+rule file; the other `.key` files in this directory are examples that include
+it, declare only example variables, and define closing problems.
 
 ## Implemented Here
 
+- `storageRules.key` collects the currently runnable subset of the
+  Pre-licenciate-paper storage taclets. It is the only rule-bearing `.key` file
+  in this directory. The split follows the `solidity-key-taclets` skill
+  guidance: root storage rules use `SimpleStoragePath`, field/index paths use
+  `Path[...]` plus `\sameAsTerm`, and complex member/index cases stay as
+  structural `.key` source patterns.
+- `storageRulesExamples.key` contains small closing examples for the
+  consolidated rules. It covers final effects for root copy/read, local field
+  write, structural member-field decomposition, and the nested `matrix[2][3]`
+  path.
 - `storage-root-read-write.key` demonstrates `storageRootWriteStore` and
-  `storageRootReadSelect` for contract storage fields using `FieldReference`
-  plus `\sameAsTerm`.
+  `storageRootReadSelect` for contract storage fields using `\sameAsTerm`.
 - `storage-root-copy-source.key` demonstrates `storageRootWriteCopySource` for
   copying one contract storage field into another.
 - `storage-root-paths.key` demonstrates the same root-level storage paper
@@ -27,19 +36,9 @@ parser, program schema-variable sorts, and logic bridge can already handle.
   rules with source patterns such as `s#a[s#i]` match nested indexed paths like
   `matrix[2][3]`, bind `a` to `matrix[2]` and `i` to `3`, and append
   `at(i)` as the `Field`-sorted index segment in the replacement.
-- `storageRules.key` collects the currently runnable subset of the
-  Pre-licenciate-paper storage taclets, while `storageRulesExamples.key`
-  contains small closing examples for them. The split follows
-  the `solidity-key-taclets` skill guidance: root storage rules use
-  `SimpleStoragePath`, field/index paths use `Path[...]` plus `\sameAsTerm`,
-  and complex member/index cases stay as structural `.key` source patterns.
-  The examples cover final effects for root copy/read, local field write/read,
-  and the nested `matrix[2][3]` path. The rule file also contains starter
-  taclets for full global field paths and root index writes; keep their examples
-  small and separate when extending the suite.
 - `commonFields.key` provides legacy shared field constants, program variables,
-  and default-value simplification rules for the older examples. The storage
-  rules/examples are self-contained and do not include this file.
+  and identities for ad hoc experiments. Runnable examples in this directory do
+  not include it.
 - Solidity `delete target` now parses to `UnaryExpression(Operator.DELETE,
   target)` and prints as `delete target`.
 - Path-aware program schema-variable sorts are available. The fixed names
