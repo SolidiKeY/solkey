@@ -41,7 +41,8 @@ public class TacletStarterExamplesTest {
             example("storage-root-paths.key"),
             example("storage-field-path-read-write.key"),
             example("storage-field-decomposition.key"),
-            example("storage-index-decomposition.key"));
+            example("storage-index-decomposition.key"),
+            example("storageRulesExamples.key"));
     }
 
     private static Arguments example(String name) {

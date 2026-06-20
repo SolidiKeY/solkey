@@ -113,7 +113,7 @@ public class Services implements LogicServices, ProofServices {
         if (pe instanceof IndexExpression index) {
             Term basePath = convertToLogicElement(index.getLeftExp(), services);
             Term indexTerm = convertToLogicElement(index.getIndexExp(), services);
-            return appendPathSegment(basePath, indexTerm, services);
+            return appendPathSegment(basePath, indexFieldTerm(indexTerm, services), services);
         }
         if (pe instanceof Literal lit) {
             LDT ldt = services.getTheoryInfo().get(lit.getLDTName());
@@ -146,6 +146,14 @@ public class Services implements LogicServices, ProofServices {
         throw new IllegalArgumentException(
             "Cannot convert member access '" + member + "' into a logic path: member '"
                 + member.getRightExp() + "' is not a field declaration.");
+    }
+
+    private static Term indexFieldTerm(Term indexTerm, Services services) {
+        Function at = services.getNamespaces().functions().lookup(new Name("at"));
+        if (at == null) {
+            throw new IllegalStateException("index field constructor 'at' is not available");
+        }
+        return services.getTermBuilder().func(at, indexTerm);
     }
 
     private static Term appendPathSegment(Term basePath, Term field, Services services) {

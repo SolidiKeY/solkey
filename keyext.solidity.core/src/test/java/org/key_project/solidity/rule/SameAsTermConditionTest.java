@@ -112,6 +112,10 @@ public class SameAsTermConditionTest {
         return services.getTermBuilder().func(function("consr"), list, last);
     }
 
+    private Term at(Term index) {
+        return services.getTermBuilder().func(function("at"), index);
+    }
+
     private Term list(Term... segments) {
         Term result = nil();
         for (int i = segments.length - 1; i >= 0; i--) {
@@ -241,8 +245,10 @@ public class SameAsTermConditionTest {
         ProgramVariable i = new ProgramVariable(new Name("i"), uintType, DataLocation.Default);
         IndexExpression indexedPath = new IndexExpression(tokens, i);
 
-        assertEquals(list(services.getTermBuilder().var(tokens), services.getTermBuilder().var(i)),
-            bindPath(indexedPath), "tokens[i] should lower to a path list with the index segment");
+        assertEquals(
+            list(services.getTermBuilder().var(tokens), at(services.getTermBuilder().var(i))),
+            bindPath(indexedPath),
+            "tokens[i] should lower to a path list with an at(index) segment");
     }
 
     @Test
@@ -262,7 +268,8 @@ public class SameAsTermConditionTest {
         IndexExpression indexedPath = new IndexExpression(balancesPath, k);
 
         Term ledgerBalances = list(fieldTerm("ledger"), fieldTerm("balances"));
-        assertEquals(consr(ledgerBalances, services.getTermBuilder().var(k)), bindPath(indexedPath),
+        assertEquals(consr(ledgerBalances, at(services.getTermBuilder().var(k))),
+            bindPath(indexedPath),
             "ledger.balances[k] should preserve field and index order");
     }
 }

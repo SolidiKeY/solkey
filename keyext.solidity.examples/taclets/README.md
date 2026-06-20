@@ -25,10 +25,21 @@ parser, program schema-variable sorts, and logic bridge can already handle.
   without a Java normalization meta-construct or generated alias block.
 - `storage-index-decomposition.key` demonstrates the indexed counterpart:
   rules with source patterns such as `s#a[s#i]` match nested indexed paths like
-  `matrix[2][3]`, bind `a` to `matrix[2]` and `i` to `3`, and append the index
-  segment in the replacement.
-- `commonFields.key` provides shared field constants, program variables, and
-  default-value simplification rules for the examples.
+  `matrix[2][3]`, bind `a` to `matrix[2]` and `i` to `3`, and append
+  `at(i)` as the `Field`-sorted index segment in the replacement.
+- `storageRules.key` collects the currently runnable subset of the
+  Pre-licenciate-paper storage taclets, while `storageRulesExamples.key`
+  contains small closing examples for them. The split follows
+  the `solidity-key-taclets` skill guidance: root storage rules use
+  `SimpleStoragePath`, field/index paths use `Path[...]` plus `\sameAsTerm`,
+  and complex member/index cases stay as structural `.key` source patterns.
+  The examples cover final effects for root copy/read, local field write/read,
+  and the nested `matrix[2][3]` path. The rule file also contains starter
+  taclets for full global field paths and root index writes; keep their examples
+  small and separate when extending the suite.
+- `commonFields.key` provides legacy shared field constants, program variables,
+  and default-value simplification rules for the older examples. The storage
+  rules/examples are self-contained and do not include this file.
 - Solidity `delete target` now parses to `UnaryExpression(Operator.DELETE,
   target)` and prints as `delete target`.
 - Path-aware program schema-variable sorts are available. The fixed names
@@ -43,7 +54,9 @@ parser, program schema-variable sorts, and logic bridge can already handle.
 - `\sameAsTerm` lowers full program paths to logic path terms. Root contract
   fields still lower to `Field` constants for `storeSt` and `selectSt`; nested
   member and indexed paths such as `alice.account.balance`, `tokens[i]`, and
-  `ledger.balances[k]` lower to `List` terms for `save` and `find`.
+  `ledger.balances[k]` lower to `List` terms for `save` and `find`. Indexed
+  segments are represented as `at(index)` so they have sort `Field` and can be
+  unfolded by the structural storage taclets.
 
 Run these through the focused JUnit test added in `keyext.solidity.core`, or
 load an individual file with the Solidity CLI from the repository root.
@@ -68,6 +81,15 @@ when the matcher can preserve the relevant Solidity path shape faithfully.
    into a single `delete path` rule: examples such as `delete carol.age` depend
    on whether `carol` is a memory object, storage root, storage alias, or a
    complex computed path.
+
+3. Add Java/logic support for the paper rules that need generated aliases or
+   heap helpers.
+
+   The runnable `.key` subset does not yet cover declaration split/skip,
+   alias-introducing unfold rules, array bounds/revert branches, push/pop
+   length updates, delete, compound-update desugaring, memory heap read/write
+   allocation rules, or storage-memory copy rules using `copySt`/`copyMem`-style
+   helpers.
 
 ## Suggested Next Examples After Java Support
 
