@@ -21,6 +21,7 @@ import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.declarations.StateVariableDeclaration;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
+import org.key_project.solidity.program.ast.declarations.StructDeclaration;
 import org.key_project.solidity.program.ast.expressions.*;
 import org.key_project.solidity.program.ast.expressions.literals.*;
 import org.key_project.solidity.program.ast.expressions.operators.Operator;
@@ -273,9 +274,28 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         Expression leftExp = visitExpression(ctx.expression());
         String fieldName = ctx.identifier().getText();
         Type leftType = leftExp.getType();
-        FieldDeclaration field = new FieldDeclaration(
-            new Name(fieldName), new TypeReference(new Name(fieldName)));
-        return new MemberExp(leftExp, field, leftType);
+        FieldDeclaration resolved = resolveStructField(leftType, fieldName);
+        FieldDeclaration field = resolved != null ? resolved
+                : new FieldDeclaration(
+                    new Name(fieldName), new TypeReference(new Name(fieldName)));
+        Type memberType = resolved != null && resolved.getTypeReference().referencedType != null
+                ? resolved.getTypeReference().referencedType
+                : leftType;
+        return new MemberExp(leftExp, field, memberType);
+    }
+
+    private @org.jspecify.annotations.Nullable FieldDeclaration resolveStructField(Type leftType,
+            String fieldName) {
+        Type unwrapped = leftType instanceof KeYSolidityType kst ? kst.getSolidityType() : leftType;
+        if (!(unwrapped instanceof StructDeclaration struct)) {
+            return null;
+        }
+        for (FieldDeclaration f : struct.getFields()) {
+            if (f.name().toString().equals(fieldName)) {
+                return f;
+            }
+        }
+        return null;
     }
 
     @Override

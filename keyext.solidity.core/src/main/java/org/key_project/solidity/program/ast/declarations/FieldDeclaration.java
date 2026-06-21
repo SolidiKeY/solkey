@@ -20,6 +20,7 @@ public class FieldDeclaration implements Declaration, SolidityProgramElement {
     private final @NonNull TypeReference typeReference;
     private final @Nullable Expression initializer;
     private final @NonNull Name name;
+    private @Nullable StructDeclaration containingStruct;
 
     public FieldDeclaration(@NonNull Name name, @NonNull TypeReference type) {
         this.name = name;
@@ -37,6 +38,14 @@ public class FieldDeclaration implements Declaration, SolidityProgramElement {
 
     public @Nullable Expression getInitializer() {
         return initializer;
+    }
+
+    public @Nullable StructDeclaration getContainingStruct() {
+        return containingStruct;
+    }
+
+    public void setContainingStruct(@NonNull StructDeclaration containingStruct) {
+        this.containingStruct = containingStruct;
     }
 
     @Override

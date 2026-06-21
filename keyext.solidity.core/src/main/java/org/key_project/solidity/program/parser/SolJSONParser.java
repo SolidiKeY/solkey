@@ -238,6 +238,7 @@ public class SolJSONParser {
             structNode.get("members").valueStream().map(m -> parseField(m, fieldPrefix)).toList();
 
         StructDeclaration stDecl = new StructDeclaration(new Name(name), fields, contractId);
+        fields.forEach(f -> f.setContainingStruct(stDecl));
         getOrCreateKeYSolidityType(stDecl);
         id2Name.put(structNode.get("id").asInt(), stDecl);
 
