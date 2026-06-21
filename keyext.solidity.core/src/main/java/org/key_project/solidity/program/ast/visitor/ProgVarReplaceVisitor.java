@@ -6,18 +6,17 @@ package org.key_project.solidity.program.ast.visitor;
 import java.util.Map;
 import java.util.Objects;
 
-import org.key_project.logic.Term;
-import org.key_project.logic.op.Operator;
-import org.key_project.logic.op.QuantifiableVariable;
 import org.key_project.solidity.common.Services;
-import org.key_project.solidity.logic.op.ElementaryUpdate;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.util.ExtList;
-import org.key_project.util.collection.ImmutableArray;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+/// Walks a Solidity AST and rebuilds it with every [ProgramVariable] occurrence replaced
+/// according to `replaceMap`. Mirrors Java's `de.uka.ilkd.key.java.visitor.ProgVarReplaceVisitor`.
+/// Term-level replacement (modality programs, `ElementaryUpdate` LHS, etc.) lives in
+/// [org.key_project.solidity.rule.execution.ProgVarReplacer], matching the Java split.
 public class ProgVarReplaceVisitor extends CreatingASTVisitor {
     protected boolean replaceAllByNew = true;
 
@@ -77,37 +76,6 @@ public class ProgVarReplaceVisitor extends CreatingASTVisitor {
             changed();
         } else {
             doDefaultAction(x);
-        }
-    }
-
-
-    private @Nullable Term replaceVariablesInTerm(@Nullable Term t) {
-        if (t == null)
-            return null;
-        if (t.op() instanceof ProgramVariable pv) {
-            if (replaceMap.containsKey(pv)) {
-                ProgramVariable replacement = replaceMap.get(pv);
-                return services.getTermFactory().createTerm(replacement);
-            } else {
-                return t;
-            }
-        } else {
-            boolean changed = false;
-            Term[] subTerms = new Term[t.arity()];
-            for (int i = 0, n = t.arity(); i < n; i++) {
-                subTerms[i] = Objects.requireNonNull(replaceVariablesInTerm(t.sub(i)));
-                changed = changed || subTerms[i] != t.sub(i);
-            }
-            Operator op = t.op();
-            if (op instanceof ElementaryUpdate eu) {
-                if (replaceMap.containsKey(eu.lhs())) {
-                    ProgramVariable replacement = replaceMap.get(eu.lhs());
-                    op = ElementaryUpdate.getInstance(replacement);
-                    changed = changed || eu != op;
-                }
-            }
-            return changed ? services.getTermFactory().createTerm(op, subTerms,
-                (ImmutableArray<QuantifiableVariable>) t.boundVars()) : t;
         }
     }
 }

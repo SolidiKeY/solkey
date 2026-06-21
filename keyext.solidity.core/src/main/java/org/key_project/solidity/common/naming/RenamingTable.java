@@ -4,12 +4,25 @@
 package org.key_project.solidity.common.naming;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import org.key_project.solidity.logic.op.ProgramVariable;
 
-public class RenamingTable {
+/// Records a single `\addprogvars`-induced rename so the proof node can be replayed without
+/// re-running the variable namer. Mirrors Java's `de.uka.ilkd.key.logic.RenamingTable`.
+public final class RenamingTable {
+    private final Map<ProgramVariable, ProgramVariable> renamingMap;
+
+    private RenamingTable(Map<ProgramVariable, ProgramVariable> renamingMap) {
+        this.renamingMap = renamingMap;
+    }
+
     public static RenamingTable getRenamingTable(
             HashMap<ProgramVariable, ProgramVariable> renamingMap) {
-        throw new RuntimeException("Not implemented yet");
+        return new RenamingTable(Map.copyOf(renamingMap));
+    }
+
+    public Map<ProgramVariable, ProgramVariable> getMap() {
+        return renamingMap;
     }
 }

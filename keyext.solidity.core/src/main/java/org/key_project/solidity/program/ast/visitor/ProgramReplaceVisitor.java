@@ -5,9 +5,12 @@ package org.key_project.solidity.program.ast.visitor;
 
 import java.util.Objects;
 
+import org.key_project.logic.Term;
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.solidity.rule.metaconstruct.ProgramTransformer;
 import org.key_project.util.ExtList;
@@ -68,14 +71,42 @@ public class ProgramReplaceVisitor extends CreatingASTVisitor {
             final var instArray = (ImmutableArray<SolidityProgramElement>) inst;
             // the assertion ensures the intended instanceof check from above
             addChildren(instArray);
-        } /*
-           * TODO: else if (inst instanceof Term t && t.op() instanceof ProgramInLogic) {
-           * addChild(services.getTypeConverter().convertToProgramElement((Term) inst));
-           * }
-           */ else {
+        } else if (inst instanceof Term t && t.op() instanceof ProgramVariable pv) {
+            addChild(pv);
+        } else {
             throw new IllegalStateException(
                 "program-replace-visitor: Instantiation missing " + "for schema variable " + sv);
         }
+        changed();
+    }
+
+    /// Schematic statement declarations (`s#aliasType storage s#lp;`) appear in `\replacewith`
+    /// templates. The inherited default uses the AST's `ExtList` constructor which extracts a
+    /// `ProgramVariable` from the children — but only after the SV has actually been substituted
+    /// in the change list. This override resolves the schema variable directly and emits a
+    /// concrete `StatementVariableDeclaration` bound to the matched `ProgramVariable`, mirroring
+    /// what Java's `ProgVarReplaceVisitor` does for `LocalVariableDeclaration`.
+    @Override
+    public void performActionOnStatementVariableDeclaration(StatementVariableDeclaration x) {
+        if (x.getSchemaVariable() == null) {
+            super.performActionOnStatementVariableDeclaration(x);
+            return;
+        }
+        final SchemaVariable sv = x.getSchemaVariable();
+        final Object inst = svinsts.getInstantiation(sv);
+        final ProgramVariable pv;
+        if (inst instanceof ProgramVariable p) {
+            pv = p;
+        } else if (inst instanceof Term t && t.op() instanceof ProgramVariable p) {
+            pv = p;
+        } else {
+            throw new IllegalStateException(
+                "program-replace-visitor: schematic StatementVariableDeclaration SV " + sv
+                    + " not instantiated to a ProgramVariable (got: " + inst + ")");
+        }
+        // Discard whatever the SV-walk left on this node's child ExtList and emit a fresh
+        // concrete decl into the parent's list.
+        addChild(new StatementVariableDeclaration(pv));
         changed();
     }
 

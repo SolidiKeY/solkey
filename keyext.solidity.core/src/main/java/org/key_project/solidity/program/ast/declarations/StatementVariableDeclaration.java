@@ -95,4 +95,10 @@ public class StatementVariableDeclaration implements Declaration, SolidityProgra
         return Objects.requireNonNull(programVariable,
             "schematic declaration has no concrete program variable");
     }
+
+    /// @return the schema variable standing for the declared variable in a taclet pattern, or
+    /// `null` for a concrete declaration.
+    public @Nullable ProgramSV getSchemaVariable() {
+        return schemaVariable;
+    }
 }

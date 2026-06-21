@@ -16,6 +16,7 @@ import org.key_project.solidity.program.ast.expressions.literals.*;
 import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.references.*;
 import org.key_project.solidity.program.ast.statement.*;
+import org.key_project.solidity.program.ext.ContextStatementBlock;
 import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.Nullable;
@@ -182,6 +183,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         DefaultAction def = new DefaultAction(x) {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
+                changeList.add(x.getType());
                 return new MemberExp(changeList);
             }
         };
@@ -375,6 +377,18 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
             @Override
             SolidityProgramElement createNewElement(ExtList changeList) {
                 return new Block(changeList);
+            }
+        };
+        def.doAction(x);
+    }
+
+    @Override
+    public void performActionOnContextStatementBlock(
+            ContextStatementBlock x) {
+        DefaultAction def = new DefaultAction(x) {
+            @Override
+            SolidityProgramElement createNewElement(ExtList changeList) {
+                return new ContextStatementBlock(changeList);
             }
         };
         def.doAction(x);
