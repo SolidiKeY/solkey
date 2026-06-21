@@ -23,19 +23,30 @@ it, declare only example variables, and define closing problems.
   copying one contract storage field into another.
 - `storage-root-paths.key` demonstrates the same root-level storage paper
   rules using the path-aware `SimpleStoragePath` program schema-variable sort.
-- `storage-field-path-read-write.key` demonstrates the first path-lowering
-  bridge for source-level member paths such as `st.age`, using `\sameAsTerm` to
-  bind the program path to the `List` consumed by `save` and `find`.
-- `storage-field-decomposition.key` demonstrates pattern-based path
-  decomposition for a literal terminal field: rules with source patterns such
-  as `s#a.balance` match `alice.account.balance`, bind `a` to
-  `alice.account`, and append the literal `balance` segment in the replacement.
-  This implements the first complex-path step directly in `.key` patterns,
-  without a Java normalization meta-construct or generated alias block.
+- `storage-field-decomposition.key` demonstrates nested member-access lowering
+  for `alice.account.balance` via the generic `_globalPath` rule pair. The
+  Solidity loader registers each struct field under its namespaced
+  `Contract$Struct$field` constant (e.g. `PaperStore$Person$account`,
+  `PaperStore$Account$balance`), and `Services.memberFieldTerm` reconstructs
+  that name at lowering time by walking the member-access chain to identify
+  the owning struct.
 - `storage-index-decomposition.key` demonstrates the indexed counterpart:
   rules with source patterns such as `s#a[s#i]` match nested indexed paths like
   `matrix[2][3]`, bind `a` to `matrix[2]` and `i` to `3`, and append
   `at(i)` as the `Field`-sorted index segment in the replacement.
+- `storage-field-global-age.key` demonstrates two-level member-access write and
+  read on a contract field (`alice.age`) via the `_globalPath` rule pair, which
+  matches a whole `Path[name=field.global]` directly without per-terminal
+  decomposition.
+- `storage-field-deep-value.key` demonstrates four-level member-access write
+  and read on `alice.account.token.value`, chaining `_decomposeToken` followed
+  by `_decomposeValue` against the `Path[name=field.global]` base.
+- `storage-index-root-array.key` demonstrates root-level dynamic-array index
+  write and read (`values[1]`) via `storageIndexWriteSave_rootIndex` and the
+  sibling `storageIndexReadFind_rootIndex`.
+- `storage-index-root-mapping.key` demonstrates the same `_rootIndex` write
+  and read on a mapping key (`balances[2]`); arrays and mappings share the
+  rule because the bounds branch is not yet modelled.
 - `commonFields.key` provides legacy shared field constants, program variables,
   and identities for ad hoc experiments. Runnable examples in this directory do
   not include it.
@@ -95,10 +106,15 @@ when the matcher can preserve the relevant Solidity path shape faithfully.
 - `storage-delete.key`: `storageDeleteSimpleTarget` and
   `storageDeleteComplexTarget`.
 - `storage-field-read-write.key`: broader `storageFieldWriteSave` and
-  `storageFieldReadFind` variants for additional source-level member paths.
+  `storageFieldReadFind` variants for additional source-level member paths
+  beyond the `_decomposeBalance`/`_decomposeToken`/`_decomposeValue` siblings
+  already present (each new terminal field still needs its own decompose
+  sibling until a generic field-name match is supported).
 - `memory-delete.key`: `memoryDeleteSimpleTarget` and
   `memoryDeleteComplexTarget`.
-- `storage-index-read-write.key`: broader indexed array/mapping read and write
-  rules beyond the starter decomposition pattern.
+- `storage-index-read-write.key`: bounds-branching variants of the existing
+  `_rootIndex` and `_decomposeArrayIndex` index rules, plus the paper's
+  storage-alias copy cases (`tokens[i] = tokRef;`) once alias introduction is
+  supported.
 - `memory-field-index.key`: memory field/index write, read, and alias-root
   cases.

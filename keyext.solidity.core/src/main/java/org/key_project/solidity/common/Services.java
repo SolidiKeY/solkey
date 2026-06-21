@@ -23,7 +23,10 @@ import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityInfo;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
+import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
+import org.key_project.solidity.program.ast.declarations.StructDeclaration;
+import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.IndexExpression;
 import org.key_project.solidity.program.ast.expressions.MemberExp;
 import org.key_project.solidity.program.ast.expressions.literals.Literal;
@@ -34,6 +37,7 @@ import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.SolidityModel;
 import org.key_project.solidity.proof.mgt.SpecificationRepository;
 import org.key_project.solidity.theory.LDT;
+import org.key_project.solidity.theory.StructLDT;
 import org.key_project.solidity.theory.TheoryInfo;
 
 import org.jspecify.annotations.NonNull;
@@ -141,11 +145,53 @@ public class Services implements LogicServices, ProofServices {
 
     private static Term memberFieldTerm(MemberExp member, Services services) {
         if (member.getRightExp() instanceof FieldDeclaration field) {
-            return services.getTermBuilder().func(fieldTerm(field.name(), services));
+            // Resolve the struct that owns this field by walking the left expression chain, then
+            // look up the namespaced `Contract$Struct$field` constant registered by
+            // SolJSONParser.parseField. For abstract receivers (e.g. `st : Struct`) the struct
+            // cannot be determined; we fall back to the simple field name.
+            StructDeclaration owner = ownerStruct(member.getLeftExp());
+            Name constantName = field.name();
+            if (owner != null && owner.getContract() != null) {
+                constantName = new Name(owner.getContract().name() + StructLDT.FIELD_SEPARATOR
+                    + owner.name() + StructLDT.FIELD_SEPARATOR + field.name());
+            }
+            return services.getTermBuilder().func(fieldTerm(constantName, services));
         }
         throw new IllegalArgumentException(
             "Cannot convert member access '" + member + "' into a logic path: member '"
                 + member.getRightExp() + "' is not a field declaration.");
+    }
+
+    /// Walks an expression to determine the [StructDeclaration] it evaluates to, returning
+    /// `null` if the expression is not (resolvable to) a concrete struct. Used by
+    /// [#memberFieldTerm] so a nested member access like `alice.account.balance` knows that
+    /// `.balance` belongs to `Account` even when the intermediate `MemberExp` reports the wrong
+    /// type on its `getType()`.
+    private static @org.jspecify.annotations.Nullable StructDeclaration ownerStruct(Expression e) {
+        Type t;
+        if (e instanceof MemberExp m && m.getRightExp() instanceof FieldDeclaration f) {
+            StructDeclaration parent = ownerStruct(m.getLeftExp());
+            if (parent == null) {
+                return null;
+            }
+            FieldDeclaration resolved = null;
+            for (FieldDeclaration sf : parent.getFields()) {
+                if (sf.name().equals(f.name())) {
+                    resolved = sf;
+                    break;
+                }
+            }
+            if (resolved == null) {
+                return null;
+            }
+            t = resolved.getTypeReference().referencedType;
+        } else {
+            t = e.getType();
+        }
+        if (t instanceof KeYSolidityType kst) {
+            t = kst.getSolidityType();
+        }
+        return t instanceof StructDeclaration s ? s : null;
     }
 
     private static Term indexFieldTerm(Term indexTerm, Services services) {

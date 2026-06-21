@@ -246,6 +246,10 @@ public class SolJSONParser {
 
     private FieldDeclaration parseField(JsonNode fieldNode, String fieldPrefix) {
         final String fieldName = fieldNode.get("name").asString();
+        // Register the field's logic constant under its namespaced `Contract$Struct$field` name.
+        // `Services.memberFieldTerm` reconstructs this name at lowering time by walking the
+        // member-access chain to identify the owning struct, so each (struct, field) pair has a
+        // distinct `Field`-sorted constant.
         registerFieldConstant(new Name(fieldPrefix + StructLDT.FIELD_SEPARATOR + fieldName));
         JsonNode typeName = fieldNode.get("typeName");
 

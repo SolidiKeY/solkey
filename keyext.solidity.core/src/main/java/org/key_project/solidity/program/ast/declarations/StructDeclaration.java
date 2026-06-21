@@ -33,6 +33,10 @@ public class StructDeclaration implements Declaration, Type, Resolver {
         return fields;
     }
 
+    public @Nullable ContractDeclaration getContract() {
+        return contract;
+    }
+
     @Override
     public @NonNull SyntaxElement getChild(int n) {
         if (0 <= n && n < getChildCount())
