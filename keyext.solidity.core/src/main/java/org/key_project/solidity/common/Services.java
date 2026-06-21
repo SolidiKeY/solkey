@@ -146,7 +146,7 @@ public class Services implements LogicServices, ProofServices {
             StructDeclaration owner = field.getContainingStruct();
             Name constantName = owner != null && owner.getContract() != null
                     ? new Name(owner.getContract().name() + StructLDT.FIELD_SEPARATOR
-                        + owner.name() + StructLDT.FIELD_SEPARATOR + field.name())
+                            + owner.name() + StructLDT.FIELD_SEPARATOR + field.name())
                     : field.name();
             return services.getTermBuilder().func(fieldTerm(constantName, services));
         }

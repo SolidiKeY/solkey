@@ -421,9 +421,11 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
             return new DeclarationStatement(List.of(schematic), initial);
         }
 
+        DataLocation dataLocation = (DataLocation) visitStorageLocation(ctx.storageLocation());
+        KeYSolidityType kst = asStorageAliasType((KeYSolidityType) type, dataLocation);
         ProgramVariable programVariable =
             new ProgramVariable(new Name(ctx.identifier().Identifier().getText()),
-                (KeYSolidityType) type, (DataLocation) visitStorageLocation(ctx.storageLocation()));
+                kst, dataLocation);
         localVars.add(programVariable);
         StatementVariableDeclaration stmDecl =
             new StatementVariableDeclaration(programVariable);
@@ -532,7 +534,8 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         String variableName = ctx.identifier().getText();
 
         ProgramVariable programVariable =
-            new ProgramVariable(new Name(variableName), type, dataLocation);
+            new ProgramVariable(new Name(variableName),
+                asStorageAliasType(type, dataLocation), dataLocation);
         localVars.add(programVariable);
         return programVariable;
     }
@@ -553,6 +556,27 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
             return Default;
         String location = ctx.getText();
         return DataLocation.fromString(location);
+    }
+
+    /// A `storage`-qualified local (`T storage lp = …`) is a path alias, not a value: it points
+    /// at a storage location and is updated by `{lp := <path>}`. Re-sort it to `List` so the
+    /// path-shaped update type-checks and downstream lowering through
+    /// [Services#convertToLogicElement] uses `consr(lp, fld)` instead of wrapping in a fresh
+    /// single-element list.
+    private KeYSolidityType asStorageAliasType(KeYSolidityType original,
+            DataLocation dataLocation) {
+        if (dataLocation != DataLocation.Storage || original == null) {
+            return original;
+        }
+        var sort = original.getSort();
+        if (sort == null || !"Struct".equals(sort.name().toString())) {
+            return original;
+        }
+        var listSort = services.getNamespaces().sorts().lookup(new Name("List"));
+        if (listSort == null) {
+            return original;
+        }
+        return new KeYSolidityType(original.getSolidityType(), listSort);
     }
 
     private static class PositionedConverterException extends RuntimeException {

@@ -28,7 +28,7 @@ it, declare only example variables, and define closing problems.
   decomposition. Uses the `&`-joined form (separate write and read diamonds).
 - `storage-field-write-read.key` is the single-program counterpart: writes
   `alice.age = 34` and then reads it into `result`, closing via
-  `findAfterSaveSameIndexedPath2`. Matches the user-facing `a.b = v; u = a.b;`
+  `findAfterSaveSameDeepPath`. Matches the user-facing `a.b = v; u = a.b;`
   shape.
 - `storage-field-disjoint-roots.key` shows that the same field on different
   root structs is isolated: after `alice.age = 1; bob.age = 2;` we still have
@@ -47,8 +47,8 @@ it, declare only example variables, and define closing problems.
   and read on `alice.account.token.value`, chaining `_decomposeToken` followed
   by `_decomposeValue` against the `Path[name=field.global]` base.
 - `storage-index-root-array.key` demonstrates root-level dynamic-array index
-  write and read (`values[1]`) via `storageIndexWriteSave_rootIndex` and the
-  sibling `storageIndexReadFind_rootIndex`. Arrays and mappings share the
+  write and read (`values[1]`) via `storageIndexWriteMappingSave_root` and the
+  sibling `storageIndexReadMappingFind_root`. Arrays and mappings share the
   rule because the bounds branch is not yet modelled, so a separate mapping
   example is not needed.
 - `storage-index-multiple-writes.key` shows last-write-wins on an indexed
@@ -66,65 +66,52 @@ it, declare only example variables, and define closing problems.
 - `storage-matrix-write-read.key` is the single-program write+read on the same
   nested indexed path: `matrix[2][3] = 99; result = matrix[2][3];`.
 
-### Storage-alias examples (partial — tripwire)
+### Storage-alias examples
 
-`storageRules.key` includes three combined declaration-with-initializer
-taclets:
+`storageRules.key` includes four local-storage alias taclets:
 
-- `storageLocalDeclInitRebind_memoryStorage` — `T storage lp = sp;`
-- `storageLocalDeclInitBindGlobalField_memoryStorage` — `T storage lp = sp.b;`
-- `storageLocalDeclInitBindLocalField_memoryStorage` — `T storage lp = lp2.b;`
+- `storageLocalDeclInitSplit_rootRebind` — `T storage lp = sp;`
+- `storageLocalDeclInitSplit_globalField` — `T storage lp = sp.b;`
+- `storageLocalDeclInitSplit_localField` — `T storage lp = lp2.b;`
+- `storageLocalRootRebind` — `lp = sp;` (standalone rebind, no declaration)
 
-The pattern shape is `s#aliasType storage s#lp = s#rhs;`. The `Type`
-schema-variable slot is display-only per `StatementVariableDeclaration`
-line 32, and `\replacewith` cannot emit a schematic declaration
-(line 23 of that class), so the paper's `storageLocalDeclInitSplit` +
-separate-assignment split is collapsed here into one combined taclet per
-RHS shape. The rules fire on `Person storage p = alice;`-style
-declarations and produce an update `{lp := selectSt<[Struct]>(storage, …)}`
-(or the `find<[Struct]>` analog for member-rooted RHS), binding the alias
-to the value of the source path.
+The pattern shape is `s#aliasType storage s#lp = s#rhs;` (and `s#lp = s#sp;`
+for the standalone variant). The `Type` schema-variable slot is display-only
+per `StatementVariableDeclaration` line 32, and `\replacewith` cannot emit a
+schematic declaration (line 23 of that class), so the paper's
+`storageLocalDeclInitSplit` + separate-assignment split is collapsed into one
+combined taclet per RHS shape. Per `storage.md` §6 ("Local-Root" rules), the
+alias binds to the **path**, not to the value at the path: the rules emit
+`{lp := cons1(rhsField)}` (root rhs) or `{lp := pathFields}` (member-rooted
+rhs).
 
-What is *not* yet covered, and why the four example files below are still
-registered under `aliasExamplesCurrentlyOpen()` in `TacletStarterExamplesTest`
-(a tripwire that flips and promotes the entry to `examples()` once it
-starts closing):
+Two pieces of plumbing make this work end-to-end:
 
-1. **Standalone rebind `lp = sp;`** (no declaration, e.g. `alicePath = bob;`).
-   The pattern collides syntactically with the existing
-   `storageRootReadSelect_memoryStorage` (which writes an int), and
-   auto-mode does not pick a non-conflicting Struct-typed variant in this
-   position.
+1. **List-sorted storage locals.** `SolidityToKeyConverter#asStorageAliasType`
+   resorts `T storage lp` from `Struct` to `List` so the path-shaped update
+   type-checks and `Services#convertToLogicElement` lowers `lp.b` as
+   `consr(lp, b)` (path append) instead of wrapping in a fresh single-element
+   list.
 
-2. **Writes through alias-rooted paths.** After
-   `{lp := find<[Struct]>(storage, p)}`, a write `lp.b = v;` lowers via the
-   existing `storageFieldWriteSave_memoryStorage` to
-   `save(storage, cons(<sub-struct>, b), v)`. The first `cons` element is
-   then a Struct value, not a Field constant, so the structural axioms in
-   `structRules.key` (`findDefinitionCons`, `selectStOfSave*`) can't unfold
-   the path back to a chain of `selectSt`s rooted at the original contract
-   field. Closing the alias examples needs either:
-   - a path-as-`List` representation for the alias (requires changing the
-     parser so `T storage lp` is `List`-sorted, not `Struct`-sorted), or
-   - an extra axiom that rewrites `cons(find<[Struct]>(s, p), q)` back into
-     an extended path before the structural rules fire.
-
-Both are out of scope of the .key-only subset and need Java- or logic-side
-support.
+2. **`\program Variable[name=…]` filters.** `ProgramVariableSVSort` accepts a
+   parameter (`storage` / `value`) that filters by `DataLocation`. This makes
+   `storageRootReadSelect` (int-typed reads of a global root)
+   and `storageLocalRootRebind` (List-typed rebind of a
+   storage-local) pairwise disjoint, even though both have shape
+   `s#x = s#rootRhs;`.
 
 Example files (consume `paper_test.sol:165-184`):
 
 - `storage-alias-write-balance.key` — from `testStorageAliases`, asserting
   `alice.account.balance = 100` after the alias-rooted writes
-  `acc.balance = 100; p.account.token.value = 3;`. The whole program now
-  reduces, but the assertion fails because the writes target
-  `cons(<sub-struct>, balance)` paths the axioms can't normalise.
+  `acc.balance = 100; p.account.token.value = 3;`.
 - `storage-alias-write-token.key` — same scenario, token branch.
-- `storage-alias-rebind-original.key` — from
-  `testStorageAliasRootAssignmentRebindsReference`, asserting `alice.age`
-  is unchanged. Reduces past the decl-init and the `bob.age = 20;` write,
-  then stalls on `alicePath = bob;`.
-- `storage-alias-rebind-alias.key` — same scenario, rebound side.
+- `storage-alias-rebind-original.key` — asserts `alice.age` is unchanged by
+  the rebind sequence `Person storage alicePath = alice; bob.age = 20;
+  alicePath = bob;`. Compares against a snapshot taken into `before` so the
+  assertion does not depend on the symbolic initial storage value.
+- `storage-alias-rebind-alias.key` — same scenario, asserts that the rebound
+  `alicePath.age` now reads back as the value written via `bob.age = 20`.
 
 - Solidity `delete target` now parses to `UnaryExpression(Operator.DELETE,
   target)` and prints as `delete target`.
