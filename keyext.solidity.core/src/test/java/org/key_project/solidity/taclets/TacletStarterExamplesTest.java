@@ -68,15 +68,15 @@ public class TacletStarterExamplesTest {
             example("storage-index-multiple-writes.key"),
             example("storage-field-disjoint-fields.key"),
             example("storage-index-decomposition.key"),
-            example("storage-matrix-write-read.key"),
+            example("storage-matrix-write-read.key"));
+    }
+
+    static Stream<Arguments> aliasExamplesCurrentlyOpen() {
+        return Stream.of(
             example("storage-alias-write-balance.key"),
             example("storage-alias-write-token.key"),
             example("storage-alias-rebind-original.key"),
             example("storage-alias-rebind-alias.key"));
-    }
-
-    static Stream<Arguments> aliasExamplesCurrentlyOpen() {
-        return Stream.of();
     }
 
     private static Arguments example(String name) {
