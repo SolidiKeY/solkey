@@ -38,14 +38,19 @@ public class TacletStarterExamplesTest {
         return Stream.of(
             example("storage-root-read-write.key"),
             example("storage-root-copy-source.key"),
-            example("storage-root-paths.key"),
-            example("storage-field-decomposition.key"),
+            example("storage-root-multiple-writes.key"),
+            example("storage-root-disjoint.key"),
             example("storage-field-global-age.key"),
+            example("storage-field-write-read.key"),
+            example("storage-field-disjoint-roots.key"),
+            example("storage-field-decomposition.key"),
+            example("storage-field-deep-write-read.key"),
             example("storage-field-deep-value.key"),
-            example("storage-index-decomposition.key"),
             example("storage-index-root-array.key"),
-            example("storage-index-root-mapping.key"),
-            example("storageRulesExamples.key"));
+            example("storage-index-multiple-writes.key"),
+            example("storage-field-disjoint-fields.key"),
+            example("storage-index-decomposition.key"),
+            example("storage-matrix-write-read.key"));
     }
 
     private static Arguments example(String name) {

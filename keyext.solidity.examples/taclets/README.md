@@ -13,16 +13,27 @@ it, declare only example variables, and define closing problems.
   guidance: root storage rules use `SimpleStoragePath`, field/index paths use
   `Path[...]` plus `\sameAsTerm`, and complex member/index cases stay as
   structural `.key` source patterns.
-- `storageRulesExamples.key` contains small closing examples for the
-  consolidated rules. It covers final effects for root copy/read, local field
-  write, structural member-field decomposition, and the nested `matrix[2][3]`
-  path.
 - `storage-root-read-write.key` demonstrates `storageRootWriteStore` and
   `storageRootReadSelect` for contract storage fields using `\sameAsTerm`.
 - `storage-root-copy-source.key` demonstrates `storageRootWriteCopySource` for
   copying one contract storage field into another.
-- `storage-root-paths.key` demonstrates the same root-level storage paper
-  rules using the path-aware `SimpleStoragePath` program schema-variable sort.
+- `storage-root-multiple-writes.key` shows last-write-wins on a root field
+  (`age = 1; age = 2; result = age;` closes with `result = 2`).
+- `storage-root-disjoint.key` shows that writing one root field does not
+  perturb another (`age = 7; balance = 9; result = age;` closes with
+  `result = 7`).
+- `storage-field-global-age.key` demonstrates two-level member-access write and
+  read on a contract field (`alice.age`) via the `_globalPath` rule pair, which
+  matches a whole `Path[name=field.global]` directly without per-terminal
+  decomposition. Uses the `&`-joined form (separate write and read diamonds).
+- `storage-field-write-read.key` is the single-program counterpart: writes
+  `alice.age = 34` and then reads it into `result`, closing via
+  `findAfterSaveSameIndexedPath2`. Matches the user-facing `a.b = v; u = a.b;`
+  shape.
+- `storage-field-disjoint-roots.key` shows that the same field on different
+  root structs is isolated: after `alice.age = 1; bob.age = 2;` we still have
+  `alice.age = 1` and `bob.age = 2`. `&`-joined because each branch asserts a
+  different read.
 - `storage-field-decomposition.key` demonstrates nested member-access lowering
   for `alice.account.balance` via the generic `_globalPath` rule pair. The
   Solidity loader registers each struct field under its namespaced
@@ -30,26 +41,30 @@ it, declare only example variables, and define closing problems.
   `PaperStore$Account$balance`), and `Services.memberFieldTerm` reconstructs
   that name at lowering time by walking the member-access chain to identify
   the owning struct.
-- `storage-index-decomposition.key` demonstrates the indexed counterpart:
-  rules with source patterns such as `s#a[s#i]` match nested indexed paths like
-  `matrix[2][3]`, bind `a` to `matrix[2]` and `i` to `3`, and append
-  `at(i)` as the `Field`-sorted index segment in the replacement.
-- `storage-field-global-age.key` demonstrates two-level member-access write and
-  read on a contract field (`alice.age`) via the `_globalPath` rule pair, which
-  matches a whole `Path[name=field.global]` directly without per-terminal
-  decomposition.
+- `storage-field-deep-write-read.key` is the single-program write+read at
+  depth 3: `alice.account.balance = 34; result = alice.account.balance;`.
 - `storage-field-deep-value.key` demonstrates four-level member-access write
   and read on `alice.account.token.value`, chaining `_decomposeToken` followed
   by `_decomposeValue` against the `Path[name=field.global]` base.
 - `storage-index-root-array.key` demonstrates root-level dynamic-array index
   write and read (`values[1]`) via `storageIndexWriteSave_rootIndex` and the
-  sibling `storageIndexReadFind_rootIndex`.
-- `storage-index-root-mapping.key` demonstrates the same `_rootIndex` write
-  and read on a mapping key (`balances[2]`); arrays and mappings share the
-  rule because the bounds branch is not yet modelled.
-- `commonFields.key` provides legacy shared field constants, program variables,
-  and identities for ad hoc experiments. Runnable examples in this directory do
-  not include it.
+  sibling `storageIndexReadFind_rootIndex`. Arrays and mappings share the
+  rule because the bounds branch is not yet modelled, so a separate mapping
+  example is not needed.
+- `storage-index-multiple-writes.key` shows last-write-wins on an indexed
+  root slot (`values[3] = 5; values[3] = 8; result = values[3];` closes with
+  `result = 8`).
+- `storage-field-disjoint-fields.key` shows that distinct struct fields under
+  the same parent do not interfere: writing `alice.account.balance` and
+  `alice.account.token.value` preserves each. Works because the field
+  constants are declared `\unique`, unlike `at(1)` vs `at(2)` which would
+  require additional injectivity reasoning.
+- `storage-index-decomposition.key` demonstrates the indexed counterpart:
+  rules with source patterns such as `s#a[s#i]` match nested indexed paths like
+  `matrix[2][3]`, bind `a` to `matrix[2]` and `i` to `3`, and append
+  `at(i)` as the `Field`-sorted index segment in the replacement.
+- `storage-matrix-write-read.key` is the single-program write+read on the same
+  nested indexed path: `matrix[2][3] = 99; result = matrix[2][3];`.
 - Solidity `delete target` now parses to `UnaryExpression(Operator.DELETE,
   target)` and prints as `delete target`.
 - Path-aware program schema-variable sorts are available. The fixed names
