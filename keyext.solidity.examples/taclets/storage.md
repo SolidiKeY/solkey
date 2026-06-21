@@ -1,0 +1,502 @@
+# Storage Rules — Summary for LLM Consumption
+
+A flat-Markdown distillation of Section 2 ("Storage Rules") of
+`main.tex` / `main.pdf`. Self-contained; no LaTeX macros. Memory rules
+are out of scope.
+
+## 1. Overview
+
+The calculus is sequent-style dynamic logic over Solidity statements.
+A conclusion has the shape
+
+    => ⟨ π stmt ω ⟩ φ
+
+- `π` is the inactive prefix (already executed / not yet handled).
+- `stmt` is the first active statement.
+- `ω` is the rest of the program.
+- `φ` is the post-condition.
+
+Rules are given for the diamond modality `⟨·⟩`. The box modality
+`[·]` is identical except for the two `revert();` rules
+(see §8).
+
+Storage is a single semantic variable `storage` of sort `Struct`
+that is updated by parallel updates `{ x := e }`. Multiple
+simultaneous assignments are written `{ a := e1 || b := e2 }`
+(parallel composition).
+
+### Three-step strategy
+
+For every storage statement, the calculus applies in this order:
+
+1. **Step 1 — Unfold the RHS.** Capture nonsimple sub-terms on the
+   right-hand side into fresh simple aliases.
+2. **Step 2 — Unfold the LHS.** Capture nonsimple sub-terms on the
+   left-hand side.
+3. **Step 3 — Emit an update.** Once every constituent is simple,
+   replace the statement with a parallel update on the continuation
+   `⟨ π ω ⟩ φ`.
+
+This mirrors Solidity's evaluation order: RHS is evaluated before LHS.
+
+## 2. Schema Variables
+
+Schema variables fix the kind of program fragment matched, so rules
+are pairwise disjoint without explicit applicability conditions.
+
+Expressions (RHS):
+- `se` — simple expression: a single stack-valued word (program
+  variable or constant). No side effects.
+- `nse` — nonsimple expression: anything that is not `se`.
+- `e` — arbitrary expression (used where the distinction does not
+  matter).
+
+Assignment targets (LHS):
+- `v` — stack program variable used as a read target.
+- `lhs` — arbitrary assignment target.
+- `nlhs` — a nonsimple assignment target.
+
+Storage paths:
+- `sp` — simple storage path: a contract root or a generated alias.
+- `lp` — simple path that is a **local** storage reference declared
+  inside a function (e.g. `Person storage p`).
+- `gp` — simple path that is a **global** contract root.
+- `nsp` — nonsimple storage path (unresolved base, receiver, or
+  index).
+- `path` — plain storage path when the simple/nonsimple distinction
+  is irrelevant.
+- `i` — simple index expression.
+
+Type-of metavariable:
+- `T_{expr}` (written `Tkindof(expr)` in the PDF) — the Solidity
+  type of `expr`, used in synthesized declarations like
+  `T_{nsp} storage sp = nsp;`.
+
+## 3. Storage-Model Primitives
+
+`storage` is a `Struct` value manipulated by these operations:
+
+- `find(storage, path)` — deep read along a field path.
+- `select(storage, sp)` — read the whole value at `sp` (used for root
+  reads and as the source of a copy).
+- `save(storage, path, val)` — deep write at `path`.
+- `store(storage, gp, val)` — shallow write at a root.
+- `default` — the default value of a type (used by `delete` and
+  `pop`).
+- `at(i)` — coerces an index/key into a field selector so it can
+  appear inside a path.
+- `length` — the synthetic field holding a dynamic array's current
+  length.
+
+Predicates on a simple path:
+- `array(sp)` — `sp` denotes a dynamic-array path.
+- `mapping(sp)` — `sp` denotes a mapping path.
+
+Array index access additionally generates bounds branches; mapping
+index access does not (mappings have no length).
+
+## 4. Step 1: Unfolding the Right-Hand Side
+
+General presentation schemas (these are templates; only the named
+instances below are rules of the calculus). `op(path, e)` ranges over
+the base operations `path.a` and `path[e]`.
+
+**unfold_rightFst** — capture a nonsimple receiver on the RHS.
+
+    nsp => ⟨ π  T_{nsp} sp = nsp; lhs = op(sp, e); ω ⟩ φ
+    --------------------------------------------------------
+            => ⟨ π  lhs = op(nsp, e); ω ⟩ φ
+
+**unfold_rightSnd** — capture a nonsimple secondary argument
+(typically an index) on the RHS.
+
+    nse => ⟨ π  T pv = nse; lhs = op(sp, pv); ω ⟩ φ
+    -----------------------------------------------
+        => ⟨ π  lhs = op(sp, nse); ω ⟩ φ
+
+**unfold_rightSndResult** — capture a nonsimple target around a
+storage read that produces a value.
+
+    nlhs => ⟨ π  T_{nlhs} pv = op(sp, se); nlhs = pv; ω ⟩ φ
+    -------------------------------------------------------
+            => ⟨ π  nlhs = op(sp, se); ω ⟩ φ
+
+### Instances of Step 1
+
+- `storageFieldRead_unfold_rightFst`  — `lhs = nsp.a`
+- `storageIndexRead_unfold_rightFst`  — `lhs = nsp[e]`
+- `storageIndexRead_unfold_rightSndIndex`  — `lhs = sp[nse]`
+- `storageFieldRead_unfold_rightSndResult`  — `nlhs = sp.a`
+- `storageIndexRead_unfold_rightSndResult`  — `nlhs = sp[se]`
+
+Standalone (push argument is not an assignment RHS, but it is
+evaluated before the push update fires):
+
+- `storagePushValue_unfold_rightSndArgument`
+
+      nse => ⟨ π  T pv = nse; sp.push(pv); ω ⟩ φ
+      ------------------------------------------
+          => ⟨ π  sp.push(nse); ω ⟩ φ
+
+## 5. Step 2: Unfolding the Left-Hand Side
+
+**unfold_leftFst** — capture a nonsimple receiver on the LHS.
+
+    nsp => ⟨ π  T_{nsp} sp = nsp; op(sp, a) = se; ω ⟩ φ
+    ---------------------------------------------------
+            => ⟨ π  op(nsp, a) = se; ω ⟩ φ
+
+**unfold_leftSnd** — capture a nonsimple index on the LHS.
+
+    nse => ⟨ π  T idx = nse; op(sp, idx) = se; ω ⟩ φ
+    ------------------------------------------------
+        => ⟨ π  op(sp, nse) = se; ω ⟩ φ
+
+### Instances of Step 2
+
+- `storageFieldWrite_unfold_leftFst`  — `nsp.a = se`
+- `storageIndexWrite_unfold_leftFst`  — `nsp[e] = se`
+- `storageIndexWrite_unfold_leftSndIndex`  — `sp[nse] = se`
+
+### Standalone receiver / delete-target simplifications
+
+These exist because their active statement is not assignment-shaped
+(`op(sp,a) = se`); it is `delete`, `push`, `pop`, or a push-return
+binding.
+
+- `storageDelete_unfold_leftFst`             — `delete nsp;`
+- `storagePushValue_unfold_leftFstReceiver`  — `nsp.push(e);`
+- `storagePush_unfold_leftFstReceiver`       — `nsp.push();`
+- `storagePop_unfold_leftFstReceiver`        — `nsp.pop();`
+- `storageLocalRootPush_unfold_leftFstReceiver` — `lp = nsp.push();`
+
+Each replaces `nsp` with a fresh `T_{nsp} storage sp = nsp;` capture,
+then continues against `sp`.
+
+## 6. Step 3: Generating an Update
+
+Once every constituent is simple, the statement is replaced by a
+parallel update on `⟨ π ω ⟩ φ`. Format below: source statement ⇝
+emitted update.
+
+### Local-storage declarations
+
+- `storageLocalDeclInitSplit`
+
+      T storage lp = path;
+      ⇝  T storage lp ;  lp = path;        (lp not occurring in path)
+
+- `storageLocalDeclSkip`
+
+      T storage lp ;
+      ⇝  (skip; produces no update)        (lp not used)
+
+### Field write
+
+- `storageFieldWriteSave`
+
+      sp.a = se
+      ⇝  { storage := save(storage, sp · a, se) }
+
+- `storageFieldWriteCopySource` (RHS is itself a storage path —
+  the *value at* `sp2` is copied, not the path)
+
+      sp1.a = sp2
+      ⇝  { storage := save(storage, sp1 · a, select(storage, sp2)) }
+
+### Root write (whole struct / primitive at a root)
+
+- `storageRootWriteStore`
+
+      gp = se
+      ⇝  { storage := store(storage, gp, se) }
+
+- `storageRootWriteCopySource`
+
+      gp = sp
+      ⇝  { storage := store(storage, gp, select(storage, sp)) }
+
+- `storageLocalRootRebind` (rebinds a local storage reference; does
+  **not** copy)
+
+      lp = sp
+      ⇝  { lp := sp }
+
+### Field / root read
+
+- `storageFieldReadFind`
+
+      v = sp.a
+      ⇝  { v := find(storage, sp · a) }
+
+- `storageRootReadSelect`
+
+      v = sp
+      ⇝  { v := select(storage, sp) }
+
+- `storageFieldReadBindLocalRoot`
+
+      lp = sp.b
+      ⇝  { lp := sp · b }
+
+- `storageFieldReadStoreRoot`
+
+      gp = sp.b
+      ⇝  { storage := store(storage, gp, find(storage, sp · b)) }
+
+### Delete
+
+- `storageDeleteSimpleTarget`
+
+      delete sp
+      ⇝  { storage := store(storage, sp, default) }
+
+### Mapping index access  (when `mapping(sp)`)
+
+- `storageIndexWriteMappingSave`
+
+      sp[i] = se
+      ⇝  { storage := save(storage, sp · at(i), se) }
+
+- `storageIndexWriteMappingCopySource`
+
+      sp1[i] = sp2
+      ⇝  { storage := save(storage, sp1 · at(i), select(storage, sp2)) }
+
+- `storageIndexReadMappingFind`
+
+      v = sp[i]
+      ⇝  { v := find(storage, sp · at(i)) }
+
+- `storageIndexReadMappingBindLocalRoot`
+
+      lp = sp[i]
+      ⇝  { lp := sp · at(i) }
+
+- `storageIndexReadMappingStoreRoot`
+
+      gp = sp[i]
+      ⇝  { storage := store(storage, gp, find(storage, sp · at(i))) }
+
+### Array index access  (when `array(sp)`, with `ℓ = find(storage, sp · length)`)
+
+Each array rule branches on bounds. Out-of-bounds goes to
+`revert();` (consumed by §8).
+
+- `storageIndexWriteArraySave`
+
+      sp[i] = se
+      ⇝  if 0 ≤ i < ℓ : { storage := save(storage, sp · at(i), se) }
+         else         : revert();
+
+- `storageIndexWriteArrayCopySource`
+
+      sp1[i] = sp2
+      ⇝  if 0 ≤ i < ℓ : { storage := save(storage, sp1 · at(i),
+                                          select(storage, sp2)) }
+         else         : revert();
+
+- `storageIndexReadArrayFind`
+
+      v = sp[i]
+      ⇝  if 0 ≤ i < ℓ : { v := find(storage, sp · at(i)) }
+         else         : revert();
+
+- `storageIndexReadArrayBindLocalRoot`
+
+      lp = sp[i]
+      ⇝  if 0 ≤ i < ℓ : { lp := sp · at(i) }
+         else         : revert();
+
+- `storageIndexReadArrayStoreRoot`
+
+      gp = sp[i]
+      ⇝  if 0 ≤ i < ℓ : { storage := store(storage, gp,
+                                           find(storage, sp · at(i))) }
+         else         : revert();
+
+### Push / pop  (let `n = find(storage, sp · length)` and `ℓ` likewise)
+
+- `storagePushLhsToPushValue` (desugar push-return assignment into
+  push-with-value)
+
+      path.push() = se
+      ⇝  path.push(se);
+
+- `storagePushValueSave`
+
+      sp.push(se)
+      ⇝  { storage := save( save(storage, sp · at(n), se),
+                            sp · length, n + 1 ) }
+
+- `storagePushValueCopySource`
+
+      sp1.push(sp2)
+      ⇝  { storage := save( save(storage, sp1 · at(n),
+                                 select(storage, sp2)),
+                            sp1 · length, n + 1 ) }
+
+- `storagePushLengthSave` (zero-arg push: append the default-valued
+  slot, return nothing)
+
+      sp.push();
+      ⇝  { storage := save(storage, sp · length, n + 1) }
+
+- `storageLocalRootPushBind` (zero-arg push whose returned slot is
+  captured into a local reference)
+
+      lp = sp.push();
+      ⇝  { storage := save(storage, sp · length, n + 1)
+           || lp := sp · at(n) }
+
+- `storagePopSave`
+
+      sp.pop();
+      ⇝  if ℓ > 0 : { storage := save( save(storage, sp · at(ℓ - 1),
+                                            default),
+                                       sp · length, ℓ - 1 ) }
+         else    : revert();
+
+## 7. Compound Updates
+
+Compound storage updates such as `s.x += e`, `s.a++`, etc., are
+desugared into explicit read–compute–write statements **before** the
+rules above apply. The calculus does not contain dedicated
+compound-update rules.
+
+## 8. Abrupt Termination
+
+A `revert();` aborts the entire transaction, so `π` and `ω` are
+irrelevant. These are the only two storage rules that differ between
+modalities:
+
+- `revertDiamond`:   `=> ⟨ π revert(); ω ⟩ φ`   ⇝  `=> ⊥`
+- `revertBox`:       `=> [ π revert(); ω ] φ`   ⇝  `=> ⊤`
+
+## 9. Discipline and Termination
+
+**Pairwise disjointness.** Schema-variable kinds, the step
+organization, and the `array(sp)` / `mapping(sp)` predicates together
+ensure that exactly one rule applies to any storage statement.
+
+**Termination.** The calculus terminates by the lexicographic measure
+
+    ( #initializedStorageDeclarations,
+      #complexExpressions,
+      compositionDepth,
+      #statements ).
+
+- `storageLocalDeclInitSplit` strictly decreases component 1.
+- The unfolding, capture, and split rules strictly decrease a later
+  component.
+- Step-3 terminal rules decrease the number of statements.
+- A `revert();` introduced on an out-of-bounds branch is immediately
+  consumed by `revertDiamond` or `revertBox`, again decreasing the
+  number of statements.
+
+**Root-write convention.** In root-write rules, `gp` and `lp` denote
+the **whole** storage lvalue, including any final field or index
+segment.
+
+## 10. Worked Examples (terse traces)
+
+### `alice.age = ageVal;`  (single-field write)
+
+    ⟨[ alice.age = ageVal; ]⟩ φ
+    ⇝ { storage := save(storage, alice · age, ageVal) } φ
+
+(`storageFieldWriteSave`.)
+
+### `alice.account = acc;`  with `Account storage acc = bob.account;`
+
+    ⟨[ Account storage acc = bob.account;
+       alice.account = acc; ]⟩ φ
+    ⇝ { acc := bob · account
+        || storage := save(storage, alice · account,
+                           find(storage, bob · account)) } φ
+
+The write copies the value at the alias's target path, not the alias
+path itself.
+
+### `alice.account.balance = 10;`  (depth-2 field write)
+
+    ⟨[ alice.account.balance = 10; ]⟩ φ
+    ⇝ ⟨[ Account storage acc = alice.account; acc.balance = 10; ]⟩ φ
+    ⇝ { acc := alice · account } ⟨[ acc.balance = 10; ]⟩ φ
+    ⇝ { acc := alice · account }
+      { storage := save(storage, acc · balance, 10) } φ
+    ⇝ { acc := alice · account
+        || storage := save(storage, alice · account · balance, 10) } φ
+
+### `v = alice.account.balance;`  (depth-2 field read)
+
+    ⟨[ v = alice.account.balance; ]⟩ φ
+    ⇝ ⟨[ Account storage acc = alice.account; v = acc.balance; ]⟩ φ
+    ⇝ { acc := alice · account } ⟨[ v = acc.balance; ]⟩ φ
+    ⇝ { acc := alice · account
+        || v := find(storage, alice · account · balance) } φ
+
+### `alice.account.token.value = 5;`  (depth-3 field write)
+
+Two captures are needed before the terminal write:
+
+    ⇝ { aliceAcc := alice · account
+        || aliceTok := alice · account · token
+        || storage := save(storage,
+                           alice · account · token · value, 5) } φ
+
+### `uint v = total;`  (root read of a primitive state variable)
+
+    ⟨[ uint v = total; ]⟩ φ
+    ⇝ { v := select(storage, total) } φ
+
+Whole-struct paths cannot be read into a location-free local; they
+must be copied through memory or aliased through storage.
+
+### `alice = pVal;`  (whole-struct write to a root)
+
+    ⟨[ alice = pVal; ]⟩ φ
+    ⇝ { storage := store(storage, alice, pVal) } φ
+
+### `alice = bob;`  (whole-struct root-to-root copy)
+
+    ⟨[ alice = bob; ]⟩ φ
+    ⇝ { storage := store(storage, alice, select(storage, bob)) } φ
+
+The path `bob` is *not* stored as the value; its struct value is
+read and stored.
+
+## 11. Quick Reference: Statement → Rule
+
+Use this when looking up which Step-3 rule fires:
+
+| Source statement                | Rule                                  |
+|--------------------------------|---------------------------------------|
+| `sp.a = se`                    | `storageFieldWriteSave`               |
+| `sp1.a = sp2`                  | `storageFieldWriteCopySource`         |
+| `gp = se`                      | `storageRootWriteStore`               |
+| `gp = sp`                      | `storageRootWriteCopySource`          |
+| `lp = sp`                      | `storageLocalRootRebind`              |
+| `v = sp.a`                     | `storageFieldReadFind`                |
+| `v = sp`                       | `storageRootReadSelect`               |
+| `lp = sp.b`                    | `storageFieldReadBindLocalRoot`       |
+| `gp = sp.b`                    | `storageFieldReadStoreRoot`           |
+| `delete sp;`                   | `storageDeleteSimpleTarget`           |
+| `sp[i] = se`  (mapping)        | `storageIndexWriteMappingSave`        |
+| `sp1[i] = sp2`  (mapping)      | `storageIndexWriteMappingCopySource`  |
+| `v = sp[i]`  (mapping)         | `storageIndexReadMappingFind`         |
+| `lp = sp[i]`  (mapping)        | `storageIndexReadMappingBindLocalRoot`|
+| `gp = sp[i]`  (mapping)        | `storageIndexReadMappingStoreRoot`    |
+| `sp[i] = se`  (array)          | `storageIndexWriteArraySave`          |
+| `sp1[i] = sp2`  (array)        | `storageIndexWriteArrayCopySource`    |
+| `v = sp[i]`  (array)           | `storageIndexReadArrayFind`           |
+| `lp = sp[i]`  (array)          | `storageIndexReadArrayBindLocalRoot`  |
+| `gp = sp[i]`  (array)          | `storageIndexReadArrayStoreRoot`      |
+| `sp.push(se);`                 | `storagePushValueSave`                |
+| `sp1.push(sp2);`               | `storagePushValueCopySource`          |
+| `sp.push();`                   | `storagePushLengthSave`               |
+| `lp = sp.push();`              | `storageLocalRootPushBind`            |
+| `path.push() = se;`            | `storagePushLhsToPushValue` (desugar) |
+| `sp.pop();`                    | `storagePopSave`                      |
+| `revert();` (in `⟨·⟩`)         | `revertDiamond`                       |
+| `revert();` (in `[·]`)         | `revertBox`                           |
