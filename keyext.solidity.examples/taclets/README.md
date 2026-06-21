@@ -65,6 +65,41 @@ it, declare only example variables, and define closing problems.
   `at(i)` as the `Field`-sorted index segment in the replacement.
 - `storage-matrix-write-read.key` is the single-program write+read on the same
   nested indexed path: `matrix[2][3] = 99; result = matrix[2][3];`.
+
+### Storage-alias examples (currently open — tripwire)
+
+`storageRules.key` now includes ports of four paper alias rules:
+`storageLocalDeclInitSplit`, `storageLocalDeclSkip`, `storageLocalRootRebind`,
+and `storageFieldReadBindLocalRoot`. The assignment-side rules use the
+`\hasSort(lp, \sort(IdentitySort))` varcond (with the generic
+`\generic IdentitySort \oneof {Identity}`) so they only fire when the target
+is a local storage alias, leaving int-valued reads to the existing
+`storageRootReadSelect` / `storageFieldReadFind_*` rules.
+
+The decl rules use `\program Type` plus the literal `storage` keyword in the
+program pattern. Today the matcher does not bind to AST nodes produced for
+`Person storage p = alice;`, so the four example files below do not close.
+They are registered under `aliasExamplesCurrentlyOpen()` in
+`TacletStarterExamplesTest` — a tripwire that flips when alias matching
+starts to work, forcing the entries to be promoted back into `examples()`.
+
+- `storage-alias-write-balance.key` — `testStorageAliases` (paper_test.sol
+  line 165), asserting `alice.account.balance = 100` after the alias-rooted
+  writes `acc.balance = 100; p.account.token.value = 3;`.
+- `storage-alias-write-token.key` — same scenario, asserting the token value
+  branch.
+- `storage-alias-rebind-original.key` — `testStorageAliasRootAssignmentRebindsReference`
+  (paper_test.sol line 176), asserting the original `alice.age` is unchanged
+  after `alicePath = bob;`.
+- `storage-alias-rebind-alias.key` — same scenario, asserting the rebound
+  `alicePath.age` reads the new target.
+
+To make these close, the decl-init-split rule needs the matcher to bind to a
+storage-typed declaration AST (likely a new ProgramSVSort for typed local
+declarations, or a different rule shape that picks up the existing
+`StatementVariableDeclaration` node directly). Once that lands, the existing
+rebind / bind-field rules should fire automatically.
+
 - Solidity `delete target` now parses to `UnaryExpression(Operator.DELETE,
   target)` and prints as `delete target`.
 - Path-aware program schema-variable sorts are available. The fixed names
@@ -110,11 +145,15 @@ when the matcher can preserve the relevant Solidity path shape faithfully.
 3. Add Java/logic support for the paper rules that need generated aliases or
    heap helpers.
 
-   The runnable `.key` subset does not yet cover declaration split/skip,
-   alias-introducing unfold rules, array bounds/revert branches, push/pop
-   length updates, delete, compound-update desugaring, memory heap read/write
-   allocation rules, or storage-memory copy rules using `copySt`/`copyMem`-style
-   helpers.
+   The runnable `.key` subset does not yet cover array bounds/revert
+   branches, push/pop length updates, delete, compound-update desugaring,
+   memory heap read/write allocation rules, or storage-memory copy rules
+   using `copySt`/`copyMem`-style helpers. Alias rules
+   (`storageLocalDeclInitSplit`, `storageLocalDeclSkip`,
+   `storageLocalRootRebind`, `storageFieldReadBindLocalRoot`) are
+   declared in `storageRules.key` but the matcher does not yet bind them
+   to `Person storage p = alice;`-style declaration nodes — see the
+   tripwire examples in the section above.
 
 ## Suggested Next Examples After Java Support
 

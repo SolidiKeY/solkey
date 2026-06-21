@@ -14,6 +14,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /// Exercises the user-visible pre-licenciate-paper taclet starters. These examples live in the
@@ -23,15 +24,32 @@ public class TacletStarterExamplesTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource("examples")
     void tacletStarterExampleCloses(String name, Path file) throws Exception {
+        Proof proof = loadAndRun(file);
+        assertTrue(proof.closed(),
+            () -> name + " should close; open goals: " + proof.openGoals().size()
+                + "; first open goal: " + proof.openGoals().head().sequent());
+    }
+
+    /// Tripwire for storage-alias examples that don't close under the current alias-rule subset.
+    /// When alias support improves (the decl-init-split / rebind / bind-field rules start firing
+    /// on `Person storage p = alice;` style declarations), these assertions will flip and force
+    /// the entries to be promoted back into [#examples].
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("aliasExamplesCurrentlyOpen")
+    void aliasExampleCurrentlyOpen(String name, Path file) throws Exception {
+        Proof proof = loadAndRun(file);
+        assertFalse(proof.closed(),
+            () -> name + " unexpectedly closed — alias rules now fire; promote this entry to "
+                + "examples() and remove the tripwire.");
+    }
+
+    private static Proof loadAndRun(Path file) throws Exception {
         KeYEnvironment env = KeYEnvironment.load(file);
         Proof proof = env.getLoadedProof();
         var strategySettings = proof.getSettings().getStrategySettings();
         strategySettings.setMaxSteps(10000);
         env.getProofControl().startAndWaitForAutoMode(proof);
-
-        assertTrue(proof.closed(),
-            () -> name + " should close; open goals: " + proof.openGoals().size()
-                + "; first open goal: " + proof.openGoals().head().sequent());
+        return proof;
     }
 
     static Stream<Arguments> examples() {
@@ -50,7 +68,15 @@ public class TacletStarterExamplesTest {
             example("storage-index-multiple-writes.key"),
             example("storage-field-disjoint-fields.key"),
             example("storage-index-decomposition.key"),
-            example("storage-matrix-write-read.key"));
+            example("storage-matrix-write-read.key"),
+            example("storage-alias-write-balance.key"),
+            example("storage-alias-write-token.key"),
+            example("storage-alias-rebind-original.key"),
+            example("storage-alias-rebind-alias.key"));
+    }
+
+    static Stream<Arguments> aliasExamplesCurrentlyOpen() {
+        return Stream.of();
     }
 
     private static Arguments example(String name) {
