@@ -65,6 +65,19 @@ it, declare only example variables, and define closing problems.
   `at(i)` as the `Field`-sorted index segment in the replacement.
 - `storage-matrix-write-read.key` is the single-program write+read on the same
   nested indexed path: `matrix[2][3] = 99; result = matrix[2][3];`.
+- `storage-local-decl-skip.key` demonstrates `storageLocalDeclSkip`: an
+  uninitialized `Person storage p;` declaration is dropped without
+  emitting an update, and the surrounding root read/write closes as if
+  the declaration were not there.
+- `storage-field-read-bind-local.key` demonstrates
+  `storageFieldReadBindLocalRoot`: a standalone `acc = bob.account;`
+  rebind (no declaration prefix) re-points an existing local storage
+  alias at a member-rooted path; the subsequent `acc.balance` read goes
+  through the rebound path and reads back the most recent write.
+- `storage-field-read-store-root.key` demonstrates
+  `storageFieldReadStoreRoot`: `total = alice.age;` copies the value
+  at a global field path into a global int root via
+  `storeSt(storage, total, find<[int]>(storage, alice·age))`.
 
 ### Storage-alias examples
 
@@ -178,6 +191,11 @@ when the matcher can preserve the relevant Solidity path shape faithfully.
   beyond the `_decomposeBalance`/`_decomposeToken`/`_decomposeValue` siblings
   already present (each new terminal field still needs its own decompose
   sibling until a generic field-name match is supported).
+- `storageFieldWriteCopySource` (struct-value copy along a member path),
+  `storageFieldReadStoreRoot` for struct-typed roots, and the
+  `…BindLocalRoot`/`…StoreRoot` mapping/array variants still need
+  `find<[Struct]>`/`storeSt` plumbing for non-int payloads and array
+  bounds branches.
 - `memory-delete.key`: `memoryDeleteSimpleTarget` and
   `memoryDeleteComplexTarget`.
 - `storage-index-read-write.key`: bounds-branching variants of the existing

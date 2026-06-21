@@ -58,7 +58,10 @@ public class TacletStarterExamplesTest {
             example("storage-alias-write-balance.key"),
             example("storage-alias-write-token.key"),
             example("storage-alias-rebind-original.key"),
-            example("storage-alias-rebind-alias.key"));
+            example("storage-alias-rebind-alias.key"),
+            example("storage-local-decl-skip.key"),
+            example("storage-field-read-bind-local.key"),
+            example("storage-field-read-store-root.key"));
     }
 
     private static Arguments example(String name) {
