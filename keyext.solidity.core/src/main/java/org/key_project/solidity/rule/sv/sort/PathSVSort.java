@@ -187,7 +187,9 @@ final class PathSVSort extends ProgramSVSort {
             if (base == null) {
                 return null;
             }
-            return new PathInfo(base.location(), false, Shape.FIELD, Container.ANY,
+            // Simple if base is a ROOT (depth-1), complex if base is FIELD/INDEX (depth-2+)
+            boolean isSimple = base.shape() == Shape.ROOT;
+            return new PathInfo(base.location(), isSimple, Shape.FIELD, Container.ANY,
                 valueKind(member.getType()), base.origin());
         }
         if (pe instanceof IndexExpression index) {

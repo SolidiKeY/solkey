@@ -8,6 +8,8 @@ package org.key_project.solidity.parser;
 }
 
 SAME_AS_TERM  : '\\sameAsTerm';
+PATH_BASE     : '\\pathBase';
+PATH_FIELD    : '\\pathField';
 NEW_LOCAL_VARS: '\\newLocalVars';
 STORE_TERM_IN : '\\storeTermIn';
 STORE_EXPR_IN : '\\storeExprIn';
