@@ -71,16 +71,21 @@ public class SameAsTermConditionTest {
         services = ParserForTesting.load().getServices();
         fieldSort = services.getNamespaces().sorts().lookup(new Name("Field"));
         assertNotNull(fieldSort, "the Field sort must be available");
+        Sort listSort = services.getNamespaces().sorts().lookup(new Name("List"));
+        assertNotNull(listSort, "the List sort must be available");
 
         Function balance = registerFieldConstant("Bank$balance");
         StateVariableDeclaration decl = new StateVariableDeclaration(new Name("balance"),
             new KeYSolidityType(fieldSort), new Name("Bank$balance"), null, Visibility.Public);
         fieldRef = new FieldReference(decl, decl.getType());
-        expectedValue = services.getTermBuilder().func(balance);
+        // With unified path representation, FieldReference now converts to cons(field, nil)
+        Term fieldTerm = services.getTermBuilder().func(balance);
+        expectedValue = list(fieldTerm);
 
         progSV = SchemaVariableFactory.createProgramSV(new Name("v"),
             ProgramSVSort.FIELD_REFERENCE, false);
-        termSV = SchemaVariableFactory.createTermSV(new Name("s"), fieldSort);
+        // Term SV must now be List-sorted since FieldReference converts to a List
+        termSV = SchemaVariableFactory.createTermSV(new Name("s"), listSort);
         condition = new SameAsTermCondition(progSV, termSV);
     }
 
@@ -179,7 +184,8 @@ public class SameAsTermConditionTest {
     @Test
     void rejectsConflictingAlreadyBoundTermVariable() {
         Function other = registerFieldConstant("Bank$owner");
-        Term otherValue = services.getTermBuilder().func(other);
+        // Now that termSV is List-sorted, the conflicting value should also be a List
+        Term otherValue = list(services.getTermBuilder().func(other));
         MatchConditions bound = bind(MatchConditions.EMPTY_MATCHCONDITIONS, termSV, otherValue);
         var result = condition.check(progSV, fieldRef, bound, services);
         assertNull(result, "a conflicting binding of s must make the condition fail");
@@ -211,9 +217,11 @@ public class SameAsTermConditionTest {
     }
 
     @Test
-    void keepsRootFieldReferencesAsFieldTerms() {
+    void convertsRootFieldReferencesToListPaths() {
+        // Global roots are now represented as single-element List paths: cons(field, nil)
+        // expectedValue is already cons(Bank$balance, nil) as set up in setUp()
         assertEquals(expectedValue, Services.convertToLogicElement(fieldRef, services),
-            "root storage fields must keep lowering to Field terms");
+            "root storage fields must now lower to single-element List paths");
     }
 
     @Test
@@ -231,9 +239,13 @@ public class SameAsTermConditionTest {
         MemberExp accountPath = new MemberExp(alice, account, personType);
         MemberExp balancePath = new MemberExp(accountPath, balance, uintType());
 
-        Term aliceAccount = list(fieldTerm("alice"), fieldTerm("account"));
+        // With unified path representation, alice is now cons(alice, nil), and each subsequent
+        // field is appended using consr. So alice.account.balance becomes:
+        // consr(consr(cons(alice, nil), account), balance)
+        Term alicePath = list(fieldTerm("alice"));
+        Term aliceAccount = consr(alicePath, fieldTerm("account"));
         assertEquals(consr(aliceAccount, fieldTerm("balance")), bindPath(balancePath),
-            "alice.account.balance should append fields in source order");
+            "alice.account.balance should append fields in source order using consr");
     }
 
     @Test
@@ -267,7 +279,10 @@ public class SameAsTermConditionTest {
         MemberExp balancesPath = new MemberExp(ledger, balances, mappingType);
         IndexExpression indexedPath = new IndexExpression(balancesPath, k);
 
-        Term ledgerBalances = list(fieldTerm("ledger"), fieldTerm("balances"));
+        // With unified representation, ledger is cons(ledger, nil), then balances is appended
+        // using consr, then at(k) is appended using consr
+        Term ledgerPath = list(fieldTerm("ledger"));
+        Term ledgerBalances = consr(ledgerPath, fieldTerm("balances"));
         assertEquals(consr(ledgerBalances, at(services.getTermBuilder().var(k))),
             bindPath(indexedPath),
             "ledger.balances[k] should preserve field and index order");

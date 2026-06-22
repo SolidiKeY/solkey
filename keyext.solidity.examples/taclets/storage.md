@@ -76,17 +76,22 @@ Type-of metavariable:
 
 `storage` is a `Struct` value manipulated by these operations:
 
-- `find(storage, path)` — deep read along a field path.
-- `select(storage, sp)` — read the whole value at `sp` (used for root
-  reads and as the source of a copy).
-- `save(storage, path, val)` — deep write at `path`.
-- `store(storage, gp, val)` — shallow write at a root.
+- `find(storage, path)` — read the value at `path` (a `List` of field
+  selectors). Used universally for both global roots and local paths.
+- `save(storage, path, val)` — write `val` at `path`. Used universally
+  for both global roots and local paths.
 - `default` — the default value of a type (used by `delete` and
   `pop`).
 - `at(i)` — coerces an index/key into a field selector so it can
   appear inside a path.
 - `length` — the synthetic field holding a dynamic array's current
   length.
+
+**Note:** Both global roots (like `alice`) and local storage aliases
+(like `lp`) are represented as `List`-typed paths. A global root
+`alice` extracts to `cons(alice, nil)` — a single-element list. This
+unification allows all storage operations to use `find`/`save`
+uniformly.
 
 Predicates on a simple path:
 - `array(sp)` — `sp` denotes a dynamic-array path.
@@ -209,18 +214,21 @@ emitted update.
 - `storageRootWriteStore`
 
       gp = se
-      ⇝  { storage := store(storage, gp, se) }
+      ⇝  { storage := save(storage, gp, se) }
 
 - `storageRootWriteCopySource`
 
       gp = sp
-      ⇝  { storage := store(storage, gp, select(storage, sp)) }
+      ⇝  { storage := save(storage, gp, find(storage, sp)) }
 
 - `storageLocalRootRebind` (rebinds a local storage reference; does
   **not** copy)
 
       lp = sp
       ⇝  { lp := sp }
+
+  Note: Since both `lp` and `sp` are now `List`-typed paths, this is
+  a direct assignment without any wrapping.
 
 ### Field / root read
 
@@ -232,7 +240,7 @@ emitted update.
 - `storageRootReadSelect`
 
       v = sp
-      ⇝  { v := select(storage, sp) }
+      ⇝  { v := find(storage, sp) }
 
 - `storageFieldReadBindLocalRoot`
 
@@ -242,14 +250,14 @@ emitted update.
 - `storageFieldReadStoreRoot`
 
       gp = sp.b
-      ⇝  { storage := store(storage, gp, find(storage, sp · b)) }
+      ⇝  { storage := save(storage, gp, find(storage, sp · b)) }
 
 ### Delete
 
 - `storageDeleteSimpleTarget`
 
       delete sp
-      ⇝  { storage := store(storage, sp, default) }
+      ⇝  { storage := save(storage, sp, default) }
 
 ### Mapping index access  (when `mapping(sp)`)
 
@@ -276,7 +284,7 @@ emitted update.
 - `storageIndexReadMappingStoreRoot`
 
       gp = sp[i]
-      ⇝  { storage := store(storage, gp, find(storage, sp · at(i))) }
+      ⇝  { storage := save(storage, gp, find(storage, sp · at(i))) }
 
 ### Array index access  (when `array(sp)`, with `ℓ = find(storage, sp · length)`)
 
@@ -311,7 +319,7 @@ Each array rule branches on bounds. Out-of-bounds goes to
 - `storageIndexReadArrayStoreRoot`
 
       gp = sp[i]
-      ⇝  if 0 ≤ i < ℓ : { storage := store(storage, gp,
+      ⇝  if 0 ≤ i < ℓ : { storage := save(storage, gp,
                                            find(storage, sp · at(i))) }
          else         : revert();
 
@@ -448,55 +456,62 @@ Two captures are needed before the terminal write:
 ### `uint v = total;`  (root read of a primitive state variable)
 
     ⟨[ uint v = total; ]⟩ φ
-    ⇝ { v := select(storage, total) } φ
+    ⇝ { v := find(storage, total) } φ
 
-Whole-struct paths cannot be read into a location-free local; they
-must be copied through memory or aliased through storage.
+where `total` extracts to `cons(total, nil)`. Whole-struct paths cannot
+be read into a location-free local; they must be copied through memory
+or aliased through storage.
 
 ### `alice = pVal;`  (whole-struct write to a root)
 
     ⟨[ alice = pVal; ]⟩ φ
-    ⇝ { storage := store(storage, alice, pVal) } φ
+    ⇝ { storage := save(storage, alice, pVal) } φ
+
+where `alice` extracts to `cons(alice, nil)`.
 
 ### `alice = bob;`  (whole-struct root-to-root copy)
 
     ⟨[ alice = bob; ]⟩ φ
-    ⇝ { storage := store(storage, alice, select(storage, bob)) } φ
+    ⇝ { storage := save(storage, alice, find(storage, bob)) } φ
 
-The path `bob` is *not* stored as the value; its struct value is
-read and stored.
+where both `alice` and `bob` extract to single-element lists. The path
+`bob` is *not* stored as the value; its struct value is read and stored.
 
 ## 11. Quick Reference: Statement → Rule
 
-Use this when looking up which Step-3 rule fires:
+Use this when looking up which Step-3 rule fires.
 
-| Source statement                | Rule                                  |
-|--------------------------------|---------------------------------------|
-| `sp.a = se`                    | `storageFieldWriteSave`               |
-| `sp1.a = sp2`                  | `storageFieldWriteCopySource`         |
-| `gp = se`                      | `storageRootWriteStore`               |
-| `gp = sp`                      | `storageRootWriteCopySource`          |
-| `lp = sp`                      | `storageLocalRootRebind`              |
-| `v = sp.a`                     | `storageFieldReadFind`                |
-| `v = sp`                       | `storageRootReadSelect`               |
-| `lp = sp.b`                    | `storageFieldReadBindLocalRoot`       |
-| `gp = sp.b`                    | `storageFieldReadStoreRoot`           |
-| `delete sp;`                   | `storageDeleteSimpleTarget`           |
-| `sp[i] = se`  (mapping)        | `storageIndexWriteMappingSave`        |
-| `sp1[i] = sp2`  (mapping)      | `storageIndexWriteMappingCopySource`  |
-| `v = sp[i]`  (mapping)         | `storageIndexReadMappingFind`         |
-| `lp = sp[i]`  (mapping)        | `storageIndexReadMappingBindLocalRoot`|
-| `gp = sp[i]`  (mapping)        | `storageIndexReadMappingStoreRoot`    |
-| `sp[i] = se`  (array)          | `storageIndexWriteArraySave`          |
-| `sp1[i] = sp2`  (array)        | `storageIndexWriteArrayCopySource`    |
-| `v = sp[i]`  (array)           | `storageIndexReadArrayFind`           |
-| `lp = sp[i]`  (array)          | `storageIndexReadArrayBindLocalRoot`  |
-| `gp = sp[i]`  (array)          | `storageIndexReadArrayStoreRoot`      |
-| `sp.push(se);`                 | `storagePushValueSave`                |
-| `sp1.push(sp2);`               | `storagePushValueCopySource`          |
-| `sp.push();`                   | `storagePushLengthSave`               |
-| `lp = sp.push();`              | `storageLocalRootPushBind`            |
-| `path.push() = se;`            | `storagePushLhsToPushValue` (desugar) |
-| `sp.pop();`                    | `storagePopSave`                      |
-| `revert();` (in `⟨·⟩`)         | `revertDiamond`                       |
-| `revert();` (in `[·]`)         | `revertBox`                           |
+**Unified path representation:** Both global roots (`gp`) and local
+storage aliases (`lp`) are `List`-typed paths. A global root `alice`
+extracts to `cons(alice, nil)`. All storage operations use `find`/`save`.
+
+| Source statement                | Rule                                  | Update operation |
+|--------------------------------|---------------------------------------|------------------|
+| `sp.a = se`                    | `storageFieldWriteSave`               | `save`           |
+| `sp1.a = sp2`                  | `storageFieldWriteCopySource`         | `save`           |
+| `gp = se`                      | `storageRootWriteStore`               | `save`           |
+| `gp = sp`                      | `storageRootWriteCopySource`          | `save`/`find`    |
+| `lp = sp`                      | `storageLocalRootRebind`              | direct assign    |
+| `v = sp.a`                     | `storageFieldReadFind`                | `find`           |
+| `v = sp`                       | `storageRootReadSelect`               | `find`           |
+| `lp = sp.b`                    | `storageFieldReadBindLocalRoot`       | direct assign    |
+| `gp = sp.b`                    | `storageFieldReadStoreRoot`           | `save`/`find`    |
+| `delete sp;`                   | `storageDeleteSimpleTarget`           | `save`           |
+| `sp[i] = se`  (mapping)        | `storageIndexWriteMappingSave`        | `save`           |
+| `sp1[i] = sp2`  (mapping)      | `storageIndexWriteMappingCopySource`  | `save`           |
+| `v = sp[i]`  (mapping)         | `storageIndexReadMappingFind`         | `find`           |
+| `lp = sp[i]`  (mapping)        | `storageIndexReadMappingBindLocalRoot`| direct assign    |
+| `gp = sp[i]`  (mapping)        | `storageIndexReadMappingStoreRoot`    | `save`/`find`    |
+| `sp[i] = se`  (array)          | `storageIndexWriteArraySave`          | `save`           |
+| `sp1[i] = sp2`  (array)        | `storageIndexWriteArrayCopySource`    | `save`           |
+| `v = sp[i]`  (array)           | `storageIndexReadArrayFind`           | `find`           |
+| `lp = sp[i]`  (array)          | `storageIndexReadArrayBindLocalRoot`  | direct assign    |
+| `gp = sp[i]`  (array)          | `storageIndexReadArrayStoreRoot`      | `save`/`find`    |
+| `sp.push(se);`                 | `storagePushValueSave`                | `save`           |
+| `sp1.push(sp2);`               | `storagePushValueCopySource`          | `save`           |
+| `sp.push();`                   | `storagePushLengthSave`               | `save`           |
+| `lp = sp.push();`              | `storageLocalRootPushBind`            | `save`           |
+| `path.push() = se;`            | `storagePushLhsToPushValue` (desugar) | —                |
+| `sp.pop();`                    | `storagePopSave`                      | `save`           |
+| `revert();` (in `⟨·⟩`)         | `revertDiamond`                       | —                |
+| `revert();` (in `[·]`)         | `revertBox`                           | —                |

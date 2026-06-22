@@ -103,9 +103,12 @@ public class Services implements LogicServices, ProofServices {
             return tb.var(pv);
         }
         if (pe instanceof FieldReference fieldRef) {
-            // a contract field access resolves, lazily and by name, to the field's
-            // registered Field-sorted constant — no logic operator is stored on the AST node
-            return tb.func(fieldTerm(fieldRef.getFieldConstantName(), services));
+            // a contract field access resolves to a single-element List path (cons(field, nil))
+            // so that global roots are treated uniformly with local storage paths
+            Term field = tb.func(fieldTerm(fieldRef.getFieldConstantName(), services));
+            Function cons = services.getNamespaces().functions().lookup(new Name("cons"));
+            Function nil = services.getNamespaces().functions().lookup(new Name("nil"));
+            return tb.func(cons, field, tb.func(nil));
         }
         if (pe instanceof MemberExp member) {
             Term basePath = convertToLogicElement(member.getLeftExp(), services);

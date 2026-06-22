@@ -61,21 +61,21 @@ public class FieldAccessExampleTest {
 
         goal.apply(app);
 
-        // after: the field write became a storeSt update on contract storage and the post
-        // reads the field back via selectSt; the field access resolved to the constant
-        // Bank$balance (looked up lazily by name).
+        // after: the field write became a save update on contract storage and the post
+        // reads the field back via find; the field access resolved to the constant
+        // Bank$balance (looked up lazily by name) wrapped in a List.
         Goal newGoal = proof.openGoals().head();
         Term after = newGoal.sequent().succedent().get(0).formula();
         String s = after.toString();
-        assertTrue(s.contains("storeSt"), "store should appear, was: " + s);
-        assertTrue(s.contains("selectSt"), "read-back select should appear, was: " + s);
+        assertTrue(s.contains("save"), "save should appear, was: " + s);
+        assertTrue(s.contains("find"), "read-back find should appear, was: " + s);
         assertTrue(s.contains("Bank$balance"),
             "resolved field constant should appear, was: " + s);
 
-        // the existing struct rule selectIntOnStore collapses the store-then-read round-trip,
+        // the existing struct rule findAfterSave collapses the save-then-find round-trip,
         // so automode closes the goal: the field really does hold the written value.
         env.getProofControl().startAndWaitForAutoMode(proof);
         assertTrue(proof.closed(),
-            "store-then-read round-trip should close via selectIntOnStore");
+            "save-then-find round-trip should close via findAfterSave");
     }
 }

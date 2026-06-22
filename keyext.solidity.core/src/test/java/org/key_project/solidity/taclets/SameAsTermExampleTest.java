@@ -59,11 +59,12 @@ public class SameAsTermExampleTest {
 
         goal.apply(app);
 
-        // \sameAsTerm bound s to the conversion of fr, so the field constant now appears
+        // \sameAsTerm bound path to the conversion of fr, which is now a List (cons(Bank$balance, nil))
         Goal newGoal = proof.openGoals().head();
         Term after = newGoal.sequent().succedent().get(0).formula();
         assertTrue(after.toString().contains("Bank$balance"),
-            "the term schema variable should have been bound to the field constant, was: " + after);
+            "the term schema variable should have been bound to a List containing the field constant, was: "
+                + after);
 
         env.getProofControl().startAndWaitForAutoMode(proof);
         assertTrue(proof.closed(), "the store-then-read round-trip should close");
