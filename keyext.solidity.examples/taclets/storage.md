@@ -126,22 +126,52 @@ storage read that produces a value.
     -------------------------------------------------------
             => ⟨ π  nlhs = op(sp, se); ω ⟩ φ
 
-### Instances of Step 1
+### Instances of unfold_rightFst
 
-- `storageFieldRead_unfold_rightFst`  — `lhs = nsp.a`
-- `storageIndexRead_unfold_rightFst`  — `lhs = nsp[e]`
-- `storageIndexRead_unfold_rightSndIndex`  — `lhs = sp[nse]`
-- `storageFieldRead_unfold_rightSndResult`  — `nlhs = sp.a`
-- `storageIndexRead_unfold_rightSndResult`  — `nlhs = sp[se]`
+**`storageFieldRead_unfold_rightFst`** — `lhs = nsp.a`
 
-Standalone (push argument is not an assignment RHS, but it is
-evaluated before the push update fires):
+    nsp => ⟨ π  storage sp = nsp; lhs = sp.a; ω ⟩ φ
+    -----------------------------------------------
+              => ⟨ π  lhs = nsp.a; ω ⟩ φ
 
-- `storagePushValue_unfold_rightSndArgument`
+**`storageIndexRead_unfold_rightFst`** — `lhs = nsp[e]`
 
-      nse => ⟨ π  T pv = nse; sp.push(pv); ω ⟩ φ
-      ------------------------------------------
-          => ⟨ π  sp.push(nse); ω ⟩ φ
+    nsp => ⟨ π  storage sp = nsp; lhs = sp[e]; ω ⟩ φ
+    ------------------------------------------------
+              => ⟨ π  lhs = nsp[e]; ω ⟩ φ
+
+### Instances of unfold_rightSnd
+
+**`storageIndexRead_unfold_rightSndIndex`** — `lhs = sp[nse]`
+
+    nse => ⟨ π  T idx = nse; lhs = sp[idx]; ω ⟩ φ
+    ---------------------------------------------
+          => ⟨ π  lhs = sp[nse]; ω ⟩ φ
+
+### Instances of unfold_rightSndResult
+
+**`storageFieldRead_unfold_rightSndResult`** — `nlhs = sp.a`
+
+    nlhs => ⟨ π  T_{nlhs} pv = sp.a; nlhs = pv; ω ⟩ φ
+    -------------------------------------------------
+              => ⟨ π  nlhs = sp.a; ω ⟩ φ
+
+**`storageIndexRead_unfold_rightSndResult`** — `nlhs = sp[se]`
+
+    nlhs => ⟨ π  T_{nlhs} pv = sp[se]; nlhs = pv; ω ⟩ φ
+    ---------------------------------------------------
+              => ⟨ π  nlhs = sp[se]; ω ⟩ φ
+
+### Standalone: push argument
+
+The push argument is not an assignment RHS, but it is evaluated before
+the push update fires.
+
+**`storagePushValue_unfold_rightSndArgument`** — `sp.push(nse);`
+
+    nse => ⟨ π  T pv = nse; sp.push(pv); ω ⟩ φ
+    ------------------------------------------
+        => ⟨ π  sp.push(nse); ω ⟩ φ
 
 ## 5. Step 2: Unfolding the Left-Hand Side
 
@@ -157,26 +187,64 @@ evaluated before the push update fires):
     ------------------------------------------------
         => ⟨ π  op(sp, nse) = se; ω ⟩ φ
 
-### Instances of Step 2
+### Instances of unfold_leftFst
 
-- `storageFieldWrite_unfold_leftFst`  — `nsp.a = se`
-- `storageIndexWrite_unfold_leftFst`  — `nsp[e] = se`
-- `storageIndexWrite_unfold_leftSndIndex`  — `sp[nse] = se`
+**`storageFieldWrite_unfold_leftFst`** — `nsp.a = se`
+
+    nsp => ⟨ π  storage sp = nsp; sp.a = se; ω ⟩ φ
+    ----------------------------------------------
+            => ⟨ π  nsp.a = se; ω ⟩ φ
+
+**`storageIndexWrite_unfold_leftFst`** — `nsp[e] = se`
+
+    nsp => ⟨ π  storage sp = nsp; sp[e] = se; ω ⟩ φ
+    -----------------------------------------------
+            => ⟨ π  nsp[e] = se; ω ⟩ φ
+
+### Instances of unfold_leftSnd
+
+**`storageIndexWrite_unfold_leftSndIndex`** — `sp[nse] = se`
+
+    nse => ⟨ π  T idx = nse; sp[idx] = se; ω ⟩ φ
+    --------------------------------------------
+         => ⟨ π  sp[nse] = se; ω ⟩ φ
 
 ### Standalone receiver / delete-target simplifications
 
 These exist because their active statement is not assignment-shaped
 (`op(sp,a) = se`); it is `delete`, `push`, `pop`, or a push-return
-binding.
-
-- `storageDelete_unfold_leftFst`             — `delete nsp;`
-- `storagePushValue_unfold_leftFstReceiver`  — `nsp.push(e);`
-- `storagePush_unfold_leftFstReceiver`       — `nsp.push();`
-- `storagePop_unfold_leftFstReceiver`        — `nsp.pop();`
-- `storageLocalRootPush_unfold_leftFstReceiver` — `lp = nsp.push();`
-
-Each replaces `nsp` with a fresh `T_{nsp} storage sp = nsp;` capture,
+binding. Each replaces `nsp` with a fresh `storage sp = nsp;` capture,
 then continues against `sp`.
+
+**`storageDelete_unfold_leftFst`** — `delete nsp;`
+
+    nsp => ⟨ π  storage sp = nsp; delete sp; ω ⟩ φ
+    ----------------------------------------------
+            => ⟨ π  delete nsp; ω ⟩ φ
+
+**`storagePushValue_unfold_leftFstReceiver`** — `nsp.push(e);`
+
+    nsp => ⟨ π  storage sp = nsp; sp.push(e); ω ⟩ φ
+    -----------------------------------------------
+            => ⟨ π  nsp.push(e); ω ⟩ φ
+
+**`storagePush_unfold_leftFstReceiver`** — `nsp.push();`
+
+    nsp => ⟨ π  storage sp = nsp; sp.push(); ω ⟩ φ
+    ----------------------------------------------
+            => ⟨ π  nsp.push(); ω ⟩ φ
+
+**`storagePop_unfold_leftFstReceiver`** — `nsp.pop();`
+
+    nsp => ⟨ π  storage sp = nsp; sp.pop(); ω ⟩ φ
+    ---------------------------------------------
+            => ⟨ π  nsp.pop(); ω ⟩ φ
+
+**`storageLocalRootPush_unfold_leftFstReceiver`** — `lp = nsp.push();`
+
+    nsp => ⟨ π  storage sp = nsp; lp = sp.push(); ω ⟩ φ
+    ---------------------------------------------------
+            => ⟨ π  lp = nsp.push(); ω ⟩ φ
 
 ## 6. Step 3: Generating an Update
 
