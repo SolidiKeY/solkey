@@ -272,8 +272,16 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     @Override
     public SyntaxElement visitMemberAccess(MemberAccessContext ctx) {
         Expression leftExp = visitExpression(ctx.expression());
-        String fieldName = ctx.identifier().getText();
         Type leftType = leftExp.getType();
+        if (ctx.schemaVariable() != null) {
+            String svName = ctx.schemaVariable().getText().substring(2);
+            SchemaVariable sv = schemaVariables.lookup(svName);
+            if (sv == null) {
+                reportError("Schema Variable " + svName + " not declared.", ctx.start);
+            }
+            return new MemberExp(leftExp, sv, leftType);
+        }
+        String fieldName = ctx.identifier().getText();
         FieldDeclaration resolved = resolveStructField(leftType, fieldName);
         FieldDeclaration field = resolved != null ? resolved
                 : new FieldDeclaration(

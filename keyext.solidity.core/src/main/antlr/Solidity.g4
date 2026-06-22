@@ -178,7 +178,7 @@ expression
   | expression ('++' | '--')                          # Postfix
   | left=expression '[' index=expression ']'                     # IndexAccess
   | base=expression '[' start=expression? ':' end=expression? ']'    # SliceAccess
-  | expression '.' identifier                         # MemberAccess
+  | expression '.' ( identifier | schemaVariable )    # MemberAccess
   | expression '{' nameValueList '}'                  # ObjectInit
   | expression '(' functionCallArguments ')'          # FunctionCallExp
   | 'new' typeName                                    # NewInstance

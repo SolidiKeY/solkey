@@ -43,6 +43,13 @@ it, declare only example variables, and define closing problems.
   the owning struct.
 - `storage-field-deep-write-read.key` is the single-program write+read at
   depth 3: `alice.account.balance = 34; result = alice.account.balance;`.
+  The proof exercises the paper's `storageFieldWrite_unfold_leftFst` (§5):
+  the nonsimple receiver `alice.account` is captured into a fresh storage
+  alias `sp` by emitting `T storage sp = alice.account; sp.balance = 34;`
+  literally into the modality. The downstream chain
+  `storageLocalDeclInitSplit` → `storageLocalDeclSkip` →
+  `storageFieldReadBindLocalRoot` → `storageFieldWriteSave_local` closes the
+  proof, matching storage.md:499-505 step for step.
 - `storage-field-deep-value.key` demonstrates four-level member-access write
   and read on `alice.account.token.value`, chaining `_decomposeToken` followed
   by `_decomposeValue` against the `Path[name=field.global]` base.
@@ -153,7 +160,17 @@ The remaining paper taclets should be added as focused `.key` patterns only
 when the matcher can preserve the relevant Solidity path shape faithfully.
 
 1. Continue direct complex-path pattern support. Implemented for member-field
-   and indexed-path decomposition.
+   and indexed-path decomposition, and for the paper's Step-2
+   `storageFieldWrite_unfold_leftFst` rule (`s#nsp.s#a = s#se` with a fresh
+   storage alias on the receiver). The supporting infrastructure adds a
+   `\program Field` schema-variable sort matching the field-name child of a
+   `MemberExp`, and storage-aliased fresh-variable instantiation in
+   `TacletApp#getProgramElement` so `\newTypeOf(sp, nsp)` yields a
+   `Variable[name=storage]`-sorted local. The paper's Step-3 `..._global`
+   and `..._local` terminal rules were rewritten to decompose the LHS the
+   same way as the unfold rule, so a simple `SIMPLICITY=SIMPLE` constraint
+   on the receiver SV suffices to keep the unfold rule winning on
+   complex-receiver writes.
 
    Member-field decomposition is implemented for patterns such as
    `s#a.field`; indexed-path decomposition is implemented for patterns such as

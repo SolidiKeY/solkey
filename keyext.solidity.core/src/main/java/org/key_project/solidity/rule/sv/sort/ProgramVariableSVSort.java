@@ -39,6 +39,10 @@ public class ProgramVariableSVSort extends ProgramSVSort {
         this.filter = filter;
     }
 
+    public Filter getFilter() {
+        return filter;
+    }
+
     @Override
     public boolean canStandFor(SolidityProgramElement pe, Services services) {
         if (!(pe instanceof ProgramVariable pv)) {

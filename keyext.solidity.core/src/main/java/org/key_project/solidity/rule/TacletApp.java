@@ -46,7 +46,7 @@ import org.key_project.solidity.rule.matching.inst.GenericSortException;
 import org.key_project.solidity.rule.matching.inst.MatchConditions;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.solidity.rule.sv.*;
-import org.key_project.solidity.rule.sv.sort.ProgramSVSort;
+import org.key_project.solidity.rule.sv.sort.ProgramVariableSVSort;
 import org.key_project.solidity.rule.taclets.NewVarcond;
 import org.key_project.solidity.rule.taclets.SolFindTaclet;
 import org.key_project.solidity.rule.taclets.SolNoFindTaclet;
@@ -61,6 +61,11 @@ import org.key_project.util.collection.ImmutableSet;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+
+import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Default;
+import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Storage;
+import static org.key_project.solidity.rule.sv.sort.ProgramSVSort.VARIABLE;
+import static org.key_project.solidity.rule.sv.sort.ProgramVariableSVSort.Filter.STORAGE_LOCAL;
 
 public abstract class TacletApp implements RuleApp {
     /// the taclet for which the application information is collected
@@ -477,7 +482,8 @@ public abstract class TacletApp implements RuleApp {
                 continue;
             }
 
-            if (operatorSv.sort() == ProgramSVSort.VARIABLE) {
+            if (operatorSv.sort() == VARIABLE
+                    || operatorSv.sort() instanceof ProgramVariableSVSort) {
                 String proposal =
                     varNamer.getSuggestiveNameProposalForProgramVariable(operatorSv, this,
                         services, proposals);
@@ -837,7 +843,8 @@ public abstract class TacletApp implements RuleApp {
         // TODO implement the real version
         // Currently a simplified version is used
         Sort svSort = sv.sort();
-        if (svSort == ProgramSVSort.VARIABLE) {
+        if (svSort == VARIABLE
+                || svSort instanceof org.key_project.solidity.rule.sv.sort.ProgramVariableSVSort) {
             NewVarcond nvc = (NewVarcond) taclet.varDeclaredNew(sv);
             if (nvc != null) {
                 KeYSolidityType kst;
@@ -861,12 +868,37 @@ public abstract class TacletApp implements RuleApp {
                     kst = (KeYSolidityType) o;
                 }
                 assert kst != null : "could not find kst for: " + o;
-                // A freshly introduced local variable (\new(v, ...) / \addprogvars) has no own
-                // declared data location, so it defaults like a plain local declaration.
-                return new ProgramVariable(new Name(instantiation), kst, DataLocation.Default);
+                DataLocation dataLocation = isStorageAliasSV(sv)
+                        ? Storage
+                        : Default;
+                if (dataLocation == Storage) {
+                    kst = asStorageAliasType(kst, services);
+                }
+                return new ProgramVariable(new Name(instantiation), kst, dataLocation);
             }
         }
         return null;
+    }
+
+    private static boolean isStorageAliasSV(ProgramSV sv) {
+        return sv.sort() instanceof org.key_project.solidity.rule.sv.sort.ProgramVariableSVSort pvs
+                && pvs.getFilter() == STORAGE_LOCAL;
+    }
+
+    private static KeYSolidityType asStorageAliasType(KeYSolidityType original,
+            Services services) {
+        if (original == null) {
+            return null;
+        }
+        var sort = original.getSort();
+        if (sort == null || !"Struct".equals(sort.name().toString())) {
+            return original;
+        }
+        var listSort = services.getNamespaces().sorts().lookup(new Name("List"));
+        if (listSort == null) {
+            return original;
+        }
+        return new KeYSolidityType(original.getSolidityType(), listSort);
     }
 
     /// checks if the instantiation of <code>sv</code> with <code>pe</code> is possible. If the

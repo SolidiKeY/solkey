@@ -9,6 +9,7 @@ import java.util.Objects;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
@@ -36,10 +37,33 @@ public class MemberExp extends SolidityExpression implements Resolver {
     }
 
     public MemberExp(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
+        super(typeFrom(children));
         this.leftExp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
         this.rightExp = Objects.requireNonNull(children.removeFirstOccurrence(SyntaxElement.class));
         this.id = -1;
+    }
+
+    private static Type typeFrom(ExtList children) {
+        Type t = children.removeFirstOccurrence(Type.class);
+        if (t != null) {
+            return t;
+        }
+        for (Object child : children) {
+            if (child instanceof FieldDeclaration fd) {
+                var tref = fd.getTypeReference();
+                if (tref.referencedType != null) {
+                    return tref.referencedType;
+                }
+            }
+        }
+        // Final fallback: pull the type off the receiver expression.
+        for (Object child : children) {
+            if (child instanceof Expression expr && expr.getType() != null) {
+                return expr.getType();
+            }
+        }
+        throw new NullPointerException(
+            "MemberExp(ExtList) requires a non-null Type in the change list");
     }
 
     public Expression getLeftExp() { return leftExp; }

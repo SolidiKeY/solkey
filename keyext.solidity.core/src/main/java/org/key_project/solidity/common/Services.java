@@ -40,6 +40,8 @@ import org.key_project.solidity.theory.TheoryInfo;
 
 import org.jspecify.annotations.NonNull;
 
+import static org.key_project.solidity.theory.StructLDT.FIELD_SEPARATOR;
+
 public class Services implements LogicServices, ProofServices {
 
     private final TermFactory tf;
@@ -115,6 +117,14 @@ public class Services implements LogicServices, ProofServices {
             Term field = memberFieldTerm(member, services);
             return appendPathSegment(basePath, field, services);
         }
+        if (pe instanceof FieldDeclaration field) {
+            StructDeclaration owner = field.getContainingStruct();
+            Name constantName = owner != null && owner.getContract() != null
+                    ? new Name(owner.getContract().name() + FIELD_SEPARATOR
+                            + owner.name() + FIELD_SEPARATOR + field.name())
+                    : field.name();
+            return services.getTermBuilder().func(fieldTerm(constantName, services));
+        }
         if (pe instanceof IndexExpression index) {
             Term basePath = convertToLogicElement(index.getLeftExp(), services);
             Term indexTerm = convertToLogicElement(index.getIndexExp(), services);
@@ -148,8 +158,8 @@ public class Services implements LogicServices, ProofServices {
         if (member.getRightExp() instanceof FieldDeclaration field) {
             StructDeclaration owner = field.getContainingStruct();
             Name constantName = owner != null && owner.getContract() != null
-                    ? new Name(owner.getContract().name() + StructLDT.FIELD_SEPARATOR
-                            + owner.name() + StructLDT.FIELD_SEPARATOR + field.name())
+                    ? new Name(owner.getContract().name() + FIELD_SEPARATOR
+                            + owner.name() + FIELD_SEPARATOR + field.name())
                     : field.name();
             return services.getTermBuilder().func(fieldTerm(constantName, services));
         }
