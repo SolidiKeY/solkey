@@ -83,7 +83,8 @@ Spotless enforces formatting (`scripts/tools/checkstyle/keyCodeStyle.xml`). Run 
 ## Taclets examples
 Use the `solidity-key-taclets` skill when creating, modifying, reviewing, or debugging Solidity `.key` taclets or examples.
 Read `keyext.solidity.examples/taclets/README.md` to see which features are missing.
-Develop them in `keyext.solidity.examples/taclets` and update `keyext.solidity.examples/taclets/README.md` after you implement the feature, so it will be already known what was already implemented.
+Storage taclets and other program rules live in `keyext.solidity.core/src/main/resources/org/key_project/solidity/proof/rules/solidityProgramRules.key` (loaded automatically via `standardSolidityRules.key`).
+Add new example problems under `keyext.solidity.examples/taclets` and update `keyext.solidity.examples/taclets/README.md` after you implement a feature.
 When creating or modifying storage rules, consult `keyext.solidity.examples/taclets/storage.md` for the calculus specification (schema variables, three-step strategy, and the statement→rule reference).
 
 ## Testing

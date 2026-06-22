@@ -1,18 +1,21 @@
 # Pre-licenciate-paper Taclet Starters
 
 This directory contains the runnable taclet subset inspired by the
-Pre-licenciate-paper storage rules. `storageRules.key` is the authoritative
-rule file; the other `.key` files in this directory are examples that include
-it, declare only example variables, and define closing problems.
+Pre-licenciate-paper storage rules. The authoritative storage rules now live
+in `keyext.solidity.core/src/main/resources/org/key_project/solidity/proof/rules/solidityProgramRules.key`
+(loaded automatically via `standardSolidityRules.key`); the `.key` files in
+this directory are examples that declare only example variables and define
+closing problems.
 
 ## Implemented Here
 
-- `storageRules.key` collects the currently runnable subset of the
-  Pre-licenciate-paper storage taclets. It is the only rule-bearing `.key` file
-  in this directory. The split follows the `solidity-key-taclets` skill
-  guidance: root storage rules use `SimpleStoragePath`, field/index paths use
-  `Path[...]` plus `\sameAsTerm`, and complex member/index cases stay as
-  structural `.key` source patterns.
+- The storage taclets live in `solidityProgramRules.key` (see the path
+  above). It collects the currently runnable subset of the
+  Pre-licenciate-paper storage taclets. The split follows the
+  `solidity-key-taclets` skill guidance: root storage rules use
+  `SimpleStoragePath`, field/index paths use `Path[...]` plus
+  `\sameAsTerm`, and complex member/index cases stay as structural `.key`
+  source patterns.
 - `storage-root-read-write.key` demonstrates `storageRootWriteStore` and
   `storageRootReadSelect` for contract storage fields using `\sameAsTerm`.
 - `storage-root-copy-source.key` demonstrates `storageRootWriteCopySource` for
@@ -88,7 +91,7 @@ it, declare only example variables, and define closing problems.
 
 ### Storage-alias examples
 
-`storageRules.key` includes four local-storage alias taclets:
+`solidityProgramRules.key` includes four local-storage alias taclets:
 
 - `storageLocalDeclInitSplit_rootRebind` — `T storage lp = sp;`
 - `storageLocalDeclInitSplit_globalField` — `T storage lp = sp.b;`
@@ -192,7 +195,7 @@ when the matcher can preserve the relevant Solidity path shape faithfully.
    branches, push/pop length updates, delete, compound-update desugaring,
    memory heap read/write allocation rules, or storage-memory copy rules
    using `copySt`/`copyMem`-style helpers. Three alias decl-init rules are
-   now in `storageRules.key` and fire correctly on
+   now in `solidityProgramRules.key` and fire correctly on
    `Person storage p = alice;`-shaped declarations, but standalone rebind
    (`lp = sp;` without declaration) and write-propagation through
    alias-rooted paths still need either path-as-List sorting for storage
