@@ -205,16 +205,6 @@ public class TacletBuilderManipulators {
             }
         };
 
-    /// `\pathBase(deepPath, basePath)` — extracts the base path from a deep field path.
-    /// For `alice.account.balance`, the base is `alice.account`.
-    public static final AbstractConditionBuilder PATH_BASE =
-        new ConstructorBasedBuilder("pathBase", PathBaseCondition.class, SV, SV);
-
-    /// `\pathField(deepPath, fieldName)` — extracts the field identifier from a MemberExp.
-    /// For `alice.account.balance`, the field is `balance`.
-    public static final AbstractConditionBuilder PATH_FIELD =
-        new ConstructorBasedBuilder("pathField", PathFieldCondition.class, SV, SV);
-
     private static final List<TacletBuilderCommand> tacletBuilderCommands = new ArrayList<>(2);
 
     static {
@@ -224,8 +214,7 @@ public class TacletBuilderManipulators {
             DROP_EFFECTLESS_ELEMENTARIES, SIMPLIFY_ITE_UPDATE,
             NEW_TYPE_OF, NEW_RUSTY_TYPE,
             IS_SUBTYPE, SAME, HAS_SORT,
-            NEW_LOCAL_VARS, HAS_INVARIANT, GET_INVARIANT, GET_VARIANT, SAME_AS_TERM,
-            PATH_BASE, PATH_FIELD);
+            NEW_LOCAL_VARS, HAS_INVARIANT, GET_INVARIANT, GET_VARIANT, SAME_AS_TERM);
     }
 
     /// Announce a [TacletBuilderCommand] for the use during the interpretation of asts. This

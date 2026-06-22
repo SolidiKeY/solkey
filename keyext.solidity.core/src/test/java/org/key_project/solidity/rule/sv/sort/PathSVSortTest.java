@@ -110,30 +110,19 @@ public class PathSVSortTest {
     }
 
     @Test
-    void memberPathKeepsBaseLocationAndSimplicityDependsOnBaseShape() {
-        // Depth-2 path: alice.age (base is ROOT) → simple
-        MemberExp shallowStorageMember = new MemberExp(storageField("alice"), field("age"),
+    void memberPathKeepsBaseLocationAndIsComplex() {
+        MemberExp storageMember = new MemberExp(storageField("alice"), field("age"),
             PrimitiveType.UINT256);
-        MemberExp shallowMemoryMember = new MemberExp(variable("account", DataLocation.Memory),
+        MemberExp memoryMember = new MemberExp(variable("account", DataLocation.Memory),
             field("age"), PrimitiveType.UINT256);
 
-        // Depth-2 paths should be simple (base is ROOT)
-        assertTrue(ProgramSVSort.SIMPLE_STORAGE_PATH.canStandFor(shallowStorageMember, services));
-        assertFalse(ProgramSVSort.COMPLEX_STORAGE_PATH.canStandFor(shallowStorageMember, services));
-        assertFalse(ProgramSVSort.MEMORY_PATH.canStandFor(shallowStorageMember, services));
+        assertTrue(ProgramSVSort.COMPLEX_STORAGE_PATH.canStandFor(storageMember, services));
+        assertFalse(ProgramSVSort.SIMPLE_STORAGE_PATH.canStandFor(storageMember, services));
+        assertFalse(ProgramSVSort.MEMORY_PATH.canStandFor(storageMember, services));
 
-        assertTrue(ProgramSVSort.SIMPLE_MEMORY_PATH.canStandFor(shallowMemoryMember, services));
-        assertFalse(ProgramSVSort.COMPLEX_MEMORY_PATH.canStandFor(shallowMemoryMember, services));
-        assertFalse(ProgramSVSort.STORAGE_PATH.canStandFor(shallowMemoryMember, services));
-
-        // Depth-3 path: alice.account.balance (base is FIELD) → complex
-        MemberExp aliceAccount = new MemberExp(storageField("alice"), field("account"),
-            PrimitiveType.UINT256);
-        MemberExp deepStorageMember = new MemberExp(aliceAccount, field("balance"),
-            PrimitiveType.UINT256);
-
-        assertTrue(ProgramSVSort.COMPLEX_STORAGE_PATH.canStandFor(deepStorageMember, services));
-        assertFalse(ProgramSVSort.SIMPLE_STORAGE_PATH.canStandFor(deepStorageMember, services));
+        assertTrue(ProgramSVSort.COMPLEX_MEMORY_PATH.canStandFor(memoryMember, services));
+        assertFalse(ProgramSVSort.SIMPLE_MEMORY_PATH.canStandFor(memoryMember, services));
+        assertFalse(ProgramSVSort.STORAGE_PATH.canStandFor(memoryMember, services));
     }
 
     @Test
