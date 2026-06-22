@@ -1,4 +1,4 @@
-# Pre-licenciate-paper Taclet Starters
+# Taclet Starters
 
 This directory contains the runnable taclet subset inspired by the
 Pre-licenciate-paper storage rules. The authoritative storage rules now live
