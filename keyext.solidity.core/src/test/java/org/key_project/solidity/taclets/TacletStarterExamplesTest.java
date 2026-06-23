@@ -61,7 +61,15 @@ public class TacletStarterExamplesTest {
             example("storage-alias-rebind-alias.key"),
             example("storage-local-decl-skip.key"),
             example("storage-field-read-bind-local.key"),
-            example("storage-field-read-store-root.key"));
+            example("storage-field-read-store-root.key"),
+            example("storage-root-preincrement.key"),
+            example("storage-root-postincrement.key"),
+            example("storage-root-predecrement.key"),
+            example("storage-root-preincrement-assign.key"),
+            example("storage-root-postincrement-assign.key"),
+            example("storage-root-postdecrement-assign.key"),
+            example("storage-field-preincrement.key"),
+            example("storage-field-postincrement-assign.key"));
     }
 
     private static Arguments example(String name) {

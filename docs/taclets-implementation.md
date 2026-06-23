@@ -89,6 +89,44 @@ closing problems.
   at a global field path into a global int root via
   `storeSt(storage, total, find<[int]>(storage, alice·age))`.
 
+### Increment and Decrement Operators
+
+Increment and decrement operators are now implemented using **direct storage update rules** that modify storage without desugaring to assignment statements. This approach follows KeY's pattern for Java heap operations and avoids the complexity of evaluating arithmetic expressions at the program level.
+
+**Implementation approach**:
+- Operators like `++age` directly create storage updates: `{storage := save(storage, path, find<[int]>(storage, path) + 1)}`
+- Arithmetic happens at the logic term level, not the program level
+- No intermediate desugaring step that would create complex expression patterns
+
+**Operator matching fix**:
+The pattern matching infrastructure was fixed to check operator fields in `AssignExpression`, `UnaryExpression`, and `BinaryExpression`. Previously, taclet patterns like `s#lhs += s#rhs` would incorrectly match regular assignments `s#lhs = s#rhs` because matching only checked AST node class, not the operator enum value. The fix adds `match()` overrides that verify `operator.equals()` before accepting a match.
+
+**Implemented rules**:
+- `storageRootPreincrement` - `++age;` on storage roots
+- `storageRootPostincrement` - `age++;` on storage roots
+- `storageRootPredecrement` - `--age;` on storage roots
+- `storageRootPostdecrement` - `age--;` on storage roots
+- `storageRootPreincrementAssignment` - `result = ++age;`
+- `storageRootPostincrementAssignment` - `result = age++;`
+- `storageRootPredecrementAssignment` - `result = --age;`
+- `storageRootPostdecrementAssignment` - `result = age--;`
+- `storageFieldPreincrement` - `++alice.age;` on nested fields
+- `storageFieldPostincrementAssignment` - `result = alice.age++;`
+
+**Example files**:
+- `storage-root-preincrement.key` - Tests `++age;` on simple storage root
+- `storage-root-postincrement.key` - Tests `age++;` on simple storage root
+- `storage-root-predecrement.key` - Tests `--age;` on simple storage root
+- `storage-root-preincrement-assign.key` - Tests `result = ++age;`
+- `storage-root-postincrement-assign.key` - Tests `result = age++;`
+- `storage-root-postdecrement-assign.key` - Tests `result = age--;`
+- `storage-field-preincrement.key` - Tests `++alice.age;` on nested field
+- `storage-field-postincrement-assign.key` - Tests `result = alice.age++;` on nested field
+
+All 8 increment/decrement examples close successfully.
+
+**Compound assignment operators** (+=, -=, *=, /=, %=, &=, |=, ^=, <<=, >>=) are parsed correctly but not yet implemented. They will require similar direct update rules or expression evaluation infrastructure.
+
 ### Storage-alias examples
 
 `solidityProgramRules.key` includes four local-storage alias taclets:
@@ -192,15 +230,17 @@ when the matcher can preserve the relevant Solidity path shape faithfully.
    heap helpers.
 
    The runnable `.key` subset does not yet cover array bounds/revert
-   branches, push/pop length updates, delete, compound-update desugaring,
-   memory heap read/write allocation rules, or storage-memory copy rules
-   using `copySt`/`copyMem`-style helpers. Three alias decl-init rules are
-   now in `solidityProgramRules.key` and fire correctly on
-   `Person storage p = alice;`-shaped declarations, but standalone rebind
-   (`lp = sp;` without declaration) and write-propagation through
-   alias-rooted paths still need either path-as-List sorting for storage
-   locals or an extra `cons(find<[Struct]>(s, p), q)` normalisation axiom
-   — see the alias section above for the specific obstacles.
+   branches, push/pop length updates, delete, memory heap read/write
+   allocation rules, or storage-memory copy rules using `copySt`/`copyMem`-style
+   helpers. Increment/decrement operators (++, --) are now implemented
+   using direct storage update rules. Compound assignment operators
+   (+=, -=, *=, /=, %=, &=, |=, ^=, <<=, >>=) are not yet implemented.
+   Three alias decl-init rules are now in `solidityProgramRules.key` and
+   fire correctly on `Person storage p = alice;`-shaped declarations, but
+   standalone rebind (`lp = sp;` without declaration) and write-propagation
+   through alias-rooted paths still need either path-as-List sorting for
+   storage locals or an extra `cons(find<[Struct]>(s, p), q)` normalisation
+   axiom — see the alias section above for the specific obstacles.
 
 ## Suggested Next Examples After Java Support
 

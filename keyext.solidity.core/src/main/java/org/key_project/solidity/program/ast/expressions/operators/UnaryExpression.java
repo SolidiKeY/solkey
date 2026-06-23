@@ -7,12 +7,15 @@ import java.util.Objects;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.SourceData;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.solidity.rule.matching.inst.MatchConditions;
 import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public class UnaryExpression implements SolidityProgramElement, Expression, OperatorExpression {
 
@@ -74,5 +77,34 @@ public class UnaryExpression implements SolidityProgramElement, Expression, Oper
             default:
                 throw new IllegalStateException("Unknown unary operator: " + operator);
         }
+    }
+
+    @Override
+    public @Nullable MatchConditions match(SourceData sourceData, @Nullable MatchConditions mc) {
+        final var src = sourceData.getSource();
+
+        if (src == null)
+            return null;
+
+        // Check class type
+        if (!(src instanceof UnaryExpression that)) {
+            return null;
+        }
+
+        // CRITICAL FIX: Check operator matches
+        if (!this.operator.equals(that.operator)) {
+            return null;
+        }
+
+        // Match children
+        final SourceData newSource = new SourceData(src, 0, sourceData.getServices());
+        mc = matchChildren(newSource, mc, 0);
+
+        if (mc == null) {
+            return null;
+        }
+
+        sourceData.next();
+        return mc;
     }
 }
