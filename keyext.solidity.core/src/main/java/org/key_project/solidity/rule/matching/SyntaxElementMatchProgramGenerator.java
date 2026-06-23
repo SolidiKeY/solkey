@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Operator;
 import org.key_project.logic.op.sv.SchemaVariable;
-import org.key_project.prover.rules.matcher.vm.VMProgramInterpreter;
 import org.key_project.prover.rules.matcher.vm.instruction.VMInstruction;
 import org.key_project.solidity.logic.GenericArgument;
 import org.key_project.solidity.logic.op.ElementaryUpdate;

@@ -35,7 +35,6 @@ import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.SolidityModel;
 import org.key_project.solidity.proof.mgt.SpecificationRepository;
 import org.key_project.solidity.theory.LDT;
-import org.key_project.solidity.theory.StructLDT;
 import org.key_project.solidity.theory.TheoryInfo;
 
 import org.jspecify.annotations.NonNull;

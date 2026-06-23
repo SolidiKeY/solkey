@@ -159,8 +159,7 @@ public class ProgVarReplacer {
     /// references a renamed variable. Mirror of Java lines 100-153.
     public SVInstantiations replace(SVInstantiations insts) {
         SVInstantiations result = insts;
-        for (ImmutableMapEntry<SchemaVariable, InstantiationEntry<?>> e :
-                (Iterable<ImmutableMapEntry<SchemaVariable, InstantiationEntry<?>>>) insts::pairIterator) {
+        for (ImmutableMapEntry<SchemaVariable, InstantiationEntry<?>> e : (Iterable<ImmutableMapEntry<SchemaVariable, InstantiationEntry<?>>>) insts::pairIterator) {
             SchemaVariable sv = e.key();
             Object inst = e.value().getInstantiation();
             if (inst instanceof Term t) {

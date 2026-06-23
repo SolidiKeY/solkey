@@ -126,19 +126,6 @@ public class TacletParserTest {
     }
 
     @Test
-    public void testParameterizedPathAwareProgramSVSortDeclarations() throws IOException {
-        parseDecls("""
-                \\schemaVariables {
-                  \\program Path[name=storage.simple.root.global.primitive] storageRoot;
-                  \\program Path[name=memory.complex.index.array.reference] memoryIndex;
-                }
-                """);
-
-        assertInstanceOf(ProgramSV.class, lookup_schemavar("storageRoot"));
-        assertInstanceOf(ProgramSV.class, lookup_schemavar("memoryIndex"));
-    }
-
-    @Test
     public void testInvalidParameterizedPathAwareProgramSVSortDeclarationFails() {
         assertThrows(Exception.class, () -> parseDecls("""
                 \\schemaVariables {

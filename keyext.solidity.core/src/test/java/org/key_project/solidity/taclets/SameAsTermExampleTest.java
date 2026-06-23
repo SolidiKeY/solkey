@@ -59,7 +59,6 @@ public class SameAsTermExampleTest {
 
         goal.apply(app);
 
-        // \sameAsTerm bound path to the conversion of fr, which is now a List (cons(Bank$balance, nil))
         Goal newGoal = proof.openGoals().head();
         Term after = newGoal.sequent().succedent().get(0).formula();
         assertTrue(after.toString().contains("Bank$balance"),
