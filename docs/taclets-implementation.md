@@ -102,6 +102,8 @@ Increment and decrement operators are now implemented using **direct storage upd
 The pattern matching infrastructure was fixed to check operator fields in `AssignExpression`, `UnaryExpression`, and `BinaryExpression`. Previously, taclet patterns like `s#lhs += s#rhs` would incorrectly match regular assignments `s#lhs = s#rhs` because matching only checked AST node class, not the operator enum value. The fix adds `match()` overrides that verify `operator.equals()` before accepting a match.
 
 **Implemented rules**:
+
+*Root-level rules:*
 - `storageRootPreincrement` - `++age;` on storage roots
 - `storageRootPostincrement` - `age++;` on storage roots
 - `storageRootPredecrement` - `--age;` on storage roots
@@ -110,20 +112,72 @@ The pattern matching infrastructure was fixed to check operator fields in `Assig
 - `storageRootPostincrementAssignment` - `result = age++;`
 - `storageRootPredecrementAssignment` - `result = --age;`
 - `storageRootPostdecrementAssignment` - `result = age--;`
+
+*Field-level rules:*
 - `storageFieldPreincrement` - `++alice.age;` on nested fields
+- `storageFieldPostincrement` - `alice.age++;` on nested fields
+- `storageFieldPredecrement` - `--alice.age;` on nested fields
+- `storageFieldPostdecrement` - `alice.age--;` on nested fields
+- `storageFieldPreincrementAssignment` - `result = ++alice.age;`
 - `storageFieldPostincrementAssignment` - `result = alice.age++;`
+- `storageFieldPredecrementAssignment` - `result = --alice.age;`
+- `storageFieldPostdecrementAssignment` - `result = alice.age--;`
+
+*Index-level rules:*
+- `storageIndexPreincrement` - `++values[i];` on indexed storage
+- `storageIndexPostincrement` - `values[i]++;` on indexed storage
+- `storageIndexPredecrement` - `--values[i];` on indexed storage
+- `storageIndexPostdecrement` - `values[i]--;` on indexed storage
+- `storageIndexPreincrementAssignment` - `result = ++values[i];`
+- `storageIndexPostincrementAssignment` - `result = values[i]++;`
+- `storageIndexPredecrementAssignment` - `result = --values[i];`
+- `storageIndexPostdecrementAssignment` - `result = values[i]--;`
+
+*Unfold rules for complex paths:*
+- `storageFieldPreincrement_unfold_leftFst` - `++nsp.a;` unfolds complex receiver
+- `storageFieldPostincrement_unfold_leftFst` - `nsp.a++;` unfolds complex receiver
+- `storageFieldPredecrement_unfold_leftFst` - `--nsp.a;` unfolds complex receiver
+- `storageFieldPostdecrement_unfold_leftFst` - `nsp.a--;` unfolds complex receiver
+- `storageIndexPreincrement_unfold_leftFst` - `++nsp[i];` unfolds complex receiver
+- `storageIndexPostincrement_unfold_leftFst` - `nsp[i]++;` unfolds complex receiver
+- `storageIndexPredecrement_unfold_leftFst` - `--nsp[i];` unfolds complex receiver
+- `storageIndexPostdecrement_unfold_leftFst` - `nsp[i]--;` unfolds complex receiver
 
 **Example files**:
+
+*Root-level examples:*
 - `storage-root-preincrement.key` - Tests `++age;` on simple storage root
 - `storage-root-postincrement.key` - Tests `age++;` on simple storage root
 - `storage-root-predecrement.key` - Tests `--age;` on simple storage root
 - `storage-root-preincrement-assign.key` - Tests `result = ++age;`
 - `storage-root-postincrement-assign.key` - Tests `result = age++;`
 - `storage-root-postdecrement-assign.key` - Tests `result = age--;`
-- `storage-field-preincrement.key` - Tests `++alice.age;` on nested field
-- `storage-field-postincrement-assign.key` - Tests `result = alice.age++;` on nested field
 
-All 8 increment/decrement examples close successfully.
+*Field-level examples:*
+- `storage-field-preincrement.key` - Tests `++alice.age;` on nested field
+- `storage-field-postincrement.key` - Tests `alice.age++;` on nested field
+- `storage-field-predecrement.key` - Tests `--alice.age;` on nested field
+- `storage-field-postdecrement.key` - Tests `alice.age--;` on nested field
+- `storage-field-preincrement-assign.key` - Tests `result = ++alice.age;`
+- `storage-field-postincrement-assign.key` - Tests `result = alice.age++;`
+- `storage-field-predecrement-assign.key` - Tests `result = --alice.age;`
+- `storage-field-postdecrement-assign.key` - Tests `result = alice.age--;`
+
+*Index-level examples:*
+- `storage-index-preincrement.key` - Tests `++values[i];` on indexed storage
+- `storage-index-postincrement.key` - Tests `values[i]++;` on indexed storage
+- `storage-index-predecrement.key` - Tests `--values[i];` on indexed storage
+- `storage-index-postdecrement.key` - Tests `values[i]--;` on indexed storage
+- `storage-index-preincrement-assign.key` - Tests `result = ++values[i];`
+- `storage-index-postincrement-assign.key` - Tests `result = values[i]++;`
+- `storage-index-predecrement-assign.key` - Tests `result = --values[i];`
+- `storage-index-postdecrement-assign.key` - Tests `result = values[i]--;`
+
+*Deep path examples (unfold rules):*
+- `storage-deep-field-preincrement.key` - Tests `++alice.account.balance;`
+- `storage-deep-field-postincrement.key` - Tests `alice.account.balance++;`
+
+All 24 increment/decrement examples close successfully.
 
 ### Compound assignment operators
 
@@ -255,9 +309,11 @@ when the matcher can preserve the relevant Solidity path shape faithfully.
    The runnable `.key` subset does not yet cover array bounds/revert
    branches, push/pop length updates, delete, memory heap read/write
    allocation rules, or storage-memory copy rules using `copySt`/`copyMem`-style
-   helpers. Increment/decrement operators (++, --) are now implemented
-   using direct storage update rules. Compound assignment operators
-   (+=, -=, *=, /=, %=, &=, |=, ^=, <<=, >>=) are not yet implemented.
+   helpers. Increment/decrement operators (++, --) are fully implemented
+   at root, field, and index levels including unfold rules for complex paths.
+   The `+=` compound assignment operator is implemented at root, field, and
+   index levels. Other compound assignment operators (-=, *=, /=, %=, &=,
+   |=, ^=, <<=, >>=) are parsed correctly but not yet implemented.
    Three alias decl-init rules are now in `solidityProgramRules.key` and
    fire correctly on `Person storage p = alice;`-shaped declarations, but
    standalone rebind (`lp = sp;` without declaration) and write-propagation

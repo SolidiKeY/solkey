@@ -73,7 +73,27 @@ public class TacletStarterExamplesTest {
             example("storage-root-postincrement-assign.key"),
             example("storage-root-postdecrement-assign.key"),
             example("storage-field-preincrement.key"),
-            example("storage-field-postincrement-assign.key"));
+            example("storage-field-postincrement.key"),
+            example("storage-field-predecrement.key"),
+            example("storage-field-postdecrement.key"),
+            example("storage-field-preincrement-assign.key"),
+            example("storage-field-postincrement-assign.key"),
+            example("storage-field-predecrement-assign.key"),
+            example("storage-field-postdecrement-assign.key"),
+            example("storage-index-preincrement.key"),
+            example("storage-index-postincrement.key"),
+            example("storage-index-predecrement.key"),
+            example("storage-index-postdecrement.key"),
+            example("storage-index-preincrement-assign.key"),
+            example("storage-index-postincrement-assign.key"),
+            example("storage-index-predecrement-assign.key"),
+            example("storage-index-postdecrement-assign.key"),
+            example("storage-deep-field-preincrement.key"),
+            example("storage-deep-field-postincrement.key"),
+            example("addition-simple.key"),
+            example("addition-storage-read.key"),
+            example("addition-storage-write.key"),
+            example("addition-both-storage.key"));
     }
 
     private static Arguments example(String name) {
