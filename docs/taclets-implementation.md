@@ -303,14 +303,28 @@ when the matcher can preserve the relevant Solidity path shape faithfully.
    on whether `carol` is a memory object, storage root, storage alias, or a
    complex computed path.
 
-   Storage `delete` on primitive (int/uint) targets is implemented at root,
-   field, and indexed levels (`storageRootDelete`, `storageFieldDelete`,
-   `storageIndexDelete`), with per-shape unfold rules
-   (`storageFieldDelete_unfold_leftFst`, `storageIndexDelete_unfold_leftFst`)
-   that alias only the receiver when it is complex — mirroring the per-shape
-   `++`/`+=` unfold structure to avoid clashing with the simple-receiver
-   terminal rules. Struct/dynamic-array root delete (which has recursive-zero
-   / length-reset semantics) and memory delete are still missing.
+   Storage `delete` at root, field, and indexed levels (`storageRootDelete`,
+   `storageFieldDelete`, `storageIndexDelete`) saves
+   `defaultF(last(spPath))` — i.e. it delegates the cleared value to the
+   field-keyed default function. `defaultF` was flattened from the previous
+   polymorphic `defaultF<[alpha]>(Field)` to `any defaultF(Field)`;
+   existing call sites in `selectOnEmptyStorage` and `defaultDef` now cast
+   the result to the read sort (`(alpha) defaultF(fld)`). Per-shape unfold
+   rules (`storageFieldDelete_unfold_leftFst`,
+   `storageIndexDelete_unfold_leftFst`) alias only the receiver when it is
+   complex — mirroring the per-shape `++`/`+=` unfold structure to avoid
+   clashing with the simple-receiver terminal rules.
+
+   Because `defaultF(F)` is uninterpreted until grounded per field, each
+   contract that uses `delete` must currently supply per-field rewrites of
+   the form
+   `\find(defaultF(C$field)) \replacewith((any) 0|mtSt|false|...)`
+   inline in the problem `.key` (see `storage-root-delete.key`,
+   `storage-root-delete-struct.key`). Auto-emitting these axioms from
+   `SolJSONParser.registerFieldConstant` based on each field's declared
+   type is the next step; bool / address / bytesN element types and
+   dynamic-array length-reset semantics of `delete arr;` are not yet
+   handled.
 
 3. Add Java/logic support for the paper rules that need generated aliases or
    heap helpers.
@@ -333,10 +347,13 @@ when the matcher can preserve the relevant Solidity path shape faithfully.
 ## Suggested Next Examples After Java Support
 
 - `storage-{root,field,index}-delete.key` cover the primitive `delete`
-  cases at root, simple-field, and simple-index receivers. The
-  receiver-unfold rules for complex receivers (e.g. `delete
-  alice.account.balance;`) are implemented but not yet exercised by an
-  example. Struct/array root delete still needs distinct rules.
+  cases at root, simple-field, and simple-index receivers.
+  `storage-root-delete-struct.key` covers `delete alice;` where `alice` is
+  a struct root (saves `mtSt`, then nested reads collapse through
+  `selectOnEmptyStorage` + the per-field int default to `0`). The
+  receiver-unfold rules for complex receivers (e.g.
+  `delete alice.account.balance;`) are implemented but not yet exercised
+  by an example.
 - `storage-field-read-write.key`: broader `storageFieldWriteSave` and
   `storageFieldReadFind` variants for additional source-level member paths
   beyond the `_decomposeBalance`/`_decomposeToken`/`_decomposeValue` siblings
