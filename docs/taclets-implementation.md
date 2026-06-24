@@ -303,16 +303,25 @@ when the matcher can preserve the relevant Solidity path shape faithfully.
    on whether `carol` is a memory object, storage root, storage alias, or a
    complex computed path.
 
+   Storage `delete` on primitive (int/uint) targets is implemented at root,
+   field, and indexed levels (`storageRootDelete`, `storageFieldDelete`,
+   `storageIndexDelete`), with per-shape unfold rules
+   (`storageFieldDelete_unfold_leftFst`, `storageIndexDelete_unfold_leftFst`)
+   that alias only the receiver when it is complex — mirroring the per-shape
+   `++`/`+=` unfold structure to avoid clashing with the simple-receiver
+   terminal rules. Struct/dynamic-array root delete (which has recursive-zero
+   / length-reset semantics) and memory delete are still missing.
+
 3. Add Java/logic support for the paper rules that need generated aliases or
    heap helpers.
 
    The runnable `.key` subset does not yet cover array bounds/revert
-   branches, push/pop length updates, delete, memory heap read/write
-   allocation rules, or storage-memory copy rules using `copySt`/`copyMem`-style
-   helpers. Increment/decrement operators (++, --) are fully implemented
-   at root, field, and index levels including unfold rules for complex paths.
-   The `+=` compound assignment operator is implemented at root, field, and
-   index levels. Other compound assignment operators (-=, *=, /=, %=, &=,
+   branches, push/pop length updates, non-primitive delete (struct/array
+   root), memory heap read/write allocation rules, or storage-memory copy
+   rules using `copySt`/`copyMem`-style helpers. Increment/decrement
+   operators (++, --) are fully implemented at root, field, and index levels
+   including unfold rules for complex paths. The `+=` compound assignment
+   operator is implemented at root, field, and index levels. Other compound assignment operators (-=, *=, /=, %=, &=,
    |=, ^=, <<=, >>=) are parsed correctly but not yet implemented.
    Three alias decl-init rules are now in `solidityProgramRules.key` and
    fire correctly on `Person storage p = alice;`-shaped declarations, but
@@ -323,8 +332,11 @@ when the matcher can preserve the relevant Solidity path shape faithfully.
 
 ## Suggested Next Examples After Java Support
 
-- `storage-delete.key`: `storageDeleteSimpleTarget` and
-  `storageDeleteComplexTarget`.
+- `storage-{root,field,index}-delete.key` cover the primitive `delete`
+  cases at root, simple-field, and simple-index receivers. The
+  receiver-unfold rules for complex receivers (e.g. `delete
+  alice.account.balance;`) are implemented but not yet exercised by an
+  example. Struct/array root delete still needs distinct rules.
 - `storage-field-read-write.key`: broader `storageFieldWriteSave` and
   `storageFieldReadFind` variants for additional source-level member paths
   beyond the `_decomposeBalance`/`_decomposeToken`/`_decomposeValue` siblings
