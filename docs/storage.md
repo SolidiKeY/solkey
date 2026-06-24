@@ -108,9 +108,9 @@ the base operations `path.a` and `path[e]`.
 
 **unfold_rightFst** — capture a nonsimple receiver on the RHS.
 
-    nsp => ⟨ π  T_{nsp} sp = nsp; lhs = op(sp, e); ω ⟩ φ
+    nsp => ⟨ π  T_{nse} se = nse; lhs = op(se, e); ω ⟩ φ
     --------------------------------------------------------
-            => ⟨ π  lhs = op(nsp, e); ω ⟩ φ
+            => ⟨ π  lhs = op(nse, e); ω ⟩ φ
 
 **unfold_rightSnd** — capture a nonsimple secondary argument
 (typically an index) on the RHS.
