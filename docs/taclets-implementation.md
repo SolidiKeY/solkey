@@ -125,7 +125,30 @@ The pattern matching infrastructure was fixed to check operator fields in `Assig
 
 All 8 increment/decrement examples close successfully.
 
-**Compound assignment operators** (+=, -=, *=, /=, %=, &=, |=, ^=, <<=, >>=) are parsed correctly but not yet implemented. They will require similar direct update rules or expression evaluation infrastructure.
+### Compound assignment operators
+
+Storage `+=` is implemented with direct storage update rules, matching the
+increment/decrement approach:
+
+- `storageRootAddAssign` - `age += 5;` on storage roots
+- `storageFieldAddAssign` - `alice.age += 4;` on nested fields
+- `storageIndexAddAssign` - `values[1] += 2;` on indexed storage paths
+- `storageFieldAddAssign_unfold_leftFst` - unfolds complex field receivers such
+  as `alice.account.balance += 4;` through a fresh storage alias before the
+  terminal field rule fires
+- `storageIndexAddAssign_unfold_leftFst` - unfolds complex indexed receivers
+  such as `sp[i][j] += 4;` through a fresh storage alias before the
+  terminal index rule fires
+
+Example files:
+
+- `storage-root-add-assign.key` - Tests `age += 5;`
+- `storage-field-add-assign.key` - Tests `alice.age += 4;`
+- `storage-index-add-assign.key` - Tests `values[1] += 2;`
+- `storage-field-deep-add-assign.key` - Tests `alice.account.balance += 4;`
+
+The remaining compound assignment operators (`-=`, `*=`, `/=`, `%=`, `&=`,
+`|=`, `^=`, `<<=`, `>>=`) are parsed correctly but not yet implemented.
 
 ### Storage-alias examples
 
