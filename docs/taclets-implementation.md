@@ -343,3 +343,112 @@ when the matcher can preserve the relevant Solidity path shape faithfully.
   supported.
 - `memory-field-index.key`: memory field/index write, read, and alias-root
   cases.
+
+## Coverage Audit Against `docs/storage.md`
+
+This section maps the §10 "Worked Examples" and the §11 "Statement →
+Rule" table in `docs/storage.md` to the current example set, and
+records, for every gap, whether new taclets/plumbing are required.
+
+### §10 Worked examples (8 traces)
+
+Covered:
+
+- `alice.age = ageVal;` → `storage-field-global-age.key`,
+  `storage-field-write-read.key`.
+- `alice.account.balance = 10;` (depth-2 write) →
+  `storage-field-deep-write-read.key`,
+  `storage-field-decomposition.key`.
+- `v = alice.account.balance;` (depth-2 read) →
+  `storage-field-decomposition.key`.
+- `alice.account.token.value = 5;` (depth-3 write) →
+  `storage-field-deep-value.key`.
+- `uint v = total;` (primitive root read) →
+  `storage-root-read-write.key`.
+- `alice = bob;` (root-to-root copy, primitive payload only) →
+  `storage-root-copy-source.key`.
+
+Recently added (struct-payload copy):
+
+- `alice = bob;` (whole-struct root-to-root copy) →
+  `storage-root-copy-struct.key`, via the new
+  `storageRootWriteCopySource_struct` taclet (`find<[Struct]>`).
+- `Account storage acc = bob.account; alice.account = acc;` →
+  `storage-field-copy-struct.key`, via the new
+  `storageFieldWriteCopySource` taclet.
+
+Still missing:
+
+- `alice = pVal;` (whole-struct write to a root from a struct *value*
+  rather than another storage path) — requires step-1 unfolding for
+  struct constructors / memory-struct sources, which is not yet
+  modelled.
+
+### §11 Statement → Rule coverage
+
+Step-3 rules with an example today:
+
+- `storageFieldWriteSave` (`sp.a = se`), `storageFieldReadFind`
+  (`v = sp.a`).
+- `storageRootWriteStore` (`gp = se`), `storageRootReadSelect`
+  (`v = sp`), `storageRootWriteCopySource` (`gp = sp`, primitive only).
+- `storageLocalRootRebind` (`lp = sp`),
+  `storageFieldReadBindLocalRoot` (`lp = sp.b`),
+  `storageFieldReadStoreRoot` (`gp = sp.b`).
+- `storageIndexWriteMappingSave` / `storageIndexReadMappingFind` —
+  currently shared with the array shape (no `array(sp)` /
+  `mapping(sp)` split).
+
+Step-3 rules added since the audit (struct-payload copy):
+
+- `storageRootWriteCopySource_struct` — `gp = sp` where both roots are
+  struct-typed. Same `\find` shape as the primitive
+  `storageRootWriteCopySource`; emits
+  `save(storage, lhsPath, find<[Struct]>(storage, rhsPath))`.
+  Disambiguation: struct payload uses `find<[Struct]>` instead of the
+  primitive rule's `find<[int]>`; both rules currently share the
+  `\find` pattern, but the proof only closes when the struct variant
+  fires for struct-typed roots (verified by `storage-root-copy-struct.key`).
+- `storageFieldWriteCopySource` — `sp1.a = sp2;` where `sp2` is a
+  simple storage path (root or storage-local). Emits
+  `save(storage, consr(sp1Path, fieldA), find<[Struct]>(storage, sp2Path))`.
+  To make this pairwise disjoint with the primitive
+  `storageFieldWriteSave`, `SimpleExpressionSVSort` was tightened to
+  exclude `DataLocation.Storage` program variables (storage-locals are
+  `List`-typed paths, not values, so they never belonged in the
+  primitive write rule).
+
+Step-3 rules with **no example and no runnable taclet**:
+
+| Missing rule | Statement shape | Blocking work |
+|---|---|---|
+| `storageDeleteSimpleTarget` | `delete sp;` | dedicated delete taclet that preserves storage-vs-memory and simple-vs-complex targets (see §"Work Needed" item 2) |
+| `storageIndexWriteMappingCopySource` | `sp1[i] = sp2` (mapping) | alias/struct-copy support |
+| `storageIndexReadMappingBindLocalRoot` | `lp = sp[i]` (mapping) | mapping-side taclet |
+| `storageIndexReadMappingStoreRoot` | `gp = sp[i]` (mapping) | mapping-side taclet |
+| All five array index variants (`storageIndexWriteArraySave`, `…CopySource`, `…ReadArrayFind`, `…BindLocalRoot`, `…StoreRoot`) | `sp[i] = …` / `… = sp[i]` (array) | bounds branch + `revert` machinery (impl doc §"Work Needed" item 3), plus the `array(sp)` / `mapping(sp)` predicate split |
+| `storagePushValueSave` | `sp.push(se);` | full push/pop calculus |
+| `storagePushValueCopySource` | `sp1.push(sp2);` | same |
+| `storagePushLengthSave` | `sp.push();` | same |
+| `storageLocalRootPushBind` | `lp = sp.push();` | same |
+| `storagePushLhsToPushValue` (desugar) | `path.push() = se;` | same |
+| `storagePopSave` | `sp.pop();` | bounds/revert + push/pop calculus |
+| `revertDiamond` | `revert();` in `⟨·⟩` | `revert` taclet pair |
+| `revertBox` | `revert();` in `[·]` | same |
+
+Compound `+=` and ++/–– (storage.md §7 — desugared before Step-3) are
+already exhaustively covered at root/field/index level (see the
+"Increment and Decrement Operators" and "Compound assignment
+operators" subsections above). Only `-=, *=, /=, %=, &=, |=, ^=, <<=,
+>>=` remain.
+
+### Take-away
+
+No example is missing purely because nobody wrote the `.key` file:
+every gap depends on a taclet or plumbing item already enumerated in
+§"Work Needed For The Full Paper Rule Set" and §"Suggested Next
+Examples After Java Support". The three coherent buckets of work are
+(1) struct-payload `find`/`save`, (2) dynamic-array semantics
+(bounds, push, pop, `revert`), and (3) mapping-specific
+`lp = sp[i]` / `gp = sp[i]` / `sp1[i] = sp2` rules plus storage
+`delete`.

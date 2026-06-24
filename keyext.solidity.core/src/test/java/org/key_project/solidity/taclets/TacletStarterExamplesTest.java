@@ -42,6 +42,8 @@ public class TacletStarterExamplesTest {
         return Stream.of(
             example("storage-root-read-write.key"),
             example("storage-root-copy-source.key"),
+            example("storage-root-copy-struct.key"),
+            example("storage-field-copy-struct.key"),
             example("storage-root-multiple-writes.key"),
             example("storage-root-disjoint.key"),
             example("storage-field-global-age.key"),
