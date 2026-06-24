@@ -247,21 +247,26 @@ public class SolJSONParser {
 
     private FieldDeclaration parseField(JsonNode fieldNode, String fieldPrefix) {
         final String fieldName = fieldNode.get("name").asString();
+        JsonNode typeName = fieldNode.get("typeName");
+
+        TypeReference typeReference;
+        Type resolvedType;
+        if (typeName.has("referencedDeclaration")) {
+            int typeId = typeName.get("referencedDeclaration").asInt();
+            resolvedType = (Type) id2Name.get(typeId);
+            typeReference = new TypeReference(resolvedType);
+        } else {
+            String primitiveName = typeName.get("name").asString();
+            resolvedType = SolidityInfo.getPrimitiveType(primitiveName);
+            typeReference = new TypeReference(new Name(primitiveName));
+        }
+
         // Register the field's logic constant under its namespaced `Contract$Struct$field` name.
         // `Services.memberFieldTerm` reconstructs this name at lowering time by walking the
         // member-access chain to identify the owning struct, so each (struct, field) pair has a
         // distinct `Field`-sorted constant.
-        registerFieldConstant(new Name(fieldPrefix + StructLDT.FIELD_SEPARATOR + fieldName));
-        JsonNode typeName = fieldNode.get("typeName");
-
-        TypeReference typeReference;
-        if (typeName.has("referencedDeclaration")) {
-            int typeId = typeName.get("referencedDeclaration").asInt();
-            Type typeRef = (Type) id2Name.get(typeId);
-            typeReference = new TypeReference(typeRef);
-        } else {
-            typeReference = new TypeReference(new Name(typeName.get("name").asString()));
-        }
+        registerFieldConstant(
+            new Name(fieldPrefix + StructLDT.FIELD_SEPARATOR + fieldName), resolvedType);
 
         FieldDeclaration field = new FieldDeclaration(new Name(fieldName), typeReference);
         id2Name.put(fieldNode.get("id").asInt(), field);
@@ -516,7 +521,7 @@ public class SolJSONParser {
         KeYSolidityType type = getOrCreateKeYSolidityType(expType);
 
         Name fieldConstantName = registerFieldConstant(
-            new Name(contractName + StructLDT.FIELD_SEPARATOR + fieldNameAsString));
+            new Name(contractName + StructLDT.FIELD_SEPARATOR + fieldNameAsString), expType);
 
         StateVariableDeclaration field =
             new StateVariableDeclaration(new Name(fieldNameAsString), type,
@@ -536,7 +541,7 @@ public class SolJSONParser {
     ///
     /// @param fullFieldName the namespaced constant name (e.g. `Contract$balance`)
     /// @return the same name, for the caller to record on the declaration
-    private Name registerFieldConstant(Name fullFieldName) {
+    private Name registerFieldConstant(Name fullFieldName, @Nullable Type fieldType) {
         // The struct theory is loaded by the time programs are parsed, so query the LDT for the
         // field sort instead of looking it up by a hard-coded name (getFieldSort() is null exactly
         // when the struct theory / Field sort is not loaded, keeping this a no-op in that case).
@@ -546,6 +551,7 @@ public class SolJSONParser {
             services.getNamespaces().functions()
                     .addSafely(new SFunction(fullFieldName, fieldSort, true, true));
         }
+        services.getSolidityInfo().registerFieldType(fullFieldName, fieldType);
         return fullFieldName;
     }
 

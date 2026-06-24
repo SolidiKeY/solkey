@@ -42,6 +42,11 @@ public class SolidityInfo {
 
     private final LinkedHashSet<StateVariableDeclaration> stateVariables = new LinkedHashSet<>();
 
+    /// Field-constant name (e.g. `Contract$age`, `Contract$Struct$age`) → declared Solidity type.
+    /// Populated by `SolJSONParser.registerFieldConstant` so meta-constructs like `#defaultOf`
+    /// can compute type-keyed values without per-field axioms in problem files.
+    private final Map<Name, Type> fieldTypes = new HashMap<>();
+
     private boolean initialized;
 
     public SolidityInfo() {
@@ -242,5 +247,17 @@ public class SolidityInfo {
             }
         }
         return null;
+    }
+
+    // ── Field constants ─────────────────────────────────────────────────────
+
+    public void registerFieldType(Name fieldConstantName, @Nullable Type type) {
+        if (type != null) {
+            fieldTypes.put(fieldConstantName, type);
+        }
+    }
+
+    public @Nullable Type getFieldType(Name fieldConstantName) {
+        return fieldTypes.get(fieldConstantName);
     }
 }

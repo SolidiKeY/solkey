@@ -315,16 +315,21 @@ when the matcher can preserve the relevant Solidity path shape faithfully.
    complex — mirroring the per-shape `++`/`+=` unfold structure to avoid
    clashing with the simple-receiver terminal rules.
 
-   Because `defaultF(F)` is uninterpreted until grounded per field, each
-   contract that uses `delete` must currently supply per-field rewrites of
-   the form
-   `\find(defaultF(C$field)) \replacewith((any) 0|mtSt|false|...)`
-   inline in the problem `.key` (see `storage-root-delete.key`,
-   `storage-root-delete-struct.key`). Auto-emitting these axioms from
-   `SolJSONParser.registerFieldConstant` based on each field's declared
-   type is the next step; bool / address / bytesN element types and
-   dynamic-array length-reset semantics of `delete arr;` are not yet
-   handled.
+   `defaultF(F)` is resolved at apply time by the `#defaultOf(Field)`
+   term-transformer meta-construct (`MetaDefaultOf`), which looks up the
+   field's declared Solidity type via `SolidityInfo.getFieldType` and
+   returns `0` for int/uint/address fields, `false` for bool fields, and
+   the empty struct `mtSt` for struct receivers. The field-type map is
+   populated by `SolJSONParser.registerFieldConstant` at contract load,
+   so no per-field axioms need to appear in problem `.key` files. The
+   resolver taclet `defaultFViaDefaultOf` (in `memoryRules.key`) uses
+   the `simplify_enlarging` heuristic so that list-walking rules
+   (`headDefinition`, `lastConsNil`) reduce a path-extracting argument
+   like `last<[Field]>(spPath)` to a bare Field constant *before* the
+   resolver fires. Remaining gaps: array element-type detection
+   (`storageIndexDelete` therefore hardcodes int `0` — sound for
+   `uint[]` / `int[]`, not for `bool[]` / `struct[]`); dynamic-array
+   length-reset semantics of `delete arr;`; memory delete.
 
 3. Add Java/logic support for the paper rules that need generated aliases or
    heap helpers.
