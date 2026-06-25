@@ -5,6 +5,7 @@ package org.key_project.solidity.common;
 
 
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Operator;
@@ -24,6 +25,7 @@ import org.key_project.util.collection.ImmutableSet;
 import org.key_project.util.collection.Pair;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import static org.key_project.solidity.proof.indices.PrefixTermTacletAppIndexCacheImpl.*;
 
@@ -158,5 +160,23 @@ public class ServiceCaches implements SessionCaches {
     /// @return The cache used by [TermTacletAppIndexCacheSet] instances.
     public Map<CacheKey, TermTacletAppIndex> getTermTacletAppIndexCache() {
         return termTacletAppIndexCache;
+    }
+
+    /// Per-proof memo for the logic printer's field short-name abbreviation table (maps a field
+    /// constant's simple name to whether it may be printed without its `contract$struct$…` prefix).
+    /// Stored here so it is shared across the many short-lived printers the UI creates and is freed
+    /// with the proof. The table itself is computed by the printer.
+    private @Nullable Map<String, Boolean> fieldShortNameCache;
+
+    /// Returns the memoized field short-name table, computing it via `computation` on first use.
+    ///
+    /// @param computation supplies the table when it is not yet cached
+    /// @return the cached table
+    public Map<String, Boolean> getFieldShortNameCache(
+            Supplier<Map<String, Boolean>> computation) {
+        if (fieldShortNameCache == null) {
+            fieldShortNameCache = computation.get();
+        }
+        return fieldShortNameCache;
     }
 }

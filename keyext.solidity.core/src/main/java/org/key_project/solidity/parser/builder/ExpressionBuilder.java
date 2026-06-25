@@ -33,9 +33,11 @@ import org.key_project.solidity.parser.KeYSolidityDLParser;
 import org.key_project.solidity.program.SolidityReader;
 import org.key_project.solidity.program.SoliditySchemaReader;
 import org.key_project.solidity.proof.calculus.SoliditySequentKit;
+import org.key_project.solidity.rule.metaconstruct.AbstractTermTransformer;
 import org.key_project.solidity.rule.sv.ModalOperatorSV;
 import org.key_project.solidity.rule.sv.VariableSV;
 import org.key_project.solidity.theory.LDT;
+import org.key_project.solidity.theory.StructLDT;
 import org.key_project.solidity.util.parsing.BuildingException;
 import org.key_project.util.collection.ImmutableArray;
 import org.key_project.util.collection.ImmutableList;
@@ -240,7 +242,50 @@ public class ExpressionBuilder extends DefaultBuilder {
             return LogicVariable.create(deBruijn, boundVars.get(idx).sort());
         }
 
+        // Allow the short form of a qualified field constant (`field` for
+        // `contract$struct$…$field`) when it is unambiguous and nothing else resolves the name.
+        if (genericArgsCtxt == null && !varfuncName.contains(StructLDT.FIELD_SEPARATOR)) {
+            final Operator field = resolveShortFieldName(ctx, varfuncName);
+            if (field != null) {
+                return field;
+            }
+        }
+
         return super.lookupVarfuncId(ctx, varfuncName, genericArgsCtxt);
+    }
+
+    /// Resolves the short form of a field constant name. Only applies when no other symbol is
+    /// registered under the bare name (so genuine symbols always win); among field constants whose
+    /// simple name matches, exactly one match resolves, several is reported as ambiguous, and none
+    /// falls through to the regular lookup.
+    ///
+    /// @param ctx parser context for error reporting
+    /// @param simpleName the bare (unqualified) identifier
+    /// @return the unique field constant, or `null` if the short form does not apply
+    private Operator resolveShortFieldName(ParserRuleContext ctx, String simpleName) {
+        final Name name = new Name(simpleName);
+        if (schemaVariables().lookup(name) != null || variables().lookup(name) != null
+                || programVariables().lookup(name) != null || functions().lookup(name) != null
+                || AbstractTermTransformer.name2metaop(simpleName) != null) {
+            return null;
+        }
+        final List<Function> matches = new ArrayList<>();
+        for (final Function f : functions().allElements()) {
+            final String n = f.name().toString();
+            final int sep = n.lastIndexOf(StructLDT.FIELD_SEPARATOR);
+            if (sep >= 0
+                    && n.substring(sep + StructLDT.FIELD_SEPARATOR.length()).equals(simpleName)) {
+                matches.add(f);
+            }
+        }
+        if (matches.size() == 1) {
+            return matches.get(0);
+        }
+        if (matches.size() > 1) {
+            semanticError(ctx, "Ambiguous field name %s; qualified candidates: %s", simpleName,
+                matches.stream().map(f -> f.name().toString()).toList());
+        }
+        return null;
     }
 
 

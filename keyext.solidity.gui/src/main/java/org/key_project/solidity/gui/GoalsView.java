@@ -10,10 +10,15 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 
+import org.key_project.solidity.common.Services;
+import org.key_project.solidity.pp.LogicPrinter;
+import org.key_project.solidity.pp.NotationInfo;
+import org.key_project.solidity.pp.PosTableLayouter;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.proof.Proof;
-import org.key_project.solidity.proof.io.OutputStreamProofSaver;
+
+import org.jspecify.annotations.Nullable;
 
 /// Lists the open goals of the current proof. Selecting a goal selects its node in the context (and
 /// thus in the proof tree and sequent view).
@@ -23,6 +28,12 @@ public final class GoalsView extends JPanel implements ProofContext.Listener {
     private final DefaultListModel<Goal> model = new DefaultListModel<>();
     private final JList<Goal> list = new JList<>(model);
     private boolean syncing;
+
+    /// Printer reused across the (frequent) cell-renderer repaints; rebuilt only when the proof's
+    /// [Services] changes. The cell renderer runs on the EDT only, so single-threaded reuse is
+    /// safe.
+    private @Nullable LogicPrinter labelPrinter;
+    private @Nullable Services labelPrinterServices;
 
     public GoalsView(ProofContext context) {
         super(new BorderLayout());
@@ -78,12 +89,19 @@ public final class GoalsView extends JPanel implements ProofContext.Listener {
     }
 
     /// A one-line label for a goal: the node number plus an abbreviated, whitespace-collapsed
-    /// rendering of its sequent, so goals can be told apart at a glance.
-    private static String describe(Goal goal) {
+    /// rendering of its sequent, so goals can be told apart at a glance. Reuses a single printer
+    /// across repaints instead of allocating one per cell.
+    private String describe(Goal goal) {
         Node node = goal.getNode();
-        String sequent = OutputStreamProofSaver
-                .printSequent(node.sequent(), node.proof().getServices())
-                .replaceAll("\\s+", " ").trim();
+        Services services = node.proof().getServices();
+        if (labelPrinter == null || labelPrinterServices != services) {
+            labelPrinter = new LogicPrinter(new NotationInfo(), services, PosTableLayouter.pure());
+            labelPrinterServices = services;
+        } else {
+            labelPrinter.reset();
+        }
+        labelPrinter.printSequent(node.sequent());
+        String sequent = labelPrinter.result().replaceAll("\\s+", " ").trim();
         if (sequent.length() > 90) {
             sequent = sequent.substring(0, 89) + "…";
         }

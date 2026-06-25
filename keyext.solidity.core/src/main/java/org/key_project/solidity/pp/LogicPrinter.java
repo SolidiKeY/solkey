@@ -3,13 +3,15 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.pp;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.key_project.logic.Term;
-import org.key_project.logic.op.Operator;
+import org.key_project.logic.op.Function;
 import org.key_project.logic.op.QuantifiableVariable;
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.prover.rules.ApplicationRestriction;
@@ -39,6 +41,7 @@ import org.key_project.solidity.rule.taclets.TacletSchemaVariableCollector;
 import org.key_project.solidity.rule.taclets.builder.AntecSuccTacletGoalTemplate;
 import org.key_project.solidity.rule.taclets.builder.RewriteTacletGoalTemplate;
 import org.key_project.solidity.theory.BoolLDT;
+import org.key_project.solidity.theory.StructLDT;
 import org.key_project.util.collection.ImmutableArray;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableSet;
@@ -181,12 +184,11 @@ public class LogicPrinter {
             Set<SchemaVariable> schemaVars = svCollector.getCollectedSchemaVariables();
             for (SchemaVariable schemaVar : schemaVars) {
                 layouter.nl();
-                final Notation notation;
-                if (schemaVar instanceof Operator opSV) {
-                    notation = notationInfo.getNotation(opSV);
-                } else {
-                    notation = notationInfo.getNotation(schemaVar.getClass());
-                }
+                // Always use the schema-variable declaration notation: it handles every SV kind
+                // (including modal-operator SVs). The operator's *term* notation must not be used
+                // here -- e.g. a modal-operator SV maps to ModalSVNotation, which has no
+                // printDeclaration.
+                final Notation notation = notationInfo.getNotation(SchemaVariable.class);
                 ((Notation.SchemaVariableNotation) notation).printDeclaration(schemaVar, this);
                 layouter.print(";");
             }
@@ -740,7 +742,7 @@ public class LogicPrinter {
          * }
          * } else
          */ {
-            String name = t.op().name().toString();
+            String name = fieldAwareName(t.op().name().toString());
             layouter.startTerm(t.arity());
             boolean alreadyPrinted = false;
             /*
@@ -789,6 +791,52 @@ public class LogicPrinter {
                 layouter.print(")").end();
             }
         }
+    }
+
+    /// Local handle on the field short-name table (shared per proof via [ServiceCaches]); `null`
+    /// until first needed so the lookup happens at most once per printer.
+    private Map<String, Boolean> fieldShortNameUnambiguous;
+
+    /// If field-prefix hiding is enabled and `name` is a qualified field constant name
+    /// (`contract$struct$…$field`) whose simple field name is unambiguous, returns the simple field
+    /// name; otherwise returns `name` unchanged.
+    ///
+    /// @param name the (possibly qualified) operator name
+    /// @return the name to print
+    private String fieldAwareName(String name) {
+        if (services == null || !notationInfo.isHideFieldPrefix()
+                || !name.contains(StructLDT.FIELD_SEPARATOR)) {
+            return name;
+        }
+        final String simple =
+            name.substring(name.lastIndexOf(StructLDT.FIELD_SEPARATOR)
+                    + StructLDT.FIELD_SEPARATOR.length());
+        if (fieldShortNameUnambiguous == null) {
+            fieldShortNameUnambiguous =
+                services.getCaches().getFieldShortNameCache(this::computeFieldShortNameUnambiguity);
+        }
+        return Boolean.TRUE.equals(fieldShortNameUnambiguous.get(simple)) ? simple : name;
+    }
+
+    /// A field's simple name may be printed in short form iff exactly one field constant carries
+    /// that suffix and no other symbol is registered under the bare simple name (otherwise the
+    /// parser's direct lookup would resolve the short form to the wrong symbol).
+    ///
+    /// @return map from simple field name to whether short-form printing is unambiguous
+    private Map<String, Boolean> computeFieldShortNameUnambiguity() {
+        final Map<String, Integer> counts = new HashMap<>();
+        for (final Function f : services.getNamespaces().functions().allElements()) {
+            final String n = f.name().toString();
+            final int idx = n.lastIndexOf(StructLDT.FIELD_SEPARATOR);
+            if (idx >= 0) {
+                counts.merge(n.substring(idx + StructLDT.FIELD_SEPARATOR.length()), 1,
+                    Integer::sum);
+            }
+        }
+        final Map<String, Boolean> result = new HashMap<>();
+        counts.forEach((simple, count) -> result.put(simple,
+            count == 1 && services.getNamespaces().functions().lookup(simple) == null));
+        return result;
     }
 
     /// Print a unary term in prefix style. For instance <code>!a</code>. No line breaks are

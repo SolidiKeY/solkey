@@ -40,6 +40,9 @@ public class NotationInfo {
     /// Whether the very fancy notation is enabled in which Unicode characters for logical operators
     /// are printed.
     public static boolean DEFAULT_UNICODE_ENABLED = false;
+    /// Whether qualified field constant names (`contract$struct$…$field`) are printed using only
+    /// their simple field name when that simple name is unambiguous among all field constants.
+    public static boolean DEFAULT_HIDE_FIELD_PREFIX = true;
 
     /// This maps operators and classes of operators to [Notation]s. The idea is that we first
     /// look whether the operator has a Notation registered. Otherwise, we see if there is one for
@@ -58,6 +61,8 @@ public class NotationInfo {
     private boolean prettySyntax = DEFAULT_PRETTY_SYNTAX;
 
     private boolean unicodeEnabled = DEFAULT_UNICODE_ENABLED;
+
+    private boolean hideFieldPrefix = DEFAULT_HIDE_FIELD_PREFIX;
 
 
     // -------------------------------------------------------------------------
@@ -197,6 +202,16 @@ public class NotationInfo {
 
     public boolean isUnicodeEnabled() {
         return unicodeEnabled;
+    }
+
+    /// Whether qualified field constant names are abbreviated to their simple field name when
+    /// unambiguous. See [#DEFAULT_HIDE_FIELD_PREFIX].
+    public boolean isHideFieldPrefix() {
+        return hideFieldPrefix;
+    }
+
+    public void setHideFieldPrefix(boolean hideFieldPrefix) {
+        this.hideFieldPrefix = hideFieldPrefix;
     }
 
     public Map<Object, Notation> getNotationTable() {
