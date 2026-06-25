@@ -141,7 +141,7 @@ public abstract class TypeResolver {
 
         @Override
         public String toString() {
-            return "\\typeof(" + resolveSV + ")";
+            return "\\typeof(" + resolveSV.name() + ")";
         }
     }
 

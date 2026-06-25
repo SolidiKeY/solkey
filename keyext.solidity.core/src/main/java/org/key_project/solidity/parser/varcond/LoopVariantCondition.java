@@ -50,4 +50,9 @@ public class LoopVariantCondition implements VariableCondition {
 
         return matchCond.setInstantiations(svInst.add(variantSV, variant, services));
     }
+
+    @Override
+    public String toString() {
+        return "\\getVariant(" + loopStatementSV.name() + ", " + variantSV.name() + ")";
+    }
 }

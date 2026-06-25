@@ -79,7 +79,7 @@ public class NewLocalVarsCondition implements VariableCondition {
 
     @Override
     public String toString() {
-        return "\\newLocalVars(" + varDeclsSV + ", " + updateBeforeSV + ", " + updateFrameSV + ", "
-            + bodySV + ")";
+        return "\\newLocalVars(" + varDeclsSV.name() + ", " + updateBeforeSV.name() + ", "
+            + updateFrameSV.name() + ", " + bodySV.name() + ")";
     }
 }

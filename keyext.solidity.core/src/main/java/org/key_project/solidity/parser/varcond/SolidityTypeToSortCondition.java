@@ -75,6 +75,6 @@ public final class SolidityTypeToSortCondition implements VariableCondition {
 
     @Override
     public String toString() {
-        return "\\hasSort(" + exprOrTypeSV + ", " + sort + ")";
+        return "\\hasSort(" + exprOrTypeSV.name() + ", " + sort.name() + ")";
     }
 }

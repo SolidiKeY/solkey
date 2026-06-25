@@ -73,6 +73,6 @@ public final class EqualUniqueCondition implements VariableCondition {
 
     @Override
     public String toString() {
-        return "\\equalUnique (" + t + ", " + t2 + ", " + res + ")";
+        return "\\equalUnique(" + t.name() + ", " + t2.name() + ", " + res.name() + ")";
     }
 }

@@ -78,6 +78,6 @@ public class DifferentInstantiationCondition extends VariableConditionAdapter {
 
     @Override
     public String toString() {
-        return "\\different(" + var1 + ", " + var2 + ")";
+        return "\\different(" + var1.name() + ", " + var2.name() + ")";
     }
 }

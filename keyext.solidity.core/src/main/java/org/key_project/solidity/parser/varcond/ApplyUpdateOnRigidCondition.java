@@ -191,6 +191,6 @@ public final class ApplyUpdateOnRigidCondition implements VariableCondition {
 
     @Override
     public String toString() {
-        return "\\applyUpdateOnRigid(" + u + ", " + phi + ", " + result + ")";
+        return "\\applyUpdateOnRigid(" + u.name() + ", " + phi.name() + ", " + result.name() + ")";
     }
 }

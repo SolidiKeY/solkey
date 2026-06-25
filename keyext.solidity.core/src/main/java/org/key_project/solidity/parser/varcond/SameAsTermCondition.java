@@ -79,6 +79,6 @@ public final class SameAsTermCondition implements VariableCondition {
 
     @Override
     public String toString() {
-        return "\\sameAsTerm(" + programSV + ", " + termSV + ")";
+        return "\\sameAsTerm(" + programSV.name() + ", " + termSV.name() + ")";
     }
 }

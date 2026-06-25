@@ -50,6 +50,6 @@ public class HasLoopInvariantCondition implements VariableCondition {
 
     @Override
     public String toString() {
-        return "\\hasInvariant(" + loopStatementSV + "," + modalitySV + ")";
+        return "\\hasInvariant(" + loopStatementSV.name() + ", " + modalitySV.name() + ")";
     }
 }

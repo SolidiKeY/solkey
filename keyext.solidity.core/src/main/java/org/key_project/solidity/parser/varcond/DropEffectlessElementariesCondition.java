@@ -171,6 +171,7 @@ public final class DropEffectlessElementariesCondition implements VariableCondit
 
     @Override
     public String toString() {
-        return "\\dropEffectlessElementaries(" + u + ", " + x + ", " + result + ")";
+        return "\\dropEffectlessElementaries(" + u.name() + ", " + x.name() + ", " + result.name()
+            + ")";
     }
 }
