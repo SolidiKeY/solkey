@@ -376,9 +376,10 @@ public class TacletIndex {
 
         if (op instanceof SModality mod && mod.programBlock().program().getChildCount() != 0) {
             prefixOccurrences.reset();
-            final var sb = (Block) mod.programBlock().program();
-            res = getProgramTacletList(map, (SolidityProgramElement) sb.getChild(0),
-                prefixOccurrences);
+            final SolidityProgramElement program = mod.programBlock().program();
+            final SolidityProgramElement firstProgramElement =
+                program instanceof Block block ? (SolidityProgramElement) block.getChild(0) : program;
+            res = getProgramTacletList(map, firstProgramElement, prefixOccurrences);
         }
 
         if (term.op() instanceof SModality || op instanceof ProgramVariable) {

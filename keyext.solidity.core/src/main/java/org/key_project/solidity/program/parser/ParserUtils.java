@@ -3,9 +3,13 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.parser;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
+import org.key_project.solidity.program.ast.expressions.MemberExp;
+import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.expressions.operators.*;
 
 public class ParserUtils {
@@ -32,6 +36,14 @@ public class ParserUtils {
 
     static public Optional<Expression> parseAssignmentMaybe(Expression left, Expression right,
             String operator) {
+        if ("=".equals(operator) && left instanceof FunctionCallExpression call
+                && call.getArguments().isEmpty()
+                && call.getFunctionExp() instanceof MemberExp member
+                && member.getRightExp() instanceof FunctionDeclaration function
+                && "push".equals(function.name().toString())) {
+            return Optional.of(new FunctionCallExpression(function.getType(), member,
+                List.of(right)));
+        }
         Operator op = null;
         for (var val : Operator.values()) {
             if (operator.equals(val.symbol()) && Operator.isAssignmentOperator(val)) {

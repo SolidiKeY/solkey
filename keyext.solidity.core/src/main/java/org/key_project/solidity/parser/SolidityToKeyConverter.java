@@ -14,6 +14,7 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.SolidityInfo;
+import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
@@ -42,6 +43,7 @@ import org.key_project.util.collection.ImmutableList;
 import org.antlr.v4.runtime.Token;
 import org.jspecify.annotations.Nullable;
 
+import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.VOID;
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Default;
 
 public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
@@ -236,6 +238,12 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         if (functionExp instanceof NewExpression newExp) {
             return new FunctionCallExpression(newExp.getType(), newExp, args.getArgs());
         }
+        if (functionExp instanceof MemberExp memberExp
+                && memberExp.getRightExp() instanceof FunctionDeclaration memberFunction) {
+            return new FunctionCallExpression(
+                inferBuiltinMemberCallType(memberExp, memberFunction, args),
+                memberExp, args.getArgs());
+        }
         Name name = new Name(functionExp.toString());
         functionDeclaration = services.getSolidityInfo().getFunctionDeclaration(name);
         if (functionDeclaration == null) {
@@ -244,6 +252,23 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         FunctionReference functionRef =
             new FunctionReference(functionDeclaration, functionDeclaration.getType());
         return new FunctionCallExpression(functionRef.getType(), functionRef, args.getArgs());
+    }
+
+    private Type inferBuiltinMemberCallType(MemberExp memberExp,
+            FunctionDeclaration functionDeclaration, FunctionCallArguments args) {
+        String functionName = functionDeclaration.name().toString();
+        if ("pop".equals(functionName) || ("push".equals(functionName) && !args.getArgs().isEmpty())) {
+            return VOID;
+        }
+        if ("push".equals(functionName)) {
+            Type receiverType = memberExp.getLeftExp().getType();
+            Type arrayType = receiverType instanceof KeYSolidityType kst ? kst.getSolidityType()
+                    : receiverType;
+            if (arrayType instanceof DynamicArrayType dynamicArrayType) {
+                return dynamicArrayType.getElementType();
+            }
+        }
+        return functionDeclaration.getType();
     }
 
     private @Nullable FunctionDeclaration simpleFunctionCallTarget(ExpressionContext ctx) {
@@ -284,6 +309,11 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
             return new MemberExp(leftExp, sv, leftType);
         }
         String fieldName = ctx.identifier().getText();
+        FunctionDeclaration builtinFunction =
+            SolidityInfo.getBuiltinFunctionDeclaration(new Name(fieldName));
+        if (builtinFunction != null && ("push".equals(fieldName) || "pop".equals(fieldName))) {
+            return new MemberExp(leftExp, builtinFunction, builtinFunction.getType());
+        }
         FieldDeclaration resolved = resolveStructField(leftType, fieldName);
         FieldDeclaration field = resolved != null ? resolved
                 : new FieldDeclaration(

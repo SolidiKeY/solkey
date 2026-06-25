@@ -332,11 +332,12 @@ when the matcher can preserve the relevant Solidity path shape faithfully.
 3. Add Java/logic support for the paper rules that need generated aliases or
    heap helpers.
 
-   The runnable `.key` subset covers bounded int array index reads/writes and
-   the `revert();` modality rules, but does not yet cover push/pop length
-   updates, non-primitive delete (struct/array root), memory heap read/write
-   allocation rules, or storage-memory copy rules using `copySt`/`copyMem`-style
-   helpers. Increment/decrement
+  The runnable `.key` subset covers bounded int array index reads/writes,
+  dynamic-array push/pop length updates, push-return assignment desugaring, pop
+  nonempty/defaulting, and the `revert();` modality rules. It does not yet cover
+  non-primitive delete (struct/array root), memory heap read/write allocation
+  rules, or storage-memory copy rules using `copySt`/`copyMem`-style helpers.
+  Increment/decrement
    operators (++, --) are fully implemented at root, field, and index levels
    including unfold rules for complex paths. The `+=` compound assignment
    operator is implemented at root, field, and index levels. Other compound assignment operators (-=, *=, /=, %=, &=,
@@ -465,12 +466,18 @@ Step-3 rules with **no example and no runnable taclet**:
 | `storageIndexWriteArrayCopySource` | `sp1[i] = sp2` (array) | runnable taclet exists for int payloads, but no focused example yet |
 | `storageIndexReadArrayBindLocalRoot` | `lp = sp[i]` (array) | runnable taclet exists, but no focused example yet |
 | `storageIndexReadArrayStoreRoot` | `gp = sp[i]` (array) | runnable taclet exists, but no focused example yet |
-| `storagePushValueSave` | `sp.push(se);` | full push/pop calculus |
-| `storagePushValueCopySource` | `sp1.push(sp2);` | same |
-| `storagePushLengthSave` | `sp.push();` | same |
-| `storageLocalRootPushBind` | `lp = sp.push();` | same |
-| `storagePushLhsToPushValue` (desugar) | `path.push() = se;` | same |
-| `storagePopSave` | `sp.pop();` | bounds/revert + push/pop calculus |
+| `storagePushValueCopySource` | `sp1.push(sp2);` | runnable taclet exists, but no focused example yet |
+| `storageLocalRootPushBind` | `lp = sp.push();` | runnable taclet exists, but the focused example is not yet part of the verified starter suite |
+
+Recently covered push/pop examples:
+
+| Rule | Example |
+|---|---|
+| `storagePushValueSave` | `storage-push-value.key` |
+| `storagePushLengthSave` | `storage-push-empty.key` |
+| `storagePushLhsToPushValue` + `storagePushValueSave` | `storage-push-return-assign.key` |
+| `storagePopSave` nonempty branch | `storage-pop-nonempty.key` |
+| `storagePopSave` empty/revert branch | `storage-pop-empty-box.key` |
 
 Compound `+=` and ++/–– (storage.md §7 — desugared before Step-3) are
 already exhaustively covered at root/field/index level (see the

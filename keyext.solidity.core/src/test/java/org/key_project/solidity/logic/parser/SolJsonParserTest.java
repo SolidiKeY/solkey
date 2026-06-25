@@ -138,6 +138,19 @@ public class SolJsonParserTest {
         assertSame(expectedType, kst.getSolidityType());
     }
 
+    private FunctionCallExpression firstExpressionStatement(String contract) throws IOException {
+        ContractDeclaration contractDec = getDeclStr(contract, services);
+        ExpressionStatement statement = (ExpressionStatement) contractDec.getFunctions()
+                .getFirst().getBody().getStatements().get(0);
+        return (FunctionCallExpression) statement.getExpression();
+    }
+
+    private static void assertBuiltinMember(MemberExp memberExp, String name) {
+        assertInstanceOf(FunctionDeclaration.class, memberExp.getRightExp());
+        FunctionDeclaration function = (FunctionDeclaration) memberExp.getRightExp();
+        assertEquals(name, function.name().toString());
+    }
+
     @Test
     void parseContractWithIntAndBoolSet() throws IOException {
         // language=solidity
@@ -1002,7 +1015,7 @@ public class SolJsonParserTest {
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract, services);
         String contractS = contractDec.toString();
-        assertTrue(contractS.contains("SimpleContract(target).g()"));
+        assertTrue(contractS.contains("SimpleContract(target).g"));
         TryStatement tryStmt = (TryStatement) contractDec.getFunctions().getFirst()
                 .getBody().getStatements().get(0);
         MemberExp memberExp = (MemberExp) tryStmt.getExpression();
@@ -1033,7 +1046,7 @@ public class SolJsonParserTest {
         ContractDeclaration contractDec = getDeclStr(contract, services);
         TryStatement tryStatement =
             (TryStatement) contractDec.getFunctions().get(0).getBody().getStatements().get(0);
-        assertTrue(tryStatement.toString().contains("SimpleContract(target).g() returns (int a)"));
+        assertTrue(tryStatement.toString().contains("SimpleContract(target).g returns (int a)"));
         ProgramVariable returnA = tryStatement.getReturnDeclaration().get(0);
         ProgramVariable rightA = (ProgramVariable) ((DeclarationStatement) tryStatement.getBody()
                 .getStatements().get(0)).getInitialValue();
@@ -1118,6 +1131,90 @@ public class SolJsonParserTest {
         FunctionReference revertRef = (FunctionReference) revertCall.getFunctionExp();
         assertEquals("revert", revertRef.referencedDeclaration.name().toString());
         assertSame(VOID, revertRef.getType());
+    }
+
+    @Test
+    @EnabledOnOs(OS.LINUX)
+    void parseArrayPushValueFunction() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    uint256[] values;
+                    function f(uint256 x) public {
+                        values.push(x);
+                    }
+                }""";
+        FunctionCallExpression pushCall = firstExpressionStatement(contract);
+        assertSame(VOID, pushCall.getType());
+        assertEquals(1, pushCall.getArguments().size());
+        MemberExp memberExp = (MemberExp) pushCall.getFunctionExp();
+        assertBuiltinMember(memberExp, "push");
+        assertInstanceOf(FieldReference.class, memberExp.getLeftExp());
+        assertEquals("values.push(x)", pushCall.toString());
+    }
+
+    @Test
+    @EnabledOnOs(OS.LINUX)
+    void parseArrayPopFunction() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    uint256[] values;
+                    function f() public {
+                        values.pop();
+                    }
+                }""";
+        FunctionCallExpression popCall = firstExpressionStatement(contract);
+        assertSame(VOID, popCall.getType());
+        assertEquals(0, popCall.getArguments().size());
+        assertBuiltinMember((MemberExp) popCall.getFunctionExp(), "pop");
+        assertEquals("values.pop()", popCall.toString());
+    }
+
+    @Test
+    @EnabledOnOs(OS.LINUX)
+    void parseStorageArrayPushReturnBinding() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    struct Person {
+                        uint256 age;
+                    }
+                    Person[] people;
+                    function f() public {
+                        Person storage p = people.push();
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract, services);
+        DeclarationStatement statement = (DeclarationStatement) contractDec.getFunctions()
+                .getFirst().getBody().getStatements().get(0);
+        FunctionCallExpression pushCall = (FunctionCallExpression) statement.getInitialValue();
+        assertNotNull(pushCall);
+        assertInstanceOf(StructDeclaration.class, pushCall.getType());
+        assertEquals("Person", pushCall.getType().name().toString());
+        assertBuiltinMember((MemberExp) pushCall.getFunctionExp(), "push");
+        assertEquals("Person storage p = people.push();", statement.toString());
+    }
+
+    @Test
+    @EnabledOnOs(OS.LINUX)
+    void parseArrayPushReturnAssignment() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    uint256[] values;
+                    function f(uint256 x) public {
+                        values.push() = x;
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract, services);
+        ExpressionStatement statement = (ExpressionStatement) contractDec.getFunctions()
+                .getFirst().getBody().getStatements().get(0);
+        FunctionCallExpression pushCall = (FunctionCallExpression) statement.getExpression();
+        assertSame(VOID, pushCall.getType());
+        assertEquals(1, pushCall.getArguments().size());
+        assertBuiltinMember((MemberExp) pushCall.getFunctionExp(), "push");
+        assertEquals("values.push(x)", pushCall.toString());
     }
 
     @Test

@@ -10,16 +10,21 @@ import org.key_project.logic.Name;
 import org.key_project.logic.Named;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.SourceData;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.StateMutability;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.references.ModifierReference;
 import org.key_project.solidity.program.ast.statement.Block;
+import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.solidity.rule.matching.inst.MatchConditions;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
-public class FunctionDeclaration implements Declaration, Named {
+public class FunctionDeclaration implements Declaration, Named, SolidityProgramElement {
     // TODO: Create another class for return type
     private final ImmutableArray<ProgramVariable> returnParameters;
     private final ImmutableArray<ProgramVariable> inputParameters;
@@ -78,7 +83,7 @@ public class FunctionDeclaration implements Declaration, Named {
         if (n < modifiers.size())
             return modifiers.get(n);
         n -= modifiers.size();
-        if (n == 0)
+        if (body != null && n == 0)
             return body;
         throw new IndexOutOfBoundsException(
             "Index should be 0 <= " + n + " < " + getChildCount());
@@ -86,7 +91,24 @@ public class FunctionDeclaration implements Declaration, Named {
 
     @Override
     public int getChildCount() {
-        return returnParameters.size() + inputParameters.size() + modifiers.size() + 1;
+        return returnParameters.size() + inputParameters.size() + modifiers.size()
+            + (body == null ? 0 : 1);
+    }
+
+    @Override
+    public @Nullable MatchConditions match(SourceData sourceData, @Nullable MatchConditions mc) {
+        if (!(sourceData.getSource() instanceof FunctionDeclaration sourceFunction)) {
+            return null;
+        }
+        if (!name.equals(sourceFunction.name)) {
+            return null;
+        }
+        sourceData.next();
+        return mc;
+    }
+
+    @Override
+    public void visit(Visitor v) {
     }
 
     @Override

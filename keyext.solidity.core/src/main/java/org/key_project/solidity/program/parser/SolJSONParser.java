@@ -218,9 +218,14 @@ public class SolJSONParser {
     }
 
     private void queueRefs(SyntaxElement cDecl, List<SyntaxElement> queue) {
+        if (cDecl == null) {
+            return;
+        }
         IntStream.range(0, cDecl.getChildCount()).mapToObj(cDecl::getChild).forEach(child -> {
-            queue.add(child);
-            queueRefs(child, queue);
+            if (child != null) {
+                queue.add(child);
+                queueRefs(child, queue);
+            }
         });
     }
 
@@ -586,6 +591,7 @@ public class SolJSONParser {
         return Optional.ofNullable(decl).map(v -> switch (v) {
             case Type tp -> tp;
             case FunctionDeclaration fd -> fd.getType();
+            case StateVariableDeclaration svd -> svd.getType();
             case StatementVariableDeclaration svd -> svd.getProgramVariable().getType();
             case FieldDeclaration fd -> fd.getTypeReference().referencedType;
             default -> null;
@@ -634,12 +640,47 @@ public class SolJSONParser {
 
     private Expression parseFunctionCall(JsonNode initializer) {
         JsonNode expNode = initializer.get("expression");
-        Type expType = expNode.has("referencedDeclaration") ? parseReferenceTypeDeclaration(expNode)
-                : parseTypeName(expNode);
         Expression functionExp = parseExpression(expNode);
         List<Expression> arguments =
             initializer.get("arguments").valueStream().map(this::parseExpression).toList();
-        return new FunctionCallExpression(expType, functionExp, arguments);
+        Type callType = inferFunctionCallType(initializer, expNode, functionExp, arguments);
+        return new FunctionCallExpression(callType, functionExp, arguments);
+    }
+
+    private Type inferFunctionCallType(JsonNode callNode, JsonNode expNode, Expression functionExp,
+            List<Expression> arguments) {
+        if (functionExp instanceof MemberExp member
+                && member.getRightExp() instanceof FunctionDeclaration function) {
+            String functionName = function.name().toString();
+            if ("pop".equals(functionName) || ("push".equals(functionName) && !arguments.isEmpty())) {
+                return VOID;
+            }
+            if ("push".equals(functionName)) {
+                Type receiverType = member.getLeftExp().getType();
+                Type arrayType = receiverType instanceof KeYSolidityType kst ? kst.getSolidityType()
+                        : receiverType;
+                if (arrayType instanceof DynamicArrayType dynamicArrayType) {
+                    return dynamicArrayType.getElementType();
+                }
+                Type solcType = parseSolcTypeDescription(callNode);
+                return solcType == null ? function.getType() : solcType;
+            }
+        }
+        if (expNode.has("referencedDeclaration")) {
+            return parseReferenceTypeDeclaration(expNode);
+        }
+        Type solcType = parseSolcTypeDescription(callNode);
+        return solcType == null ? parseTypeName(expNode) : solcType;
+    }
+
+    private @Nullable Type parseSolcTypeDescription(JsonNode node) {
+        JsonNode typeDescriptions = node.get("typeDescriptions");
+        if (typeDescriptions == null || typeDescriptions.isNull()
+                || typeDescriptions.get("typeString") == null
+                || typeDescriptions.get("typeString").isNull()) {
+            return null;
+        }
+        return SolidityInfo.getPrimitiveType(typeDescriptions.get("typeString").asString());
     }
 
     private Expression parseIndexRangeAccess(JsonNode initializer) {
@@ -692,6 +733,19 @@ public class SolJSONParser {
 
     private Expression parseMemberAccess(JsonNode initializer) {
         Expression leftExp = parseExpression(initializer.get("expression"));
+        if (!initializer.has("referencedDeclaration")
+                || initializer.get("referencedDeclaration").isNull()) {
+            JsonNode memberNameNode = initializer.get("memberName");
+            if (memberNameNode != null && !memberNameNode.isNull()) {
+                FunctionDeclaration builtin = SolidityInfo
+                        .getBuiltinFunctionDeclaration(new Name(memberNameNode.asString()));
+                if (builtin != null && ("push".equals(memberNameNode.asString())
+                        || "pop".equals(memberNameNode.asString()))) {
+                    return new MemberExp(leftExp, builtin, builtin.getType());
+                }
+            }
+            throw new RuntimeException("Unresolved member access " + initializer);
+        }
         int rightId = initializer.get("referencedDeclaration").asInt();
         JsonNode expNode = initializer.get("expression");
         Type type =

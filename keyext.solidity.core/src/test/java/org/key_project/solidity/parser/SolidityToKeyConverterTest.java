@@ -267,6 +267,57 @@ public class SolidityToKeyConverterTest {
     }
 
     @Test
+    void arrayPushValueFunctionCall() {
+        FunctionCallExpression exp = (FunctionCallExpression) parseExpression("v.push(false)");
+        assertEquals("v.push(false)", exp.toString());
+        assertSame(VOID, exp.getType());
+        assertEquals(1, exp.getArguments().size());
+        MemberExp memberExp = (MemberExp) exp.getFunctionExp();
+        assertEquals("v", memberExp.getLeftExp().toString());
+        FunctionDeclaration push = (FunctionDeclaration) memberExp.getRightExp();
+        assertEquals("push", push.name().toString());
+
+        PrettyPrinter printer = PrettyPrinter.purePrinter();
+        printer.printFragment(exp);
+        assertEquals("v.push(false)", printer.result());
+    }
+
+    @Test
+    void arrayPopFunctionCall() {
+        FunctionCallExpression exp = (FunctionCallExpression) parseExpression("v.pop()");
+        assertEquals("v.pop()", exp.toString());
+        assertSame(VOID, exp.getType());
+        assertEquals(0, exp.getArguments().size());
+        MemberExp memberExp = (MemberExp) exp.getFunctionExp();
+        FunctionDeclaration pop = (FunctionDeclaration) memberExp.getRightExp();
+        assertEquals("pop", pop.name().toString());
+    }
+
+    @Test
+    void arrayPushReturnStorageBinding() {
+        DeclarationStatement statement =
+            (DeclarationStatement) parseStatement("Person storage p = v.push();");
+        FunctionCallExpression exp = (FunctionCallExpression) statement.getInitialValue();
+        assertNotNull(exp);
+        assertEquals("v.push()", exp.toString());
+        MemberExp memberExp = (MemberExp) exp.getFunctionExp();
+        FunctionDeclaration push = (FunctionDeclaration) memberExp.getRightExp();
+        assertEquals("push", push.name().toString());
+        assertEquals("Person storage p = v.push();", statement.toString());
+    }
+
+    @Test
+    void arrayPushReturnAssignment() {
+        FunctionCallExpression exp = (FunctionCallExpression) parseExpression("v.push() = false");
+        assertEquals("v.push(false)", exp.toString());
+        assertSame(VOID, exp.getType());
+        assertEquals(1, exp.getArguments().size());
+        MemberExp memberExp = (MemberExp) exp.getFunctionExp();
+        FunctionDeclaration push = (FunctionDeclaration) memberExp.getRightExp();
+        assertEquals("push", push.name().toString());
+    }
+
+    @Test
     void array() {
         IndexExpression exp = (IndexExpression) parseExpression("v[false]");
         assertEquals("v", ((ProgramVariable) exp.getLeftExp()).toString());
