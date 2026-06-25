@@ -15,6 +15,7 @@ import org.key_project.solidity.parser.varcond.TypeComparisonCondition.Mode;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.rule.sv.OperatorSV;
 import org.key_project.solidity.rule.sv.ProgramSV;
+import org.key_project.solidity.rule.sv.sort.ProgramSVSort;
 import org.key_project.solidity.rule.taclets.builder.TacletBuilder;
 
 import org.jspecify.annotations.NonNull;
@@ -182,6 +183,56 @@ public class TacletBuilderManipulators {
     public static final AbstractConditionBuilder HAS_SORT =
         new SolidityTypeToSortConditionBuilder("hasSort");
 
+    public static final AbstractConditionBuilder HAS_FIELD_SORT =
+        new AbstractConditionBuilder("hasFieldSort", SV, SORT) {
+            @Override
+            public VariableCondition build(Object[] arguments, List<String> parameters,
+                    boolean negated) {
+                if (negated) {
+                    throw new IllegalArgumentException(
+                        "\\hasFieldSort does not support negation");
+                }
+                if (!(arguments[0] instanceof ProgramSV fieldSV)) {
+                    throw new IllegalArgumentException(
+                        "\\hasFieldSort expects a field program schema variable as its first "
+                            + "argument, "
+                            + "but got: " + arguments[0]);
+                }
+                if (fieldSV.sort() != ProgramSVSort.FIELD) {
+                    throw new IllegalArgumentException(
+                        "\\hasFieldSort expects a field program schema variable as its first "
+                            + "argument, but got: " + fieldSV);
+                }
+                if (arguments[1] instanceof GenericSort gs) {
+                    return new FieldExpressionTypeToSortCondition(fieldSV, gs);
+                }
+                throw new IllegalArgumentException(
+                    "Generic or parametric sort is expected. Got: " + arguments[1]);
+            }
+        };
+
+    public static final AbstractConditionBuilder HAS_ELEMENT_SORT =
+        new AbstractConditionBuilder("hasElementSort", SV, SORT) {
+            @Override
+            public VariableCondition build(Object[] arguments, List<String> parameters,
+                    boolean negated) {
+                if (negated) {
+                    throw new IllegalArgumentException(
+                        "\\hasElementSort does not support negation");
+                }
+                if (!(arguments[0] instanceof ProgramSV receiverSV)) {
+                    throw new IllegalArgumentException(
+                        "\\hasElementSort expects a program schema variable as its first argument, "
+                            + "but got: " + arguments[0]);
+                }
+                if (arguments[1] instanceof GenericSort gs) {
+                    return new IndexedExpressionTypeToSortCondition(receiverSV, gs);
+                }
+                throw new IllegalArgumentException(
+                    "Generic or parametric sort is expected. Got: " + arguments[1]);
+            }
+        };
+
     public static final TacletBuilderCommand NEW_LOCAL_VARS =
         new ConstructorBasedBuilder("newLocalVars", NewLocalVarsCondition.class, SV, SV, SV, SV);
 
@@ -213,7 +264,7 @@ public class TacletBuilderManipulators {
             FREE_5, EQUAL_UNIQUE,
             DROP_EFFECTLESS_ELEMENTARIES, SIMPLIFY_ITE_UPDATE,
             NEW_TYPE_OF, NEW_RUSTY_TYPE,
-            IS_SUBTYPE, SAME, HAS_SORT,
+            IS_SUBTYPE, SAME, HAS_SORT, HAS_FIELD_SORT, HAS_ELEMENT_SORT,
             NEW_LOCAL_VARS, HAS_INVARIANT, GET_INVARIANT, GET_VARIANT, SAME_AS_TERM);
     }
 

@@ -41,7 +41,7 @@ public final class SolidityTypeToSortCondition implements VariableCondition {
         final Sort svSort = exprOrTypeSV.sort();
         return svSort == ProgramSVSort.EXPRESSION || svSort == ProgramSVSort.SIMPLE_EXPRESSION
                 || svSort == ProgramSVSort.NON_SIMPLE_EXPRESSION || svSort == ProgramSVSort.TYPE
-                || exprOrTypeSV.arity() == 0;
+                || svSort instanceof ProgramSVSort || exprOrTypeSV.arity() == 0;
     }
 
     @Override
@@ -60,10 +60,11 @@ public final class SolidityTypeToSortCondition implements VariableCondition {
             type = t.sort();
         } else if (svSubst instanceof Type st) {
             type = services.getSolidityInfo().getKeYSolidityType(st).getSort();
-        } else {
-            final var expr = (Expression) svSubst;
+        } else if (svSubst instanceof Expression expr) {
             type = services.getSolidityInfo().getKeYSolidityType(expr.getType())
                     .getSort();
+        } else {
+            return null;
         }
         try {
             return matchCond.setInstantiations(

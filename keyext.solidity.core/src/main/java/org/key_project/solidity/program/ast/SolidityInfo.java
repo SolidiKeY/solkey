@@ -13,9 +13,9 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.abstractions.*;
 import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
+import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.StateMutability;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
-import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.StateVariableDeclaration;
 import org.key_project.solidity.theory.TheoryInfo;
 
@@ -45,11 +45,6 @@ public class SolidityInfo {
     private final Map<Name, ContractDeclaration> contracts = new LinkedHashMap<>();
 
     private final LinkedHashSet<StateVariableDeclaration> stateVariables = new LinkedHashSet<>();
-
-    /// Field-constant name (e.g. `Contract$age`, `Contract$Struct$age`) → declared Solidity type.
-    /// Populated by `SolJSONParser.registerFieldConstant` so meta-constructs like `#defaultOf`
-    /// can compute type-keyed values without per-field axioms in problem files.
-    private final Map<Name, Type> fieldTypes = new HashMap<>();
 
     private boolean initialized;
 
@@ -264,15 +259,4 @@ public class SolidityInfo {
         return null;
     }
 
-    // ── Field constants ─────────────────────────────────────────────────────
-
-    public void registerFieldType(Name fieldConstantName, @Nullable Type type) {
-        if (type != null) {
-            fieldTypes.put(fieldConstantName, type);
-        }
-    }
-
-    public @Nullable Type getFieldType(Name fieldConstantName) {
-        return fieldTypes.get(fieldConstantName);
-    }
 }

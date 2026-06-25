@@ -21,6 +21,7 @@ import org.key_project.util.collection.ImmutableSLList;
 import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -141,6 +142,52 @@ public class TacletParserTest {
                   \\program Path[name=array.mapping] invalidPath;
                 }
                 """));
+    }
+
+    @Test
+    public void testHasElementSortVarcondParses() throws IOException {
+        parseDecls("""
+                \\sorts {
+                  \\generic alpha;
+                  int;
+                  List;
+                }
+                \\schemaVariables {
+                  \\program Path[name=storage.simple] sp;
+                }
+                """);
+
+        Taclet taclet = parseTaclet("""
+                hasElementSortSmoke {
+                   \\find(x = x)
+                   \\varcond(\\hasElementSort(sp, \\sort(alpha)))
+                   \\replacewith(x = x)
+                }
+                """);
+
+        assertNotNull(taclet);
+    }
+
+    @Test
+    public void testHasFieldSortVarcondParses() throws IOException {
+        parseDecls("""
+                \\sorts {
+                  \\generic alpha;
+                }
+                \\schemaVariables {
+                  \\program Field a;
+                }
+                """);
+
+        Taclet taclet = parseTaclet("""
+                hasFieldSortSmoke {
+                   \\find(x = x)
+                   \\varcond(\\hasFieldSort(a, \\sort(alpha)))
+                   \\replacewith(x = x)
+                }
+                """);
+
+        assertNotNull(taclet);
     }
 
     @Test

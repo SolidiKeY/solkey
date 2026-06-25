@@ -7,8 +7,10 @@ import KeYLexer;
 package org.key_project.solidity.parser;
 }
 
-SAME_AS_TERM  : '\\sameAsTerm';
-NEW_LOCAL_VARS: '\\newLocalVars';
+SAME_AS_TERM   : '\\sameAsTerm';
+HAS_FIELD_SORT: '\\hasFieldSort';
+HAS_ELEMENT_SORT: '\\hasElementSort';
+NEW_LOCAL_VARS : '\\newLocalVars';
 STORE_TERM_IN : '\\storeTermIn';
 STORE_EXPR_IN : '\\storeExprIn';
 HAS_INVARIANT : '\\hasInvariant';
@@ -32,4 +34,3 @@ CONST : 'const';
 CHOOSECONTRACT : '\\chooseContract';
 CONTRACTS : '\\contracts';
 INVARIANTS : '\\invariants';
-

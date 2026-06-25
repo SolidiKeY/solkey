@@ -55,8 +55,6 @@ public abstract class AbstractTermTransformer extends AbstractSortedOperator
 
     public static final AbstractTermTransformer LOGIC_SHIFT = new ShiftTransformer();
 
-    public static final AbstractTermTransformer META_DEFAULT_OF = new MetaDefaultOf();
-
     @SuppressWarnings("argument.type.incompatible")
     protected AbstractTermTransformer(Name name, int arity, Sort sort) {
         super(name, createMetaSortArray(arity), sort, NONE);

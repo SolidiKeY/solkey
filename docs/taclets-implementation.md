@@ -308,33 +308,26 @@ when the matcher can preserve the relevant Solidity path shape faithfully.
    on whether `carol` is a memory object, storage root, storage alias, or a
    complex computed path.
 
-   Storage `delete` at root, field, and indexed levels (`storageRootDelete`,
-   `storageFieldDelete`, `storageIndexDelete`) saves
-   `defaultF(last(spPath))` — i.e. it delegates the cleared value to the
-   field-keyed default function. `defaultF` was flattened from the previous
-   polymorphic `defaultF<[alpha]>(Field)` to `any defaultF(Field)`;
-   existing call sites in `selectOnEmptyStorage` and `defaultDef` now cast
-   the result to the read sort (`(alpha) defaultF(fld)`). Per-shape unfold
-   rules (`storageFieldDelete_unfold_leftFst`,
-   `storageIndexDelete_unfold_leftFst`) alias only the receiver when it is
-   complex — mirroring the per-shape `++`/`+=` unfold structure to avoid
-   clashing with the simple-receiver terminal rules.
+  Storage `delete` at root and field levels (`storageRootDelete`,
+  `storageFieldDelete`) saves the typed default operator
+  `defaultValue<[alpha]>`. `storageRootDelete` binds `alpha` from the
+  matched root path with `\hasSort(sp, \sort(alpha))`. `storageFieldDelete`
+  binds `alpha` from the matched field with
+  `\hasFieldSort(a, \sort(alpha))`, which reads the field's AST type metadata.
+  Per-shape unfold rules (`storageFieldDelete_unfold_leftFst`,
+  `storageIndexDelete_unfold_leftFst`) alias only the receiver when it is
+  complex — mirroring the per-shape `++`/`+=` unfold structure to avoid
+  clashing with the simple-receiver terminal rules.
 
-   `defaultF(F)` is resolved at apply time by the `#defaultOf(Field)`
-   term-transformer meta-construct (`MetaDefaultOf`), which looks up the
-   field's declared Solidity type via `SolidityInfo.getFieldType` and
-   returns `0` for int/uint/address fields, `false` for bool fields, and
-   the empty struct `mtSt` for struct receivers. The field-type map is
-   populated by `SolJSONParser.registerFieldConstant` at contract load,
-   so no per-field axioms need to appear in problem `.key` files. The
-   resolver taclet `defaultFViaDefaultOf` (in `memoryRules.key`) uses
-   the `simplify_enlarging` heuristic so that list-walking rules
-   (`headDefinition`, `lastConsNil`) reduce a path-extracting argument
-   like `last<[Field]>(spPath)` to a bare Field constant *before* the
-   resolver fires. Remaining gaps: array element-type detection
-   (`storageIndexDelete` therefore hardcodes int `0` — sound for
-   `uint[]` / `int[]`, not for `bool[]` / `struct[]`); dynamic-array
-   length-reset semantics of `delete arr;`; memory delete.
+  The currently supported default rewrites are `defaultValue<[int]> = 0`,
+  `defaultValue<[bool]> = FALSE`, and `defaultValue<[Struct]> = mtSt`,
+  shared by memory defaults, empty storage reads, and storage delete.
+  `storageIndexDelete` binds `alpha` from indexed receivers with
+  `\hasElementSort(sp, \sort(alpha))`, using a mapping's value type or an
+  array's element type. Index keys still lower through the current `at(idx)`
+  int-index encoding, so non-int key precision remains out of scope.
+  Remaining gaps: dynamic-array length-reset semantics of `delete arr;`;
+  memory delete.
 
 3. Add Java/logic support for the paper rules that need generated aliases or
    heap helpers.

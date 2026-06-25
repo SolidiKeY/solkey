@@ -18,6 +18,8 @@ contract PaperStore {
     uint balance;
     uint[] values;
     mapping(uint => uint) balances;
+    mapping(uint => Person) people;
+    mapping(uint => bool) flags;
     uint[][] matrix;
     Person alice;
     Person bob;
