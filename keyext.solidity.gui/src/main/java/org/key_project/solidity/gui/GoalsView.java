@@ -68,6 +68,14 @@ public final class GoalsView extends JPanel implements ProofContext.Listener {
         list.setFont(font);
     }
 
+    /// Drops the cached label printer so the next render rebuilds it; call when a global rendering
+    /// setting (e.g. pretty printing) changed, since the reused printer captured the old setting.
+    public void invalidatePrinter() {
+        labelPrinter = null;
+        labelPrinterServices = null;
+        list.repaint();
+    }
+
     @Override
     public void proofLoaded() {
         refresh();

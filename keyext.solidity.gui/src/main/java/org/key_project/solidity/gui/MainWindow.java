@@ -18,6 +18,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -36,6 +37,7 @@ import javax.swing.border.Border;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.key_project.solidity.control.KeYEnvironment;
+import org.key_project.solidity.pp.NotationInfo;
 import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.io.ProofSaver;
@@ -68,6 +70,7 @@ public final class MainWindow extends JFrame {
     public MainWindow() {
         super("KeYther");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
+        applyPrettyPrinting(prefs.getBoolean("pp.pretty", true));
         setJMenuBar(buildMenuBar());
 
         treePanel.setHoverListener(infoView::preview);
@@ -164,13 +167,47 @@ public final class MainWindow extends JFrame {
         file.add(menuItem("Preferences ...", this::openPreferences));
         file.add(menuItem("Exit", this::dispose));
 
+        JMenu view = new JMenu("View");
+        JCheckBoxMenuItem pretty = new JCheckBoxMenuItem("Use pretty syntax",
+            prefs.getBoolean("pp.pretty", true));
+        pretty.addActionListener(e -> setPrettyPrinting(pretty.isSelected()));
+        view.add(pretty);
+        view.add(menuItem("Font ...", this::openFontPreferences));
+
         JMenu proof = new JMenu("Proof");
         proof.add(menuItem("Run auto mode", this::runAutoMode));
         proof.add(menuItem("Prune proof at selected node", this::pruneAtSelected));
 
         bar.add(file);
+        bar.add(view);
         bar.add(proof);
         return bar;
+    }
+
+    /// Sets the global pretty-printing default (pretty notation + abbreviated, unambiguous field
+    /// names), persists it, and re-renders the views so the change is visible immediately.
+    ///
+    /// @param on whether pretty printing is enabled
+    private void setPrettyPrinting(boolean on) {
+        prefs.putBoolean("pp.pretty", on);
+        applyPrettyPrinting(on);
+        goalsView.invalidatePrinter(); // its reused printer captured the previous setting
+        context.fireProofChanged();
+    }
+
+    /// Applies the pretty-printing default to the notation used by every freshly created printer.
+    /// When off, terms print in raw form, including fully qualified `contract$struct$…$field`
+    /// names.
+    ///
+    /// @param on whether pretty printing is enabled
+    private void applyPrettyPrinting(boolean on) {
+        NotationInfo.DEFAULT_PRETTY_SYNTAX = on;
+        NotationInfo.DEFAULT_HIDE_FIELD_PREFIX = on;
+    }
+
+    /// Opens the preferences dialog focused on the font settings.
+    private void openFontPreferences() {
+        new PreferencesDialog(this, prefs, this::applyAllFonts, true).setVisible(true);
     }
 
     private JToolBar buildToolBar() {

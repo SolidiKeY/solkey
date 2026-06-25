@@ -51,6 +51,12 @@ final class PreferencesDialog extends JDialog {
     private final List<JSpinner> paneSize = new ArrayList<>();
 
     PreferencesDialog(Frame owner, Preferences prefs, Runnable onApply) {
+        this(owner, prefs, onApply, false);
+    }
+
+    /// @param focusFont when `true`, the dialog opens with the global font control focused, so the
+    /// font settings are the active selection
+    PreferencesDialog(Frame owner, Preferences prefs, Runnable onApply, boolean focusFont) {
         super(owner, "Preferences", true);
         this.prefs = prefs;
         this.onApply = onApply;
@@ -113,6 +119,9 @@ final class PreferencesDialog extends JDialog {
         getRootPane().setDefaultButton(ok);
         pack();
         setLocationRelativeTo(owner);
+        if (focusFont) {
+            javax.swing.SwingUtilities.invokeLater(globalFamily::requestFocusInWindow);
+        }
     }
 
     private int header(JPanel form, GridBagConstraints g, int row, String text) {
