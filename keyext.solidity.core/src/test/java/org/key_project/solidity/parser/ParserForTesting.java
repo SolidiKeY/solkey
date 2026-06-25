@@ -32,6 +32,7 @@ import org.antlr.v4.runtime.*;
 
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.BOOL;
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.UINT;
+import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.VOID;
 import static org.key_project.solidity.rule.sv.SchemaVariableFactory.createProgramSV;
 
 public class ParserForTesting {
@@ -96,12 +97,13 @@ public class ParserForTesting {
         // services.getSolidityInfo().addType(enumSort, ksEnumType);
         // services.getNamespaces().sorts().add(enumSort);
 
-        Namespace<FunctionDeclaration> functions = new Namespace<>();
         FunctionDeclaration f = new FunctionDeclaration(new Name("f"),
-            List.of(), null, List.of(), null, null, null, null, List.of(), null);
-        functions.add(f);
+            List.of(), VOID, List.of(), null, null, null, null, List.of(), null);
+        services.getSolidityInfo().registerContract(
+            new ContractDeclaration(new Name("ParserForTestingFunctions"), List.of(),
+                List.of(), List.of(), List.of(f), List.of()));
 
-        return new SolidityToKeyConverter(services, functions, localVars, schemaVariables);
+        return new SolidityToKeyConverter(services, localVars, schemaVariables);
     }
 
     static public SolidityParser parse(String s) {

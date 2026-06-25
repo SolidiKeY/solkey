@@ -99,6 +99,7 @@ public class SolJSONParser {
     /// @return the KeY AST representation of {@code root}
     private List<SyntaxElement> json2SolidityAST(JsonNode root) {
         if ("SourceUnit".equals(root.get("nodeType").asString())) {
+            registerBuiltinFunctions(root);
             List<SyntaxElement> ast = parseSourceUnit(root.get("nodes").valueStream().toList());
             registerCreatedTypes();
             return ast;
@@ -120,6 +121,31 @@ public class SolJSONParser {
                         && "contract".equals(n.get("contractKind").asString()))
                 .map(this::parseContract)
                 .collect(Collectors.toList());
+    }
+
+    private void registerBuiltinFunctions(JsonNode node) {
+        if (node == null || node.isNull()) {
+            return;
+        }
+        if ("Identifier".equals(node.has("nodeType") ? node.get("nodeType").asString() : null)
+                && node.has("name") && node.has("referencedDeclaration")) {
+            FunctionDeclaration builtin = SolidityInfo
+                    .getBuiltinFunctionDeclaration(new Name(node.get("name").asString()));
+            if (builtin != null) {
+                registerBuiltinFunction(node.get("referencedDeclaration").asInt(), builtin.name());
+            }
+        }
+        node.valueStream().forEach(this::registerBuiltinFunctions);
+    }
+
+    private void registerBuiltinFunction(int id, Name name) {
+        FunctionDeclaration builtin = SolidityInfo.getBuiltinFunctionDeclaration(name);
+        if (builtin == null) {
+            throw new IllegalStateException("Built-in Solidity function " + name
+                + " is not registered");
+        }
+        id2Name.put(id, builtin);
+        functionId2Type.put(id, builtin.getType());
     }
 
 

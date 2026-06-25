@@ -40,37 +40,28 @@ import org.key_project.util.collection.ImmutableArray;
 import org.key_project.util.collection.ImmutableList;
 
 import org.antlr.v4.runtime.Token;
+import org.jspecify.annotations.Nullable;
 
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Default;
 
 public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
-    private Namespace<FunctionDeclaration> localFunctions;
     private Namespace<ProgramVariable> localVars;
     final private Namespace<? extends SchemaVariable> schemaVariables;
     final private Services services;
 
     public SolidityToKeyConverter() {
-        this.services = new Services();
-        this.localFunctions = new Namespace<>();
-        this.localVars = new Namespace<>();
-        this.schemaVariables = new Namespace<>();
+        this(new Services());
     }
 
-    public SolidityToKeyConverter(Services services, Namespace<FunctionDeclaration> localFunctions,
-            Namespace<ProgramVariable> localVars,
+    public SolidityToKeyConverter(Services services, Namespace<ProgramVariable> localVars,
             Namespace<? extends SchemaVariable> schemaVariables) {
         this.services = services;
-        this.localFunctions = localFunctions;
         this.localVars = localVars;
         this.schemaVariables = schemaVariables;
     }
 
     public SolidityToKeyConverter(Services services) {
-        this(services, new Namespace<>(), new Namespace<>(), new Namespace<>());
-    }
-
-    public Namespace<FunctionDeclaration> localFunctions() {
-        return localFunctions;
+        this(services, new Namespace<>(), new Namespace<>());
     }
 
     public Namespace<ProgramVariable> localVars() {
@@ -233,24 +224,35 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitFunctionCallExp(FunctionCallExpContext ctx) {
-        Expression functionExp = visitExpression(ctx.expression());
         FunctionCallArguments args =
             (FunctionCallArguments) visitFunctionCallArguments(ctx.functionCallArguments());
+        FunctionDeclaration functionDeclaration = simpleFunctionCallTarget(ctx.expression());
+        if (functionDeclaration != null) {
+            FunctionReference functionRef =
+                new FunctionReference(functionDeclaration, functionDeclaration.getType());
+            return new FunctionCallExpression(functionRef.getType(), functionRef, args.getArgs());
+        }
+        Expression functionExp = visitExpression(ctx.expression());
         if (functionExp instanceof NewExpression newExp) {
             return new FunctionCallExpression(newExp.getType(), newExp, args.getArgs());
         }
         Name name = new Name(functionExp.toString());
-        FunctionDeclaration functionDeclaration = localFunctions.lookup(name);
-        if (functionDeclaration == null) {
-            // Not a locally declared function: look it up in the parsed contracts.
-            functionDeclaration = services.getSolidityInfo().getFunctionDeclaration(name);
-        }
+        functionDeclaration = services.getSolidityInfo().getFunctionDeclaration(name);
         if (functionDeclaration == null) {
             reportError("Unknown function " + name, ctx.start);
         }
         FunctionReference functionRef =
             new FunctionReference(functionDeclaration, functionDeclaration.getType());
         return new FunctionCallExpression(functionRef.getType(), functionRef, args.getArgs());
+    }
+
+    private @Nullable FunctionDeclaration simpleFunctionCallTarget(ExpressionContext ctx) {
+        if (ctx instanceof PrimaryContext primary
+                && primary.primaryExpression().identifier() != null) {
+            Name name = new Name(primary.primaryExpression().identifier().getText());
+            return services.getSolidityInfo().getFunctionDeclaration(name);
+        }
+        return null;
     }
 
     @Override

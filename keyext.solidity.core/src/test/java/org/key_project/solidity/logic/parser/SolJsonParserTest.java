@@ -1101,6 +1101,26 @@ public class SolJsonParserTest {
     }
 
     @Test
+    void parseRevertFunction() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function f() public {
+                        revert();
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract, services);
+        ExpressionStatement statement = (ExpressionStatement) contractDec.getFunctions()
+                .getFirst().getBody().getStatements().get(0);
+        FunctionCallExpression revertCall = (FunctionCallExpression) statement.getExpression();
+        assertSame(VOID, revertCall.getType());
+        assertEquals(0, revertCall.getArguments().size());
+        FunctionReference revertRef = (FunctionReference) revertCall.getFunctionExp();
+        assertEquals("revert", revertRef.referencedDeclaration.name().toString());
+        assertSame(VOID, revertRef.getType());
+    }
+
+    @Test
     @ExpectedToFail("tuple returns not yet supported")
     void tupleReturn() throws IOException {
         // language=solidity

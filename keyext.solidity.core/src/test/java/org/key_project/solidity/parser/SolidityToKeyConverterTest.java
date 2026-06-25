@@ -11,6 +11,7 @@ import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
 import org.key_project.solidity.program.ast.expressions.*;
 import org.key_project.solidity.program.ast.expressions.literals.*;
 import org.key_project.solidity.program.ast.expressions.operators.*;
+import org.key_project.solidity.program.ast.references.FunctionReference;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.solidity.testutil.ExpectedToFail;
@@ -252,6 +253,17 @@ public class SolidityToKeyConverterTest {
         FunctionCallExpression exp = (FunctionCallExpression) parseExpression("f(false)");
         assertEquals("f", exp.functionExp.toString());
         assertFalse(((BoolLiteral) exp.getArgument(0)).getValue());
+    }
+
+    @Test
+    void revertFunctionCall() {
+        ExpressionStatement statement = (ExpressionStatement) parseStatement("revert();");
+        FunctionCallExpression exp = (FunctionCallExpression) statement.getExpression();
+        assertSame(VOID, exp.getType());
+        assertEquals(0, exp.getArguments().size());
+        FunctionReference revertRef = (FunctionReference) exp.getFunctionExp();
+        assertEquals("revert", revertRef.referencedDeclaration.name().toString());
+        assertSame(VOID, revertRef.getType());
     }
 
     @Test

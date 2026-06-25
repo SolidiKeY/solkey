@@ -30,8 +30,7 @@ public class BothParsersTest {
 
     public BothParsersTest() throws IOException {
         services = ParserForTesting.load().getServices();
-        stk = new SolidityToKeyConverter(services, new Namespace<>(), new Namespace<>(),
-            new Namespace<>());
+        stk = new SolidityToKeyConverter(services, new Namespace<>(), new Namespace<>());
         solcParser = new SolcParser(services);
         addContractToService();
     }

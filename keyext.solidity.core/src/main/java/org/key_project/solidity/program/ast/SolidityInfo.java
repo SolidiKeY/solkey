@@ -13,6 +13,8 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.abstractions.*;
 import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
+import org.key_project.solidity.program.ast.declarations.FunctionEnums.StateMutability;
+import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.StateVariableDeclaration;
 import org.key_project.solidity.theory.TheoryInfo;
@@ -32,6 +34,8 @@ import org.slf4j.LoggerFactory;
 /// [#put(KeYSolidityType)].
 public class SolidityInfo {
     private static final Logger LOGGER = LoggerFactory.getLogger(SolidityInfo.class);
+    private static final Map<Name, FunctionDeclaration> BUILTIN_FUNCTIONS =
+        createBuiltinFunctions();
 
     /// Solidity AST type → KeYSolidityType (and the same by type name).
     private final Map<Type, KeYSolidityType> typeMap = new HashMap<>();
@@ -153,6 +157,17 @@ public class SolidityInfo {
 
     // ── Contracts and functions ─────────────────────────────────────────────
 
+    private static Map<Name, FunctionDeclaration> createBuiltinFunctions() {
+        FunctionDeclaration revert = new FunctionDeclaration(new Name("revert"), List.of(),
+            PrimitiveType.VOID, List.of(), null, "function", Visibility.internal,
+            StateMutability.pure, List.of(), "");
+        return Map.of(revert.name(), revert);
+    }
+
+    public static @Nullable FunctionDeclaration getBuiltinFunctionDeclaration(Name functionName) {
+        return BUILTIN_FUNCTIONS.get(functionName);
+    }
+
     /// Registers a fully parsed contract. Called by the parser after all
     /// references inside the contract are resolved.
     public void registerContract(ContractDeclaration contract) {
@@ -202,7 +217,7 @@ public class SolidityInfo {
                 }
             }
         }
-        return null;
+        return getBuiltinFunctionDeclaration(functionName);
     }
 
     private static boolean signatureMatches(FunctionDeclaration fd,
