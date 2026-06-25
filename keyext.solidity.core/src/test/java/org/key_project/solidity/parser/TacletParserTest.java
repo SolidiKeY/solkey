@@ -112,6 +112,8 @@ public class TacletParserTest {
                   \\program MemoryPath memoryPath;
                   \\program SimpleMemoryPath simpleMemoryPath;
                   \\program ComplexMemoryPath complexMemoryPath;
+                  \\program Path[name=storage.simple.array] arrayPath;
+                  \\program Path[name=storage.simple.mapping] mappingPath;
                   \\program Path path;
                 }
                 """);
@@ -122,6 +124,8 @@ public class TacletParserTest {
         assertInstanceOf(ProgramSV.class, lookup_schemavar("memoryPath"));
         assertInstanceOf(ProgramSV.class, lookup_schemavar("simpleMemoryPath"));
         assertInstanceOf(ProgramSV.class, lookup_schemavar("complexMemoryPath"));
+        assertInstanceOf(ProgramSV.class, lookup_schemavar("arrayPath"));
+        assertInstanceOf(ProgramSV.class, lookup_schemavar("mappingPath"));
         assertInstanceOf(ProgramSV.class, lookup_schemavar("path"));
     }
 
@@ -130,6 +134,11 @@ public class TacletParserTest {
         assertThrows(Exception.class, () -> parseDecls("""
                 \\schemaVariables {
                   \\program Path[name=storage.memory] invalidPath;
+                }
+                """));
+        assertThrows(Exception.class, () -> parseDecls("""
+                \\schemaVariables {
+                  \\program Path[name=array.mapping] invalidPath;
                 }
                 """));
     }

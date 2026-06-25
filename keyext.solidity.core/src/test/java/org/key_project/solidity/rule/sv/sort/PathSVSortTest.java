@@ -10,8 +10,11 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.SortImpl;
+import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
+import org.key_project.solidity.program.ast.abstractions.MappingType;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
+import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
@@ -35,11 +38,12 @@ public class PathSVSortTest {
 
     private Services services;
     private KeYSolidityType uintType;
+    private Sort uintSort;
 
     @BeforeEach
     void setUp() {
         services = new Services();
-        Sort uintSort = new SortImpl(new Name("uint256"), false);
+        uintSort = new SortImpl(new Name("uint256"), false);
         uintType = new KeYSolidityType(PrimitiveType.UINT256, uintSort);
     }
 
@@ -47,9 +51,21 @@ public class PathSVSortTest {
         return new ProgramVariable(new Name(name), uintType, location);
     }
 
+    private ProgramVariable variable(String name, Type type, DataLocation location) {
+        return new ProgramVariable(new Name(name), new KeYSolidityType(type, uintSort), location);
+    }
+
     private FieldReference storageField(String name) {
+        return storageField(name, uintType);
+    }
+
+    private FieldReference storageField(String name, Type type) {
+        return storageField(name, new KeYSolidityType(type, uintSort));
+    }
+
+    private FieldReference storageField(String name, KeYSolidityType type) {
         StateVariableDeclaration decl = new StateVariableDeclaration(new Name(name),
-            uintType, new Name("Store$" + name), null, Visibility.Public);
+            type, new Name("Store$" + name), null, Visibility.Public);
         return new FieldReference(decl, decl.getType());
     }
 
@@ -140,5 +156,56 @@ public class PathSVSortTest {
             () -> ProgramSVSort.PATH.createInstance("memory.global"));
         assertThrows(IllegalArgumentException.class,
             () -> ProgramSVSort.PATH.createInstance("storage.outer"));
+        assertThrows(IllegalArgumentException.class,
+            () -> ProgramSVSort.PATH.createInstance("array.mapping"));
+    }
+
+    @Test
+    void arrayFilterMatchesDynamicArrayFieldReferenceOnly() {
+        FieldReference values = storageField("values",
+            new DynamicArrayType(PrimitiveType.UINT));
+        FieldReference balances = storageField("balances",
+            new MappingType(PrimitiveType.UINT, PrimitiveType.UINT));
+
+        assertTrue(ProgramSVSort.PATH.createInstance("storage.array")
+                .canStandFor(values, services));
+        assertFalse(ProgramSVSort.PATH.createInstance("storage.array")
+                .canStandFor(balances, services));
+    }
+
+    @Test
+    void mappingFilterMatchesMappingFieldReferenceOnly() {
+        FieldReference values = storageField("values",
+            new DynamicArrayType(PrimitiveType.UINT));
+        FieldReference balances = storageField("balances",
+            new MappingType(PrimitiveType.UINT, PrimitiveType.UINT));
+
+        assertFalse(ProgramSVSort.PATH.createInstance("storage.mapping")
+                .canStandFor(values, services));
+        assertTrue(ProgramSVSort.PATH.createInstance("storage.mapping")
+                .canStandFor(balances, services));
+    }
+
+    @Test
+    void arrayFilterMatchesStorageLocalArrays() {
+        ProgramVariable localArray = variable("localArray",
+            new DynamicArrayType(PrimitiveType.UINT), DataLocation.Storage);
+
+        assertTrue(ProgramSVSort.PATH.createInstance("storage.array")
+                .canStandFor(localArray, services));
+        assertFalse(ProgramSVSort.PATH.createInstance("storage.mapping")
+                .canStandFor(localArray, services));
+    }
+
+    @Test
+    void nestedArrayIndexKeepsArrayKindForNextIndex() {
+        FieldReference matrix = storageField("matrix",
+            new DynamicArrayType(new DynamicArrayType(PrimitiveType.UINT)));
+        IndexExpression matrixRow = new IndexExpression(matrix, new Uint256Literal(BigInteger.TWO));
+
+        assertTrue(ProgramSVSort.PATH.createInstance("storage.array")
+                .canStandFor(matrixRow, services));
+        assertFalse(ProgramSVSort.PATH.createInstance("storage.mapping")
+                .canStandFor(matrixRow, services));
     }
 }

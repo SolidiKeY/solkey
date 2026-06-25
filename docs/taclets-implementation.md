@@ -57,10 +57,15 @@ closing problems.
   and read on `alice.account.token.value`, chaining `_decomposeToken` followed
   by `_decomposeValue` against the `Path[name=field.global]` base.
 - `storage-index-root-array.key` demonstrates root-level dynamic-array index
-  write and read (`values[1]`) via `storageIndexWriteMappingSave_root` and the
-  sibling `storageIndexReadMappingFind_root`. Arrays and mappings share the
-  rule because the bounds branch is not yet modelled, so a separate mapping
-  example is not needed.
+  write and read (`values[1]`) via the bounded
+  `storageIndexWriteArraySave_root` and `storageIndexReadArrayFind_root`
+  rules. The example assumes `values.size > 1`, so the in-bounds branch closes
+  and the out-of-bounds/revert branch is contradictory.
+- `storage-index-root-mapping.key` demonstrates root-level mapping index write
+  and read (`balances[1]`) via the unbounded mapping rules; mappings do not
+  generate size checks.
+- `storage-index-array-out-of-bounds-box.key` demonstrates the out-of-bounds
+  array branch in box modality, where `revert();` closes to `true`.
 - `storage-index-multiple-writes.key` shows last-write-wins on an indexed
   root slot (`values[3] = 5; values[3] = 8; result = values[3];` closes with
   `result = 8`).
@@ -334,10 +339,11 @@ when the matcher can preserve the relevant Solidity path shape faithfully.
 3. Add Java/logic support for the paper rules that need generated aliases or
    heap helpers.
 
-   The runnable `.key` subset does not yet cover array bounds/revert
-   branches, push/pop length updates, non-primitive delete (struct/array
-   root), memory heap read/write allocation rules, or storage-memory copy
-   rules using `copySt`/`copyMem`-style helpers. Increment/decrement
+   The runnable `.key` subset covers bounded int array index reads/writes and
+   the `revert();` modality rules, but does not yet cover push/pop length
+   updates, non-primitive delete (struct/array root), memory heap read/write
+   allocation rules, or storage-memory copy rules using `copySt`/`copyMem`-style
+   helpers. Increment/decrement
    operators (++, --) are fully implemented at root, field, and index levels
    including unfold rules for complex paths. The `+=` compound assignment
    operator is implemented at root, field, and index levels. Other compound assignment operators (-=, *=, /=, %=, &=,
@@ -429,9 +435,12 @@ Step-3 rules with an example today:
 - `storageLocalRootRebind` (`lp = sp`),
   `storageFieldReadBindLocalRoot` (`lp = sp.b`),
   `storageFieldReadStoreRoot` (`gp = sp.b`).
-- `storageIndexWriteMappingSave` / `storageIndexReadMappingFind` —
-  currently shared with the array shape (no `array(sp)` /
-  `mapping(sp)` split).
+- `storageIndexWriteMappingSave` / `storageIndexReadMappingFind` for mappings
+  and `storageIndexWriteArraySave` / `storageIndexReadArrayFind` for arrays.
+  `Path[name=...array]` and `Path[name=...mapping]` keep the rules disjoint;
+  array rules branch on `0 <= i < find(storage, sp · size)`, mapping rules do
+  not.
+- `revertDiamond` / `revertBox`.
 
 Step-3 rules added since the audit (struct-payload copy):
 
@@ -460,15 +469,15 @@ Step-3 rules with **no example and no runnable taclet**:
 | `storageIndexWriteMappingCopySource` | `sp1[i] = sp2` (mapping) | alias/struct-copy support |
 | `storageIndexReadMappingBindLocalRoot` | `lp = sp[i]` (mapping) | mapping-side taclet |
 | `storageIndexReadMappingStoreRoot` | `gp = sp[i]` (mapping) | mapping-side taclet |
-| All five array index variants (`storageIndexWriteArraySave`, `…CopySource`, `…ReadArrayFind`, `…BindLocalRoot`, `…StoreRoot`) | `sp[i] = …` / `… = sp[i]` (array) | bounds branch + `revert` machinery (impl doc §"Work Needed" item 3), plus the `array(sp)` / `mapping(sp)` predicate split |
+| `storageIndexWriteArrayCopySource` | `sp1[i] = sp2` (array) | runnable taclet exists for int payloads, but no focused example yet |
+| `storageIndexReadArrayBindLocalRoot` | `lp = sp[i]` (array) | runnable taclet exists, but no focused example yet |
+| `storageIndexReadArrayStoreRoot` | `gp = sp[i]` (array) | runnable taclet exists, but no focused example yet |
 | `storagePushValueSave` | `sp.push(se);` | full push/pop calculus |
 | `storagePushValueCopySource` | `sp1.push(sp2);` | same |
 | `storagePushLengthSave` | `sp.push();` | same |
 | `storageLocalRootPushBind` | `lp = sp.push();` | same |
 | `storagePushLhsToPushValue` (desugar) | `path.push() = se;` | same |
 | `storagePopSave` | `sp.pop();` | bounds/revert + push/pop calculus |
-| `revertDiamond` | `revert();` in `⟨·⟩` | `revert` taclet pair |
-| `revertBox` | `revert();` in `[·]` | same |
 
 Compound `+=` and ++/–– (storage.md §7 — desugared before Step-3) are
 already exhaustively covered at root/field/index level (see the

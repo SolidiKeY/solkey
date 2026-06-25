@@ -12,7 +12,13 @@ import org.key_project.logic.Name;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.abstractions.ArrayType;
+import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
+import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
+import org.key_project.solidity.program.ast.abstractions.MappingType;
+import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
+import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.IndexExpression;
 import org.key_project.solidity.program.ast.expressions.MemberExp;
 import org.key_project.solidity.program.ast.references.FieldReference;
@@ -21,7 +27,7 @@ final class PathSVSort extends ProgramSVSort {
     private static final Map<String, ProgramSVSort> PARAMETERIZED_SORTS = new HashMap<>();
 
     private enum Axis {
-        LOCATION, SIMPLICITY, ORIGIN
+        LOCATION, SIMPLICITY, ORIGIN, KIND
     }
 
     enum Location {
@@ -36,22 +42,29 @@ final class PathSVSort extends ProgramSVSort {
         ANY, LOCAL, GLOBAL
     }
 
-    private record PathInfo(Location location, boolean simple, Origin origin) {
+    private enum Kind {
+        ANY, ARRAY, MAPPING
+    }
+
+    private record PathInfo(Location location, boolean simple, Origin origin, Kind kind) {
     }
 
     private final Location location;
     private final Simplicity simplicity;
     private final Origin origin;
+    private final Kind kind;
 
     PathSVSort(String name, Location location, Simplicity simplicity) {
-        this(name, location, simplicity, Origin.ANY);
+        this(name, location, simplicity, Origin.ANY, Kind.ANY);
     }
 
-    private PathSVSort(String name, Location location, Simplicity simplicity, Origin origin) {
+    private PathSVSort(String name, Location location, Simplicity simplicity, Origin origin,
+            Kind kind) {
         super(new Name(name));
         this.location = location;
         this.simplicity = simplicity;
         this.origin = origin;
+        this.kind = kind;
     }
 
     @Override
@@ -64,6 +77,9 @@ final class PathSVSort extends ProgramSVSort {
             return false;
         }
         if (origin != Origin.ANY && info.origin() != origin) {
+            return false;
+        }
+        if (kind != Kind.ANY && info.kind() != kind) {
             return false;
         }
         return switch (simplicity) {
@@ -96,6 +112,10 @@ final class PathSVSort extends ProgramSVSort {
                     () -> filters.origin = Origin.LOCAL);
                 case "global" -> filters.set(Axis.ORIGIN, flag, seen,
                     () -> filters.origin = Origin.GLOBAL);
+                case "array" -> filters.set(Axis.KIND, flag, seen,
+                    () -> filters.kind = Kind.ARRAY);
+                case "mapping" -> filters.set(Axis.KIND, flag, seen,
+                    () -> filters.kind = Kind.MAPPING);
                 default -> throw new IllegalArgumentException(
                     "Unknown Path sort flag '" + rawFlag + "'");
             }
@@ -105,46 +125,68 @@ final class PathSVSort extends ProgramSVSort {
                 "Memory paths are always local; use 'memory' or 'memory.local'");
         }
         ProgramSVSort result = new PathSVSort("Path[name=" + parameter + "]", filters.location,
-            filters.simplicity, filters.origin);
+            filters.simplicity, filters.origin, filters.kind);
         PARAMETERIZED_SORTS.put(parameter, result);
         return result;
     }
 
     private static PathInfo classify(SolidityProgramElement pe, Services services) {
         if (pe instanceof FieldReference) {
-            return new PathInfo(Location.STORAGE, true, Origin.GLOBAL);
+            return new PathInfo(Location.STORAGE, true, Origin.GLOBAL, kindOf(pe));
         }
         if (pe instanceof ProgramVariable pv) {
             DataLocation dataLocation = pv.getDataLocation();
             if (dataLocation == DataLocation.Storage) {
-                return new PathInfo(Location.STORAGE, true, Origin.LOCAL);
+                return new PathInfo(Location.STORAGE, true, Origin.LOCAL, kindOf(pe));
             }
             if (dataLocation == DataLocation.Memory) {
-                return new PathInfo(Location.MEMORY, true, Origin.LOCAL);
+                return new PathInfo(Location.MEMORY, true, Origin.LOCAL, kindOf(pe));
             }
-            return new PathInfo(Location.ANY, true, Origin.LOCAL);
+            return new PathInfo(Location.ANY, true, Origin.LOCAL, kindOf(pe));
         }
         if (pe instanceof MemberExp member) {
             PathInfo base = classify(member.getLeftExp(), services);
             if (base == null) {
                 return null;
             }
-            return new PathInfo(base.location(), false, base.origin());
+            return new PathInfo(base.location(), false, base.origin(), kindOf(pe));
         }
         if (pe instanceof IndexExpression index) {
             PathInfo base = classify(index.getLeftExp(), services);
             if (base == null) {
                 return null;
             }
-            return new PathInfo(base.location(), false, base.origin());
+            return new PathInfo(base.location(), false, base.origin(), kindOf(pe));
         }
         return null;
+    }
+
+    private static Kind kindOf(SolidityProgramElement pe) {
+        if (!(pe instanceof Expression expression)) {
+            return Kind.ANY;
+        }
+        Type type = unwrap(expression.getType());
+        if (type instanceof DynamicArrayType || type instanceof ArrayType) {
+            return Kind.ARRAY;
+        }
+        if (type instanceof MappingType) {
+            return Kind.MAPPING;
+        }
+        return Kind.ANY;
+    }
+
+    private static Type unwrap(Type type) {
+        if (type instanceof KeYSolidityType keyType && keyType.getSolidityType() != null) {
+            return keyType.getSolidityType();
+        }
+        return type;
     }
 
     private static final class PathFilters {
         private Location location = Location.ANY;
         private Simplicity simplicity = Simplicity.ANY;
         private Origin origin = Origin.ANY;
+        private Kind kind = Kind.ANY;
 
         private void set(Axis axis, String flag, Map<Axis, String> seen, Runnable setter) {
             String previous = seen.putIfAbsent(axis, flag);
