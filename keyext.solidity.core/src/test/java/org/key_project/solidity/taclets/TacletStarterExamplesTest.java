@@ -105,6 +105,8 @@ public class TacletStarterExamplesTest {
             example("storage-push-return-assign.key"),
             example("storage-pop-nonempty.key"),
             example("storage-pop-empty-box.key"),
+            example("memory-decl-fresh.key"),
+            example("memory-root-delete-fresh.key"),
             example("addition-simple.key"),
             example("addition-storage-read.key"),
             example("addition-storage-write.key"),

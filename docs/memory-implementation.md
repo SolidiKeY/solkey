@@ -555,6 +555,10 @@ support should add or adjust these logic rules:
 Start with small examples under `keyext.solidity.examples/taclets/`. Suggested
 files:
 
+- `memory-decl-fresh.key`: implemented. `Person memory carol;` allocates a
+  fresh root with an explicit `new(memory, r)` branch.
+- `memory-root-delete-fresh.key`: implemented. `delete carol;` rebinds the
+  memory root to a fresh identity with the same freshness branch.
 - `memory-decl-default.key`: `Person memory carol; result = carol.age;`
   proves default primitive read.
 - `memory-root-alias.key`: `carol = david; carol.age = 41;` proves
@@ -565,8 +569,9 @@ files:
   `carol.account.balance`.
 - `memory-field-reference-assign.key`: `carol.account = david.account;` proves
   later writes alias.
-- `memory-delete.key`: separate primitive field, reference field, and root
-  delete cases.
+- `memory-delete.key`: separate primitive field, reference field, index, and
+  complex receiver delete cases. Root delete is covered by
+  `memory-root-delete-fresh.key`.
 - `memory-array-index.key`: fixed-length memory array read/write with bounds.
 - `storage-to-memory.key`: `Person memory carol = alice;` then mutate `alice`
   and prove the memory snapshot is unchanged.

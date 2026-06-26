@@ -326,8 +326,14 @@ when the matcher can preserve the relevant Solidity path shape faithfully.
   `\hasElementSort(sp, \sort(alpha))`, using a mapping's value type or an
   array's element type. Index keys still lower through the current `at(idx)`
   int-index encoding, so non-int key precision remains out of scope.
+  Memory root allocation is implemented for bare reference declarations
+  (`memoryReferenceDeclFreshAlloc`) and root memory delete/rebinding
+  (`memoryRootDeleteFreshRebind`). Both rules introduce a fresh
+  `IdentityPrim` skolem and split off an explicit `new(memory, r)` proof
+  branch; the semantic branch assumes that freshness fact before emitting
+  `{mp := idC(r, nil)} {memory := addM(memory, r)}`.
   Remaining gaps: dynamic-array length-reset semantics of `delete arr;`;
-  memory delete.
+  memory field/index delete and complex memory delete receivers.
 
 3. Add Java/logic support for the paper rules that need generated aliases or
    heap helpers.
@@ -335,8 +341,9 @@ when the matcher can preserve the relevant Solidity path shape faithfully.
   The runnable `.key` subset covers bounded int array index reads/writes,
   dynamic-array push/pop length updates, push-return assignment desugaring, pop
   nonempty/defaulting, and the `revert();` modality rules. It does not yet cover
-  non-primitive delete (struct/array root), memory heap read/write allocation
-  rules, or storage-memory copy rules using `copySt`/`copyMem`-style helpers.
+  full memory heap read/write rules, memory allocation with initializers,
+  memory array allocation, or storage-memory copy rules using
+  `copySt`/`copyMem`-style helpers.
   Increment/decrement
    operators (++, --) are fully implemented at root, field, and index levels
    including unfold rules for complex paths. The `+=` compound assignment
@@ -369,8 +376,10 @@ when the matcher can preserve the relevant Solidity path shape faithfully.
   `…BindLocalRoot`/`…StoreRoot` mapping/array variants still need
   `find<[Struct]>`/`storeSt` plumbing for non-int payloads and array
   bounds branches.
-- `memory-delete.key`: `memoryDeleteSimpleTarget` and
-  `memoryDeleteComplexTarget`.
+- `memory-decl-fresh.key` and `memory-root-delete-fresh.key` cover the
+  implemented fresh root allocation/rebinding mechanism from `mtMem`.
+  Remaining `memory-delete.key` work should cover primitive field, reference
+  field, index, and complex receiver cases.
 - `storage-index-read-write.key`: bounds-branching variants of the existing
   `_rootIndex` and `_decomposeArrayIndex` index rules, plus the paper's
   storage-alias copy cases (`tokens[i] = tokRef;`) once alias introduction is
