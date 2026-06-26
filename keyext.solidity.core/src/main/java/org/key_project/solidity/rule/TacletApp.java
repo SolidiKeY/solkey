@@ -37,6 +37,7 @@ import org.key_project.solidity.logic.TermBuilder;
 import org.key_project.solidity.logic.op.*;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
+import org.key_project.solidity.program.ast.abstractions.MemoryReferenceTypes;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.expressions.Expression;
@@ -63,8 +64,10 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Default;
+import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Memory;
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Storage;
 import static org.key_project.solidity.rule.sv.sort.ProgramSVSort.VARIABLE;
+import static org.key_project.solidity.rule.sv.sort.ProgramVariableSVSort.Filter.MEMORY_LOCAL;
 import static org.key_project.solidity.rule.sv.sort.ProgramVariableSVSort.Filter.STORAGE_LOCAL;
 
 public abstract class TacletApp implements RuleApp {
@@ -868,11 +871,11 @@ public abstract class TacletApp implements RuleApp {
                     kst = (KeYSolidityType) o;
                 }
                 assert kst != null : "could not find kst for: " + o;
-                DataLocation dataLocation = isStorageAliasSV(sv)
-                        ? Storage
-                        : Default;
+                DataLocation dataLocation = dataLocationForFreshVariable(sv);
                 if (dataLocation == Storage) {
                     kst = asStorageAliasType(kst, services);
+                } else if (dataLocation == Memory) {
+                    kst = MemoryReferenceTypes.asMemoryReferenceType(kst, dataLocation, services);
                 }
                 return new ProgramVariable(new Name(instantiation), kst, dataLocation);
             }
@@ -880,9 +883,15 @@ public abstract class TacletApp implements RuleApp {
         return null;
     }
 
-    private static boolean isStorageAliasSV(ProgramSV sv) {
-        return sv.sort() instanceof org.key_project.solidity.rule.sv.sort.ProgramVariableSVSort pvs
-                && pvs.getFilter() == STORAGE_LOCAL;
+    private static DataLocation dataLocationForFreshVariable(ProgramSV sv) {
+        if (!(sv.sort() instanceof org.key_project.solidity.rule.sv.sort.ProgramVariableSVSort pvs)) {
+            return Default;
+        }
+        return switch (pvs.getFilter()) {
+            case STORAGE_LOCAL -> Storage;
+            case MEMORY_LOCAL -> Memory;
+            case ANY, NON_STORAGE_LOCAL -> Default;
+        };
     }
 
     private static KeYSolidityType asStorageAliasType(KeYSolidityType original,

@@ -17,13 +17,11 @@ import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocat
 public class ProgramVariableSVSort extends ProgramSVSort {
 
     /// Restricts which program variables this SV may match. `ANY` admits every program variable
-    /// (legacy behavior); `STORAGE_LOCAL` and `NON_STORAGE_LOCAL` partition them by whether the
-    /// variable is a `storage`-qualified local, which the converter resorts to `List`. The two
-    /// filters together let rules with overlapping `\find` patterns (e.g.
-    /// `storageRootReadSelect` and `storageLocalRootRebind`) become
-    /// pairwise disjoint without relying on the update RHS's sort check to reject the wrong rule.
+    /// (legacy behavior); location-specific filters admit only the corresponding Solidity local
+    /// kind. `NON_STORAGE_LOCAL` keeps the historical `Variable[name=value]` behavior for rules
+    /// that only need to exclude storage aliases.
     public enum Filter {
-        ANY, STORAGE_LOCAL, NON_STORAGE_LOCAL
+        ANY, STORAGE_LOCAL, MEMORY_LOCAL, NON_STORAGE_LOCAL
     }
 
     private static final Map<String, ProgramSVSort> PARAMETERIZED_SORTS = new HashMap<>();
@@ -51,6 +49,7 @@ public class ProgramVariableSVSort extends ProgramSVSort {
         return switch (filter) {
             case ANY -> true;
             case STORAGE_LOCAL -> pv.getDataLocation() == DataLocation.Storage;
+            case MEMORY_LOCAL -> pv.getDataLocation() == DataLocation.Memory;
             case NON_STORAGE_LOCAL -> pv.getDataLocation() != DataLocation.Storage;
         };
     }
@@ -65,6 +64,7 @@ public class ProgramVariableSVSort extends ProgramSVSort {
         return switch (filter) {
             case ANY -> true;
             case STORAGE_LOCAL -> pv.getDataLocation() == DataLocation.Storage;
+            case MEMORY_LOCAL -> pv.getDataLocation() == DataLocation.Memory;
             case NON_STORAGE_LOCAL -> pv.getDataLocation() != DataLocation.Storage;
         };
     }
@@ -82,9 +82,11 @@ public class ProgramVariableSVSort extends ProgramSVSort {
         }
         Filter f = switch (parameter.toLowerCase(Locale.ROOT)) {
             case "storage", "storage.local" -> Filter.STORAGE_LOCAL;
+            case "memory", "memory.local" -> Filter.MEMORY_LOCAL;
             case "non-storage", "value" -> Filter.NON_STORAGE_LOCAL;
             default -> throw new IllegalArgumentException(
-                "Unknown Variable sort flag '" + parameter + "' (expected 'storage' or 'value')");
+                "Unknown Variable sort flag '" + parameter
+                    + "' (expected 'storage', 'memory', or 'value')");
         };
         ProgramSVSort result =
             new ProgramVariableSVSort(new Name("Variable[name=" + parameter + "]"),
