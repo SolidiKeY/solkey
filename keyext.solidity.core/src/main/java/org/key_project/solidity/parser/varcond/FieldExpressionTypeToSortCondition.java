@@ -13,6 +13,7 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.sort.GenericSort;
 import org.key_project.solidity.program.ast.SolidityInfo;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
+import org.key_project.solidity.program.ast.abstractions.MemoryReferenceTypes;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
 import org.key_project.solidity.rule.matching.inst.GenericSortCondition;
@@ -26,10 +27,17 @@ import org.jspecify.annotations.Nullable;
 public final class FieldExpressionTypeToSortCondition implements VariableCondition {
     private final ProgramSV fieldSV;
     private final GenericSort sort;
+    private final boolean memoryPayload;
 
     public FieldExpressionTypeToSortCondition(ProgramSV fieldSV, GenericSort sort) {
+        this(fieldSV, sort, false);
+    }
+
+    public FieldExpressionTypeToSortCondition(ProgramSV fieldSV, GenericSort sort,
+            boolean memoryPayload) {
         this.fieldSV = fieldSV;
         this.sort = sort;
+        this.memoryPayload = memoryPayload;
     }
 
     @Override
@@ -56,7 +64,9 @@ public final class FieldExpressionTypeToSortCondition implements VariableConditi
             return null;
         }
 
-        Sort type = keyType.getSort();
+        Sort type = memoryPayload && MemoryReferenceTypes.isReferenceType(fieldType)
+                ? services.getTheoryInfo().getMemoryLDT().getIdentitySort()
+                : keyType.getSort();
         try {
             return matchCond.setInstantiations(
                 inst.add(GenericSortCondition.createIdentityCondition(sort, type), lServices));
@@ -67,6 +77,7 @@ public final class FieldExpressionTypeToSortCondition implements VariableConditi
 
     @Override
     public String toString() {
-        return "\\hasFieldSort(" + fieldSV.name() + ", " + sort.name() + ")";
+        String condition = memoryPayload ? "\\hasMemoryFieldSort" : "\\hasFieldSort";
+        return condition + "(" + fieldSV.name() + ", " + sort.name() + ")";
     }
 }

@@ -15,6 +15,7 @@ import org.key_project.solidity.program.ast.abstractions.ArrayType;
 import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.MappingType;
+import org.key_project.solidity.program.ast.abstractions.MemoryReferenceTypes;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.rule.matching.inst.GenericSortCondition;
@@ -28,10 +29,17 @@ import org.jspecify.annotations.Nullable;
 public final class IndexedExpressionTypeToSortCondition implements VariableCondition {
     private final ProgramSV receiverSV;
     private final GenericSort sort;
+    private final boolean memoryPayload;
 
     public IndexedExpressionTypeToSortCondition(ProgramSV receiverSV, GenericSort sort) {
+        this(receiverSV, sort, false);
+    }
+
+    public IndexedExpressionTypeToSortCondition(ProgramSV receiverSV, GenericSort sort,
+            boolean memoryPayload) {
         this.receiverSV = receiverSV;
         this.sort = sort;
+        this.memoryPayload = memoryPayload;
     }
 
     @Override
@@ -61,7 +69,9 @@ public final class IndexedExpressionTypeToSortCondition implements VariableCondi
             return null;
         }
 
-        Sort type = keyType.getSort();
+        Sort type = memoryPayload && MemoryReferenceTypes.isReferenceType(elementType)
+                ? services.getTheoryInfo().getMemoryLDT().getIdentitySort()
+                : keyType.getSort();
         SVInstantiations inst = (SVInstantiations) matchCond.getInstantiations();
         try {
             return matchCond.setInstantiations(
@@ -73,6 +83,7 @@ public final class IndexedExpressionTypeToSortCondition implements VariableCondi
 
     @Override
     public String toString() {
-        return "\\hasElementSort(" + receiverSV.name() + ", " + sort.name() + ")";
+        String condition = memoryPayload ? "\\hasMemoryElementSort" : "\\hasElementSort";
+        return condition + "(" + receiverSV.name() + ", " + sort.name() + ")";
     }
 }

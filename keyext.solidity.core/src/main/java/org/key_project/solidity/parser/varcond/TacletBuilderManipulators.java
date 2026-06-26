@@ -21,6 +21,7 @@ import org.key_project.solidity.rule.taclets.builder.TacletBuilder;
 import org.jspecify.annotations.NonNull;
 
 import static org.key_project.solidity.parser.varcond.ArgumentType.SORT;
+import static org.key_project.solidity.rule.sv.sort.ProgramSVSort.FIELD;
 
 
 /// This class manages the register of various factories for the different built-in
@@ -198,13 +199,40 @@ public class TacletBuilderManipulators {
                             + "argument, "
                             + "but got: " + arguments[0]);
                 }
-                if (fieldSV.sort() != ProgramSVSort.FIELD) {
+                if (fieldSV.sort() != FIELD) {
                     throw new IllegalArgumentException(
                         "\\hasFieldSort expects a field program schema variable as its first "
                             + "argument, but got: " + fieldSV);
                 }
                 if (arguments[1] instanceof GenericSort gs) {
                     return new FieldExpressionTypeToSortCondition(fieldSV, gs);
+                }
+                throw new IllegalArgumentException(
+                    "Generic or parametric sort is expected. Got: " + arguments[1]);
+            }
+        };
+
+    public static final AbstractConditionBuilder HAS_MEMORY_FIELD_SORT =
+        new AbstractConditionBuilder("hasMemoryFieldSort", SV, SORT) {
+            @Override
+            public VariableCondition build(Object[] arguments, List<String> parameters,
+                    boolean negated) {
+                if (negated) {
+                    throw new IllegalArgumentException(
+                        "\\hasMemoryFieldSort does not support negation");
+                }
+                if (!(arguments[0] instanceof ProgramSV fieldSV)) {
+                    throw new IllegalArgumentException(
+                        "\\hasMemoryFieldSort expects a field program schema variable as its "
+                            + "first argument, but got: " + arguments[0]);
+                }
+                if (fieldSV.sort() != FIELD) {
+                    throw new IllegalArgumentException(
+                        "\\hasMemoryFieldSort expects a field program schema variable as its "
+                            + "first argument, but got: " + fieldSV);
+                }
+                if (arguments[1] instanceof GenericSort gs) {
+                    return new FieldExpressionTypeToSortCondition(fieldSV, gs, true);
                 }
                 throw new IllegalArgumentException(
                     "Generic or parametric sort is expected. Got: " + arguments[1]);
@@ -227,6 +255,28 @@ public class TacletBuilderManipulators {
                 }
                 if (arguments[1] instanceof GenericSort gs) {
                     return new IndexedExpressionTypeToSortCondition(receiverSV, gs);
+                }
+                throw new IllegalArgumentException(
+                    "Generic or parametric sort is expected. Got: " + arguments[1]);
+            }
+        };
+
+    public static final AbstractConditionBuilder HAS_MEMORY_ELEMENT_SORT =
+        new AbstractConditionBuilder("hasMemoryElementSort", SV, SORT) {
+            @Override
+            public VariableCondition build(Object[] arguments, List<String> parameters,
+                    boolean negated) {
+                if (negated) {
+                    throw new IllegalArgumentException(
+                        "\\hasMemoryElementSort does not support negation");
+                }
+                if (!(arguments[0] instanceof ProgramSV receiverSV)) {
+                    throw new IllegalArgumentException(
+                        "\\hasMemoryElementSort expects a program schema variable as its first "
+                            + "argument, but got: " + arguments[0]);
+                }
+                if (arguments[1] instanceof GenericSort gs) {
+                    return new IndexedExpressionTypeToSortCondition(receiverSV, gs, true);
                 }
                 throw new IllegalArgumentException(
                     "Generic or parametric sort is expected. Got: " + arguments[1]);
@@ -264,7 +314,8 @@ public class TacletBuilderManipulators {
             FREE_5, EQUAL_UNIQUE,
             DROP_EFFECTLESS_ELEMENTARIES, SIMPLIFY_ITE_UPDATE,
             NEW_TYPE_OF, NEW_RUSTY_TYPE,
-            IS_SUBTYPE, SAME, HAS_SORT, HAS_FIELD_SORT, HAS_ELEMENT_SORT,
+            IS_SUBTYPE, SAME, HAS_SORT, HAS_FIELD_SORT, HAS_MEMORY_FIELD_SORT, HAS_ELEMENT_SORT,
+            HAS_MEMORY_ELEMENT_SORT,
             NEW_LOCAL_VARS, HAS_INVARIANT, GET_INVARIANT, GET_VARIANT, SAME_AS_TERM);
     }
 

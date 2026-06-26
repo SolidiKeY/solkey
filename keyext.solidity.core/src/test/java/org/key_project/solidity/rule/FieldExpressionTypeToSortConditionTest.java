@@ -36,10 +36,12 @@ public class FieldExpressionTypeToSortConditionTest {
     private Sort intSort;
     private Sort boolSort;
     private Sort structSort;
+    private Sort identitySort;
     private ProgramSV fieldSV;
     private ProgramSV receiverSV;
     private GenericSort alpha;
     private FieldExpressionTypeToSortCondition condition;
+    private FieldExpressionTypeToSortCondition memoryCondition;
 
     @BeforeEach
     void setUp() {
@@ -47,12 +49,14 @@ public class FieldExpressionTypeToSortConditionTest {
         intSort = services.getTheoryInfo().getIntLDT().targetSort();
         boolSort = services.getTheoryInfo().getBoolLDT().targetSort();
         structSort = services.getTheoryInfo().getStructLDT().targetSort();
+        identitySort = services.getTheoryInfo().getMemoryLDT().getIdentitySort();
         fieldSV = SchemaVariableFactory.createProgramSV(new Name("a"), ProgramSVSort.FIELD,
             false);
         receiverSV = SchemaVariableFactory.createProgramSV(new Name("sp"),
             ProgramSVSort.SIMPLE_STORAGE_PATH, false);
         alpha = new GenericSort(new Name("alpha"));
         condition = new FieldExpressionTypeToSortCondition(fieldSV, alpha);
+        memoryCondition = new FieldExpressionTypeToSortCondition(fieldSV, alpha, true);
     }
 
     @Test
@@ -81,6 +85,24 @@ public class FieldExpressionTypeToSortConditionTest {
     }
 
     @Test
+    void bindsMemoryStructFieldSortToIdentity() {
+        StructDeclaration struct = new StructDeclaration(new Name("Payload"), List.of(), -1);
+        services.getSolidityInfo().put(new KeYSolidityType(struct, structSort));
+
+        MatchConditions result = checkMemory(
+            new FieldDeclaration(new Name("payload"), new TypeReference(struct)));
+
+        assertSort(result, identitySort);
+    }
+
+    @Test
+    void keepsPrimitiveMemoryFieldSort() {
+        MatchConditions result = checkMemory(field("age", "uint"));
+
+        assertSort(result, intSort);
+    }
+
+    @Test
     void rejectsNonFieldInstantiation() {
         ProgramVariable total = new ProgramVariable(new Name("total"),
             new KeYSolidityType(PrimitiveType.UINT256, intSort), DataLocation.Storage);
@@ -105,6 +127,11 @@ public class FieldExpressionTypeToSortConditionTest {
 
     private MatchConditions check(FieldDeclaration field) {
         return (MatchConditions) condition.check(fieldSV, field,
+            MatchConditions.EMPTY_MATCHCONDITIONS, services);
+    }
+
+    private MatchConditions checkMemory(FieldDeclaration field) {
+        return (MatchConditions) memoryCondition.check(fieldSV, field,
             MatchConditions.EMPTY_MATCHCONDITIONS, services);
     }
 

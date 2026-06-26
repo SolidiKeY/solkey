@@ -191,6 +191,52 @@ public class TacletParserTest {
     }
 
     @Test
+    public void testHasMemoryElementSortVarcondParses() throws IOException {
+        parseDecls("""
+                \\sorts {
+                  \\generic alpha;
+                  int;
+                  List;
+                }
+                \\schemaVariables {
+                  \\program Path[name=memory.simple] mp;
+                }
+                """);
+
+        Taclet taclet = parseTaclet("""
+                hasMemoryElementSortSmoke {
+                   \\find(x = x)
+                   \\varcond(\\hasMemoryElementSort(mp, \\sort(alpha)))
+                   \\replacewith(x = x)
+                }
+                """);
+
+        assertNotNull(taclet);
+    }
+
+    @Test
+    public void testHasMemoryFieldSortVarcondParses() throws IOException {
+        parseDecls("""
+                \\sorts {
+                  \\generic alpha;
+                }
+                \\schemaVariables {
+                  \\program Field a;
+                }
+                """);
+
+        Taclet taclet = parseTaclet("""
+                hasMemoryFieldSortSmoke {
+                   \\find(x = x)
+                   \\varcond(\\hasMemoryFieldSort(a, \\sort(alpha)))
+                   \\replacewith(x = x)
+                }
+                """);
+
+        assertNotNull(taclet);
+    }
+
+    @Test
     public void testImpLeft() {
         // imp-left rule
         // find(b->b0 =>) replacewith(b0 =>) replacewith(=> b)
