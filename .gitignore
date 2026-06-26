@@ -76,7 +76,6 @@ checkstyle-diff.txt
 /key.ncore/src/main/antlr/KeYLexer.tokens
 /keyext.rusty/src/main/gen/
 
-# Claude Code files
 .claude
 /.bash_profile
 /.bashrc
@@ -87,3 +86,5 @@ checkstyle-diff.txt
 /.ripgreprc
 /.zprofile
 /.zshrc
+
+rules
