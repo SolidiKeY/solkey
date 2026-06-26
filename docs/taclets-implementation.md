@@ -331,19 +331,21 @@ when the matcher can preserve the relevant Solidity path shape faithfully.
   (`memoryRootDeleteFreshRebind`). Both rules introduce a fresh
   `IdentityPrim` skolem and split off an explicit `new(memory, r)` proof
   branch; the semantic branch assumes that freshness fact before emitting
-  `{mp := idC(r, nil)} {memory := addM(memory, r)}`.
-  Remaining gaps: dynamic-array length-reset semantics of `delete arr;`;
-  memory field/index delete and complex memory delete receivers.
+  `{mp := idC(r, nil)} {memory := addM(memory, r)}`. Memory field/index
+  delete is now split between primitive default writes and reference-slot
+  freshening, with complex receivers unfolded through fresh memory aliases.
+  Dynamic-array length-reset semantics of `delete arr;` remains out of scope
+  for the current memory rules.
 
 3. Add Java/logic support for the paper rules that need generated aliases or
    heap helpers.
 
   The runnable `.key` subset covers bounded int array index reads/writes,
   dynamic-array push/pop length updates, push-return assignment desugaring, pop
-  nonempty/defaulting, and the `revert();` modality rules. It does not yet cover
-  full memory heap read/write rules, memory allocation with initializers,
-  memory array allocation, or storage-memory copy rules using
-  `copySt`/`copyMem`-style helpers.
+  nonempty/defaulting, and the `revert();` modality rules. Source-level memory
+  rules now cover heap field/index reads and writes, root aliasing, memory
+  allocation with selected initializers, fixed-length memory array allocation,
+  and lazy storage-memory copies through `copySt`/`copyMem`.
   Increment/decrement
    operators (++, --) are fully implemented at root, field, and index levels
    including unfold rules for complex paths. The `+=` compound assignment
@@ -378,8 +380,11 @@ when the matcher can preserve the relevant Solidity path shape faithfully.
   bounds branches.
 - `memory-decl-fresh.key` and `memory-root-delete-fresh.key` cover the
   implemented fresh root allocation/rebinding mechanism from `mtMem`.
-  Remaining `memory-delete.key` work should cover primitive field, reference
-  field, index, and complex receiver cases.
+  `memory-decl-default.key`, `memory-root-alias.key`,
+  `memory-field-alias.key`, `memory-deep-field.key`,
+  `memory-field-reference-assign.key`, `memory-delete.key`,
+  `memory-array-index.key`, `storage-to-memory.key`, and
+  `memory-to-storage.key` cover the source-level memory rule family.
 - `storage-index-read-write.key`: bounds-branching variants of the existing
   `_rootIndex` and `_decomposeArrayIndex` index rules, plus the paper's
   storage-alias copy cases (`tokens[i] = tokRef;`) once alias introduction is

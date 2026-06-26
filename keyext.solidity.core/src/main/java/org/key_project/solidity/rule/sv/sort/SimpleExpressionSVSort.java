@@ -17,9 +17,8 @@ import org.key_project.solidity.program.ast.expressions.literals.Literal;
 public class SimpleExpressionSVSort extends ProgramSVSort {
 
     /// Mirrors [ProgramVariableSVSort.Filter]: `ANY` admits every simple expression,
-    /// `NON_STORAGE_LOCAL` (`SimpleExpression[name=value]`) excludes storage-qualified locals
-    /// (those are `List`-typed paths and never play the role of a stack-valued `se` in the
-    /// paper's calculus), `STORAGE_LOCAL` admits only storage-qualified locals.
+    /// `NON_STORAGE_LOCAL` (`SimpleExpression[name=value]`) excludes storage-qualified locals and
+    /// memory reference aliases. Those are path/identity references, not ordinary stack values.
     public enum Filter {
         ANY, STORAGE_LOCAL, NON_STORAGE_LOCAL
     }
@@ -48,7 +47,8 @@ public class SimpleExpressionSVSort extends ProgramSVSort {
             return switch (filter) {
                 case ANY -> true;
                 case STORAGE_LOCAL -> pv.getDataLocation() == DataLocation.Storage;
-                case NON_STORAGE_LOCAL -> pv.getDataLocation() != DataLocation.Storage;
+                case NON_STORAGE_LOCAL -> pv.getDataLocation() != DataLocation.Storage
+                        && pv.getDataLocation() != DataLocation.Memory;
             };
         }
 

@@ -12,6 +12,8 @@ HAS_FIELD_SORT: '\\hasFieldSort';
 HAS_MEMORY_FIELD_SORT: '\\hasMemoryFieldSort';
 HAS_ELEMENT_SORT: '\\hasElementSort';
 HAS_MEMORY_ELEMENT_SORT: '\\hasMemoryElementSort';
+IS_MEMORY_REFERENCE_FIELD: '\\isMemoryReferenceField';
+IS_MEMORY_REFERENCE_ELEMENT: '\\isMemoryReferenceElement';
 NEW_LOCAL_VARS : '\\newLocalVars';
 STORE_TERM_IN : '\\storeTermIn';
 STORE_EXPR_IN : '\\storeExprIn';

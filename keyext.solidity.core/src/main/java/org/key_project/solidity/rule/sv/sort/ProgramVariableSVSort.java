@@ -18,8 +18,8 @@ public class ProgramVariableSVSort extends ProgramSVSort {
 
     /// Restricts which program variables this SV may match. `ANY` admits every program variable
     /// (legacy behavior); location-specific filters admit only the corresponding Solidity local
-    /// kind. `NON_STORAGE_LOCAL` keeps the historical `Variable[name=value]` behavior for rules
-    /// that only need to exclude storage aliases.
+    /// kind. `NON_STORAGE_LOCAL` is used by `Variable[name=value]` and admits only ordinary
+    /// stack/value locals, excluding both storage aliases and memory reference aliases.
     public enum Filter {
         ANY, STORAGE_LOCAL, MEMORY_LOCAL, NON_STORAGE_LOCAL
     }
@@ -50,7 +50,8 @@ public class ProgramVariableSVSort extends ProgramSVSort {
             case ANY -> true;
             case STORAGE_LOCAL -> pv.getDataLocation() == DataLocation.Storage;
             case MEMORY_LOCAL -> pv.getDataLocation() == DataLocation.Memory;
-            case NON_STORAGE_LOCAL -> pv.getDataLocation() != DataLocation.Storage;
+            case NON_STORAGE_LOCAL -> pv.getDataLocation() != DataLocation.Storage
+                    && pv.getDataLocation() != DataLocation.Memory;
         };
     }
 
@@ -65,7 +66,8 @@ public class ProgramVariableSVSort extends ProgramSVSort {
             case ANY -> true;
             case STORAGE_LOCAL -> pv.getDataLocation() == DataLocation.Storage;
             case MEMORY_LOCAL -> pv.getDataLocation() == DataLocation.Memory;
-            case NON_STORAGE_LOCAL -> pv.getDataLocation() != DataLocation.Storage;
+            case NON_STORAGE_LOCAL -> pv.getDataLocation() != DataLocation.Storage
+                    && pv.getDataLocation() != DataLocation.Memory;
         };
     }
 

@@ -283,6 +283,39 @@ public class TacletBuilderManipulators {
             }
         };
 
+    public static final AbstractConditionBuilder IS_MEMORY_REFERENCE_FIELD =
+        new AbstractConditionBuilder("isMemoryReferenceField", SV) {
+            @Override
+            public VariableCondition build(Object[] arguments, List<String> parameters,
+                    boolean negated) {
+                if (!(arguments[0] instanceof ProgramSV fieldSV)) {
+                    throw new IllegalArgumentException(
+                        "\\isMemoryReferenceField expects a field program schema variable as its "
+                            + "first argument, but got: " + arguments[0]);
+                }
+                if (fieldSV.sort() != FIELD) {
+                    throw new IllegalArgumentException(
+                        "\\isMemoryReferenceField expects a field program schema variable as its "
+                            + "first argument, but got: " + fieldSV);
+                }
+                return new MemoryReferenceFieldCondition(fieldSV, negated);
+            }
+        };
+
+    public static final AbstractConditionBuilder IS_MEMORY_REFERENCE_ELEMENT =
+        new AbstractConditionBuilder("isMemoryReferenceElement", SV) {
+            @Override
+            public VariableCondition build(Object[] arguments, List<String> parameters,
+                    boolean negated) {
+                if (!(arguments[0] instanceof ProgramSV receiverSV)) {
+                    throw new IllegalArgumentException(
+                        "\\isMemoryReferenceElement expects a program schema variable as its "
+                            + "first argument, but got: " + arguments[0]);
+                }
+                return new MemoryReferenceElementCondition(receiverSV, negated);
+            }
+        };
+
     public static final TacletBuilderCommand NEW_LOCAL_VARS =
         new ConstructorBasedBuilder("newLocalVars", NewLocalVarsCondition.class, SV, SV, SV, SV);
 
@@ -315,7 +348,7 @@ public class TacletBuilderManipulators {
             DROP_EFFECTLESS_ELEMENTARIES, SIMPLIFY_ITE_UPDATE,
             NEW_TYPE_OF, NEW_RUSTY_TYPE,
             IS_SUBTYPE, SAME, HAS_SORT, HAS_FIELD_SORT, HAS_MEMORY_FIELD_SORT, HAS_ELEMENT_SORT,
-            HAS_MEMORY_ELEMENT_SORT,
+            HAS_MEMORY_ELEMENT_SORT, IS_MEMORY_REFERENCE_FIELD, IS_MEMORY_REFERENCE_ELEMENT,
             NEW_LOCAL_VARS, HAS_INVARIANT, GET_INVARIANT, GET_VARIANT, SAME_AS_TERM);
     }
 
