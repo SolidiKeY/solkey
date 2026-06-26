@@ -87,4 +87,5 @@ checkstyle-diff.txt
 /.zprofile
 /.zshrc
 
+rustKeY
 rules
