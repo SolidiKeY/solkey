@@ -457,5 +457,6 @@ public class SolidityToKeyConverterTest {
         assertInstanceOf(StructDeclaration.class, alice.getType());
         Type structType = alice.getType();
         assertEquals("Person", structType.toString());
+        assertEquals("Identity", alice.sort().name().toString());
     }
 }

@@ -449,7 +449,7 @@ public class SolJSONParser {
         DataLocation dataLocation =
             DataLocation.fromString(declaration.get("storageLocation").asString());
         ProgramVariable programVariable =
-            new ProgramVariable(name, ksType, dataLocation);
+            new ProgramVariable(name, asMemoryReferenceType(ksType, dataLocation), dataLocation);
         Declaration decl = new StatementVariableDeclaration(programVariable);
         id2Name.put(id, decl);
         return decl;
@@ -472,15 +472,22 @@ public class SolJSONParser {
             final KeYSolidityType kst = typeRef == null && contractKSTById.containsKey(typeId)
                     ? contractKSTById.get(typeId)
                     : getOrCreateKeYSolidityType(typeRef);
-            programVariable = new ProgramVariable(new Name(fieldName), kst, dataLocation);
+            programVariable = new ProgramVariable(new Name(fieldName),
+                asMemoryReferenceType(kst, dataLocation), dataLocation);
         } else {
             Type type = parseTypeName(node);
             final KeYSolidityType kst = getOrCreateKeYSolidityType(type);
-            programVariable = new ProgramVariable(new Name(fieldName), kst, dataLocation);
+            programVariable = new ProgramVariable(new Name(fieldName),
+                asMemoryReferenceType(kst, dataLocation), dataLocation);
         }
         id2Name.put(id, programVariable);
 
         return programVariable;
+    }
+
+    private KeYSolidityType asMemoryReferenceType(KeYSolidityType original,
+            DataLocation dataLocation) {
+        return MemoryReferenceTypes.asMemoryReferenceType(original, dataLocation, services);
     }
 
     private Type parseType(JsonNode node) {
@@ -652,7 +659,8 @@ public class SolJSONParser {
         if (functionExp instanceof MemberExp member
                 && member.getRightExp() instanceof FunctionDeclaration function) {
             String functionName = function.name().toString();
-            if ("pop".equals(functionName) || ("push".equals(functionName) && !arguments.isEmpty())) {
+            if ("pop".equals(functionName)
+                    || ("push".equals(functionName) && !arguments.isEmpty())) {
                 return VOID;
             }
             if ("push".equals(functionName)) {

@@ -16,6 +16,7 @@ import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.SolidityInfo;
 import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
+import org.key_project.solidity.program.ast.abstractions.MemoryReferenceTypes;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
@@ -257,7 +258,8 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     private Type inferBuiltinMemberCallType(MemberExp memberExp,
             FunctionDeclaration functionDeclaration, FunctionCallArguments args) {
         String functionName = functionDeclaration.name().toString();
-        if ("pop".equals(functionName) || ("push".equals(functionName) && !args.getArgs().isEmpty())) {
+        if ("pop".equals(functionName)
+                || ("push".equals(functionName) && !args.getArgs().isEmpty())) {
             return VOID;
         }
         if ("push".equals(functionName)) {
@@ -462,7 +464,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         }
 
         DataLocation dataLocation = (DataLocation) visitStorageLocation(ctx.storageLocation());
-        KeYSolidityType kst = asStorageAliasType((KeYSolidityType) type, dataLocation);
+        KeYSolidityType kst = asLocalVariableType((KeYSolidityType) type, dataLocation);
         ProgramVariable programVariable =
             new ProgramVariable(new Name(ctx.identifier().Identifier().getText()),
                 kst, dataLocation);
@@ -575,7 +577,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
         ProgramVariable programVariable =
             new ProgramVariable(new Name(variableName),
-                asStorageAliasType(type, dataLocation), dataLocation);
+                asLocalVariableType(type, dataLocation), dataLocation);
         localVars.add(programVariable);
         return programVariable;
     }
@@ -617,6 +619,12 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
             return original;
         }
         return new KeYSolidityType(original.getSolidityType(), listSort);
+    }
+
+    private KeYSolidityType asLocalVariableType(KeYSolidityType original,
+            DataLocation dataLocation) {
+        return MemoryReferenceTypes.asMemoryReferenceType(
+            asStorageAliasType(original, dataLocation), dataLocation, services);
     }
 
     private static class PositionedConverterException extends RuntimeException {

@@ -622,6 +622,8 @@ public class SolJsonParserTest {
         String contractStr = contractDeclaration.toString();
         assertTrue(contractStr.contains("Person memory alice"));
         assertEquals(Memory, decl.getProgramVariable().getDataLocation());
+        assertEquals("Identity", decl.getProgramVariable().sort().name().toString());
+        assertInstanceOf(StructDeclaration.class, decl.getProgramVariable().getType());
     }
 
     @Test
@@ -737,6 +739,7 @@ public class SolJsonParserTest {
         ProgramVariable foo = decl.getProgramVariable();
         Type fooType = foo.getType();
         assertInstanceOf(DynamicArrayType.class, fooType);
+        assertEquals("Identity", foo.sort().name().toString());
         DynamicArrayType arrayType = (DynamicArrayType) fooType;
         assertSame(BOOL, arrayType.getElementType());
     }
@@ -1398,6 +1401,7 @@ public class SolJsonParserTest {
         assertEquals("bob", bob.name().toString());
         assertInstanceOf(StructDeclaration.class, bob.getType());
         assertEquals("Person", bob.getType().name().toString());
+        assertEquals("Identity", bob.sort().name().toString());
     }
 
     @Test
