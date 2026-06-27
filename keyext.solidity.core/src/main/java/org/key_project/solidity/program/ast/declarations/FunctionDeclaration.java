@@ -92,7 +92,7 @@ public class FunctionDeclaration implements Declaration, Named, SolidityProgramE
     @Override
     public int getChildCount() {
         return returnParameters.size() + inputParameters.size() + modifiers.size()
-            + (body == null ? 0 : 1);
+                + (body == null ? 0 : 1);
     }
 
     @Override

@@ -156,13 +156,20 @@ public class SolidityInfo {
         FunctionDeclaration revert = new FunctionDeclaration(new Name("revert"), List.of(),
             PrimitiveType.VOID, List.of(), null, "function", Visibility.internal,
             StateMutability.pure, List.of(), "");
+        FunctionDeclaration assertFn = new FunctionDeclaration(new Name("assert"), List.of(),
+            PrimitiveType.VOID, List.of(), null, "function", Visibility.internal,
+            StateMutability.pure, List.of(), "");
+        FunctionDeclaration requireFn = new FunctionDeclaration(new Name("require"), List.of(),
+            PrimitiveType.VOID, List.of(), null, "function", Visibility.internal,
+            StateMutability.pure, List.of(), "");
         FunctionDeclaration push = new FunctionDeclaration(new Name("push"), List.of(),
             PrimitiveType.VOID, List.of(), null, "function", Visibility.internal,
             StateMutability.nonpayable, List.of(), "");
         FunctionDeclaration pop = new FunctionDeclaration(new Name("pop"), List.of(),
             PrimitiveType.VOID, List.of(), null, "function", Visibility.internal,
             StateMutability.nonpayable, List.of(), "");
-        return Map.of(revert.name(), revert, push.name(), push, pop.name(), pop);
+        return Map.of(revert.name(), revert, assertFn.name(), assertFn, requireFn.name(),
+            requireFn, push.name(), push, pop.name(), pop);
     }
 
     public static @Nullable FunctionDeclaration getBuiltinFunctionDeclaration(Name functionName) {

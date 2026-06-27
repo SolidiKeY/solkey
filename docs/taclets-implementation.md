@@ -509,3 +509,49 @@ Examples After Java Support". The three coherent buckets of work are
 (bounds, push, pop, `revert`), and (3) mapping-specific
 `lp = sp[i]` / `gp = sp[i]` / `sp1[i] = sp2` rules plus storage
 `delete`.
+
+## mainFeatures Examples (PaperTest.sol)
+
+The `keyext.solidity.examples/mainFeatures/` directory contains 29 end-to-end
+proof problems from `PaperTest.sol` exercising the full storage/memory rule set.
+Each `.key` file uses `\programSource "PaperTest.sol"` and inlines the function
+body directly in the modality. The JUnit driver is
+`PaperTestExamplesTest.java`.
+
+**Passing (17 proofs close automatically):**
+- Storage: write/read, nested writes, field deep copy, root deep copy, aliases,
+  map read/write/delete, delete paper case.
+- Memory: aliasing, field shallow copy, root alias, delete alias,
+  root-delete-rebinds-only-local, delete-identity-field-freshens-slot,
+  delete-primitive-field.
+- Cross-location: storage→memory copy (root, field, complex path),
+  memory→storage copy (root, field, complex source, complex target).
+
+**Disabled — missing taclet support:**
+- `testStorageArrayReadWrite`, `testStorageArrayPushPop`: array index after
+  `push()` — bounds check is generated against pre-push storage, so the
+  condition `0 < tokens.length_before` cannot auto-close when the initial size
+  is unconstrained.
+- `testStoragePushLvaluePrimitive`, `testStoragePushReturnAlias`: `push()`
+  returning an lvalue (`values.push() = 77`) or a storage alias
+  (`Token storage t = tokens.push()`) — no push-returns-lvalue taclet yet.
+- `testStorageStructDeleteSkipsMappingMember`: `delete` on a struct must
+  preserve mapping members — not modeled in `storageRootDelete`.
+- `testMemoryUintArrayAuxiliaryCases`, `testMemoryTokenArrayAuxiliaryCases`,
+  `testStorageEvaluationOrder`: `++i` pre-increment in index/assignment
+  position — no desugaring rule yet.
+
+**Bugs fixed to reach the passing set:**
+- `Services.getOverlay` was ignoring its `localNamespaces` argument; fixed to
+  use the supplied namespace so second skolem constant gets a distinct name.
+- `TacletApp.createSkolemConstant` was constructing `SFunction` with
+  `unique=false`; fixed to use `(Name, Sort, isRigid=true, unique=true)` so
+  `equalUnique` can close `freshIdp_0 = freshIdp_1`.
+- `IndexExpression.getType()` was returning the container type
+  (`mapping(uint=>uint)`) instead of the element type (`uint`); fixed by
+  extracting the element type in the constructor.
+- `TypeReference(Type)` constructor was setting `typeName=null`; fixed to
+  derive `typeName` from `referencedType.name()`.
+- `at(int)` is now declared `\unique Field` in `structHeader.key` so
+  `equalUnique` can simplify `at(1) = at(2)` to `false` and close map
+  index-disjointness goals.

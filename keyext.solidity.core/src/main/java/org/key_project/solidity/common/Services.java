@@ -252,7 +252,7 @@ public class Services implements LogicServices, ProofServices {
 
     public Services getOverlay(NamespaceSet localNamespaces) {
         Services result = new Services(this);
-        result.setNamespaces(namespaces);
+        result.setNamespaces(localNamespaces);
         return result;
     }
 

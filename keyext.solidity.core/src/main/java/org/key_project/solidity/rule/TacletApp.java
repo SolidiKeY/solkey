@@ -710,7 +710,7 @@ public abstract class TacletApp implements RuleApp {
     public TacletApp createSkolemConstant(String instantiation, SchemaVariable sv, Sort sort,
             boolean interesting, Services services) {
         final SFunction c =
-            new SFunction(new Name(instantiation), sort, true, new Sort[0]);
+            new SFunction(new Name(instantiation), sort, /* isRigid= */ true, /* unique= */ true);
         return addInstantiation(sv, services.getTermBuilder().func(c), interesting, services);
     }
 

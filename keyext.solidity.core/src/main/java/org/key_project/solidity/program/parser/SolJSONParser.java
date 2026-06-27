@@ -287,9 +287,8 @@ public class SolJSONParser {
             resolvedType = (Type) id2Name.get(typeId);
             typeReference = new TypeReference(resolvedType);
         } else {
-            String primitiveName = typeName.get("name").asString();
-            resolvedType = SolidityInfo.getPrimitiveType(primitiveName);
-            typeReference = new TypeReference(new Name(primitiveName));
+            resolvedType = parseType(typeName);
+            typeReference = new TypeReference(resolvedType);
         }
 
         // Register the field's logic constant under its namespaced `Contract$Struct$field` name.

@@ -378,7 +378,8 @@ public class TacletIndex {
             prefixOccurrences.reset();
             final SolidityProgramElement program = mod.programBlock().program();
             final SolidityProgramElement firstProgramElement =
-                program instanceof Block block ? (SolidityProgramElement) block.getChild(0) : program;
+                program instanceof Block block ? (SolidityProgramElement) block.getChild(0)
+                        : program;
             res = getProgramTacletList(map, firstProgramElement, prefixOccurrences);
         }
 

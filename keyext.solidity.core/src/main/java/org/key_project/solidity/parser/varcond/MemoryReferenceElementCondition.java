@@ -11,12 +11,13 @@ import org.key_project.prover.rules.instantiation.MatchResultInfo;
 import org.key_project.solidity.program.ast.abstractions.ArrayType;
 import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
 import org.key_project.solidity.program.ast.abstractions.MappingType;
-import org.key_project.solidity.program.ast.abstractions.MemoryReferenceTypes;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.rule.sv.ProgramSV;
 
 import org.jspecify.annotations.Nullable;
+
+import static org.key_project.solidity.program.ast.abstractions.MemoryReferenceTypes.isReferenceType;
 
 /// Checks whether an indexed receiver stores reference payloads in memory.
 public final class MemoryReferenceElementCondition implements VariableCondition {
@@ -45,13 +46,14 @@ public final class MemoryReferenceElementCondition implements VariableCondition 
             case DynamicArrayType dynamicArrayType -> dynamicArrayType.getElementType();
             default -> null;
         };
-        boolean reference = elementType != null && MemoryReferenceTypes.isReferenceType(elementType);
+        boolean reference =
+            elementType != null && isReferenceType(elementType);
         return reference != negated ? matchCond : null;
     }
 
     @Override
     public String toString() {
         return (negated ? "\\not " : "") + "\\isMemoryReferenceElement("
-                + receiverSV.name() + ")";
+            + receiverSV.name() + ")";
     }
 }

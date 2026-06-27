@@ -6,10 +6,10 @@ package org.key_project.solidity.program.parser;
 import java.util.List;
 import java.util.Optional;
 
+import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
 import org.key_project.solidity.program.ast.expressions.MemberExp;
-import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.expressions.operators.*;
 
 public class ParserUtils {

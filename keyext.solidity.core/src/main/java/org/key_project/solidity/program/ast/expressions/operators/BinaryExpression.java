@@ -17,6 +17,8 @@ import org.key_project.util.ExtList;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.BOOL;
+
 public final class BinaryExpression
         implements SolidityProgramElement, Expression, OperatorExpression {
 
@@ -72,7 +74,12 @@ public final class BinaryExpression
 
     @Override
     public Type getType() {
-        return left.getType();
+        return switch (operator) {
+            case EQUAL, NOT_EQUAL, LESS_THAN, GREATER_THAN, LESS_EQUAL, GREATER_EQUAL,
+                    LOGICAL_AND, LOGICAL_OR ->
+                BOOL;
+            default -> left.getType();
+        };
     }
 
     public String toString() {

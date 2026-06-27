@@ -15,7 +15,6 @@ import org.key_project.solidity.parser.varcond.TypeComparisonCondition.Mode;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.rule.sv.OperatorSV;
 import org.key_project.solidity.rule.sv.ProgramSV;
-import org.key_project.solidity.rule.sv.sort.ProgramSVSort;
 import org.key_project.solidity.rule.taclets.builder.TacletBuilder;
 
 import org.jspecify.annotations.NonNull;

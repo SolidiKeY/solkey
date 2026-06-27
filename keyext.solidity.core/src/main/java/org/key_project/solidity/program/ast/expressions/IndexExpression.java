@@ -6,6 +6,9 @@ package org.key_project.solidity.program.ast.expressions;
 import java.util.Objects;
 
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.abstractions.ArrayType;
+import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
+import org.key_project.solidity.program.ast.abstractions.MappingType;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
@@ -20,9 +23,21 @@ public class IndexExpression extends SolidityExpression {
     Expression indexExp;
 
     public IndexExpression(Expression leftExp, Expression indexExp) {
-        super(leftExp.getType());
+        super(elementTypeOf(leftExp.getType()));
         this.leftExp = leftExp;
         this.indexExp = indexExp;
+    }
+
+    private static Type elementTypeOf(Type containerType) {
+        if (containerType == null) {
+            return null;
+        }
+        return switch (containerType) {
+            case MappingType m -> m.valueType();
+            case ArrayType a -> a.getElementType();
+            case DynamicArrayType d -> d.getElementType();
+            default -> containerType;
+        };
     }
 
     public IndexExpression(ExtList children, Type type) {
