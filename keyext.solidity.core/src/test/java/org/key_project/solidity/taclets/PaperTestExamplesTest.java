@@ -65,7 +65,9 @@ public class PaperTestExamplesTest {
             example("testMemoryToStorageCopyRoot.key"),
             example("testMemoryToStorageCopyField.key"),
             example("testMemoryToStorageCopyComplexSource.key"),
-            example("testMemoryToStorageCopyComplexTarget.key"));
+            example("testMemoryToStorageCopyComplexTarget.key"),
+            example("testMemoryUintArrayAuxiliaryCases.key"),
+            example("testMemoryTokenArrayAuxiliaryCases.key"));
     }
 
     private static Arguments example(String name) {
@@ -107,17 +109,9 @@ public class PaperTestExamplesTest {
     }
 
     @Test
-    @Disabled("testMemoryUintArrayAuxiliaryCases: carolValues[++i] — pre-increment in index position not implemented")
-    void testMemoryUintArrayAuxiliaryCases_disabled() {
-    }
-
-    @Test
-    @Disabled("testMemoryTokenArrayAuxiliaryCases: carolValues_1[++i_1] — pre-increment in index position not implemented")
-    void testMemoryTokenArrayAuxiliaryCases_disabled() {
-    }
-
-    @Test
-    @Disabled("testStorageEvaluationOrder: a[++i] = ++i — pre-increment evaluation order not implemented")
+    @Disabled("testStorageEvaluationOrder: a[++i] = ++i — the ++i taclets work (see the memory cases), "
+        + "but this example first needs a.push(100); statement sequences, which hit a pre-existing "
+        + "void-call statement-suffix reconstruction bug (same family as the other disabled push tests)")
     void testStorageEvaluationOrder_disabled() {
     }
 
