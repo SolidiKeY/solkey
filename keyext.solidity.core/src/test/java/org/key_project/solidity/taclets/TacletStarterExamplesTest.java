@@ -101,6 +101,7 @@ public class TacletStarterExamplesTest {
             example("storage-index-delete-mapping-struct.key"),
             example("storage-index-delete-mapping-bool.key"),
             example("storage-push-value.key"),
+            example("storage-push-nonsimple-arg.key"),
             example("storage-push-empty.key"),
             example("storage-push-return-assign.key"),
             example("storage-pop-nonempty.key"),

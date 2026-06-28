@@ -488,10 +488,30 @@ Recently covered push/pop examples:
 | Rule | Example |
 |---|---|
 | `storagePushValueSave` | `storage-push-value.key` |
+| `storagePushValue_unfold_rightSndArgument` + `storagePushValueSave` | `storage-push-nonsimple-arg.key` |
 | `storagePushLengthSave` | `storage-push-empty.key` |
 | `storagePushLhsToPushValue` + `storagePushValueSave` | `storage-push-return-assign.key` |
 | `storagePopSave` nonempty branch | `storage-pop-nonempty.key` |
 | `storagePopSave` empty/revert branch | `storage-pop-empty-box.key` |
+
+`storagePushValue_unfold_rightSndArgument` is `storage.md` §4's Step-1
+"unfold the push argument" rule: `sp.push(nse)` with a non-simple argument
+`nse` is rewritten to `T pv = nse; sp.push(pv);`, evaluating the argument into
+a fresh value local so the terminal `storagePushValueSave` (which requires a
+`SimpleExpression`) can fire. It mirrors the existing
+`storageIndexWriteNonSimpleIndexCapture` / `addition_unfold_*` capture rules and
+stays disjoint from `storagePushValueSave` (literal/value-local arguments) and
+`storagePushValueCopySource` (simple storage-path arguments), since
+`NonSimpleExpression` matches neither literals nor program variables.
+
+Landing this rule also exposed and fixed a long-standing infrastructure bug:
+`FunctionDeclaration.visit(Visitor)` was empty, so `CreatingASTVisitor`'s
+per-node `ExtList` was never popped when a method call (e.g. `push`) was
+reconstructed inside a statement *sequence*, corrupting the rewrite stack
+(`DeclarationStatement cannot be cast to ContextStatementBlock`). It now
+dispatches to `performActionOnFunctionDeclaration` like `FieldDeclaration` does.
+This is the "void-call statement-suffix reconstruction bug" referenced by the
+disabled push tests in `PaperTestExamplesTest`.
 
 Compound `+=` and ++/–– (storage.md §7 — desugared before Step-3) are
 already exhaustively covered at root/field/index level (see the

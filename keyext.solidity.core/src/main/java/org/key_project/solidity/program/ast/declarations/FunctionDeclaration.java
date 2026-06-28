@@ -109,6 +109,7 @@ public class FunctionDeclaration implements Declaration, Named, SolidityProgramE
 
     @Override
     public void visit(Visitor v) {
+        v.performActionOnFunctionDeclaration(this);
     }
 
     @Override
