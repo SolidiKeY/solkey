@@ -88,6 +88,8 @@ Storage taclets and other program rules live in `keyext.solidity.core/src/main/r
 Add new example problems under `keyext.solidity.examples/taclets` and update `docs/taclets-implementation.md` after you implement a feature.
 When creating or modifying storage rules, consult `docs/storage.md` for the calculus specification (schema variables, three-step strategy, and the statement→rule reference).
 
+**When planning a new taclet:** always begin the plan with a plain-English explanation of what the taclet does — state the precondition (what must be true before the rule fires), the transformation (what sequent change it performs), and the postcondition (what is true after). Write this before any KeY syntax.
+
 ## Testing
 
 Run `./gradlew :keyext.solidity.core:test` after refactoring. Prefer modifying existing test classes over creating new ones.

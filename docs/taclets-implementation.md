@@ -538,9 +538,16 @@ Each `.key` file uses `\programSource "PaperTest.sol"` and inlines the function
 body directly in the modality. The JUnit driver is
 `PaperTestExamplesTest.java`.
 
-**Passing (17 proofs close automatically):**
+**Passing (19 proofs close automatically):**
 - Storage: write/read, nested writes, field deep copy, root deep copy, aliases,
   map read/write/delete, delete paper case.
+- Storage push (lvalue/alias): `testStoragePushLvaluePrimitive`
+  (`values.push() = 77; values[0] == 77`) and `testStoragePushReturnAlias`
+  (`Token storage t = tokens.push(); t.value = 99; tokens[0].value == 99`).
+  Both assume a fresh contract slot via a
+  `find<[int]>(storage, cons2(Contract$arr, size)) = 0` precondition (the
+  `mainFeatures` problems otherwise start from an unconstrained symbolic
+  `storage`, so an array's initial length is unknown).
 - Memory: aliasing, field shallow copy, root alias, delete alias,
   root-delete-rebinds-only-local, delete-identity-field-freshens-slot,
   delete-primitive-field.
@@ -549,12 +556,10 @@ body directly in the modality. The JUnit driver is
 
 **Disabled — missing taclet support:**
 - `testStorageArrayReadWrite`, `testStorageArrayPushPop`: array index after
-  `push()` — bounds check is generated against pre-push storage, so the
-  condition `0 < tokens.length_before` cannot auto-close when the initial size
-  is unconstrained.
-- `testStoragePushLvaluePrimitive`, `testStoragePushReturnAlias`: `push()`
-  returning an lvalue (`values.push() = 77`) or a storage alias
-  (`Token storage t = tokens.push()`) — no push-returns-lvalue taclet yet.
+  `push()` — these still start from an unconstrained symbolic `storage`, so the
+  array's initial length is unknown and the post-push length/index facts cannot
+  auto-close (cf. the two passing push tests above, which add a fresh-contract
+  `…·size = 0` precondition).
 - `testStorageStructDeleteSkipsMappingMember`: `delete` on a struct must
   preserve mapping members — not modeled in `storageRootDelete`.
 - `testMemoryUintArrayAuxiliaryCases`, `testMemoryTokenArrayAuxiliaryCases`,
@@ -575,3 +580,23 @@ body directly in the modality. The JUnit driver is
 - `at(int)` is now declared `\unique Field` in `structHeader.key` so
   `equalUnique` can simplify `at(1) = at(2)` to `false` and close map
   index-disjointness goals.
+- Array `.length` was unreadable: `SolidityToKeyConverter.visitMemberAccess`
+  built a synthetic `length` field with no logic constant. It now lowers
+  `arr.length` (on `ArrayType`/`DynamicArrayType` receivers) to the existing
+  `size` Field constant with `uint256` type, so the ordinary
+  `storageFieldReadFind` rule reads it as `find<[int]>(storage, arr·size)`.
+- The array index-**read** rules (`storageIndexReadArrayFind_root`/`_decompose`,
+  `storageIndexReadArrayBindLocalRoot`, `storageIndexReadArrayStoreRoot`)
+  emitted their bounds via `\add`, which sees the *pre-update* storage. They now
+  emit `bounds & {read}⟨rest⟩post` inside the replacement (under the ambient
+  update), so bounds are checked in the post-update state. For diamond this is
+  exactly `⟨arr[idx];rest⟩post`; for box the conjunction soundly implies
+  `bounds -> {read}[rest]post`. (The array index-*write* rules have the same
+  latent `\add` issue but are not yet exercised — left as follow-up.)
+- `storageLocalRootPushBind` (`lp = sp.push();`) emitted its storage bump and
+  alias bind as a *sequential* `{storage := …}{lp := …}`, so `lp`'s index
+  `find(storage, sp·size)` saw the bumped storage and bound `lp` to
+  `at(post-push length)` instead of the new element's `at(pre-push length)`.
+  Fixed to a parallel update `{ storage := … || lp := sp·at(n) }`, matching
+  `storage.md`. Reading the pushed element back through a literal index
+  (`tokens[0]`) now matches.

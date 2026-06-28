@@ -14,9 +14,11 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.SolidityInfo;
+import org.key_project.solidity.program.ast.abstractions.ArrayType;
 import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.MemoryReferenceTypes;
+import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
@@ -315,6 +317,12 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
             SolidityInfo.getBuiltinFunctionDeclaration(new Name(fieldName));
         if (builtinFunction != null && ("push".equals(fieldName) || "pop".equals(fieldName))) {
             return new MemberExp(leftExp, builtinFunction, builtinFunction.getType());
+        }
+        if ("length".equals(fieldName)
+                && (leftType instanceof DynamicArrayType || leftType instanceof ArrayType)) {
+            FieldDeclaration sizeField =
+                new FieldDeclaration(new Name("size"), new TypeReference(new Name("uint256")));
+            return new MemberExp(leftExp, sizeField, PrimitiveType.UINT256);
         }
         FieldDeclaration resolved = resolveStructField(leftType, fieldName);
         FieldDeclaration field = resolved != null ? resolved

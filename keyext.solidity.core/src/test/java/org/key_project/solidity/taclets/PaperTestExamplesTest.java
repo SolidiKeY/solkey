@@ -67,7 +67,9 @@ public class PaperTestExamplesTest {
             example("testMemoryToStorageCopyComplexSource.key"),
             example("testMemoryToStorageCopyComplexTarget.key"),
             example("testMemoryUintArrayAuxiliaryCases.key"),
-            example("testMemoryTokenArrayAuxiliaryCases.key"));
+            example("testMemoryTokenArrayAuxiliaryCases.key"),
+            example("testStoragePushLvaluePrimitive.key"),
+            example("testStoragePushReturnAlias.key"));
     }
 
     private static Arguments example(String name) {
@@ -91,16 +93,6 @@ public class PaperTestExamplesTest {
     @Test
     @Disabled("testStorageArrayPushPop: Token(42) struct constructor syntax not supported by parser")
     void testStorageArrayPushPop_disabled() {
-    }
-
-    @Test
-    @Disabled("testStoragePushLvaluePrimitive: values.push() = 77 — push-returns-lvalue not implemented")
-    void testStoragePushLvaluePrimitive_disabled() {
-    }
-
-    @Test
-    @Disabled("testStoragePushReturnAlias: Token storage t = tokens.push() — push-returns-alias not implemented")
-    void testStoragePushReturnAlias_disabled() {
     }
 
     @Test
