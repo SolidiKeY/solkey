@@ -480,7 +480,6 @@ Step-3 rules with **no example and no runnable taclet**:
 | `storageIndexWriteArrayCopySource` | `sp1[i] = sp2` (array) | runnable taclet exists for int payloads, but no focused example yet |
 | `storageIndexReadArrayBindLocalRoot` | `lp = sp[i]` (array) | runnable taclet exists, but no focused example yet |
 | `storageIndexReadArrayStoreRoot` | `gp = sp[i]` (array) | runnable taclet exists, but no focused example yet |
-| `storagePushValueCopySource` | `sp1.push(sp2);` | runnable taclet exists, but no focused example yet |
 | `storageLocalRootPushBind` | `lp = sp.push();` | runnable taclet exists, but the focused example is not yet part of the verified starter suite |
 
 Recently covered push/pop examples:
@@ -491,8 +490,25 @@ Recently covered push/pop examples:
 | `storagePushValue_unfold_rightSndArgument` + `storagePushValueSave` | `storage-push-nonsimple-arg.key` |
 | `storagePushLengthSave` | `storage-push-empty.key` |
 | `storagePushLhsToPushValue` + `storagePushValueSave` | `storage-push-return-assign.key` |
+| `storagePushLhsToPushValueCopySource` + `storagePushValueCopySource_unfold_leftFstReceiver` + `storagePushValueCopySource` | `mainFeatures/testStorageComplexReceiverPushLvalueCopy.key` |
 | `storagePopSave` nonempty branch | `storage-pop-nonempty.key` |
 | `storagePopSave` empty/revert branch | `storage-pop-empty-box.key` |
+
+The complex-receiver push-lvalue copy chain (`bucket.tokens.push() = tokRef;`)
+desugars the copy-source push-return assignment
+(`storagePushLhsToPushValueCopySource`: `nsp.push() = sp2;` ⇝ `nsp.push(sp2);`),
+captures the complex receiver into a fresh storage alias
+(`storagePushValueCopySource_unfold_leftFstReceiver`, mirroring
+`storagePushValue_unfold_leftFstReceiver` but for a simple storage-path
+argument), and then appends the copied struct via the terminal
+`storagePushValueCopySource`. The terminal now reads the copied payload with
+`find<[Struct]>` directly (matching `storageFieldWriteCopySource` /
+`storageRootWriteCopySource_struct`) rather than a generic `find<[alpha]>`. The
+three value-push rules (`storagePushValueSave`,
+`storagePushValue_unfold_leftFstReceiver`, `storagePushLhsToPushValue`) were
+tightened from a bare `SimpleExpression` to `SimpleExpression[name=value]`, so a
+storage-local copy source (`tokRef`) is no longer matched as a value push;
+this also fixes a latent over-match that would `save` the path term itself.
 
 `storagePushValue_unfold_rightSndArgument` is `storage.md` §4's Step-1
 "unfold the push argument" rule: `sp.push(nse)` with a non-simple argument
@@ -548,6 +564,13 @@ body directly in the modality. The JUnit driver is
   `find<[int]>(storage, cons2(Contract$arr, size)) = 0` precondition (the
   `mainFeatures` problems otherwise start from an unconstrained symbolic
   `storage`, so an array's initial length is unknown).
+- Complex-receiver push-lvalue copy: `testStorageComplexReceiverPushLvalueCopy`
+  (`bucket.tokens.push() = tokRef;` where `bucket.tokens` is a struct-member
+  array and `tokRef` is a `Token storage` reference). Assumes a fresh nested
+  slot via `find<[int]>(storage, cons3(PaperTest$bucket,
+  PaperTest$TokenBucket$tokens, size)) = 0`. Reads the result back through a
+  simple-array alias (`Token[] storage bt = bucket.tokens; bt[0].value`) because
+  indexing the complex path `bucket.tokens[0]` directly is not yet supported.
 - Memory: aliasing, field shallow copy, root alias, delete alias,
   root-delete-rebinds-only-local, delete-identity-field-freshens-slot,
   delete-primitive-field.
@@ -562,9 +585,12 @@ body directly in the modality. The JUnit driver is
   `…·size = 0` precondition).
 - `testStorageStructDeleteSkipsMappingMember`: `delete` on a struct must
   preserve mapping members — not modeled in `storageRootDelete`.
-- `testMemoryUintArrayAuxiliaryCases`, `testMemoryTokenArrayAuxiliaryCases`,
-  `testStorageEvaluationOrder`: `++i` pre-increment in index/assignment
-  position — no desugaring rule yet.
+- `testMemoryUintArrayAuxiliaryCases`, `testStorageEvaluationOrder`: `++i`
+  pre-increment in index/assignment position — no desugaring rule yet.
+  (`testMemoryTokenArrayAuxiliaryCases` is enabled and passes;
+  `testMemoryUintArrayAuxiliaryCases` was previously left in the enabled
+  `examples()` stream by mistake even though it cannot close, and is now
+  `@Disabled` to match.)
 
 **Bugs fixed to reach the passing set:**
 - `Services.getOverlay` was ignoring its `localNamespaces` argument; fixed to
@@ -593,6 +619,18 @@ body directly in the modality. The JUnit driver is
   exactly `⟨arr[idx];rest⟩post`; for box the conjunction soundly implies
   `bounds -> {read}[rest]post`. (The array index-*write* rules have the same
   latent `\add` issue but are not yet exercised — left as follow-up.)
+- Storage aliases of **array/mapping** reference types were not re-sorted to
+  `List`. `asStorageAliasType` (in both `SolidityToKeyConverter` and
+  `TacletApp#getProgramElement`) only re-sorted types whose sort name was
+  `Struct`, but dynamic/fixed arrays and mappings have their own sorts
+  (`DynamicArraySort`, `ArraySort`, `MappingSort`). A storage-local array alias
+  such as the fresh receiver capture `Token[] storage sp = bucket.tokens;` (or a
+  source-level `Token[] storage bt = bucket.tokens;`) therefore kept its array
+  sort, and `\sameAsTerm(sp, spPath)` against a `\term List` schema variable
+  threw `SortException` ("Sort of SV is not compatible with its instantiation's
+  sort"), killing auto mode. Both copies now re-sort any storage-held reference
+  collection (struct, array, mapping) to `List` via a shared `isStoragePathType`
+  check.
 - `storageLocalRootPushBind` (`lp = sp.push();`) emitted its storage bump and
   alias bind as a *sequential* `{storage := …}{lp := …}`, so `lp`'s index
   `find(storage, sp·size)` saw the bumped storage and bound `lp` to
