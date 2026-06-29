@@ -17,8 +17,10 @@ import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.MappingType;
 import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
 import org.key_project.solidity.program.ast.expressions.IndexExpression;
 import org.key_project.solidity.program.ast.expressions.MemberExp;
 import org.key_project.solidity.program.ast.references.FieldReference;
@@ -158,7 +160,24 @@ final class PathSVSort extends ProgramSVSort {
             }
             return new PathInfo(base.location(), false, base.origin(), kindOf(pe));
         }
+        // A no-arg `arr.push()` returns the freshly appended slot: a complex storage
+        // location rooted at the array receiver, with the array's element type. Treating
+        // it as a complex path lets the ordinary complex-receiver unfold rules capture it.
+        if (pe instanceof FunctionCallExpression call && isNoArgPush(call)) {
+            PathInfo base = classify(((MemberExp) call.getFunctionExp()).getLeftExp(), services);
+            if (base == null) {
+                return null;
+            }
+            return new PathInfo(base.location(), false, base.origin(), kindOf(pe));
+        }
         return null;
+    }
+
+    private static boolean isNoArgPush(FunctionCallExpression call) {
+        return call.getArguments().isEmpty()
+                && call.getFunctionExp() instanceof MemberExp m
+                && m.getRightExp() instanceof FunctionDeclaration fd
+                && "push".equals(fd.name().toString());
     }
 
     private static Kind kindOf(SolidityProgramElement pe) {

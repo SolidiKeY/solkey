@@ -69,7 +69,13 @@ public class PaperTestExamplesTest {
             example("testMemoryTokenArrayAuxiliaryCases.key"),
             example("testStoragePushLvaluePrimitive.key"),
             example("testStoragePushReturnAlias.key"),
-            example("testStorageComplexReceiverPushLvalueCopy.key"));
+            example("testStorageComplexReceiverPushLvalueCopy.key"),
+            example("testStoragePushLvalueCopiesStorageSource.key"),
+            example("testStorageComplexReceiverEmptyPush.key"),
+            example("testStoragePushFieldLvalue.key"),
+            example("testStorageComplexReceiverPushFieldLvalue.key"),
+            example("testStorageNestedPushReturnAlias.key"),
+            example("testStorageArrayReadWrite.key"));
     }
 
     private static Arguments example(String name) {
@@ -84,11 +90,6 @@ public class PaperTestExamplesTest {
     }
 
     // --- Deferred: missing taclet support (see docs/taclets-implementation.md) ---
-
-    @Test
-    @Disabled("testStorageArrayReadWrite: array index after push — bounds check uses pre-push storage, cannot auto-close")
-    void testStorageArrayReadWrite_disabled() {
-    }
 
     @Test
     @Disabled("testStorageArrayPushPop: Token(42) struct constructor syntax not supported by parser")
@@ -114,33 +115,7 @@ public class PaperTestExamplesTest {
     void testStorageEvaluationOrder_disabled() {
     }
 
-    // --- Deferred: require taclet support for push().field, complex-receiver push, and
-    // mapping-element struct copy (see docs/taclets-implementation.md) ---
-
-    @Test
-    @Disabled("testStoragePushFieldLvalue: tokens.push().value = 11 — no push-field-lvalue taclet")
-    void testStoragePushFieldLvalue_disabled() {
-    }
-
-    @Test
-    @Disabled("testStorageNestedPushReturnAlias: people.push().account alias — no nested push-return taclet")
-    void testStorageNestedPushReturnAlias_disabled() {
-    }
-
-    @Test
-    @Disabled("testStoragePushLvalueCopiesStorageSource: tokens.push() = storageRef — no push-lvalue-copy taclet")
-    void testStoragePushLvalueCopiesStorageSource_disabled() {
-    }
-
-    @Test
-    @Disabled("testStorageComplexReceiverEmptyPush: bucket.tokens.push() — no complex-receiver push taclet")
-    void testStorageComplexReceiverEmptyPush_disabled() {
-    }
-
-    @Test
-    @Disabled("testStorageComplexReceiverPushFieldLvalue: bucket.tokens.push().value = v — no complex-receiver push-field-lvalue taclet")
-    void testStorageComplexReceiverPushFieldLvalue_disabled() {
-    }
+    // --- Deferred: require mapping-element struct copy (see docs/taclets-implementation.md) ---
 
     @Test
     @Disabled("testStorageMapStructCopy: accountMap[2] = accountMap[1] — no mapping-element struct copy taclet")

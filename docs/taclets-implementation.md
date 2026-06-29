@@ -264,9 +264,14 @@ Example files (consume `paper_test.sol:165-184`):
   filters use `Path[name=...]`, with dotted flags such as `storage`, `memory`,
   `simple`, `complex`, `root`, `field`, `index`, `array`, `mapping`,
   `primitive`, `reference`, `local`, and `global`. Roots are simple; member
-  and indexed paths such as `alice.account` are complex. Storage paths may be
+  and indexed paths such as `alice.account` are complex, as is a no-arg
+  `arr.push()` (the freshly appended slot, typed as the array's element type) —
+  this lets the complex-receiver unfold rules capture a `push()` return value
+  the same way they capture any other complex path. Storage paths may be
   `local` or `global`; memory paths are always local. Field/index paths lower
-  to the `List` sort consumed by `save` and `find` in `structRules.key`.
+  to the `List` sort consumed by `save` and `find` in `structRules.key`. A
+  `push()` path is only ever captured (via `\newTypeOf`), never lowered with
+  `\sameAsTerm`, since `convertToLogicElement` cannot turn a call into a term.
 - `\sameAsTerm` lowers full program paths to logic path terms. Root contract
   fields still lower to `Field` constants for `storeSt` and `selectSt`; nested
   member and indexed paths such as `alice.account.balance`, `tokens[i]`, and
@@ -478,7 +483,6 @@ Step-3 rules with **no example and no runnable taclet**:
 | `storageIndexReadMappingBindLocalRoot` | `lp = sp[i]` (mapping) | mapping-side taclet |
 | `storageIndexReadMappingStoreRoot` | `gp = sp[i]` (mapping) | mapping-side taclet |
 | `storageIndexWriteArrayCopySource` | `sp1[i] = sp2` (array) | runnable taclet exists for int payloads, but no focused example yet |
-| `storageIndexReadArrayBindLocalRoot` | `lp = sp[i]` (array) | runnable taclet exists, but no focused example yet |
 | `storageIndexReadArrayStoreRoot` | `gp = sp[i]` (array) | runnable taclet exists, but no focused example yet |
 | `storageLocalRootPushBind` | `lp = sp.push();` | runnable taclet exists, but the focused example is not yet part of the verified starter suite |
 
@@ -491,8 +495,29 @@ Recently covered push/pop examples:
 | `storagePushLengthSave` | `storage-push-empty.key` |
 | `storagePushLhsToPushValue` + `storagePushValueSave` | `storage-push-return-assign.key` |
 | `storagePushLhsToPushValueCopySource` + `storagePushValueCopySource_unfold_leftFstReceiver` + `storagePushValueCopySource` | `mainFeatures/testStorageComplexReceiverPushLvalueCopy.key` |
+| `storagePushLhsToPushValueCopySource` (simple receiver) + `storagePushValueCopySource` | `mainFeatures/testStoragePushLvalueCopiesStorageSource.key` |
+| `storagePush_unfold_leftFstReceiver` + `storagePushLengthSave` | `mainFeatures/testStorageComplexReceiverEmptyPush.key` |
+| `storageFieldWrite_unfold_leftFst` (+ split/push-bind/`storageFieldWriteSave`) | `mainFeatures/testStoragePushFieldLvalue.key` |
+| `storageFieldWrite_unfold_leftFst` (+ `storageLocalRootPush_unfold_leftFstReceiver` …) | `mainFeatures/testStorageComplexReceiverPushFieldLvalue.key` |
+| `storageFieldRead_unfold_rightFst` (+ split/push-bind/`storageFieldReadBindLocalRoot`) | `mainFeatures/testStorageNestedPushReturnAlias.key` |
 | `storagePopSave` nonempty branch | `storage-pop-nonempty.key` |
 | `storagePopSave` empty/revert branch | `storage-pop-empty-box.key` |
+
+The `sp.push().a` shape (a field access on the slot returned by `push()`) needs **no
+dedicated push-field rules**: a no-arg `arr.push()` is classified by `PathSVSort` as a
+**complex storage path** (rooted at the array receiver, with the array's element type),
+so the ordinary complex-path receiver-unfold rules
+`storageFieldWrite_unfold_leftFst` (`nsp.a = se;`) and
+`storageFieldRead_unfold_rightFst` (`lhs = nsp.a;`) already match it and capture the
+push value into a fresh element-typed storage alias (`\newTypeOf` reads the push
+call's element type). The capture `T storage t = arr.push();` (also a `StoragePath`
+RHS) is split by `storageLocalDeclInitSplit` and push-bound by the existing
+`storageLocalRootPushBind` / `storageLocalRootPush_unfold_leftFstReceiver`; the
+residual `t.a` field op is finished by the existing `storageFieldWriteSave` /
+`storageFieldReadFind` / `storageFieldReadBindLocalRoot`. (Because `push()` is now a
+`StoragePath`, the former `storageLocalDeclInitPushSplit` is also redundant and removed.)
+The widened `storagePushLhsToPushValueCopySource` (`Path[name=storage.array]`) also covers the
+simple-receiver copy-source case `tokens.push() = storageRef;`.
 
 The complex-receiver push-lvalue copy chain (`bucket.tokens.push() = tokRef;`)
 desugars the copy-source push-return assignment
@@ -571,6 +596,25 @@ body directly in the modality. The JUnit driver is
   PaperTest$TokenBucket$tokens, size)) = 0`. Reads the result back through a
   simple-array alias (`Token[] storage bt = bucket.tokens; bt[0].value`) because
   indexing the complex path `bucket.tokens[0]` directly is not yet supported.
+- Remaining push family (all fresh-array preconditioned as above):
+  - `testStoragePushLvalueCopiesStorageSource` (`tokens.push() = storageRef;`,
+    simple receiver) — the copy-source desugar `storagePushLhsToPushValueCopySource`
+    now matches any array receiver (`Path[name=storage.array]`), feeding the
+    terminal `storagePushValueCopySource` directly.
+  - `testStorageComplexReceiverEmptyPush` (`bucket.tokens.push();`) — the existing
+    `storagePush_unfold_leftFstReceiver` captures the complex receiver; closes now
+    that array storage aliases re-sort to `List`.
+  - `testStoragePushFieldLvalue` (`tokens.push().value = 11;`) and
+    `testStorageComplexReceiverPushFieldLvalue` (`bucket.tokens.push().value = 5;`):
+    `push()` classifies as a complex storage path, so `storageFieldWrite_unfold_leftFst`
+    captures the `push()` receiver, then the split/push-bind/`storageFieldWriteSave` chain.
+  - `testStorageNestedPushReturnAlias`
+    (`Account storage acc = people.push().account;`): `storageFieldRead_unfold_rightFst`
+    captures the `push()` receiver, then the split/push-bind/`storageFieldReadBindLocalRoot`
+    chain.
+  - `testStorageArrayReadWrite` (`tokens.push(); tokens[0].value = 100; …`) — now
+    closes with the fresh-array precondition (the field-write-on-index path uses the
+    post-update-bounds `storageIndexReadArrayBindLocalRoot`).
 - Memory: aliasing, field shallow copy, root alias, delete alias,
   root-delete-rebinds-only-local, delete-identity-field-freshens-slot,
   delete-primitive-field.
@@ -578,11 +622,8 @@ body directly in the modality. The JUnit driver is
   memory→storage copy (root, field, complex source, complex target).
 
 **Disabled — missing taclet support:**
-- `testStorageArrayReadWrite`, `testStorageArrayPushPop`: array index after
-  `push()` — these still start from an unconstrained symbolic `storage`, so the
-  array's initial length is unknown and the post-push length/index facts cannot
-  auto-close (cf. the two passing push tests above, which add a fresh-contract
-  `…·size = 0` precondition).
+- `testStorageArrayPushPop`: `tokens.push(Token(42));` — the `Token(42)` struct
+  literal is not supported by the parser (and there is no push-struct-value taclet).
 - `testStorageStructDeleteSkipsMappingMember`: `delete` on a struct must
   preserve mapping members — not modeled in `storageRootDelete`.
 - `testMemoryUintArrayAuxiliaryCases`, `testStorageEvaluationOrder`: `++i`
