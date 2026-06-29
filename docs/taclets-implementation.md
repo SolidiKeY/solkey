@@ -206,8 +206,96 @@ Example files:
 - `storage-index-add-assign.key` - Tests `values[1] += 2;`
 - `storage-field-deep-add-assign.key` - Tests `alice.account.balance += 4;`
 
-The remaining compound assignment operators (`-=`, `*=`, `/=`, `%=`, `&=`,
-`|=`, `^=`, `<<=`, `>>=`) are parsed correctly but not yet implemented.
+The arithmetic compound assignments `-=`, `*=`, `/=`, `%=` (`docs/taclet-ideas.md`
+Tier 2) are twins of the `+=` family — each clones the same five rules with the
+infix operator swapped (`-`, `*`, `/`, `%`):
+
+- `storageRoot{Sub,Mul,Div,Mod}Assign` - terminal rule on storage roots
+- `storageField{Sub,Mul,Div,Mod}Assign` - terminal rule on nested fields
+- `storageIndex{Sub,Mul,Div,Mod}Assign` - terminal rule on indexed (array) paths
+- `storageField{Sub,Mul,Div,Mod}Assign_unfold_leftFst` - unfolds complex field
+  receivers through a fresh storage alias before the terminal field rule fires
+- `storageIndex{Sub,Mul,Div,Mod}Assign_unfold_leftFst` - unfolds complex indexed
+  receivers before the terminal index rule fires
+
+Like the Tier-1 `/` and `%` expression rules, the `/=` and `%=` terminals guard
+the update with `\if(se != 0)\then(…)\else(revert)`, so dividing/modding a storage
+target by zero reverts (the unfold rules carry no guard — they only rewrite the
+program). There is no overflow branch, matching `+=` and Tier-1 arithmetic.
+
+Example files (root / field / array-index / deep-field per operator):
+
+- `storage-{root,field,index,field-deep}-sub-assign.key` - `-=`
+- `storage-{root,field,index,field-deep}-mul-assign.key` - `*=`
+- `storage-{root,field,index,field-deep}-div-assign.key` - `/=`
+- `storage-{root,field,index,field-deep}-mod-assign.key` - `%=`
+
+The `…-field-deep-…` examples (e.g. `alice.account.balance /= 4;`) exercise the
+`…Field…_unfold_leftFst` rule before the terminal fires.
+
+The remaining compound assignment operators (`&=`, `|=`, `^=`, `<<=`, `>>=`) are
+parsed correctly but not yet implemented — they are gated on bitwise LDT support.
+
+### Tier 1 expression operators
+
+`docs/taclet-ideas.md` Tier 1 (pure expression evaluation) is implemented by
+mirroring the existing `+` and `==` families, and staying faithful to KeY's Java
+calculus (`key.core/.../integer/integerAssignment2UpdateRules.key`,
+`.../rules/javaRules.key`). The terminal rules assign the logic-level result of
+the operator to a value variable; non-simple operands are first captured into
+fresh value temporaries (the `_unfold_*` / `*Capture*` rules), exactly like
+`addition_unfold_left/right/result` and `boolEqualityCaptureLhs`.
+
+Solidity adaptations vs. Java: plain LDT operators (`sub`, `mul`, `div`, `mod`,
+`pow`, `neg`) instead of Java's overflow-wrapper `javaXxx` functions, so — like
+the existing `+` — there is **no overflow branch**; and division-by-zero
+**reverts** (`revert();`) where Java throws `ArithmeticException`.
+
+**Arithmetic** (`solidityProgramRules.key`), each with `_unfold_left`,
+`_unfold_right`, `_unfold_result`, and a terminal:
+
+- `subtractionAssignment` — `v = a - b;` → `{v := a - b}`
+- `multiplicationAssignment` — `v = a * b;` → `{v := a * b}`
+- `powerAssignment` — `v = a ** b;` → `{v := pow(a, b)}` (no infix `**` in the
+  term parser; `pow` on concrete literals is folded by `intSimplificationRules`)
+- `divisionAssignment` — `v = a / b;` → `\if(b != 0)\then({v := a / b}…)\else(revert)`
+- `moduloAssignment` — `v = a % b;` → `\if(b != 0)\then({v := a % b}…)\else(revert)`
+
+**Relational** (bool result), each with `…CaptureLhs`, `…CaptureRhs`, and a
+terminal twin of `boolEqualityAssignment` (predicate map `< → lt`, `<= → leq`,
+`> → gt`, `>= → geq`; `!=` negates equality):
+
+- `boolInequalityAssignment` (`!=`), `lessThanAssignment` (`<`),
+  `greaterThanAssignment` (`>`), `lessEqualAssignment` (`<=`),
+  `greaterEqualAssignment` (`>=`).
+
+**Logical / unary** (mirroring Java `compound_assignment_*_simple`/`_mixed`,
+`compound_assignment_1_new`/`_2`, `unaryMinusInt`):
+
+- `logicalAndAssignment` (`&&`), `logicalOrAssignment` (`||`) with a
+  `…CaptureLhs` left-capture rule each.
+- `logicalNotAssignment` (`!`) and `unaryMinusAssignment` (`-x`), each with a
+  capture rule for a non-simple operand.
+
+Example files: `subtraction-simple.key`, `subtraction-storage-read.key`,
+`multiplication-simple.key`, `power-simple.key`, `division-simple.key`,
+`modulo-simple.key`, `less-than-simple.key`, `greater-than-simple.key`,
+`less-equal-simple.key`, `greater-equal-simple.key`, `not-equal-simple.key`,
+`logical-and-simple.key`, `logical-or-simple.key`, `logical-not-simple.key`,
+`unary-minus-simple.key` (all in `TacletStarterExamplesTest`).
+
+Deferred from Tier 1, with rationale:
+
+- **Bitwise `&`, `|`, `^`, `<<`, `>>` and `~x`** — `intHeader.key` has no bitwise
+  LDT functions (Java uses `javaBitwiseAndInt`, `shiftleft`, …). Deferred until
+  int bit-ops are modelled (matching `docs/taclet-ideas.md`).
+- **Unary plus `+x`** — Java has no unary-plus rule (parse-time no-op) and
+  Solidity ≥0.5 removed the operator.
+- **`&&`/`||` right-operand short-circuit** — Java's `_nonsimple` variant expands
+  to an `if`-statement, which depends on the Tier-3 `if` rule. Only the
+  both-operands-simple terminal and the left-operand capture are implemented now.
+- **Checked-arithmetic overflow revert (Solidity ≥0.8)** — consistent with `+`
+  having none; future work alongside the Tier-3 `unchecked { }` rule.
 
 ### Storage-alias examples
 

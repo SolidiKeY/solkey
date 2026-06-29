@@ -7,8 +7,11 @@ note on the intended sequent transformation. Implement against the conventions
 in `docs/key-taclets.md`; storage/memory shapes follow `docs/storage.md`.
 
 Already done (for reference, do **not** re-add): local assign/decl, `+`,
-`+=`, `==`, `assert`, `revert`, `++`/`--`, `delete`, and the storage/memory
-read/write/copy/push/pop family. See `docs/taclets-implementation.md`.
+`+=`, `==`, `assert`, `revert`, `++`/`--`, `delete`, the storage/memory
+read/write/copy/push/pop family, **all of Tier 1 below except the deferred
+bitwise / unary-plus / short-circuit items**, and the **Tier 2 arithmetic
+compound assignments `-=`, `*=`, `/=`, `%=`**. See
+`docs/taclets-implementation.md`.
 
 ## Tier 1 — Pure expression evaluation (easiest)
 
@@ -17,25 +20,29 @@ rules: capture non-simple operands into fresh value locals, then assign the
 logic-level result of the operator to the target var. Pattern to copy:
 `v = se1 ⊕ se2;` ⇝ `{v := t1 ⊕ t2}`.
 
-- **Arithmetic** (`BinaryOp`): `-`, `*`, `/`, `%`, `**`. One unfold+assign
-  rule each, reusing `intHeader`/`intDiv` operators. `/` and `%` need a
-  `den != 0` revert branch.
-- **Relational** (`BinaryOp`): `!=`, `<`, `>`, `<=`, `>=`. Twins of `==`:
-  `v = se1 < se2;` ⇝ `{v := \if(t1 < t2)\then(TRUE)\else(FALSE)}`.
-- **Logical** (`BinaryOp`/`UnaryPrefix`): `&&`, `||`, `!`. Bool-typed twins of
-  the relational rules; `&&`/`||` ideally short-circuit (sequence the rhs).
-- **Unary prefix** (`UnaryPrefix`): `-x`, `+x`, `~x`. `v = -x;` ⇝ `{v := -t}`.
-- **Bitwise** (`BinaryOp`): `&`, `|`, `^`, `<<`, `>>`. Need bitwise LDT
-  operators; lower priority until int bit-ops are modelled.
+- **Arithmetic** (`BinaryOp`): `-`, `*`, `/`, `%`, `**`. ✅ Done — see
+  `docs/taclets-implementation.md` ("Tier 1 expression operators"). `/` and `%`
+  revert on a zero denominator.
+- **Relational** (`BinaryOp`): `!=`, `<`, `>`, `<=`, `>=`. ✅ Done — twins of
+  `==`: `v = se1 < se2;` ⇝ `{v := \if(lt(t1, t2))\then(TRUE)\else(FALSE)}`.
+- **Logical** (`BinaryOp`/`UnaryPrefix`): `&&`, `||`, `!`. ✅ Done for
+  both-simple operands + left-operand capture. Right-operand short-circuit
+  (`&&`/`||`) is deferred — it needs the Tier-3 `if` rule.
+- **Unary prefix** (`UnaryPrefix`): `-x` ✅ Done (`v = -x;` ⇝ `{v := -t}`).
+  `+x` is skipped (Solidity ≥0.5 removed it; Java has no rule). `~x` is bitwise
+  (see below).
+- **Bitwise** (`BinaryOp`): `&`, `|`, `^`, `<<`, `>>` (and `~x`). ⏳ Deferred —
+  need bitwise LDT operators; lower priority until int bit-ops are modelled.
 
 ## Tier 2 — Remaining compound assignments
 
-Parsed but unimplemented (`storage.md` §7 desugars these pre-Step-3). Clone the
-`+=` family (`storageRootAddAssign` / `…Field…` / `…Index…` + `_unfold_leftFst`)
-for each operator at root/field/index level:
+Clone the `+=` family (`storageRootAddAssign` / `…Field…` / `…Index…` +
+`_unfold_leftFst`) for each operator at root/field/index level:
 
-- `-=`, `*=`, `/=`, `%=` (`/=`, `%=` add a `den != 0` branch).
-- `&=`, `|=`, `^=`, `<<=`, `>>=` (gated on Tier-1 bitwise support).
+- `-=`, `*=`, `/=`, `%=`. ✅ Done — twins of `+=` with the infix operator swapped;
+  `/=`, `%=` add a `se != 0` revert branch on the terminals. See
+  `docs/taclets-implementation.md` ("Compound assignment operators").
+- `&=`, `|=`, `^=`, `<<=`, `>>=`. ⏳ Deferred — gated on Tier-1 bitwise support.
 
 ## Tier 3 — Control flow
 
