@@ -473,14 +473,34 @@ Step-3 rules added since the audit (struct-payload copy):
   exclude `DataLocation.Storage` program variables (storage-locals are
   `List`-typed paths, not values, so they never belonged in the
   primitive write rule).
+- `storageIndexWriteMappingCopySource` — `sp1[i] = sp2;` (mapping, `sp2`
+  a simple storage path) emits
+  `save(storage, consr(sp1Path, at(idx)), find<[Struct]>(storage, sp2Path))`.
+  Unbounded twin of `storageIndexWriteArrayCopySource`.
+- `storageIndexReadMappingBindLocalRoot` — `lp = sp[i];` (mapping) emits
+  `{lp := consr(spPath, at(idx))}`. Unbounded twin of
+  `storageIndexReadArrayBindLocalRoot`; also discharges the captured
+  `src = sp[i];` declaration left by `storageFieldWrite_unfold_leftFst` on
+  mapping-element field writes.
+- `storageIndexWriteMapRefRhsCapture` — Step-1 RHS capture, storage twin of
+  `memoryIndexWriteMemRefRhsCapture`. A non-simple storage read on the RHS of a
+  mapping index write (`sp[i] = nse;`) is captured into a fresh storage alias
+  (`T storage src = nse; sp[i] = src;`) so the
+  split/`storageIndexReadMappingBindLocalRoot`/`storageIndexWriteMappingCopySource`
+  chain can finish. (Latent limitation, shared with the memory clone: a
+  non-simple *value* RHS — e.g. an int `valuesMap[2] = valuesMap[1]` — would be
+  captured into an ill-sorted `uint storage` alias; no current example exercises
+  that shape, which needs the value-capture twin → `…MappingSave` instead.)
+
+These three close `mainFeatures/testStorageMapStructCopy.key`
+(`accountMap[2] = accountMap[1];`, a `mapping(uint => Account)` deep struct copy
+verified by mutating the source after the copy).
 
 Step-3 rules with **no example and no runnable taclet**:
 
 | Missing rule | Statement shape | Blocking work |
 |---|---|---|
 | `storageDeleteSimpleTarget` | `delete sp;` | dedicated delete taclet that preserves storage-vs-memory and simple-vs-complex targets (see §"Work Needed" item 2) |
-| `storageIndexWriteMappingCopySource` | `sp1[i] = sp2` (mapping) | alias/struct-copy support |
-| `storageIndexReadMappingBindLocalRoot` | `lp = sp[i]` (mapping) | mapping-side taclet |
 | `storageIndexReadMappingStoreRoot` | `gp = sp[i]` (mapping) | mapping-side taclet |
 | `storageIndexWriteArrayCopySource` | `sp1[i] = sp2` (array) | runnable taclet exists for int payloads, but no focused example yet |
 | `storageIndexReadArrayStoreRoot` | `gp = sp[i]` (array) | runnable taclet exists, but no focused example yet |
@@ -581,7 +601,8 @@ body directly in the modality. The JUnit driver is
 
 **Passing (19 proofs close automatically):**
 - Storage: write/read, nested writes, field deep copy, root deep copy, aliases,
-  map read/write/delete, delete paper case.
+  map read/write/delete, delete paper case, mapping-element struct deep copy
+  (`testStorageMapStructCopy`: `accountMap[2] = accountMap[1];`).
 - Storage push (lvalue/alias): `testStoragePushLvaluePrimitive`
   (`values.push() = 77; values[0] == 77`) and `testStoragePushReturnAlias`
   (`Token storage t = tokens.push(); t.value = 99; tokens[0].value == 99`).

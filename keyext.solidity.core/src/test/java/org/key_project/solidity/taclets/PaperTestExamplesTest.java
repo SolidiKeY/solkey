@@ -75,7 +75,8 @@ public class PaperTestExamplesTest {
             example("testStoragePushFieldLvalue.key"),
             example("testStorageComplexReceiverPushFieldLvalue.key"),
             example("testStorageNestedPushReturnAlias.key"),
-            example("testStorageArrayReadWrite.key"));
+            example("testStorageArrayReadWrite.key"),
+            example("testStorageMapStructCopy.key"));
     }
 
     private static Arguments example(String name) {
@@ -113,12 +114,5 @@ public class PaperTestExamplesTest {
         + "but this example first needs a.push(100); statement sequences, which hit a pre-existing "
         + "void-call statement-suffix reconstruction bug (same family as the other disabled push tests)")
     void testStorageEvaluationOrder_disabled() {
-    }
-
-    // --- Deferred: require mapping-element struct copy (see docs/taclets-implementation.md) ---
-
-    @Test
-    @Disabled("testStorageMapStructCopy: accountMap[2] = accountMap[1] — no mapping-element struct copy taclet")
-    void testStorageMapStructCopy_disabled() {
     }
 }
