@@ -601,9 +601,9 @@ Recently covered push/pop examples:
 | `storagePushValueSave` | `storage-push-value.key` |
 | `storagePushValue_unfold_rightSndArgument` + `storagePushValueSave` | `storage-push-nonsimple-arg.key` |
 | `storagePushLengthSave` | `storage-push-empty.key` |
-| `storagePushLhsToPushValue` + `storagePushValueSave` | `storage-push-return-assign.key` |
-| `storagePushLhsToPushValueCopySource` + `storagePushValueCopySource_unfold_leftFstReceiver` + `storagePushValueCopySource` | `mainFeatures/testStorageComplexReceiverPushLvalueCopy.key` |
-| `storagePushLhsToPushValueCopySource` (simple receiver) + `storagePushValueCopySource` | `mainFeatures/testStoragePushLvalueCopiesStorageSource.key` |
+| (parse-time push-lvalue desugar) + `storagePushValueSave` | `storage-push-return-assign.key` |
+| (parse-time push-lvalue desugar) + `storagePushValueCopySource_unfold_leftFstReceiver` + `storagePushValueCopySource` | `mainFeatures/testStorageComplexReceiverPushLvalueCopy.key` |
+| (parse-time push-lvalue desugar, simple receiver) + `storagePushValueCopySource` | `mainFeatures/testStoragePushLvalueCopiesStorageSource.key` |
 | `storagePush_unfold_leftFstReceiver` + `storagePushLengthSave` | `mainFeatures/testStorageComplexReceiverEmptyPush.key` |
 | `storageFieldWrite_unfold_leftFst` (+ split/push-bind/`storageFieldWriteSave`) | `mainFeatures/testStoragePushFieldLvalue.key` |
 | `storageFieldWrite_unfold_leftFst` (+ `storageLocalRootPush_unfold_leftFstReceiver` …) | `mainFeatures/testStorageComplexReceiverPushFieldLvalue.key` |
@@ -624,12 +624,19 @@ RHS) is split by `storageLocalDeclInitSplit` and push-bound by the existing
 residual `t.a` field op is finished by the existing `storageFieldWriteSave` /
 `storageFieldReadFind` / `storageFieldReadBindLocalRoot`. (Because `push()` is now a
 `StoragePath`, the former `storageLocalDeclInitPushSplit` is also redundant and removed.)
-The widened `storagePushLhsToPushValueCopySource` (`Path[name=storage.array]`) also covers the
-simple-receiver copy-source case `tokens.push() = storageRef;`.
+The push-lvalue desugar `sp.push() = se ⇝ sp.push(se)` (both the value and
+copy-source forms, simple or complex receiver) is performed at **parse time** by
+`ParserUtils.parseAssignmentMaybe`: an assignment whose lhs is a zero-arg `.push()`
+call is rewritten into a one-arg `.push(value)` `FunctionCallExpression`. Therefore the
+`push() = …` shape never reaches the prover. The former taclets
+`storagePushLhsToPushValue` / `storagePushLhsToPushValueCopySource` had identical `\find`
+and `\replacewith` (both `sp.push(value)`) — they were no-ops the strategy could pick
+repeatedly, producing an infinite loop (`testStorageEvaluationOrder`, 3rd push). **They
+have been removed**; the parse-time desugar feeds `storagePushValueSave` /
+`storagePushValueCopySource` directly, keeping a single applicable rule per statement.
 
 The complex-receiver push-lvalue copy chain (`bucket.tokens.push() = tokRef;`)
-desugars the copy-source push-return assignment
-(`storagePushLhsToPushValueCopySource`: `nsp.push() = sp2;` ⇝ `nsp.push(sp2);`),
+parse-desugars to `nsp.push(sp2);`, then
 captures the complex receiver into a fresh storage alias
 (`storagePushValueCopySource_unfold_leftFstReceiver`, mirroring
 `storagePushValue_unfold_leftFstReceiver` but for a simple storage-path
@@ -637,8 +644,8 @@ argument), and then appends the copied struct via the terminal
 `storagePushValueCopySource`. The terminal now reads the copied payload with
 `find<[Struct]>` directly (matching `storageFieldWriteCopySource` /
 `storageRootWriteCopySource_struct`) rather than a generic `find<[alpha]>`. The
-three value-push rules (`storagePushValueSave`,
-`storagePushValue_unfold_leftFstReceiver`, `storagePushLhsToPushValue`) were
+value-push rules (`storagePushValueSave`,
+`storagePushValue_unfold_leftFstReceiver`) were
 tightened from a bare `SimpleExpression` to `SimpleExpression[name=value]`, so a
 storage-local copy source (`tokRef`) is no longer matched as a value push;
 this also fixes a latent over-match that would `save` the path term itself.
@@ -659,8 +666,9 @@ per-node `ExtList` was never popped when a method call (e.g. `push`) was
 reconstructed inside a statement *sequence*, corrupting the rewrite stack
 (`DeclarationStatement cannot be cast to ContextStatementBlock`). It now
 dispatches to `performActionOnFunctionDeclaration` like `FieldDeclaration` does.
-This is the "void-call statement-suffix reconstruction bug" referenced by the
-disabled push tests in `PaperTestExamplesTest`.
+(This is the "void-call statement-suffix reconstruction bug" the
+`testStorageEvaluationOrder` `@Disabled` comment once blamed; it fixed the crash but
+was *not* the cause of that example's loop — see the no-op push-lvalue rules above.)
 
 Compound `+=` and ++/–– (storage.md §7 — desugared before Step-3) are
 already exhaustively covered at root/field/index level (see the
@@ -707,9 +715,9 @@ body directly in the modality. The JUnit driver is
   indexing the complex path `bucket.tokens[0]` directly is not yet supported.
 - Remaining push family (all fresh-array preconditioned as above):
   - `testStoragePushLvalueCopiesStorageSource` (`tokens.push() = storageRef;`,
-    simple receiver) — the copy-source desugar `storagePushLhsToPushValueCopySource`
-    now matches any array receiver (`Path[name=storage.array]`), feeding the
-    terminal `storagePushValueCopySource` directly.
+    simple receiver) — the parse-time push-lvalue desugar rewrites this to
+    `tokens.push(storageRef);`, feeding the terminal `storagePushValueCopySource`
+    directly.
   - `testStorageComplexReceiverEmptyPush` (`bucket.tokens.push();`) — the existing
     `storagePush_unfold_leftFstReceiver` captures the complex receiver; closes now
     that array storage aliases re-sort to `List`.
@@ -724,6 +732,16 @@ body directly in the modality. The JUnit driver is
   - `testStorageArrayReadWrite` (`tokens.push(); tokens[0].value = 100; …`) — now
     closes with the fresh-array precondition (the field-write-on-index path uses the
     post-update-bounds `storageIndexReadArrayBindLocalRoot`).
+  - `testStorageEvaluationOrder` (`a.push(100)×3; a[++i] = ++i; assert(a[2] == 1);`,
+    fresh-array preconditioned) — exercises Solidity's RHS-before-LHS-index evaluation
+    order on a storage array. The new `storageIndexWriteNonSimpleRhsCapture` captures
+    the non-simple RHS *first* (`uint _rhs = ++i; a[++i] = _rhs;`), then the existing
+    `storageIndexWriteNonSimpleIndexCapture` captures the non-simple index
+    (`uint _idx = ++i; a[_idx] = _rhs;`), so `_rhs` binds before `_idx` (giving
+    `a[2] == 1`). Ordering is self-enforcing by schema-variable kind: while the RHS is
+    non-simple only the RHS-capture matches (the index-capture requires a
+    `SimpleExpression` RHS), and once the RHS is the simple temp only the index-capture
+    matches — one applicable rule per statement.
 - Memory: aliasing, field shallow copy, root alias, delete alias,
   root-delete-rebinds-only-local, delete-identity-field-freshens-slot,
   delete-primitive-field.
@@ -735,14 +753,28 @@ body directly in the modality. The JUnit driver is
   literal is not supported by the parser (and there is no push-struct-value taclet).
 - `testStorageStructDeleteSkipsMappingMember`: `delete` on a struct must
   preserve mapping members — not modeled in `storageRootDelete`.
-- `testMemoryUintArrayAuxiliaryCases`, `testStorageEvaluationOrder`: `++i`
-  pre-increment in index/assignment position — no desugaring rule yet.
+- `testMemoryUintArrayAuxiliaryCases`: `carolValues[++i] = 77` — `++i` in a
+  **memory** array index position has no desugaring rule yet.
   (`testMemoryTokenArrayAuxiliaryCases` is enabled and passes;
   `testMemoryUintArrayAuxiliaryCases` was previously left in the enabled
   `examples()` stream by mistake even though it cannot close, and is now
   `@Disabled` to match.)
 
 **Bugs fixed to reach the passing set:**
+- `storageIndexWriteArraySave_root` checked its bounds against the **pre-update**
+  storage: the `0 <= idx & idx < find(storage, path·size)` guards were emitted via
+  `\add`, which adds them *outside* the pending update `{U}` in front of the modality,
+  so `find(storage, …)` read the array length *before* any preceding push/write. Any
+  array index write after a mutation wrongly reverted (e.g. `a.push(100); a[0] = 7;`
+  checked `0 < len(empty array)`). Fixed by moving the bound *inside* the `\replacewith`
+  as the antecedent of an implication, so `{U}` distributes onto it and the length comes
+  from the post-mutation storage. The two branches keep the modality-generic revert
+  split — `inBounds` is `bound -> {save}…post`, `outOfBounds` is `!bound -> ⟨/[revert]post`
+  (vacuously true in `[·]`, forcing in-bounds in `⟨·⟩`) — so the box out-of-bounds case
+  (`storage-index-array-out-of-bounds-box.key`) still closes. (The same
+  `\add`-outside-update pattern still exists in
+  `storageIndexWriteArraySave_decompose`, `storageIndexWriteArrayCopySource`, and
+  `storagePopSave`; they are not exercised after a mutation by the current suite.)
 - `Services.getOverlay` was ignoring its `localNamespaces` argument; fixed to
   use the supplied namespace so second skolem constant gets a distinct name.
 - `TacletApp.createSkolemConstant` was constructing `SFunction` with

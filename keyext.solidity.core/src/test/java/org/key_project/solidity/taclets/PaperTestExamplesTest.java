@@ -76,7 +76,8 @@ public class PaperTestExamplesTest {
             example("testStorageComplexReceiverPushFieldLvalue.key"),
             example("testStorageNestedPushReturnAlias.key"),
             example("testStorageArrayReadWrite.key"),
-            example("testStorageMapStructCopy.key"));
+            example("testStorageMapStructCopy.key"),
+            example("testStorageEvaluationOrder.key"));
     }
 
     private static Arguments example(String name) {
@@ -107,12 +108,5 @@ public class PaperTestExamplesTest {
         + "position has no desugaring rule yet (pre-existing; was incorrectly left in the enabled "
         + "examples() stream and never closed). See docs/taclets-implementation.md.")
     void testMemoryUintArrayAuxiliaryCases_disabled() {
-    }
-
-    @Test
-    @Disabled("testStorageEvaluationOrder: a[++i] = ++i — the ++i taclets work (see the memory cases), "
-        + "but this example first needs a.push(100); statement sequences, which hit a pre-existing "
-        + "void-call statement-suffix reconstruction bug (same family as the other disabled push tests)")
-    void testStorageEvaluationOrder_disabled() {
     }
 }
