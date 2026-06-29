@@ -67,6 +67,10 @@ public class PaperTestExamplesTest {
             example("testMemoryToStorageCopyComplexSource.key"),
             example("testMemoryToStorageCopyComplexTarget.key"),
             example("testMemoryTokenArrayAuxiliaryCases.key"),
+            example("testMemoryUintArrayAuxiliaryCases.key"),
+            example("testMemoryUintArrayPredecrement.key"),
+            example("testMemoryUintArrayPostincrement.key"),
+            example("testMemoryUintArrayPostdecrement.key"),
             example("testStoragePushLvaluePrimitive.key"),
             example("testStoragePushReturnAlias.key"),
             example("testStorageComplexReceiverPushLvalueCopy.key"),
@@ -101,12 +105,5 @@ public class PaperTestExamplesTest {
     @Test
     @Disabled("testStorageStructDeleteSkipsMappingMember: delete struct preserves mapping members — no such taclet")
     void testStorageStructDeleteSkipsMappingMember_disabled() {
-    }
-
-    @Test
-    @Disabled("testMemoryUintArrayAuxiliaryCases: carolValues[++i] = 77 — ++i in a memory array index "
-        + "position has no desugaring rule yet (pre-existing; was incorrectly left in the enabled "
-        + "examples() stream and never closed). See docs/taclets-implementation.md.")
-    void testMemoryUintArrayAuxiliaryCases_disabled() {
     }
 }

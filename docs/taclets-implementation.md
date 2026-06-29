@@ -744,7 +744,12 @@ body directly in the modality. The JUnit driver is
     matches — one applicable rule per statement.
 - Memory: aliasing, field shallow copy, root alias, delete alias,
   root-delete-rebinds-only-local, delete-identity-field-freshens-slot,
-  delete-primitive-field.
+  delete-primitive-field, uint-array auxiliary cases
+  (`testMemoryUintArrayAuxiliaryCases`, `carolValues[++i] = 77`), and the full
+  inc/dec family in a memory array index — `carolValues[--i]`
+  (`testMemoryUintArrayPredecrement`), `carolValues[i++]`
+  (`testMemoryUintArrayPostincrement`), `carolValues[i--]`
+  (`testMemoryUintArrayPostdecrement`).
 - Cross-location: storage→memory copy (root, field, complex path),
   memory→storage copy (root, field, complex source, complex target).
 
@@ -753,14 +758,29 @@ body directly in the modality. The JUnit driver is
   literal is not supported by the parser (and there is no push-struct-value taclet).
 - `testStorageStructDeleteSkipsMappingMember`: `delete` on a struct must
   preserve mapping members — not modeled in `storageRootDelete`.
-- `testMemoryUintArrayAuxiliaryCases`: `carolValues[++i] = 77` — `++i` in a
-  **memory** array index position has no desugaring rule yet.
-  (`testMemoryTokenArrayAuxiliaryCases` is enabled and passes;
-  `testMemoryUintArrayAuxiliaryCases` was previously left in the enabled
-  `examples()` stream by mistake even though it cannot close, and is now
-  `@Disabled` to match.)
 
 **Bugs fixed to reach the passing set:**
+- `storageRoot{Pre,Post}{in,de}crementAssignment` (`result = ++age;` etc.) declared their
+  receiver as an **unconstrained** `\program Path sp`, so they over-matched *any*
+  `vp = ++lv;` — including `vp = ++localValueVar;` where `lv` is a plain local. The
+  `\varcond(\sameAsTerm(sp, spPath))` then tried to bind the `\term List spPath` to the
+  local's `int`-sorted term, throwing `SortException` and aborting the whole proof. This
+  is why `testMemoryUintArrayAuxiliaryCases` (`carolValues[++i] = 77`) could not close: the
+  index-capture rule `memoryIndexWriteNonSimpleIndexCapture` emits `uint pv = ++i;`, which
+  `valueDeclInitSplit` splits into the assignment form `pv = ++i;` (the storage path keeps
+  the decl-init form and is consumed by `localDeclPreincrement`, so it never triggered the
+  bug — hence the earlier misdiagnosis of a "missing `++i` memory-index desugaring rule").
+  Fixed by constraining the receiver to `\program Path[name=storage.simple.global] sp`,
+  matching the non-assignment siblings (`storageRootPreincrement` etc.); the generic
+  `localAssignPreincrement` now handles `pv = ++i;`.
+- The other three inc/dec operators in a memory array index (`carolValues[--i]`,
+  `carolValues[i++]`, `carolValues[i--]`) closed the `SortException` once the rule above was
+  constrained, but then stalled with an open goal: only `localDeclPreincrement` /
+  `localAssignPreincrement` existed for local value variables, so the captured
+  `pv = --i;` / `pv = i++;` / `pv = i--;` had no applicable rule. Added the missing six —
+  `localDecl{Pre,Post}decrement` / `localDeclPostincrement` and their `localAssign…` assignment
+  twins — mirroring the pre-increment pair (pre forms read the new value, post forms read the
+  old value before updating). Covered by `testMemoryUintArray{Predecrement,Postincrement,Postdecrement}`.
 - `storageIndexWriteArraySave_root` checked its bounds against the **pre-update**
   storage: the `0 <= idx & idx < find(storage, path·size)` guards were emitted via
   `\add`, which adds them *outside* the pending update `{U}` in front of the modality,
