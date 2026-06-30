@@ -7,7 +7,6 @@ import org.key_project.logic.Name;
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.solidity.program.ast.statement.Statement;
 import org.key_project.solidity.rule.sv.ProgramSV;
-import org.key_project.solidity.rule.sv.sort.ProgramSVSort;
 import org.key_project.util.collection.*;
 
 import org.junit.jupiter.api.Test;
