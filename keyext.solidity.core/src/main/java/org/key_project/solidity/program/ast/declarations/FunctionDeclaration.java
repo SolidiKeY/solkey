@@ -4,6 +4,7 @@
 package org.key_project.solidity.program.ast.declarations;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.key_project.logic.Name;
@@ -28,7 +29,7 @@ public class FunctionDeclaration implements Declaration, Named, SolidityProgramE
     // TODO: Create another class for return type
     private final ImmutableArray<ProgramVariable> returnParameters;
     private final ImmutableArray<ProgramVariable> inputParameters;
-    private final Block body;
+    private final @Nullable Block body;
     private final String kind;
     private final Visibility visibility;
     private final StateMutability stateMutability;
@@ -43,7 +44,7 @@ public class FunctionDeclaration implements Declaration, Named, SolidityProgramE
     private final String documentation;
 
     public FunctionDeclaration(Name name, List<ProgramVariable> returnParameters, Type type,
-            List<ProgramVariable> inputParameters, Block body, String kind,
+            List<ProgramVariable> inputParameters, @Nullable Block body, String kind,
             Visibility visibility, StateMutability stateMutability,
             List<ModifierReference> modifiers, String documentation) {
         this.name = name;
@@ -59,7 +60,7 @@ public class FunctionDeclaration implements Declaration, Named, SolidityProgramE
     }
 
     public Block getBody() {
-        return body;
+        return Objects.requireNonNull(body);
     }
 
     public ImmutableArray<ProgramVariable> getReturnParameters() {
@@ -128,7 +129,7 @@ public class FunctionDeclaration implements Declaration, Named, SolidityProgramE
                 .append(" ")
                 .append(modifiers.stream().map(ModifierReference::toString)
                         .collect(Collectors.joining(" ")))
-                .append(getBody().toString());
+                .append(body == null ? "" : body.toString());
         return strBuffer.toString();
     }
 

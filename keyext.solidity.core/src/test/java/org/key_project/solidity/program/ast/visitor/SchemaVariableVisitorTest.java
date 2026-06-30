@@ -7,6 +7,7 @@ import org.key_project.logic.Name;
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.solidity.program.ast.statement.Statement;
 import org.key_project.solidity.rule.sv.ProgramSV;
+import org.key_project.solidity.rule.sv.sort.ProgramSVSort;
 import org.key_project.util.collection.*;
 
 import org.junit.jupiter.api.Test;
@@ -15,12 +16,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.key_project.solidity.parser.ParserForTesting.parseStatement;
 import static org.key_project.solidity.rule.matching.inst.SVInstantiations.EMPTY_SVINSTANTIATIONS;
 import static org.key_project.solidity.rule.sv.SchemaVariableFactory.createProgramSV;
+import static org.key_project.solidity.rule.sv.sort.ProgramSVSort.VARIABLE;
 
 public class SchemaVariableVisitorTest {
 
     @Test
     void onlySchema() {
-        ProgramSV x = createProgramSV(new Name("x"), null, false);
+        ProgramSV x = createProgramSV(new Name("x"), VARIABLE, false);
         ProgramSVCollector visitor =
             new ProgramSVCollector(x, ImmutableSLList.nil(), EMPTY_SVINSTANTIATIONS);
 

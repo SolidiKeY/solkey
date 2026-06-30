@@ -88,11 +88,11 @@ public class ProgramReplaceVisitor extends CreatingASTVisitor {
     /// what Java's `ProgVarReplaceVisitor` does for `LocalVariableDeclaration`.
     @Override
     public void performActionOnStatementVariableDeclaration(StatementVariableDeclaration x) {
-        if (x.getSchemaVariable() == null) {
+        final SchemaVariable sv = x.getSchemaVariable();
+        if (sv == null) {
             super.performActionOnStatementVariableDeclaration(x);
             return;
         }
-        final SchemaVariable sv = x.getSchemaVariable();
         final Object inst = svinsts.getInstantiation(sv);
         final ProgramVariable pv;
         if (inst instanceof ProgramVariable p) {

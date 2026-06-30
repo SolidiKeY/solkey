@@ -28,6 +28,10 @@ public final class MemoryReferenceTypes {
         if (identitySort == null) {
             return original;
         }
-        return new KeYSolidityType(original.getSolidityType(), identitySort);
+        Type solidityType = original.getSolidityType();
+        if (solidityType == null) {
+            return original;
+        }
+        return new KeYSolidityType(solidityType, identitySort);
     }
 }
