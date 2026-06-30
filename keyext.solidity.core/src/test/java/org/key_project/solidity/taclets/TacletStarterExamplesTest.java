@@ -120,6 +120,7 @@ public class TacletStarterExamplesTest {
             example("storage-push-nonsimple-arg.key"),
             example("storage-push-empty.key"),
             example("storage-push-return-assign.key"),
+            example("storage-push-local-bind.key"),
             example("storage-pop-nonempty.key"),
             example("storage-pop-empty-box.key"),
             example("storage-pop-after-push.key"),

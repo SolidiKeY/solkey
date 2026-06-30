@@ -824,6 +824,15 @@ body directly in the modality. The JUnit driver is
 - `at(int)` is now declared `\unique Field` in `structHeader.key` so
   `equalUnique` can simplify `at(1) = at(2)` to `false` and close map
   index-disjointness goals.
+- Because `at(int)` and `size` are both `\unique Field`, `equalUnique`
+  discharges `at(n) = size` to `false` automatically — `at` is *not* special
+  among fields. The leftover `& !(at(n) = size)` precondition (a workaround from
+  before `at` was unique) was therefore dropped from all eight push/pop/index
+  example problems (`storage-push-value.key`, `storage-push-return-assign.key`,
+  `storage-push-local-bind.key`, `storage-push-nonsimple-arg.key`,
+  `storage-pop-nonempty.key`, `storage-pop-after-push.key`,
+  `storage-index-decompose-after-push.key`,
+  `storage-index-copysource-after-push.key`); they all still close.
 - Array `.length` was unreadable: `SolidityToKeyConverter.visitMemberAccess`
   built a synthetic `length` field with no logic constant. It now lowers
   `arr.length` (on `ArrayType`/`DynamicArrayType` receivers) to the existing
