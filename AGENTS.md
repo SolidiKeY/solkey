@@ -80,12 +80,21 @@ Grammars in `keyext.solidity.core/src/main/antlr/`: `Solidity.g4`, `KeYSolidityD
 
 Spotless enforces formatting (`scripts/tools/checkstyle/keyCodeStyle.xml`). Run `./gradlew spotlessApply` before committing. Fields `@NonNull` by default.
 
-## Taclets examples
-Read `docs/taclets-implementation.md` when creating, modifying, reviewing, or debugging Solidity `.key` taclets or examples.
-Read `docs/key-taclets.md` first for Solidity taclet authoring syntax, common schema-variable choices, examples, and verification commands.
-Storage taclets and other program rules live in `keyext.solidity.core/src/main/resources/org/key_project/solidity/proof/rules/solidityProgramRules.key` (loaded automatically via `standardSolidityRules.key`).
-Add new example problems under `keyext.solidity.examples/taclets` and update `docs/taclets-implementation.md` after you implement a feature.
-When creating or modifying storage rules, consult `docs/storage.md` for the calculus specification (schema variables, three-step strategy, and the statement→rule reference).
+## Documentation (`docs/`)
+
+Read the relevant doc before working on taclets — each is a compact, agent-facing reference:
+
+| Doc | Read when |
+|---|---|
+| `key-taclets.md` | **Start here** to author a taclet — rule shape, schema-variable choices, varconds, verification commands. |
+| `taclets-implementation.md` | Checking what is already implemented (rule families + example files) and how to run/verify it. |
+| `taclet-ideas.md` | Picking the next unimplemented construct — the backlog, ordered simple → complex. |
+| `storage.md` | Working on storage rules — calculus spec (schema vars, three-step strategy, statement→rule table, worked traces). |
+| `memory.md` | Working on memory rules — calculus spec (identity heap, aliasing, delete, cross-domain `copySt`/`copyMem`). |
+| `require-assert.md` | Touching `require` / `assert` rules (box vs. diamond false-branch behavior). |
+| `solidity-json-documentation.md` | Parsing `solc --ast-compact-json` (consumed by `SolJSONParser`). |
+
+Program rules live in `keyext.solidity.core/src/main/resources/org/key_project/solidity/proof/rules/solidityProgramRules.key` (loaded automatically via `standardSolidityRules.key`). Add new example problems under `keyext.solidity.examples/taclets`, and after changing a feature update `docs/taclets-implementation.md` (implemented) or `docs/taclet-ideas.md` (backlog).
 
 **When planning a new taclet:** always begin the plan with a plain-English explanation of what the taclet does — state the precondition (what must be true before the rule fires), the transformation (what sequent change it performs), and the postcondition (what is true after). Write this before any KeY syntax.
 

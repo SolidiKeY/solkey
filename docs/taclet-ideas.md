@@ -90,3 +90,16 @@ Clone the `+=` family (`storageRootAddAssign` / `…Field…` / `…Index…` +
 - **Address/payable builtins & globals** (`msg.sender`, `msg.value`,
   `block.*`, `.balance`, `.transfer`): require an environment/ledger model
   beyond the storage/memory heaps.
+
+## Refinements to implemented rules
+
+Edge cases of already-supported constructs (see `docs/taclets-implementation.md`):
+
+- **Whole-struct write from a struct *value*** (`alice = pVal;`, vs. the
+  supported root-to-root `alice = bob;`): needs Step-1 unfolding for struct
+  constructors / memory-struct sources.
+- **`delete` of a struct must preserve mapping members** (blocks disabled
+  `testStorageStructDeleteSkipsMappingMember`): `storageRootDelete` currently
+  resets the whole root.
+- **Dynamic-array `delete arr;` length reset**: not modeled by the current
+  memory/storage delete rules.
