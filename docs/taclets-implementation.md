@@ -610,6 +610,9 @@ Recently covered push/pop examples:
 | `storageFieldRead_unfold_rightFst` (+ split/push-bind/`storageFieldReadBindLocalRoot`) | `mainFeatures/testStorageNestedPushReturnAlias.key` |
 | `storagePopSave` nonempty branch | `storage-pop-nonempty.key` |
 | `storagePopSave` empty/revert branch | `storage-pop-empty-box.key` |
+| `storagePopSave` nonempty branch, bound read post-push | `storage-pop-after-push.key` |
+| `storageIndexWriteArraySave_decompose` inBounds branch, bound read post-push | `storage-index-decompose-after-push.key` |
+| `storageIndexWriteArrayCopySource` inBounds branch, bound read post-push | `storage-index-copysource-after-push.key` |
 
 The `sp.push().a` shape (a field access on the slot returned by `push()`) needs **no
 dedicated push-field rules**: a no-arg `arr.push()` is classified by `PathSVSort` as a
@@ -791,10 +794,23 @@ body directly in the modality. The JUnit driver is
   from the post-mutation storage. The two branches keep the modality-generic revert
   split — `inBounds` is `bound -> {save}…post`, `outOfBounds` is `!bound -> ⟨/[revert]post`
   (vacuously true in `[·]`, forcing in-bounds in `⟨·⟩`) — so the box out-of-bounds case
-  (`storage-index-array-out-of-bounds-box.key`) still closes. (The same
-  `\add`-outside-update pattern still exists in
+  (`storage-index-array-out-of-bounds-box.key`) still closes.
+- The same `\add`-outside-update bug was then fixed in the three remaining
+  array write/pop rules that emitted their bound (or emptiness check) via `\add`:
   `storageIndexWriteArraySave_decompose`, `storageIndexWriteArrayCopySource`, and
-  `storagePopSave`; they are not exercised after a mutation by the current suite.)
+  `storagePopSave`. Each now uses the implication-inside-`\replacewith` split of
+  `storageIndexWriteArraySave_root`, so the length is read from the post-update
+  storage. New diamond regression examples exercise each rule after a preceding
+  mutation — `storage-pop-after-push.key` (`values.push(); values.pop();`),
+  `storage-index-decompose-after-push.key` (`matrix[0].push(100); matrix[0][0] = 7;`),
+  and `storage-index-copysource-after-push.key`
+  (`uint[][] storage m = matrix; m.push(); m[0] = values;`, the only construction
+  that reaches `storageIndexWriteArrayCopySource`: a local-alias LHS dodges the
+  `storage.simple.global.array` competitors `storageIndexWriteArraySave_root` and
+  `storageIndexWriteNonSimpleRhsCapture`). All three close only with the fix and
+  fail under the reverted `\add` form. The pre-update box revert paths
+  (`storage-index-array-out-of-bounds-box.key`, `storage-pop-empty-box.key`) are
+  unchanged and still close.
 - `Services.getOverlay` was ignoring its `localNamespaces` argument; fixed to
   use the supplied namespace so second skolem constant gets a distinct name.
 - `TacletApp.createSkolemConstant` was constructing `SFunction` with
