@@ -42,6 +42,7 @@ public class PaperTestExamplesTest {
             example("testStorageAliases.key"),
             example("testStorageMapReadWriteAndDelete.key"),
             example("testStorageDeletePaperCase.key"),
+            example("testStorageStructDeleteSkipsMappingMember.key"),
             example("testMemoryAliasing.key"),
             example("testMemoryFieldShallowCopy.key"),
             example("testMemoryRootAlias.key"),
@@ -83,10 +84,5 @@ public class PaperTestExamplesTest {
     @Test
     @Disabled("testStorageArrayPushPop: Token(42) struct constructor syntax not supported by parser")
     void testStorageArrayPushPop_disabled() {
-    }
-
-    @Test
-    @Disabled("testStorageStructDeleteSkipsMappingMember: delete struct preserves mapping members — no such taclet")
-    void testStorageStructDeleteSkipsMappingMember_disabled() {
     }
 }

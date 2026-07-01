@@ -322,10 +322,27 @@ emitted update.
 
 ### Delete
 
+`delete` writes a *reset value* that is lazy for structs, so that **mapping
+members survive** — Solidity's `delete` does not clear mappings (they cannot be
+enumerated).
+
 - `storageDeleteSimpleTarget`
 
       delete sp
-      ⇝  { storage := save(storage, sp, default) }
+      ⇝  { storage := save(storage, sp, delValue(find(storage, sp))) }
+
+- `delValue(v)` is the reset value of the deleted lvalue: a primitive becomes its
+  `default`; a struct becomes a lazy marker `delNode(v)` wrapping the original
+  value `v`.
+- Reading a member `f` of `delNode(v)`:
+    - `f` is a **mapping** member → read the original (`v`), i.e. preserved;
+    - `f` is a **struct/array** member → recurse (nested mappings survive too);
+    - `f` is a **primitive** member → `default`.
+
+The field variant (`delete sp.a`) applies the same `delValue(find(...))` scheme at
+the fully-qualified path, so deleting a struct field also preserves its mappings.
+The index variant (`delete sp[i]`) resets that single entry/element eagerly to
+`default` — `{ storage := save(storage, sp · at(i), default) }`.
 
 ### Mapping index access  (when `mapping(sp)`)
 
@@ -564,7 +581,7 @@ extracts to `cons(alice, nil)`. All storage operations use `find`/`save`.
 | `v = sp`                       | `storageRootReadSelect`               | `find`           |
 | `lp = sp.b`                    | `storageFieldReadBindLocalRoot`       | direct assign    |
 | `gp = sp.b`                    | `storageFieldReadStoreRoot`           | `save`/`find`    |
-| `delete sp;`                   | `storageDeleteSimpleTarget`           | `save`           |
+| `delete sp;`                   | `storageDeleteSimpleTarget`           | `save`/`delValue`|
 | `sp[i] = se`  (mapping)        | `storageIndexWriteMappingSave`        | `save`           |
 | `sp1[i] = sp2`  (mapping)      | `storageIndexWriteMappingCopySource`  | `save`           |
 | `v = sp[i]`  (mapping)         | `storageIndexReadMappingFind`         | `find`           |

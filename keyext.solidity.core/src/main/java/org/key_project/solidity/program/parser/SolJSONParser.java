@@ -295,7 +295,7 @@ public class SolJSONParser {
         // `Services.memberFieldTerm` reconstructs this name at lowering time by walking the
         // member-access chain to identify the owning struct, so each (struct, field) pair has a
         // distinct `Field`-sorted constant.
-        registerFieldConstant(new Name(fieldPrefix + FIELD_SEPARATOR + fieldName));
+        registerFieldConstant(new Name(fieldPrefix + FIELD_SEPARATOR + fieldName), resolvedType);
 
         FieldDeclaration field = new FieldDeclaration(new Name(fieldName), typeReference);
         id2Name.put(fieldNode.get("id").asInt(), field);
@@ -558,7 +558,8 @@ public class SolJSONParser {
 
         Name fieldConstantName =
             registerFieldConstant(new Name(contractName + FIELD_SEPARATOR
-                    + fieldNameAsString));
+                    + fieldNameAsString),
+                type);
 
         StateVariableDeclaration field =
             new StateVariableDeclaration(new Name(fieldNameAsString), type,
@@ -569,26 +570,54 @@ public class SolJSONParser {
         return field;
     }
 
-    /// Registers a unique `Field`-sorted constant under the given namespaced name. Both contract
-    /// state variables (`Contract$field`) and struct members (`Contract$Struct$member`) use the
-    /// same scheme, so a single `selectSt`/`storeSt` theory (whose field argument is of sort
-    /// `Field`) covers both. No-op if the struct theory — and thus the `Field` sort — is not
-    /// loaded; the name is still returned so callers can record it. Idempotent: a constant that is
-    /// already registered is left untouched.
+    /// Registers a unique field constant under the given namespaced name. Both contract state
+    /// variables (`Contract$field`) and struct members (`Contract$Struct$member`) use the same
+    /// scheme, so a single `selectSt`/`storeSt` theory (whose field argument is of sort `Field`)
+    /// covers both. The constant is stamped with the `Field` sub-sort matching its Solidity type so
+    /// `delete` can classify the member (see [#fieldSortFor]). No-op if the struct theory — and
+    /// thus
+    /// the `Field` sort — is not loaded; the name is still returned so callers can record it.
+    /// Idempotent: a constant that is already registered is left untouched.
     ///
     /// @param fullFieldName the namespaced constant name (e.g. `Contract$balance`)
+    /// @param fieldType the member's Solidity type, used to pick the field sub-sort (may be null)
     /// @return the same name, for the caller to record on the declaration
-    private Name registerFieldConstant(Name fullFieldName) {
+    private Name registerFieldConstant(Name fullFieldName, Type fieldType) {
         // The struct theory is loaded by the time programs are parsed, so query the LDT for the
         // field sort instead of looking it up by a hard-coded name (getFieldSort() is null exactly
         // when the struct theory / Field sort is not loaded, keeping this a no-op in that case).
-        Sort fieldSort = services.getTheoryInfo().getStructLDT().getFieldSort();
+        Sort fieldSort = fieldSortFor(fieldType);
         if (fieldSort != null
                 && services.getNamespaces().functions().lookup(fullFieldName) == null) {
             services.getNamespaces().functions()
                     .addSafely(new SFunction(fullFieldName, fieldSort, true, true));
         }
         return fullFieldName;
+    }
+
+    /// Chooses the `Field` sub-sort for a member so `delete` can classify it: `MapField` for
+    /// mappings (their entries are preserved), `IdField` for struct/array references (`delete`
+    /// recurses into them), and plain `Field` for primitives (reset to default). Falls back to
+    /// `Field` (or null) when a sub-sort is unavailable, e.g. the struct theory is not loaded.
+    private Sort fieldSortFor(Type fieldType) {
+        var structLDT = services.getTheoryInfo().getStructLDT();
+        Sort base = structLDT.getFieldSort();
+        if (fieldType == null) {
+            return base;
+        }
+        Type unwrapped =
+            fieldType instanceof KeYSolidityType kst && kst.getSolidityType() != null
+                    ? kst.getSolidityType()
+                    : fieldType;
+        if (unwrapped instanceof MappingType) {
+            Sort mapSort = structLDT.getMapFieldSort();
+            return mapSort != null ? mapSort : base;
+        }
+        if (MemoryReferenceTypes.isReferenceType(unwrapped)) {
+            Sort idSort = structLDT.getIdFieldSort();
+            return idSort != null ? idSort : base;
+        }
+        return base;
     }
 
     Type parseReferenceTypeDeclaration(JsonNode expNode) {

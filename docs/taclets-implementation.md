@@ -87,11 +87,24 @@ storage↔memory copies via `copySt` / `copyMem`. Memory references are
 `Identity`-sorted, not copied `Struct` values; no `push`/`pop`/mapping.
 
 ### Delete
-`storageRootDelete`, `storageFieldDelete`, `storageIndexDelete` save the typed
-default `defaultValue<[alpha]>` (`int→0`, `bool→FALSE`, `Struct→mtSt`), binding
-`alpha` via `\hasSort` / `\hasFieldSort` / `\hasElementSort`. Complex receivers
-unfold first (`…_unfold_leftFst`). Storage and memory deletes stay separate by
-design.
+`storageRootDelete` and `storageFieldDelete` save
+`delValue<[alpha]>(find<[alpha]>(storage, path))`, binding `alpha` via `\hasSort` /
+`\hasFieldSort`. (`storageIndexDelete` keeps the eager `defaultValue<[alpha]>`:
+deleting a single collection entry/element resets it outright — the
+`storage-index-delete-mapping-struct` starter asserts the whole entry `= mtSt`.)
+`delValue` picks the reset value by sort: any
+non-struct sort collapses to `defaultValue<[alpha]>` (`int→0`, `bool→FALSE`), while
+a struct becomes a lazy `delNode` marker (structRules.key). This gives Solidity's
+`delete` semantics on structs: value/reference members reset, but **mapping members
+are preserved**. On read, `selectSt` on a `delNode` reads a mapping member
+(`MapField`) through to the original struct, recurses into a reference member
+(`IdField`, so nested structs' mappings also survive), and resets a primitive leaf.
+Mapping vs. reference members are told apart by `Field` sub-sorts (`MapField` /
+`IdField`) stamped on the field constants at parse time (`SolJSONParser`, keyed off
+the member's Solidity type). The struct case is disambiguated from the default case
+purely by the concrete-vs-generic sort of the `delValue` rewrite rules (no varcond),
+mirroring `selectIntOnStore` / `selectOnStore`. Complex receivers unfold first
+(`…_unfold_leftFst`). Storage and memory deletes stay separate by design.
 
 ### Paths and lowering
 Path SV sorts: `StoragePath`, `SimpleStoragePath`, `ComplexStoragePath`,
@@ -110,19 +123,19 @@ See `taclet-ideas.md` for the full backlog. Headline gaps:
 - Bitwise operators and bitwise compound assignments (need bitwise LDTs).
 - Whole-struct write from a struct **value** (`alice = pVal;`) and struct
   literals (`Token(42)`) — need step-1 unfolding for struct constructors.
-- `delete` on a struct preserving mapping members; dynamic-array `delete arr;`
-  length reset.
+- Dynamic-array `delete arr;` length reset (whole-array delete).
 - Control flow (`if`, loops, `return`), calls beyond `ExpandFunctionBody`,
   events, casts — see `taclet-ideas.md` Tiers 3–5.
 
 ## mainFeatures examples (PaperTest.sol)
 
-`keyext.solidity.examples/mainFeatures/` holds 29 end-to-end problems driven by
+`keyext.solidity.examples/mainFeatures/` holds 38 end-to-end problems driven by
 `PaperTestExamplesTest.java`; each inlines a function body in the modality over
 `\programSource "PaperTest.sol"`.
 
 **Passing (most close automatically):** storage write/read, nested + deep copy,
-aliases, mapping read/write/delete, mapping-element struct deep copy
+aliases, mapping read/write/delete, struct-`delete` preserving mapping members
+(`testStorageStructDeleteSkipsMappingMember`), mapping-element struct deep copy
 (`testStorageMapStructCopy`); the full push/pop family
 (`testStoragePush*`, `testStorageComplexReceiverPush*`, `testStorageArrayReadWrite`,
 `testStorageEvaluationOrder` — RHS-before-LHS index order); memory aliasing,
@@ -134,8 +147,6 @@ unconstrained symbolic storage.
 **Disabled — missing taclet support:**
 - `testStorageArrayPushPop` — `tokens.push(Token(42));`, struct-literal `Token(42)`
   not parsed (no push-struct-value taclet).
-- `testStorageStructDeleteSkipsMappingMember` — `delete` on a struct must preserve
-  mapping members; not modeled.
 
 ## Verification
 
