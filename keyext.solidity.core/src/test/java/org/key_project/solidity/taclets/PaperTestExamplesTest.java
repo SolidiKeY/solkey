@@ -72,7 +72,8 @@ public class PaperTestExamplesTest {
             example("testStorageNestedPushReturnAlias.key"),
             example("testStorageArrayReadWrite.key"),
             example("testStorageMapStructCopy.key"),
-            example("testStorageEvaluationOrder.key"));
+            example("testStorageEvaluationOrder.key"),
+            example("testDeepPopDoesNotResetMappingMember.key"));
     }
 
     private static Arguments example(String name) {

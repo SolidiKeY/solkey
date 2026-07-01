@@ -21,6 +21,10 @@ contract PaperTest {
         mapping(uint => uint) balances;
     }
 
+    struct LedgerUse {
+        Ledger ledger;
+    }
+
     struct TokenBucket {
         Token[] tokens;
     }
@@ -35,4 +39,5 @@ contract PaperTest {
     TokenBucket bucket;
     mapping(uint => uint) valuesMap;
     mapping(uint => Account) accountMap;
+    LedgerUse[] ledgerUses;
 }

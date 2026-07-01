@@ -77,6 +77,13 @@ rules needed. Terminals: `storagePushValueSave`, `storagePushValueCopySource`
 revert branch), `storagePushValue_unfold_rightSndArgument` (non-simple argument
 capture), `storage{Push,…}_unfold_leftFstReceiver`. Array bounds/length are read
 from **post-update** storage (bound emitted inside `\replacewith`, not via `\add`).
+`storagePopSave`'s nonempty branch clears the popped slot with the
+mapping-preserving `delValue<[alpha]>(find<[alpha]>(storage, sp · at(ℓ-1)))`
+marker (not eager `defaultValue`), reusing the `delNode` machinery of §Delete —
+so a mapping nested in the popped element survives `pop()` (and a later bare
+`push()`, which only bumps `length`), exactly like `storageRootDelete` /
+`storageFieldDelete`. See the `testDeepPopDoesNotResetMappingMember` mainFeatures
+example.
 
 ### Memory
 Source-level memory family covers heap field/index read & write, root aliasing,

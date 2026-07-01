@@ -442,11 +442,14 @@ Each array rule branches on bounds. Out-of-bounds goes to
       ⇝  { storage := save(storage, sp · length, n + 1)
            || lp := sp · at(n) }
 
-- `storagePopSave`
+- `storagePopSave` (clears the popped slot with the same mapping-preserving
+  `delValue`/`delNode` marker as `delete`, so a mapping nested in the popped
+  element survives a `pop()` — and, since a later bare `push()` only bumps
+  `length`, survives a subsequent re-`push()` too)
 
       sp.pop();
       ⇝  if ℓ > 0 : { storage := save( save(storage, sp · at(ℓ - 1),
-                                            default),
+                                            delValue(find(storage, sp · at(ℓ - 1)))),
                                        sp · length, ℓ - 1 ) }
          else    : revert();
 
