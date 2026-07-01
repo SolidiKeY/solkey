@@ -16,7 +16,6 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import org.key_project.solidity.control.KeYEnvironment;
-import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.io.OutputStreamProofSaver;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
@@ -29,6 +28,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.key_project.solidity.testutil.SolidityExampleTests.loadAndProve;
+import static org.key_project.solidity.testutil.SolidityExampleTests.treeSignature;
 
 public class RulesTest {
 
@@ -40,21 +41,10 @@ public class RulesTest {
     /// example here starts closing, remove it from this set.
     private static final Set<String> KNOWN_UNSUPPORTED = Set.of();
 
-    private static Proof prove(Path f, long timeout, int maxSteps) throws ProblemLoaderException {
-        var env = KeYEnvironment.load(f);
-        var loadedProof = env.getLoadedProof();
-        var stratSettings = loadedProof.getSettings().getStrategySettings();
-        stratSettings.setTimeout(timeout);
-        stratSettings.setMaxSteps(maxSteps);
-        env.getProofControl().startAndWaitForAutoMode(loadedProof);
-        return loadedProof;
-    }
-
-
     @ParameterizedTest(name = "{0}")
     @MethodSource("exampleFiles")
     public void exampleLoads(String exampleName, Path exampleFile) throws ProblemLoaderException {
-        Proof proof = prove(exampleFile, -1, 10000);
+        Proof proof = loadAndProve(exampleFile, 10000, -1);
 
         // For debugging to inspect the saved proof
         // if (!proof.closed()) {
@@ -91,7 +81,7 @@ public class RulesTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource("exampleFiles")
     public void exampleSavesAndReloads(String exampleName, Path exampleFile) throws Exception {
-        Proof original = prove(exampleFile, -1, 10000);
+        Proof original = loadAndProve(exampleFile, 10000, -1);
 
         // save as a sibling of the example so any relative \include / \programSource resolves
         File out = exampleFile.resolveSibling(exampleFile.getFileName() + ".roundtrip.proof")
@@ -109,25 +99,6 @@ public class RulesTest {
         } finally {
             out.delete();
         }
-    }
-
-    /// Canonical preorder rendering of a proof tree: each node's applied rule name (or `*` for an
-    /// open leaf) followed by its children in parentheses.
-    private static String treeSignature(Node node) {
-        StringBuilder sb = new StringBuilder();
-        var app = node.getAppliedRuleApp();
-        sb.append(app == null ? "*" : app.rule().name().toString());
-        if (node.childrenCount() > 0) {
-            sb.append('(');
-            for (int i = 0; i < node.childrenCount(); i++) {
-                if (i > 0) {
-                    sb.append(',');
-                }
-                sb.append(treeSignature(node.child(i)));
-            }
-            sb.append(')');
-        }
-        return sb.toString();
     }
 
     static Stream<Arguments> exampleFiles() throws Exception {

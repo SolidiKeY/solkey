@@ -3,28 +3,22 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.taclets;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-
 import org.key_project.solidity.control.KeYEnvironment;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Proof;
 
 import org.junit.jupiter.api.Test;
 
+import static org.key_project.solidity.testutil.SolidityExampleTests.example;
+import static org.key_project.solidity.testutil.SolidityExampleTests.load;
+
 /// Diagnostic test: runs testStorageWriteAndRead with a small step limit and prints open goals.
 /// Not meant to close — used to inspect proof state.
 public class ProofDiagnosticTest {
 
-    private static Path examplesDir() {
-        Path path = Path.of("keyext.solidity.examples/mainFeatures");
-        return Files.exists(path) ? path : Path.of("../keyext.solidity.examples/mainFeatures");
-    }
-
     @Test
     void diagnoseOpenGoals() throws Exception {
-        Path file = examplesDir().resolve("testStorageWriteAndRead.key");
-        KeYEnvironment env = KeYEnvironment.load(file);
+        KeYEnvironment env = load(example("mainFeatures/testStorageWriteAndRead.key"));
         Proof proof = env.getLoadedProof();
 
         var strategySettings = proof.getSettings().getStrategySettings();

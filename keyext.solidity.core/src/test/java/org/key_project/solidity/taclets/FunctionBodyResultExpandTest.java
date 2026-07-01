@@ -6,13 +6,8 @@ package org.key_project.solidity.taclets;
 import java.net.URL;
 import java.nio.file.Path;
 
-import org.key_project.logic.PosInTerm;
-import org.key_project.logic.Term;
-import org.key_project.prover.sequent.PosInOccurrence;
 import org.key_project.prover.sequent.SequentFormula;
 import org.key_project.solidity.control.KeYEnvironment;
-import org.key_project.solidity.logic.SolidityBlock;
-import org.key_project.solidity.logic.op.SModality;
 import org.key_project.solidity.program.ast.expressions.operators.AssignExpression;
 import org.key_project.solidity.program.ast.expressions.operators.Operator;
 import org.key_project.solidity.program.ast.statement.Block;
@@ -21,15 +16,15 @@ import org.key_project.solidity.program.ast.statement.FunctionBodyStatement;
 import org.key_project.solidity.program.ast.statement.Statement;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Proof;
-import org.key_project.solidity.rule.TacletApp;
-import org.key_project.util.collection.ImmutableList;
 
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.key_project.solidity.testutil.SolidityExampleTests.applyNamedTacletAtTop;
+import static org.key_project.solidity.testutil.SolidityExampleTests.load;
+import static org.key_project.solidity.testutil.SolidityExampleTests.modalityProgram;
 
 /// End-to-end test for the *result-value* connection of function-body expansion: a `.key`
 /// problem loads a stateful contract via `\programSource`, places `r = getBalance()@Bank;`
@@ -38,12 +33,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /// `r = <named-return>;` that connects the function's return value to the surrounding `r`.
 public class FunctionBodyResultExpandTest {
 
-    private static Block modalityProgram(Term formula) {
-        assertInstanceOf(SModality.class, formula.op(), "succedent formula must be a modality");
-        SolidityBlock sb = ((SModality) formula.op()).programBlock();
-        return (Block) sb.program();
-    }
-
     @Test
     void expandsBodyAndConnectsResultVariable() throws Exception {
         URL res = getClass().getClassLoader()
@@ -51,7 +40,7 @@ public class FunctionBodyResultExpandTest {
         assertNotNull(res, "test resource bankExpand.key must exist");
         Path file = Path.of(res.toURI());
 
-        KeYEnvironment env = KeYEnvironment.load(file);
+        KeYEnvironment env = load(file);
         Proof proof = env.getLoadedProof();
         Goal goal = proof.openGoals().head();
 
@@ -64,21 +53,7 @@ public class FunctionBodyResultExpandTest {
         assertNotNull(fbs.getResultVar(), "the call should carry a result variable");
 
         // find and apply the functionBodyExpand taclet at the modality formula
-        PosInOccurrence pos = new PosInOccurrence(sf, PosInTerm.getTopLevel(), false);
-        ImmutableList<TacletApp> apps = env.getProofControl().getFindTaclet(goal, pos);
-        TacletApp expandApp = null;
-        for (TacletApp app : apps) {
-            if (app.taclet().name().toString().equals("functionBodyExpand")) {
-                expandApp = app;
-                break;
-            }
-        }
-        assertNotNull(expandApp, "functionBodyExpand should be applicable at the modality");
-        expandApp = expandApp.setPosInOccurrence(pos, proof.getServices());
-        assertTrue(expandApp.complete(), "functionBodyExpand should be complete once positioned");
-
-        ImmutableList<Goal> result = goal.apply(expandApp);
-        assertNotNull(result);
+        applyNamedTacletAtTop(env, proof, goal, "functionBodyExpand");
 
         // after: the placeholder is gone and the last statement is the result assignment
         Goal newGoal = proof.openGoals().head();

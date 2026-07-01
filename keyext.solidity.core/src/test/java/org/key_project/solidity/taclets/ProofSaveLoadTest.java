@@ -8,7 +8,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.key_project.solidity.control.KeYEnvironment;
-import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.io.AbstractProblemLoader.ReplayResult;
 import org.key_project.solidity.proof.io.ProofSaver;
@@ -19,24 +18,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.key_project.solidity.testutil.SolidityExampleTests.example;
+import static org.key_project.solidity.testutil.SolidityExampleTests.loadAndProve;
+import static org.key_project.solidity.testutil.SolidityExampleTests.treeSignature;
 
 /// Round-trip: prove a closing example, save the proof, then reload it and check the saved proof
 /// replays back to a closed proof (exercises {@code KeYUserProblemFile.readProof} /
 /// {@link org.key_project.solidity.parser.ProofReplayer}).
 public class ProofSaveLoadTest {
 
-    private static Path example() {
-        Path p = Path.of("keyext.solidity.examples/fieldAccess/fieldAccess.key");
-        return Files.exists(p) ? p
-                : Path.of("../keyext.solidity.examples/fieldAccess/fieldAccess.key");
-    }
-
     @Test
     void saveThenReloadClosedProof() throws Exception {
         // 1) load + prove
-        KeYEnvironment env = KeYEnvironment.load(example());
-        Proof proof = env.getLoadedProof();
-        env.getProofControl().startAndWaitForAutoMode(proof);
+        Proof proof = loadAndProve(example("fieldAccess/fieldAccess.key"));
         assertTrue(proof.closed(), "precondition: example should close");
 
         // 2) save into an unrelated temp dir WITHOUT the .sol source next to it. The example uses
@@ -71,26 +65,5 @@ public class ProofSaveLoadTest {
             "reloaded proof should have the same number of nodes");
         assertEquals(treeSignature(proof.root()), treeSignature(reloaded.root()),
             "reloaded proof tree (shape + applied rules) should match the original");
-    }
-
-    /// A canonical, preorder rendering of a proof tree: each node contributes the name of its
-    /// applied rule (or `*` for an open/leaf node) followed by its children in parentheses. Two
-    /// trees with the same signature have the same shape and apply the same rules in the same
-    /// order at every node.
-    private static String treeSignature(Node node) {
-        StringBuilder sb = new StringBuilder();
-        var app = node.getAppliedRuleApp();
-        sb.append(app == null ? "*" : app.rule().name().toString());
-        if (node.childrenCount() > 0) {
-            sb.append('(');
-            for (int i = 0; i < node.childrenCount(); i++) {
-                if (i > 0) {
-                    sb.append(',');
-                }
-                sb.append(treeSignature(node.child(i)));
-            }
-            sb.append(')');
-        }
-        return sb.toString();
     }
 }

@@ -3,12 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.taclets;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
-import org.key_project.solidity.control.KeYEnvironment;
 import org.key_project.solidity.proof.Proof;
+import org.key_project.solidity.testutil.SolidityExampleTests;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -17,6 +16,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.key_project.solidity.testutil.SolidityExampleTests.loadAndProve;
 
 /// Loads the `keyext.solidity.examples/mainFeatures/` showcase problems — one per `test*` function
 /// in `PaperTest.sol`. Each problem calls the function in a diamond modality with postcondition
@@ -27,20 +27,10 @@ public class PaperTestExamplesTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource("examples")
     void paperTestExampleCloses(String name, Path file) throws Exception {
-        Proof proof = loadAndRun(file);
+        Proof proof = loadAndProve(file, 50000, 30000);
         assertTrue(proof.closed(),
             () -> name + " should close; open goals: " + proof.openGoals().size()
                 + "; first open goal: " + proof.openGoals().head().sequent());
-    }
-
-    private static Proof loadAndRun(Path file) throws Exception {
-        KeYEnvironment env = KeYEnvironment.load(file);
-        Proof proof = env.getLoadedProof();
-        var strategySettings = proof.getSettings().getStrategySettings();
-        strategySettings.setMaxSteps(50000);
-        strategySettings.setTimeout(30000);
-        env.getProofControl().startAndWaitForAutoMode(proof);
-        return proof;
     }
 
     static Stream<Arguments> examples() {
@@ -85,14 +75,7 @@ public class PaperTestExamplesTest {
     }
 
     private static Arguments example(String name) {
-        Path path = examplesDir().resolve(name);
-        assertTrue(Files.exists(path), "example must exist: " + path.toAbsolutePath());
-        return Arguments.of(name, path);
-    }
-
-    private static Path examplesDir() {
-        Path path = Path.of("keyext.solidity.examples/mainFeatures");
-        return Files.exists(path) ? path : Path.of("../keyext.solidity.examples/mainFeatures");
+        return Arguments.of(name, SolidityExampleTests.example("mainFeatures/" + name));
     }
 
     // --- Deferred: missing taclet support (see docs/taclets-implementation.md) ---

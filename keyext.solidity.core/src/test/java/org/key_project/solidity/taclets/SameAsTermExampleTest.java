@@ -3,23 +3,19 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.taclets;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.key_project.logic.PosInTerm;
 import org.key_project.logic.Term;
-import org.key_project.prover.sequent.PosInOccurrence;
-import org.key_project.prover.sequent.SequentFormula;
 import org.key_project.solidity.control.KeYEnvironment;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Proof;
-import org.key_project.solidity.rule.TacletApp;
-import org.key_project.util.collection.ImmutableList;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.key_project.solidity.testutil.SolidityExampleTests.applyNamedTacletAtTop;
+import static org.key_project.solidity.testutil.SolidityExampleTests.example;
+import static org.key_project.solidity.testutil.SolidityExampleTests.load;
 
 /// Loads the user-visible `keyext.solidity.examples/fieldAccess/sameAsTerm.key` showcase and checks
 /// that the
@@ -28,36 +24,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /// round-trip then closes.
 public class SameAsTermExampleTest {
 
-    private static Path example() {
-        Path p = Path.of("keyext.solidity.examples/fieldAccess/sameAsTerm.key");
-        return Files.exists(p) ? p
-                : Path.of("../keyext.solidity.examples/fieldAccess/sameAsTerm.key");
-    }
-
     @Test
     void sameAsTermBindsAndCloses() throws Exception {
-        Path file = example();
-        assertTrue(Files.exists(file), "example must exist: " + file.toAbsolutePath());
+        Path file = example("fieldAccess/sameAsTerm.key");
 
-        KeYEnvironment env = KeYEnvironment.load(file);
+        KeYEnvironment env = load(file);
         Proof proof = env.getLoadedProof();
         Goal goal = proof.openGoals().head();
 
-        SequentFormula sf = goal.sequent().succedent().get(0);
-        PosInOccurrence pos = new PosInOccurrence(sf, PosInTerm.getTopLevel(), false);
-        ImmutableList<TacletApp> apps = env.getProofControl().getFindTaclet(goal, pos);
-        TacletApp app = null;
-        for (TacletApp a : apps) {
-            if (a.taclet().name().toString().equals("fieldWriteThenReadViaTerm")) {
-                app = a;
-                break;
-            }
-        }
-        assertNotNull(app, "fieldWriteThenReadViaTerm should be applicable");
-        app = app.setPosInOccurrence(pos, proof.getServices());
-        assertTrue(app.complete(), "rule should be complete once positioned");
-
-        goal.apply(app);
+        applyNamedTacletAtTop(env, proof, goal, "fieldWriteThenReadViaTerm");
 
         Goal newGoal = proof.openGoals().head();
         Term after = newGoal.sequent().succedent().get(0).formula();
