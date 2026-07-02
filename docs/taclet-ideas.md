@@ -89,7 +89,7 @@ Clone the `+=` family (`storageRootAddAssign` / `…Field…` / `…Index…` +
   needs new LDTs.
 - **Address/payable builtins & globals** (`msg.sender`, `msg.value`,
   `block.*`, `.balance`, `.transfer`): require an environment/ledger model
-  beyond the storage/memory heaps.
+  beyond the storage/memory heaps. Ordered implementation plan: `docs/net.md`.
 
 ## Refinements to implemented rules
 

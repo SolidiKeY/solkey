@@ -91,6 +91,7 @@ Read the relevant doc before working on taclets — each is a compact, agent-fac
 | `taclet-ideas.md` | Picking the next unimplemented construct — the backlog, ordered simple → complex. |
 | `storage.md` | Working on storage rules — calculus spec (schema vars, three-step strategy, statement→rule table, worked traces). |
 | `memory.md` | Working on memory rules — calculus spec (identity heap, aliasing, delete, cross-domain `copySt`/`copyMem`). |
+| `net.md` | Implementing the payment/ledger model (`net`, `msg.sender`/`msg.value`, `transfer`, contract invariants, proof obligations) — ordered plan from the ISoLA 2020 paper. |
 | `require-assert.md` | Touching `require` / `assert` rules (box vs. diamond false-branch behavior). |
 | `solidity-json-documentation.md` | Parsing `solc --ast-compact-json` (consumed by `SolJSONParser`). |
 
