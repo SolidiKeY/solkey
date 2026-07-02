@@ -146,7 +146,12 @@ public class TacletStarterExamplesTest {
             example("logical-and-simple.key"),
             example("logical-or-simple.key"),
             example("logical-not-simple.key"),
-            example("unary-minus-simple.key"));
+            example("unary-minus-simple.key"),
+            example("net-manual-update.key"),
+            example("net-msg-value.key"),
+            example("net-transfer-simple.key"),
+            example("net-transfer-capture-argument.key"),
+            example("net-transfer-capture-receiver.key"));
     }
 
     private static Arguments example(String name) {

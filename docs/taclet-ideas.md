@@ -90,6 +90,10 @@ Clone the `+=` family (`storageRootAddAssign` / `…Field…` / `…Index…` +
 - **Address/payable builtins & globals** (`msg.sender`, `msg.value`,
   `block.*`, `.balance`, `.transfer`): require an environment/ledger model
   beyond the storage/memory heaps. Ordered implementation plan: `docs/net.md`.
+  ✅ First slice done — `net` ledger, `msg.sender`/`msg.value`, and
+  `transfer` with no-callback semantics (see `docs/taclets-implementation.md`
+  "Payments"). Still open: with-callback `transfer`, `send`, `call{value:}`,
+  `block.*`, `.balance`.
 
 ## Refinements to implemented rules
 

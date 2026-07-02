@@ -15,6 +15,7 @@ contract PaperStore {
 
     uint total;
     uint age;
+    address owner;
     uint balance;
     uint[] values;
     mapping(uint => uint) balances;

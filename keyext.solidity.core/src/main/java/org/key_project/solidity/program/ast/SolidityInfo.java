@@ -102,15 +102,32 @@ public class SolidityInfo {
         for (var entry : pseudoSorts.entrySet()) {
             Type pseudoType = entry.getKey();
             Sort sort = entry.getValue().get();
-            // An LDT .key file may already have created a sort-only instance
-            // for this pseudo type; complete and reuse it so every holder of
-            // the instance sees the finished type.
-            KeYSolidityType kst = pending.stream()
-                    .filter(t -> t.name().equals(pseudoType.name())).findFirst()
-                    .orElseGet(() -> new KeYSolidityType(sort));
-            kst.setSolidityType(pseudoType);
-            put(kst);
-            pending.remove(kst);
+            // LDT .key files may already have created sort-only instances for
+            // this pseudo type (one per \programVariables declaration, e.g.
+            // `Struct storage;` and `Struct net;`); complete and reuse each so
+            // every holder of an instance sees the finished type.
+            List<KeYSolidityType> matches = pending.stream()
+                    .filter(t -> t.name().equals(pseudoType.name())).toList();
+            if (matches.isEmpty()) {
+                put(new KeYSolidityType(pseudoType, sort));
+            }
+            for (KeYSolidityType kst : matches) {
+                kst.setSolidityType(pseudoType);
+                put(kst);
+                pending.remove(kst);
+            }
+        }
+
+        // Remaining sort-only instances stem from LDT program variables of an
+        // already-registered type (e.g. `int msgSender;` in netHeader.key):
+        // complete them against that registration.
+        for (var it = pending.iterator(); it.hasNext();) {
+            KeYSolidityType kst = it.next();
+            KeYSolidityType registered = typeByName.get(kst.name().toString());
+            if (registered != null && registered.getSolidityType() != null) {
+                kst.setSolidityType(registered.getSolidityType());
+                it.remove();
+            }
         }
 
         if (!pending.isEmpty()) {
@@ -168,8 +185,15 @@ public class SolidityInfo {
         FunctionDeclaration pop = new FunctionDeclaration(new Name("pop"), List.of(),
             PrimitiveType.VOID, List.of(), null, "function", Visibility.internal,
             StateMutability.nonpayable, List.of(), "");
+        FunctionDeclaration transfer = new FunctionDeclaration(new Name("transfer"), List.of(),
+            PrimitiveType.VOID, List.of(), null, "function", Visibility.external,
+            StateMutability.payable, List.of(), "");
+        FunctionDeclaration send = new FunctionDeclaration(new Name("send"), List.of(),
+            PrimitiveType.BOOL, List.of(), null, "function", Visibility.external,
+            StateMutability.payable, List.of(), "");
         return Map.of(revert.name(), revert, assertFn.name(), assertFn, requireFn.name(),
-            requireFn, push.name(), push, pop.name(), pop);
+            requireFn, push.name(), push, pop.name(), pop, transfer.name(), transfer,
+            send.name(), send);
     }
 
     public static @Nullable FunctionDeclaration getBuiltinFunctionDeclaration(Name functionName) {

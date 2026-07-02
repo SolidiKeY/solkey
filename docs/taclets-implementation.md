@@ -113,6 +113,21 @@ purely by the concrete-vs-generic sort of the `delValue` rewrite rules (no varco
 mirroring `selectIntOnStore` / `selectOnStore`. Complex receivers unfold first
 (`…_unfold_leftFst`). Storage and memory deletes stay separate by design.
 
+### Payments (`net` ledger, `msg`, `transfer`)
+First slice of `docs/net.md` (Steps 1–3). `netHeader.key` declares the
+program variables `Struct net` (per-address ledger: read
+`selectSt<[int]>(net, at(a))`, empty ledger `mtSt` ⇒ `net(a) = 0`),
+`msgSender`, `msgValue`, and `self`. `msg.sender` / `msg.value` desugar to
+`msgSender` / `msgValue` in `SolidityToKeyConverter.visitMemberAccess`
+(shadowable by a local named `msg`). `transfer` and `send` are registered
+builtins classified like `push`/`pop` (`MemberExp` + `FunctionCallExpression`,
+no dedicated AST node). Rules (no-callback semantics only): `transferNoCallback`
+(`a.transfer(v);` ⇝ `{net := storeSt(net, at(a), selectSt<[int]>(net, at(a)) − v)}`),
+plus `transfer_unfold_leftFstReceiver` / `transfer_unfold_rightSndArgument`
+captures. Not yet done: the with-callback rule (contract-invariant varcond +
+havoc, `docs/net.md` Step 4), `send`/`call{value:}` rules, and proof-obligation
+plumbing (`docs/net.md` Step 5). Five `net-*` starter examples close.
+
 ### Paths and lowering
 Path SV sorts: `StoragePath`, `SimpleStoragePath`, `ComplexStoragePath`,
 `MemoryPath`, `SimpleMemoryPath`, `ComplexMemoryPath`, plus precise

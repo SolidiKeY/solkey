@@ -304,6 +304,28 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitMemberAccess(MemberAccessContext ctx) {
+        // msg.sender / msg.value desugar to the built-in program variables
+        // msgSender / msgValue (netHeader.key), unless a local named `msg`
+        // shadows the global.
+        if (ctx.identifier() != null && "msg".equals(ctx.expression().getText())
+                && localVars.lookup("msg") == null) {
+            String member = ctx.identifier().getText();
+            String pvName = switch (member) {
+                case "sender" -> "msgSender";
+                case "value" -> "msgValue";
+                default -> null;
+            };
+            if (pvName == null) {
+                reportError("Unsupported msg member '" + member
+                    + "' (only msg.sender and msg.value are modeled)", ctx.start);
+            }
+            ProgramVariable pv = localVars.lookup(pvName);
+            if (pv == null) {
+                reportError("msg." + member + " requires the built-in program variable "
+                    + pvName + " (declared in netHeader.key)", ctx.start);
+            }
+            return pv;
+        }
         Expression leftExp = visitExpression(ctx.expression());
         Type leftType = leftExp.getType();
         if (ctx.schemaVariable() != null) {
@@ -317,7 +339,8 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         String fieldName = ctx.identifier().getText();
         FunctionDeclaration builtinFunction =
             SolidityInfo.getBuiltinFunctionDeclaration(new Name(fieldName));
-        if (builtinFunction != null && ("push".equals(fieldName) || "pop".equals(fieldName))) {
+        if (builtinFunction != null && ("push".equals(fieldName) || "pop".equals(fieldName)
+                || "transfer".equals(fieldName) || "send".equals(fieldName))) {
             return new MemberExp(leftExp, builtinFunction, builtinFunction.getType());
         }
         if ("length".equals(fieldName)
