@@ -161,7 +161,7 @@ modifiers
    
 one_schema_var_decl
    : MODALOPERATOR one_schema_modal_op_decl
-   | PROGRAM (schema_modifiers)? id = simple_ident (LBRACKET nameString = simple_ident EQUALS parameter = simple_ident_dots RBRACKET)? ids = simple_ident_comma_list
+   | PROGRAM (schema_modifiers)? id = simple_ident (LBRACKET params = simple_ident_comma_list RBRACKET)? ids = simple_ident_comma_list
    | FORMULA (schema_modifiers)? ids = simple_ident_comma_list
    | TERMLABEL (schema_modifiers)? ids = simple_ident_comma_list
    | UPDATE (schema_modifiers)? ids = simple_ident_comma_list

@@ -99,7 +99,7 @@ final class PathSVSort extends ProgramSVSort {
         }
         var filters = new PathFilters();
         Map<Axis, String> seen = new EnumMap<>(Axis.class);
-        for (String rawFlag : parameter.split("\\.")) {
+        for (String rawFlag : parameter.split(",")) {
             String flag = rawFlag.toLowerCase(Locale.ROOT);
             switch (flag) {
                 case "storage" -> filters.set(Axis.LOCATION, flag, seen,
@@ -124,9 +124,9 @@ final class PathSVSort extends ProgramSVSort {
         }
         if (filters.location == Location.MEMORY && filters.origin == Origin.GLOBAL) {
             throw new IllegalArgumentException(
-                "Memory paths are always local; use 'memory' or 'memory.local'");
+                "Memory paths are always local; use 'memory' or 'memory,local'");
         }
-        ProgramSVSort result = new PathSVSort("Path[name=" + parameter + "]", filters.location,
+        ProgramSVSort result = new PathSVSort("Path[" + parameter + "]", filters.location,
             filters.simplicity, filters.origin, filters.kind);
         PARAMETERIZED_SORTS.put(parameter, result);
         return result;

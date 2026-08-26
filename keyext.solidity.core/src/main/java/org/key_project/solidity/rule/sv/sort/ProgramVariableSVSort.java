@@ -18,7 +18,7 @@ public class ProgramVariableSVSort extends ProgramSVSort {
 
     /// Restricts which program variables this SV may match. `ANY` admits every program variable
     /// (legacy behavior); location-specific filters admit only the corresponding Solidity local
-    /// kind. `NON_STORAGE_LOCAL` is used by `Variable[name=value]` and admits only ordinary
+    /// kind. `NON_STORAGE_LOCAL` is used by `Variable[value]` and admits only ordinary
     /// stack/value locals, excluding both storage aliases and memory reference aliases.
     public enum Filter {
         ANY, STORAGE_LOCAL, MEMORY_LOCAL, NON_STORAGE_LOCAL
@@ -83,15 +83,15 @@ public class ProgramVariableSVSort extends ProgramSVSort {
             return cached;
         }
         Filter f = switch (parameter.toLowerCase(Locale.ROOT)) {
-            case "storage", "storage.local" -> Filter.STORAGE_LOCAL;
-            case "memory", "memory.local" -> Filter.MEMORY_LOCAL;
+            case "storage", "storage,local" -> Filter.STORAGE_LOCAL;
+            case "memory", "memory,local" -> Filter.MEMORY_LOCAL;
             case "non-storage", "value" -> Filter.NON_STORAGE_LOCAL;
             default -> throw new IllegalArgumentException(
                 "Unknown Variable sort flag '" + parameter
                     + "' (expected 'storage', 'memory', or 'value')");
         };
         ProgramSVSort result =
-            new ProgramVariableSVSort(new Name("Variable[name=" + parameter + "]"),
+            new ProgramVariableSVSort(new Name("Variable[" + parameter + "]"),
                 f);
         PARAMETERIZED_SORTS.put(parameter, result);
         return result;

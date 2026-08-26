@@ -929,16 +929,13 @@ public class TacletPBuilder extends ExpressionBuilder {
         SchemaVariableModifierSet mods = null;
         accept(ctx.one_schema_modal_op_decl());
         Sort s = null;
-        List<String> ids = accept(ctx.simple_ident_comma_list());
+        List<String> ids = accept(ctx.ids);
         if (ctx.PROGRAM() != null) {
             mods = new SchemaVariableModifierSet.ProgramSV();
             accept(ctx.schema_modifiers(), mods);
             String id = accept(ctx.id);
-            String nameString = accept(ctx.nameString);
-            String parameter = accept(ctx.simple_ident_dots());
-            if (nameString != null && !"name".equals(nameString)) {
-                semanticError(ctx, "Unrecognized token '%s', expected 'name'", nameString);
-            }
+            List<String> paramList = accept(ctx.params);
+            String parameter = paramList != null ? String.join(",", paramList) : null;
             ProgramSVSort psv = ProgramSVSort.name2sort().get(new Name(id));
             if (psv == null) {
                 semanticError(ctx,

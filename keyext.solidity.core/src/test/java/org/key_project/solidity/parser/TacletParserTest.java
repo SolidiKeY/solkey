@@ -113,8 +113,8 @@ public class TacletParserTest {
                   \\program MemoryPath memoryPath;
                   \\program SimpleMemoryPath simpleMemoryPath;
                   \\program ComplexMemoryPath complexMemoryPath;
-                  \\program Path[name=storage.simple.array] arrayPath;
-                  \\program Path[name=storage.simple.mapping] mappingPath;
+                  \\program Path[storage,simple,array] arrayPath;
+                  \\program Path[storage,simple,mapping] mappingPath;
                   \\program Path path;
                 }
                 """);
@@ -134,12 +134,12 @@ public class TacletParserTest {
     public void testInvalidParameterizedPathAwareProgramSVSortDeclarationFails() {
         assertThrows(Exception.class, () -> parseDecls("""
                 \\schemaVariables {
-                  \\program Path[name=storage.memory] invalidPath;
+                  \\program Path[storage,memory] invalidPath;
                 }
                 """));
         assertThrows(Exception.class, () -> parseDecls("""
                 \\schemaVariables {
-                  \\program Path[name=array.mapping] invalidPath;
+                  \\program Path[array,mapping] invalidPath;
                 }
                 """));
     }
@@ -153,7 +153,7 @@ public class TacletParserTest {
                   List;
                 }
                 \\schemaVariables {
-                  \\program Path[name=storage.simple] sp;
+                  \\program Path[storage,simple] sp;
                 }
                 """);
 
@@ -199,7 +199,7 @@ public class TacletParserTest {
                   List;
                 }
                 \\schemaVariables {
-                  \\program Path[name=memory.simple] mp;
+                  \\program Path[memory,simple] mp;
                 }
                 """);
 

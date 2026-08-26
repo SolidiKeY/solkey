@@ -23,7 +23,7 @@ Most program rules follow this shape:
 ```key
 ruleName {
     \schemaVar \formula post;
-    \schemaVar \program Path[name=storage.simple.global] rootLhs;
+    \schemaVar \program Path[storage,simple,global] rootLhs;
     \schemaVar \program SimpleExpression se;
     \schemaVar \term List lhsPath;
 
@@ -49,11 +49,11 @@ Important syntax:
 
 Prefer precise program sorts so rules stay disjoint:
 
-- `Variable[name=value]` for stack/value variables.
-- `Variable[name=storage]` for local storage aliases.
-- `Path[name=storage.simple.global]` for contract storage roots.
-- `Path[name=storage.simple]` for simple storage roots or aliases.
-- `Path[name=storage.complex]` for member/index paths that need unfolding.
+- `Variable[value]` for stack/value variables.
+- `Variable[storage]` for local storage aliases.
+- `Path[storage,simple,global]` for contract storage roots.
+- `Path[storage,simple]` for simple storage roots or aliases.
+- `Path[storage,complex]` for member/index paths that need unfolding.
 - `StoragePath`, `SimpleStoragePath`, `MemoryPath`, and related path sorts when
   the exact path kind is the point of the rule.
 - `SimpleExpression`, `NonSimpleExpression`, `Expression`, `Field`, and `Type`

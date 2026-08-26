@@ -151,13 +151,13 @@ public class PathSVSortTest {
     @Test
     void parameterizedPathSortRejectsUnknownAndConflictingFlags() {
         assertThrows(IllegalArgumentException.class,
-            () -> ProgramSVSort.PATH.createInstance("storage.memory"));
+            () -> ProgramSVSort.PATH.createInstance("storage,memory"));
         assertThrows(IllegalArgumentException.class,
-            () -> ProgramSVSort.PATH.createInstance("memory.global"));
+            () -> ProgramSVSort.PATH.createInstance("memory,global"));
         assertThrows(IllegalArgumentException.class,
-            () -> ProgramSVSort.PATH.createInstance("storage.outer"));
+            () -> ProgramSVSort.PATH.createInstance("storage,outer"));
         assertThrows(IllegalArgumentException.class,
-            () -> ProgramSVSort.PATH.createInstance("array.mapping"));
+            () -> ProgramSVSort.PATH.createInstance("array,mapping"));
     }
 
     @Test
@@ -167,9 +167,9 @@ public class PathSVSortTest {
         FieldReference balances = storageField("balances",
             new MappingType(PrimitiveType.UINT, PrimitiveType.UINT));
 
-        assertTrue(ProgramSVSort.PATH.createInstance("storage.array")
+        assertTrue(ProgramSVSort.PATH.createInstance("storage,array")
                 .canStandFor(values, services));
-        assertFalse(ProgramSVSort.PATH.createInstance("storage.array")
+        assertFalse(ProgramSVSort.PATH.createInstance("storage,array")
                 .canStandFor(balances, services));
     }
 
@@ -180,9 +180,9 @@ public class PathSVSortTest {
         FieldReference balances = storageField("balances",
             new MappingType(PrimitiveType.UINT, PrimitiveType.UINT));
 
-        assertFalse(ProgramSVSort.PATH.createInstance("storage.mapping")
+        assertFalse(ProgramSVSort.PATH.createInstance("storage,mapping")
                 .canStandFor(values, services));
-        assertTrue(ProgramSVSort.PATH.createInstance("storage.mapping")
+        assertTrue(ProgramSVSort.PATH.createInstance("storage,mapping")
                 .canStandFor(balances, services));
     }
 
@@ -191,9 +191,9 @@ public class PathSVSortTest {
         ProgramVariable localArray = variable("localArray",
             new DynamicArrayType(PrimitiveType.UINT), DataLocation.Storage);
 
-        assertTrue(ProgramSVSort.PATH.createInstance("storage.array")
+        assertTrue(ProgramSVSort.PATH.createInstance("storage,array")
                 .canStandFor(localArray, services));
-        assertFalse(ProgramSVSort.PATH.createInstance("storage.mapping")
+        assertFalse(ProgramSVSort.PATH.createInstance("storage,mapping")
                 .canStandFor(localArray, services));
     }
 
@@ -203,9 +203,9 @@ public class PathSVSortTest {
             new DynamicArrayType(new DynamicArrayType(PrimitiveType.UINT)));
         IndexExpression matrixRow = new IndexExpression(matrix, new Uint256Literal(BigInteger.TWO));
 
-        assertTrue(ProgramSVSort.PATH.createInstance("storage.array")
+        assertTrue(ProgramSVSort.PATH.createInstance("storage,array")
                 .canStandFor(matrixRow, services));
-        assertFalse(ProgramSVSort.PATH.createInstance("storage.mapping")
+        assertFalse(ProgramSVSort.PATH.createInstance("storage,mapping")
                 .canStandFor(matrixRow, services));
     }
 }

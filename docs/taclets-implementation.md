@@ -11,7 +11,7 @@ What is runnable today vs. pending. Rules live in
 - Open backlog (next constructs to implement) → `taclet-ideas.md`
 
 The split follows the `solidity-key-taclets` skill: root rules use
-`SimpleStoragePath`; field/index paths use `Path[name=...]` + `\sameAsTerm`;
+`SimpleStoragePath`; field/index paths use `Path[...]` + `\sameAsTerm`;
 complex member/index receivers stay as structural `.key` source patterns and are
 captured into fresh storage aliases by `_unfold_leftFst` / `_unfold_rightFst`
 rules before a terminal rule fires.
@@ -64,7 +64,7 @@ operands are captured by `_unfold_left/right/result` (arith) or `…CaptureLhs/R
 `storageLocalRootRebind` (standalone `lp = sp;`). The alias binds to the **path**,
 not the value: `{lp := cons1(rhsField)}` or `{lp := pathFields}`. Two enablers:
 `SolidityToKeyConverter#asStorageAliasType` re-sorts any storage-held reference
-collection (`Struct`, array, mapping) to `List`; `\program Variable[name=storage|value]`
+collection (`Struct`, array, mapping) to `List`; `\program Variable[storage|value]`
 filters by `DataLocation` to keep value-reads and path-rebinds disjoint.
 
 ### Push / pop
@@ -131,7 +131,7 @@ plumbing (`docs/net.md` Step 5). Five `net-*` starter examples close.
 ### Paths and lowering
 Path SV sorts: `StoragePath`, `SimpleStoragePath`, `ComplexStoragePath`,
 `MemoryPath`, `SimpleMemoryPath`, `ComplexMemoryPath`, plus precise
-`Path[name=...]` with dotted flags (`storage`/`memory`, `simple`/`complex`,
+`Path[...]` with comma-separated flags (`storage`/`memory`, `simple`/`complex`,
 `root`/`field`/`index`, `array`/`mapping`, `primitive`/`reference`,
 `local`/`global`). Roots are simple; member/indexed paths and no-arg `arr.push()`
 are complex. `\sameAsTerm` lowers full program paths to logic `List` terms;

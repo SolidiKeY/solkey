@@ -48,7 +48,7 @@ class ProgramVariableSVSortTest {
     @Test
     void memoryLocalAliasUsesMemoryFilter() {
         ProgramVariableSVSort sort =
-            (ProgramVariableSVSort) ProgramSVSort.VARIABLE.createInstance("memory.local");
+            (ProgramVariableSVSort) ProgramSVSort.VARIABLE.createInstance("memory,local");
 
         assertEquals(ProgramVariableSVSort.Filter.MEMORY_LOCAL, sort.getFilter());
     }

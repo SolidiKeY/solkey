@@ -17,7 +17,7 @@ import org.key_project.solidity.program.ast.expressions.literals.Literal;
 public class SimpleExpressionSVSort extends ProgramSVSort {
 
     /// Mirrors [ProgramVariableSVSort.Filter]: `ANY` admits every simple expression,
-    /// `NON_STORAGE_LOCAL` (`SimpleExpression[name=value]`) excludes storage-qualified locals and
+    /// `NON_STORAGE_LOCAL` (`SimpleExpression[value]`) excludes storage-qualified locals and
     /// memory reference aliases. Those are path/identity references, not ordinary stack values.
     public enum Filter {
         ANY, STORAGE_LOCAL, NON_STORAGE_LOCAL
@@ -62,14 +62,14 @@ public class SimpleExpressionSVSort extends ProgramSVSort {
             return cached;
         }
         Filter f = switch (parameter.toLowerCase(Locale.ROOT)) {
-            case "storage", "storage.local" -> Filter.STORAGE_LOCAL;
+            case "storage", "storage,local" -> Filter.STORAGE_LOCAL;
             case "non-storage", "value" -> Filter.NON_STORAGE_LOCAL;
             default -> throw new IllegalArgumentException(
                 "Unknown SimpleExpression sort flag '" + parameter
                     + "' (expected 'storage' or 'value')");
         };
         ProgramSVSort result = new SimpleExpressionSVSort(
-            new Name("SimpleExpression[name=" + parameter + "]"), f);
+            new Name("SimpleExpression[" + parameter + "]"), f);
         PARAMETERIZED_SORTS.put(parameter, result);
         return result;
     }
