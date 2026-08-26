@@ -11,7 +11,8 @@ What is runnable today vs. pending. Rules live in
 - Open backlog (next constructs to implement) → `taclet-ideas.md`
 
 The split follows the `solidity-key-taclets` skill: root rules use
-`SimpleStoragePath`; field/index paths use `Path[...]` + `\sameAsTerm`;
+`SimpleStoragePath`; field/index paths use `Path[...]` schema variables placed
+directly in the resulting terms (the engine lowers the matched AST to logic);
 complex member/index receivers stay as structural `.key` source patterns and are
 captured into fresh storage aliases by `_unfold_leftFst` / `_unfold_rightFst`
 rules before a terminal rule fires.
@@ -134,10 +135,10 @@ Path SV sorts: `StoragePath`, `SimpleStoragePath`, `ComplexStoragePath`,
 `Path[...]` with comma-separated flags (`storage`/`memory`, `simple`/`complex`,
 `root`/`field`/`index`, `array`/`mapping`, `primitive`/`reference`,
 `local`/`global`). Roots are simple; member/indexed paths and no-arg `arr.push()`
-are complex. `\sameAsTerm` lowers full program paths to logic `List` terms;
-indexed segments lower to `at(index)` (sort `Field`); `arr.length` lowers to the
-`size` field. A `push()` path is only ever captured via `\newTypeOf`, never
-lowered with `\sameAsTerm`.
+are complex. Path schema variables used directly in `\replacewith`/`\add` term
+positions lower to logic `List` terms automatically; indexed segments lower to
+`at(index)` (sort `Field`); `arr.length` lowers to the `size` field. A `push()`
+path is only ever captured via `\newTypeOf`, never lowered directly.
 
 ## Not yet implemented
 

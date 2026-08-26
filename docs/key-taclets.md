@@ -25,11 +25,9 @@ ruleName {
     \schemaVar \formula post;
     \schemaVar \program Path[storage,simple,global] rootLhs;
     \schemaVar \program SimpleExpression se;
-    \schemaVar \term List lhsPath;
 
     \find(\modality{#mod}{c# s#rootLhs = s#se; #c}\endmodality(post))
-    \varcond(\sameAsTerm(rootLhs, lhsPath))
-    \replacewith({storage := save(storage, lhsPath, se)}
+    \replacewith({storage := save(storage, rootLhs, se)}
         \modality{#mod}{c# #c}\endmodality(post))
     \heuristics(simplify_prog)
 };
@@ -59,14 +57,15 @@ Prefer precise program sorts so rules stay disjoint:
 - `SimpleExpression`, `NonSimpleExpression`, `Expression`, `Field`, and `Type`
   for statement pieces.
 
-Use term variables for the lowered logic objects that appear in updates:
-`List` for paths, `Field` for fields, `int` for integer indices or values.
+Matched program schema variables can be used directly in the term positions of
+`\replacewith`/`\add`: the engine lowers the matched AST piece to its logic
+form automatically (storage paths become `List` terms, fields become `Field`
+constants, simple expressions become value terms). Write `save(storage,
+rootLhs, se)` directly — no bridging `\term` variable is needed. (Only in
+`\find`/`\assumes` term positions are program schema variables not allowed;
+there the `\sameAsTerm(programPart, termPart)` varcond still bridges them.)
 
 ## Varconds
-
-Use `\sameAsTerm(programPart, termPart)` when a matched Solidity path, field,
-or expression must be lowered into the logic term used by `save`, `find`,
-`consr`, or `at`.
 
 Use `\newTypeOf(freshVar, source)` and `\newTypeOf(aliasType, source)` when a
 rule synthesizes a fresh program variable or declaration with the same Solidity
