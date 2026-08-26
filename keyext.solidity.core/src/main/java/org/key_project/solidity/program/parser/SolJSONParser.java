@@ -31,7 +31,9 @@ import org.key_project.solidity.program.ast.expressions.literals.*;
 import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.references.*;
 import org.key_project.solidity.program.ast.statement.*;
+import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableArray;
+import org.key_project.util.collection.ImmutableSet;
 
 import org.jspecify.annotations.*;
 import tools.jackson.databind.JsonNode;
@@ -197,13 +199,22 @@ public class SolJSONParser {
     private KeYSolidityType pendingContractKST(String contractName, int contractId) {
         Sort s = services.getNamespaces().sorts().lookup(contractName);
         if (s == null) {
-            s = new SortImpl(new Name(contractName), false); // HACK, inheritance
+            s = new SortImpl(new Name(contractName), false, valueSupersort("Prim")); // HACK,
+                                                                                     // inheritance
             services.getNamespaces().sorts().addSafely(s);
         }
         KeYSolidityType contractKST = new KeYSolidityType(s);
         contractKSTs.put(new Name(contractName), contractKST);
         contractKSTById.put(contractId, contractKST);
         return contractKST;
+    }
+
+    private ImmutableSet<Sort> valueSupersort(String sortName) {
+        Sort s = services.getNamespaces().sorts().lookup(sortName);
+        if (s == null) {
+            return DefaultImmutableSet.nil();
+        }
+        return DefaultImmutableSet.<Sort>nil().add(s);
     }
 
     private void completeReferences(SyntaxElement cDecl) {
@@ -917,7 +928,8 @@ public class SolJSONParser {
 
         Sort sort =
             new DynamicArraySort(
-                getElementSort(dynamicArrayType, dynamicArrayType.getElementType()));
+                getElementSort(dynamicArrayType, dynamicArrayType.getElementType()),
+                valueSupersort("StValue"));
         sort = getOrAddSort(sort);
         kst = new KeYSolidityType(dynamicArrayType, sort);
         dynamicArrayKSTs.put(arrayName, kst);
@@ -931,7 +943,7 @@ public class SolJSONParser {
             return kst;
 
         Sort sort = new ArraySort(getElementSort(arrayType, arrayType.getElementType()),
-            arrayType.length());
+            arrayType.length(), valueSupersort("StValue"));
         sort = getOrAddSort(sort);
         kst = new KeYSolidityType(arrayType, sort);
         arrayKSTs.put(arrayName, kst);
@@ -953,7 +965,8 @@ public class SolJSONParser {
                 + "unsupported component type");
         }
         Sort sort =
-            new MappingSort(componentTypes.get(0).getSort(), componentTypes.get(1).getSort());
+            new MappingSort(componentTypes.get(0).getSort(), componentTypes.get(1).getSort(),
+                valueSupersort("StValue"));
         sort = getOrAddSort(sort);
         kst = new KeYSolidityType(mappingType, sort);
         mappingKSTs.put(mappingName, kst);

@@ -33,7 +33,11 @@ The Maude model uses these operations:
 - `add(mem, id)` - allocate a fresh root identity.
 - `read(mem, id, field)` - read one field from one identity.
 - `readR(mem, id, fields)` - recursively read through a field path.
-- `write(mem, id, field, value)` - write one field of one identity.
+- `write(mem, id, field, value)` - write one field of one identity. `value` has
+  sort `MemValue`, the supersort of everything storable in memory: `Identity`
+  (references) and `Prim` (`int`, `bool`, contract sorts). `Struct` and `List`
+  are not storable in memory — structs enter it only via `copySt`, whose last
+  argument is `Struct`-sorted.
 - `delete(mem, id)` - reset the identity subtree to defaults.
 - `erase(mem)` - normalize identity-copy writes used by lazy copy semantics.
 - `copySt(mem, id, st)` - install a lazy storage-to-memory view.

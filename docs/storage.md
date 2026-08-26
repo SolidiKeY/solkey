@@ -79,7 +79,10 @@ Type-of metavariable:
 - `find(storage, path)` — read the value at `path` (a `List` of field
   selectors). Used universally for both global roots and local paths.
 - `save(storage, path, val)` — write `val` at `path`. Used universally
-  for both global roots and local paths.
+  for both global roots and local paths. `val` has sort `StValue`, the
+  supersort of everything storable in storage: `Struct` (incl. the
+  dynamically created array/mapping sorts) and `Prim` (`int`, `bool`,
+  contract sorts). `Identity`, `List` and `Memory` are not storable.
 - `default` — the default value of a type (used by `delete` and
   `pop`).
 - `at(i)` — coerces an index/key into a field selector so it can

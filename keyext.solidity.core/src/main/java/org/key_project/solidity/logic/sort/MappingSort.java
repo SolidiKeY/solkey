@@ -5,14 +5,15 @@ package org.key_project.solidity.logic.sort;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.sort.Sort;
+import org.key_project.util.collection.ImmutableSet;
 
 
 public class MappingSort extends SortImpl {
     private static Sort keySort;
     private static Sort valueSort;
 
-    public MappingSort(Sort keySort, Sort valueSort) {
-        super(new Name("mapping(" + keySort + " => " + valueSort + ")"));
+    public MappingSort(Sort keySort, Sort valueSort, ImmutableSet<Sort> ext) {
+        super(new Name("mapping(" + keySort + " => " + valueSort + ")"), false, ext);
         this.keySort = keySort;
         this.valueSort = valueSort;
     }

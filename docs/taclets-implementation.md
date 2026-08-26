@@ -10,6 +10,16 @@ What is runnable today vs. pending. Rules live in
 - Calculus spec → `storage.md`, `memory.md`
 - Open backlog (next constructs to implement) → `taclet-ideas.md`
 
+Sort hierarchy (declared across the `*Header.key` files; `StValue`/`MemValue`/
+`Prim` in `solidityDLHeader.key`): values storable in storage have sort
+`StValue` (`Struct` + `Prim`), values storable in memory have sort `MemValue`
+(`Identity` + `Prim`); `Prim` (`int`, `bool`, contract sorts) extends both.
+Accordingly `storeSt`/`save` take `StValue`, `write` takes `MemValue`, and
+`copySt` takes `Struct` as last argument. Array/mapping sorts created by
+`SolJSONParser` extend `StValue`; taclets whose generic sort flows into a value
+position use the bounded generics `alphaSt`/`alphaMem`
+(`solidityProgramRules.key`).
+
 The split follows the `solidity-key-taclets` skill: root rules use
 `SimpleStoragePath`; field/index paths use `Path[...]` schema variables placed
 directly in the resulting terms (the engine lowers the matched AST to logic);

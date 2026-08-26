@@ -5,15 +5,20 @@ package org.key_project.solidity.logic.sort;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.sort.Sort;
+import org.key_project.util.collection.ImmutableSet;
 
 public class ArraySort extends SortImpl {
     public final Sort elementSort;
     private final int length;
 
-    public ArraySort(Sort elementSort, int length) {
-        super(new Name(elementSort + "[" + length + "]"));
+    public ArraySort(Sort elementSort, int length, ImmutableSet<Sort> ext) {
+        super(new Name(elementSort + "[" + length + "]"), false, ext);
         this.elementSort = elementSort;
         this.length = length;
+    }
+
+    public ArraySort(Sort elementSort, int length) {
+        this(elementSort, length, ImmutableSet.empty());
     }
 
     public Sort elementSort() {
