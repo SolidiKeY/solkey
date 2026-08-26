@@ -93,6 +93,14 @@ branch), fixed-length array allocation, primitive-default vs. reference-slot
 delete (`memoryRootDeleteFreshRebind` and field/index delete), and lazy
 storage↔memory copies via `copySt` / `copyMem`. Memory references are
 `Identity`-sorted, not copied `Struct` values; no `push`/`pop`/mapping.
+Complex memory receivers are captured first by `memoryIndexRead_unfold_rightFst`
+/ `memoryIndexWrite_unfold_leftFst` / `memoryIndexDelete_unfold_leftFst`. These
+take a plain `Path[memory,complex]` (no `array` flag): a receiver capture uses no
+array structure, and in memory an indexable path is an array anyway — mappings
+cannot be memory-located and `bytes`/`string` are not memory reference types. The
+`array` flag stays on the rules that do consume it (`memoryIndexWriteArray`,
+`memoryIndexReadArray*`, `memoryIndex*Delete`), which emit the `size` bound.
+`memory-struct-array-index.key` covers the complex-receiver path.
 
 ### Delete
 `storageRootDelete` and `storageFieldDelete` save

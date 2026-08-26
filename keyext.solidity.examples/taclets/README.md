@@ -14,6 +14,9 @@ These examples exercise source-level Solidity program taclets loaded through
 - `memory-delete.key` covers primitive delete and reference-field freshening.
 - `memory-array-index.key` covers fixed-length memory array allocation and
   bounded index read/write.
+- `memory-struct-array-index.key` covers index read/write through a *complex*
+  memory receiver (`basket.items[1]`), exercising
+  `memoryIndexWrite_unfold_leftFst` / `memoryIndexRead_unfold_rightFst`.
 - `storage-to-memory.key` and `memory-to-storage.key` cover lazy `copySt` and
   `copyMem` transfers.
 

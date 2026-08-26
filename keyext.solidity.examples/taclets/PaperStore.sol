@@ -13,6 +13,10 @@ contract PaperStore {
         uint age;
     }
 
+    struct Basket {
+        uint[] items;
+    }
+
     uint total;
     uint age;
     address owner;
