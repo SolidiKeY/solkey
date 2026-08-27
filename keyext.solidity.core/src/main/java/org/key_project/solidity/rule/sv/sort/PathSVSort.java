@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.rule.sv.sort;
 
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -27,10 +26,6 @@ import org.key_project.solidity.program.ast.references.FieldReference;
 
 final class PathSVSort extends ProgramSVSort {
     private static final Map<String, ProgramSVSort> PARAMETERIZED_SORTS = new HashMap<>();
-
-    private enum Axis {
-        LOCATION, SIMPLICITY, ORIGIN, KIND
-    }
 
     enum Location {
         ANY, STORAGE, MEMORY
@@ -98,36 +93,28 @@ final class PathSVSort extends ProgramSVSort {
             return cached;
         }
         var filters = new PathFilters();
-        Map<Axis, String> seen = new EnumMap<>(Axis.class);
         for (String rawFlag : parameter.split(",")) {
             String flag = rawFlag.toLowerCase(Locale.ROOT);
             switch (flag) {
-                case "storage" -> filters.set(Axis.LOCATION, flag, seen,
-                    () -> filters.location = Location.STORAGE);
-                case "memory" -> filters.set(Axis.LOCATION, flag, seen,
-                    () -> filters.location = Location.MEMORY);
-                case "simple" -> filters.set(Axis.SIMPLICITY, flag, seen,
-                    () -> filters.simplicity = Simplicity.SIMPLE);
-                case "complex", "nonsimple", "non-simple" -> filters.set(Axis.SIMPLICITY, flag,
-                    seen, () -> filters.simplicity = Simplicity.COMPLEX);
-                case "local" -> filters.set(Axis.ORIGIN, flag, seen,
-                    () -> filters.origin = Origin.LOCAL);
-                case "global" -> filters.set(Axis.ORIGIN, flag, seen,
-                    () -> filters.origin = Origin.GLOBAL);
-                case "array" -> filters.set(Axis.KIND, flag, seen,
-                    () -> filters.kind = Kind.ARRAY);
-                case "mapping" -> filters.set(Axis.KIND, flag, seen,
-                    () -> filters.kind = Kind.MAPPING);
+                case "storage" -> filters.location.set(Location.STORAGE, flag);
+                case "memory" -> filters.location.set(Location.MEMORY, flag);
+                case "simple" -> filters.simplicity.set(Simplicity.SIMPLE, flag);
+                case "complex", "nonsimple", "non-simple" -> filters.simplicity
+                        .set(Simplicity.COMPLEX, flag);
+                case "local" -> filters.origin.set(Origin.LOCAL, flag);
+                case "global" -> filters.origin.set(Origin.GLOBAL, flag);
+                case "array" -> filters.kind.set(Kind.ARRAY, flag);
+                case "mapping" -> filters.kind.set(Kind.MAPPING, flag);
                 default -> throw new IllegalArgumentException(
                     "Unknown Path sort flag '" + rawFlag + "'");
             }
         }
-        if (filters.location == Location.MEMORY && filters.origin == Origin.GLOBAL) {
+        if (filters.location.value == Location.MEMORY && filters.origin.value == Origin.GLOBAL) {
             throw new IllegalArgumentException(
                 "Memory paths are always local; use 'memory' or 'memory,local'");
         }
-        ProgramSVSort result = new PathSVSort("Path[" + parameter + "]", filters.location,
-            filters.simplicity, filters.origin, filters.kind);
+        ProgramSVSort result = new PathSVSort("Path[" + parameter + "]", filters.location.value,
+            filters.simplicity.value, filters.origin.value, filters.kind.value);
         PARAMETERIZED_SORTS.put(parameter, result);
         return result;
     }
@@ -202,18 +189,28 @@ final class PathSVSort extends ProgramSVSort {
     }
 
     private static final class PathFilters {
-        private Location location = Location.ANY;
-        private Simplicity simplicity = Simplicity.ANY;
-        private Origin origin = Origin.ANY;
-        private Kind kind = Kind.ANY;
+        private final Filter<Location> location = new Filter<>(Location.ANY);
+        private final Filter<Simplicity> simplicity = new Filter<>(Simplicity.ANY);
+        private final Filter<Origin> origin = new Filter<>(Origin.ANY);
+        private final Filter<Kind> kind = new Filter<>(Kind.ANY);
+    }
 
-        private void set(Axis axis, String flag, Map<Axis, String> seen, Runnable setter) {
-            String previous = seen.putIfAbsent(axis, flag);
-            if (previous != null) {
+    /** One filter axis: its value plus the flag that set it, so conflicts can be reported. */
+    private static final class Filter<T> {
+        private T value;
+        private String flag;
+
+        private Filter(T unrestricted) {
+            this.value = unrestricted;
+        }
+
+        private void set(T newValue, String newFlag) {
+            if (flag != null) {
                 throw new IllegalArgumentException(
-                    "Conflicting Path sort flags '" + previous + "' and '" + flag + "'");
+                    "Conflicting Path sort flags '" + flag + "' and '" + newFlag + "'");
             }
-            setter.run();
+            this.value = newValue;
+            this.flag = newFlag;
         }
     }
 }
