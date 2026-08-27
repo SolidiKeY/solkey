@@ -17,6 +17,11 @@ These examples exercise source-level Solidity program taclets loaded through
 - `memory-struct-array-index.key` covers index read/write through a *complex*
   memory receiver (`basket.items[1]`), exercising
   `memoryIndexWrite_unfold_leftFst` / `memoryIndexRead_unfold_rightFst`.
+- `memory-assign-forms.key` covers the assignment forms directly (no
+  declaration-with-initializer): `carol = alice;` (`memoryStorageCopy`) and
+  `xs = new uint[](4);` (`memoryArrayFreshAlloc`). Declarations with an
+  initializer are first decomposed by `memoryLocalDeclInitDrop`
+  (`T memory m = x;` ⇝ `m = x;`).
 - `storage-to-memory.key` and `memory-to-storage.key` cover lazy `copySt` and
   `copyMem` transfers.
 

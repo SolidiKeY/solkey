@@ -42,7 +42,10 @@ rules before a terminal rule fires.
   do not. `storageIndexWrite{Array,Mapping}Save`,
   `storageIndexRead{Array,Mapping}Find`, plus `…CopySource`, `…BindLocalRoot`,
   `…StoreRoot`, and `_decompose` variants for nested indexed paths.
-- Local-storage declarations: `storageLocalDeclSkip`, `storageLocalDeclInitSplit`.
+- Local declarations: `memoryLocalDeclInitDrop` drops any declaration-with-
+  initializer (value/storage/memory alike — the location keyword in a pattern is
+  display-only) to the plain assignment and registers the variable;
+  `storageLocalDeclSkip` / `valueDeclSkip` consume bare declarations.
 
 ### Increment / decrement (`++`/`--`, pre/post, plain and `result = …`)
 Direct storage updates (no program-level desugaring), e.g. `++age;` ⇝
@@ -71,7 +74,7 @@ operands are captured by `_unfold_left/right/result` (arith) or `…CaptureLhs/R
   `&&`/`||` right short-circuit (needs the Tier-3 `if`), checked-arith overflow.
 
 ### Storage aliases
-`storageLocalDeclInitSplit_{rootRebind,globalField,localField}` and
+`memoryLocalDeclInitDrop` (decl-with-init decomposition) followed by
 `storageLocalRootRebind` (standalone `lp = sp;`). The alias binds to the **path**,
 not the value: `{lp := cons1(rhsField)}` or `{lp := pathFields}`. Two enablers:
 `SolidityToKeyConverter#asStorageAliasType` re-sorts any storage-held reference
@@ -99,9 +102,17 @@ example.
 ### Memory
 Source-level memory family covers heap field/index read & write, root aliasing,
 fresh allocation (`memoryReferenceDeclFreshAlloc`, with a `new(memory, r)` skolem
-branch), fixed-length array allocation, primitive-default vs. reference-slot
+branch), fixed-length array allocation (`memoryArrayFreshAlloc`, assignment form
+`mp = new T(len);`), primitive-default vs. reference-slot
 delete (`memoryRootDeleteFreshRebind` and field/index delete), and lazy
-storage↔memory copies via `copySt` / `copyMem`. Memory references are
+storage↔memory copies via `copySt` / `copyMem` (`memoryStorageCopy` for
+`m = <simple storage path>;`, `memoryStorageCopyUnfold` captures a complex
+storage RHS in a local storage pointer first). Declarations with initializer
+never reach these rules: `memoryLocalDeclInitDrop` rewrites `T memory m = x;`
+to `m = x;` (registering `m` as a program variable), so all memory terminals
+match plain assignments; only the bare `T memory m;` keeps its one-shot
+fresh-allocation semantics. `memory-assign-forms.key` covers the assignment
+forms directly. Memory references are
 `Identity`-sorted, not copied `Struct` values; no `push`/`pop`/mapping.
 Complex memory receivers are captured first by `memoryIndexRead_unfold_rightFst`
 / `memoryIndexWrite_unfold_leftFst` / `memoryIndexDelete_unfold_leftFst`. These

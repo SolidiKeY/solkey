@@ -69,7 +69,7 @@ Clone the `+=` family (`storageRootAddAssign` / `…Field…` / `…Index…` +
   bodies that emit events don't get stuck.
 - **`NewInstance`** (`new T[](n)`, `new T`): allocate a fresh memory array /
   struct of the given length and bind the reference (extends
-  `memoryArrayDeclFreshAlloc`).
+  `memoryArrayFreshAlloc`).
 - **`ObjectInit`** (`Token(42)`, `Token{value: 42}`): struct-literal
   construction. Blocks the disabled `testStorageArrayPushPop`
   (`tokens.push(Token(42));`). Needs a struct-value source for the existing

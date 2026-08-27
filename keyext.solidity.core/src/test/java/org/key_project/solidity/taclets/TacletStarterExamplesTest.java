@@ -127,6 +127,7 @@ public class TacletStarterExamplesTest {
             example("memory-delete.key"),
             example("memory-array-index.key"),
             example("memory-struct-array-index.key"),
+            example("memory-assign-forms.key"),
             example("storage-to-memory.key"),
             example("memory-to-storage.key"),
             example("addition-simple.key"),
