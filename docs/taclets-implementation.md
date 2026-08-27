@@ -200,19 +200,31 @@ any zero-child `FunctionReference` matched any other). A literal operand
 (`require(true)`) still matches neither rule (pre-existing `assert` gap).
 
 ### Payments (`net` ledger, `msg`, `transfer`)
-First slice of `docs/net.md` (Steps 1–3). `netHeader.key` declares the
+`docs/net.md` Steps 1–4. `netHeader.key` declares the
 program variables `Struct net` (per-address ledger: read
 `selectSt<[int]>(net, at(a))`, empty ledger `mtSt` ⇒ `net(a) = 0`),
-`msgSender`, `msgValue`, and `self`. `msg.sender` / `msg.value` desugar to
+`msgSender`, `msgValue`, and `self`, plus the uninterpreted contract-invariant
+predicate `CInv(Struct, Struct)` over `(storage, net)` (solidiKeY-style: each
+problem file gives it meaning via its own `insertCInv` rewrite taclet).
+`msg.sender` / `msg.value` desugar to
 `msgSender` / `msgValue` in `SolidityToKeyConverter.visitMemberAccess`
 (shadowable by a local named `msg`). `transfer` and `send` are registered
 builtins classified like `push`/`pop` (`MemberExp` + `FunctionCallExpression`,
-no dedicated AST node). Rules (no-callback semantics only): `transferNoCallback`
-(`a.transfer(v);` ⇝ `{net := storeSt(net, at(a), selectSt<[int]>(net, at(a)) − v)}`),
-plus `transfer_unfold_leftFstReceiver` / `transfer_unfold_rightSndArgument`
-captures. Not yet done: the with-callback rule (contract-invariant varcond +
-havoc, `docs/net.md` Step 4), `send`/`call{value:}` rules, and proof-obligation
-plumbing (`docs/net.md` Step 5). Five `net-*` starter examples close.
+no dedicated AST node). Transfer semantics is the taclet choice
+`transferSemantics:{noCallback, withCallback}` (`optionsDeclarations.key`,
+default `noCallback`; examples pin the other variant with
+`\withOptions transferSemantics:withCallback;`). Under `noCallback`:
+`transferNoCallback`
+(`a.transfer(v);` ⇝ `{net := storeSt(net, at(a), selectSt<[int]>(net, at(a)) − v)}`).
+Under `withCallback`: `transferWithCallback` splits into "invariant on exit"
+(book `net(a) −= v`, prove `CInv(storage, net)`, drop the continuation) and
+"resume after callback" (havoc `storage` and `net` with `\skolemTerm Struct`
+constants, assume `CInv`, continue). Both share the
+`transfer_unfold_leftFstReceiver` / `transfer_unfold_rightSndArgument`
+captures. Not yet done: the `\getContractInvariant` varcond +
+`ContractSpecification` plumbing (`docs/net.md` Step 4 phase 2),
+`send`/`call{value:}` rules, and proof-obligation
+plumbing (`docs/net.md` Step 5). Seven `net-*` starter examples close.
 
 ### Paths and lowering
 Path SV sorts: `StoragePath`, `SimpleStoragePath`, `ComplexStoragePath`,

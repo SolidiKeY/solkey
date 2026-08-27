@@ -35,6 +35,15 @@ These examples exercise source-level Solidity program taclets loaded through
   (`to.transfer(5);` books `net(to) -= 5`).
 - `net-transfer-capture-argument.key` and `net-transfer-capture-receiver.key`
   cover the nonsimple-amount and nonsimple-receiver capture rules.
+- `net-transfer-withcallback-simple.key` covers the `transferWithCallback`
+  rule (selected via `\withOptions transferSemantics:withCallback;`): the
+  contract invariant `CInv(storage, net)` is defined per example by an
+  `insertCInv` taclet; the rule proves it on exit and assumes it after the
+  storage/net havoc.
+- `net-transfer-withcallback-storage.key` covers the transfer-last discipline
+  with an invariant relating a storage field to the ledger; swapping the two
+  statements reproduces the classic re-entrancy bug (the "invariant on exit"
+  branch stays open).
 
 ## Require
 

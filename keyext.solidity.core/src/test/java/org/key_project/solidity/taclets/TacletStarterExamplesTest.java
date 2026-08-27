@@ -154,6 +154,8 @@ public class TacletStarterExamplesTest {
             example("net-transfer-simple.key"),
             example("net-transfer-capture-argument.key"),
             example("net-transfer-capture-receiver.key"),
+            example("net-transfer-withcallback-simple.key"),
+            example("net-transfer-withcallback-storage.key"),
             example("require-holds-diamond.key"),
             example("require-guard-box.key"),
             example("storage-index-write-nse-chain.key"),

@@ -51,9 +51,9 @@ maintained by the calculus, not by the program. On top of it:
 | `address` type | Registered in `SolidityInfo`, mapped to the `int` sort |
 | `net` mapping | **Done** (Step 1): `Struct net` in `netHeader.key`, read/write via `selectSt`/`storeSt` |
 | `msg.sender` / `msg.value` | **Done** (Step 2): desugared to the `msgSender`/`msgValue` program variables in `SolidityToKeyConverter` |
-| `transfer` / `send` / `call{value:}` | `transfer` **done with no-callback semantics** (Step 3: builtin + classification + `transferNoCallback` and both capture rules); `send` has builtin + classification but no rule; `call{value:}` missing |
-| Havoc update | **Missing** as a rule ingredient, but `\skolemTerm` SVs exist (`memoryReferenceDeclFreshAlloc` shows the fresh-symbol pattern) |
-| Contract invariant storage + retrieval | **Missing**, but the loop-invariant machinery (`SpecificationRepository`, `\getInvariant`/`\hasInvariant` varconds in `TacletBuilderManipulators`) is the exact template |
+| `transfer` / `send` / `call{value:}` | `transfer` **done with both semantics** (Step 3: builtin + classification + `transferNoCallback` and both capture rules; Step 4: `transferWithCallback` under the `transferSemantics` choice); `send` has builtin + classification but no rule; `call{value:}` missing |
+| Havoc update | **Done** in `transferWithCallback`: `{storage := storageSk \|\| net := netSk}` with `\skolemTerm Struct` SVs (the `memoryReferenceDeclFreshAlloc` fresh-symbol pattern) |
+| Contract invariant storage + retrieval | **Phase 1 done**: uninterpreted `CInv(Struct, Struct)` predicate (`netHeader.key`) expanded by a per-example `insertCInv` taclet. Repository-backed retrieval still missing; the loop-invariant machinery (`SpecificationRepository`, `\getInvariant`/`\hasInvariant` varconds in `TacletBuilderManipulators`) is the exact template |
 | Proof-obligation generator | **Missing**; `proof/init/` already has `AbstractPO` / `ContractPO` / `FunctionalOperationContractPO` scaffolding. The paper's prototype also wrote POs by hand, so a manual pattern is faithful for phase 1 |
 
 ## 3. Design Decisions
@@ -101,11 +101,18 @@ Ordered; each step has a runnable milestone. Rules go in
 `\rules(programRules:Solidity)` of `solidityProgramRules.key`; examples
 under `keyext.solidity.examples/taclets/`.
 
-> **Status:** Steps 1–3 are implemented (`netHeader.key`, the converter
-> desugaring, and the `transfer` builtin + no-callback rules); the five
-> `net-*` starter examples close. The `transferSemantics` choice is deferred
-> to Step 4 — until the with-callback rule exists there is nothing to
-> switch between. One enabling fix along the way:
+> **Status:** Steps 1–4 are implemented (`netHeader.key`, the converter
+> desugaring, the `transfer` builtin + no-callback rules, and the
+> with-callback rule); the seven `net-*` starter examples close. The
+> `transferSemantics:{noCallback, withCallback}` choice exists in
+> `optionsDeclarations.key` (default `noCallback`; examples select the other
+> variant with `\withOptions transferSemantics:withCallback;`). Step 4 took
+> the CInv-predicate route instead of the `inv` schema formula below:
+> `netHeader.key` declares an uninterpreted `CInv(Struct, Struct)` over
+> `(storage, net)`, `transferWithCallback` references it directly, and each
+> problem file defines it via its own `insertCInv` rewrite taclet (phase 1 of
+> the invariant plumbing; the `\getContractInvariant` varcond remains phase
+> 2). One enabling fix along the way:
 > `SolidityInfo.registerPredefinedTypes` now resolves *all* pending
 > sort-only `KeYSolidityType`s (LDT headers may declare several program
 > variables of the same sort, and primitives like `int msgSender;`).
