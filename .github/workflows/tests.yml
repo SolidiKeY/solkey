@@ -53,7 +53,6 @@ jobs:
         with:
           java-version: ${{ matrix.java }}
           distribution: 'corretto'
-          cache: 'gradle'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
@@ -89,7 +88,6 @@ jobs:
         with:
           java-version: ${{ matrix.java }}
           distribution: 'corretto'
-          cache: 'gradle'
 
       - name: Setup SMT solvers
         uses: keyproject/setup-smt@v0

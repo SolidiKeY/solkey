@@ -22,7 +22,6 @@ jobs:
         with:
           java-version: ${{matrix.java}}
           distribution: 'corretto'
-          cache: 'gradle'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6

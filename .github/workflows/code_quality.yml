@@ -18,7 +18,6 @@ jobs:
         with:
           java-version: 21
           distribution: 'corretto'
-          cache: 'gradle'
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
       - name: Build with Gradle
