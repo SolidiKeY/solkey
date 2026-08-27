@@ -124,8 +124,10 @@ public class SolidityInfo {
         for (var it = pending.iterator(); it.hasNext();) {
             KeYSolidityType kst = it.next();
             KeYSolidityType registered = typeByName.get(kst.name().toString());
-            if (registered != null && registered.getSolidityType() != null) {
-                kst.setSolidityType(registered.getSolidityType());
+            @Nullable
+            Type registeredType = registered == null ? null : registered.getSolidityType();
+            if (registeredType != null) {
+                kst.setSolidityType(registeredType);
                 it.remove();
             }
         }
