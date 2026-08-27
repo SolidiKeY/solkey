@@ -30,7 +30,7 @@ import org.key_project.solidity.program.ast.references.FieldReference;
 final class PathSVSort extends ProgramSVSort {
     private static final Map<String, ProgramSVSort> PARAMETERIZED_SORTS = new HashMap<>();
 
-    enum Location {
+    enum DataArea {
         ANY, STORAGE, MEMORY
     }
 
@@ -42,7 +42,7 @@ final class PathSVSort extends ProgramSVSort {
         ANY, LOCAL, GLOBAL
     }
 
-    private enum Kind {
+    private enum TypeCategory {
         ANY, ARRAY, MAPPING
     }
 
@@ -50,26 +50,27 @@ final class PathSVSort extends ProgramSVSort {
         ANY, PRIMITIVE, REFERENCE
     }
 
-    private record PathInfo(Location location, boolean simple, Origin origin, Kind kind) {
+    private record PathInfo(DataArea dataArea, boolean simple, Origin origin,
+            TypeCategory typeCategory) {
     }
 
-    private final Location location;
+    private final DataArea dataArea;
     private final Simplicity simplicity;
     private final Origin origin;
-    private final Kind kind;
+    private final TypeCategory typeCategory;
     private final TypeKind typeKind;
 
-    PathSVSort(String name, Location location, Simplicity simplicity) {
-        this(name, location, simplicity, Origin.ANY, Kind.ANY, TypeKind.ANY);
+    PathSVSort(String name, DataArea dataArea, Simplicity simplicity) {
+        this(name, dataArea, simplicity, Origin.ANY, TypeCategory.ANY, TypeKind.ANY);
     }
 
-    private PathSVSort(String name, Location location, Simplicity simplicity, Origin origin,
-            Kind kind, TypeKind typeKind) {
+    private PathSVSort(String name, DataArea dataArea, Simplicity simplicity, Origin origin,
+            TypeCategory typeCategory, TypeKind typeKind) {
         super(new Name(name));
-        this.location = location;
+        this.dataArea = dataArea;
         this.simplicity = simplicity;
         this.origin = origin;
-        this.kind = kind;
+        this.typeCategory = typeCategory;
         this.typeKind = typeKind;
     }
 
@@ -79,13 +80,13 @@ final class PathSVSort extends ProgramSVSort {
         if (info == null) {
             return false;
         }
-        if (location != Location.ANY && info.location() != location) {
+        if (dataArea != DataArea.ANY && info.dataArea() != dataArea) {
             return false;
         }
         if (origin != Origin.ANY && info.origin() != origin) {
             return false;
         }
-        if (kind != Kind.ANY && info.kind() != kind) {
+        if (typeCategory != TypeCategory.ANY && info.typeCategory() != typeCategory) {
             return false;
         }
         if (typeKind != TypeKind.ANY && typeKindOf(pe) != typeKind) {
@@ -108,27 +109,27 @@ final class PathSVSort extends ProgramSVSort {
         for (String rawFlag : parameter.split(",")) {
             String flag = rawFlag.toLowerCase(Locale.ROOT);
             switch (flag) {
-                case "storage" -> filters.location.set(Location.STORAGE, flag);
-                case "memory" -> filters.location.set(Location.MEMORY, flag);
+                case "storage" -> filters.dataArea.set(DataArea.STORAGE, flag);
+                case "memory" -> filters.dataArea.set(DataArea.MEMORY, flag);
                 case "simple" -> filters.simplicity.set(Simplicity.SIMPLE, flag);
                 case "complex", "nonsimple", "non-simple" -> filters.simplicity
                         .set(Simplicity.COMPLEX, flag);
                 case "local" -> filters.origin.set(Origin.LOCAL, flag);
                 case "global" -> filters.origin.set(Origin.GLOBAL, flag);
-                case "array" -> filters.kind.set(Kind.ARRAY, flag);
-                case "mapping" -> filters.kind.set(Kind.MAPPING, flag);
+                case "array" -> filters.typeCategory.set(TypeCategory.ARRAY, flag);
+                case "mapping" -> filters.typeCategory.set(TypeCategory.MAPPING, flag);
                 case "primitive" -> filters.typeKind.set(TypeKind.PRIMITIVE, flag);
                 case "reference" -> filters.typeKind.set(TypeKind.REFERENCE, flag);
                 default -> throw new IllegalArgumentException(
                     "Unknown Path sort flag '" + rawFlag + "'");
             }
         }
-        if (filters.location.value == Location.MEMORY && filters.origin.value == Origin.GLOBAL) {
+        if (filters.dataArea.value == DataArea.MEMORY && filters.origin.value == Origin.GLOBAL) {
             throw new IllegalArgumentException(
                 "Memory paths are always local; use 'memory' or 'memory,local'");
         }
-        ProgramSVSort result = new PathSVSort("Path[" + parameter + "]", filters.location.value,
-            filters.simplicity.value, filters.origin.value, filters.kind.value,
+        ProgramSVSort result = new PathSVSort("Path[" + parameter + "]", filters.dataArea.value,
+            filters.simplicity.value, filters.origin.value, filters.typeCategory.value,
             filters.typeKind.value);
         PARAMETERIZED_SORTS.put(parameter, result);
         return result;
@@ -136,24 +137,24 @@ final class PathSVSort extends ProgramSVSort {
 
     private static PathInfo classify(SolidityProgramElement pe, Services services) {
         if (pe instanceof FieldReference) {
-            return new PathInfo(Location.STORAGE, true, Origin.GLOBAL, kindOf(pe));
+            return new PathInfo(DataArea.STORAGE, true, Origin.GLOBAL, typeCategoryOf(pe));
         }
         if (pe instanceof ProgramVariable pv) {
             DataLocation dataLocation = pv.getDataLocation();
             if (dataLocation == DataLocation.Storage) {
-                return new PathInfo(Location.STORAGE, true, Origin.LOCAL, kindOf(pe));
+                return new PathInfo(DataArea.STORAGE, true, Origin.LOCAL, typeCategoryOf(pe));
             }
             if (dataLocation == DataLocation.Memory) {
-                return new PathInfo(Location.MEMORY, true, Origin.LOCAL, kindOf(pe));
+                return new PathInfo(DataArea.MEMORY, true, Origin.LOCAL, typeCategoryOf(pe));
             }
-            return new PathInfo(Location.ANY, true, Origin.LOCAL, kindOf(pe));
+            return new PathInfo(DataArea.ANY, true, Origin.LOCAL, typeCategoryOf(pe));
         }
         if (pe instanceof MemberExp member) {
             PathInfo base = classify(member.getLeftExp(), services);
             if (base == null) {
                 return null;
             }
-            return new PathInfo(base.location(), false, base.origin(), kindOf(pe));
+            return new PathInfo(base.dataArea(), false, base.origin(), typeCategoryOf(pe));
         }
         if (pe instanceof IndexExpression index) {
             if (!isSimpleIndex(index.getIndexExp())) {
@@ -163,7 +164,7 @@ final class PathSVSort extends ProgramSVSort {
             if (base == null) {
                 return null;
             }
-            return new PathInfo(base.location(), false, base.origin(), kindOf(pe));
+            return new PathInfo(base.dataArea(), false, base.origin(), typeCategoryOf(pe));
         }
         // A no-arg `arr.push()` returns the freshly appended slot: a complex storage
         // location rooted at the array receiver, with the array's element type. Treating
@@ -173,7 +174,7 @@ final class PathSVSort extends ProgramSVSort {
             if (base == null) {
                 return null;
             }
-            return new PathInfo(base.location(), false, base.origin(), kindOf(pe));
+            return new PathInfo(base.dataArea(), false, base.origin(), typeCategoryOf(pe));
         }
         return null;
     }
@@ -201,15 +202,15 @@ final class PathSVSort extends ProgramSVSort {
         return TypeKind.ANY;
     }
 
-    private static Kind kindOf(SolidityProgramElement pe) {
+    private static TypeCategory typeCategoryOf(SolidityProgramElement pe) {
         Type type = typeOf(pe);
         if (type instanceof DynamicArrayType || type instanceof ArrayType) {
-            return Kind.ARRAY;
+            return TypeCategory.ARRAY;
         }
         if (type instanceof MappingType) {
-            return Kind.MAPPING;
+            return TypeCategory.MAPPING;
         }
-        return Kind.ANY;
+        return TypeCategory.ANY;
     }
 
     private static Type typeOf(SolidityProgramElement pe) {
@@ -239,10 +240,10 @@ final class PathSVSort extends ProgramSVSort {
     }
 
     private static final class PathFilters {
-        private final Filter<Location> location = new Filter<>(Location.ANY);
+        private final Filter<DataArea> dataArea = new Filter<>(DataArea.ANY);
         private final Filter<Simplicity> simplicity = new Filter<>(Simplicity.ANY);
         private final Filter<Origin> origin = new Filter<>(Origin.ANY);
-        private final Filter<Kind> kind = new Filter<>(Kind.ANY);
+        private final Filter<TypeCategory> typeCategory = new Filter<>(TypeCategory.ANY);
         private final Filter<TypeKind> typeKind = new Filter<>(TypeKind.ANY);
     }
 

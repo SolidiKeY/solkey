@@ -28,22 +28,22 @@ public abstract class ProgramSVSort extends SortImpl {
     public static final ProgramSVSort FIELD_REFERENCE = new FieldReferenceSVSort();
     public static final ProgramSVSort FIELD = new FieldSVSort();
     public static final ProgramSVSort PATH =
-        new PathSVSort("Path", PathSVSort.Location.ANY, PathSVSort.Simplicity.ANY);
+        new PathSVSort("Path", PathSVSort.DataArea.ANY, PathSVSort.Simplicity.ANY);
     public static final ProgramSVSort STORAGE_PATH =
-        new PathSVSort("StoragePath", PathSVSort.Location.STORAGE, PathSVSort.Simplicity.ANY);
+        new PathSVSort("StoragePath", PathSVSort.DataArea.STORAGE, PathSVSort.Simplicity.ANY);
     public static final ProgramSVSort SIMPLE_STORAGE_PATH =
-        new PathSVSort("SimpleStoragePath", PathSVSort.Location.STORAGE,
+        new PathSVSort("SimpleStoragePath", PathSVSort.DataArea.STORAGE,
             PathSVSort.Simplicity.SIMPLE);
     public static final ProgramSVSort COMPLEX_STORAGE_PATH =
-        new PathSVSort("ComplexStoragePath", PathSVSort.Location.STORAGE,
+        new PathSVSort("ComplexStoragePath", PathSVSort.DataArea.STORAGE,
             PathSVSort.Simplicity.COMPLEX);
     public static final ProgramSVSort MEMORY_PATH =
-        new PathSVSort("MemoryPath", PathSVSort.Location.MEMORY, PathSVSort.Simplicity.ANY);
+        new PathSVSort("MemoryPath", PathSVSort.DataArea.MEMORY, PathSVSort.Simplicity.ANY);
     public static final ProgramSVSort SIMPLE_MEMORY_PATH =
-        new PathSVSort("SimpleMemoryPath", PathSVSort.Location.MEMORY,
+        new PathSVSort("SimpleMemoryPath", PathSVSort.DataArea.MEMORY,
             PathSVSort.Simplicity.SIMPLE);
     public static final ProgramSVSort COMPLEX_MEMORY_PATH =
-        new PathSVSort("ComplexMemoryPath", PathSVSort.Location.MEMORY,
+        new PathSVSort("ComplexMemoryPath", PathSVSort.DataArea.MEMORY,
             PathSVSort.Simplicity.COMPLEX);
     public static final ProgramSVSort TYPE = new TypeSVSort();
 
