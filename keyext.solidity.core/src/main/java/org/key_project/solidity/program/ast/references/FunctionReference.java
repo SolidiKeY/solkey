@@ -71,10 +71,12 @@ public class FunctionReference extends SolidityExpression implements Resolver, V
         if (!(sourceData.getSource() instanceof FunctionReference sourceReference)) {
             return null;
         }
-        if (referencedDeclaration == null || sourceReference.referencedDeclaration == null) {
+        final FunctionDeclaration thisDecl = referencedDeclaration;
+        final FunctionDeclaration sourceDecl = sourceReference.referencedDeclaration;
+        if (thisDecl == null || sourceDecl == null) {
             return null;
         }
-        if (!referencedDeclaration.name().equals(sourceReference.referencedDeclaration.name())) {
+        if (!thisDecl.name().equals(sourceDecl.name())) {
             return null;
         }
         sourceData.next();
