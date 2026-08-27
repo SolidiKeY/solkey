@@ -148,8 +148,10 @@ are preserved**. On read, `selectSt` on a `delNode` reads a mapping member
 Mapping vs. reference members are told apart by `Field` sub-sorts (`MapField` /
 `IdField`) stamped on the field constants at parse time (`SolJSONParser`, keyed off
 the member's Solidity type). The struct case is disambiguated from the default case
-purely by the concrete-vs-generic sort of the `delValue` rewrite rules (no varcond),
-mirroring `selectIntOnStore` / `selectOnStore`. Complex receivers unfold first
+purely by the sorts of the `delValue` rewrite rules (no varcond): `delValueStruct`
+matches the concrete `Struct` sort and, being in `simplify`, outranks the
+`StValue`-generic `delValueDefault` (`simplify_enlarging`); the same pattern pairs
+`selectStDelNodeMap`/`Ref` with `selectStDelNodeDefault`. Complex receivers unfold first
 (`…_unfold_leftFst`). Storage and memory deletes stay separate by design.
 
 ### Capture partition (non-simple RHS / index, storage.md Steps 1–2)

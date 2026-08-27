@@ -126,10 +126,10 @@ public class ProofTreeLinearizationTest {
         env.getProofControl().startAndWaitForAutoMode(proof);
         context.fireProofChanged();
 
-        assertTrue(panel.search("selectIntOnStore", true), "the rule name occurs in the proof");
+        assertTrue(panel.search("selectOnSaveCons", true), "the rule name occurs in the proof");
         org.key_project.solidity.proof.Node selected = context.getSelectedNode();
         assertTrue(selected != null
-                && selected.name().toLowerCase().contains("selectintonstore"),
+                && selected.name().toLowerCase().contains("selectonsavecons"),
             "search should select a matching node");
         assertTrue(!panel.search("no-such-rule-xyz", true), "a missing query finds nothing");
     }

@@ -66,7 +66,7 @@ sort, `net(a)` is expressed with the existing struct primitives:
     write  :  {net := storeSt(net, at(a), selectSt<[int]>(net, at(a)) + v)}
 
 Everything needed already exists in `structRules.key`: read-over-write
-(`selectIntOnStore`), and `selectOnEmpty` + `defaultValue<[int]> = 0`, which
+(`selectOnStore`), and `selectOnEmpty` + `defaultValue<[int]> = 0`, which
 gives the paper's implicit "initially `net(a) = 0`" from `net = mtSt` in the
 constructor PO. Zero new sorts, functions, or simplification rules.
 
