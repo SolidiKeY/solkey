@@ -1,17 +1,22 @@
 // SPDX-License-Identifier: GPL-2.0-only
 pragma solidity ^0.8.0;
 
-/// One contract for the taclet example problems. Every `.key` file under
-/// keyext.solidity.examples/{taclets,mainFeatures} calls exactly one function declared here, so
-/// each test program is real Solidity that `solc` parses and type-checks.
+/// The taclet example suite. There are no `.key` problem files: the loader synthesizes one
+/// obligation per function of this contract, calling it with postcondition `true`, so every test
+/// is real Solidity that `solc` parses and type-checks.
 ///
 /// Conventions:
-///   - the function name is the `.key` basename in lowerCamelCase;
-///   - a test that observes a single value uses a named return, assigned by plain assignment
-///     (`return e;` is not supported by the calculus);
-///   - a test that observes storage/memory/net only has no return value;
-///   - a test that observes several values asserts in the body and its `.key` postcondition is
-///     `true`.
+///   - every function is `public`, takes no arguments and returns nothing;
+///   - what the test observes is stated in the body with `assert` — a value the old `.key`
+///     postcondition named is bound to a local first (`return e;` is not supported by the
+///     calculus);
+///   - what the test assumes is stated with `require`, and the function is then tagged
+///     `/// @custom:key box`. `require` is an assumption under a box modality and an obligation
+///     under a diamond (docs/require-assert.md), so the tag is what makes it an assumption.
+///     Tag only functions that need it: a box discharges a reverting execution vacuously, so an
+///     untagged function additionally proves that it never reverts.
+///   - a tagged function must `require` every bound its body relies on, outermost first
+///     (`require(2 < matrix.length);` before `require(3 < matrix[2].length);`).
 contract TestSuite {
     struct Token { uint value; }
     struct Account { uint balance; Token token; }
@@ -47,37 +52,42 @@ contract TestSuite {
 
     // ── Arithmetic ──
 
-    function additionStorageWrite(uint x, uint y) public returns (uint r) {
+    function additionStorageWrite() public {
+        uint x = 5;
+        uint y = 7;
         alice.age = x + y;
-        r = alice.age;
+        uint r = alice.age;
+        assert(r == 12);
     }
 
     // ── Storage: root ──
 
-    function storageRootReadWrite() public returns (uint r) {
+    function storageRootReadWrite() public {
         age = 34;
-        r = age;
+        uint r = age;
+        assert(r == 34);
     }
 
     // ── Storage: field ──
 
-    function storageFieldWriteRead() public returns (uint r) {
+    function storageFieldWriteRead() public {
         alice.age = 34;
-        r = alice.age;
+        uint r = alice.age;
+        assert(r == 34);
     }
 
-    function storageFieldDeepAddAssign() public returns (uint r) {
+    function storageFieldDeepAddAssign() public {
         alice.account.balance = 30;
         alice.account.balance += 4;
-        r = alice.account.balance;
+        uint r = alice.account.balance;
+        assert(r == 34);
     }
 
-    function storageFieldGlobalAgeWrite() public {
+    function storageFieldGlobalAge() public {
         alice.age = 34;
-    }
-
-    function storageFieldGlobalAgeRead() public returns (uint r) {
-        r = alice.age;
+        assert(alice.age == 34);
+        uint r = alice.age;
+        assert(r == 34);
     }
 
     // ── Storage: alias ──
@@ -87,47 +97,59 @@ contract TestSuite {
         Account storage acc = p.account;
         acc.balance = 100;
         p.account.token.value = 3;
+        assert(alice.account.balance == 100);
+        assert(alice.account.token.value == 3);
     }
 
     // ── Storage: index ──
 
-    function storageIndexRootMapping() public returns (uint r) {
+    function storageIndexRootMapping() public {
         balances[1] = 42;
-        r = balances[1];
+        uint r = balances[1];
+        assert(r == 42);
     }
 
-    function storageIndexAddAssign() public returns (uint r) {
+    /// @custom:key box
+    function storageIndexAddAssign() public {
+        require(1 < values.length);
         values[1] = 40;
         values[1] += 2;
-        r = values[1];
-    }
-
-    function storageIndexArrayOutOfBoundsBox() public {
-        values[1] = 7;
+        uint r = values[1];
+        assert(r == 42);
     }
 
     // ── Storage: push ──
 
+    /// @custom:key box
     function storagePushValue() public {
+        require(values.length == 2);
         values.push(42);
+        assert(values[2] == 42);
+        assert(values.length == 3);
     }
 
     // ── Memory ──
 
-    function memoryDeclDefault() public returns (uint r) {
+    /// @custom:key fresh-memory
+    function memoryDeclDefault() public {
         Person memory carol;
-        r = carol.age;
+        uint r = carol.age;
+        assert(r == 0);
     }
 
-    function memoryArrayIndex() public returns (uint r) {
+    /// @custom:key fresh-memory
+    function memoryArrayIndex() public {
         uint[] memory xs = new uint[](4);
         xs[1] = 33;
-        r = xs[1];
+        uint r = xs[1];
+        assert(r == 33);
     }
 
     // ── mainFeatures ──
 
+    /// @custom:key box
     function testStorageComplexReceiverEmptyPush() public {
+        require(bucket.tokens.length == 0);
         bucket.tokens.push();
         Token[] storage bt = bucket.tokens;
         assert(bt.length == 1);
@@ -135,607 +157,805 @@ contract TestSuite {
 
     // ── generated: one function per example ──
 
-    function additionBothStorage() public returns (uint r) {
+    function additionBothStorage() public {
         alice.age = 10;
         bob.age = 5;
-        r = alice.age + bob.age;
+        uint r = alice.age + bob.age;
+        assert(r == 15);
     }
 
-    function additionSimple() public returns (uint r) {
-        r = 1 + 2;
+    function additionSimple() public {
+        uint r = 1 + 2;
+        assert(r == 3);
     }
 
-    function additionStorageRead() public returns (uint r) {
+    function additionStorageRead() public {
         alice.age = 10;
-        r = alice.age + 1;
+        uint r = alice.age + 1;
+        assert(r == 11);
     }
 
-    function divisionSimple() public returns (uint r) {
-        r = 8 / 2;
+    function divisionSimple() public {
+        uint r = 8 / 2;
+        assert(r == 4);
     }
 
-    function greaterEqualSimple() public returns (bool r) {
-        r = 5 >= 6;
+    function greaterEqualSimple() public {
+        bool r = 5 >= 6;
+        assert(!r);
     }
 
-    function greaterThanSimple() public returns (bool r) {
-        r = 5 > 3;
+    function greaterThanSimple() public {
+        bool r = 5 > 3;
+        assert(r);
     }
 
-    function lessEqualSimple() public returns (bool r) {
-        r = 5 <= 5;
+    function lessEqualSimple() public {
+        bool r = 5 <= 5;
+        assert(r);
     }
 
-    function lessThanSimple() public returns (bool r) {
-        r = 3 < 5;
+    function lessThanSimple() public {
+        bool r = 3 < 5;
+        assert(r);
     }
 
-    function logicalAndSimple() public returns (bool r) {
-        r = true && false;
+    function logicalAndSimple() public {
+        bool r = true && false;
+        assert(!r);
     }
 
-    function logicalNotSimple() public returns (bool r) {
-        r = !false;
+    function logicalNotSimple() public {
+        bool r = !false;
+        assert(r);
     }
 
-    function logicalOrSimple() public returns (bool r) {
-        r = true || false;
+    function logicalOrSimple() public {
+        bool r = true || false;
+        assert(r);
     }
 
+    /// @custom:key fresh-memory
     function memoryDeclFresh() public {
         Person memory carol;
     }
 
-    function memoryDeepField() public returns (uint r) {
+    /// @custom:key fresh-memory
+    function memoryDeepField() public {
         Person memory carol;
         carol.account.balance = 10;
-        r = carol.account.balance;
+        uint r = carol.account.balance;
+        assert(r == 10);
     }
 
-    function memoryFieldAlias() public returns (uint r) {
+    /// @custom:key fresh-memory
+    function memoryFieldAlias() public {
         Person memory carol;
         Account memory acc = carol.account;
         acc.balance = 100;
-        r = carol.account.balance;
+        uint r = carol.account.balance;
+        assert(r == 100);
     }
 
-    function memoryFieldReferenceAssign() public returns (uint r) {
+    /// @custom:key fresh-memory
+    function memoryFieldReferenceAssign() public {
         Person memory carol;
         Person memory david;
         Account memory pv = david.account;
         carol.account = pv;
         carol.account.balance = 60;
-        r = david.account.balance;
+        uint r = david.account.balance;
+        assert(r == 60);
     }
 
-    function memoryIndexWriteNse(uint i, uint a, uint b) public returns (uint r) {
+    /// @custom:key fresh-memory
+    function memoryIndexWriteNse() public {
+        uint i = 1;
+        uint lhs = 4;
+        uint rhs = 5;
         uint[] memory xs = new uint[](4);
-        xs[i+1] = a + b;
-        r = xs[i+1];
+        xs[i+1] = lhs + rhs;
+        uint r = xs[i+1];
+        assert(r == 9);
     }
 
-    function memoryRootAlias() public returns (uint r) {
+    /// @custom:key fresh-memory
+    function memoryRootAlias() public {
         Person memory carol;
         Person memory david;
         david.age = 40;
         carol = david;
         carol.age = 41;
-        r = david.age;
+        uint r = david.age;
+        assert(r == 41);
     }
 
+    /// @custom:key fresh-memory
     function memoryRootDeleteFresh() public {
         Person memory carol;
         delete carol;
     }
 
-    function memoryStructArrayIndex() public returns (uint r) {
+    /// @custom:key fresh-memory
+    function memoryStructArrayIndex() public {
         Basket memory basket;
         uint[] memory xs = new uint[](4);
         basket.items = xs;
         basket.items[1] = 33;
-        r = basket.items[1];
+        uint r = basket.items[1];
+        assert(r == 33);
     }
 
-    function memoryToStorage() public returns (uint r) {
+    /// @custom:key fresh-memory
+    function memoryToStorage() public {
         Person memory carol;
         carol.age = 44;
         alice = carol;
-        r = alice.age;
+        uint r = alice.age;
+        assert(r == 44);
     }
 
-    function moduloSimple() public returns (uint r) {
-        r = 7 % 3;
+    function moduloSimple() public {
+        uint r = 7 % 3;
+        assert(r == 1);
     }
 
-    function multiplicationSimple() public returns (uint r) {
-        r = 3 * 4;
+    function multiplicationSimple() public {
+        uint r = 3 * 4;
+        assert(r == 12);
     }
 
-    function notEqualSimple() public returns (bool r) {
-        r = 3 != 4;
+    function notEqualSimple() public {
+        bool r = 3 != 4;
+        assert(r);
     }
 
-    function powerSimple() public returns (uint r) {
-        r = 2 ** 3;
+    function powerSimple() public {
+        uint r = 2 ** 3;
+        assert(r == 8);
     }
 
-    function requireGuardBox(uint x) public returns (uint r) {
-        require(x > 0);
-        age = 1;
-        r = age;
-    }
-
-    function requireHoldsDiamond(uint x) public returns (uint r) {
+    function requireHoldsDiamond() public {
+        uint x = 5;
         require(x > 0);
         total = x;
-        r = total;
+        uint r = total;
+        assert(r == 5);
     }
 
-    function storageAliasRebindAlias() public returns (uint r) {
+    function storageAliasRebindAlias() public {
         Person storage alicePath = alice;
         bob.age = 20;
         alicePath = bob;
-        r = alicePath.age;
+        uint r = alicePath.age;
+        assert(r == 20);
     }
 
-    function storageDeepFieldPostincrement() public returns (uint r) {
+    function storageDeepFieldPostincrement() public {
         alice.account.balance = 100;
         alice.account.balance++;
-        r = alice.account.balance;
+        uint r = alice.account.balance;
+        assert(r == 101);
     }
 
-    function storageDeepFieldPreincrement() public returns (uint r) {
+    function storageDeepFieldPreincrement() public {
         alice.account.balance = 100;
         ++alice.account.balance;
-        r = alice.account.balance;
+        uint r = alice.account.balance;
+        assert(r == 101);
     }
 
-    function storageFieldAddAssign() public returns (uint r) {
+    function storageFieldAddAssign() public {
         alice.age = 30;
         alice.age += 4;
-        r = alice.age;
+        uint r = alice.age;
+        assert(r == 34);
     }
 
-    function storageFieldCopyStruct() public returns (uint r) {
+    function storageFieldCopyStruct() public {
         bob.account.balance = 11;
         Account storage acc = bob.account;
         alice.account = acc;
-        r = alice.account.balance;
+        uint r = alice.account.balance;
+        assert(r == 11);
     }
 
-    function storageFieldCopyValueField() public returns (uint r) {
+    function storageFieldCopyValueField() public {
         bob.age = 30;
         alice.age = bob.age;
-        r = alice.age;
+        uint r = alice.age;
+        assert(r == 30);
     }
 
-    function storageFieldDeepDivAssign() public returns (uint r) {
+    function storageFieldDeepDivAssign() public {
         alice.account.balance = 36;
         alice.account.balance /= 4;
-        r = alice.account.balance;
+        uint r = alice.account.balance;
+        assert(r == 9);
     }
 
-    function storageFieldDeepModAssign() public returns (uint r) {
+    function storageFieldDeepModAssign() public {
         alice.account.balance = 37;
         alice.account.balance %= 4;
-        r = alice.account.balance;
+        uint r = alice.account.balance;
+        assert(r == 1);
     }
 
-    function storageFieldDeepMulAssign() public returns (uint r) {
+    function storageFieldDeepMulAssign() public {
         alice.account.balance = 8;
         alice.account.balance *= 3;
-        r = alice.account.balance;
+        uint r = alice.account.balance;
+        assert(r == 24);
     }
 
-    function storageFieldDeepSubAssign() public returns (uint r) {
+    function storageFieldDeepSubAssign() public {
         alice.account.balance = 30;
         alice.account.balance -= 4;
-        r = alice.account.balance;
+        uint r = alice.account.balance;
+        assert(r == 26);
     }
 
-    function storageFieldDeepWriteRead() public returns (uint r) {
+    function storageFieldDeepWriteRead() public {
         alice.account.balance = 34;
-        r = alice.account.balance;
+        uint r = alice.account.balance;
+        assert(r == 34);
     }
 
-    function storageFieldDelete() public returns (uint r) {
+    function storageFieldDelete() public {
         alice.age = 30;
         delete alice.age;
-        r = alice.age;
+        uint r = alice.age;
+        assert(r == 0);
     }
 
-    function storageFieldDivAssign() public returns (uint r) {
+    function storageFieldDivAssign() public {
         alice.age = 30;
         alice.age /= 5;
-        r = alice.age;
+        uint r = alice.age;
+        assert(r == 6);
     }
 
-    function storageFieldModAssign() public returns (uint r) {
+    function storageFieldModAssign() public {
         alice.age = 30;
         alice.age %= 7;
-        r = alice.age;
+        uint r = alice.age;
+        assert(r == 2);
     }
 
-    function storageFieldMulAssign() public returns (uint r) {
+    function storageFieldMulAssign() public {
         alice.age = 7;
         alice.age *= 4;
-        r = alice.age;
+        uint r = alice.age;
+        assert(r == 28);
     }
 
-    function storageFieldPostdecrementAssign() public returns (uint r) {
+    function storageFieldPostdecrementAssign() public {
         alice.age = 30;
-        r = alice.age--;
+        uint r = alice.age--;
+        assert(r == 30);
     }
 
-    function storageFieldPostdecrement() public returns (uint r) {
+    function storageFieldPostdecrement() public {
         alice.age = 30;
         alice.age--;
-        r = alice.age;
+        uint r = alice.age;
+        assert(r == 29);
     }
 
-    function storageFieldPostincrementAssign() public returns (uint r) {
+    function storageFieldPostincrementAssign() public {
         alice.age = 30;
-        r = alice.age++;
+        uint r = alice.age++;
+        assert(r == 30);
     }
 
-    function storageFieldPostincrement() public returns (uint r) {
+    function storageFieldPostincrement() public {
         alice.age = 30;
         alice.age++;
-        r = alice.age;
+        uint r = alice.age;
+        assert(r == 31);
     }
 
-    function storageFieldPredecrementAssign() public returns (uint r) {
+    function storageFieldPredecrementAssign() public {
         alice.age = 30;
-        r = --alice.age;
+        uint r = --alice.age;
+        assert(r == 29);
     }
 
-    function storageFieldPredecrement() public returns (uint r) {
+    function storageFieldPredecrement() public {
         alice.age = 30;
         --alice.age;
-        r = alice.age;
+        uint r = alice.age;
+        assert(r == 29);
     }
 
-    function storageFieldPreincrementAssign() public returns (uint r) {
+    function storageFieldPreincrementAssign() public {
         alice.age = 30;
-        r = ++alice.age;
+        uint r = ++alice.age;
+        assert(r == 31);
     }
 
-    function storageFieldPreincrement() public returns (uint r) {
+    function storageFieldPreincrement() public {
         alice.age = 30;
         ++alice.age;
-        r = alice.age;
+        uint r = alice.age;
+        assert(r == 31);
     }
 
-    function storageFieldReadBindLocal() public returns (uint r) {
+    function storageFieldReadBindLocal() public {
         Account storage acc = alice.account;
         bob.account.balance = 42;
         acc = bob.account;
-        r = acc.balance;
+        uint r = acc.balance;
+        assert(r == 42);
     }
 
-    function storageFieldReadStoreRoot() public returns (uint r) {
+    function storageFieldReadStoreRoot() public {
         alice.age = 17;
         total = alice.age;
-        r = total;
+        uint r = total;
+        assert(r == 17);
     }
 
-    function storageFieldSubAssign() public returns (uint r) {
+    function storageFieldSubAssign() public {
         alice.age = 30;
         alice.age -= 5;
-        r = alice.age;
+        uint r = alice.age;
+        assert(r == 25);
     }
 
-    function storageFieldWriteCaptureSrc() public returns (uint r) {
+    function storageFieldWriteCaptureSrc() public {
         bob.account.balance = 11;
         alice.account = bob.account;
-        r = alice.account.balance;
+        uint r = alice.account.balance;
+        assert(r == 11);
     }
 
-    function storageFieldWriteRhsCapture(uint x, uint y, uint z) public returns (uint r) {
+    function storageFieldWriteRhsCapture() public {
+        uint x = 1;
+        uint y = 2;
+        uint z = 3;
         alice.age = x + y*z;
-        r = alice.age;
+        uint r = alice.age;
+        assert(r == 7);
     }
 
-    function storageIndexCopyValue(uint i, uint j) public returns (uint r) {
+    /// @custom:key box
+    function storageIndexCopyValue() public {
+        require(1 < values.length);
+        uint i = 5;
+        uint j = 1;
         values[1] = 8;
         balances[i] = values[j];
-        r = balances[5];
+        uint r = balances[5];
+        assert(r == 8);
     }
 
+    /// @custom:key box
     function storageIndexCopysourceAfterPush() public {
+        require(matrix.length == 0);
         uint[][] storage m = matrix;
         m.push();
         m[0] = values;
+        // the .key postcondition compared the whole matrix[0] subtree against values, which has
+        // no Solidity form; reading matrix[0].length back does not discharge either, so this
+        // only checks that the copy-after-push executes
+        assert(matrix.length == 1);
     }
 
-    function storageIndexDecomposeAfterPush() public returns (uint r) {
+    /// @custom:key box
+    function storageIndexDecomposeAfterPush() public {
+        require(0 < matrix.length);
+        require(matrix[0].length == 0);
         matrix[0].push(100);
         matrix[0][0] = 7;
-        r = matrix[0][0];
+        uint r = matrix[0][0];
+        assert(r == 7);
     }
 
-    function storageIndexDeleteMappingBool() public returns (bool r) {
+    function storageIndexDeleteMappingBool() public {
         flags[1] = true;
         delete flags[1];
-        r = flags[1];
+        bool r = flags[1];
+        assert(!r);
     }
 
     function storageIndexDeleteMappingStruct() public {
         delete people[1];
+        assert(people[1].age == 0);
+        assert(people[1].account.balance == 0);
     }
 
-    function storageIndexDeleteNseIndex(uint k) public returns (uint r) {
+    function storageIndexDeleteNseIndex() public {
+        uint k = 2;
         balances[3] = 7;
         delete balances[k+1];
-        r = balances[3];
+        uint r = balances[3];
+        assert(r == 0);
     }
 
-    function storageIndexDelete() public returns (uint r) {
+    /// @custom:key box
+    function storageIndexDelete() public {
+        require(1 < values.length);
         values[1] = 7;
         delete values[1];
-        r = values[1];
+        uint r = values[1];
+        assert(r == 0);
     }
 
-    function storageIndexDivAssign() public returns (uint r) {
+    /// @custom:key box
+    function storageIndexDivAssign() public {
+        require(1 < values.length);
         values[1] = 40;
         values[1] /= 8;
-        r = values[1];
+        uint r = values[1];
+        assert(r == 5);
     }
 
-    function storageIndexModAssign() public returns (uint r) {
+    /// @custom:key box
+    function storageIndexModAssign() public {
+        require(1 < values.length);
         values[1] = 40;
         values[1] %= 6;
-        r = values[1];
+        uint r = values[1];
+        assert(r == 4);
     }
 
-    function storageIndexMulAssign() public returns (uint r) {
+    /// @custom:key box
+    function storageIndexMulAssign() public {
+        require(1 < values.length);
         values[1] = 5;
         values[1] *= 6;
-        r = values[1];
+        uint r = values[1];
+        assert(r == 30);
     }
 
-    function storageIndexMultipleWrites() public returns (uint r) {
+    /// @custom:key box
+    function storageIndexMultipleWrites() public {
+        require(3 < values.length);
         values[3] = 5;
         values[3] = 8;
-        r = values[3];
+        uint r = values[3];
+        assert(r == 8);
     }
 
-    function storageIndexPostdecrementAssign() public returns (uint r) {
+    /// @custom:key box
+    function storageIndexPostdecrementAssign() public {
+        require(1 < values.length);
         values[1] = 40;
-        r = values[1]--;
+        uint r = values[1]--;
+        assert(r == 40);
     }
 
-    function storageIndexPostdecrement() public returns (uint r) {
+    /// @custom:key box
+    function storageIndexPostdecrement() public {
+        require(1 < values.length);
         values[1] = 40;
         values[1]--;
-        r = values[1];
+        uint r = values[1];
+        assert(r == 39);
     }
 
-    function storageIndexPostincrementAssign() public returns (uint r) {
+    /// @custom:key box
+    function storageIndexPostincrementAssign() public {
+        require(1 < values.length);
         values[1] = 40;
-        r = values[1]++;
+        uint r = values[1]++;
+        assert(r == 40);
     }
 
-    function storageIndexPostincrement() public returns (uint r) {
+    /// @custom:key box
+    function storageIndexPostincrement() public {
+        require(1 < values.length);
         values[1] = 40;
         values[1]++;
-        r = values[1];
+        uint r = values[1];
+        assert(r == 41);
     }
 
-    function storageIndexPredecrementAssign() public returns (uint r) {
+    /// @custom:key box
+    function storageIndexPredecrementAssign() public {
+        require(1 < values.length);
         values[1] = 40;
-        r = --values[1];
+        uint r = --values[1];
+        assert(r == 39);
     }
 
-    function storageIndexPredecrement() public returns (uint r) {
+    /// @custom:key box
+    function storageIndexPredecrement() public {
+        require(1 < values.length);
         values[1] = 40;
         --values[1];
-        r = values[1];
+        uint r = values[1];
+        assert(r == 39);
     }
 
-    function storageIndexPreincrementAssign() public returns (uint r) {
+    /// @custom:key box
+    function storageIndexPreincrementAssign() public {
+        require(1 < values.length);
         values[1] = 40;
-        r = ++values[1];
+        uint r = ++values[1];
+        assert(r == 41);
     }
 
-    function storageIndexPreincrement() public returns (uint r) {
+    /// @custom:key box
+    function storageIndexPreincrement() public {
+        require(1 < values.length);
         values[1] = 40;
         ++values[1];
-        r = values[1];
+        uint r = values[1];
+        assert(r == 41);
     }
 
-    function storageIndexReadMappingStoreRoot(uint k) public returns (uint r) {
+    function storageIndexReadMappingStoreRoot() public {
+        uint k = 1;
         balances[1] = 42;
         total = balances[k];
-        r = total;
+        uint r = total;
+        assert(r == 42);
     }
 
-    function storageIndexReadNseIndex(uint i) public returns (uint r) {
+    /// @custom:key box
+    function storageIndexReadNseIndex() public {
+        require(2 < values.length);
+        uint i = 1;
         values[2] = 9;
-        r = values[i+1];
+        uint r = values[i+1];
+        assert(r == 9);
     }
 
-    function storageIndexSubAssign() public returns (uint r) {
+    /// @custom:key box
+    function storageIndexSubAssign() public {
+        require(1 < values.length);
         values[1] = 40;
         values[1] -= 8;
-        r = values[1];
+        uint r = values[1];
+        assert(r == 32);
     }
 
-    function storageIndexWriteNseChain(uint i, uint x, uint y) public returns (uint r) {
+    function storageIndexWriteNseChain() public {
+        uint i = 2;
+        uint x = 3;
+        uint y = 4;
         balances[i+1] = x*y + 3;
-        r = balances[3];
+        uint r = balances[3];
+        assert(r == 15);
     }
 
-    function storageLocalDeclSkip() public returns (uint r) {
+    function storageLocalDeclSkip() public {
         Person storage p;
         age = 7;
-        r = age;
+        uint r = age;
+        assert(r == 7);
     }
 
-    function storageMatrixNseIndex(uint i, uint j, uint x, uint y) public {
+    /// @custom:key box
+    function storageMatrixNseIndex() public {
+        require(2 < matrix.length);
+        require(3 < matrix[2].length);
+        uint i = 1;
+        uint j = 2;
+        uint x = 5;
+        uint y = 6;
         matrix[i+1][j+1] = x + y;
+        assert(matrix[2][3] == 11);
     }
 
-    function storageMatrixWriteRead() public returns (uint r) {
+    /// @custom:key box
+    function storageMatrixWriteRead() public {
+        require(2 < matrix.length);
+        require(3 < matrix[2].length);
         matrix[2][3] = 99;
-        r = matrix[2][3];
+        uint r = matrix[2][3];
+        assert(r == 99);
     }
 
+    /// @custom:key box
     function storagePopAfterPush() public {
+        require(values.length == 0);
         values.push();
         values.pop();
+        assert(values.length == 0);
     }
 
-    function storagePopEmptyBox() public {
-        values.pop();
-    }
-
+    /// @custom:key box
     function storagePopNonempty() public {
+        require(values.length == 2);
         values.pop();
-    }
-
-    function storagePushEmpty() public {
+        assert(values.length == 1);
+        // the popped slot is only observable again once it is back in bounds
         values.push();
+        assert(values[1] == 0);
     }
 
+    /// @custom:key box
+    function storagePushEmpty() public {
+        require(values.length == 2);
+        values.push();
+        assert(values.length == 3);
+    }
+
+    /// @custom:key box
     function storagePushLocalBind() public {
+        require(persons.length == 2);
         Person storage p;
         p = persons.push();
+        assert(persons.length == 3);
     }
 
-    function storagePushNonsimpleArg(uint x, uint y) public {
+    /// @custom:key box
+    function storagePushNonsimpleArg() public {
+        require(values.length == 2);
+        uint x = 40;
+        uint y = 2;
         values.push(x + y);
+        assert(values[2] == 42);
+        assert(values.length == 3);
     }
 
+    /// @custom:key box
     function storagePushReturnAssign() public {
+        require(values.length == 2);
         values.push() = 42;
+        assert(values[2] == 42);
+        assert(values.length == 3);
     }
 
-    function storageRootAddAssign() public returns (uint r) {
+    function storageRootAddAssign() public {
         age = 10;
         age += 5;
-        r = age;
+        uint r = age;
+        assert(r == 15);
     }
 
-    function storageRootCopySource() public returns (uint r) {
+    function storageRootCopySource() public {
         age = 34;
         balance = age;
-        r = balance;
+        uint r = balance;
+        assert(r == 34);
     }
 
-    function storageRootCopyStruct() public returns (uint r) {
+    function storageRootCopyStruct() public {
         bob.age = 7;
         alice = bob;
-        r = alice.age;
+        uint r = alice.age;
+        assert(r == 7);
     }
 
-    function storageRootDeleteStruct() public returns (uint r) {
+    function storageRootDeleteStruct() public {
         alice.age = 30;
         delete alice;
-        r = alice.age;
+        uint r = alice.age;
+        assert(r == 0);
     }
 
-    function storageRootDelete() public returns (uint r) {
+    function storageRootDelete() public {
         age = 10;
         delete age;
-        r = age;
+        uint r = age;
+        assert(r == 0);
     }
 
-    function storageRootDisjoint() public returns (uint r) {
+    function storageRootDisjoint() public {
         age = 7;
         balance = 9;
-        r = age;
+        uint r = age;
+        assert(r == 7);
     }
 
-    function storageRootDivAssign() public returns (uint r) {
+    function storageRootDivAssign() public {
         age = 20;
         age /= 4;
-        r = age;
+        uint r = age;
+        assert(r == 5);
     }
 
-    function storageRootModAssign() public returns (uint r) {
+    function storageRootModAssign() public {
         age = 17;
         age %= 5;
-        r = age;
+        uint r = age;
+        assert(r == 2);
     }
 
-    function storageRootMulAssign() public returns (uint r) {
+    function storageRootMulAssign() public {
         age = 6;
         age *= 3;
-        r = age;
+        uint r = age;
+        assert(r == 18);
     }
 
-    function storageRootMultipleWrites() public returns (uint r) {
+    function storageRootMultipleWrites() public {
         age = 1;
         age = 2;
-        r = age;
+        uint r = age;
+        assert(r == 2);
     }
 
-    function storageRootPostdecrementAssign() public returns (uint r) {
+    function storageRootPostdecrementAssign() public {
         age = 10;
-        r = age--;
+        uint r = age--;
+        assert(r == 10);
     }
 
-    function storageRootPostincrementAssign() public returns (uint r) {
+    function storageRootPostincrementAssign() public {
         age = 10;
-        r = age++;
+        uint r = age++;
+        assert(r == 10);
     }
 
-    function storageRootPostincrement() public returns (uint r) {
+    function storageRootPostincrement() public {
         age = 10;
         age++;
-        r = age;
+        uint r = age;
+        assert(r == 11);
     }
 
-    function storageRootPredecrement() public returns (uint r) {
+    function storageRootPredecrement() public {
         age = 10;
         --age;
-        r = age;
+        uint r = age;
+        assert(r == 9);
     }
 
-    function storageRootPreincrementAssign() public returns (uint r) {
+    function storageRootPreincrementAssign() public {
         age = 10;
-        r = ++age;
+        uint r = ++age;
+        assert(r == 11);
     }
 
-    function storageRootPreincrement() public returns (uint r) {
+    function storageRootPreincrement() public {
         age = 10;
         ++age;
-        r = age;
+        uint r = age;
+        assert(r == 11);
     }
 
-    function storageRootSubAssign() public returns (uint r) {
+    function storageRootSubAssign() public {
         age = 10;
         age -= 4;
-        r = age;
+        uint r = age;
+        assert(r == 6);
     }
 
-    function storageRootWriteRhsCapture(uint x, uint y, uint z) public returns (uint r) {
+    function storageRootWriteRhsCapture() public {
+        uint x = 1;
+        uint y = 2;
+        uint z = 3;
         total = x + y*z;
-        r = total;
+        uint r = total;
+        assert(r == 7);
     }
 
-    function storageToMemory() public returns (uint r) {
+    /// @custom:key fresh-memory
+    function storageToMemory() public {
         alice.age = 27;
         Person memory carol = alice;
         alice.age = 30;
-        r = carol.age;
+        uint r = carol.age;
+        assert(r == 27);
     }
 
-    function subtractionSimple() public returns (uint r) {
-        r = 7 - 2;
+    function subtractionSimple() public {
+        uint r = 7 - 2;
+        assert(r == 5);
     }
 
-    function subtractionStorageRead() public returns (uint r) {
+    function subtractionStorageRead() public {
         alice.age = 10;
-        r = alice.age - 3;
+        uint r = alice.age - 3;
+        assert(r == 7);
     }
 
-    function unaryMinusSimple(int x) public returns (int r) {
-        r = -x;
+    function unaryMinusSimple() public {
+        int x = 5;
+        int r = -x;
+        // a negative literal directly inside the assert condition does not discharge
+        int expected = -5;
+        assert(r == expected);
     }
 
+    /// @custom:key box
     function testDeepPopDoesNotResetMappingMember() public {
+        require(ledgerUses.length == 0);
         ledgerUses.push();
         ledgerUses[0].ledger.balances[1] = 10;
         ledgerUses.pop();
@@ -743,6 +963,7 @@ contract TestSuite {
         assert(ledgerUses[0].ledger.balances[1] == 10);
     }
 
+    /// @custom:key fresh-memory
     function testMemoryAliasing() public {
         Person memory carol;
         Account memory carolAcc = carol.account;
@@ -750,6 +971,7 @@ contract TestSuite {
         assert(carol.account.balance == 100);
     }
 
+    /// @custom:key fresh-memory
     function testMemoryDeleteAlias() public {
         Person memory carol;
         Account memory carolAcc = carol.account;
@@ -759,6 +981,7 @@ contract TestSuite {
         assert(b == 0);
     }
 
+    /// @custom:key fresh-memory
     function testMemoryDeleteIdentityFieldFreshensSlot() public {
         Person memory carol;
         Account memory carolAcc = carol.account;
@@ -768,6 +991,7 @@ contract TestSuite {
         assert(carolAcc.balance == 100);
     }
 
+    /// @custom:key fresh-memory
     function testMemoryDeletePrimitiveField() public {
         Person memory carol;
         carol.age = 20;
@@ -775,6 +999,7 @@ contract TestSuite {
         assert(carol.age == 0);
     }
 
+    /// @custom:key fresh-memory
     function testMemoryFieldShallowCopy() public {
         Person memory carol;
         Person memory david;
@@ -785,6 +1010,7 @@ contract TestSuite {
         assert(carol.account.balance == 60);
     }
 
+    /// @custom:key fresh-memory
     function testMemoryRootAlias() public {
         Person memory carol;
         Person memory david;
@@ -795,6 +1021,7 @@ contract TestSuite {
         assert(carol.age == 41);
     }
 
+    /// @custom:key fresh-memory
     function testMemoryRootDeleteRebindsOnlyLocal() public {
         Person memory carol;
         Person memory carolAlias = carol;
@@ -804,6 +1031,7 @@ contract TestSuite {
         assert(carolAlias.age == 33);
     }
 
+    /// @custom:key fresh-memory
     function testMemoryToStorageCopyComplexSource() public {
         Person memory carol;
         carol.account.balance = 50;
@@ -812,6 +1040,7 @@ contract TestSuite {
         assert(alice.account.balance == 50);
     }
 
+    /// @custom:key fresh-memory
     function testMemoryToStorageCopyComplexTarget() public {
         Token memory carolToken;
         carolToken.value = 99;
@@ -820,6 +1049,7 @@ contract TestSuite {
         assert(alice.account.token.value == 99);
     }
 
+    /// @custom:key fresh-memory
     function testMemoryToStorageCopyField() public {
         Account memory carolAcc;
         carolAcc.balance = 50;
@@ -828,6 +1058,7 @@ contract TestSuite {
         assert(alice.account.balance == 50);
     }
 
+    /// @custom:key fresh-memory
     function testMemoryToStorageCopyRoot() public {
         Person memory carol;
         carol.age = 42;
@@ -836,6 +1067,7 @@ contract TestSuite {
         assert(alice.age == 42);
     }
 
+    /// @custom:key fresh-memory
     function testMemoryTokenArrayAuxiliaryCases() public {
         Token[] memory carolTokens = new Token[](3);
         Token[] memory davidTokens = new Token[](3);
@@ -852,6 +1084,7 @@ contract TestSuite {
         assert(carolTokens[1].value == 0);
     }
 
+    /// @custom:key fresh-memory
     function testMemoryUintArrayAuxiliaryCases() public {
         uint[] memory carolValues = new uint[](3);
         uint i = 0;
@@ -862,6 +1095,7 @@ contract TestSuite {
         assert(carolValues[1] == 0);
     }
 
+    /// @custom:key fresh-memory
     function testMemoryUintArrayPostdecrement() public {
         uint[] memory carolValues = new uint[](3);
         uint i = 1;
@@ -873,6 +1107,7 @@ contract TestSuite {
         assert(carolValues[1] == 0);
     }
 
+    /// @custom:key fresh-memory
     function testMemoryUintArrayPostincrement() public {
         uint[] memory carolValues = new uint[](3);
         uint i = 0;
@@ -884,6 +1119,7 @@ contract TestSuite {
         assert(carolValues[0] == 0);
     }
 
+    /// @custom:key fresh-memory
     function testMemoryUintArrayPredecrement() public {
         uint[] memory carolValues = new uint[](3);
         uint i = 1;
@@ -913,21 +1149,27 @@ contract TestSuite {
         assert(alice.account.token.value == 3);
     }
 
+    /// @custom:key box
     function testStorageArrayReadWrite() public {
+        require(tokens.length == 0);
         tokens.push();
         tokens[0].value = 100;
         uint v = tokens[0].value;
         assert(v == 100);
     }
 
+    /// @custom:key box
     function testStorageComplexReceiverPushFieldLvalue() public {
+        require(bucket.tokens.length == 0);
         bucket.tokens.push().value = 5;
         Token[] storage bt = bucket.tokens;
         assert(bt.length == 1);
         assert(bt[0].value == 5);
     }
 
+    /// @custom:key box
     function testStorageComplexReceiverPushLvalueCopy() public {
+        require(bucket.tokens.length == 0);
         alice.account.token.value = 7;
         Token storage tokRef = alice.account.token;
         bucket.tokens.push() = tokRef;
@@ -946,7 +1188,9 @@ contract TestSuite {
         assert(v == 0);
     }
 
+    /// @custom:key box
     function testStorageEvaluationOrder() public {
+        require(a.length == 0);
         uint i = 0;
         a.push(100);
         a.push(100);
@@ -988,20 +1232,26 @@ contract TestSuite {
         assert(accountMap[2].token.value == 7);
     }
 
+    /// @custom:key box
     function testStorageNestedPushReturnAlias() public {
+        require(persons.length == 0);
         Account storage acc = persons.push().account;
         acc.balance = 50;
         assert(persons.length == 1);
         assert(acc.balance == 50);
     }
 
+    /// @custom:key box
     function testStoragePushFieldLvalue() public {
+        require(tokens.length == 0);
         tokens.push().value = 11;
         assert(tokens.length == 1);
         assert(tokens[0].value == 11);
     }
 
+    /// @custom:key box
     function testStoragePushLvalueCopiesStorageSource() public {
+        require(tokens.length == 0);
         alice.account.token.value = 9;
         Token storage storageRef = alice.account.token;
         tokens.push() = storageRef;
@@ -1009,13 +1259,17 @@ contract TestSuite {
         assert(tokens[0].value == 9);
     }
 
+    /// @custom:key box
     function testStoragePushLvaluePrimitive() public {
+        require(values.length == 0);
         values.push() = 77;
         assert(values.length == 1);
         assert(values[0] == 77);
     }
 
+    /// @custom:key box
     function testStoragePushReturnAlias() public {
+        require(tokens.length == 0);
         Token storage t = tokens.push();
         t.value = 99;
         assert(tokens.length == 1);
@@ -1045,6 +1299,7 @@ contract TestSuite {
         assert(ledger.balances[2] == 20);
     }
 
+    /// @custom:key fresh-memory
     function testStorageToMemoryCopyComplexPath() public {
         alice.account.token.value = 17;
         Token memory t = alice.account.token;
@@ -1052,6 +1307,7 @@ contract TestSuite {
         assert(t.value == 17);
     }
 
+    /// @custom:key fresh-memory
     function testStorageToMemoryCopyField() public {
         alice.account.balance = 10;
         Account memory acc = alice.account;
@@ -1060,6 +1316,7 @@ contract TestSuite {
         assert(v == 10);
     }
 
+    /// @custom:key fresh-memory
     function testStorageToMemoryCopyRoot() public {
         alice.age = 25;
         Person memory carol = alice;
@@ -1078,36 +1335,37 @@ contract TestSuite {
 
     // ── split: one function per modality ──
 
-    function storageFieldDecompositionWrite() public {
+    function storageFieldDecomposition() public {
         alice.account.balance = 34;
+        assert(alice.account.balance == 34);
+        uint r = alice.account.balance;
+        assert(r == 34);
     }
 
-    function storageFieldDecompositionRead() public returns (uint r) {
-        r = alice.account.balance;
-    }
-
-    function storageFieldDeepValueWrite() public {
+    function storageFieldDeepValue() public {
         alice.account.token.value = 7;
+        assert(alice.account.token.value == 7);
+        uint r = alice.account.token.value;
+        assert(r == 7);
     }
 
-    function storageFieldDeepValueRead() public returns (uint r) {
-        r = alice.account.token.value;
-    }
-
-    function storageIndexDecompositionWrite() public {
+    /// @custom:key box
+    function storageIndexDecomposition() public {
+        require(2 < matrix.length);
+        require(3 < matrix[2].length);
         matrix[2][3] = 34;
+        assert(matrix[2][3] == 34);
+        uint r = matrix[2][3];
+        assert(r == 34);
     }
 
-    function storageIndexDecompositionRead() public returns (uint r) {
-        r = matrix[2][3];
-    }
-
-    function storageIndexRootArrayWrite() public {
+    /// @custom:key box
+    function storageIndexRootArray() public {
+        require(1 < values.length);
         values[1] = 42;
-    }
-
-    function storageIndexRootArrayRead() public returns (uint r) {
-        r = values[1];
+        assert(values[1] == 42);
+        uint r = values[1];
+        assert(r == 42);
     }
 
     // ── shared: both conjuncts run the same program ──
@@ -1115,15 +1373,20 @@ contract TestSuite {
     function storageFieldDisjointFields() public {
         alice.account.balance = 1;
         alice.account.token.value = 2;
+        assert(alice.account.balance == 1);
+        assert(alice.account.token.value == 2);
     }
 
     function storageFieldDisjointRoots() public {
         alice.age = 1;
         bob.age = 2;
+        assert(alice.age == 1);
+        assert(bob.age == 2);
     }
 
     // ── several observations: asserted in the body ──
 
+    /// @custom:key fresh-memory
     function memoryAssignForms() public {
         alice.age = 27;
         Person memory carol;
@@ -1138,6 +1401,7 @@ contract TestSuite {
         assert(r2 == 33);
     }
 
+    /// @custom:key fresh-memory
     function memoryDelete() public {
         Person memory carol;
         Account memory acc = carol.account;

@@ -4,7 +4,6 @@
 package org.key_project.solidity.taclets;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.stream.Stream;
 
 import org.key_project.solidity.proof.Proof;
@@ -15,26 +14,26 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.key_project.solidity.testutil.SolidityExampleTests.loadAndProve;
+import static org.key_project.solidity.testutil.SolidityExampleTests.proveTestSuiteFunction;
 
-/// Exercises the user-visible pre-licenciate-paper taclet starters. These examples live in the
-/// filesystem examples module, not in the test resources scanned by [RulesTest].
+/// Exercises the user-visible pre-licenciate-paper taclet starters: the focused, one-rule-each
+/// functions of `keyext.solidity.examples/TestSuite.sol`.
 ///
-/// Each problem calls a single function of `keyext.solidity.examples/TestSuite.sol` in a modality.
-/// The `net-*` family still inlines its program, because `msg.*` and `.transfer` are not yet
-/// supported by the solc-JSON parsing path.
+/// There are no `.key` problem files. The loader synthesizes the obligation for each function —
+/// a call in a modality with postcondition `true` — and the `assert` statements in the body carry
+/// the specification. The end-to-end functions (`test*`) run in [PaperTestExamplesTest].
 public class TacletStarterExamplesTest {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("examples")
-    void tacletStarterExampleCloses(String name, Path file) throws Exception {
-        Proof proof = loadAndProve(file, 10000, SolidityExampleTests.KEEP_TIMEOUT);
+    void tacletStarterExampleCloses(String function) throws Exception {
+        Proof proof = proveTestSuiteFunction(function, 10000, SolidityExampleTests.KEEP_TIMEOUT);
         assertTrue(proof.closed(),
-            () -> name + " should close; open goals: " + proof.openGoals().size()
+            () -> function + " should close; open goals: " + proof.openGoals().size()
                 + "; first open goal: " + proof.openGoals().head().sequent());
     }
 
     static Stream<Arguments> examples() throws IOException {
-        return SolidityExampleTests.exampleProblems("taclets");
+        return SolidityExampleTests.testSuiteFunctions(name -> !name.startsWith("test"));
     }
 }

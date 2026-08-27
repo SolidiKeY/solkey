@@ -4,11 +4,10 @@
 package org.key_project.solidity.testutil;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.key_project.logic.PosInTerm;
@@ -22,6 +21,7 @@ import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.proof.Proof;
+import org.key_project.solidity.proof.init.SolidityProblemSynthesizer;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
 import org.key_project.solidity.rule.TacletApp;
 import org.key_project.util.collection.ImmutableList;
@@ -69,37 +69,46 @@ public final class SolidityExampleTests {
         return Files.exists(p) ? p : Path.of("../keyext.solidity.examples").resolve(subdir);
     }
 
-    /// Every `.key` problem in an example directory, as `(fileName, path)` arguments sorted by
-    /// name. Enumerating beats a hand-maintained list: a new example is picked up automatically,
-    /// and one cannot silently drop out of the suite.
-    public static Stream<Arguments> exampleProblems(String subdir) throws IOException {
-        Path dir = examplesDir(subdir);
-        assertTrue(Files.isDirectory(dir), "example directory must exist: " + dir.toAbsolutePath());
-        try (var entries = Files.list(dir)) {
-            List<Path> problems = entries
-                    .filter(Files::isRegularFile)
-                    .filter(path -> path.getFileName().toString().endsWith(".key"))
-                    .filter(SolidityExampleTests::hasProofObligation)
-                    .sorted(Comparator.comparing(path -> path.getFileName().toString()))
-                    .toList();
-            assertTrue(!problems.isEmpty(), "no .key problems found in " + dir.toAbsolutePath());
-            return problems.stream()
-                    .map(path -> Arguments.of(path.getFileName().toString(), path));
-        }
+    /// The single contract the taclet examples live in. It has no `.key` problems beside it: the
+    /// loader synthesizes one obligation per function.
+    public static Path testSuite() {
+        return example(TEST_SUITE_CONTRACT + ".sol");
     }
 
-    private static boolean hasProofObligation(Path path) {
-        try {
-            return Files.readString(path).contains("\\problem");
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+    public static final String TEST_SUITE_CONTRACT = "TestSuite";
+
+    /// The functions of [#testSuite] an obligation can be generated for, matching `selector`, as
+    /// `(function)` arguments sorted by name. Enumerating beats a hand-maintained list: a new
+    /// example is picked up automatically, and one cannot silently drop out of the suite.
+    public static Stream<Arguments> testSuiteFunctions(Predicate<String> selector)
+            throws IOException {
+        List<String> functions =
+            SolidityProblemSynthesizer.provableFunctions(testSuite(), TEST_SUITE_CONTRACT)
+                    .stream()
+                    .filter(selector)
+                    .sorted()
+                    .toList();
+        assertTrue(!functions.isEmpty(),
+            "no matching functions in " + testSuite().toAbsolutePath());
+        return functions.stream().map(Arguments::of);
     }
 
     // --- loading and proving -------------------------------------------------------------------
 
     public static KeYEnvironment load(Path file) throws ProblemLoaderException {
         return KeYEnvironment.load(file);
+    }
+
+    /// Load the obligation for one function of a Solidity source, with no `.key` problem file.
+    public static KeYEnvironment load(Path solFile, String contract, String function)
+            throws ProblemLoaderException {
+        return KeYEnvironment.load(solFile, contract, function);
+    }
+
+    /// Load the obligation for one function of [#testSuite] and run automode on it.
+    public static Proof proveTestSuiteFunction(String function, int maxSteps, long timeout)
+            throws ProblemLoaderException {
+        return prove(load(testSuite(), TEST_SUITE_CONTRACT, function), maxSteps, timeout);
     }
 
     /// Run automode on the environment's loaded proof, optionally overriding the strategy's step

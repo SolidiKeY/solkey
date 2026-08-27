@@ -9,13 +9,49 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class SolcWrapper {
 
+    /// Identifies a contract file revision: the same path with the same size and modification
+    /// time yields the same AST, so the JSON can be reused instead of forking solc again.
+    private record ContractRevision(Path path, long size, long lastModified) {
+    }
+
+    private static final Map<ContractRevision, String> JSON_CACHE = new ConcurrentHashMap<>();
+
+    /// The solc AST JSON of `contractPath`, memoized per file revision.
+    ///
+    /// A single obligation forks solc twice — once to enumerate the contract's functions, once
+    /// while loading — and a suite run repeats that for every function of the same file.
     public static String getJsonSolidity(Path contractPath) throws IOException {
+        ContractRevision revision = revisionOf(contractPath);
+        if (revision == null) {
+            return runSolcOn(contractPath);
+        }
+        String cached = JSON_CACHE.get(revision);
+        if (cached == null) {
+            cached = runSolcOn(contractPath);
+            JSON_CACHE.put(revision, cached);
+        }
+        return cached;
+    }
+
+    private static ContractRevision revisionOf(Path contractPath) {
+        try {
+            Path real = contractPath.toRealPath();
+            return new ContractRevision(real, Files.size(real),
+                Files.getLastModifiedTime(real).toMillis());
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    private static String runSolcOn(Path contractPath) throws IOException {
         String fileName = contractPath.toAbsolutePath().toString();
         ProcessBuilder pb = new ProcessBuilder(getSolcCommand(), "--ast-compact-json", fileName);
         Process proc = pb.start();

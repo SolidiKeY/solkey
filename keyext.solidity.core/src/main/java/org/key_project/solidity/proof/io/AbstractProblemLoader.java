@@ -70,6 +70,9 @@ public abstract class AbstractProblemLoader {
     /// and not shown to the user.
     private boolean ignoreWarnings = false;
 
+    /// Which function to prove when `file` is a `.sol` source; `null` to infer it.
+    private final @Nullable SolidityProblemSpec solidityProblem;
+
     /// Constructor.
     ///
     /// @param file The file or folder to load.
@@ -82,11 +85,22 @@ public abstract class AbstractProblemLoader {
     protected AbstractProblemLoader(Path file,
             @Nullable List<Path> includes, @Nullable Profile profileOfNewProofs,
             @Nullable ProblemLoaderControl control) {
+        this(file, includes, profileOfNewProofs, control, null);
+    }
+
+    /// Constructor selecting a function of a Solidity source file.
+    ///
+    /// @param solidityProblem which function of a `.sol` `file` to prove; `null` to infer it
+    protected AbstractProblemLoader(Path file,
+            @Nullable List<Path> includes, @Nullable Profile profileOfNewProofs,
+            @Nullable ProblemLoaderControl control,
+            @Nullable SolidityProblemSpec solidityProblem) {
         this.file = file;
         this.control = control;
         this.profileOfNewProofs =
             profileOfNewProofs != null ? profileOfNewProofs : SolidityProfile.getDefaultInstance();
         this.includes = includes;
+        this.solidityProblem = solidityProblem;
     }
 
     protected void setProof(Proof proof) {
@@ -219,16 +233,14 @@ public abstract class AbstractProblemLoader {
         fileRepo.setBaseDir(file);
 
         if (filename.endsWith(".sol")) {
-            // solidity file, probably enriched by specifications
-            SLEnvInput ret = null;
-            if (file.getParent() == null) {
-                ret = new SLEnvInput(Paths.get("."), profileOfNewProofs, includes);
-            } else {
-                ret = new SLEnvInput(file.getParent().toAbsolutePath(), profileOfNewProofs,
-                    includes);
-            }
-            ret.setSolidityFile(file.toAbsolutePath());
-            return ret;
+            // a Solidity source carries no \problem, so synthesize one for the selected function
+            SolidityProblemSpec spec =
+                SolidityProblemSynthesizer.resolve(file, solidityProblem);
+            return new KeYUserProblemFile(spec.contract() + "." + spec.function(),
+                RuleSourceFactory.fromString(
+                    SolidityProblemSynthesizer.problemText(file, spec),
+                    SolidityProblemSynthesizer.anchor(file, spec)),
+                profileOfNewProofs, fileRepo);
         } else if (filename.endsWith(".zproof")) { // zipped proof package
             /*
              * TODO: Currently it is not possible to load proof bundles with multiple proofs. This

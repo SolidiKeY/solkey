@@ -12,6 +12,7 @@ import org.key_project.solidity.common.Profile;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.init.InitConfig;
+import org.key_project.solidity.proof.init.SolidityProblemSpec;
 import org.key_project.solidity.proof.io.AbstractProblemLoader;
 import org.key_project.solidity.proof.io.AbstractProblemLoader.ReplayResult;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
@@ -115,9 +116,25 @@ public class KeYEnvironment<U extends UserInterfaceControl> {
             @Nullable Properties poPropertiesToForce,
             @Nullable Consumer<Proof> callbackProofLoaded,
             boolean forceNewProfileOfNewProofs) throws ProblemLoaderException {
+        return load(profile, location, includes, poPropertiesToForce, callbackProofLoaded,
+            forceNewProfileOfNewProofs, null);
+    }
+
+    /// Loads the given location as
+    /// [#load(Profile,Path,List,Properties,Consumer,boolean)] does, selecting which function to
+    /// prove when `location` is a Solidity source rather than a problem file.
+    ///
+    /// @param solidityProblem the function of a `.sol` `location` to prove; `null` to infer it
+    public static KeYEnvironment<DefaultUserInterfaceControl> load(@Nullable Profile profile,
+            Path location,
+            @Nullable List<Path> includes,
+            @Nullable Properties poPropertiesToForce,
+            @Nullable Consumer<Proof> callbackProofLoaded,
+            boolean forceNewProfileOfNewProofs,
+            @Nullable SolidityProblemSpec solidityProblem) throws ProblemLoaderException {
         DefaultUserInterfaceControl ui = new DefaultUserInterfaceControl();
         AbstractProblemLoader loader = ui.load(profile, location, includes, poPropertiesToForce,
-            forceNewProfileOfNewProofs, callbackProofLoaded);
+            forceNewProfileOfNewProofs, callbackProofLoaded, solidityProblem);
         InitConfig initConfig = loader.getInitConfig();
 
         return new KeYEnvironment<>(ui, initConfig, loader.getProof(),
@@ -182,6 +199,20 @@ public class KeYEnvironment<U extends UserInterfaceControl> {
     public static KeYEnvironment<DefaultUserInterfaceControl> load(Path keyFile)
             throws ProblemLoaderException {
         return load(keyFile, null);
+    }
+
+    /// Loads the obligation for one function of a Solidity source file: the function is called in
+    /// a modality with postcondition `true`, and the `assert` statements in its body carry the
+    /// specification. No `.key` problem file is involved.
+    ///
+    /// @param solFile the `.sol` source to verify
+    /// @param contract the contract declaring `function`, or `null` if the file declares one
+    /// @param function the function to prove
+    /// @throws ProblemLoaderException Occurred Exception
+    public static KeYEnvironment<DefaultUserInterfaceControl> load(Path solFile,
+            @Nullable String contract, String function) throws ProblemLoaderException {
+        return load(null, solFile, null, null, null, false,
+            new SolidityProblemSpec(contract, function));
     }
 
     public void dispose() {

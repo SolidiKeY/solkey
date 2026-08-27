@@ -125,36 +125,39 @@ location.
 
 ## Examples and Verification
 
-Add runnable taclet examples under:
+Add runnable taclet examples as functions of:
 
 ```text
-keyext.solidity.examples/taclets/
+keyext.solidity.examples/TestSuite.sol
 ```
 
+There are no `.key` problem files — the loader synthesizes the obligation
+`\<{ f()@TestSuite; }\>(true)` for each function, so the specification is written in the body.
 Use small examples that force the new rule, for example:
 
-```key
-\programSource "PaperStore.sol";
-
-\programVariables {
-    int result;
-}
-
-\problem {
-    \<{ age = 34; result = age; }\>(result = 34)
+```solidity
+function storageRootReadWrite() public {
+    age = 34;
+    uint r = age;
+    assert(r == 34);
 }
 ```
+
+An example that needs an assumption states it with `require` and is tagged `/// @custom:key
+box`, which makes `require` an assumption instead of an obligation. Full conventions:
+`keyext.solidity.examples/README.md`.
 
 Verify individual examples with the Solidity CLI:
 
 ```bash
-./gradlew :keyext.solidity.core:solidityCli --args="-m 10000 /home/guilherme/projects/solkey/keyext.solidity.examples/taclets/<file>.key"
+./run-key.sh keyext.solidity.examples/TestSuite.sol <function>
 ```
 
-For the taclet example set, use the focused harness:
+For the taclet example set, use the focused harnesses:
 
 ```bash
-./gradlew :keyext.solidity.core:test --tests "org.key_project.solidity.taclets.PaperTacletsExampleTest"
+./gradlew :keyext.solidity.core:test --tests "org.key_project.solidity.taclets.TacletStarterExamplesTest"
+./gradlew :keyext.solidity.core:test --tests "org.key_project.solidity.taclets.PaperTestExamplesTest"
 ```
 
 Avoid using the full legacy `RulesTest` suite as the first acceptance gate for

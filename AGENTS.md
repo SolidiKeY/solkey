@@ -16,19 +16,24 @@
 ./gradlew :keyext.solidity.core:solidityCli                           # Run CLI on default problem2.key
 ./gradlew :keyext.solidity.core:solidityCli -PkeyFile=problem1.key    # Run on specific .key file
 ./gradlew :keyext.solidity.core:solidityCli --args="--no-prove -m 20000 problem1.key"
-./run-key.sh problem1.key            # Wrapper script (same as above)
+./run-key.sh problem1.key                                 # Wrapper script (same as above)
+./run-key.sh keyext.solidity.examples/TestSuite.sol       # Every function of a .sol
+./run-key.sh keyext.solidity.examples/TestSuite.sol testSimpleAssert   # One function
 ```
 
 Java 21 required. Test max heap: 4GB, max parallel forks: 1.
 
-## Verifying `.key` Problems
+## Verifying Problems
 
-**Always use `solidityCli` to run/verify `.key` files.** Gradle's `--args` replaces the default arguments—put the entire CLI argument list in one `--args` value. CLI options: `--no-prove` (load only), `--no-replay`, `-m/--max`, `-t/--timeout`, `-s/--print-stats`, `-v/--verbose`, `--help`.
+**Always use `solidityCli` to run/verify a problem.** Gradle's `--args` replaces the default arguments—put the entire CLI argument list in one `--args` value. CLI options: `--no-prove` (load only), `--no-replay`, `-m/--max`, `-t/--timeout`, `-s/--print-stats`, `-v/--verbose`, `-f/--function`, `-c/--contract`, `--help`.
+
+`solidityCli` accepts a `.sol` file directly — no `.key` needed. The loader synthesizes one obligation per function (`\<{ f()@C; }\>(true)`), so the specification lives in the Solidity body as `assert`. Without `--function` every function is proved and a `N/M closed` summary is printed.
 
 ## File Locations
 
 | Purpose | Location |
 |---|---|
+| **Taclet examples (`.sol`)** | `keyext.solidity.examples/TestSuite.sol` — see `keyext.solidity.examples/README.md` |
 | **Problem files (`.key`)** | `keyext.solidity.core/src/test/resources/org/key_project/solidity/examples/` |
 | **Proof rules (`.key`)** | `keyext.solidity.core/src/main/resources/org/key_project/solidity/proof/rules/` |
 
@@ -42,7 +47,7 @@ Java 21 required. Test max heap: 4GB, max parallel forks: 1.
 | `key.core`                         | Java-specific logic, parsers, proof management |
 | `key.ui`                           | GUI + CLI entry point |
 | `keyext.solidity.core`             | **Solidity verification** — main focus |
-| `keyext.solidity.examples.taclets` | **Main taclets examples** |
+| `keyext.solidity.examples`         | **Main taclets examples** (`TestSuite.sol`) |
 
 Dependencies: `keyext.*` → `key.core` → `key.ncore` → `key.util`.
 
@@ -97,7 +102,7 @@ Read the relevant doc before working on taclets — each is a compact, agent-fac
 | `require-assert.md` | Touching `require` / `assert` rules (box vs. diamond false-branch behavior). |
 | `solidity-json-documentation.md` | Parsing `solc --ast-compact-json` (consumed by `SolJSONParser`). |
 
-Program rules live in `keyext.solidity.core/src/main/resources/org/key_project/solidity/proof/rules/solidityProgramRules.key` (loaded automatically via `standardSolidityRules.key`). Add new example problems under `keyext.solidity.examples/taclets`, and after changing a feature update `docs/taclets-implementation.md` (implemented) or `docs/taclet-ideas.md` (backlog).
+Program rules live in `keyext.solidity.core/src/main/resources/org/key_project/solidity/proof/rules/solidityProgramRules.key` (loaded automatically via `standardSolidityRules.key`). Add new examples as functions of `keyext.solidity.examples/TestSuite.sol` (conventions: `keyext.solidity.examples/README.md`), and after changing a feature update `docs/taclets-implementation.md` (implemented) or `docs/taclet-ideas.md` (backlog).
 
 **When planning a new taclet:** always begin the plan with a plain-English explanation of what the taclet does — state the precondition (what must be true before the rule fires), the transformation (what sequent change it performs), and the postcondition (what is true after). Write this before any KeY syntax.
 

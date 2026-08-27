@@ -14,6 +14,7 @@ import org.key_project.solidity.proof.init.InitConfig;
 import org.key_project.solidity.proof.init.ProofAggregate;
 import org.key_project.solidity.proof.init.ProofInputException;
 import org.key_project.solidity.proof.init.ProofOblInput;
+import org.key_project.solidity.proof.init.SolidityProblemSpec;
 import org.key_project.solidity.proof.io.AbstractProblemLoader;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
 
@@ -50,10 +51,23 @@ public interface UserInterfaceControl {
     /// @param callback receives the proof after it is loaded, but before it is replayed
     /// @return The opened [AbstractProblemLoader].
     /// @throws ProblemLoaderException Occurred Exception.
-    public AbstractProblemLoader load(Profile profile, Path file, List<Path> includes,
+    default AbstractProblemLoader load(Profile profile, Path file, List<Path> includes,
             Properties poPropertiesToForce,
             boolean forceNewProfileOfNewProofs,
-            Consumer<Proof> callback) throws ProblemLoaderException;
+            Consumer<Proof> callback) throws ProblemLoaderException {
+        return load(profile, file, includes, poPropertiesToForce, forceNewProfileOfNewProofs,
+            callback, null);
+    }
+
+    /// Opens a file as [#load(Profile,Path,List,Properties,boolean,Consumer)] does, selecting
+    /// which function to prove when `file` is a Solidity source rather than a problem file.
+    ///
+    /// @param solidityProblem the function of a `.sol` `file` to prove; `null` to infer it
+    AbstractProblemLoader load(Profile profile, Path file, List<Path> includes,
+            Properties poPropertiesToForce,
+            boolean forceNewProfileOfNewProofs,
+            Consumer<Proof> callback,
+            SolidityProblemSpec solidityProblem) throws ProblemLoaderException;
 
     /// Instantiates a new [Proof] in this [UserInterfaceControl] for the given
     /// [ProofOblInput] based on the [InitConfig].

@@ -9,6 +9,8 @@ import java.nio.file.Path;
 import java.util.List;
 
 import org.key_project.solidity.control.KeYEnvironment;
+import org.key_project.solidity.proof.init.SolidityProblemSpec;
+import org.key_project.solidity.proof.init.SolidityProblemSynthesizer;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
 import org.key_project.solidity.proof.io.ProofSaver;
 
@@ -52,6 +54,14 @@ public class CLI {
         description = "maximal number of rule applications")
     int max;
 
+    @Option(names = { "-f", "--function" },
+        description = "for a .sol FILE: the function to prove; all of them if omitted")
+    String function;
+
+    @Option(names = { "-c", "--contract" },
+        description = "for a .sol FILE: the contract to prove against, if it declares several")
+    String contract;
+
     public static void main(String[] args) {
         System.exit(execute(args));
     }
@@ -76,11 +86,46 @@ public class CLI {
     }
 
     private static boolean run(CLI cli) {
+        Path f = cli.file.toPath();
+        if (!f.getFileName().toString().endsWith(".sol")) {
+            if (cli.function != null || cli.contract != null) {
+                System.err.println("--function and --contract apply to .sol files only");
+                return false;
+            }
+            return prove(cli, null);
+        }
+        if (cli.function != null) {
+            return prove(cli, new SolidityProblemSpec(cli.contract, cli.function));
+        }
+        final List<String> functions;
+        try {
+            functions = SolidityProblemSynthesizer.provableFunctions(f, cli.contract);
+        } catch (IOException | IllegalArgumentException e) {
+            System.err.println("Error while reading " + cli.file + ":");
+            System.err.println("  " + e.getMessage());
+            return false;
+        }
+        int closed = 0;
+        for (String function : functions) {
+            boolean ok = prove(cli, new SolidityProblemSpec(cli.contract, function));
+            System.out.flush();
+            System.err.flush();
+            System.out.println((ok ? "PASS " : "FAIL ") + function);
+            if (ok) {
+                closed++;
+            }
+        }
+        System.out.println(closed + "/" + functions.size() + " closed");
+        return closed == functions.size();
+    }
+
+    private static boolean prove(CLI cli, SolidityProblemSpec spec) {
         try {
             if (cli.verbose)
                 System.out.println("Loading...");
             Path f = cli.file.toPath();
-            var env = KeYEnvironment.load(f);
+            var env = spec == null ? KeYEnvironment.load(f)
+                    : KeYEnvironment.load(f, spec.contract(), spec.function());
             var loadedProof = env.getLoadedProof();
             if (loadedProof.closed()) {
                 if (cli.prove) {

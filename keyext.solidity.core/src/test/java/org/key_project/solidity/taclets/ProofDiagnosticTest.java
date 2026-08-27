@@ -9,8 +9,9 @@ import org.key_project.solidity.proof.Proof;
 
 import org.junit.jupiter.api.Test;
 
-import static org.key_project.solidity.testutil.SolidityExampleTests.example;
+import static org.key_project.solidity.testutil.SolidityExampleTests.TEST_SUITE_CONTRACT;
 import static org.key_project.solidity.testutil.SolidityExampleTests.load;
+import static org.key_project.solidity.testutil.SolidityExampleTests.testSuite;
 
 /// Diagnostic test: runs testStorageWriteAndRead with a small step limit and prints open goals.
 /// Not meant to close — used to inspect proof state.
@@ -18,7 +19,8 @@ public class ProofDiagnosticTest {
 
     @Test
     void diagnoseOpenGoals() throws Exception {
-        KeYEnvironment env = load(example("mainFeatures/testStorageWriteAndRead.key"));
+        KeYEnvironment env =
+            load(testSuite(), TEST_SUITE_CONTRACT, "testStorageWriteAndRead");
         Proof proof = env.getLoadedProof();
 
         var strategySettings = proof.getSettings().getStrategySettings();
