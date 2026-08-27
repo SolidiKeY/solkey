@@ -893,7 +893,7 @@ public abstract class TacletApp implements RuleApp {
         return switch (pvs.getFilter()) {
             case STORAGE_LOCAL -> Storage;
             case MEMORY_LOCAL -> Memory;
-            case ANY, NON_STORAGE_LOCAL -> Default;
+            case ANY -> Default;
         };
     }
 

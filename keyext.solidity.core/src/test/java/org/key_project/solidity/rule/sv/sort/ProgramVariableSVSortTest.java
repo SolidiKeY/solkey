@@ -60,4 +60,12 @@ class ProgramVariableSVSortTest {
 
         assertTrue(exception.getMessage().contains("memory"));
     }
+
+    @Test
+    void variableFilterRejectsRemovedValueFlag() {
+        assertThrows(IllegalArgumentException.class,
+            () -> ProgramSVSort.VARIABLE.createInstance("value"));
+        assertThrows(IllegalArgumentException.class,
+            () -> ProgramSVSort.VARIABLE.createInstance("non-storage"));
+    }
 }

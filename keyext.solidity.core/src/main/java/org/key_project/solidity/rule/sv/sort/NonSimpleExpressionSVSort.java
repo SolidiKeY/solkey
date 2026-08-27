@@ -22,7 +22,7 @@ import org.key_project.solidity.program.ast.references.FieldReference;
 public class NonSimpleExpressionSVSort extends ProgramSVSort {
 
     private enum Filter {
-        ANY, VALUE
+        ANY, PRIMITIVE
     }
 
     private static final Map<String, ProgramSVSort> PARAMETERIZED_SORTS = new HashMap<>();
@@ -70,12 +70,13 @@ public class NonSimpleExpressionSVSort extends ProgramSVSort {
         if (cached != null) {
             return cached;
         }
-        if (!"value".equals(parameter.toLowerCase(Locale.ROOT))) {
+        if (!"primitive".equals(parameter.toLowerCase(Locale.ROOT))) {
             throw new IllegalArgumentException(
-                "Unknown NonSimpleExpression sort flag '" + parameter + "' (expected 'value')");
+                "Unknown NonSimpleExpression sort flag '" + parameter
+                    + "' (expected 'primitive')");
         }
         ProgramSVSort result = new NonSimpleExpressionSVSort(
-            new Name("NonSimpleExpression[" + parameter + "]"), Filter.VALUE);
+            new Name("NonSimpleExpression[" + parameter + "]"), Filter.PRIMITIVE);
         PARAMETERIZED_SORTS.put(parameter, result);
         return result;
     }

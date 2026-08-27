@@ -15,12 +15,12 @@ import org.key_project.solidity.parser.varcond.TypeComparisonCondition.Mode;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.rule.sv.OperatorSV;
 import org.key_project.solidity.rule.sv.ProgramSV;
+import org.key_project.solidity.rule.sv.sort.FieldSVSort;
 import org.key_project.solidity.rule.taclets.builder.TacletBuilder;
 
 import org.jspecify.annotations.NonNull;
 
 import static org.key_project.solidity.parser.varcond.ArgumentType.SORT;
-import static org.key_project.solidity.rule.sv.sort.ProgramSVSort.FIELD;
 
 
 /// This class manages the register of various factories for the different built-in
@@ -198,7 +198,7 @@ public class TacletBuilderManipulators {
                             + "argument, "
                             + "but got: " + arguments[0]);
                 }
-                if (fieldSV.sort() != FIELD) {
+                if (!(fieldSV.sort() instanceof FieldSVSort)) {
                     throw new IllegalArgumentException(
                         "\\hasFieldSort expects a field program schema variable as its first "
                             + "argument, but got: " + fieldSV);
@@ -225,7 +225,7 @@ public class TacletBuilderManipulators {
                         "\\hasMemoryFieldSort expects a field program schema variable as its "
                             + "first argument, but got: " + arguments[0]);
                 }
-                if (fieldSV.sort() != FIELD) {
+                if (!(fieldSV.sort() instanceof FieldSVSort)) {
                     throw new IllegalArgumentException(
                         "\\hasMemoryFieldSort expects a field program schema variable as its "
                             + "first argument, but got: " + fieldSV);
@@ -282,39 +282,6 @@ public class TacletBuilderManipulators {
             }
         };
 
-    public static final AbstractConditionBuilder IS_MEMORY_REFERENCE_FIELD =
-        new AbstractConditionBuilder("isMemoryReferenceField", SV) {
-            @Override
-            public VariableCondition build(Object[] arguments, List<String> parameters,
-                    boolean negated) {
-                if (!(arguments[0] instanceof ProgramSV fieldSV)) {
-                    throw new IllegalArgumentException(
-                        "\\isMemoryReferenceField expects a field program schema variable as its "
-                            + "first argument, but got: " + arguments[0]);
-                }
-                if (fieldSV.sort() != FIELD) {
-                    throw new IllegalArgumentException(
-                        "\\isMemoryReferenceField expects a field program schema variable as its "
-                            + "first argument, but got: " + fieldSV);
-                }
-                return new MemoryReferenceFieldCondition(fieldSV, negated);
-            }
-        };
-
-    public static final AbstractConditionBuilder IS_MEMORY_REFERENCE_ELEMENT =
-        new AbstractConditionBuilder("isMemoryReferenceElement", SV) {
-            @Override
-            public VariableCondition build(Object[] arguments, List<String> parameters,
-                    boolean negated) {
-                if (!(arguments[0] instanceof ProgramSV receiverSV)) {
-                    throw new IllegalArgumentException(
-                        "\\isMemoryReferenceElement expects a program schema variable as its "
-                            + "first argument, but got: " + arguments[0]);
-                }
-                return new MemoryReferenceElementCondition(receiverSV, negated);
-            }
-        };
-
     public static final TacletBuilderCommand NEW_LOCAL_VARS =
         new ConstructorBasedBuilder("newLocalVars", NewLocalVarsCondition.class, SV, SV, SV, SV);
 
@@ -347,7 +314,7 @@ public class TacletBuilderManipulators {
             DROP_EFFECTLESS_ELEMENTARIES, SIMPLIFY_ITE_UPDATE,
             NEW_TYPE_OF, NEW_RUSTY_TYPE,
             IS_SUBTYPE, SAME, HAS_SORT, HAS_FIELD_SORT, HAS_MEMORY_FIELD_SORT, HAS_ELEMENT_SORT,
-            HAS_MEMORY_ELEMENT_SORT, IS_MEMORY_REFERENCE_FIELD, IS_MEMORY_REFERENCE_ELEMENT,
+            HAS_MEMORY_ELEMENT_SORT,
             NEW_LOCAL_VARS, HAS_INVARIANT, GET_INVARIANT, GET_VARIANT, SAME_AS_TERM);
     }
 

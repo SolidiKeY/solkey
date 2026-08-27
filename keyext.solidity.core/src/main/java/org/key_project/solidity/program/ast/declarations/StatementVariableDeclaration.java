@@ -8,8 +8,10 @@ import java.util.Objects;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.SourceData;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.solidity.rule.matching.inst.MatchConditions;
 import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.util.ExtList;
 
@@ -31,21 +33,28 @@ public class StatementVariableDeclaration implements Declaration, SolidityProgra
     private final @Nullable ProgramSV schemaVariable;
     /// the declared type of a schematic declaration (kept for display only; not matched)
     private final @Nullable Object schemaType;
+    /// the data location written in a schematic declaration pattern; a concrete declaration only
+    /// matches if its variable's data location equals this
+    private final @Nullable DataLocation schemaDataLocation;
 
     public StatementVariableDeclaration(ProgramVariable programVariable) {
         this.programVariable = programVariable;
         this.schemaVariable = null;
         this.schemaType = null;
+        this.schemaDataLocation = null;
     }
 
     /// Creates a schematic declaration whose variable position is a program schema variable.
     ///
     /// @param type the declared type (for display only)
     /// @param schemaVariable the schema variable standing for the declared variable
-    public StatementVariableDeclaration(@Nullable Object type, ProgramSV schemaVariable) {
+    /// @param schemaDataLocation the data location written in the pattern ([Default] if none)
+    public StatementVariableDeclaration(@Nullable Object type, ProgramSV schemaVariable,
+            DataLocation schemaDataLocation) {
         this.programVariable = null;
         this.schemaVariable = schemaVariable;
         this.schemaType = type;
+        this.schemaDataLocation = schemaDataLocation;
     }
 
     public StatementVariableDeclaration(ExtList extList) {
@@ -53,6 +62,19 @@ public class StatementVariableDeclaration implements Declaration, SolidityProgra
             Objects.requireNonNull(extList.removeFirstOccurrence(ProgramVariable.class));
         this.schemaVariable = null;
         this.schemaType = null;
+        this.schemaDataLocation = null;
+    }
+
+    @Override
+    public @Nullable MatchConditions match(SourceData sourceData, @Nullable MatchConditions mc) {
+        if (schemaVariable != null) {
+            if (!(sourceData.getSource() instanceof StatementVariableDeclaration concrete)
+                    || concrete.programVariable == null
+                    || concrete.programVariable.getDataLocation() != schemaDataLocation) {
+                return null;
+            }
+        }
+        return SolidityProgramElement.super.match(sourceData, mc);
     }
 
     @Override
@@ -73,7 +95,11 @@ public class StatementVariableDeclaration implements Declaration, SolidityProgra
     @Override
     public String toString() {
         if (schemaVariable != null) {
-            return (schemaType == null ? "" : schemaType + " ") + schemaVariable;
+            String location =
+                schemaDataLocation == null || schemaDataLocation == Default
+                        ? ""
+                        : schemaDataLocation + " ";
+            return (schemaType == null ? "" : schemaType + " ") + location + schemaVariable;
         }
         ProgramVariable pv = Objects.requireNonNull(programVariable);
         DataLocation dataLocation = pv.getDataLocation();

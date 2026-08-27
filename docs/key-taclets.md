@@ -47,8 +47,15 @@ Important syntax:
 
 Prefer precise program sorts so rules stay disjoint:
 
-- `Variable[value]` for stack/value variables.
+- `Variable` for stack/value targets; a variable carries no value-mode flag —
+  keep rules disjoint via the field/path side instead: `Path[...,primitive]` /
+  `Path[...,reference]` type-kind flags, `Path[...,primitiveElement]` /
+  `Path[...,referenceElement]` element-kind flags on indexed receivers,
+  `Field[primitive]` / `Field[reference]` on accessed members, and
+  `SimpleExpression[primitive]` / `NonSimpleExpression[primitive]` on
+  expressions (mappings count as reference throughout).
 - `Variable[storage]` for local storage aliases.
+- `Variable[memory]` for local memory references.
 - `Path[storage,simple,global]` for contract storage roots.
 - `Path[storage,simple]` for simple storage roots or aliases.
 - `Path[storage,complex]` for member/index paths that need unfolding.

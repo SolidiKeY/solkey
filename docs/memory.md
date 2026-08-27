@@ -69,10 +69,11 @@ Memory statements follow the same three-step strategy as storage statements:
 
 Declarations with an initializer are decomposed first: `memoryLocalDeclInitDrop`
 rewrites `T memory m = x;` to `m = x;` and registers `m` as a program variable
-(the rule is generic — it fires on value and storage declarations-with-
-initializer too, since the location keyword in a pattern is display-only). Only
+(the `memory` keyword in the pattern is matched against the declared variable's
+data location; siblings `localValueDeclInitDrop` / `storageLocalDeclInitDrop`
+handle the other locations). Only
 the bare declaration `T memory m;` performs a fresh allocation (§4). The drop
-rule strictly decreases the number of initialized declarations, so it composes
+rules strictly decrease the number of initialized declarations, so they compose
 with the storage termination measure (`storage.md` §9).
 
 Memory arrays are fixed-length after allocation. They have bounds branches for

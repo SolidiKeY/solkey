@@ -16,6 +16,7 @@ import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.MappingType;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
+import org.key_project.solidity.program.ast.abstractions.StorageReferenceTypes;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
@@ -50,6 +51,10 @@ final class PathSVSort extends ProgramSVSort {
         ANY, PRIMITIVE, REFERENCE
     }
 
+    private enum ElementKind {
+        ANY, PRIMITIVE, REFERENCE
+    }
+
     private record PathInfo(DataArea dataArea, boolean simple, Origin origin,
             TypeCategory typeCategory) {
     }
@@ -59,19 +64,22 @@ final class PathSVSort extends ProgramSVSort {
     private final Origin origin;
     private final TypeCategory typeCategory;
     private final TypeKind typeKind;
+    private final ElementKind elementKind;
 
     PathSVSort(String name, DataArea dataArea, Simplicity simplicity) {
-        this(name, dataArea, simplicity, Origin.ANY, TypeCategory.ANY, TypeKind.ANY);
+        this(name, dataArea, simplicity, Origin.ANY, TypeCategory.ANY, TypeKind.ANY,
+            ElementKind.ANY);
     }
 
     private PathSVSort(String name, DataArea dataArea, Simplicity simplicity, Origin origin,
-            TypeCategory typeCategory, TypeKind typeKind) {
+            TypeCategory typeCategory, TypeKind typeKind, ElementKind elementKind) {
         super(new Name(name));
         this.dataArea = dataArea;
         this.simplicity = simplicity;
         this.origin = origin;
         this.typeCategory = typeCategory;
         this.typeKind = typeKind;
+        this.elementKind = elementKind;
     }
 
     @Override
@@ -90,6 +98,9 @@ final class PathSVSort extends ProgramSVSort {
             return false;
         }
         if (typeKind != TypeKind.ANY && typeKindOf(pe) != typeKind) {
+            return false;
+        }
+        if (elementKind != ElementKind.ANY && elementKindOf(pe) != elementKind) {
             return false;
         }
         return switch (simplicity) {
@@ -120,6 +131,8 @@ final class PathSVSort extends ProgramSVSort {
                 case "mapping" -> filters.typeCategory.set(TypeCategory.MAPPING, flag);
                 case "primitive" -> filters.typeKind.set(TypeKind.PRIMITIVE, flag);
                 case "reference" -> filters.typeKind.set(TypeKind.REFERENCE, flag);
+                case "primitiveelement" -> filters.elementKind.set(ElementKind.PRIMITIVE, flag);
+                case "referenceelement" -> filters.elementKind.set(ElementKind.REFERENCE, flag);
                 default -> throw new IllegalArgumentException(
                     "Unknown Path sort flag '" + rawFlag + "'");
             }
@@ -130,7 +143,7 @@ final class PathSVSort extends ProgramSVSort {
         }
         ProgramSVSort result = new PathSVSort("Path[" + parameter + "]", filters.dataArea.value,
             filters.simplicity.value, filters.origin.value, filters.typeCategory.value,
-            filters.typeKind.value);
+            filters.typeKind.value, filters.elementKind.value);
         PARAMETERIZED_SORTS.put(parameter, result);
         return result;
     }
@@ -202,6 +215,25 @@ final class PathSVSort extends ProgramSVSort {
         return TypeKind.ANY;
     }
 
+    private static ElementKind elementKindOf(SolidityProgramElement pe) {
+        Type type = typeOf(pe);
+        Type elementType = null;
+        if (type instanceof MappingType mappingType) {
+            elementType = unwrap(mappingType.valueType());
+        } else if (type instanceof ArrayType arrayType) {
+            elementType = unwrap(arrayType.getElementType());
+        } else if (type instanceof DynamicArrayType dynamicArrayType) {
+            elementType = unwrap(dynamicArrayType.getElementType());
+        }
+        if (elementType instanceof PrimitiveType) {
+            return ElementKind.PRIMITIVE;
+        }
+        if (elementType != null && StorageReferenceTypes.isReferenceType(elementType)) {
+            return ElementKind.REFERENCE;
+        }
+        return ElementKind.ANY;
+    }
+
     private static TypeCategory typeCategoryOf(SolidityProgramElement pe) {
         Type type = typeOf(pe);
         if (type instanceof DynamicArrayType || type instanceof ArrayType) {
@@ -245,6 +277,7 @@ final class PathSVSort extends ProgramSVSort {
         private final Filter<Origin> origin = new Filter<>(Origin.ANY);
         private final Filter<TypeCategory> typeCategory = new Filter<>(TypeCategory.ANY);
         private final Filter<TypeKind> typeKind = new Filter<>(TypeKind.ANY);
+        private final Filter<ElementKind> elementKind = new Filter<>(ElementKind.ANY);
     }
 
     /** One filter axis: its value plus the flag that set it, so conflicts can be reported. */

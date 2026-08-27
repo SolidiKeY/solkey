@@ -492,7 +492,8 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
                 reportError("Schema Variable " + svName + " not declared.", ctx.start);
             }
             StatementVariableDeclaration schematic =
-                new StatementVariableDeclaration(type, (ProgramSV) sv);
+                new StatementVariableDeclaration(type, (ProgramSV) sv,
+                    (DataLocation) visitStorageLocation(ctx.storageLocation()));
             return new DeclarationStatement(List.of(schematic), initial);
         }
 

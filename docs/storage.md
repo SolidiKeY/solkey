@@ -257,9 +257,10 @@ emitted update.
 
 ### Local-storage declarations
 
-- `memoryLocalDeclInitDrop` (generic: also fires on value and memory
-  declarations; the declared variable is registered as a program
-  variable)
+- `storageLocalDeclInitDrop` (the `storage` keyword in the pattern is
+  matched; sibling rules `localValueDeclInitDrop` /
+  `memoryLocalDeclInitDrop` handle the other locations; the declared
+  variable is registered as a program variable)
 
       T storage lp = path;
       ⇝  lp = path;                        (lp not occurring in path)
@@ -487,7 +488,7 @@ ensure that exactly one rule applies to any storage statement.
       compositionDepth,
       #statements ).
 
-- `memoryLocalDeclInitDrop` strictly decreases component 1.
+- The `*DeclInitDrop` rules strictly decrease component 1.
 - The unfolding, capture, and split rules strictly decrease a later
   component.
 - Step-3 terminal rules decrease the number of statements.

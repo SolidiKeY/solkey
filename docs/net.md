@@ -174,8 +174,8 @@ end-to-end; no new AST node and no grammar change (`MemberAccess` +
    `s#a` is an SV receiver, the literal member name `transfer` resolves to
    the same builtin `FunctionDeclaration` object, so structural matching
    works exactly as it does for `s#sp.push(s#se);` today. Receiver SV sort:
-   `SimpleExpression[value]` (matches non-storage/non-memory program
-   variables and literals — an address-typed local or literal); nonsimple
+   `SimpleExpression[primitive]` (matches literals and primitive-typed
+   program variables — an address-typed local or literal); nonsimple
    receivers are handled by the capture rule below, not the sort.
 5. **`.sol` sources** — mirror the same builtin mapping where
    `SolJSONParser` resolves member calls from the solc AST, so bodies
@@ -202,8 +202,8 @@ end-to-end; no new AST node and no grammar change (`MemberAccess` +
 ```key
 transferNoCallback {
     \schemaVar \formula post;
-    \schemaVar \program SimpleExpression[value] a;
-    \schemaVar \program SimpleExpression[value] se;
+    \schemaVar \program SimpleExpression[primitive] a;
+    \schemaVar \program SimpleExpression[primitive] se;
 
     \find(\modality{#mod}{c# s#a.transfer(s#se); #c}\endmodality(post))
     \replacewith({net := storeSt(net, at(a),
@@ -253,8 +253,8 @@ invariant varcond described below.
 ```key
 transferWithCallback {
     \schemaVar \formula post, inv;
-    \schemaVar \program SimpleExpression[value] a;
-    \schemaVar \program SimpleExpression[value] se;
+    \schemaVar \program SimpleExpression[primitive] a;
+    \schemaVar \program SimpleExpression[primitive] se;
     \skolemTerm Struct storageSk;
     \skolemTerm Struct netSk;
 

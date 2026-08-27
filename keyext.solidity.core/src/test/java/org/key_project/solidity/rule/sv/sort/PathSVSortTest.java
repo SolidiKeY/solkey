@@ -161,8 +161,8 @@ public class PathSVSortTest {
     }
 
     @Test
-    void nonSimpleExpressionValueAcceptsOperatorShapedValueExpressionsOnly() {
-        ProgramSVSort nseValue = ProgramSVSort.NON_SIMPLE_EXPRESSION.createInstance("value");
+    void nonSimpleExpressionPrimitiveAcceptsOperatorShapedPrimitiveExpressionsOnly() {
+        ProgramSVSort nseValue = ProgramSVSort.NON_SIMPLE_EXPRESSION.createInstance("primitive");
         ProgramVariable a = variable("a", DataLocation.Default);
         BinaryExpression sum =
             new BinaryExpression(Operator.ADD, a, new Uint256Literal(BigInteger.ONE));
@@ -178,6 +178,59 @@ public class PathSVSortTest {
         assertFalse(nseValue.canStandFor(age, services));
         assertFalse(nseValue.canStandFor(account, services));
         assertFalse(nseValue.canStandFor(alice, services));
+    }
+
+    @Test
+    void elementKindFlagsClassifyByElementType() {
+        StructDeclaration accountStruct =
+            new StructDeclaration(new Name("Account"), List.of(field("balance")), -1);
+        FieldReference balances = storageField("balances",
+            new MappingType(PrimitiveType.UINT, PrimitiveType.UINT));
+        FieldReference accounts = storageField("accounts",
+            new MappingType(PrimitiveType.UINT, accountStruct));
+        FieldReference values = storageField("values",
+            new DynamicArrayType(PrimitiveType.UINT));
+        FieldReference records = storageField("records",
+            new DynamicArrayType(accountStruct));
+        FieldReference nested = storageField("nested",
+            new MappingType(PrimitiveType.UINT,
+                new MappingType(PrimitiveType.UINT, PrimitiveType.UINT)));
+
+        ProgramSVSort primitiveElement =
+            ProgramSVSort.PATH.createInstance("storage,primitiveElement");
+        ProgramSVSort referenceElement =
+            ProgramSVSort.PATH.createInstance("storage,referenceElement");
+
+        assertTrue(primitiveElement.canStandFor(balances, services));
+        assertTrue(primitiveElement.canStandFor(values, services));
+        assertFalse(primitiveElement.canStandFor(accounts, services));
+        assertFalse(primitiveElement.canStandFor(records, services));
+        assertFalse(primitiveElement.canStandFor(nested, services));
+
+        assertFalse(referenceElement.canStandFor(balances, services));
+        assertFalse(referenceElement.canStandFor(values, services));
+        assertTrue(referenceElement.canStandFor(accounts, services));
+        assertTrue(referenceElement.canStandFor(records, services));
+        assertTrue(referenceElement.canStandFor(nested, services));
+
+        assertThrows(IllegalArgumentException.class,
+            () -> ProgramSVSort.PATH.createInstance("primitiveElement,referenceElement"));
+    }
+
+    @Test
+    void storageSimplePrimitiveAcceptsPrimitiveRootsOnly() {
+        ProgramSVSort primitiveRoot =
+            ProgramSVSort.PATH.createInstance("storage,simple,primitive");
+        FieldReference count = storageField("count", PrimitiveType.UINT256);
+        StructDeclaration accountStruct =
+            new StructDeclaration(new Name("Account"), List.of(field("balance")), -1);
+        FieldReference alice = storageField("alice", accountStruct);
+        ProgramVariable alias = variable("lp",
+            new DynamicArrayType(PrimitiveType.UINT), DataLocation.Storage);
+
+        assertTrue(primitiveRoot.canStandFor(count, services));
+        assertFalse(primitiveRoot.canStandFor(alice, services));
+        assertFalse(primitiveRoot.canStandFor(alias, services));
     }
 
     @Test

@@ -42,9 +42,11 @@ rules before a terminal rule fires.
   do not. `storageIndexWrite{Array,Mapping}Save`,
   `storageIndexRead{Array,Mapping}Find`, plus `…CopySource`, `…BindLocalRoot`,
   `…StoreRoot`, and `_decompose` variants for nested indexed paths.
-- Local declarations: `memoryLocalDeclInitDrop` drops any declaration-with-
-  initializer (value/storage/memory alike — the location keyword in a pattern is
-  display-only) to the plain assignment and registers the variable;
+- Local declarations: the location keyword in a schematic declaration pattern
+  is matched against the concrete variable's `DataLocation`, so
+  `localValueDeclInitDrop` / `storageLocalDeclInitDrop` /
+  `memoryLocalDeclInitDrop` (one per location) drop a declaration-with-
+  initializer to the plain assignment and register the variable;
   `storageLocalDeclSkip` / `valueDeclSkip` consume bare declarations.
 
 ### Increment / decrement (`++`/`--`, pre/post, plain and `result = …`)
@@ -77,12 +79,15 @@ captures (§Capture partition below), which also cover nested RHS like
   `&&`/`||` right short-circuit (needs the Tier-3 `if`), checked-arith overflow.
 
 ### Storage aliases
-`memoryLocalDeclInitDrop` (decl-with-init decomposition) followed by
+`storageLocalDeclInitDrop` (decl-with-init decomposition) followed by
 `storageLocalRootRebind` (standalone `lp = sp;`). The alias binds to the **path**,
 not the value: `{lp := cons1(rhsField)}` or `{lp := pathFields}`. Two enablers:
 `SolidityToKeyConverter#asStorageAliasType` re-sorts any storage-held reference
-collection (`Struct`, array, mapping) to `List`; `\program Variable[storage|value]`
-filters by `DataLocation` to keep value-reads and path-rebinds disjoint.
+collection (`Struct`, array, mapping) to `List`; value-reads and path-rebinds
+stay disjoint through the read side, not the target variable — the value-read
+rules require a primitive source (`Path[storage,simple,primitive]` root,
+`Field[primitive]` member, or `Path[...,primitiveElement]` indexed receiver),
+while rebinds keep their `Variable[storage]` target.
 
 ### Push / pop
 Push-lvalue `sp.push() = se` is desugared to `sp.push(se)` at **parse time**
@@ -111,7 +116,8 @@ delete (`memoryRootDeleteFreshRebind` and field/index delete), and lazy
 storage↔memory copies via `copySt` / `copyMem` (`memoryStorageCopy` for
 `m = <simple storage path>;`, `memoryStorageCopyUnfold` captures a complex
 storage RHS in a local storage pointer first). Declarations with initializer
-never reach these rules: `memoryLocalDeclInitDrop` rewrites `T memory m = x;`
+never reach these rules: `memoryLocalDeclInitDrop` (memory-only, the `memory`
+keyword in the pattern is matched) rewrites `T memory m = x;`
 to `m = x;` (registering `m` as a program variable), so all memory terminals
 match plain assignments; only the bare `T memory m;` keeps its one-shot
 fresh-allocation semantics. `memory-assign-forms.key` covers the assignment
@@ -150,11 +156,11 @@ mirroring `selectIntOnStore` / `selectOnStore`. Complex receivers unfold first
 Non-simple constituents are hoisted into fresh locals by a disjoint rule family,
 partitioned by the RHS's *static type* so each capture picks the right variable
 kind:
-- **Value RHS** (`NonSimpleExpression[value]`: operator-shaped, primitive-typed,
-  not path-shaped): `storageRootWriteValueRhsCapture` (`gp = nse;`),
-  `fieldWriteValueRhsCapture` (`e.a = nse;`, location-neutral),
-  `indexWriteValueRhsCapture` (`e1[e2] = nse;`, location-neutral) → fresh
-  `Variable[value]`.
+- **Value RHS** (`NonSimpleExpression[primitive]`: operator-shaped,
+  primitive-typed, not path-shaped): `storageRootWriteValueRhsCapture`
+  (`gp = nse;`), `fieldWriteValueRhsCapture` (`e.a = nse;`, location-neutral),
+  `indexWriteValueRhsCapture` (`e1[e2] = nse;`, location-neutral) → fresh plain
+  `Variable`.
 - **Reference-path RHS** (`Path[…,complex,reference]`):
   `storageIndexWriteStorageRefRhsCapture`, `storageFieldWriteCaptureSrc`,
   `memoryIndexWriteMemRefRhsCapture`, `memoryFieldWriteCaptureSrc` → fresh
@@ -165,7 +171,7 @@ kind:
   `memory{Field,Index}Read_unfold_rightSndResult` — `nlhs = sp.a;` /
   `nlhs = sp[se];` with `nlhs : Path[complex,primitive]` capture the read into a
   value temp, then the plain write rules fire. `memoryToStorageFieldCopyField`
-  is restricted to `\isMemoryReferenceField` so primitive members take this
+  is restricted to a `Field[reference]` member so primitive members take this
   route instead.
 - **Non-simple index** (paper `unfold_leftSnd` / `rightSndIndex`), all with
   `Path[storage]` / `Path[memory]` bases (any simplicity/origin/kind):
@@ -218,8 +224,10 @@ which keeps "matches a `Path[...]` SV" aligned with "lowerable by
 `convertToLogicElement`". The `primitive`/`reference` flags filter by the path's
 static type; for index expressions rebuilt during taclet instantiation the type
 is re-derived from the base's element type (`PathSVSort.typeOf`).
-`NonSimpleExpression[value]` filters non-simple expressions to operator-shaped,
-primitive-typed, non-path ones (`NonSimpleExpressionSVSort`). Path schema
+`NonSimpleExpression[primitive]` filters non-simple expressions to
+operator-shaped, primitive-typed, non-path ones (`NonSimpleExpressionSVSort`);
+`SimpleExpression[primitive]` analogously restricts literals/variables to
+primitive static type (`SimpleExpressionSVSort`). Path schema
 variables used directly in `\replacewith`/`\add` term
 positions lower to logic `List` terms automatically; indexed segments lower to
 `at(index)` (sort `Field`); `arr.length` lowers to the `size` field. A `push()`
