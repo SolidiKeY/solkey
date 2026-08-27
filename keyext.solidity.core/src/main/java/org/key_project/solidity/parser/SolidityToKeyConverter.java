@@ -637,7 +637,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     /// A `storage`-qualified local (`T storage lp = …`) is a path alias, not a value: it points
     /// at a storage location and is updated by `{lp := <path>}`. Re-sort it to `List` so the
     /// path-shaped update type-checks and downstream lowering through
-    /// [Services#convertToLogicElement] uses `consr(lp, fld)` instead of wrapping in a fresh
+    /// [Services#convertToLogicElement] uses `consr(lp, a)` instead of wrapping in a fresh
     /// single-element list. This applies to every reference-location type held in storage —
     /// structs as well as dynamic/fixed arrays and mappings (e.g. `Token[] storage bt = …`).
     private KeYSolidityType asStorageAliasType(KeYSolidityType original,

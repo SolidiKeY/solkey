@@ -147,7 +147,7 @@ storage read that produces a value.
 
 **`storageIndexRead_unfold_rightSndIndex`** — `lhs = sp[nse]`
 
-    nse => ⟨ π  T idx = nse; lhs = sp[idx]; ω ⟩ φ
+    nse => ⟨ π  T pv = nse; lhs = sp[pv]; ω ⟩ φ
     ---------------------------------------------
           => ⟨ π  lhs = sp[nse]; ω ⟩ φ
 
@@ -186,7 +186,7 @@ the push update fires.
 
 **unfold_leftSnd** — capture a nonsimple index on the LHS.
 
-    nse => ⟨ π  T idx = nse; op(sp, idx) = se; ω ⟩ φ
+    nse => ⟨ π  T pv = nse; op(sp, pv) = se; ω ⟩ φ
     ------------------------------------------------
         => ⟨ π  op(sp, nse) = se; ω ⟩ φ
 
@@ -208,7 +208,7 @@ the push update fires.
 
 **`storageIndexWrite_unfold_leftSndIndex`** — `sp[nse] = se`
 
-    nse => ⟨ π  T idx = nse; sp[idx] = se; ω ⟩ φ
+    nse => ⟨ π  T pv = nse; sp[pv] = se; ω ⟩ φ
     --------------------------------------------
          => ⟨ π  sp[nse] = se; ω ⟩ φ
 

@@ -23,11 +23,11 @@ Most program rules follow this shape:
 ```key
 ruleName {
     \schemaVar \formula post;
-    \schemaVar \program Path[storage,simple,global] rootLhs;
+    \schemaVar \program Path[storage,simple,global] gp;
     \schemaVar \program SimpleExpression se;
 
-    \find(\modality{#mod}{c# s#rootLhs = s#se; #c}\endmodality(post))
-    \replacewith({storage := save(storage, rootLhs, se)}
+    \find(\modality{#mod}{c# s#gp = s#se; #c}\endmodality(post))
+    \replacewith({storage := save(storage, gp, se)}
         \modality{#mod}{c# #c}\endmodality(post))
     \heuristics(simplify_prog)
 };
@@ -64,11 +64,33 @@ Prefer precise program sorts so rules stay disjoint:
 - `SimpleExpression`, `NonSimpleExpression`, `Expression`, `Field`, and `Type`
   for statement pieces.
 
+### Naming conventions
+
+Use the canonical names from `docs/storage.md`/`docs/memory.md` — every taclet
+of the same shape uses the same name for the same role:
+
+| Role | Name |
+|---|---|
+| Postcondition formula | `post` |
+| Simple / nonsimple / arbitrary expression | `se` (`se1`, `se2`) / `nse` / `e` (`e1`, `e2`) |
+| Simple index expression | `i` |
+| Stack variable read target | `v` |
+| Assignment target (arbitrary / nonsimple) | `lhs` / `nlhs` |
+| Global storage root | `gp` |
+| Simple / nonsimple storage path | `sp` (`sp1`, `sp2`) / `nsp` |
+| Local storage alias variable | `lp` |
+| Simple / nonsimple memory path | `mp` / `nmp` |
+| Field (second field) | `a` (`b`) |
+| Fresh captured value temp and its type | `pv`, `pvType` |
+| Type of a fresh path alias | `aliasType` |
+| Declared type in value declarations | `varType` |
+| Address in transfer rules (`net(a)`) | `a` |
+
 Matched program schema variables can be used directly in the term positions of
 `\replacewith`/`\add`: the engine lowers the matched AST piece to its logic
 form automatically (storage paths become `List` terms, fields become `Field`
 constants, simple expressions become value terms). Write `save(storage,
-rootLhs, se)` directly — no bridging `\term` variable is needed. (Only in
+gp, se)` directly — no bridging `\term` variable is needed. (Only in
 `\find`/`\assumes` term positions are program schema variables not allowed;
 there the `\sameAsTerm(programPart, termPart)` varcond still bridges them.)
 

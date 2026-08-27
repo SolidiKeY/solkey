@@ -28,7 +28,7 @@ public class IndexExpression extends SolidityExpression {
         this.indexExp = indexExp;
     }
 
-    // A schematic container expression (e.g. `s#indexedRoot` in a taclet template) has no
+    // A schematic container expression (e.g. `s#gp` in a taclet template) has no
     // resolved type, so `containerType` may be null here; in that case the element type is also
     // unknown (null). The @NonNull-by-default field tolerates this for templates, so we suppress
     // the resulting return-type warning rather than make every expression's type @Nullable.
