@@ -5,8 +5,8 @@ package de.uka.ilkd.key.proof.runallproofs.proofcollection;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 import de.uka.ilkd.key.control.DefaultUserInterfaceControl;
@@ -16,7 +16,6 @@ import de.uka.ilkd.key.proof.Proof;
 import de.uka.ilkd.key.proof.io.AbstractProblemLoader.ReplayResult;
 import de.uka.ilkd.key.proof.io.ProblemLoaderException;
 import de.uka.ilkd.key.proof.io.ProofSaver;
-import de.uka.ilkd.key.proof.runallproofs.ProveTest;
 import de.uka.ilkd.key.proof.runallproofs.RunAllProofsTest;
 import de.uka.ilkd.key.proof.runallproofs.TestResult;
 import de.uka.ilkd.key.scripts.ProofScriptEngine;
@@ -153,8 +152,8 @@ public class TestFile implements Serializable {
             if (verbose) {
                 LOGGER.info("Now processing file {}", keyFile);
             }
-            // File that the created proof will be saved to.
-            var proofFile = Paths.get(keyFile.toAbsolutePath() + ".proof");
+            // Temporary file that the created proof will be saved to for the reload check.
+            var proofFile = Files.createTempFile(keyFile.getFileName().toString(), ".proof");
 
             KeYEnvironment<DefaultUserInterfaceControl> env = null;
             Proof loadedProof = null;
@@ -203,16 +202,6 @@ public class TestFile implements Serializable {
 
                 autoMode(env, loadedProof, script);
 
-                if (testProperty == TestProperty.PROVABLE
-                        || testProperty == TestProperty.NOTPROVABLE) {
-                    ProofSaver.saveToFile(new File(keyFile.toAbsolutePath() + ".save.proof"),
-                        loadedProof);
-
-                    var path = Paths.get("proofs",
-                        loadedProof.getProofFile().getFileName() + ".proof.xml.gz");
-                    ProveTest.saveProofXml(loadedProof, path);
-                    LOGGER.info("Stored {}", path);
-                }
                 boolean closed = loadedProof.closed();
                 success = (testProperty == TestProperty.PROVABLE) == closed;
                 if (verbose) {
@@ -243,6 +232,7 @@ public class TestFile implements Serializable {
                 if (env != null) {
                     env.dispose();
                 }
+                Files.deleteIfExists(proofFile);
             }
             return getRunAllProofsTestResult(catched, success);
         }

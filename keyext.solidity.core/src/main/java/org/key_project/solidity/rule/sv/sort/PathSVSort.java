@@ -15,13 +15,16 @@ import org.key_project.solidity.program.ast.abstractions.ArrayType;
 import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.MappingType;
+import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
+import org.key_project.solidity.program.ast.declarations.StructDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
 import org.key_project.solidity.program.ast.expressions.IndexExpression;
 import org.key_project.solidity.program.ast.expressions.MemberExp;
+import org.key_project.solidity.program.ast.expressions.literals.Literal;
 import org.key_project.solidity.program.ast.references.FieldReference;
 
 final class PathSVSort extends ProgramSVSort {
@@ -43,6 +46,10 @@ final class PathSVSort extends ProgramSVSort {
         ANY, ARRAY, MAPPING
     }
 
+    private enum TypeKind {
+        ANY, PRIMITIVE, REFERENCE
+    }
+
     private record PathInfo(Location location, boolean simple, Origin origin, Kind kind) {
     }
 
@@ -50,18 +57,20 @@ final class PathSVSort extends ProgramSVSort {
     private final Simplicity simplicity;
     private final Origin origin;
     private final Kind kind;
+    private final TypeKind typeKind;
 
     PathSVSort(String name, Location location, Simplicity simplicity) {
-        this(name, location, simplicity, Origin.ANY, Kind.ANY);
+        this(name, location, simplicity, Origin.ANY, Kind.ANY, TypeKind.ANY);
     }
 
     private PathSVSort(String name, Location location, Simplicity simplicity, Origin origin,
-            Kind kind) {
+            Kind kind, TypeKind typeKind) {
         super(new Name(name));
         this.location = location;
         this.simplicity = simplicity;
         this.origin = origin;
         this.kind = kind;
+        this.typeKind = typeKind;
     }
 
     @Override
@@ -77,6 +86,9 @@ final class PathSVSort extends ProgramSVSort {
             return false;
         }
         if (kind != Kind.ANY && info.kind() != kind) {
+            return false;
+        }
+        if (typeKind != TypeKind.ANY && typeKindOf(pe) != typeKind) {
             return false;
         }
         return switch (simplicity) {
@@ -105,6 +117,8 @@ final class PathSVSort extends ProgramSVSort {
                 case "global" -> filters.origin.set(Origin.GLOBAL, flag);
                 case "array" -> filters.kind.set(Kind.ARRAY, flag);
                 case "mapping" -> filters.kind.set(Kind.MAPPING, flag);
+                case "primitive" -> filters.typeKind.set(TypeKind.PRIMITIVE, flag);
+                case "reference" -> filters.typeKind.set(TypeKind.REFERENCE, flag);
                 default -> throw new IllegalArgumentException(
                     "Unknown Path sort flag '" + rawFlag + "'");
             }
@@ -114,7 +128,8 @@ final class PathSVSort extends ProgramSVSort {
                 "Memory paths are always local; use 'memory' or 'memory,local'");
         }
         ProgramSVSort result = new PathSVSort("Path[" + parameter + "]", filters.location.value,
-            filters.simplicity.value, filters.origin.value, filters.kind.value);
+            filters.simplicity.value, filters.origin.value, filters.kind.value,
+            filters.typeKind.value);
         PARAMETERIZED_SORTS.put(parameter, result);
         return result;
     }
@@ -141,6 +156,9 @@ final class PathSVSort extends ProgramSVSort {
             return new PathInfo(base.location(), false, base.origin(), kindOf(pe));
         }
         if (pe instanceof IndexExpression index) {
+            if (!isSimpleIndex(index.getIndexExp())) {
+                return null;
+            }
             PathInfo base = classify(index.getLeftExp(), services);
             if (base == null) {
                 return null;
@@ -160,18 +178,31 @@ final class PathSVSort extends ProgramSVSort {
         return null;
     }
 
-    private static boolean isNoArgPush(FunctionCallExpression call) {
+    static boolean isNoArgPush(FunctionCallExpression call) {
         return call.getArguments().isEmpty()
                 && call.getFunctionExp() instanceof MemberExp m
                 && m.getRightExp() instanceof FunctionDeclaration fd
                 && "push".equals(fd.name().toString());
     }
 
-    private static Kind kindOf(SolidityProgramElement pe) {
-        if (!(pe instanceof Expression expression)) {
-            return Kind.ANY;
+    private static boolean isSimpleIndex(SolidityProgramElement index) {
+        return index instanceof ProgramVariable || index instanceof Literal;
+    }
+
+    private static TypeKind typeKindOf(SolidityProgramElement pe) {
+        Type type = typeOf(pe);
+        if (type instanceof PrimitiveType) {
+            return TypeKind.PRIMITIVE;
         }
-        Type type = unwrap(expression.getType());
+        if (type instanceof StructDeclaration || type instanceof ArrayType
+                || type instanceof DynamicArrayType || type instanceof MappingType) {
+            return TypeKind.REFERENCE;
+        }
+        return TypeKind.ANY;
+    }
+
+    private static Kind kindOf(SolidityProgramElement pe) {
+        Type type = typeOf(pe);
         if (type instanceof DynamicArrayType || type instanceof ArrayType) {
             return Kind.ARRAY;
         }
@@ -179,6 +210,25 @@ final class PathSVSort extends ProgramSVSort {
             return Kind.MAPPING;
         }
         return Kind.ANY;
+    }
+
+    private static Type typeOf(SolidityProgramElement pe) {
+        if (!(pe instanceof Expression expression)) {
+            return null;
+        }
+        if (pe instanceof IndexExpression index) {
+            Type baseType = typeOf(index.getLeftExp());
+            if (baseType instanceof DynamicArrayType arrayType) {
+                return unwrap(arrayType.getElementType());
+            }
+            if (baseType instanceof ArrayType arrayType) {
+                return unwrap(arrayType.getElementType());
+            }
+            if (baseType instanceof MappingType mappingType) {
+                return unwrap(mappingType.valueType());
+            }
+        }
+        return unwrap(expression.getType());
     }
 
     private static Type unwrap(Type type) {
@@ -193,6 +243,7 @@ final class PathSVSort extends ProgramSVSort {
         private final Filter<Simplicity> simplicity = new Filter<>(Simplicity.ANY);
         private final Filter<Origin> origin = new Filter<>(Origin.ANY);
         private final Filter<Kind> kind = new Filter<>(Kind.ANY);
+        private final Filter<TypeKind> typeKind = new Filter<>(TypeKind.ANY);
     }
 
     /** One filter axis: its value plus the flag that set it, so conflicts can be reported. */

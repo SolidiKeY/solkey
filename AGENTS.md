@@ -101,6 +101,8 @@ Program rules live in `keyext.solidity.core/src/main/resources/org/key_project/s
 
 **When planning a new taclet:** always begin the plan with a plain-English explanation of what the taclet does — state the precondition (what must be true before the rule fires), the transformation (what sequent change it performs), and the postcondition (what is true after). Write this before any KeY syntax.
 
+**`\addprogvars` — common mistake:** do NOT put `\addprogvars(pv)` on a capture/unfold taclet whose `\replacewith` re-emits a declaration for the fresh variable (`s#pvType s#pv = s#nse; ...`) — that declaration is consumed later by `memoryLocalDeclInitDrop`, which registers the variable itself, so the early `\addprogvars` is redundant. `\addprogvars` belongs only on the rules that consume the declaration statement itself (`memoryLocalDeclInitDrop`, `storageLocalDeclSkip`, `valueDeclSkip`, `memoryReferenceDeclFreshAlloc`, the `localDecl*crement` family).
+
 ## Testing
 
 Run `./gradlew :keyext.solidity.core:test` after refactoring. Prefer modifying existing test classes over creating new ones.

@@ -4,6 +4,7 @@
 package org.key_project.solidity.rule.sv.sort;
 
 import java.math.BigInteger;
+import java.util.List;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.sort.Sort;
@@ -19,6 +20,7 @@ import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.declarations.StateVariableDeclaration;
+import org.key_project.solidity.program.ast.declarations.StructDeclaration;
 import org.key_project.solidity.program.ast.expressions.IndexExpression;
 import org.key_project.solidity.program.ast.expressions.MemberExp;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
@@ -122,7 +124,7 @@ public class PathSVSortTest {
     }
 
     @Test
-    void indexPathIsComplexEvenWithSimpleIndexExpression() {
+    void indexPathIsComplexWithSimpleIndexAndNoPathWithNonSimpleIndex() {
         ProgramVariable simpleIndex = variable("i", DataLocation.Default);
         IndexExpression simplePath = new IndexExpression(storageField("balances"), simpleIndex);
 
@@ -134,9 +136,48 @@ public class PathSVSortTest {
         assertTrue(ProgramSVSort.COMPLEX_STORAGE_PATH.canStandFor(simplePath, services));
         assertFalse(ProgramSVSort.SIMPLE_STORAGE_PATH.canStandFor(simplePath, services));
 
-        assertTrue(ProgramSVSort.STORAGE_PATH.canStandFor(complexPath, services));
+        assertFalse(ProgramSVSort.STORAGE_PATH.canStandFor(complexPath, services));
         assertFalse(ProgramSVSort.SIMPLE_STORAGE_PATH.canStandFor(complexPath, services));
-        assertTrue(ProgramSVSort.COMPLEX_STORAGE_PATH.canStandFor(complexPath, services));
+        assertFalse(ProgramSVSort.COMPLEX_STORAGE_PATH.canStandFor(complexPath, services));
+    }
+
+    @Test
+    void typeKindFlagsSeparatePrimitiveAndReferencePaths() {
+        StructDeclaration accountStruct =
+            new StructDeclaration(new Name("Account"), List.of(field("balance")), -1);
+        FieldReference alice = storageField("alice", accountStruct);
+        MemberExp age = new MemberExp(alice, field("age"), PrimitiveType.UINT256);
+        MemberExp account = new MemberExp(alice, field("account"), accountStruct);
+
+        ProgramSVSort complexReference =
+            ProgramSVSort.PATH.createInstance("storage,complex,reference");
+        ProgramSVSort complexPrimitive = ProgramSVSort.PATH.createInstance("complex,primitive");
+
+        assertTrue(complexReference.canStandFor(account, services));
+        assertFalse(complexReference.canStandFor(age, services));
+        assertFalse(complexReference.canStandFor(alice, services));
+        assertTrue(complexPrimitive.canStandFor(age, services));
+        assertFalse(complexPrimitive.canStandFor(account, services));
+    }
+
+    @Test
+    void nonSimpleExpressionValueAcceptsOperatorShapedValueExpressionsOnly() {
+        ProgramSVSort nseValue = ProgramSVSort.NON_SIMPLE_EXPRESSION.createInstance("value");
+        ProgramVariable a = variable("a", DataLocation.Default);
+        BinaryExpression sum =
+            new BinaryExpression(Operator.ADD, a, new Uint256Literal(BigInteger.ONE));
+        StructDeclaration accountStruct =
+            new StructDeclaration(new Name("Account"), List.of(field("balance")), -1);
+        FieldReference alice = storageField("alice", accountStruct);
+        MemberExp age = new MemberExp(alice, field("age"), PrimitiveType.UINT256);
+        MemberExp account = new MemberExp(alice, field("account"), accountStruct);
+
+        assertTrue(nseValue.canStandFor(sum, services));
+        assertFalse(nseValue.canStandFor(a, services));
+        assertFalse(nseValue.canStandFor(new Uint256Literal(BigInteger.ONE), services));
+        assertFalse(nseValue.canStandFor(age, services));
+        assertFalse(nseValue.canStandFor(account, services));
+        assertFalse(nseValue.canStandFor(alice, services));
     }
 
     @Test

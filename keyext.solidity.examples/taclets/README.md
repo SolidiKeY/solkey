@@ -35,3 +35,35 @@ These examples exercise source-level Solidity program taclets loaded through
   (`to.transfer(5);` books `net(to) -= 5`).
 - `net-transfer-capture-argument.key` and `net-transfer-capture-receiver.key`
   cover the nonsimple-amount and nonsimple-receiver capture rules.
+
+## Require
+
+- `require-holds-diamond.key` covers `requireConditionCapture` +
+  `requireSimple` in a diamond (both branches close from a known-true guard).
+- `require-guard-box.key` covers the box guard semantics: the "Reverts" branch
+  closes via `revertBox` without knowing the condition.
+
+## Capture partition (non-simple RHS / index)
+
+- `storage-index-write-nse-chain.key` — `balances[i+1] = x*y + 3;` — the full
+  `nse1[nse2] = nse3` chain: `indexWriteValueRhsCapture`, then
+  `storageIndexWriteNonSimpleIndexCapture`, then the mapping save.
+- `storage-matrix-nse-index.key` — `matrix[i+1][j+1] = x + y;` — inner
+  (`indexWriteInnerNonSimpleIndexCapture`) plus outer index captures.
+- `storage-index-read-nse-index.key` — `result = values[i+1];`
+  (`storageIndexRead_unfold_rightSndIndex`).
+- `storage-root-write-rhs-capture.key` / `storage-field-write-rhs-capture.key`
+  — nested value RHS into a root / field target
+  (`storageRootWriteValueRhsCapture`, `fieldWriteValueRhsCapture`).
+- `storage-field-copy-value-field.key` — `alice.age = bob.age;`
+  (`storageFieldRead_unfold_rightSndResult`).
+- `storage-index-copy-value.key` — `balances[i] = values[j];`
+  (`storageIndexRead_unfold_rightSndResult`).
+- `storage-field-write-capture-src.key` — `alice.account = bob.account;`
+  (`storageFieldWriteCaptureSrc`, reference-path RHS into a storage alias).
+- `memory-index-write-nse.key` — `xs[i+1] = a + b;` — memory value-RHS and
+  index captures.
+- `storage-index-delete-nse-index.key` — `delete balances[k+1];`
+  (`storageIndexDeleteNonSimpleIndexCapture`).
+- `storage-index-read-mapping-store-root.key` — `total = balances[k];`
+  (`storageIndexReadMappingStoreRoot`).

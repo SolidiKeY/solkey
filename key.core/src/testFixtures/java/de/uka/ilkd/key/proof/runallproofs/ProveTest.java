@@ -98,8 +98,8 @@ public class ProveTest {
 
         Assertions.assertTrue(Files.exists(keyFile), "File " + keyFile + " does not exists");
 
-        // File that the created proof will be saved to.
-        var proofFile = Paths.get(keyFile.toAbsolutePath() + ".proof");
+        // Temporary file that the created proof will be saved to for the reload check.
+        var proofFile = Files.createTempFile(keyFile.getFileName().toString(), ".proof");
 
         LOGGER.info("({}) Proof will be saved to: {}", caseId, proofFile);
 
@@ -158,6 +158,7 @@ public class ProveTest {
             if (env != null) {
                 env.dispose();
             }
+            Files.deleteIfExists(proofFile);
         }
 
         String message = String.format("(%s) %sVerifying property \"%s\"%sfor file: %s",

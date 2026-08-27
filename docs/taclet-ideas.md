@@ -7,8 +7,10 @@ note on the intended sequent transformation. Implement against the conventions
 in `docs/key-taclets.md`; storage/memory shapes follow `docs/storage.md`.
 
 Already done (for reference, do **not** re-add): local assign/decl, `+`,
-`+=`, `==`, `assert`, `revert`, `++`/`--`, `delete`, the storage/memory
-read/write/copy/push/pop family, **all of Tier 1 below except the deferred
+`+=`, `==`, `assert`, `require`, `revert`, `++`/`--`, `delete`, the
+storage/memory read/write/copy/push/pop family, the non-simple RHS/index
+capture partition (`docs/taclets-implementation.md` §Capture partition),
+**all of Tier 1 below except the deferred
 bitwise / unary-plus / short-circuit items**, and the **Tier 2 arithmetic
 compound assignments `-=`, `*=`, `/=`, `%=`**. See
 `docs/taclets-implementation.md`.

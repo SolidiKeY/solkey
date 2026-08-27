@@ -8,10 +8,12 @@ import java.util.Objects;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.Resolver;
+import org.key_project.solidity.program.ast.SourceData;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.solidity.rule.matching.inst.MatchConditions;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -62,6 +64,21 @@ public class FunctionReference extends SolidityExpression implements Resolver, V
     @Override
     public FunctionDeclaration mainProgramElement() {
         return Objects.requireNonNull(referencedDeclaration, "function reference is not resolved");
+    }
+
+    @Override
+    public @Nullable MatchConditions match(SourceData sourceData, @Nullable MatchConditions mc) {
+        if (!(sourceData.getSource() instanceof FunctionReference sourceReference)) {
+            return null;
+        }
+        if (referencedDeclaration == null || sourceReference.referencedDeclaration == null) {
+            return null;
+        }
+        if (!referencedDeclaration.name().equals(sourceReference.referencedDeclaration.name())) {
+            return null;
+        }
+        sourceData.next();
+        return mc;
     }
 
     public void visit(Visitor v) {

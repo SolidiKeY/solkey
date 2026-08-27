@@ -64,8 +64,11 @@ the AST node class) so `+=` does not match `=`.
 
 ### Tier-1 expression operators
 Mirror the `+`/`==` families: terminal assigns the logic-level result, non-simple
-operands are captured by `_unfold_left/right/result` (arith) or `…CaptureLhs/Rhs`
-(relational/logical). Uses plain LDT ops (`sub`, `mul`, `div`, `mod`, `pow`,
+operands are captured by `_unfold_left/right` (arith) or `…CaptureLhs/Rhs`
+(relational/logical). The former `<op>_unfold_result` rules (`nlhs = se1 OP se2`)
+are gone — a non-simple write target is now served by the per-statement RHS
+captures (§Capture partition below), which also cover nested RHS like
+`total = x + y*z;`. Uses plain LDT ops (`sub`, `mul`, `div`, `mod`, `pow`,
 `neg`), so no overflow branch; `/` and `%` revert on a zero denominator.
 - Arithmetic: `-`, `*`, `**` (`pow`), `/`, `%`.
 - Relational: `!=`, `<`, `>`, `<=`, `>=` (predicate map `lt/leq/gt/geq`).
@@ -143,6 +146,51 @@ purely by the concrete-vs-generic sort of the `delValue` rewrite rules (no varco
 mirroring `selectIntOnStore` / `selectOnStore`. Complex receivers unfold first
 (`…_unfold_leftFst`). Storage and memory deletes stay separate by design.
 
+### Capture partition (non-simple RHS / index, storage.md Steps 1–2)
+Non-simple constituents are hoisted into fresh locals by a disjoint rule family,
+partitioned by the RHS's *static type* so each capture picks the right variable
+kind:
+- **Value RHS** (`NonSimpleExpression[value]`: operator-shaped, primitive-typed,
+  not path-shaped): `storageRootWriteValueRhsCapture` (`gp = nse;`),
+  `fieldWriteValueRhsCapture` (`e.a = nse;`, location-neutral),
+  `indexWriteValueRhsCapture` (`e1[e2] = nse;`, location-neutral) → fresh
+  `Variable[value]`.
+- **Reference-path RHS** (`Path[…,complex,reference]`):
+  `storageIndexWriteStorageRefRhsCapture`, `storageFieldWriteCaptureSrc`,
+  `memoryIndexWriteMemRefRhsCapture`, `memoryFieldWriteCaptureSrc` → fresh
+  storage/memory alias. Primitive-typed complex paths are excluded (they go
+  through the value-read captures below).
+- **Value path RHS into a non-simple target** (paper `unfold_rightSndResult`):
+  `storage{Field,Index}Read_unfold_rightSndResult`,
+  `memory{Field,Index}Read_unfold_rightSndResult` — `nlhs = sp.a;` /
+  `nlhs = sp[se];` with `nlhs : Path[complex,primitive]` capture the read into a
+  value temp, then the plain write rules fire. `memoryToStorageFieldCopyField`
+  is restricted to `\isMemoryReferenceField` so primitive members take this
+  route instead.
+- **Non-simple index** (paper `unfold_leftSnd` / `rightSndIndex`), all with
+  `Path[storage]` / `Path[memory]` bases (any simplicity/origin/kind):
+  `storageIndexWriteNonSimpleIndexCapture`, `memoryIndexWriteNonSimpleIndexCapture`,
+  `storageIndexWriteRootRhsNonSimpleIndexCapture` (root-reference RHS),
+  `storageIndexRead_unfold_rightSndIndex`, `memoryIndexRead_unfold_rightSndIndex`,
+  `storageIndexDeleteNonSimpleIndexCapture`, `memoryIndexDeleteNonSimpleIndexCapture`.
+  Depth-2 inner indices (`e1[nse][e2]`) have dedicated location-neutral captures
+  `indexWriteInnerNonSimpleIndexCapture` / `indexReadInnerNonSimpleIndexCapture`;
+  NSE indices at depth ≥ 3 or under member bases (`people[k+1].age`) are still
+  unsupported.
+Also `storageIndexReadMappingStoreRoot` closes the paper's §11 table
+(`gp = sp[i]` for mappings, no bounds branch).
+
+### Require / assert
+Per `require-assert.md`: `requireConditionCapture` / `requireSimple` and
+`assertConditionCapture` / `assertSimple`. `requireSimple` branches
+`pv = FALSE | ⟨ω⟩φ` ("Holds") and `pv = TRUE | ⟨revert();⟩φ` ("Reverts") inside
+`\replacewith` so the update context binding `pv` is preserved; combined with
+`revertDiamond`/`revertBox` this yields `c ∧ φ` (diamond) / `c → φ` (box), while
+`assert` keeps `c ∧ φ` in both modalities. `FunctionReference.match` compares
+callee names, so `assert`/`require`/`revert` patterns are disjoint (previously
+any zero-child `FunctionReference` matched any other). A literal operand
+(`require(true)`) still matches neither rule (pre-existing `assert` gap).
+
 ### Payments (`net` ledger, `msg`, `transfer`)
 First slice of `docs/net.md` (Steps 1–3). `netHeader.key` declares the
 program variables `Struct net` (per-address ledger: read
@@ -164,7 +212,15 @@ Path SV sorts: `StoragePath`, `SimpleStoragePath`, `ComplexStoragePath`,
 `Path[...]` with comma-separated flags (`storage`/`memory`, `simple`/`complex`,
 `root`/`field`/`index`, `array`/`mapping`, `primitive`/`reference`,
 `local`/`global`). Roots are simple; member/indexed paths and no-arg `arr.push()`
-are complex. Path schema variables used directly in `\replacewith`/`\add` term
+are complex. An `IndexExpression` whose index is not simple (variable/literal) is
+**not** a path at all — it must be normalized by the index-capture rules first,
+which keeps "matches a `Path[...]` SV" aligned with "lowerable by
+`convertToLogicElement`". The `primitive`/`reference` flags filter by the path's
+static type; for index expressions rebuilt during taclet instantiation the type
+is re-derived from the base's element type (`PathSVSort.typeOf`).
+`NonSimpleExpression[value]` filters non-simple expressions to operator-shaped,
+primitive-typed, non-path ones (`NonSimpleExpressionSVSort`). Path schema
+variables used directly in `\replacewith`/`\add` term
 positions lower to logic `List` terms automatically; indexed segments lower to
 `at(index)` (sort `Field`); `arr.length` lowers to the `size` field. A `push()`
 path is only ever captured via `\newTypeOf`, never lowered directly.

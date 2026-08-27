@@ -153,7 +153,20 @@ public class TacletStarterExamplesTest {
             example("net-msg-value.key"),
             example("net-transfer-simple.key"),
             example("net-transfer-capture-argument.key"),
-            example("net-transfer-capture-receiver.key"));
+            example("net-transfer-capture-receiver.key"),
+            example("require-holds-diamond.key"),
+            example("require-guard-box.key"),
+            example("storage-index-write-nse-chain.key"),
+            example("storage-matrix-nse-index.key"),
+            example("storage-index-read-nse-index.key"),
+            example("storage-root-write-rhs-capture.key"),
+            example("storage-field-write-rhs-capture.key"),
+            example("storage-field-copy-value-field.key"),
+            example("storage-index-copy-value.key"),
+            example("storage-field-write-capture-src.key"),
+            example("memory-index-write-nse.key"),
+            example("storage-index-delete-nse-index.key"),
+            example("storage-index-read-mapping-store-root.key"));
     }
 
     private static Arguments example(String name) {
