@@ -80,6 +80,8 @@ Grammars in `keyext.solidity.core/src/main/antlr/`: `Solidity.g4`, `KeYSolidityD
 
 Spotless enforces formatting (`scripts/tools/checkstyle/keyCodeStyle.xml`). Run `./gradlew spotlessApply` before committing. Fields `@NonNull` by default.
 
+**Do not add comments to the code.** Write self-explanatory code instead; leave existing comments untouched unless the change makes them wrong.
+
 ## Documentation (`docs/`)
 
 Read the relevant doc before working on taclets — each is a compact, agent-facing reference:
