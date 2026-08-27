@@ -278,6 +278,31 @@ unconstrained symbolic storage.
 - `testStorageArrayPushPop` — `tokens.push(Token(42));`, struct-literal `Token(42)`
   not parsed (no push-struct-value taclet).
 
+## Verifying a function directly from a `.sol` file (no `.key` file)
+
+A single Solidity function can be verified without writing a `.key` problem file. The
+proof obligation `\[{ body }\] true` is synthesized in memory
+(`FunctionVerificationPO`): leading `require` statements act as preconditions (their
+false branch reverts and closes trivially in box) and every `assert` is an obligation.
+Function parameters and named return parameters are registered as free program
+variables (symbolic inputs).
+
+```bash
+# CLI: --function is required, --contract optional when the name is unambiguous
+./gradlew :keyext.solidity.core:solidityCli --args="--contract MyContract --function deposit /abs/path/MyContract.sol"
+```
+
+```java
+// Tests: KeYEnvironment.loadFunction / SolidityExampleTests.loadAndProveFunction
+KeYEnvironment env = KeYEnvironment.loadFunction(solPath, "MyContract", "deposit");
+Proof proof = SolidityExampleTests.prove(env, 10000, KEEP_TIMEOUT);
+```
+
+Example: `keyext.solidity.examples/taclets/FunctionVerification.sol`, exercised by
+`FunctionVerificationTest`. Scope: the body must stay within the implemented rule set
+above; a value-carrying top-level `return` has no consuming rule yet (assign to named
+return parameters instead).
+
 ## Verification
 
 ```bash

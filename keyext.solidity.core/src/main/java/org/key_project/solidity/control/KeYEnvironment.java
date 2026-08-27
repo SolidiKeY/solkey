@@ -14,6 +14,7 @@ import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.init.InitConfig;
 import org.key_project.solidity.proof.io.AbstractProblemLoader;
 import org.key_project.solidity.proof.io.AbstractProblemLoader.ReplayResult;
+import org.key_project.solidity.proof.io.FunctionTarget;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
 
 import org.jspecify.annotations.Nullable;
@@ -115,13 +116,38 @@ public class KeYEnvironment<U extends UserInterfaceControl> {
             @Nullable Properties poPropertiesToForce,
             @Nullable Consumer<Proof> callbackProofLoaded,
             boolean forceNewProfileOfNewProofs) throws ProblemLoaderException {
+        return load(profile, location, includes, callbackProofLoaded,
+            forceNewProfileOfNewProofs, null);
+    }
+
+    private static KeYEnvironment<DefaultUserInterfaceControl> load(@Nullable Profile profile,
+            Path location,
+            @Nullable List<Path> includes,
+                                                                    @Nullable Consumer<Proof> callbackProofLoaded,
+            boolean forceNewProfileOfNewProofs,
+            @Nullable FunctionTarget functionTarget) throws ProblemLoaderException {
         DefaultUserInterfaceControl ui = new DefaultUserInterfaceControl();
-        AbstractProblemLoader loader = ui.load(profile, location, includes, poPropertiesToForce,
-            forceNewProfileOfNewProofs, callbackProofLoaded);
+        AbstractProblemLoader loader = ui.load(profile, location, includes,
+                callbackProofLoaded, functionTarget);
         InitConfig initConfig = loader.getInitConfig();
 
         return new KeYEnvironment<>(ui, initConfig, loader.getProof(),
             loader.getResult());
+    }
+
+    /// Loads the given Solidity source file and creates a proof obligation for the selected
+    /// function, without requiring a `.key` problem file.
+    ///
+    /// @param solFile The `.sol` file to load.
+    /// @param contract The contract containing the function, or `null` if the function name is
+    /// unambiguous.
+    /// @param function The name of the function to verify.
+    /// @return The [KeYEnvironment] whose loaded proof is the generated proof obligation.
+    /// @throws ProblemLoaderException Occurred Exception
+    public static KeYEnvironment<DefaultUserInterfaceControl> loadFunction(Path solFile,
+            @Nullable String contract, String function) throws ProblemLoaderException {
+        return load(null, solFile, null, null, false,
+            new FunctionTarget(contract, function));
     }
 
     /// Loads the given location and returns all required references as [KeYEnvironment]. The

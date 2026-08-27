@@ -52,6 +52,15 @@ public class CLI {
         description = "maximal number of rule applications")
     int max;
 
+    @Option(names = "--contract",
+        description = "contract containing the function to verify (only for .sol input; "
+            + "optional if the function name is unambiguous)")
+    String contract;
+
+    @Option(names = "--function",
+        description = "function to verify (required for .sol input)")
+    String function;
+
     public static void main(String[] args) {
         System.exit(execute(args));
     }
@@ -80,7 +89,20 @@ public class CLI {
             if (cli.verbose)
                 System.out.println("Loading...");
             Path f = cli.file.toPath();
-            var env = KeYEnvironment.load(f);
+            boolean solInput = cli.file.getName().endsWith(".sol");
+            if (solInput && cli.function == null) {
+                System.err.println(
+                    "Error: verifying a .sol file requires --function (and optionally --contract).");
+                return false;
+            }
+            if (!solInput && (cli.function != null || cli.contract != null)) {
+                System.err.println(
+                    "Error: --function/--contract are only supported for .sol input files.");
+                return false;
+            }
+            var env = solInput
+                    ? KeYEnvironment.loadFunction(f, cli.contract, cli.function)
+                    : KeYEnvironment.load(f);
             var loadedProof = env.getLoadedProof();
             if (loadedProof.closed()) {
                 if (cli.prove) {

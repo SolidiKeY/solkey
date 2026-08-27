@@ -94,6 +94,20 @@ public final class SolidityExampleTests {
         return prove(load(file), maxSteps, timeout);
     }
 
+    /// Load a `.sol` file and create the proof obligation for the given function, without a
+    /// `.key` problem file. The contract may be `null` when the function name is unambiguous.
+    public static KeYEnvironment loadFunction(Path solFile, String contract, String function)
+            throws ProblemLoaderException {
+        return KeYEnvironment.loadFunction(solFile, contract, function);
+    }
+
+    /// Load a function from a `.sol` file and run automode with an explicit step budget and
+    /// timeout.
+    public static Proof loadAndProveFunction(Path solFile, String contract, String function,
+            int maxSteps, long timeout) throws ProblemLoaderException {
+        return prove(loadFunction(solFile, contract, function), maxSteps, timeout);
+    }
+
     // --- proof inspection ----------------------------------------------------------------------
 
     /// Find the taclet named `tacletName` applicable at the top-level succedent formula of `goal`,

@@ -70,6 +70,9 @@ public abstract class AbstractProblemLoader {
     /// and not shown to the user.
     private boolean ignoreWarnings = false;
 
+    /// The Solidity function to verify when loading a `.sol` file directly, or `null`.
+    private @Nullable FunctionTarget functionTarget;
+
     /// Constructor.
     ///
     /// @param file The file or folder to load.
@@ -91,6 +94,10 @@ public abstract class AbstractProblemLoader {
 
     protected void setProof(Proof proof) {
         this.proof = proof;
+    }
+
+    public void setFunctionTarget(@Nullable FunctionTarget functionTarget) {
+        this.functionTarget = functionTarget;
     }
 
     /// Executes the loading process and tries to instantiate a proof and to re-apply rules on it if
@@ -174,8 +181,13 @@ public abstract class AbstractProblemLoader {
                 callbackProofLoaded.accept(proof);
             }
             // OneStepSimplifier.refreshOSS(proof);
-            result = replayProof(proof);
-            // LOGGER.info("Replay result: {}", result.getStatus());
+            if (envInput instanceof KeYUserProblemFile) {
+                result = replayProof(proof);
+                // LOGGER.info("Replay result: {}", result.getStatus());
+            } else {
+                result = new ReplayResult("Fresh proof obligation, nothing to replay.",
+                    List.of(), proof.root());
+            }
         }
     }
 
@@ -220,13 +232,8 @@ public abstract class AbstractProblemLoader {
 
         if (filename.endsWith(".sol")) {
             // solidity file, probably enriched by specifications
-            SLEnvInput ret = null;
-            if (file.getParent() == null) {
-                ret = new SLEnvInput(Paths.get("."), profileOfNewProofs, includes);
-            } else {
-                ret = new SLEnvInput(file.getParent().toAbsolutePath(), profileOfNewProofs,
-                    includes);
-            }
+            SLEnvInput ret =
+                new SLEnvInput(file.toAbsolutePath(), profileOfNewProofs, includes);
             ret.setSolidityFile(file.toAbsolutePath());
             return ret;
         } else if (filename.endsWith(".zproof")) { // zipped proof package
@@ -344,7 +351,10 @@ public abstract class AbstractProblemLoader {
         }
 
         // Instantiate proof obligation
-        if (envInput instanceof ProofOblInput && chooseContract == null
+        if (envInput instanceof SLEnvInput && functionTarget != null) {
+            return new LoadedPOContainer(new FunctionVerificationPO(initConfig,
+                functionTarget.contract(), functionTarget.function()));
+        } else if (envInput instanceof ProofOblInput && chooseContract == null
                 && proofObligation == null) {
             return new LoadedPOContainer((ProofOblInput) envInput);
         } /*

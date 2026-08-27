@@ -9,6 +9,7 @@ import java.util.List;
 import org.key_project.solidity.common.Profile;
 import org.key_project.solidity.proof.init.ProofInputException;
 import org.key_project.solidity.proof.io.AbstractEnvInput;
+import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableSet;
 
 import org.jspecify.annotations.Nullable;
@@ -37,7 +38,7 @@ public final class SLEnvInput extends AbstractEnvInput {
 
         // TODO
         // return createSpecs(new JMLSpecExtractor(initConfig.getServices()));
-        return null;
+        return DefaultImmutableSet.nil();
     }
 
     // -------------------------------------------------------------------------
@@ -58,7 +59,7 @@ public final class SLEnvInput extends AbstractEnvInput {
 
     @Override
     public Path getInitialFile() {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        return getSolidityFile() != null ? getSolidityFile() : solidityPath;
     }
 
 }
