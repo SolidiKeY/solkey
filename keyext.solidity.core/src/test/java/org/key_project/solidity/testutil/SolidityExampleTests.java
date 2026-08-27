@@ -3,8 +3,13 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.testutil;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Stream;
 
 import org.key_project.logic.PosInTerm;
 import org.key_project.logic.Term;
@@ -20,6 +25,8 @@ import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
 import org.key_project.solidity.rule.TacletApp;
 import org.key_project.util.collection.ImmutableList;
+
+import org.junit.jupiter.params.provider.Arguments;
 
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -60,6 +67,33 @@ public final class SolidityExampleTests {
     public static Path examplesDir(String subdir) {
         Path p = Path.of("keyext.solidity.examples").resolve(subdir);
         return Files.exists(p) ? p : Path.of("../keyext.solidity.examples").resolve(subdir);
+    }
+
+    /// Every `.key` problem in an example directory, as `(fileName, path)` arguments sorted by
+    /// name. Enumerating beats a hand-maintained list: a new example is picked up automatically,
+    /// and one cannot silently drop out of the suite.
+    public static Stream<Arguments> exampleProblems(String subdir) throws IOException {
+        Path dir = examplesDir(subdir);
+        assertTrue(Files.isDirectory(dir), "example directory must exist: " + dir.toAbsolutePath());
+        try (var entries = Files.list(dir)) {
+            List<Path> problems = entries
+                    .filter(Files::isRegularFile)
+                    .filter(path -> path.getFileName().toString().endsWith(".key"))
+                    .filter(SolidityExampleTests::hasProofObligation)
+                    .sorted(Comparator.comparing(path -> path.getFileName().toString()))
+                    .toList();
+            assertTrue(!problems.isEmpty(), "no .key problems found in " + dir.toAbsolutePath());
+            return problems.stream()
+                    .map(path -> Arguments.of(path.getFileName().toString(), path));
+        }
+    }
+
+    private static boolean hasProofObligation(Path path) {
+        try {
+            return Files.readString(path).contains("\\problem");
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     // --- loading and proving -------------------------------------------------------------------

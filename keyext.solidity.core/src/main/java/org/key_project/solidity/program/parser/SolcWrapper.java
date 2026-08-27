@@ -53,20 +53,45 @@ public class SolcWrapper {
         return targetPath.toAbsolutePath().toString();
     }
 
+    /// Consumes solc's output and waits for it to exit.
+    ///
+    /// Both pipes have to be drained while the process is still running. The AST JSON of a
+    /// contract with more than a handful of function bodies exceeds the operating system's pipe
+    /// buffer, at which point solc blocks writing; waiting for exit before reading then
+    /// deadlocks both processes permanently.
     static String finishesSolcCommand(Process proc) throws IOException {
-        BufferedReader procInput = proc.inputReader();
-        int exitCode;
+        final StringBuilder errors = new StringBuilder();
+        Thread errorDrain = new Thread(() -> {
+            try (BufferedReader reader =
+                new BufferedReader(new InputStreamReader(proc.getErrorStream(), UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    errors.append(line).append('\n');
+                }
+            } catch (IOException ignored) {
+                // the diagnostics are best-effort; the exit code decides the outcome
+            }
+        }, "solc-stderr");
+        errorDrain.setDaemon(true);
+        errorDrain.start();
+
+        final String output;
+        try (BufferedReader procInput = proc.inputReader()) {
+            output = extract4lines(procInput);
+        }
+
+        final int exitCode;
         try {
             exitCode = proc.waitFor();
+            errorDrain.join();
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
-        if (exitCode == 1) {
-            InputStream errorStream = proc.getErrorStream();
-            String errorStr = new String(errorStream.readAllBytes(), UTF_8);
-            throw new RuntimeException("Not possible to compile solidity code:\n" + errorStr);
+        if (exitCode != 0) {
+            throw new RuntimeException("Not possible to compile solidity code:\n" + errors);
         }
-        return extract4lines(procInput);
+        return output;
     }
 
     public static String readSolBuff(byte[] contract) throws IOException {

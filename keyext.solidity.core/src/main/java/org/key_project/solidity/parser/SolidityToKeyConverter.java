@@ -10,7 +10,6 @@ import org.key_project.logic.Name;
 import org.key_project.logic.Namespace;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.op.sv.SchemaVariable;
-import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.parser.SolidityParser.*;
@@ -18,7 +17,6 @@ import org.key_project.solidity.program.ast.SolidityInfo;
 import org.key_project.solidity.program.ast.abstractions.ArrayType;
 import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
-import org.key_project.solidity.program.ast.abstractions.MappingType;
 import org.key_project.solidity.program.ast.abstractions.MemoryReferenceTypes;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.abstractions.Type;
@@ -640,35 +638,9 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     /// [Services#convertToLogicElement] uses `consr(lp, a)` instead of wrapping in a fresh
     /// single-element list. This applies to every reference-location type held in storage —
     /// structs as well as dynamic/fixed arrays and mappings (e.g. `Token[] storage bt = …`).
-    private KeYSolidityType asStorageAliasType(KeYSolidityType original,
-            DataLocation dataLocation) {
-        if (dataLocation != DataLocation.Storage || original == null) {
-            return original;
-        }
-        var sort = original.getSort();
-        if (sort == null || !isStoragePathType(original, sort)) {
-            return original;
-        }
-        var listSort = services.getNamespaces().sorts().lookup(new Name("List"));
-        if (listSort == null) {
-            return original;
-        }
-        return new KeYSolidityType(original.getSolidityType(), listSort);
-    }
-
-    private static boolean isStoragePathType(KeYSolidityType original, Sort sort) {
-        if ("Struct".equals(sort.name().toString())) {
-            return true;
-        }
-        Type solType = original.getSolidityType();
-        return solType instanceof DynamicArrayType || solType instanceof ArrayType
-                || solType instanceof MappingType;
-    }
-
     private KeYSolidityType asLocalVariableType(KeYSolidityType original,
             DataLocation dataLocation) {
-        return MemoryReferenceTypes.asMemoryReferenceType(
-            asStorageAliasType(original, dataLocation), dataLocation, services);
+        return MemoryReferenceTypes.asLocalVariableType(original, dataLocation, services);
     }
 
     private static class PositionedConverterException extends RuntimeException {

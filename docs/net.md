@@ -47,7 +47,7 @@ maintained by the calculus, not by the program. On top of it:
 | `require` / `assert` / `revert` | Done, refined (`require-assert.md`) |
 | Storage model | Done, richer than the paper's (paths, aliases, `storage.md`) |
 | Unbounded ints ("Solidity Light") | Done (`intHeader.key`; `in_uint256` exists for later rounding) |
-| `result = f(args)@C;` call statement | Parses (`Solidity.g4` `FunctionBodyStatement`); inlined by `ExpandFunctionBody`. The `functionBodyExpand` taclet is currently declared **per example** (`mainFeatures/testSimpleAssert.key`), not in `solidityProgramRules.key` |
+| `result = f(args)@C;` call statement | Parses (`Solidity.g4` `FunctionBodyStatement`); inlined by `ExpandFunctionBody`. The `functionBodyExpand` taclet is in the standard rule set (`solidityProgramRules.key`), together with `blockEmpty`, which discards the inlined body block |
 | `address` type | Registered in `SolidityInfo`, mapped to the `int` sort |
 | `net` mapping | **Done** (Step 1): `Struct net` in `netHeader.key`, read/write via `selectSt`/`storeSt` |
 | `msg.sender` / `msg.value` | **Done** (Step 2): desugared to the `msgSender`/`msgValue` program variables in `SolidityToKeyConverter` |
@@ -285,9 +285,9 @@ whole storage".
 Invariant plumbing, in two phases:
 
 1. **Manual:** declare the rule *in the example `.key` file* with `inv`
-   spelled out literally (exactly how `functionBodyExpand` is declared in
-   `mainFeatures/testSimpleAssert.key` today). This validates the rule shape
-   with zero infrastructure.
+   spelled out literally (exactly how `insertCInv` is declared in
+   `taclets/net-transfer-withcallback-simple.key` today). This validates the
+   rule shape with zero infrastructure.
 2. **Varcond:** add a `ContractSpecification` to `speclang/`, store it in
    `SpecificationRepository`, and register `\getContractInvariant` in
    `TacletBuilderManipulators`, cloning the `LoopInvariantCondition` /
@@ -413,3 +413,19 @@ verifies partial correctness only (box), assumes `transfer`'s gas stipend
 for the no-callback variant (a callee can still be re-entered through
 `call`), and its Table-1 auction examples deliberately contain seeded bugs —
 open proofs there are the expected result, not a regression.
+
+## Why the `net-*` examples are still inline
+
+Every other example moved its program into `keyext.solidity.examples/TestSuite.sol` and calls
+it as `f()@TestSuite`. The seven `net-*` files did not, for two independent reasons:
+
+- **solc.** `msg.value` is only allowed in a `payable` function, and `.transfer` requires
+  `address payable`, not `address`. `net-transfer-capture-receiver` in particular exists to
+  read the `address`-typed `owner` state variable.
+- **`SolJSONParser`.** It cannot resolve `msg` (solc gives it `referencedDeclaration -15`, so
+  the `id2Name` lookup misses), and `.transfer` falls through to
+  `RuntimeException("Unresolved member access")`. Both work in `SolidityToKeyConverter`, which
+  is what parses a program written inline in the modality.
+
+`net-manual-update` has no program at all — its `\problem` is a bare `{net := storeSt(...)}`
+update — so there is nothing to move.

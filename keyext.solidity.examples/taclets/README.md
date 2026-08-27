@@ -3,6 +3,39 @@
 These examples exercise source-level Solidity program taclets loaded through
 `standardSolidityRules.key`.
 
+## Layout
+
+The program of each example lives in `../TestSuite.sol`, the single contract shared with
+`../mainFeatures/`. A `.key` file supplies only the pre/postcondition and calls one function:
+
+```
+\programSource "../TestSuite.sol";
+\programVariables { int result; }
+\problem { \<{ result = storageFieldWriteRead()@TestSuite; }\>(result = 34) }
+```
+
+so every test program is real Solidity, type-checked by `solc` on load. Check the contract
+with `solc --ast-compact-json ../TestSuite.sol > /dev/null` before running a suite.
+
+Conventions:
+
+- The function name is the `.key` basename in lowerCamelCase
+  (`storage-field-write-read.key` → `storageFieldWriteRead`).
+- One observed value → a named return, assigned by plain assignment. `return e;` is not
+  supported by the calculus; see `docs/taclets-implementation.md`.
+- Several observed values → in-body `assert`s and postcondition `true`
+  (`memory-delete`, `memory-assign-forms`, `storage-alias-rebind-original`).
+- Observing only storage/memory → no return value at all.
+- A problem with two modalities calls two functions with `Write`/`Read` suffixes
+  (`storage-field-global-age`, `storage-index-root-array`, …), unless both conjuncts run the
+  *same* program, in which case they share one function (`storageFieldDisjointFields`,
+  `storageFieldDisjointRoots`, `storageAliasWrite`).
+
+**Still inline.** The seven `net-*` examples keep their program inside the modality:
+`msg.value` needs a `payable` function and `.transfer` needs `address payable`, and
+`SolJSONParser` supports neither `msg` nor `.transfer` (`SolidityToKeyConverter` does).
+`net-manual-update` has no program at all. See `docs/net.md`.
+
 ## Memory
 
 - `memory-decl-fresh.key` and `memory-root-delete-fresh.key` cover fresh memory

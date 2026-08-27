@@ -4,7 +4,16 @@ What is runnable today vs. pending. Rules live in
 `keyext.solidity.core/src/main/resources/org/key_project/solidity/proof/rules/solidityProgramRules.key`
 (loaded via `standardSolidityRules.key`). Runnable examples live in
 `keyext.solidity.examples/taclets/` (focused, one rule each) and
-`keyext.solidity.examples/mainFeatures/` (end-to-end, from `PaperTest.sol`).
+`keyext.solidity.examples/mainFeatures/` (end-to-end). Both drive the single contract
+`keyext.solidity.examples/TestSuite.sol`: each `.key` calls one function of it,
+
+```
+\programSource "../TestSuite.sol";
+\problem { \<{ result = storageFieldWriteRead()@TestSuite; }\>(result = 34) }
+```
+
+so every test program is real Solidity that `solc` parses and type-checks. See
+"Function-body inlining" below for the shape constraints this imposes.
 
 - Authoring syntax → `key-taclets.md`
 - Calculus spec → `storage.md`, `memory.md`
@@ -257,11 +266,13 @@ See `taclet-ideas.md` for the full backlog. Headline gaps:
 - Control flow (`if`, loops, `return`), calls beyond `ExpandFunctionBody`,
   events, casts — see `taclet-ideas.md` Tiers 3–5.
 
-## mainFeatures examples (PaperTest.sol)
+## mainFeatures examples (TestSuite.sol)
 
-`keyext.solidity.examples/mainFeatures/` holds 38 end-to-end problems driven by
-`PaperTestExamplesTest.java`; each inlines a function body in the modality over
-`\programSource "PaperTest.sol"`.
+`keyext.solidity.examples/mainFeatures/` holds 41 end-to-end problems driven by
+`PaperTestExamplesTest.java`; each calls one `test*` function of `TestSuite.sol` with
+postcondition `true`, the obligations being carried by in-body `assert`s.
+`testStorageArrayPushPop` is listed in that class's `KNOWN_UNSUPPORTED` (struct literal
+`Token(42)`) and is reported as skipped.
 
 **Passing (most close automatically):** storage write/read, nested + deep copy,
 aliases, mapping read/write/delete, struct-`delete` preserving mapping members
@@ -281,6 +292,10 @@ unconstrained symbolic storage.
 ## Verification
 
 ```bash
+# Type-check the contract first — ~150ms, and it catches a Solidity error before a
+# multi-minute test run:
+solc --ast-compact-json keyext.solidity.examples/TestSuite.sol > /dev/null
+
 # One focused example (absolute path — the CLI resolves relative paths against
 # test-resources, not the repo root):
 ./gradlew :keyext.solidity.core:solidityCli --args="-m 10000 /abs/path/keyext.solidity.examples/taclets/<file>.key"
@@ -291,3 +306,37 @@ unconstrained symbolic storage.
 
 # Use --no-prove first when debugging a parser/matcher failure (load only).
 ```
+
+Both example suites enumerate their directory, so a new `.key` file is picked up without
+editing the test class.
+
+## Function-body inlining
+
+`functionBodyExpand` (in `solidityProgramRules.key`, so examples need not declare it) rewrites
+a call statement to the callee's body via the `ExpandFunctionBody` transformer, which emits
+
+```
+T0 p0 = arg0; ... Tn pn = argn; Tr r0; { <body> } result = r0;
+```
+
+`blockEmpty` then discards the body block once its statements have run. Constraints that
+follow from the current implementation — every example in `TestSuite.sol` respects them:
+
+- **The call must be the whole modality program.** `functionBodyExpand`'s `\find` is a bare
+  `s#fbs`, not a context block, so `\<{ f()@C; g()@C; }\>` does not match.
+- **Exactly one named return.** Only `freshReturns.get(0)` is wired to the result variable; a
+  second named return is silently dropped.
+- **No `return e;`.** It parses, but no taclet consumes a `ReturnStatement`, so symbolic
+  execution gets stuck. Assign to the named return instead.
+- **No overloading.** `visitFunctionBodyStatement` takes the first function whose *name*
+  matches, ignoring the signature, so function names must be unique.
+- **Single-identifier left-hand side.** `(a, b) = f()@C;` is not parseable.
+
+A test that observes more than one value therefore asserts in the body and uses postcondition
+`true`; a test that observes only storage/memory has no return value at all.
+
+Note that a `.sol` body is parsed by `SolJSONParser` (the solc-JSON path), not by
+`SolidityToKeyConverter` (the ANTLR path used for programs written inline in a modality). The
+two are not equally complete: `msg.sender`, `msg.value`, `.transfer` and `.send` work in the
+ANTLR path but not in the JSON one. That is a **parser** gap, not a taclet gap, and it is why
+the seven `net-*` examples still inline their programs.

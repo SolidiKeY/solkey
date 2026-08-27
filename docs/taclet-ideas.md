@@ -107,3 +107,13 @@ Edge cases of already-supported constructs (see `docs/taclets-implementation.md`
 - **Dynamic-array `delete arr;` length reset**: not modeled by the current
   memory/storage delete rules. (Struct-`delete` preserving mapping members is now
   implemented via the lazy `delNode` marker — see `docs/storage.md` §6.)
+
+## Raised in priority by the TestSuite.sol migration
+
+- **`return e;` (Tier 3).** Now on the critical path: every example in `TestSuite.sol` has to
+  use a *named* return and assign to it, because no taclet consumes a `ReturnStatement`. A
+  companion fix belongs in `ExpandFunctionBody`, which currently wires only the first named
+  return and silently drops the rest.
+- **`msg.*` / `.transfer` / `.send` in `SolJSONParser`.** Implemented in the ANTLR path only,
+  which is the sole reason the seven `net-*` examples could not move into the shared contract.
+  See `net.md`.
