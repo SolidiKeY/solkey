@@ -130,14 +130,12 @@ contract TestSuite {
 
     // ── Memory ──
 
-    /// @custom:key fresh-memory
     function memoryDeclDefault() public {
         Person memory carol;
         uint r = carol.age;
         assert(r == 0);
     }
 
-    /// @custom:key fresh-memory
     function memoryArrayIndex() public {
         uint[] memory xs = new uint[](4);
         xs[1] = 33;
@@ -215,12 +213,10 @@ contract TestSuite {
         assert(r);
     }
 
-    /// @custom:key fresh-memory
     function memoryDeclFresh() public {
         Person memory carol;
     }
 
-    /// @custom:key fresh-memory
     function memoryDeepField() public {
         Person memory carol;
         carol.account.balance = 10;
@@ -228,7 +224,6 @@ contract TestSuite {
         assert(r == 10);
     }
 
-    /// @custom:key fresh-memory
     function memoryFieldAlias() public {
         Person memory carol;
         Account memory acc = carol.account;
@@ -237,7 +232,6 @@ contract TestSuite {
         assert(r == 100);
     }
 
-    /// @custom:key fresh-memory
     function memoryFieldReferenceAssign() public {
         Person memory carol;
         Person memory david;
@@ -248,7 +242,6 @@ contract TestSuite {
         assert(r == 60);
     }
 
-    /// @custom:key fresh-memory
     function memoryIndexWriteNse() public {
         uint i = 1;
         uint lhs = 4;
@@ -259,7 +252,6 @@ contract TestSuite {
         assert(r == 9);
     }
 
-    /// @custom:key fresh-memory
     function memoryRootAlias() public {
         Person memory carol;
         Person memory david;
@@ -270,13 +262,11 @@ contract TestSuite {
         assert(r == 41);
     }
 
-    /// @custom:key fresh-memory
     function memoryRootDeleteFresh() public {
         Person memory carol;
         delete carol;
     }
 
-    /// @custom:key fresh-memory
     function memoryStructArrayIndex() public {
         Basket memory basket;
         uint[] memory xs = new uint[](4);
@@ -286,7 +276,6 @@ contract TestSuite {
         assert(r == 33);
     }
 
-    /// @custom:key fresh-memory
     function memoryToStorage() public {
         Person memory carol;
         carol.age = 44;
@@ -925,7 +914,6 @@ contract TestSuite {
         assert(r == 7);
     }
 
-    /// @custom:key fresh-memory
     function storageToMemory() public {
         alice.age = 27;
         Person memory carol = alice;
@@ -963,7 +951,6 @@ contract TestSuite {
         assert(ledgerUses[0].ledger.balances[1] == 10);
     }
 
-    /// @custom:key fresh-memory
     function testMemoryAliasing() public {
         Person memory carol;
         Account memory carolAcc = carol.account;
@@ -971,7 +958,6 @@ contract TestSuite {
         assert(carol.account.balance == 100);
     }
 
-    /// @custom:key fresh-memory
     function testMemoryDeleteAlias() public {
         Person memory carol;
         Account memory carolAcc = carol.account;
@@ -981,7 +967,6 @@ contract TestSuite {
         assert(b == 0);
     }
 
-    /// @custom:key fresh-memory
     function testMemoryDeleteIdentityFieldFreshensSlot() public {
         Person memory carol;
         Account memory carolAcc = carol.account;
@@ -991,7 +976,6 @@ contract TestSuite {
         assert(carolAcc.balance == 100);
     }
 
-    /// @custom:key fresh-memory
     function testMemoryDeletePrimitiveField() public {
         Person memory carol;
         carol.age = 20;
@@ -999,7 +983,6 @@ contract TestSuite {
         assert(carol.age == 0);
     }
 
-    /// @custom:key fresh-memory
     function testMemoryFieldShallowCopy() public {
         Person memory carol;
         Person memory david;
@@ -1010,7 +993,6 @@ contract TestSuite {
         assert(carol.account.balance == 60);
     }
 
-    /// @custom:key fresh-memory
     function testMemoryRootAlias() public {
         Person memory carol;
         Person memory david;
@@ -1021,7 +1003,6 @@ contract TestSuite {
         assert(carol.age == 41);
     }
 
-    /// @custom:key fresh-memory
     function testMemoryRootDeleteRebindsOnlyLocal() public {
         Person memory carol;
         Person memory carolAlias = carol;
@@ -1031,7 +1012,6 @@ contract TestSuite {
         assert(carolAlias.age == 33);
     }
 
-    /// @custom:key fresh-memory
     function testMemoryToStorageCopyComplexSource() public {
         Person memory carol;
         carol.account.balance = 50;
@@ -1040,7 +1020,6 @@ contract TestSuite {
         assert(alice.account.balance == 50);
     }
 
-    /// @custom:key fresh-memory
     function testMemoryToStorageCopyComplexTarget() public {
         Token memory carolToken;
         carolToken.value = 99;
@@ -1049,7 +1028,6 @@ contract TestSuite {
         assert(alice.account.token.value == 99);
     }
 
-    /// @custom:key fresh-memory
     function testMemoryToStorageCopyField() public {
         Account memory carolAcc;
         carolAcc.balance = 50;
@@ -1058,7 +1036,6 @@ contract TestSuite {
         assert(alice.account.balance == 50);
     }
 
-    /// @custom:key fresh-memory
     function testMemoryToStorageCopyRoot() public {
         Person memory carol;
         carol.age = 42;
@@ -1067,7 +1044,6 @@ contract TestSuite {
         assert(alice.age == 42);
     }
 
-    /// @custom:key fresh-memory
     function testMemoryTokenArrayAuxiliaryCases() public {
         Token[] memory carolTokens = new Token[](3);
         Token[] memory davidTokens = new Token[](3);
@@ -1084,7 +1060,6 @@ contract TestSuite {
         assert(carolTokens[1].value == 0);
     }
 
-    /// @custom:key fresh-memory
     function testMemoryUintArrayAuxiliaryCases() public {
         uint[] memory carolValues = new uint[](3);
         uint i = 0;
@@ -1095,7 +1070,6 @@ contract TestSuite {
         assert(carolValues[1] == 0);
     }
 
-    /// @custom:key fresh-memory
     function testMemoryUintArrayPostdecrement() public {
         uint[] memory carolValues = new uint[](3);
         uint i = 1;
@@ -1107,7 +1081,6 @@ contract TestSuite {
         assert(carolValues[1] == 0);
     }
 
-    /// @custom:key fresh-memory
     function testMemoryUintArrayPostincrement() public {
         uint[] memory carolValues = new uint[](3);
         uint i = 0;
@@ -1119,7 +1092,6 @@ contract TestSuite {
         assert(carolValues[0] == 0);
     }
 
-    /// @custom:key fresh-memory
     function testMemoryUintArrayPredecrement() public {
         uint[] memory carolValues = new uint[](3);
         uint i = 1;
@@ -1299,7 +1271,6 @@ contract TestSuite {
         assert(ledger.balances[2] == 20);
     }
 
-    /// @custom:key fresh-memory
     function testStorageToMemoryCopyComplexPath() public {
         alice.account.token.value = 17;
         Token memory t = alice.account.token;
@@ -1307,7 +1278,6 @@ contract TestSuite {
         assert(t.value == 17);
     }
 
-    /// @custom:key fresh-memory
     function testStorageToMemoryCopyField() public {
         alice.account.balance = 10;
         Account memory acc = alice.account;
@@ -1316,7 +1286,6 @@ contract TestSuite {
         assert(v == 10);
     }
 
-    /// @custom:key fresh-memory
     function testStorageToMemoryCopyRoot() public {
         alice.age = 25;
         Person memory carol = alice;
@@ -1386,7 +1355,6 @@ contract TestSuite {
 
     // ── several observations: asserted in the body ──
 
-    /// @custom:key fresh-memory
     function memoryAssignForms() public {
         alice.age = 27;
         Person memory carol;
@@ -1401,7 +1369,6 @@ contract TestSuite {
         assert(r2 == 33);
     }
 
-    /// @custom:key fresh-memory
     function memoryDelete() public {
         Person memory carol;
         Account memory acc = carol.account;

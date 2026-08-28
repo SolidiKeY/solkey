@@ -76,11 +76,8 @@ Miss one and the proof closes on the out-of-bounds revert branch without checkin
 | Natspec tag | Effect |
 |---|---|
 | `/// @custom:key box` | box modality — `require` becomes an assumption |
-| `/// @custom:key fresh-memory` | assume `memory = mtMem`, which the fresh-allocation rules need |
 
 `@custom:` is solc's extension prefix; any other tag is rejected as invalid documentation.
-`fresh-memory` is not the default: an assumption no proof uses is one more formula for the
-strategy to rewrite, and at least one example stops closing when it is present.
 
 ## Known gaps
 

@@ -22,12 +22,6 @@ public final class SolidityProblemSynthesizer {
     /// other tag is rejected as invalid documentation.
     public static final String BOX_DIRECTIVE = "@custom:key box";
 
-    /// Natspec directive assuming execution starts with empty memory (`memory = mtMem`), which
-    /// the fresh-allocation rules need. It is not emitted by default: an assumption no proof uses
-    /// is one more formula for the strategy to rewrite, and at least one example stops closing
-    /// when it is present.
-    public static final String FRESH_MEMORY_DIRECTIVE = "@custom:key fresh-memory";
-
     private SolidityProblemSynthesizer() {}
 
     /// Fills in whatever the caller left open, and fails with the available candidates listed
@@ -69,16 +63,13 @@ public final class SolidityProblemSynthesizer {
         boolean box = function.documentation().contains(BOX_DIRECTIVE);
         String call = spec.function() + "()@" + spec.contract() + ";";
         String modality = box ? "\\[{ " + call + " }\\](true)" : "\\<{ " + call + " }\\>(true)";
-        String assumption = function.documentation().contains(FRESH_MEMORY_DIRECTIVE)
-                ? "memory = mtMem -> "
-                : "";
         return """
                 \\programSource "%s";
 
                 \\problem {
-                    %s%s
+                    %s
                 }
-                """.formatted(solFile.toAbsolutePath(), assumption, modality);
+                """.formatted(solFile.toAbsolutePath(), modality);
     }
 
     /// A path identifying this obligation. It is never created; it only fixes the directory
