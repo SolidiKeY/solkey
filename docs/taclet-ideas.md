@@ -116,6 +116,9 @@ Edge cases of already-supported constructs (see `docs/taclets-implementation.md`
   use a *named* return and assign to it, because no taclet consumes a `ReturnStatement`. A
   companion fix belongs in `ExpandFunctionBody`, which currently wires only the first named
   return and silently drops the rest.
-- **`msg.*` / `.transfer` / `.send` in `SolJSONParser`.** Implemented in the ANTLR path only,
-  which is the sole reason the seven `net-*` examples could not move into the shared contract.
-  See `net.md`.
+- **`msg.*` / `.transfer` / `.send` in `SolJSONParser`.** ✅ Done — `parseMemberAccess`
+  desugars `msg.sender`/`msg.value` to the `msgSender`/`msgValue` program variables and
+  resolves `transfer`/`send` to the builtin declarations, so `.sol` function bodies with
+  those forms load; the `net/` examples now call real `PiggyBankNet.sol` functions
+  (`f(args)@PiggyBankNet`). Still `.key`-based: the synthesized obligations cannot carry an
+  `insertCInv` rules block or a taclet option. See `net.md`.

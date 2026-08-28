@@ -720,9 +720,12 @@ public class SolJSONParser {
         if (functionExp instanceof MemberExp member
                 && member.getRightExp() instanceof FunctionDeclaration function) {
             String functionName = function.name().toString();
-            if ("pop".equals(functionName)
+            if ("pop".equals(functionName) || "transfer".equals(functionName)
                     || ("push".equals(functionName) && !arguments.isEmpty())) {
                 return VOID;
+            }
+            if ("send".equals(functionName)) {
+                return BOOL;
             }
             if ("push".equals(functionName)) {
                 Type receiverType = member.getLeftExp().getType();
@@ -804,7 +807,27 @@ public class SolJSONParser {
     }
 
     private Expression parseMemberAccess(JsonNode initializer) {
-        Expression leftExp = parseExpression(initializer.get("expression"));
+        JsonNode baseNode = initializer.get("expression");
+        if ("Identifier".equals(baseNode.get("nodeType").asString())
+                && "msg".equals(baseNode.get("name").asString())
+                && baseNode.get("referencedDeclaration").asInt() < 0) {
+            final String member = initializer.get("memberName").asString();
+            String pvName = switch (member) {
+                case "sender" -> "msgSender";
+                case "value" -> "msgValue";
+                default -> throw new RuntimeException("Unsupported msg member '" + member
+                    + "' (only msg.sender and msg.value are modeled)");
+            };
+            ProgramVariable pv =
+                services.getNamespaces().programVariables().lookup(new Name(pvName));
+            if (pv == null) {
+                throw new RuntimeException("msg." + member
+                    + " requires the built-in program variable " + pvName
+                    + " (declared in netHeader.key)");
+            }
+            return pv;
+        }
+        Expression leftExp = parseExpression(baseNode);
         if (!initializer.has("referencedDeclaration")
                 || initializer.get("referencedDeclaration").isNull()) {
             JsonNode memberNameNode = initializer.get("memberName");
@@ -812,7 +835,8 @@ public class SolJSONParser {
                 final String memberName = memberNameNode.asString();
                 FunctionDeclaration builtin =
                     SolidityInfo.getBuiltinFunctionDeclaration(new Name(memberName));
-                if (builtin != null && ("push".equals(memberName) || "pop".equals(memberName))) {
+                if (builtin != null && ("push".equals(memberName) || "pop".equals(memberName)
+                        || "transfer".equals(memberName) || "send".equals(memberName))) {
                     return new MemberExp(leftExp, builtin, builtin.getType());
                 }
                 Type leftType = leftExp.getType();

@@ -100,13 +100,19 @@ an unbacked transfer reverts, and box discharges that run.
 Ordered; each step has a runnable milestone. Rules go in
 `\rules(programRules:Solidity)` of `solidityProgramRules.key`.
 
-> **No example covers `net` any more.** The seven `net-*` starters were `.key`-only — they
-> need a problem-local `\rules { insertCInv … }`, `\withOptions
-> transferSemantics:withCallback`, and inline `msg.*` / `.transfer`, none of which survives
-> the move to `.sol`-only examples (`SolJSONParser` parses neither `msg` nor `.transfer`).
-> Restoring coverage means teaching `SolJSONParser` those forms and giving the synthesizer a
-> way to carry an invariant and a taclet option — see `keyext.solidity.examples/README.md`,
-> "Known gaps". The milestones below are kept as the record of what was built.
+> **`net` examples live in `keyext.solidity.examples/net/`.** Each `.key` problem there
+> verifies a real function of `net/PiggyBankNet.sol` by calling it in the modality
+> (`\<{ payTo(to)@PiggyBankNet; }\>(post)`): `SolJSONParser` now desugars
+> `msg.sender`/`msg.value` to the `msgSender`/`msgValue` program variables and resolves
+> `.transfer`/`.send` to the builtin declarations, so the `.sol` bodies load and
+> `functionBodyExpand` inlines them. The problems stay `.key`-based because their
+> obligations need a problem-local `\rules { insertCInv … }`, `\withOptions
+> transferSemantics:withCallback`, and a hand-written PO shape — none of which a
+> synthesized `.sol` obligation can carry yet. The `net-*` starters cover the ledger
+> update, `msg.*`, and `.transfer` under both semantics; `piggybank-addMoney-invariant.key`
+> (the eq.-4 PO schema) and `piggybank-break-invariant.key` (`transferWithCallback` with
+> the transfer-last discipline) verify the course PiggyBank invariant
+> `balance = net(owner)`. `NetExamplesTest` enumerates the directory.
 
 > **Status:** Steps 1–4 are implemented (`netHeader.key`, the converter
 > desugaring, the `transfer` builtin + no-callback rules, and the
@@ -149,7 +155,10 @@ Ordered; each step has a runnable milestone. Rules go in
 `{net := storeSt(net, at(1), selectSt<[int]>(net, at(1)) + 5)}` and proves
 `selectSt<[int]>(net, at(1)) = 5 & selectSt<[int]>(net, at(2)) = 0` from
 `net = mtSt` closes using only existing struct rules (this was
-`net-manual-update.key`).
+`net-manual-update.key`; once the transfer rules landed, the hand-written
+update became derivable and the example was folded into
+`net-transfer-simple.key`, whose postcondition checks both the booked slot
+and an untouched one).
 
 ### Step 2 — `msg.sender` and `msg.value`
 
@@ -158,7 +167,9 @@ Ordered; each step has a runnable milestone. Rules go in
    `msgValue` program variables (type `address` resp. `uint`). `msg` itself
    is never a value; any other member is an error for now.
 2. `SolJSONParser` needs the same mapping for `.sol` sources (the solc AST
-   marks these as `MemberAccess` on the builtin `msg` global).
+   marks these as `MemberAccess` on the builtin `msg` global). ✅ Done, together
+   with `transfer`/`send` builtin resolution, in `parseMemberAccess` /
+   `inferFunctionCallType`.
 
 **Milestone:** `\<{ x = msg.value; }\>(x = msgValue)`-style example closes
 (no new taclets — `msg.value` is a simple expression after desugaring).
@@ -421,18 +432,15 @@ for the no-callback variant (a callee can still be re-entered through
 `call`), and its Table-1 auction examples deliberately contain seeded bugs —
 open proofs there are the expected result, not a regression.
 
-## Why the `net-*` examples are still inline
+## Why the `net-*` examples call `PiggyBankNet.sol` instead of `TestSuite.sol`
 
-Every other example moved its program into `keyext.solidity.examples/TestSuite.sol` and calls
-it as `f()@TestSuite`. The seven `net-*` files did not, for two independent reasons:
+Every other example lives in `keyext.solidity.examples/TestSuite.sol` and is called as
+`f()@TestSuite`. The `net` examples call functions of the dedicated
+`keyext.solidity.examples/net/PiggyBankNet.sol` instead, because solc's typing rules would
+leak into the shared contract: `msg.value` is only allowed in a `payable` function, and
+`.transfer` requires `address payable` receivers. `SolJSONParser` handles both forms since
+`parseMemberAccess` learned them (an identifier base named `msg` with a negative
+`referencedDeclaration` desugars to the `msgSender`/`msgValue` program variables of
+`netHeader.key`; `transfer`/`send` resolve to the `SolidityInfo` builtins, typed
+`VOID`/`BOOL` in `inferFunctionCallType`).
 
-- **solc.** `msg.value` is only allowed in a `payable` function, and `.transfer` requires
-  `address payable`, not `address`. `net-transfer-capture-receiver` in particular exists to
-  read the `address`-typed `owner` state variable.
-- **`SolJSONParser`.** It cannot resolve `msg` (solc gives it `referencedDeclaration -15`, so
-  the `id2Name` lookup misses), and `.transfer` falls through to
-  `RuntimeException("Unresolved member access")`. Both work in `SolidityToKeyConverter`, which
-  is what parses a program written inline in the modality.
-
-`net-manual-update` has no program at all — its `\problem` is a bare `{net := storeSt(...)}`
-update — so there is nothing to move.
