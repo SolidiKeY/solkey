@@ -195,10 +195,10 @@ expression
   | expression '|' expression                         # BinaryOp
   | expression '&&' expression                        # BinaryOp
   | expression '||' expression                        # BinaryOp
+  | <assoc=right> condition=expression '?' true=expression ':' false=expression # Ternary
   | <assoc=right> expression
     ('=' | '|=' | '^=' | '&=' | '<<=' | '>>=' | '+=' | '-=' | '*=' | '/=' | '%=')
     expression                                        # BinaryOp
-  | <assoc=right> condition=expression '?' true=expression ':' false=expression # Ternary
   ;
 
 primaryExpression

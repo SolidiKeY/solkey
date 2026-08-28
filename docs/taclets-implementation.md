@@ -91,10 +91,24 @@ captures (§Capture partition below), which also cover nested RHS like
 - Relational: `!=`, `<`, `>`, `<=`, `>=` (predicate map `lt/leq/gt/geq`).
 - Logical / unary: `&&`, `||`, `!`, unary `-x`. A non-simple left operand is
   captured eagerly (Solidity always evaluates it); a non-simple *right* operand
-  goes through `logicalAnd/OrShortCircuitRhs` — a two-goal split on the simple
-  left operand, each branch guarded requireSimple-style by a `se = TRUE/FALSE`
-  disjunct, so the right operand is only evaluated on the branch that reaches it
+  must NOT be captured — that would evaluate it unconditionally, breaking
+  short-circuit semantics (e.g. `x != 0 && 10 / x > 1` would grow a spurious
+  revert branch). Java KeY (`compound_assignment_3/5_nonsimple`) rewrites to an
+  `if`-`else` statement instead; lacking `if` rules, `logicalAnd/OrShortCircuitRhs`
+  perform that split directly at the sequent level (`\add(se = TRUE/FALSE ==>)`),
+  continuing with `v = nse;` on the branch that reaches the right operand and
+  `v = false;` / `v = true;` on the short-circuit branch
   (examples `logicalAndShortCircuitRhs` / `logicalOrShortCircuitRhs`).
+- Conditional operator `?:`: `ternaryCaptureCond` hoists a non-simple
+  condition (always evaluated); `ternarySplit` is the Java KeY
+  `ifElseSplit`-style sequent-level two-goal split
+  (`\find( ==> \modality...)` with `\add(se = TRUE/FALSE ==>)`, the update
+  context is applied to the added guard) continuing with `v = e1;` / `v = e2;`.
+  The sequent-level shape is deliberate: Java KeY's formula-level `if`/`ifElse`
+  taclets have their heuristics commented out — automation there also runs on
+  the sequent-level `ifElseSplit`, and a formula-level `\if` variant tried here
+  made `additionStorageWrite` diverge past 10k nodes
+  (examples `ternaryCaptureCond` / `ternarySplit`).
 - Deferred: bitwise (`& | ^ << >> ~`), unary `+` (removed in Solidity ≥0.5),
   checked-arith overflow.
 

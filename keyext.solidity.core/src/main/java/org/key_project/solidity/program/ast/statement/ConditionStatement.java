@@ -33,7 +33,7 @@ public class ConditionStatement implements Statement {
     public ConditionStatement(ExtList children) {
         this.condition = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
         this.thenBody = Objects.requireNonNull(children.removeFirstOccurrence(Statement.class));
-        this.elseBody = Objects.requireNonNull(children.removeFirstOccurrence(Statement.class));
+        this.elseBody = children.removeFirstOccurrence(Statement.class);
     }
 
     @Override

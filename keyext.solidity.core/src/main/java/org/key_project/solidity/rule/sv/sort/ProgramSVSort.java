@@ -46,6 +46,7 @@ public abstract class ProgramSVSort extends SortImpl {
         new PathSVSort("ComplexMemoryPath", PathSVSort.DataArea.MEMORY,
             PathSVSort.Simplicity.COMPLEX);
     public static final ProgramSVSort TYPE = new TypeSVSort();
+    public static final ProgramSVSort STATEMENT = new StatementSVSort();
 
 
     @SuppressWarnings("argument.type.incompatible")

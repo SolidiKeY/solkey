@@ -231,6 +231,50 @@ contract TestSuite {
         assert(r);
     }
 
+    function ternaryCaptureCond() public {
+        uint x = 5;
+        uint r = x == 5 ? x + 1 : 0;
+        assert(r == 6);
+    }
+
+    function ternaryToIf() public {
+        bool b = true;
+        uint r = b ? 1 : 2;
+        assert(r == 1);
+    }
+
+    function ifUnfold() public {
+        uint x = 5;
+        uint r = 0;
+        if (x == 4) r = 1;
+        assert(r == 0);
+    }
+
+    function ifElseUnfold() public {
+        uint x = 5;
+        uint r = 0;
+        if (x == 5) r = 1; else r = 2;
+        assert(r == 1);
+    }
+
+    function ifSplit() public {
+        bool b = true;
+        uint r = 0;
+        if (b) r = 1;
+        assert(r == 1);
+    }
+
+    function ifElseSplit() public {
+        bool b = false;
+        uint r = 0;
+        if (b) {
+            r = 1;
+        } else {
+            r = 2;
+        }
+        assert(r == 2);
+    }
+
     function memoryDeclFresh() public {
         Person memory carol;
     }

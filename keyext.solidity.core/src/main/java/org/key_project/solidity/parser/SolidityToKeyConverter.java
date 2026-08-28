@@ -516,6 +516,9 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     public SyntaxElement visitIfStatement(IfStatementContext ctx) {
         Expression condition = visitExpression(ctx.expression());
         Statement trueBody = (Statement) visitStatement(ctx.ifStm);
+        if (ctx.elseStm == null) {
+            return new ConditionStatement(condition, trueBody);
+        }
         Statement elseBody = (Statement) visitStatement(ctx.elseStm);
         return new ConditionStatement(condition, trueBody, elseBody);
     }

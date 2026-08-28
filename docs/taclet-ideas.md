@@ -29,8 +29,9 @@ logic-level result of the operator to the target var. Pattern to copy:
   `==`: `v = se1 < se2;` ⇝ `{v := \if(lt(t1, t2))\then(TRUE)\else(FALSE)}`.
 - **Logical** (`BinaryOp`/`UnaryPrefix`): `&&`, `||`, `!`. ✅ Done —
   both-simple operands, left-operand capture, and right-operand short-circuit
-  (`logicalAnd/OrShortCircuitRhs`, two-goal split guarded requireSimple-style
-  by `se = TRUE/FALSE` disjuncts; no `if` rule needed).
+  (`logicalAnd/OrShortCircuitRhs` split directly at the sequent level, the
+  Solidity analog of Java KeY's `compound_assignment_3/5_nonsimple` if-else
+  rewrite; no `if` rule needed).
 - **Unary prefix** (`UnaryPrefix`): `-x` ✅ Done (`v = -x;` ⇝ `{v := -t}`).
   `+x` is skipped (Solidity ≥0.5 removed it; Java has no rule). `~x` is bitwise
   (see below).
