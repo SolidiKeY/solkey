@@ -1,16 +1,26 @@
 // SPDX-License-Identifier: GPL-2.0-only
 pragma solidity ^0.8.0;
 
-// The `net` ledger companion contract (docs/net.md): real Solidity `msg.sender`,
-// `msg.value` and `.transfer`, verified function-by-function from the `.key` problems in
-// this directory, each calling `f(args)@PiggyBankNet` in its modality. It is loaded only
-// via their `\programSource` - the synthesized `.sol` obligations cannot carry the
-// `insertCInv` rules block or the transferSemantics option these proofs need.
+// Course PiggyBank1 (SolidityCalculus/maltaCourseKey/piggybank) in the supported
+// fragment: the PiggyBankState enum is a uint (0 Unused, 1 InUse, 2 Broken), modifiers
+// are inlined requires, `now` is the timeNow state variable, `365 days` is 31536000.
+// Verified per function by the piggybank-*.key problems beside this file against the
+// course invariant
+//   state != Broken -> balance == net(owner),
+//   state == Broken -> net(owner) == 0.
+// breakPiggyBank keeps the course order (state = Broken written before the payout
+// leaves), so the invariant also holds at the transfer point
+// (piggybank-breakPiggyBank-withcallback.key).
+// The readMsg/payTo/payToPlus/payOwner helpers host the net-* machinery starters; the
+// invariant does not mention their paidBy/paidValue fields.
 contract PiggyBankNet {
     address payable owner;
     address paidBy;
     uint paidValue;
+    uint state; // 0 Unused, 1 InUse, 2 Broken
+    uint timeOfFirstDeposit;
     uint balance;
+    uint timeNow;
 
     function readMsg() public payable {
         paidValue = msg.value;
@@ -30,12 +40,28 @@ contract PiggyBankNet {
     }
 
     function addMoney() public payable {
-        balance = balance + msg.value;
+        address own = owner;
+        require(msg.sender == own);
+        uint st = state;
+        require(st != 2);
+        uint b = balance;
+        uint tn = timeNow;
+        balance = b + msg.value;
+        if (st == 0) {
+            state = 1;
+            timeOfFirstDeposit = tn;
+        }
     }
 
     function breakPiggyBank() public {
+        address own = owner;
+        require(msg.sender == own);
+        uint st = state;
+        require(st == 1);
+        uint dl = timeOfFirstDeposit + 31536000;
+        require(timeNow >= dl);
         uint b = balance;
-        balance = 0;
+        state = 2;
         owner.transfer(b);
     }
 }

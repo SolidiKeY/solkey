@@ -130,7 +130,10 @@ taclet:
 ```
 
 (the ISoLA 2020 eq.-4 schema: assume the invariant, book the incoming payment, run the
-function, prove the invariant restored plus the function's postcondition). The bodies are
+function, prove the invariant restored plus the function's postcondition). Every
+`insertCInv` conjunct, antecedent pin, and postcondition conjunct carries a `//` comment
+stating it in the course's surface syntax (`// net(owner) <= 0 :`), so a PO reads
+top-to-bottom without decoding the `find`/`selectSt` terms. The bodies are
 loaded from the `.sol` sources (`SolJSONParser` desugars `msg.*` to the
 `msgSender`/`msgValue` program variables, resolves `transfer`/`send` to the builtins, and
 unwraps `payable(...)`/`address(...)` casts) and inlined by `functionBodyExpand`. The
@@ -140,10 +143,14 @@ transferSemantics:withCallback` choice, and the hand-written PO shape.
 
 The contract sets, ported from the SolidityCalculus course (`maltaCourseKey`):
 
-- **`PiggyBankNet.sol`** — invariant `balance = net(owner)`. `piggybank-addMoney-invariant`
-  (deposit restores the invariant), `piggybank-break-invariant` (`transferWithCallback` on
-  the payout: the transfer-last body closes both the "invariant on exit" and the havocked
-  "resume after callback" branch).
+- **`PiggyBankNet.sol`** — the course PiggyBank1 state machine (Unused/InUse/Broken):
+  invariant `state != Broken -> balance = net(owner)`, `state == Broken -> net(owner) = 0`.
+  `piggybank-addMoney-invariant` (full course postcondition — the bank ends InUse with
+  `balance = net(owner)`; carries the course's enum-range assumption),
+  `piggybank-breakPiggyBank-invariant` (`net(owner) = 0` and Broken after the payout),
+  `piggybank-breakPiggyBank-withcallback` (the course order — Broken written before the
+  payout leaves — keeps the invariant at the transfer point). The contract also hosts the
+  `readMsg`/`payTo`/`payToPlus`/`payOwner` helpers the `net-*` starters call.
 - **`EscrowNet.sol`** — invariant `sender != receiver`, `amountInEscrow = net(sender) +
   net(receiver)`, plus state conditionals. `escrow-placeInEscrow-invariant`
   (`net(sender) = msg.value` after the deposit), `escrow-releaseEscrow-invariant`

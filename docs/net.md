@@ -110,7 +110,8 @@ Ordered; each step has a runnable milestone. Rules go in
 > obligations need a problem-local `\rules { insertCInv … }`, `\withOptions
 > transferSemantics:withCallback`, and the hand-written eq.-4 PO shape — none of which a
 > synthesized `.sol` obligation can carry yet. The Step-6 course port is done for the
-> loop-free examples: `PiggyBankNet` (balance = net(owner)), `EscrowNet` (escrow-v2
+> loop-free examples: `PiggyBankNet` (the course PiggyBank1 state machine:
+> state != Broken -> balance = net(owner), state == Broken -> net(owner) = 0), `EscrowNet` (escrow-v2
 > conservation with state conditionals), `AuctionNet` (transfer-last makeBid under both
 > semantics + closeAuction) and `AuctionWithdrawNet` (the effective_net withdrawal
 > pattern; like the course, closeAuction has no PO — the stated invariant provably does
