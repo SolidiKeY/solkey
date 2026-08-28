@@ -101,18 +101,23 @@ Ordered; each step has a runnable milestone. Rules go in
 `\rules(programRules:Solidity)` of `solidityProgramRules.key`.
 
 > **`net` examples live in `keyext.solidity.examples/net/`.** Each `.key` problem there
-> verifies a real function of `net/PiggyBankNet.sol` by calling it in the modality
-> (`\<{ payTo(to)@PiggyBankNet; }\>(post)`): `SolJSONParser` now desugars
-> `msg.sender`/`msg.value` to the `msgSender`/`msgValue` program variables and resolves
-> `.transfer`/`.send` to the builtin declarations, so the `.sol` bodies load and
+> verifies a real function of a contract beside it by calling it in the modality
+> (`\[{ makeBid()@AuctionNet; }\] (CInv(storage, net) & post)`): `SolJSONParser` desugars
+> `msg.sender`/`msg.value` to the `msgSender`/`msgValue` program variables, resolves
+> `.transfer`/`.send` to the builtin declarations, and unwraps `payable(...)` /
+> `address(...)` casts (identity — addresses are ints), so the `.sol` bodies load and
 > `functionBodyExpand` inlines them. The problems stay `.key`-based because their
 > obligations need a problem-local `\rules { insertCInv … }`, `\withOptions
-> transferSemantics:withCallback`, and a hand-written PO shape — none of which a
-> synthesized `.sol` obligation can carry yet. The `net-*` starters cover the ledger
-> update, `msg.*`, and `.transfer` under both semantics; `piggybank-addMoney-invariant.key`
-> (the eq.-4 PO schema) and `piggybank-break-invariant.key` (`transferWithCallback` with
-> the transfer-last discipline) verify the course PiggyBank invariant
-> `balance = net(owner)`. `NetExamplesTest` enumerates the directory.
+> transferSemantics:withCallback`, and the hand-written eq.-4 PO shape — none of which a
+> synthesized `.sol` obligation can carry yet. The Step-6 course port is done for the
+> loop-free examples: `PiggyBankNet` (balance = net(owner)), `EscrowNet` (escrow-v2
+> conservation with state conditionals), `AuctionNet` (transfer-last makeBid under both
+> semantics + closeAuction) and `AuctionWithdrawNet` (the effective_net withdrawal
+> pattern; like the course, closeAuction has no PO — the stated invariant provably does
+> not survive it), plus a `CasinoNet` conservation set of our own design. The `net-*`
+> starters cover the raw ledger/transfer machinery. `NetExamplesTest` enumerates the
+> directory. Still open from Step 6: the multi-auction `closeAuction` loop (needs loop
+> invariants over `net`) and paper Table 1's expected-open buggy variants.
 
 > **Status:** Steps 1–4 are implemented (`netHeader.key`, the converter
 > desugaring, the `transfer` builtin + no-callback rules, and the

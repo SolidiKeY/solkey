@@ -773,7 +773,8 @@ public class SolJsonParserTest {
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract, services);
-        assertTrue(contractDec.toString().contains("bool(true);"));
+        assertFalse(contractDec.toString().contains("bool(true);"));
+        assertTrue(contractDec.toString().contains("true;"));
     }
 
     @Test

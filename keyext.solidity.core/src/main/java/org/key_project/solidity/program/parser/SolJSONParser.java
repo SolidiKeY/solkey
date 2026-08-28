@@ -707,6 +707,12 @@ public class SolJSONParser {
     }
 
     private Expression parseFunctionCall(JsonNode initializer) {
+        JsonNode kindNode = initializer.get("kind");
+        if (kindNode != null && "typeConversion".equals(kindNode.asString())
+                && "ElementaryTypeNameExpression"
+                        .equals(initializer.get("expression").get("nodeType").asString())) {
+            return parseExpression(initializer.get("arguments").get(0));
+        }
         JsonNode expNode = initializer.get("expression");
         Expression functionExp = parseExpression(expNode);
         List<Expression> arguments =

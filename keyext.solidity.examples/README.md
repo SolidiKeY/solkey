@@ -1,7 +1,7 @@
 # Solidity Examples
 
-`TestSuite.sol` holds the taclet examples; `PiggyBank.sol`, `Escrow.sol`, `Auction.sol` and
-`Casino.sol` hold scenario examples (see below). All are loaded the same way.
+`TestSuite.sol` holds the taclet examples; `net/` holds the scenario contracts with their
+invariant-based `.key` proof obligations (see "The `net/` directory").
 
 `TestSuite.sol` holds the taclet examples. There are no `.key` problem files beside it: the
 loader reads the contract, and for each function synthesizes
@@ -99,7 +99,7 @@ Three shapes have no `assert` form and are not covered by any example:
 - **The `net` payment ledger** (`docs/net.md`) — needs `\rules` blocks to define `CInv`
   and `\withOptions transferSemantics:withCallback`, which a synthesized obligation cannot
   carry. Covered by the `.key` problems of `net/` instead, which call real functions of
-  `net/PiggyBankNet.sol` (see "The `net/` directory" below).
+  the contracts beside them (see "The `net/` directory" below).
 - **Whole-subtree equality** — `find<[int]>(storage, cons2(matrix, at(0))) = find<[int]>(storage,
   cons1(values))` compares two storage subtrees; Solidity cannot state it, and reading
   `matrix[0].length` back does not discharge. `storageIndexCopysourceAfterPush` therefore only
@@ -111,92 +111,96 @@ Two smaller ones, worked around in place with a comment:
   discharge; bind it first (`int expected = -5;`);
 - a popped slot is out of bounds, so `pop` clearing it is only observable after pushing again.
 
-## Scenario contracts
-
-`PiggyBank.sol`, `Escrow.sol`, `Auction.sol` and `Casino.sol` port the SolidityCalculus
-course examples (piggy bank lifecycle, two-party escrow, single/multi auction with the
-reentrancy-ordering lesson, casino bet resolution) into the supported fragment. Each
-function is a self-contained scenario: box-tagged requires set up the pre-state, the
-transition statements run inline, asserts state the postcondition or invariant. Constructs
-the calculus lacks are modeled away uniformly:
-
-- enum states are a `uint state;` with the values documented in a comment;
-- participants are `uint` ids and `msg.sender` is a `caller` state variable;
-- `block.timestamp` is a `timeNow` state variable;
-- `.transfer` and the `net` ledger are outbound counters (`ownerReceived`, `paidOut`) or
-  credit mappings (`refunds`, `withdrawable`), so conservation properties become sums of
-  those; loops are unrolled for two participants;
-- a modifier is inlined as requires (happy path) or as an `if (guard) { body }` wrapper
-  whose test asserts the state unchanged — the positive no-op form of "this reverts".
-
-Run them like the test suite: `./run-key.sh keyext.solidity.examples/PiggyBank.sol` — every
-function of every file closes. `ScenarioExamplesTest` enumerates all four contracts, so a
-new scenario function joins `./gradlew :keyext.solidity.core:test` by being written.
-
-The port covers state transitions and conservation properties, not the transfer/reentrancy
-semantics itself: `.transfer` is a counter update here, so nothing re-enters, and "the
-contract invariant holds at every external transfer" (`CInv`, `docs/net.md`) is not
-expressible in a `.sol`-synthesized obligation. The `closeV1OpenDuringPayout`-style
-snapshot tests state the surface positively instead: they observe (and prove) which state
-a reentrant callee *would* see at the payout point. The real transfer/invariant obligations
-live in the `net/` `.key` problems (next section).
-
 ## The `net/` directory
 
-`net/` holds the `net`-ledger examples (`docs/net.md`). `PiggyBankNet.sol` is a real
-Solidity contract — `payable` functions reading `msg.sender`/`msg.value`, `address
-payable` receivers, `.transfer` — and each `.key` problem beside it verifies one of its
-functions by calling it in the modality, solidiKeY-style:
+`net/` holds the scenario contracts and their `net`-ledger proof obligations
+(`docs/net.md`). Each contract is real Solidity — `payable` functions reading
+`msg.sender`/`msg.value`, `address payable` receivers, `.transfer`, `payable(...)` casts
+— and each `.key` problem beside it verifies one function by calling it in the modality,
+solidiKeY-style, against a contract invariant supplied by a per-problem `insertCInv`
+taclet:
 
 ```
 \problem {
-    pre -> \<{ payTo(to)@PiggyBankNet; }\>(selectSt<[int]>(net, at(to)) = -5)
+    pre & CInv(storage, net) ->
+    {old := storage || net := storeSt(net, at(msgSender),
+                                      selectSt<[int]>(net, at(msgSender)) + msgValue)}
+    \[{ makeBid()@AuctionNet; }\] (CInv(storage, net) & post)
 }
 ```
 
-The body is loaded from the `.sol` source (`SolJSONParser` desugars `msg.sender` /
-`msg.value` to the `msgSender`/`msgValue` program variables and resolves
-`transfer`/`send` to the builtins) and inlined by `functionBodyExpand`. The problems stay
-`.key`-based because their obligations need what a synthesized `.sol` obligation cannot
-carry: a `\rules { insertCInv … }` block defining the contract invariant
-`CInv(storage, net)`, the `\withOptions transferSemantics:withCallback` choice, and a
-hand-written proof-obligation shape. The `net-*` starters cover the ledger update,
-`msg.*` desugaring, and `.transfer` under both semantics (simple, capture-argument,
-capture-receiver, with-callback); the two `piggybank-*-invariant` problems verify the
-course PiggyBank invariant `balance = net(owner)` at the transfer boundary:
+(the ISoLA 2020 eq.-4 schema: assume the invariant, book the incoming payment, run the
+function, prove the invariant restored plus the function's postcondition). The bodies are
+loaded from the `.sol` sources (`SolJSONParser` desugars `msg.*` to the
+`msgSender`/`msgValue` program variables, resolves `transfer`/`send` to the builtins, and
+unwraps `payable(...)`/`address(...)` casts) and inlined by `functionBodyExpand`. The
+problems stay `.key`-based because their obligations need what a synthesized `.sol`
+obligation cannot carry: the `\rules { insertCInv … }` block, the `\withOptions
+transferSemantics:withCallback` choice, and the hand-written PO shape.
 
-- `piggybank-addMoney-invariant.key` — the paper's proof-obligation schema (ISoLA 2020,
-  eq. 4): book the incoming payment on `net(msgSender)`, run `addMoney()@PiggyBankNet`,
-  prove the invariant restored;
-- `piggybank-break-invariant.key` — `transferWithCallback` on
-  `breakPiggyBank()@PiggyBankNet`: the transfer-last body closes both the "invariant on
-  exit" and the havocked "resume after callback" branch; moving the transfer before the
-  storage write reopens the exit branch — the Fig. 4 re-entrancy bug.
+The contract sets, ported from the SolidityCalculus course (`maltaCourseKey`):
+
+- **`PiggyBankNet.sol`** — invariant `balance = net(owner)`. `piggybank-addMoney-invariant`
+  (deposit restores the invariant), `piggybank-break-invariant` (`transferWithCallback` on
+  the payout: the transfer-last body closes both the "invariant on exit" and the havocked
+  "resume after callback" branch).
+- **`EscrowNet.sol`** — invariant `sender != receiver`, `amountInEscrow = net(sender) +
+  net(receiver)`, plus state conditionals. `escrow-placeInEscrow-invariant`
+  (`net(sender) = msg.value` after the deposit), `escrow-releaseEscrow-invariant`
+  (flag flips preserve the invariant), `escrow-withdrawFrom-invariant`
+  (`net(receiver) = -net(sender)`; noCallback, since the course body order breaks the
+  invariant at the transfer point).
+- **`AuctionNet.sol`** (transfer-last) — invariant `bid = net(bidder) + net(owner)`,
+  `net(owner) <= 0`, `mode = Open -> net(owner) = 0`. `auction-makeBid-invariant`
+  (full course postcondition, noCallback), `auction-makeBid-withcallback` (the paper's
+  Table-1 entry: the transfer-last body keeps the invariant at the refund point),
+  `auction-closeAuction-invariant` (`net(owner) = -net(bidder)`).
+- **`AuctionWithdrawNet.sol`** (withdrawal pattern) — the same invariant over
+  `effective_net(a) = net(a) - withdrawableBalances[a]`, with mapping reads via
+  `cons2(...$withdrawableBalances, at(a))`. `auction-withdraw-makeBid-invariant` and
+  `auction-withdraw-withdraw-invariant` (paying out one's credited balance leaves every
+  `effective_net` unchanged). Like the course, `closeAuction` has no PO: it credits the
+  owner without resetting `bid`, so the stated invariant provably does not survive it.
+- **`CasinoNet.sol`** — own design (the course ships no casino `.key`): conservation
+  `net(operator) + net(player) = pot` (+ `bet` while a bet is active).
+  `casino-addToPot-invariant`, `casino-placeBet-invariant`, `casino-decideBet-invariant`
+  (both parity branches), `casino-decideBet-withcallback` (payout last keeps the
+  invariant at the transfer point).
+
+The `net-*` starters cover the raw machinery: the ledger update, `msg.*` desugaring, and
+`.transfer` under both semantics (simple, capture-argument, capture-receiver,
+with-callback).
+
+Symbolic POs occasionally need two kinds of sound antecedent strengthening, always noted
+in the file comment: `geq(field, 0)` uint-range assumptions ("Solidity Light" uses
+unbounded ints), and participant-distinctness pins (`bidder != owner`) where automode
+will not perform a mapping-alias case split on its own.
 
 Run one with `./gradlew :keyext.solidity.core:solidityCli -PkeyFile=<path>` (or pass the
 path in `--args`); `NetExamplesTest` enumerates the directory, so a new `.key` problem
 joins `./gradlew :keyext.solidity.core:test` by being written.
 
-### Calculus conventions the scenario files follow
+### Calculus conventions the `.sol` bodies follow
 
 Found while closing these proofs; violating one leaves an open goal (or fails to load)
 without pointing at the culprit:
 
-- a comparison may read storage on **one side only** — `require(caller == owner)` stalls;
-  bind one side first (`uint o = owner; require(caller == o);`);
+- a comparison may read storage on the **left side only** — `require(msg.sender == sender)`
+  and `b = msgSender == sender` stall; bind the storage read first
+  (`address snd = sender; require(msg.sender == snd);`);
 - the right side of a compound assignment must not read storage —
-  `ownerReceived += balance` stalls; bind first (`uint b = balance; ownerReceived += b;`);
+  `pot += msg.value` stalls; bind first (`uint p = pot; pot = p + msg.value;`);
 - an assert compares bound locals, never an arithmetic expression —
   `assert(r == x + y)` stalls; bind `uint expected = x + y;` first;
-- a storage-to-storage copy (`betTimestamp = timeNow;`) stalls when other storage writes
-  precede it in the body; bind the read before the writes;
+- a storage-to-storage copy (`releaseTime = timeNow;`) stalls when other storage writes
+  precede it in the body; bind the read before the writes
+  (`uint rt = timeNow + delayUntilRelease; releaseTime = rt;`);
 - a bare `require(someBool)` on a storage bool is assumable but not observable: a local
   bound from that bool won't discharge an assert. Use `require(someBool == true)` when the
-  test later asserts the snapshot;
+  proof later needs the value;
 - a parenthesized subexpression inside a larger condition
   (`require(a && (b || c))`) is a solc `TupleExpression`, which `SolJSONParser` rejects at
-  load time — split it into its own `require(b || c)`;
-- `address` equality has no discharging rule, hence the `uint` participant ids.
+  load time — split it into its own `require(b || c)`.
 
 ## Other directories
 
