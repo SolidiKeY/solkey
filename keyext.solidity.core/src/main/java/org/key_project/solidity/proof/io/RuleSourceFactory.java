@@ -42,6 +42,12 @@ public class RuleSourceFactory {
         return new UrlRuleSource(url);
     }
 
+    /// A rule source over in-memory text. `anchor` need not exist; it fixes the directory
+    /// relative paths resolve against and identifies the source.
+    public static RuleSource fromString(final String content, final Path anchor) {
+        return new StringRuleSource(content, anchor);
+    }
+
     public static RuleSource initRuleFile(final Path file) {
         return initRuleFile(file, false);
     }

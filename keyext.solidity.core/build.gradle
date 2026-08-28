@@ -196,11 +196,20 @@ def solidityExamplesDir = rootProject.file("keyext.solidity.core/src/test/resour
 
 tasks.register('solidityCli', JavaExec) {
     group = "application"
-    description = "Run the Solidity CLI. Use -PkeyFile=filename.key to specify file."
+    description = "Run the Solidity CLI. Use -PkeyFile=file.key|file.sol to specify the file, " +
+        "and -Pfunction=name to pick one function of a .sol (all of them otherwise)."
     mainClass.set(solidityCliMainClass)
     classpath = sourceSets.main.runtimeClasspath
     workingDir = solidityExamplesDir
     args project.findProperty('keyFile') ?: "problem2.key"
+    def function = project.findProperty('function')
+    if (function) {
+        args('--function', function.toString())
+    }
+    def contract = project.findProperty('contract')
+    if (contract) {
+        args('--contract', contract.toString())
+    }
     // forward extra CLI arguments, e.g. -PcliArgs="--output=/tmp/p.proof --verbose"
     def extra = project.findProperty('cliArgs')
     if (extra) {

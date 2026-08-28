@@ -17,6 +17,7 @@ import org.key_project.solidity.parser.ProofReplayer;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.io.IProofFileParser;
 import org.key_project.solidity.proof.io.KeYFile;
+import org.key_project.solidity.proof.io.RuleSource;
 import org.key_project.solidity.proof.io.consistency.FileRepo;
 import org.key_project.solidity.settings.Configuration;
 import org.key_project.solidity.settings.ProofSettings;
@@ -67,6 +68,17 @@ public class KeYUserProblemFile extends KeYFile implements ProofOblInput {
     public KeYUserProblemFile(String name, Path file, FileRepo fileRepo, Profile profile,
             boolean compressed) {
         super(name, file, fileRepo, profile, compressed);
+    }
+
+    /// Instantiates a new user problem file over an arbitrary rule source, which lets a problem
+    /// be synthesized in memory rather than read from disk.
+    ///
+    /// @param name the name of the problem
+    /// @param file the rule source to read from
+    /// @param profile the KeY profile under which to load
+    /// @param fileRepo the fileRepo which will store the file
+    public KeYUserProblemFile(String name, RuleSource file, Profile profile, FileRepo fileRepo) {
+        super(name, file, profile, fileRepo);
     }
 
     // -------------------------------------------------------------------------

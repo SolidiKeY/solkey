@@ -47,7 +47,7 @@ maintained by the calculus, not by the program. On top of it:
 | `require` / `assert` / `revert` | Done, refined (`require-assert.md`) |
 | Storage model | Done, richer than the paper's (paths, aliases, `storage.md`) |
 | Unbounded ints ("Solidity Light") | Done (`intHeader.key`; `in_uint256` exists for later rounding) |
-| `result = f(args)@C;` call statement | Parses (`Solidity.g4` `FunctionBodyStatement`); inlined by `ExpandFunctionBody`. The `functionBodyExpand` taclet is currently declared **per example** (`mainFeatures/testSimpleAssert.key`), not in `solidityProgramRules.key` |
+| `result = f(args)@C;` call statement | Parses (`Solidity.g4` `FunctionBodyStatement`); inlined by `ExpandFunctionBody`. The `functionBodyExpand` taclet is in the standard rule set (`solidityProgramRules.key`), together with `blockEmpty`, which discards the inlined body block |
 | `address` type | Registered in `SolidityInfo`, mapped to the `int` sort |
 | `net` mapping | **Done** (Step 1): `Struct net` in `netHeader.key`, read/write via `selectSt`/`storeSt` |
 | `msg.sender` / `msg.value` | **Done** (Step 2): desugared to the `msgSender`/`msgValue` program variables in `SolidityToKeyConverter` |
@@ -98,8 +98,15 @@ an unbacked transfer reverts, and box discharges that run.
 ## 4. Next Steps to Implement `net`
 
 Ordered; each step has a runnable milestone. Rules go in
-`\rules(programRules:Solidity)` of `solidityProgramRules.key`; examples
-under `keyext.solidity.examples/taclets/`.
+`\rules(programRules:Solidity)` of `solidityProgramRules.key`.
+
+> **No example covers `net` any more.** The seven `net-*` starters were `.key`-only — they
+> need a problem-local `\rules { insertCInv … }`, `\withOptions
+> transferSemantics:withCallback`, and inline `msg.*` / `.transfer`, none of which survives
+> the move to `.sol`-only examples (`SolJSONParser` parses neither `msg` nor `.transfer`).
+> Restoring coverage means teaching `SolJSONParser` those forms and giving the synthesizer a
+> way to carry an invariant and a taclet option — see `keyext.solidity.examples/README.md`,
+> "Known gaps". The milestones below are kept as the record of what was built.
 
 > **Status:** Steps 1–4 are implemented (`netHeader.key`, the converter
 > desugaring, the `transfer` builtin + no-callback rules, and the
@@ -141,8 +148,8 @@ under `keyext.solidity.examples/taclets/`.
 **Milestone:** a `.key` problem that manually applies
 `{net := storeSt(net, at(1), selectSt<[int]>(net, at(1)) + 5)}` and proves
 `selectSt<[int]>(net, at(1)) = 5 & selectSt<[int]>(net, at(2)) = 0` from
-`net = mtSt` closes using only existing struct rules. Add it as
-`net-manual-update.key`.
+`net = mtSt` closes using only existing struct rules (this was
+`net-manual-update.key`).
 
 ### Step 2 — `msg.sender` and `msg.value`
 
@@ -233,7 +240,7 @@ left-to-right): `transfer_unfold_receiver` hoists a nonsimple receiver
 
 **Milestone:** a piggy-bank-style body (`require` + storage write +
 `transfer`) closes in box modality against a hand-written PO
-(see Step 5). Example `net-transfer-nocallback.key`.
+(see Step 5). This was `net-transfer-simple.key`.
 
 ### Step 4 — Havoc and the with-callback rule
 
@@ -285,9 +292,9 @@ whole storage".
 Invariant plumbing, in two phases:
 
 1. **Manual:** declare the rule *in the example `.key` file* with `inv`
-   spelled out literally (exactly how `functionBodyExpand` is declared in
-   `mainFeatures/testSimpleAssert.key` today). This validates the rule shape
-   with zero infrastructure.
+   spelled out literally (exactly how `insertCInv` is declared in
+   `net-transfer-withcallback-simple.key` did). This validates the
+   rule shape with zero infrastructure.
 2. **Varcond:** add a `ContractSpecification` to `speclang/`, store it in
    `SpecificationRepository`, and register `\getContractInvariant` in
    `TacletBuilderManipulators`, cloning the `LoopInvariantCondition` /
@@ -343,14 +350,14 @@ do it only after several hand-written POs have stabilized the pattern.
   invariants).
 - Reproduce paper Table 1: each example under both `transferSemantics`
   choices, expecting the same closed/open matrix.
-- Add starters to `TacletStarterExamplesTest.examples()`, update
-  `keyext.solidity.examples/taclets/README.md`, move the implemented items
+- Add starters as functions of `keyext.solidity.examples/TestSuite.sol` (they are picked up
+  automatically), update `keyext.solidity.examples/README.md`, move the implemented items
   from `taclet-ideas.md` Tier 5 into `taclets-implementation.md`.
 
 Verification, as for all taclet work:
 
 ```bash
-./gradlew :keyext.solidity.core:solidityCli --args="--no-replay -m 20000 /abs/path/keyext.solidity.examples/taclets/net-<file>.key"
+./run-key.sh keyext.solidity.examples/TestSuite.sol <function>
 ./gradlew :keyext.solidity.core:test --tests "org.key_project.solidity.taclets.TacletStarterExamplesTest"
 ./gradlew :keyext.solidity.core:test   # after any Java-side change
 ```
@@ -413,3 +420,19 @@ verifies partial correctness only (box), assumes `transfer`'s gas stipend
 for the no-callback variant (a callee can still be re-entered through
 `call`), and its Table-1 auction examples deliberately contain seeded bugs —
 open proofs there are the expected result, not a regression.
+
+## Why the `net-*` examples are still inline
+
+Every other example moved its program into `keyext.solidity.examples/TestSuite.sol` and calls
+it as `f()@TestSuite`. The seven `net-*` files did not, for two independent reasons:
+
+- **solc.** `msg.value` is only allowed in a `payable` function, and `.transfer` requires
+  `address payable`, not `address`. `net-transfer-capture-receiver` in particular exists to
+  read the `address`-typed `owner` state variable.
+- **`SolJSONParser`.** It cannot resolve `msg` (solc gives it `referencedDeclaration -15`, so
+  the `id2Name` lookup misses), and `.transfer` falls through to
+  `RuntimeException("Unresolved member access")`. Both work in `SolidityToKeyConverter`, which
+  is what parses a program written inline in the modality.
+
+`net-manual-update` has no program at all — its `\problem` is a bare `{net := storeSt(...)}`
+update — so there is nothing to move.

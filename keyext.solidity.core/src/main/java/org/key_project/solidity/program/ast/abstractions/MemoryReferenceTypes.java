@@ -34,4 +34,42 @@ public final class MemoryReferenceTypes {
         }
         return new KeYSolidityType(solidityType, identitySort);
     }
+
+    /// Retypes a `storage` local to the `List` sort, so it denotes the *path* it is bound to
+    /// rather than the value at that path. Applies to every reference-location type held in
+    /// storage — structs as well as dynamic/fixed arrays and mappings (e.g.
+    /// `Token[] storage bt = ...`). Anything else is returned unchanged.
+    public static KeYSolidityType asStorageAliasType(KeYSolidityType original,
+            DataLocation dataLocation, Services services) {
+        if (dataLocation != DataLocation.Storage || original == null) {
+            return original;
+        }
+        Sort sort = original.getSort();
+        if (sort == null || !isStoragePathType(original, sort)) {
+            return original;
+        }
+        Sort listSort =
+            services.getNamespaces().sorts().lookup(new org.key_project.logic.Name("List"));
+        if (listSort == null) {
+            return original;
+        }
+        return new KeYSolidityType(original.getSolidityType(), listSort);
+    }
+
+    public static boolean isStoragePathType(KeYSolidityType original, Sort sort) {
+        if ("Struct".equals(sort.name().toString())) {
+            return true;
+        }
+        Type solType = original.getSolidityType();
+        return solType instanceof DynamicArrayType || solType instanceof ArrayType
+                || solType instanceof MappingType;
+    }
+
+    /// The type a local variable declaration gets: a `storage` local denotes a path, a `memory`
+    /// local denotes an identity, everything else keeps its declared type.
+    public static KeYSolidityType asLocalVariableType(KeYSolidityType original,
+            DataLocation dataLocation, Services services) {
+        return asMemoryReferenceType(asStorageAliasType(original, dataLocation, services),
+            dataLocation, services);
+    }
 }

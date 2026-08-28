@@ -66,6 +66,19 @@ public class MemberExp extends SolidityExpression implements Resolver {
             "MemberExp(ExtList) requires a non-null Type in the change list");
     }
 
+    /// A member access denotes the *member*, so its type is the member's declared type. That
+    /// type is often still unresolved while the enclosing function body is parsed, so it is read
+    /// through here rather than captured at construction; the constructor argument remains the
+    /// fallback for builtins and unresolved members.
+    @Override
+    public Type getType() {
+        if (rightExp instanceof FieldDeclaration fd
+                && fd.getTypeReference().referencedType != null) {
+            return fd.getTypeReference().referencedType;
+        }
+        return type;
+    }
+
     public Expression getLeftExp() { return leftExp; }
 
     public @Nullable SyntaxElement getRightExp() {

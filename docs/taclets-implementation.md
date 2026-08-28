@@ -2,9 +2,24 @@
 
 What is runnable today vs. pending. Rules live in
 `keyext.solidity.core/src/main/resources/org/key_project/solidity/proof/rules/solidityProgramRules.key`
-(loaded via `standardSolidityRules.key`). Runnable examples live in
-`keyext.solidity.examples/taclets/` (focused, one rule each) and
-`keyext.solidity.examples/mainFeatures/` (end-to-end, from `PaperTest.sol`).
+(loaded via `standardSolidityRules.key`). Runnable examples are the functions of the single
+contract `keyext.solidity.examples/TestSuite.sol` — the focused, one-rule-each ones run in
+`TacletStarterExamplesTest`, the end-to-end `test*` ones in `PaperTestExamplesTest`. There are
+no `.key` problem files: the loader synthesizes one obligation per function,
+
+```
+\programSource "<abs path>/TestSuite.sol";
+\problem { \<{ storageFieldWriteRead()@TestSuite; }\>(true) }
+```
+
+(a function with parameters additionally gets a `\programVariables` block declaring one
+unconstrained variable per parameter, passed as the call's arguments — such a function is
+box-tagged and assumes its argument values with `require`)
+
+so the specification lives in the body as `assert`, and every test program is real Solidity
+that `solc` parses and type-checks. Authoring conventions and the `/// @custom:key` directives
+are in `keyext.solidity.examples/README.md`. See "Function-body inlining" below for the shape
+constraints this imposes.
 
 - Authoring syntax → `key-taclets.md`
 - Calculus spec → `storage.md`, `memory.md`
@@ -74,9 +89,14 @@ captures (§Capture partition below), which also cover nested RHS like
 `neg`), so no overflow branch; `/` and `%` revert on a zero denominator.
 - Arithmetic: `-`, `*`, `**` (`pow`), `/`, `%`.
 - Relational: `!=`, `<`, `>`, `<=`, `>=` (predicate map `lt/leq/gt/geq`).
-- Logical / unary: `&&`, `||` (left-capture only), `!`, unary `-x`.
+- Logical / unary: `&&`, `||`, `!`, unary `-x`. A non-simple left operand is
+  captured eagerly (Solidity always evaluates it); a non-simple *right* operand
+  goes through `logicalAnd/OrShortCircuitRhs` — a two-goal split on the simple
+  left operand, each branch guarded requireSimple-style by a `se = TRUE/FALSE`
+  disjunct, so the right operand is only evaluated on the branch that reaches it
+  (examples `logicalAndShortCircuitRhs` / `logicalOrShortCircuitRhs`).
 - Deferred: bitwise (`& | ^ << >> ~`), unary `+` (removed in Solidity ≥0.5),
-  `&&`/`||` right short-circuit (needs the Tier-3 `if`), checked-arith overflow.
+  checked-arith overflow.
 
 ### Storage aliases
 `storageLocalDeclInitDrop` (decl-with-init decomposition) followed by
@@ -104,7 +124,7 @@ mapping-preserving `delValue<[alpha]>(find<[alpha]>(storage, sp · at(ℓ-1)))`
 marker (not eager `defaultValue`), reusing the `delNode` machinery of §Delete —
 so a mapping nested in the popped element survives `pop()` (and a later bare
 `push()`, which only bumps `length`), exactly like `storageRootDelete` /
-`storageFieldDelete`. See the `testDeepPopDoesNotResetMappingMember` mainFeatures
+`storageFieldDelete`. See the `testDeepPopDoesNotResetMappingMember` end-to-end
 example.
 
 ### Memory
@@ -120,7 +140,7 @@ never reach these rules: `memoryLocalDeclInitDrop` (memory-only, the `memory`
 keyword in the pattern is matched) rewrites `T memory m = x;`
 to `m = x;` (registering `m` as a program variable), so all memory terminals
 match plain assignments; only the bare `T memory m;` keeps its one-shot
-fresh-allocation semantics. `memory-assign-forms.key` covers the assignment
+fresh-allocation semantics. `memoryAssignForms` covers the assignment
 forms directly. Memory references are
 `Identity`-sorted, not copied `Struct` values; no `push`/`pop`/mapping.
 Complex memory receivers are captured first by `memoryIndexRead_unfold_rightFst`
@@ -130,7 +150,7 @@ array structure, and in memory an indexable path is an array anyway — mappings
 cannot be memory-located and `bytes`/`string` are not memory reference types. The
 `array` flag stays on the rules that do consume it (`memoryIndexWriteArray`,
 `memoryIndexReadArray*`, `memoryIndex*Delete`), which emit the `size` bound.
-`memory-struct-array-index.key` covers the complex-receiver path.
+`memoryStructArrayIndex` covers the complex-receiver path.
 
 ### Delete
 `storageRootDelete` and `storageFieldDelete` save
@@ -224,7 +244,10 @@ constants, assume `CInv`, continue). Both share the
 captures. Not yet done: the `\getContractInvariant` varcond +
 `ContractSpecification` plumbing (`docs/net.md` Step 4 phase 2),
 `send`/`call{value:}` rules, and proof-obligation
-plumbing (`docs/net.md` Step 5). Seven `net-*` starter examples close.
+plumbing (`docs/net.md` Step 5). **No example covers any of this any more**: the seven `net-*`
+starters were `.key`-only (problem-local `\rules` for `CInv`, `\withOptions`, and inline
+`msg.*` / `.transfer` that `SolJSONParser` does not parse) and were deleted with the rest of
+the `.key` examples.
 
 ### Paths and lowering
 Path SV sorts: `StoragePath`, `SimpleStoragePath`, `ComplexStoragePath`,
@@ -257,11 +280,11 @@ See `taclet-ideas.md` for the full backlog. Headline gaps:
 - Control flow (`if`, loops, `return`), calls beyond `ExpandFunctionBody`,
   events, casts — see `taclet-ideas.md` Tiers 3–5.
 
-## mainFeatures examples (PaperTest.sol)
+## End-to-end examples (the `test*` functions)
 
-`keyext.solidity.examples/mainFeatures/` holds 38 end-to-end problems driven by
-`PaperTestExamplesTest.java`; each inlines a function body in the modality over
-`\programSource "PaperTest.sol"`.
+`TestSuite.sol` holds 40 end-to-end `test*` functions driven by `PaperTestExamplesTest.java`;
+each is called with postcondition `true`, the obligations being carried by in-body `assert`s.
+The other 127 functions are the focused starters run by `TacletStarterExamplesTest`.
 
 **Passing (most close automatically):** storage write/read, nested + deep copy,
 aliases, mapping read/write/delete, struct-`delete` preserving mapping members
@@ -271,12 +294,13 @@ aliases, mapping read/write/delete, struct-`delete` preserving mapping members
 `testStorageEvaluationOrder` — RHS-before-LHS index order); memory aliasing,
 delete, and inc/dec in array indices (`testMemoryUintArray*`); cross-location
 storage↔memory copies. Push examples assume a fresh-slot precondition
-(`find<[int]>(storage, …·size) = 0`) since `mainFeatures` starts from
+(`require(tokens.length == 0);` under `/// @custom:key box`) since execution starts from
 unconstrained symbolic storage.
 
-**Disabled — missing taclet support:**
+**Dropped — missing taclet support:**
 - `testStorageArrayPushPop` — `tokens.push(Token(42));`, struct-literal `Token(42)`
-  not parsed (no push-struct-value taclet).
+  not parsed (no push-struct-value taclet). It had no `TestSuite.sol` function and was
+  removed with the `.key` files.
 
 ## Verifying a function directly from a `.sol` file (no `.key` file)
 
@@ -306,9 +330,14 @@ return parameters instead).
 ## Verification
 
 ```bash
-# One focused example (absolute path — the CLI resolves relative paths against
-# test-resources, not the repo root):
-./gradlew :keyext.solidity.core:solidityCli --args="-m 10000 /abs/path/keyext.solidity.examples/taclets/<file>.key"
+# Type-check the contract first — ~150ms, and it catches a Solidity error before a
+# multi-minute test run:
+solc --ast-compact-json keyext.solidity.examples/TestSuite.sol > /dev/null
+
+# One example, or every function of the contract (absolute path — the CLI resolves relative
+# paths against test-resources, not the repo root):
+./run-key.sh keyext.solidity.examples/TestSuite.sol <function>
+./run-key.sh keyext.solidity.examples/TestSuite.sol
 
 # Focused taclet suites:
 ./gradlew :keyext.solidity.core:test --tests "org.key_project.solidity.taclets.TacletStarterExamplesTest"
@@ -316,3 +345,37 @@ return parameters instead).
 
 # Use --no-prove first when debugging a parser/matcher failure (load only).
 ```
+
+Both example suites enumerate the contract, so a new function is picked up without editing the
+test class.
+
+## Function-body inlining
+
+`functionBodyExpand` (in `solidityProgramRules.key`, so examples need not declare it) rewrites
+a call statement to the callee's body via the `ExpandFunctionBody` transformer, which emits
+
+```
+T0 p0 = arg0; ... Tn pn = argn; Tr r0; { <body> } result = r0;
+```
+
+`blockEmpty` then discards the body block once its statements have run. Constraints that
+follow from the current implementation — every example in `TestSuite.sol` respects them:
+
+- **The call must be the whole modality program.** `functionBodyExpand`'s `\find` is a bare
+  `s#fbs`, not a context block, so `\<{ f()@C; g()@C; }\>` does not match.
+- **Exactly one named return.** Only `freshReturns.get(0)` is wired to the result variable; a
+  second named return is silently dropped.
+- **No `return e;`.** It parses, but no taclet consumes a `ReturnStatement`, so symbolic
+  execution gets stuck. Assign to the named return instead.
+- **No overloading.** `visitFunctionBodyStatement` takes the first function whose *name*
+  matches, ignoring the signature, so function names must be unique.
+- **Single-identifier left-hand side.** `(a, b) = f()@C;` is not parseable.
+
+A test that observes more than one value therefore asserts in the body and uses postcondition
+`true`; a test that observes only storage/memory has no return value at all.
+
+Note that a `.sol` body is parsed by `SolJSONParser` (the solc-JSON path), not by
+`SolidityToKeyConverter` (the ANTLR path used for programs written inline in a modality). The
+two are not equally complete: `msg.sender`, `msg.value`, `.transfer` and `.send` work in the
+ANTLR path but not in the JSON one. That is a **parser** gap, not a taclet gap, and it is why
+the seven `net-*` examples still inline their programs.

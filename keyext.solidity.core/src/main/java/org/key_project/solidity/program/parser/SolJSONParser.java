@@ -163,16 +163,24 @@ public class SolJSONParser {
 
         KeYSolidityType contractType = pendingContractKST(contractName, contractId);
 
+        // Declarations first: a function body may mention any state variable or struct member,
+        // and expression typing during body parsing needs those type references already
+        // resolved (a member access on an array- or mapping-valued member is classified by its
+        // declared type).
+        List<JsonNode> functionNodes = new ArrayList<>();
         for (JsonNode node : contractNode.get("nodes").values()) {
             final String nodeType = node.get("nodeType").asString();
             switch (nodeType) {
                 case "VariableDeclaration" -> fields.add(parseVariableField(contractName, node));
-                case "FunctionDefinition" -> functions.add(parseFunction(node));
+                case "FunctionDefinition" -> functionNodes.add(node);
                 case "StructDefinition" -> structs.add(parseStruct(node, contractName, contractId));
                 case "ModifierDefinition" -> modifiers.add(parseModifier(node));
                 case "EnumDefinition" -> enums.add(parseEnum(node));
                 default -> throw new RuntimeException("Unknown node type " + nodeType);
             }
+        }
+        for (JsonNode node : functionNodes) {
+            functions.add(parseFunction(node));
         }
 
         final ContractDeclaration cDecl =
@@ -219,7 +227,7 @@ public class SolJSONParser {
 
     private void completeReferences(SyntaxElement cDecl) {
         List<SyntaxElement> elements = new ArrayList<>();
-        queueRefs(cDecl, elements);
+        queueRefs(cDecl, elements, Collections.newSetFromMap(new IdentityHashMap<>()));
         elements.forEach(el -> {
             if (el instanceof Resolver r)
                 r.resolve(id2Name);
@@ -228,14 +236,20 @@ public class SolJSONParser {
         });
     }
 
-    private void queueRefs(SyntaxElement cDecl, List<SyntaxElement> queue) {
-        if (cDecl == null) {
+    /// Collects every node reachable from `cDecl`. Struct and type nodes are shared by every
+    /// declaration that mentions them, so the traversal must remember what it has already seen:
+    /// without `visited` the walk re-descends once per path to a shared node and blows up
+    /// exponentially on contracts with nested structs. Resolution is idempotent, so visiting
+    /// each node once is enough.
+    private void queueRefs(SyntaxElement cDecl, List<SyntaxElement> queue,
+            Set<SyntaxElement> visited) {
+        if (cDecl == null || !visited.add(cDecl)) {
             return;
         }
         IntStream.range(0, cDecl.getChildCount()).mapToObj(cDecl::getChild).forEach(child -> {
             if (child != null) {
                 queue.add(child);
-                queueRefs(child, queue);
+                queueRefs(child, queue, visited);
             }
         });
     }
@@ -300,6 +314,14 @@ public class SolJSONParser {
         } else {
             resolvedType = parseType(typeName);
             typeReference = new TypeReference(resolvedType);
+        }
+
+        // Struct members need the same KeYSolidityType registration that state variables get in
+        // `parseVariableField`: rules that capture a member into a fresh program variable look
+        // its type up by the member's Solidity type.
+        if (resolvedType != null && !(resolvedType instanceof PrimitiveType)
+                && !(resolvedType instanceof KeYSolidityType)) {
+            getOrCreateKeYSolidityType(resolvedType);
         }
 
         // Register the field's logic constant under its namespaced `Contract$Struct$field` name.
@@ -458,8 +480,8 @@ public class SolJSONParser {
         KeYSolidityType ksType = getOrCreateKeYSolidityType(type);
         DataLocation dataLocation =
             DataLocation.fromString(declaration.get("storageLocation").asString());
-        ProgramVariable programVariable =
-            new ProgramVariable(name, asMemoryReferenceType(ksType, dataLocation), dataLocation);
+        ProgramVariable programVariable = new ProgramVariable(name,
+            MemoryReferenceTypes.asLocalVariableType(ksType, dataLocation, services), dataLocation);
         Declaration decl = new StatementVariableDeclaration(programVariable);
         id2Name.put(id, decl);
         return decl;
@@ -755,9 +777,12 @@ public class SolJSONParser {
 
     private Expression parseIndexAccess(JsonNode initializer) {
         JsonNode baseExpression = initializer.get("baseExpression");
-        Expression leftExp = baseExpression.has("referencedDeclaration")
-                ? getVariableExpression(baseExpression.get("referencedDeclaration").asInt())
-                : parseExpression(baseExpression);
+        Expression leftExp =
+            "Identifier".equals(baseExpression.get("nodeType").asString())
+                    && baseExpression.has("referencedDeclaration")
+                            ? getVariableExpression(
+                                baseExpression.get("referencedDeclaration").asInt())
+                            : parseExpression(baseExpression);
         Expression indexExp = parseExpression(initializer.get("indexExpression"));
         return new IndexExpression(leftExp, indexExp);
     }
@@ -784,11 +809,20 @@ public class SolJSONParser {
                 || initializer.get("referencedDeclaration").isNull()) {
             JsonNode memberNameNode = initializer.get("memberName");
             if (memberNameNode != null && !memberNameNode.isNull()) {
-                FunctionDeclaration builtin = SolidityInfo
-                        .getBuiltinFunctionDeclaration(new Name(memberNameNode.asString()));
-                if (builtin != null && ("push".equals(memberNameNode.asString())
-                        || "pop".equals(memberNameNode.asString()))) {
+                final String memberName = memberNameNode.asString();
+                FunctionDeclaration builtin =
+                    SolidityInfo.getBuiltinFunctionDeclaration(new Name(memberName));
+                if (builtin != null && ("push".equals(memberName) || "pop".equals(memberName))) {
                     return new MemberExp(leftExp, builtin, builtin.getType());
+                }
+                Type leftType = leftExp.getType();
+                if ("length".equals(memberName)
+                        && (leftType instanceof DynamicArrayType
+                                || leftType instanceof ArrayType)) {
+                    FieldDeclaration sizeField =
+                        new FieldDeclaration(new Name("size"),
+                            new TypeReference(new Name("uint256")));
+                    return new MemberExp(leftExp, sizeField, UINT256);
                 }
             }
             throw new RuntimeException("Unresolved member access " + initializer);

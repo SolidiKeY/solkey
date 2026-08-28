@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import org.key_project.solidity.common.Profile;
+import org.key_project.solidity.proof.init.SolidityProblemSpec;
 
 import org.jspecify.annotations.Nullable;
 
@@ -24,5 +25,15 @@ public class SingleThreadProblemLoader extends AbstractProblemLoader {
             @Nullable Profile profileOfNewProofs,
             @Nullable ProblemLoaderControl control) {
         super(file, includes, profileOfNewProofs, control);
+    }
+
+    /// Constructor.
+    ///
+    /// @param solidityProblem which function of a `.sol` `file` to prove; `null` to infer it
+    public SingleThreadProblemLoader(Path file, @Nullable List<Path> includes,
+            @Nullable Profile profileOfNewProofs,
+            @Nullable ProblemLoaderControl control,
+            @Nullable SolidityProblemSpec solidityProblem) {
+        super(file, includes, profileOfNewProofs, control, solidityProblem);
     }
 }

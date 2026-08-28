@@ -21,8 +21,8 @@ import org.key_project.solidity.proof.init.ProblemInitializer;
 import org.key_project.solidity.proof.init.ProofAggregate;
 import org.key_project.solidity.proof.init.ProofInputException;
 import org.key_project.solidity.proof.init.ProofOblInput;
+import org.key_project.solidity.proof.init.SolidityProblemSpec;
 import org.key_project.solidity.proof.io.AbstractProblemLoader;
-import org.key_project.solidity.proof.io.FunctionTarget;
 import org.key_project.solidity.proof.io.ProblemLoaderControl;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
 import org.key_project.solidity.proof.io.SingleThreadProblemLoader;
@@ -68,18 +68,11 @@ public abstract class AbstractUserInterfaceControl
     public AbstractProblemLoader load(Profile profile, Path file, List<Path> includes,
             Properties poPropertiesToForce,
             boolean forceNewProfileOfNewProofs,
-            Consumer<Proof> callback) throws ProblemLoaderException {
-        return load(profile, file, includes,
-                callback, null);
-    }
-
-    public AbstractProblemLoader load(Profile profile, Path file, List<Path> includes,
-                                      Consumer<Proof> callback,
-            FunctionTarget functionTarget) throws ProblemLoaderException {
+            Consumer<Proof> callback,
+            SolidityProblemSpec solidityProblem) throws ProblemLoaderException {
         AbstractProblemLoader loader = null;
         try {
-            loader = new SingleThreadProblemLoader(file, includes, profile, null);
-            loader.setFunctionTarget(functionTarget);
+            loader = new SingleThreadProblemLoader(file, includes, profile, null, solidityProblem);
             if (callback != null) {
                 loader.load(callback);
             } else {

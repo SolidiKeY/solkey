@@ -27,9 +27,10 @@ logic-level result of the operator to the target var. Pattern to copy:
   revert on a zero denominator.
 - **Relational** (`BinaryOp`): `!=`, `<`, `>`, `<=`, `>=`. ✅ Done — twins of
   `==`: `v = se1 < se2;` ⇝ `{v := \if(lt(t1, t2))\then(TRUE)\else(FALSE)}`.
-- **Logical** (`BinaryOp`/`UnaryPrefix`): `&&`, `||`, `!`. ✅ Done for
-  both-simple operands + left-operand capture. Right-operand short-circuit
-  (`&&`/`||`) is deferred — it needs the Tier-3 `if` rule.
+- **Logical** (`BinaryOp`/`UnaryPrefix`): `&&`, `||`, `!`. ✅ Done —
+  both-simple operands, left-operand capture, and right-operand short-circuit
+  (`logicalAnd/OrShortCircuitRhs`, two-goal split guarded requireSimple-style
+  by `se = TRUE/FALSE` disjuncts; no `if` rule needed).
 - **Unary prefix** (`UnaryPrefix`): `-x` ✅ Done (`v = -x;` ⇝ `{v := -t}`).
   `+x` is skipped (Solidity ≥0.5 removed it; Java has no rule). `~x` is bitwise
   (see below).
@@ -107,3 +108,13 @@ Edge cases of already-supported constructs (see `docs/taclets-implementation.md`
 - **Dynamic-array `delete arr;` length reset**: not modeled by the current
   memory/storage delete rules. (Struct-`delete` preserving mapping members is now
   implemented via the lazy `delNode` marker — see `docs/storage.md` §6.)
+
+## Raised in priority by the TestSuite.sol migration
+
+- **`return e;` (Tier 3).** Now on the critical path: every example in `TestSuite.sol` has to
+  use a *named* return and assign to it, because no taclet consumes a `ReturnStatement`. A
+  companion fix belongs in `ExpandFunctionBody`, which currently wires only the first named
+  return and silently drops the rest.
+- **`msg.*` / `.transfer` / `.send` in `SolJSONParser`.** Implemented in the ANTLR path only,
+  which is the sole reason the seven `net-*` examples could not move into the shared contract.
+  See `net.md`.

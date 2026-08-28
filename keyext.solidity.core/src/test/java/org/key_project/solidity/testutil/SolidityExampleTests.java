@@ -3,8 +3,12 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.testutil;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import org.key_project.logic.PosInTerm;
 import org.key_project.logic.Term;
@@ -17,9 +21,12 @@ import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.proof.Proof;
+import org.key_project.solidity.proof.init.SolidityProblemSynthesizer;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
 import org.key_project.solidity.rule.TacletApp;
 import org.key_project.util.collection.ImmutableList;
+
+import org.junit.jupiter.params.provider.Arguments;
 
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -62,10 +69,46 @@ public final class SolidityExampleTests {
         return Files.exists(p) ? p : Path.of("../keyext.solidity.examples").resolve(subdir);
     }
 
+    /// The single contract the taclet examples live in. It has no `.key` problems beside it: the
+    /// loader synthesizes one obligation per function.
+    public static Path testSuite() {
+        return example(TEST_SUITE_CONTRACT + ".sol");
+    }
+
+    public static final String TEST_SUITE_CONTRACT = "TestSuite";
+
+    /// The functions of [#testSuite] an obligation can be generated for, matching `selector`, as
+    /// `(function)` arguments sorted by name. Enumerating beats a hand-maintained list: a new
+    /// example is picked up automatically, and one cannot silently drop out of the suite.
+    public static Stream<Arguments> testSuiteFunctions(Predicate<String> selector)
+            throws IOException {
+        List<String> functions =
+            SolidityProblemSynthesizer.provableFunctions(testSuite(), TEST_SUITE_CONTRACT)
+                    .stream()
+                    .filter(selector)
+                    .sorted()
+                    .toList();
+        assertTrue(!functions.isEmpty(),
+            "no matching functions in " + testSuite().toAbsolutePath());
+        return functions.stream().map(Arguments::of);
+    }
+
     // --- loading and proving -------------------------------------------------------------------
 
     public static KeYEnvironment load(Path file) throws ProblemLoaderException {
         return KeYEnvironment.load(file);
+    }
+
+    /// Load the obligation for one function of a Solidity source, with no `.key` problem file.
+    public static KeYEnvironment load(Path solFile, String contract, String function)
+            throws ProblemLoaderException {
+        return KeYEnvironment.load(solFile, contract, function);
+    }
+
+    /// Load the obligation for one function of [#testSuite] and run automode on it.
+    public static Proof proveTestSuiteFunction(String function, int maxSteps, long timeout)
+            throws ProblemLoaderException {
+        return prove(load(testSuite(), TEST_SUITE_CONTRACT, function), maxSteps, timeout);
     }
 
     /// Run automode on the environment's loaded proof, optionally overriding the strategy's step
@@ -92,20 +135,6 @@ public final class SolidityExampleTests {
     public static Proof loadAndProve(Path file, int maxSteps, long timeout)
             throws ProblemLoaderException {
         return prove(load(file), maxSteps, timeout);
-    }
-
-    /// Load a `.sol` file and create the proof obligation for the given function, without a
-    /// `.key` problem file. The contract may be `null` when the function name is unambiguous.
-    public static KeYEnvironment loadFunction(Path solFile, String contract, String function)
-            throws ProblemLoaderException {
-        return KeYEnvironment.loadFunction(solFile, contract, function);
-    }
-
-    /// Load a function from a `.sol` file and run automode with an explicit step budget and
-    /// timeout.
-    public static Proof loadAndProveFunction(Path solFile, String contract, String function,
-            int maxSteps, long timeout) throws ProblemLoaderException {
-        return prove(loadFunction(solFile, contract, function), maxSteps, timeout);
     }
 
     // --- proof inspection ----------------------------------------------------------------------

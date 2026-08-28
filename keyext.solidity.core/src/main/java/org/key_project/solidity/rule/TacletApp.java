@@ -36,10 +36,7 @@ import org.key_project.solidity.logic.LogicVariableTable;
 import org.key_project.solidity.logic.TermBuilder;
 import org.key_project.solidity.logic.op.*;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
-import org.key_project.solidity.program.ast.abstractions.ArrayType;
-import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
-import org.key_project.solidity.program.ast.abstractions.MappingType;
 import org.key_project.solidity.program.ast.abstractions.MemoryReferenceTypes;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
@@ -899,27 +896,8 @@ public abstract class TacletApp implements RuleApp {
 
     private static KeYSolidityType asStorageAliasType(KeYSolidityType original,
             Services services) {
-        if (original == null) {
-            return null;
-        }
-        var sort = original.getSort();
-        if (sort == null || !isStoragePathType(original, sort)) {
-            return original;
-        }
-        var listSort = services.getNamespaces().sorts().lookup(new Name("List"));
-        if (listSort == null) {
-            return original;
-        }
-        return new KeYSolidityType(original.getSolidityType(), listSort);
-    }
-
-    private static boolean isStoragePathType(KeYSolidityType original, Sort sort) {
-        if ("Struct".equals(sort.name().toString())) {
-            return true;
-        }
-        Type solType = original.getSolidityType();
-        return solType instanceof DynamicArrayType || solType instanceof ArrayType
-                || solType instanceof MappingType;
+        return original == null ? null
+                : MemoryReferenceTypes.asStorageAliasType(original, Storage, services);
     }
 
     /// checks if the instantiation of <code>sv</code> with <code>pe</code> is possible. If the

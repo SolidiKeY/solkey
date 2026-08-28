@@ -70,8 +70,8 @@ public abstract class AbstractProblemLoader {
     /// and not shown to the user.
     private boolean ignoreWarnings = false;
 
-    /// The Solidity function to verify when loading a `.sol` file directly, or `null`.
-    private @Nullable FunctionTarget functionTarget;
+    /// Which function to prove when `file` is a `.sol` source; `null` to infer it.
+    private final @Nullable SolidityProblemSpec solidityProblem;
 
     /// Constructor.
     ///
@@ -85,19 +85,26 @@ public abstract class AbstractProblemLoader {
     protected AbstractProblemLoader(Path file,
             @Nullable List<Path> includes, @Nullable Profile profileOfNewProofs,
             @Nullable ProblemLoaderControl control) {
+        this(file, includes, profileOfNewProofs, control, null);
+    }
+
+    /// Constructor selecting a function of a Solidity source file.
+    ///
+    /// @param solidityProblem which function of a `.sol` `file` to prove; `null` to infer it
+    protected AbstractProblemLoader(Path file,
+            @Nullable List<Path> includes, @Nullable Profile profileOfNewProofs,
+            @Nullable ProblemLoaderControl control,
+            @Nullable SolidityProblemSpec solidityProblem) {
         this.file = file;
         this.control = control;
         this.profileOfNewProofs =
             profileOfNewProofs != null ? profileOfNewProofs : SolidityProfile.getDefaultInstance();
         this.includes = includes;
+        this.solidityProblem = solidityProblem;
     }
 
     protected void setProof(Proof proof) {
         this.proof = proof;
-    }
-
-    public void setFunctionTarget(@Nullable FunctionTarget functionTarget) {
-        this.functionTarget = functionTarget;
     }
 
     /// Executes the loading process and tries to instantiate a proof and to re-apply rules on it if
@@ -231,11 +238,14 @@ public abstract class AbstractProblemLoader {
         fileRepo.setBaseDir(file);
 
         if (filename.endsWith(".sol")) {
-            // solidity file, probably enriched by specifications
-            SLEnvInput ret =
-                new SLEnvInput(file.toAbsolutePath(), profileOfNewProofs, includes);
-            ret.setSolidityFile(file.toAbsolutePath());
-            return ret;
+            // a Solidity source carries no \problem, so synthesize one for the selected function
+            SolidityProblemSpec spec =
+                SolidityProblemSynthesizer.resolve(file, solidityProblem);
+            return new KeYUserProblemFile(spec.contract() + "." + spec.function(),
+                RuleSourceFactory.fromString(
+                    SolidityProblemSynthesizer.problemText(file, spec),
+                    SolidityProblemSynthesizer.anchor(file, spec)),
+                profileOfNewProofs, fileRepo);
         } else if (filename.endsWith(".zproof")) { // zipped proof package
             /*
              * TODO: Currently it is not possible to load proof bundles with multiple proofs. This
@@ -351,10 +361,7 @@ public abstract class AbstractProblemLoader {
         }
 
         // Instantiate proof obligation
-        if (envInput instanceof SLEnvInput && functionTarget != null) {
-            return new LoadedPOContainer(new FunctionVerificationPO(initConfig,
-                functionTarget.contract(), functionTarget.function()));
-        } else if (envInput instanceof ProofOblInput && chooseContract == null
+        if (envInput instanceof ProofOblInput && chooseContract == null
                 && proofObligation == null) {
             return new LoadedPOContainer((ProofOblInput) envInput);
         } /*
