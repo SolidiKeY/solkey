@@ -209,6 +209,20 @@ without pointing at the culprit:
   (`require(a && (b || c))`) is a solc `TupleExpression`, which `SolJSONParser` rejects at
   load time — split it into its own `require(b || c)`.
 
+## The `solc/` directory
+
+`solc/` holds ports of the Solidity compiler's own semantic tests
+(`ethereum/solidity`, `test/libsolidity/semanticTests/`) — six contracts written in the same
+`require`/`assert` style as `TestSuite.sol`, one per upstream theme (expressions, structs,
+arrays, memory, mappings, control flow). Where `TestSuite.sol` exercises one taclet each, these
+cross-check the calculus against a description of Solidity semantics SolKey did not write.
+
+`solc/README.md` has the provenance table (upstream file → function), the adaptation rules
+(loops unrolled, `return e;` turned into `assert`, `bytesN` dropped), and the list of known
+failures — examples that state upstream semantics the calculus cannot discharge yet and are
+kept red on purpose. `SolcSemanticsExamplesTest` enumerates the directory, so a new example
+joins `./gradlew :keyext.solidity.core:test` by being written.
+
 ## Other directories
 
 `fieldAccess/`, `functionBody/` and `newVariable/` still use `.key` problems — they exercise

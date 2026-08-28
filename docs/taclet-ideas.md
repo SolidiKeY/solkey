@@ -110,6 +110,45 @@ Edge cases of already-supported constructs (see `docs/taclets-implementation.md`
   memory/storage delete rules. (Struct-`delete` preserving mapping members is now
   implemented via the lazy `delNode` marker — see `docs/storage.md` §6.)
 
+## Raised by the solc semantic-test ports
+
+Found by porting the Solidity compiler's own semantic tests into
+`keyext.solidity.examples/solc/` (`taclets-implementation.md`, "solc semantic-test ports").
+Each has a failing example in the suite naming it, so closing the gap is observable.
+
+- **`++`/`--` as a statement on a local** (`i++;`, `++i;`). The increment family has
+  root/field/index rules and the `x = i++` result forms, but nothing consumes a bare
+  increment of a plain local. Clone `localDeclPostincrement` without the result
+  assignment. Example: `SolcExpressions.bareIncrementOnLocal`; the state-variable twin
+  beside it closes.
+- **Compound assignment on a local** (`r += e;`). `storage{Root,Field,Index}AddAssign` and
+  friends are storage-only; a local target has no rule. Example:
+  `SolcExpressions.compoundAssignOnLocal`.
+- **Indexing a storage alias of a primitive-element array** (`uint[] storage ref = arr;
+  ref[1]`). Open for both reads and writes, including when the bound is stated on the alias;
+  `ref.length` works and the struct-element twin works, so the primitive-element index rules
+  are not accepting a local alias as receiver. Example:
+  `SolcArrays.storageArrayAliasWritesThrough`.
+- **Whole-value copy into an array or mapping element** (`pairs2[0] = src;`,
+  `arrayMap[0] = row;`). Raises a `TermCreationException` in the index-write copy-source
+  rules, while the struct-into-mapping form (`accountMap[2] = accountMap[1];`) works — so
+  the ill-sorted term is built for array elements and for array-valued entries. Examples:
+  `SolcStructs.structArrayElementCopy`, `SolcMappings.arrayElementsToMapping`.
+- **A freshly pushed slot is not known to be zero.** No axiom relates a slot beyond `length`
+  to its default value, so `arr.push(); assert(arr[0] == 0);` is open from unconstrained
+  storage; only pop-then-push is observable. This is upstream's
+  `array_storage_index_zeroed_test.sol` invariant. Example: `SolcArrays.pushedSlotIsZeroed`.
+- **`?:` over memory references into a storage target**
+  (`storageStruct = c ? memA : memB;`). Open, while the memory-target form and the
+  `if`/`else` form both close. Example:
+  `SolcControlFlow.ternarySelectsFirstMemorySource`.
+- **`SolJSONParser`: self-recursive struct types.** `struct s2 { mapping(k => s2) recursive; }`
+  throws an NPE in `getOrCreateMappingKeYSolidityType` and takes the whole file down at load.
+  Worked around in the ports by unrolling the hierarchy.
+- **Mapping members must be aliased before being indexed.** `nested.recursive[4].z` is open
+  where `map[4].z` with `map = nested.recursive` closes; the member-mapping index rules need
+  the same complex-receiver capture the other index families have.
+
 ## Raised in priority by the TestSuite.sol migration
 
 - **`return e;` (Tier 3).** Now on the critical path: every example in `TestSuite.sol` has to

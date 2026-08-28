@@ -316,6 +316,36 @@ unconstrained symbolic storage.
   not parsed (no push-struct-value taclet). It had no `TestSuite.sol` function and was
   removed with the `.key` files.
 
+## solc semantic-test ports (`keyext.solidity.examples/solc/`)
+
+Six contracts porting the Solidity compiler's own semantic tests
+(`ethereum/solidity`, `test/libsolidity/semanticTests/`) into the `require`/`assert` style, run
+by `SolcSemanticsExamplesTest` — an external cross-check of the calculus against a description
+of the language SolKey did not write. Provenance table, adaptation rules and the not-ported
+families are in `keyext.solidity.examples/solc/README.md`.
+
+65 of the 72 functions close. The seven that do not are kept in the suite deliberately, each
+with a `KNOWN FAILURE` comment and a backlog entry in `taclet-ideas.md`; they surfaced five
+gaps that no `TestSuite.sol` example reached:
+
+- `++`/`--` and `+=` **as a statement on a local variable** — the increment family has
+  root/field/index rules plus the `x = i++` result forms, and the compound-assignment family is
+  storage-only, so `i++;` and `r += e;` on a plain local are both open.
+- **Indexing a storage alias of a primitive-element array** (`uint[] storage ref = arr;
+  ref[1]`) — open for reads and writes, while `ref.length` and the struct-element twin close.
+- **Whole-value copy into an array or mapping element** (`pairs2[0] = src;`,
+  `arrayMap[0] = row;`) — raises a `TermCreationException`, although the struct-into-mapping
+  form (`accountMap[2] = accountMap[1];`) works.
+- **A freshly pushed slot is not known to be zero** — there is no axiom tying a slot beyond
+  `length` to its default value, so only the pop-then-push form is observable.
+- **`?:` over memory references assigned into a storage target** — open, while the same
+  selection into a memory target and the `if`/`else` form both close.
+
+Two more were found and worked around in place: `SolJSONParser` throws on a **self-recursive
+struct type** (`struct s2 { mapping(k => s2) recursive; }`), and a **mapping that is a struct
+member has to be bound to an alias before it can be indexed** (`map[4].z` closes where
+`nested.recursive[4].z` does not).
+
 ## Verifying a function directly from a `.sol` file (no `.key` file)
 
 A single Solidity function can be verified without writing a `.key` problem file. The
