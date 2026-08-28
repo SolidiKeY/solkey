@@ -8,6 +8,9 @@ loader reads the contract, and for each function synthesizes
 \problem { \<{ someFunction()@TestSuite; }\>(true) }
 ```
 
+(a function with parameters additionally gets a `\programVariables` block declaring one
+unconstrained variable per parameter, passed as the call's arguments)
+
 so the whole specification lives in the Solidity body and every test program is real Solidity,
 type-checked by `solc` on load.
 
@@ -29,7 +32,12 @@ running a suite.
 
 ## Writing an example
 
-Every function is `public`, takes no arguments and returns nothing.
+Every function is `public` and returns nothing. A function may take arguments: the loader
+declares one unconstrained program variable per parameter and passes them as the call's
+arguments, so the function must be box-tagged and pin the values its asserts rely on in one
+conjoined `require(x == 5 && y == 7)` — it plays the role of the old `.key` precondition
+`x = 5 & y = 7`. Storage bounds stay in their own ordered requires (see below), since each one
+guards the evaluation of the next.
 
 **What the test observes** goes in the body as `assert`. A value the postcondition talks about
 is bound to a local first — `return e;` is not supported by the calculus:

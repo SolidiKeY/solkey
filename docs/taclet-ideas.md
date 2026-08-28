@@ -27,9 +27,10 @@ logic-level result of the operator to the target var. Pattern to copy:
   revert on a zero denominator.
 - **Relational** (`BinaryOp`): `!=`, `<`, `>`, `<=`, `>=`. ✅ Done — twins of
   `==`: `v = se1 < se2;` ⇝ `{v := \if(lt(t1, t2))\then(TRUE)\else(FALSE)}`.
-- **Logical** (`BinaryOp`/`UnaryPrefix`): `&&`, `||`, `!`. ✅ Done for
-  both-simple operands + left-operand capture. Right-operand short-circuit
-  (`&&`/`||`) is deferred — it needs the Tier-3 `if` rule.
+- **Logical** (`BinaryOp`/`UnaryPrefix`): `&&`, `||`, `!`. ✅ Done —
+  both-simple operands, left-operand capture, and right-operand short-circuit
+  (`logicalAnd/OrShortCircuitRhs`, two-goal split guarded requireSimple-style
+  by `se = TRUE/FALSE` disjuncts; no `if` rule needed).
 - **Unary prefix** (`UnaryPrefix`): `-x` ✅ Done (`v = -x;` ⇝ `{v := -t}`).
   `+x` is skipped (Solidity ≥0.5 removed it; Java has no rule). `~x` is bitwise
   (see below).

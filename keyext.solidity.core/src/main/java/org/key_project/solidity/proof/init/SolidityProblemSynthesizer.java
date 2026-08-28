@@ -6,6 +6,7 @@ package org.key_project.solidity.proof.init;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.key_project.solidity.program.parser.SolidityOutline;
 
@@ -16,6 +17,10 @@ import org.key_project.solidity.program.parser.SolidityOutline;
 /// specification is carried by the `assert` statements in the function body. A function may
 /// select the box modality with a `/// @key box` natspec comment, which turns its leading
 /// `require` statements into assumptions instead of obligations (see `docs/require-assert.md`).
+///
+/// Function parameters are declared as unconstrained program variables and passed to the call,
+/// so a parameterized function is normally box-tagged and assumes the values its asserts rely
+/// on with a leading `require(x == 5 && y == 7)`.
 public final class SolidityProblemSynthesizer {
 
     /// Natspec directive selecting the box modality. `@custom:` is solc's extension prefix; any
@@ -61,15 +66,21 @@ public final class SolidityProblemSynthesizer {
                     .orElseThrow(() -> new IllegalArgumentException(
                         "no public function " + spec.function() + " in " + solFile));
         boolean box = function.documentation().contains(BOX_DIRECTIVE);
-        String call = spec.function() + "()@" + spec.contract() + ";";
+        List<SolidityOutline.Parameter> parameters = function.parameters();
+        String arguments = parameters.stream().map(SolidityOutline.Parameter::name)
+                .collect(Collectors.joining(", "));
+        String call = spec.function() + "(" + arguments + ")@" + spec.contract() + ";";
         String modality = box ? "\\[{ " + call + " }\\](true)" : "\\<{ " + call + " }\\>(true)";
+        String programVariables = parameters.isEmpty() ? ""
+                : parameters.stream().map(p -> "    " + p.keySort() + " " + p.name() + ";")
+                        .collect(Collectors.joining("\n", "\\programVariables {\n", "\n}\n\n"));
         return """
                 \\programSource "%s";
 
-                \\problem {
+                %s\\problem {
                     %s
                 }
-                """.formatted(solFile.toAbsolutePath(), modality);
+                """.formatted(solFile.toAbsolutePath(), programVariables, modality);
     }
 
     /// A path identifying this obligation. It is never created; it only fixes the directory

@@ -6,7 +6,13 @@ pragma solidity ^0.8.0;
 /// is real Solidity that `solc` parses and type-checks.
 ///
 /// Conventions:
-///   - every function is `public`, takes no arguments and returns nothing;
+///   - every function is `public` and returns nothing;
+///   - a function may take arguments: the loader binds each one to an unconstrained program
+///     variable, so the function must be tagged `/// @custom:key box` and state the values its
+///     asserts rely on in one conjoined `require(x == 5 && y == 7)` — the box turns it into an
+///     assumption, playing the role of the old `.key` precondition `x = 5 & y = 7`. Bounds on
+///     storage stay in their own ordered requires (next point), since each one guards the
+///     evaluation of the next;
 ///   - what the test observes is stated in the body with `assert` — a value the old `.key`
 ///     postcondition named is bound to a local first (`return e;` is not supported by the
 ///     calculus);
@@ -52,9 +58,9 @@ contract TestSuite {
 
     // ── Arithmetic ──
 
-    function additionStorageWrite() public {
-        uint x = 5;
-        uint y = 7;
+    /// @custom:key box
+    function additionStorageWrite(uint x, uint y) public {
+        require(x == 5 && y == 7);
         alice.age = x + y;
         uint r = alice.age;
         assert(r == 12);
@@ -203,6 +209,12 @@ contract TestSuite {
         assert(!r);
     }
 
+    function logicalAndShortCircuitRhs() public {
+        uint x = 5;
+        bool r = x == 5 && x + 1 == 6;
+        assert(r);
+    }
+
     function logicalNotSimple() public {
         bool r = !false;
         assert(r);
@@ -210,6 +222,12 @@ contract TestSuite {
 
     function logicalOrSimple() public {
         bool r = true || false;
+        assert(r);
+    }
+
+    function logicalOrShortCircuitRhs() public {
+        uint x = 5;
+        bool r = x == 4 || x + 1 == 6;
         assert(r);
     }
 
@@ -242,10 +260,9 @@ contract TestSuite {
         assert(r == 60);
     }
 
-    function memoryIndexWriteNse() public {
-        uint i = 1;
-        uint lhs = 4;
-        uint rhs = 5;
+    /// @custom:key box
+    function memoryIndexWriteNse(uint i, uint lhs, uint rhs) public {
+        require(i == 1 && lhs == 4 && rhs == 5);
         uint[] memory xs = new uint[](4);
         xs[i+1] = lhs + rhs;
         uint r = xs[i+1];
@@ -302,6 +319,14 @@ contract TestSuite {
     function powerSimple() public {
         uint r = 2 ** 3;
         assert(r == 8);
+    }
+
+    /// @custom:key box
+    function requireGuardBox(uint x) public {
+        require(x > 0);
+        age = 1;
+        uint r = age;
+        assert(r == 1);
     }
 
     function requireHoldsDiamond() public {
@@ -499,20 +524,18 @@ contract TestSuite {
         assert(r == 11);
     }
 
-    function storageFieldWriteRhsCapture() public {
-        uint x = 1;
-        uint y = 2;
-        uint z = 3;
+    /// @custom:key box
+    function storageFieldWriteRhsCapture(uint x, uint y, uint z) public {
+        require(x == 1 && y == 2 && z == 3);
         alice.age = x + y*z;
         uint r = alice.age;
         assert(r == 7);
     }
 
     /// @custom:key box
-    function storageIndexCopyValue() public {
+    function storageIndexCopyValue(uint i, uint j) public {
         require(1 < values.length);
-        uint i = 5;
-        uint j = 1;
+        require(i == 5 && j == 1);
         values[1] = 8;
         balances[i] = values[j];
         uint r = balances[5];
@@ -554,8 +577,9 @@ contract TestSuite {
         assert(people[1].account.balance == 0);
     }
 
-    function storageIndexDeleteNseIndex() public {
-        uint k = 2;
+    /// @custom:key box
+    function storageIndexDeleteNseIndex(uint k) public {
+        require(k == 2);
         balances[3] = 7;
         delete balances[k+1];
         uint r = balances[3];
@@ -675,8 +699,9 @@ contract TestSuite {
         assert(r == 41);
     }
 
-    function storageIndexReadMappingStoreRoot() public {
-        uint k = 1;
+    /// @custom:key box
+    function storageIndexReadMappingStoreRoot(uint k) public {
+        require(k == 1);
         balances[1] = 42;
         total = balances[k];
         uint r = total;
@@ -684,9 +709,9 @@ contract TestSuite {
     }
 
     /// @custom:key box
-    function storageIndexReadNseIndex() public {
+    function storageIndexReadNseIndex(uint i) public {
         require(2 < values.length);
-        uint i = 1;
+        require(i == 1);
         values[2] = 9;
         uint r = values[i+1];
         assert(r == 9);
@@ -701,10 +726,9 @@ contract TestSuite {
         assert(r == 32);
     }
 
-    function storageIndexWriteNseChain() public {
-        uint i = 2;
-        uint x = 3;
-        uint y = 4;
+    /// @custom:key box
+    function storageIndexWriteNseChain(uint i, uint x, uint y) public {
+        require(i == 2 && x == 3 && y == 4);
         balances[i+1] = x*y + 3;
         uint r = balances[3];
         assert(r == 15);
@@ -718,13 +742,10 @@ contract TestSuite {
     }
 
     /// @custom:key box
-    function storageMatrixNseIndex() public {
+    function storageMatrixNseIndex(uint i, uint j, uint x, uint y) public {
         require(2 < matrix.length);
         require(3 < matrix[2].length);
-        uint i = 1;
-        uint j = 2;
-        uint x = 5;
-        uint y = 6;
+        require(i == 1 && j == 2 && x == 5 && y == 6);
         matrix[i+1][j+1] = x + y;
         assert(matrix[2][3] == 11);
     }
@@ -772,10 +793,9 @@ contract TestSuite {
     }
 
     /// @custom:key box
-    function storagePushNonsimpleArg() public {
+    function storagePushNonsimpleArg(uint x, uint y) public {
         require(values.length == 2);
-        uint x = 40;
-        uint y = 2;
+        require(x == 40 && y == 2);
         values.push(x + y);
         assert(values[2] == 42);
         assert(values.length == 3);
@@ -905,10 +925,9 @@ contract TestSuite {
         assert(r == 6);
     }
 
-    function storageRootWriteRhsCapture() public {
-        uint x = 1;
-        uint y = 2;
-        uint z = 3;
+    /// @custom:key box
+    function storageRootWriteRhsCapture(uint x, uint y, uint z) public {
+        require(x == 1 && y == 2 && z == 3);
         total = x + y*z;
         uint r = total;
         assert(r == 7);
@@ -933,8 +952,9 @@ contract TestSuite {
         assert(r == 7);
     }
 
-    function unaryMinusSimple() public {
-        int x = 5;
+    /// @custom:key box
+    function unaryMinusSimple(int x) public {
+        require(x == 5);
         int r = -x;
         // a negative literal directly inside the assert condition does not discharge
         int expected = -5;

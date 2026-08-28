@@ -32,13 +32,23 @@ public record SolidityOutline(List<Contract> contracts) {
 
     /// `documentation` is the function's natspec comment, used to carry per-function directives
     /// into the generated obligation (see `SolidityProblemSynthesizer`).
-    public record Function(String name, int parameterCount, int resultCount,
+    public record Function(String name, List<Parameter> parameters, int resultCount,
             String documentation) {
 
-        /// Whether an obligation can be generated for this function: it takes no arguments and
-        /// returns nothing, so its specification has to live in the body as `assert`.
+        /// Whether an obligation can be generated for this function: it returns nothing (its
+        /// specification has to live in the body as `assert`) and every parameter has a `.key`
+        /// sort, so the obligation can bind it to an unconstrained program variable.
         public boolean isProvable() {
-            return parameterCount == 0 && resultCount == 0;
+            return resultCount == 0 && parameters.stream().allMatch(p -> p.keySort() != null);
+        }
+    }
+
+    public record Parameter(String name, String type) {
+
+        /// The `\programVariables` sort this parameter is declared with in the generated
+        /// obligation, or `null` if the type has none.
+        public String keySort() {
+            return type.matches("u?int\\d*") ? "int" : null;
         }
     }
 
@@ -66,10 +76,19 @@ public record SolidityOutline(List<Contract> contracts) {
                 continue;
             }
             functions.add(new Function(text(node, "name"),
-                count(node, "parameters"), count(node, "returnParameters"),
+                parametersOf(node), count(node, "returnParameters"),
                 node.has("documentation") ? text(node.get("documentation"), "text") : ""));
         }
         return functions;
+    }
+
+    private static List<Parameter> parametersOf(JsonNode function) {
+        List<Parameter> parameters = new ArrayList<>();
+        for (JsonNode node : function.get("parameters").get("parameters").values()) {
+            parameters.add(new Parameter(text(node, "name"),
+                text(node.get("typeDescriptions"), "typeString")));
+        }
+        return parameters;
     }
 
     private static String text(JsonNode node, String field) {

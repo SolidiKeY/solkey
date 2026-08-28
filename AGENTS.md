@@ -27,7 +27,7 @@ Java 21 required. Test max heap: 4GB, max parallel forks: 1.
 
 **Always use `solidityCli` to run/verify a problem.** Gradle's `--args` replaces the default arguments—put the entire CLI argument list in one `--args` value. CLI options: `--no-prove` (load only), `--no-replay`, `-m/--max`, `-t/--timeout`, `-s/--print-stats`, `-v/--verbose`, `-f/--function`, `-c/--contract`, `--help`.
 
-`solidityCli` accepts a `.sol` file directly — no `.key` needed. The loader synthesizes one obligation per function (`\<{ f()@C; }\>(true)`), so the specification lives in the Solidity body as `assert`. Without `--function` every function is proved and a `N/M closed` summary is printed.
+`solidityCli` accepts a `.sol` file directly — no `.key` needed. The loader synthesizes one obligation per function (`\<{ f(x, y)@C; }\>(true)`, with one unconstrained program variable per parameter), so the specification lives in the Solidity body as `assert` — a parameterized function is box-tagged and assumes its argument values with `require`. Without `--function` every function is proved and a `N/M closed` summary is printed.
 
 ## File Locations
 

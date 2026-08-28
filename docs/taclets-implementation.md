@@ -12,6 +12,10 @@ no `.key` problem files: the loader synthesizes one obligation per function,
 \problem { \<{ storageFieldWriteRead()@TestSuite; }\>(true) }
 ```
 
+(a function with parameters additionally gets a `\programVariables` block declaring one
+unconstrained variable per parameter, passed as the call's arguments — such a function is
+box-tagged and assumes its argument values with `require`)
+
 so the specification lives in the body as `assert`, and every test program is real Solidity
 that `solc` parses and type-checks. Authoring conventions and the `/// @custom:key` directives
 are in `keyext.solidity.examples/README.md`. See "Function-body inlining" below for the shape
@@ -85,9 +89,14 @@ captures (§Capture partition below), which also cover nested RHS like
 `neg`), so no overflow branch; `/` and `%` revert on a zero denominator.
 - Arithmetic: `-`, `*`, `**` (`pow`), `/`, `%`.
 - Relational: `!=`, `<`, `>`, `<=`, `>=` (predicate map `lt/leq/gt/geq`).
-- Logical / unary: `&&`, `||` (left-capture only), `!`, unary `-x`.
+- Logical / unary: `&&`, `||`, `!`, unary `-x`. A non-simple left operand is
+  captured eagerly (Solidity always evaluates it); a non-simple *right* operand
+  goes through `logicalAnd/OrShortCircuitRhs` — a two-goal split on the simple
+  left operand, each branch guarded requireSimple-style by a `se = TRUE/FALSE`
+  disjunct, so the right operand is only evaluated on the branch that reaches it
+  (examples `logicalAndShortCircuitRhs` / `logicalOrShortCircuitRhs`).
 - Deferred: bitwise (`& | ^ << >> ~`), unary `+` (removed in Solidity ≥0.5),
-  `&&`/`||` right short-circuit (needs the Tier-3 `if`), checked-arith overflow.
+  checked-arith overflow.
 
 ### Storage aliases
 `storageLocalDeclInitDrop` (decl-with-init decomposition) followed by
