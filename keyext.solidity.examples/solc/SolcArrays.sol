@@ -55,8 +55,7 @@ contract SolcArrays {
         assert(storageArray.length == 0);
     }
 
-    /// solc: array/array_storage_push_empty.sol — a no-arg `push()` only appends a slot; the
-    /// length is what the upstream test observes.
+    /// solc: array/array_storage_push_empty.sol — a no-arg `push()` appends one slot.
     /// @custom:key box
     function pushEmptyGrowsLength() public {
         require(storageArray.length == 2);
@@ -65,8 +64,8 @@ contract SolcArrays {
     }
 
     /// solc: array/array_storage_index_zeroed_test.sol — the upstream invariant that a slot
-    /// beyond the current length reads as zero, in the form the calculus can observe: pop the
-    /// written slot, push it back, and it is cleared.
+    /// beyond the current length reads as zero: write a slot, pop it, push it back, and it is
+    /// cleared.
     /// @custom:key box
     function popThenPushSlotIsZeroed() public {
         require(storageArray.length == 0);
@@ -79,11 +78,7 @@ contract SolcArrays {
     }
 
     /// solc: array/array_storage_index_zeroed_test.sol — the direct form of the same
-    /// invariant.
-    ///
-    /// KNOWN FAILURE — the calculus starts from unconstrained storage and has no axiom tying
-    /// a slot beyond `length` to its default value, so a freshly pushed slot is symbolic
-    /// rather than zero. Only the pop-then-push form above is provable today.
+    /// invariant: a freshly pushed slot reads as zero.
     /// @custom:key box
     function pushedSlotIsZeroed() public {
         require(storageArray.length == 0);

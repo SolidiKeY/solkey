@@ -27,11 +27,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /// generated for is proved, so a new example joins the suite by being written — the contract
 /// name is taken from the file name.
 ///
-/// One example is a known failure: it states upstream semantics the calculus cannot discharge
-/// yet, and is kept red on purpose so the gap stays visible. It carries a `KNOWN FAILURE`
-/// comment naming what is missing, and is listed in
-/// `keyext.solidity.examples/solc/README.md`. Six others started out red and were fixed by
-/// the rule and parser changes the port prompted; they stay here as regression tests.
+/// Seven examples started out red and were fixed by the rule and parser changes the port
+/// prompted; they stay here as regression tests. The gaps they found are listed in
+/// `keyext.solidity.examples/solc/README.md`.
 public class SolcSemanticsExamplesTest {
 
     private static final String DIRECTORY = "solc";

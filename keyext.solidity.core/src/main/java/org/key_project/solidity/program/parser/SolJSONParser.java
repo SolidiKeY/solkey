@@ -628,10 +628,12 @@ public class SolJSONParser {
         return fullFieldName;
     }
 
-    /// Chooses the `Field` sub-sort for a member so `delete` can classify it: `MapField` for
-    /// mappings (their entries are preserved), `IdField` for struct/array references (`delete`
-    /// recurses into them), and plain `Field` for primitives (reset to default). Falls back to
-    /// `Field` (or null) when a sub-sort is unavailable, e.g. the struct theory is not loaded.
+    /// Chooses the `Field` sub-sort for a member, so a rule can say which kind of member it
+    /// applies to instead of matching every field. The partition is total: `MapField` for
+    /// mappings (their entries are preserved by `delete`), `IdField` for struct/array
+    /// references (`delete` recurses into them), and `PrimField` for value members (reset to
+    /// their default). Falls back to the base `Field` (or null) when a sub-sort is
+    /// unavailable, e.g. the struct theory is not loaded.
     private Sort fieldSortFor(Type fieldType) {
         var structLDT = services.getTheoryInfo().getStructLDT();
         Sort base = structLDT.getFieldSort();
@@ -643,14 +645,16 @@ public class SolJSONParser {
                     ? kst.getSolidityType()
                     : fieldType;
         if (unwrapped instanceof MappingType) {
-            Sort mapSort = structLDT.getMapFieldSort();
-            return mapSort != null ? mapSort : base;
+            return orBase(structLDT.getMapFieldSort(), base);
         }
         if (MemoryReferenceTypes.isReferenceType(unwrapped)) {
-            Sort idSort = structLDT.getIdFieldSort();
-            return idSort != null ? idSort : base;
+            return orBase(structLDT.getIdFieldSort(), base);
         }
-        return base;
+        return orBase(structLDT.getPrimFieldSort(), base);
+    }
+
+    private static Sort orBase(Sort sort, Sort base) {
+        return sort != null ? sort : base;
     }
 
     Type parseReferenceTypeDeclaration(JsonNode expNode) {

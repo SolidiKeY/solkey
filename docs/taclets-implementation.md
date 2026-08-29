@@ -133,12 +133,13 @@ rules needed. Terminals: `storagePushValueSave`, `storagePushValueCopySource`
 revert branch), `storagePushValue_unfold_rightSndArgument` (non-simple argument
 capture), `storage{Push,…}_unfold_leftFstReceiver`. Array bounds/length are read
 from **post-update** storage (bound emitted inside `\replacewith`, not via `\add`).
-`storagePopSave`'s nonempty branch clears the popped slot with the
-mapping-preserving `delValue<[alpha]>(find<[alpha]>(storage, sp · at(ℓ-1)))`
-marker (not eager `defaultValue`), reusing the `delNode` machinery of §Delete —
-so a mapping nested in the popped element survives `pop()` (and a later bare
-`push()`, which only bumps `length`), exactly like `storageRootDelete` /
-`storageFieldDelete`. See the `testDeepPopDoesNotResetMappingMember` end-to-end
+`storagePopSave`'s nonempty branch clears the popped slot with the mapping-preserving
+`delAt(storage, sp · at(ℓ-1))` marker (not eager `defaultValue`), reusing the `delNode`
+machinery of §Delete — so a mapping nested in the popped element survives `pop()` and a
+later `push()`, exactly like `storageRootDelete` / `storageFieldDelete`.
+`storagePushLengthSave` clears the appended slot the same way, which is what makes
+`arr.push(); assert(arr[0] == 0);` provable for a primitive element while a struct
+element keeps its mapping members. See the `testDeepPopDoesNotResetMappingMember` end-to-end
 example.
 
 ### Memory
@@ -167,10 +168,10 @@ cannot be memory-located and `bytes`/`string` are not memory reference types. Th
 `memoryStructArrayIndex` covers the complex-receiver path.
 
 ### Delete
-`storageRootDelete` and `storageFieldDelete` save
-`delValue<[alpha]>(find<[alpha]>(storage, path))`, binding `alpha` via `\hasSort` /
-`\hasFieldSort`. (`storageIndexDelete` keeps the eager `defaultValue<[alpha]>`:
-deleting a single collection entry/element resets it outright — the
+`storageRootDelete` and `storageFieldDelete` save the sort-free `delAt(storage, path)`
+marker, resolved on read (see "Sort-free clearing and copying" below).
+(`storageIndexDelete` saves `defVal` instead: deleting a single collection
+entry/element resets it outright, mapping members included — the
 `storage-index-delete-mapping-struct` starter asserts the whole entry `= mtSt`.)
 `delValue` picks the reset value by sort: any
 non-struct sort collapses to `defaultValue<[alpha]>` (`int→0`, `bool→FALSE`), while
@@ -179,14 +180,54 @@ a struct becomes a lazy `delNode` marker (structRules.key). This gives Solidity'
 are preserved**. On read, `selectSt` on a `delNode` reads a mapping member
 (`MapField`) through to the original struct, recurses into a reference member
 (`IdField`, so nested structs' mappings also survive), and resets a primitive leaf.
-Mapping vs. reference members are told apart by `Field` sub-sorts (`MapField` /
-`IdField`) stamped on the field constants at parse time (`SolJSONParser`, keyed off
-the member's Solidity type). The struct case is disambiguated from the default case
-purely by the sorts of the `delValue` rewrite rules (no varcond): `delValueStruct`
-matches the concrete `Struct` sort and, being in `simplify`, outranks the
-`StValue`-generic `delValueDefault` (`simplify_enlarging`); the same pattern pairs
-`selectStDelNodeMap`/`Ref` with `selectStDelNodeDefault`. Complex receivers unfold first
-(`…_unfold_leftFst`). Storage and memory deletes stay separate by design.
+Member kinds are told apart by `Field` sub-sorts stamped on the field constants at
+parse time (`SolJSONParser#fieldSortFor`, keyed off the member's Solidity type). The
+partition is **total** — every field constant is exactly one of `MapField` (mapping),
+`IdField` (struct/array reference) or `PrimField` (value) — so the base `Field` sort
+means "any field" and nothing else, and a rule that matches `Field` is saying so
+deliberately rather than picking up primitives by default.
+
+That makes the three `selectStDelNode*` rules disjoint by sort: `Map`, `Ref` and
+`Prim` each name the case they cover and all sit in `simplify`, with no reliance on
+rule ranking. (`delValue` still uses the ranking trick — `delValueStruct` matches the
+concrete `Struct` sort and outranks the `StValue`-generic `delValueDefault` in
+`simplify_enlarging` — because there the discrimination is on the *value*, not on a
+field.) Complex receivers unfold first (`…_unfold_leftFst`). Storage and memory
+deletes stay separate by design.
+
+### Sort-free clearing and copying
+
+A rule that clears or copies a location used to need the location's value sort, which is
+program-AST information, so it was recovered at matching time by a sort-binding varcond
+(`\hasSort` / `\hasFieldSort` / `\hasElementSort` / `\hasMemoryElementSort`). Those are
+gone: the sort is now resolved **on read** instead, using the cast that `selectOnStore`
+(and `readOnWrite` in memory) already inserts.
+
+Three sort-free symbols carry the deferred value:
+
+| Symbol | Means | Resolved by |
+|---|---|---|
+| `delAt(Struct, List)` | the value at a path, deleted — a struct keeps its mapping members | `delAtStruct` / `delAtPrim` |
+| `valAt(Struct, List)` | the value at a path, for copies | `valAtFind` |
+| `defVal` | a location reset outright, mapping members included | `defValResolve` |
+
+`defVal` is declared `Prim`, so it is both an `StValue` and a `MemValue` and serves storage
+and memory alike — the same arrangement `defaultValue<[alpha]>` already has (declared once in
+`memoryRules.key`, resolved by `defaultValueInt`/`defaultValueBool` there and
+`defaultValueStruct` in `structRules.key`). A separate memory twin is not needed.
+
+`delAtStruct`/`delAtPrim` reuse the `delValueStruct`/`delValueDefault` ranking: the
+concrete `Struct` case sits in `simplify` and outranks the `StValue`-generic case in
+`simplify_enlarging`. `defVal` is deliberately distinct from `delAt` — it is what
+`storageIndexDelete` writes, which resets a collection element outright rather than
+preserving its mapping members.
+
+**Stores can defer their sort; reads cannot.** A stored value is read later, and the read
+supplies the sort through its cast. A read rule has to *produce* a value of the target
+variable's sort, and nothing in the taclet language names that sort — so
+`memoryIndexReadArrayValue` keeps the one remaining `\hasMemoryElementSort`. (Its storage
+counterparts hard-code `find<[int]>` instead, which is why they would mistype a `bool`
+element; the memory rule is the more correct of the two.)
 
 ### Capture partition (non-simple RHS / index, storage.md Steps 1–2)
 Non-simple constituents are hoisted into fresh locals by a disjoint rule family,
@@ -324,10 +365,9 @@ by `SolcSemanticsExamplesTest` — an external cross-check of the calculus again
 of the language SolKey did not write. Provenance table, adaptation rules and the not-ported
 families are in `keyext.solidity.examples/solc/README.md`.
 
-71 of the 72 functions close. The port found seven gaps no `TestSuite.sol` example reached; six
-were fixed and their examples are now regression tests, one remains.
-
-Fixed — see "Rules added or corrected by the solc port" below:
+All 72 functions close. The port found seven gaps no `TestSuite.sol` example reached; all were
+fixed, and their examples are now regression tests. See "Rules added or corrected by the solc
+port" below:
 
 - `++`/`--` and `+=` **as a statement on a local variable**; and a **non-simple RHS in a
   compound assignment** at any location (`total += a * 16;` was open for storage too).
@@ -336,12 +376,8 @@ Fixed — see "Rules added or corrected by the solc port" below:
 - **Whole-value copy into an array or mapping element** (`pairs2[0] = src;`,
   `arrayMap[0] = row;`), which raised a `TermCreationException`.
 - **`?:` over memory references assigned into a storage target**, a `SolJSONParser` typing bug.
-
-Still open:
-
-- **A freshly pushed slot is not known to be zero** — there is no axiom tying a slot beyond
-  `length` to its default value, so only the pop-then-push form is observable
-  (`SolcArrays.pushedSlotIsZeroed`).
+- **A freshly pushed slot was not known to be zero** — `push` bumped `size` without touching
+  the appended slot.
 
 Two more are worked around in the examples rather than fixed: `SolJSONParser` throws on a
 **self-recursive struct type** (`struct s2 { mapping(k => s2) recursive; }`), and a **mapping
@@ -368,6 +404,13 @@ closes where `nested.recursive[4].z` does not).
   variable matched and `save(…, path)` was built ill-sorted.
 - `storageIndexWrite{Array,Mapping}CopySource` are sort-generic (`find<[alphaSt]>` with
   `\hasSort`, the `storageRootDelete` pattern) instead of hard-coding `int` / `Struct`.
+- `storagePushLengthSave` clears the appended slot as well as bumping `size`, mirroring
+  `storagePopSave`'s nested saves. It writes the lazy `delValue<[alphaSt]>` marker rather than
+  an eager `defaultValue`, so the reset resolves by sort: a primitive element becomes 0 (which
+  is what makes `arr.push(); assert(arr[0] == 0);` provable), while a struct element becomes a
+  `delNode` whose mapping members still read through — so
+  `testDeepPopDoesNotResetMappingMember`, where a bare `push` is asserted *not* to install an
+  empty element, keeps closing.
 - `SolJSONParser.parseConditional` types a `?:` from its branches instead of always `bool`,
   matching `SolidityToKeyConverter`. The wrong type made a reference-valued ternary look
   primitive, so it was captured into a `bool` temp and symbolic execution stalled.

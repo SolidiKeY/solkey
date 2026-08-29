@@ -78,23 +78,14 @@ close. They are noted in place at the affected function.
 - **A `push` argument that reads storage must be bound first**, per the general convention in
   `../README.md`.
 
-## Known failures
+## Gaps this port found
 
-One example is in the directory and in CI **on purpose**: it states upstream semantics the
-calculus cannot discharge yet, so the gap stays visible instead of being quietly dropped. It
-carries a `KNOWN FAILURE` comment and a backlog entry in `docs/taclet-ideas.md`.
-
-| Function | Upstream | Missing |
-|---|---|---|
-| `SolcArrays.pushedSlotIsZeroed` | `array/array_storage_index_zeroed_test.sol` | No axiom ties a slot beyond `length` to its default, so a freshly pushed slot is symbolic rather than zero. Only the pop-then-push form (`popThenPushSlotIsZeroed`) is observable today. |
-
-### Fixed by this port
-
-Six further examples were red when first written and are green now; the port is what found
-them. They stay in the suite as regression tests.
+Every example closes. Seven were red when first written; the port is what found them, and they
+stay in the suite as regression tests.
 
 | Function | Was | Fix |
 |---|---|---|
+| `SolcArrays.pushedSlotIsZeroed` | `storagePushLengthSave` bumped `size` without touching the new slot, so a freshly pushed slot stayed symbolic rather than zero | `push` now clears the appended slot with the same lazy `delValue<[alphaSt]>` marker `pop` uses, which resolves by sort: a primitive element becomes `defaultValue`, a struct becomes a `delNode` that preserves mapping members (`TestSuite.testDeepPopDoesNotResetMappingMember`) |
 | `SolcExpressions.bareIncrementOnLocal` | `i++;` as a statement had rules for storage paths but not for a local | added `local{Pre,Post}{in,de}crement` |
 | `SolcExpressions.compoundAssignOnLocal` | `r += e;` existed for storage paths only, and a non-simple RHS had no capture at any location | added `local{Add,Sub,Mul,Div,Mod}Assign` and the location-neutral `*AssignValueRhsCapture` family |
 | `SolcArrays.storageArrayAliasWritesThrough` | the array index rules split on `global` vs `complex`, so a `simple`+`local` alias root matched neither | dropped `global` from `storageIndex{Read,Write}Array*_root`, matching their `BindLocalRoot`/`StoreRoot`/`CopySource` siblings |

@@ -116,12 +116,6 @@ Found by porting the Solidity compiler's own semantic tests into
 `keyext.solidity.examples/solc/` (`taclets-implementation.md`, "solc semantic-test ports").
 Each has a failing example in the suite naming it, so closing the gap is observable.
 
-- **A freshly pushed slot is not known to be zero.** No axiom relates a slot beyond `length`
-  to its default value, so `arr.push(); assert(arr[0] == 0);` is open from unconstrained
-  storage; only pop-then-push is observable, because `storagePushLengthSave` bumps `size`
-  without touching the new slot while `storagePopSave` clears the popped one. This is
-  upstream's `array_storage_index_zeroed_test.sol` invariant. Example:
-  `SolcArrays.pushedSlotIsZeroed`.
 - **`SolJSONParser`: self-recursive struct types.** `struct s2 { mapping(k => s2) recursive; }`
   throws an NPE in `getOrCreateMappingKeYSolidityType` and takes the whole file down at load.
   Worked around in the ports by unrolling the hierarchy.
@@ -133,7 +127,8 @@ Each has a failing example in the suite naming it, so closing the gap is observa
 `taclets-implementation.md`, "Rules added or corrected by the solc port"): `++`/`--` and
 compound assignment on a local, a non-simple RHS in a compound assignment at any location,
 indexing a storage alias of a primitive-element array, the ill-sorted whole-value copy into
-an array or mapping element, and the `?:` type bug in `SolJSONParser.parseConditional`.
+an array or mapping element, the `?:` type bug in `SolJSONParser.parseConditional`, and
+`push` leaving the appended slot symbolic instead of clearing it with `delValue`.
 
 ## Raised in priority by the TestSuite.sol migration
 
