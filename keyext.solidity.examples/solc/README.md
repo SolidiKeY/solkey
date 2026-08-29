@@ -80,8 +80,8 @@ close. They are noted in place at the affected function.
 
 ## Gaps this port found
 
-Every example closes except the one listed under "Known open" below. Seven were red when first
-written; the port is what found them, and they stay in the suite as regression tests.
+Every example closes. Seven were red when first written; the port is what found them, and they
+stay in the suite as regression tests.
 
 | Function | Was | Fix |
 |---|---|---|
@@ -93,15 +93,28 @@ written; the port is what found them, and they stay in the suite as regression t
 | `SolcMappings.arrayElementsToMapping` | same, plus `storageIndexWriteMappingCopySource` hard-coding `find<[Struct]>` | same generic-sort treatment |
 | `SolcControlFlow.ternarySelectsFirstMemorySource` | `SolJSONParser.parseConditional` typed every `?:` as `bool`, so a reference-typed ternary was captured into a `bool` temp and got stuck | take the type from the branches, as `SolidityToKeyConverter` already did |
 
-## Known open
+## Cost of `push`/`pop`
 
-Examples that do not close yet. Each is skipped by `KNOWN_OPEN` in `SolcSemanticsExamplesTest`,
-so the suite stays green and a red run means new breakage; closing the gap should remove the
-entry in both places.
+`pushThenPopRestoresLength` was what exposed this: writing the cleared slot as a `save` of the
+deleted value at that path mentions the storage **twice**, so the term doubled on every `push`
+or `pop`. Six operations built a term whose deleted-value markers held 93% of the sequent, and the
+proof cost ~89× one operation for only ~9× the rule applications — the extra time was spent
+rewriting ever-larger terms, not taking more steps.
 
-| Function | Open goal |
-|---|---|
-| `SolcArrays.pushThenPopRestoresLength` | Three `push()`es then three `pop()`s leave `storagePopSave`'s `0 < find<[int]>(storage, sp·size)` guard undischarged: `find`-over-`save` does not reduce through the nested `save` stack the pushes and pops build up, so a trivially-true arithmetic guard survives |
+`delAt(st, p)` (`structRules.key`) denotes the same storage while mentioning `st` once, so the
+term now grows linearly. The reset value is still chosen by sort, on read, through the existing
+`delValue<[alpha]>` dispatch — struct elements keep their `delNode`, so mapping members survive a
+`pop` (`TestSuite.testDeepPopDoesNotResetMappingMember`).
+
+| Function | ops | Peak term before | after | Time before | after |
+|---|---|---|---|---|---|
+| `pushEmptyGrowsLength` | 1 | 118 | 88 | 41 ms | 71 ms |
+| `lengthTracksPushAndPop` | 2 | 437 | 284 | 277 ms | 239 ms |
+| `popThenPushSlotIsZeroed` | 3 | 1031 | 353 | 664 ms | 483 ms |
+| `pushThenPopRestoresLength` | 6 | 6183 | **589** | 4081 ms | **1120 ms** |
+
+The one-operation timings are in the noise; the point is the slope. Peak term size at six
+operations fell 10×, and the duplicated storage copies are gone entirely.
 
 ## Not ported
 

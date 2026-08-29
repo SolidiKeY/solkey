@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import org.key_project.solidity.proof.Proof;
@@ -35,12 +34,6 @@ public class SolcSemanticsExamplesTest {
 
     private static final String DIRECTORY = "solc";
 
-    /// Examples that do not close yet, as `contract.function`. Each entry needs a matching
-    /// entry under "Known open" in `keyext.solidity.examples/solc/README.md`; removing the
-    /// proof gap should remove the entry here in the same change.
-    private static final Set<String> KNOWN_OPEN = Set.of(
-        "SolcArrays.pushThenPopRestoresLength");
-
     @ParameterizedTest(name = "{0}.{1}")
     @MethodSource("examples")
     void solcSemanticsExampleCloses(String contract, String function) throws Exception {
@@ -59,7 +52,6 @@ public class SolcSemanticsExamplesTest {
             SolidityProblemSynthesizer.provableFunctions(contractSource(contract), contract)
                     .stream()
                     .sorted()
-                    .filter(function -> !KNOWN_OPEN.contains(contract + "." + function))
                     .forEach(function -> args.add(Arguments.of(contract, function)));
         }
         return args.build();

@@ -158,13 +158,15 @@ revert branch), `storagePushValue_unfold_rightSndArgument` (non-simple argument
 capture), `storage{Push,…}_unfold_leftFstReceiver`. Array bounds/length are read
 from **post-update** storage (bound emitted inside `\replacewith`, not via `\add`).
 `storagePopSave`'s nonempty branch clears the popped slot with the mapping-preserving
-`delAt(storage, sp · at(ℓ-1))` marker (not eager `defaultValue`), reusing the `delNode`
+`delAt(storage, sp · at(ℓ-1))` (not eager `defaultValue`), reusing the `delNode`
 machinery of §Delete — so a mapping nested in the popped element survives `pop()` and a
 later `push()`, exactly like `storageRootDelete` / `storageFieldDelete`.
 `storagePushLengthSave` clears the appended slot the same way, which is what makes
 `arr.push(); assert(arr[0] == 0);` provable for a primitive element while a struct
 element keeps its mapping members. See the `testDeepPopDoesNotResetMappingMember` end-to-end
-example.
+example. `delAt(st, p)` names `st` once where the equivalent `save`-of-deleted-value form
+named it twice; reads commute through it with `selectOnDelAtCons`, and the reset still
+resolves by sort on read through `delValue<[alpha]>`.
 
 ### Memory
 Source-level memory family covers heap field/index read & write, root aliasing,
@@ -231,7 +233,7 @@ Three sort-free symbols carry the deferred value:
 
 | Symbol | Means | Resolved by |
 |---|---|---|
-| `delAt(Struct, List)` | the value at a path, deleted — a struct keeps its mapping members | `delAtStruct` / `delAtPrim` |
+| `delAt(Struct, List)` | the storage with a location reset — a struct keeps its mapping members | `delAtEmpty` / `selectOnDelAtCons` |
 | `valAt(Struct, List)` | the value at a path, for copies | `valAtFind` |
 | `defVal` | a location reset outright, mapping members included | `defValResolve` |
 
@@ -240,11 +242,16 @@ and memory alike — the same arrangement `defaultValue<[alpha]>` already has (d
 `memoryRules.key`, resolved by `defaultValueInt`/`defaultValueBool` there and
 `defaultValueStruct` in `structRules.key`). A separate memory twin is not needed.
 
-`delAtStruct`/`delAtPrim` reuse the `delValueStruct`/`delValueDefault` ranking: the
-concrete `Struct` case sits in `simplify` and outranks the `StValue`-generic case in
-`simplify_enlarging`. `defVal` is deliberately distinct from `delAt` — it is what
-`storageIndexDelete` writes, which resets a collection element outright rather than
-preserving its mapping members.
+`selectOnDelAtCons` defers to `delValue<[alpha]>` for the reset value, so it inherits the
+`delValueStruct`/`delValueDefault` ranking: the concrete `Struct` case sits in `simplify` and
+outranks the `StValue`-generic case in `simplify_enlarging`. `defVal` is deliberately distinct
+from `delAt` — it is what `storageIndexDelete` writes, which resets a collection element
+outright rather than preserving its mapping members.
+
+`delAt` names its storage argument once, where the `save(st, p, <deleted value at p>)` form it
+replaced named it twice. That doubled the storage term at every `push`/`pop`, so a sequence of
+them grew exponentially: `SolcArrays.pushThenPopRestoresLength` peaked at a 6183-node sequent,
+93% of it under the deleted-value marker. It now peaks at 589 and proves in 1.1s instead of 4.1s.
 
 **Stores can defer their sort; reads cannot.** A stored value is read later, and the read
 supplies the sort through its cast. A read rule has to *produce* a value of the target
@@ -429,12 +436,16 @@ closes where `nested.recursive[4].z` does not).
 - `storageIndexWrite{Array,Mapping}CopySource` are sort-generic (`find<[alphaSt]>` with
   `\hasSort`, the `storageRootDelete` pattern) instead of hard-coding `int` / `Struct`.
 - `storagePushLengthSave` clears the appended slot as well as bumping `size`, mirroring
-  `storagePopSave`'s nested saves. It writes the lazy `delValue<[alphaSt]>` marker rather than
-  an eager `defaultValue`, so the reset resolves by sort: a primitive element becomes 0 (which
-  is what makes `arr.push(); assert(arr[0] == 0);` provable), while a struct element becomes a
+  `storagePopSave`. It writes the lazy delete marker rather than an eager `defaultValue`, so the
+  reset resolves by sort: a primitive element becomes 0 (which is what makes
+  `arr.push(); assert(arr[0] == 0);` provable), while a struct element becomes a
   `delNode` whose mapping members still read through — so
   `testDeepPopDoesNotResetMappingMember`, where a bare `push` is asserted *not* to install an
-  empty element, keeps closing.
+  empty element, keeps closing. Both rules carry the marker as `delAt(storage, path)`, which names
+  `storage` once rather than twice, so the term grows
+  linearly in the number of push/pop operations instead of doubling at each one — peak term size
+  for `SolcArrays.pushThenPopRestoresLength` fell from 6183 to 589, and its proof from 4.1s to
+  1.1s.
 - `SolJSONParser.parseConditional` types a `?:` from its branches instead of always `bool`,
   matching `SolidityToKeyConverter`. The wrong type made a reference-valued ternary look
   primitive, so it was captured into a `bool` temp and symbolic execution stalled.

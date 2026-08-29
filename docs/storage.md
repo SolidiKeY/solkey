@@ -92,13 +92,22 @@ Type-of metavariable:
 
 Three further operations exist so that a rule which *clears* or *copies* a
 location does not have to know what that location holds. They are sort-free;
-the sort is resolved when the value is read back, through the cast that
-`selectOnStore` (and `readOnWrite` in memory) already inserts:
+the sort is resolved when the value is read back — for `valAt` and `defVal`
+through the cast that `selectOnStore` (and `readOnWrite` in memory) already
+inserts, for `delAt` through `delValue<[alpha]>` on the select:
 
-- `delAt(storage, path)` — the value at `path`, deleted. A struct becomes the
-  lazy `delNode` marker, so its mapping members survive; anything else
-  collapses to its default. Used by `delete` on a root or field, and by
-  `push`/`pop` to clear the slot they add or remove.
+- `delAt(storage, path)` — the storage with the location at `path` reset. A
+  struct there becomes the lazy `delNode` marker, so its mapping members
+  survive; anything else collapses to its default. The choice is made on read,
+  by sort, through `delValue<[alpha]>` in `selectOnDelAtCons` (the
+  counterpart of `selectOnSaveCons`) — so the rules that write it stay
+  sort-free. Used by `delete` on a root or field, and by `push`/`pop` to clear
+  the slot they add or remove.
+
+  It names `storage` **once**. The equivalent `save(storage, path, <deleted
+  value at path>)` names it twice, which doubles the storage term at every
+  `push`/`pop`; a sequence of them then grows exponentially rather than
+  linearly, which is what made `SolcArrays.pushThenPopRestoresLength` slow.
 - `valAt(storage, path)` — the value at `path`, for copies. The sort-free twin
   of `find`.
 - `defVal` — a location reset outright, mapping members included. The
@@ -367,13 +376,12 @@ enumerated).
 - `storageDeleteSimpleTarget`
 
       delete sp
-      ⇝  { storage := save(storage, sp, delAt(storage, sp)) }
+      ⇝  { storage := delAt(storage, sp) }
 
-- `delAt(storage, p)` is the reset value of the deleted lvalue, left unresolved:
-  on read it becomes `default` for a primitive, and the lazy marker
-  `delNode(find(storage, p))` for a struct. Writing the marker rather than the
-  resolved value is what lets the rule stay sort-free — the sort arrives with
-  the read.
+- `delAt(storage, p)` leaves the reset lvalue unresolved: on read it becomes
+  `default` for a primitive, and the lazy marker `delNode(…)` for a struct.
+  Deferring the choice rather than writing the resolved value is what lets the
+  rule stay sort-free — the sort arrives with the read.
 - Reading a member `f` of `delNode(v)`:
     - `f` is a **mapping** member → read the original (`v`), i.e. preserved;
     - `f` is a **struct/array** member → recurse (nested mappings survive too);
@@ -470,10 +478,12 @@ Each array rule branches on bounds. Out-of-bounds goes to
                             sp1 · length, n + 1 ) }
 
 - `storagePushLengthSave` (zero-arg push: append the default-valued
-  slot, return nothing)
+  slot, return nothing — the appended slot is cleared with `delAt`, so a
+  struct element's mapping members survive being pushed over)
 
       sp.push();
-      ⇝  { storage := save(storage, sp · length, n + 1) }
+      ⇝  { storage := save( delAt(storage, sp · at(n)),
+                            sp · length, n + 1 ) }
 
 - `storageLocalRootPushBind` (zero-arg push whose returned slot is
   captured into a local reference)
@@ -482,14 +492,13 @@ Each array rule branches on bounds. Out-of-bounds goes to
       ⇝  { storage := save(storage, sp · length, n + 1)
            || lp := sp · at(n) }
 
-- `storagePopSave` (clears the popped slot with the same mapping-preserving
-  `delAt` marker as `delete`, so a mapping nested in the popped element
-  survives a `pop()` — and survives a subsequent re-`push()` too, since
-  `push` clears with the very same marker)
+- `storagePopSave` (clears the popped slot with `delAt`, which is
+  mapping-preserving in the same way `delete` is, so a mapping
+  nested in the popped element survives a `pop()` — and survives a subsequent
+  re-`push()` too, since `push` clears with the very same marker)
 
       sp.pop();
-      ⇝  if ℓ > 0 : { storage := save( save(storage, sp · at(ℓ - 1),
-                                            delAt(storage, sp · at(ℓ - 1))),
+      ⇝  if ℓ > 0 : { storage := save( delAt(storage, sp · at(ℓ - 1)),
                                        sp · length, ℓ - 1 ) }
          else    : revert();
 
@@ -624,7 +633,7 @@ extracts to `cons(alice, nil)`. All storage operations use `find`/`save`.
 | `v = sp`                       | `storageRootReadSelect`               | `find`           |
 | `lp = sp.b`                    | `storageFieldReadBindLocalRoot`       | direct assign    |
 | `gp = sp.b`                    | `storageFieldReadStoreRoot`           | `save`/`find`    |
-| `delete sp;`                   | `storageDeleteSimpleTarget`           | `save`/`delAt`   |
+| `delete sp;`                   | `storageDeleteSimpleTarget`           | `delAt`        |
 | `sp[i] = se`  (mapping)        | `storageIndexWriteMappingSave`        | `save`           |
 | `sp1[i] = sp2`  (mapping)      | `storageIndexWriteMappingCopySource`  | `save`           |
 | `v = sp[i]`  (mapping)         | `storageIndexReadMappingFind`         | `find`           |
