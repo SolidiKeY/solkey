@@ -72,9 +72,6 @@ contract SolcExpressions {
     /// solc: expressions/inc_dec_operators.sol — the upstream chain verbatim, with the
     /// compound assignment `r += a++ * 0x10` on a local instead of the bound-step rewrite
     /// used by [incDecChainOnLocal].
-    ///
-    /// KNOWN FAILURE — compound assignment has rules at storage root/field/index level only,
-    /// so `r += e;` on a *local* leaves an open goal. `r = r + e;` closes.
     function compoundAssignOnLocal() public {
         uint a = 6;
         uint r = a;
@@ -84,18 +81,13 @@ contract SolcExpressions {
 
     /// solc: expressions/inc_dec_operators.sol — a bare `a++;` statement, the increment form
     /// the upstream loops use.
-    ///
-    /// KNOWN FAILURE — `++`/`--` as a statement of its own has rules for storage
-    /// root/field/index but not for a local; only the result forms (`uint p = a++;`) are
-    /// covered. `a = a + 1;` closes.
     function bareIncrementOnLocal() public {
         uint a = 6;
         a++;
         assert(a == 7);
     }
 
-    /// solc: expressions/inc_dec_operators.sol — the same statement on a state variable, which
-    /// does have a rule; the contrast is what makes the gap above precise.
+    /// solc: expressions/inc_dec_operators.sol — the same statement on a state variable.
     function bareIncrementOnStateVariable() public {
         v = 6;
         v++;

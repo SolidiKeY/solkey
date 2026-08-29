@@ -80,19 +80,27 @@ close. They are noted in place at the affected function.
 
 ## Known failures
 
-These are in the directory and in CI **on purpose**: each states upstream semantics the calculus
-cannot discharge yet, so the gap stays visible instead of being quietly dropped. Each function
-carries a `KNOWN FAILURE` comment, and each gap has a backlog entry in `docs/taclet-ideas.md`.
+One example is in the directory and in CI **on purpose**: it states upstream semantics the
+calculus cannot discharge yet, so the gap stays visible instead of being quietly dropped. It
+carries a `KNOWN FAILURE` comment and a backlog entry in `docs/taclet-ideas.md`.
 
 | Function | Upstream | Missing |
 |---|---|---|
-| `SolcExpressions.bareIncrementOnLocal` | `expressions/inc_dec_operators.sol` | `++`/`--` as a statement of its own has rules at storage root/field/index level but not for a local. The result forms (`uint p = a++;`) are covered, and `bareIncrementOnStateVariable` beside it closes. |
-| `SolcExpressions.compoundAssignOnLocal` | `expressions/inc_dec_operators.sol` | `+=` and friends exist at storage root/field/index level only; `r += e;` on a local has no rule. `r = r + e;` closes. |
 | `SolcArrays.pushedSlotIsZeroed` | `array/array_storage_index_zeroed_test.sol` | No axiom ties a slot beyond `length` to its default, so a freshly pushed slot is symbolic rather than zero. Only the pop-then-push form (`popThenPushSlotIsZeroed`) is observable today. |
-| `SolcArrays.storageArrayAliasWritesThrough` | `array/storage_array_ref.sol` | An alias of an array with *primitive* elements cannot be indexed — `ref[1]` is open for reads and writes, even with the bound stated on the alias. `ref.length` works, and the struct-element twin `storageStructArrayAliasWritesThrough` closes. |
-| `SolcStructs.structArrayElementCopy` | `array/copying/array_copy_storage_storage_struct.sol` | A whole-struct copy into an *array* element raises a `TermCreationException`; the same copy into a *mapping* element works. Member-wise workaround: `structArrayElementCopyMemberwise`. |
-| `SolcMappings.arrayElementsToMapping` | `array/copying/array_elements_to_mapping.sol` | A whole-array copy into a mapping entry raises the same `TermCreationException`. Element-wise workaround: `arrayElementsToMappingElementwise`. |
-| `SolcControlFlow.ternarySelectsFirstMemorySource` | `expressions/conditional_expression_storage_memory_1.sol` | A `?:` over two memory references assigned into a *storage* target is open. The memory-target form (`ternaryIntoMemoryTarget`) and the `if`/`else` form (`ifElseSelectsMemorySource`) both close, so the gap is the storage-target copy after the split. |
+
+### Fixed by this port
+
+Six further examples were red when first written and are green now; the port is what found
+them. They stay in the suite as regression tests.
+
+| Function | Was | Fix |
+|---|---|---|
+| `SolcExpressions.bareIncrementOnLocal` | `i++;` as a statement had rules for storage paths but not for a local | added `local{Pre,Post}{in,de}crement` |
+| `SolcExpressions.compoundAssignOnLocal` | `r += e;` existed for storage paths only, and a non-simple RHS had no capture at any location | added `local{Add,Sub,Mul,Div,Mod}Assign` and the location-neutral `*AssignValueRhsCapture` family |
+| `SolcArrays.storageArrayAliasWritesThrough` | the array index rules split on `global` vs `complex`, so a `simple`+`local` alias root matched neither | dropped `global` from `storageIndex{Read,Write}Array*_root`, matching their `BindLocalRoot`/`StoreRoot`/`CopySource` siblings |
+| `SolcStructs.structArrayElementCopy` | `TermCreationException`: the index-write *save* rules took an unrestricted `SimpleExpression`, so a storage-alias variable matched and `save(…, path)` was ill-sorted | restricted the value to `SimpleExpression[primitive]` so the copy routes to `…CopySource`, and made that rule sort-generic (`find<[alphaSt]>` + `\hasSort`) |
+| `SolcMappings.arrayElementsToMapping` | same, plus `storageIndexWriteMappingCopySource` hard-coding `find<[Struct]>` | same generic-sort treatment |
+| `SolcControlFlow.ternarySelectsFirstMemorySource` | `SolJSONParser.parseConditional` typed every `?:` as `bool`, so a reference-typed ternary was captured into a `bool` temp and got stuck | take the type from the branches, as `SolidityToKeyConverter` already did |
 
 ## Not ported
 

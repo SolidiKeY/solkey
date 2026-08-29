@@ -92,9 +92,6 @@ contract SolcMappings {
 
     /// solc: array/copying/array_elements_to_mapping.sol — the upstream `m[0] = s[0];` copies a
     /// whole array into a mapping entry.
-    ///
-    /// KNOWN FAILURE — the whole-array copy raises a `TermCreationException`, the same gap as
-    /// `SolcStructs.structArrayElementCopy`. See the element-wise twin below.
     /// @custom:key box
     function arrayElementsToMapping() public {
         require(rows.length == 1);

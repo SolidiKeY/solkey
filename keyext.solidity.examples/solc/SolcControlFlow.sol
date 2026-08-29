@@ -91,11 +91,6 @@ contract SolcControlFlow {
 
     /// solc: expressions/conditional_expression_storage_memory_1.sol — `data1 = cond ? x : y;`
     /// with two memory sources, `cond` true.
-    ///
-    /// KNOWN FAILURE — a `?:` over two memory references assigned into a *storage* target
-    /// leaves an open goal. The same selection into a *memory* target closes
-    /// ([ternaryIntoMemoryTarget]), and so does the `if`/`else` form
-    /// ([ifElseSelectsMemorySource]), so the gap is the storage-target copy after the split.
     /// @custom:key box
     function ternarySelectsFirstMemorySource(uint cond) public {
         require(cond == 1);

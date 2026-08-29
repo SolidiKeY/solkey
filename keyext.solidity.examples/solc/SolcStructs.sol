@@ -150,11 +150,6 @@ contract SolcStructs {
 
     /// solc: array/copying/array_copy_storage_storage_struct.sol — the element-wise form of
     /// the upstream whole-array copy `data2 = data1;` (which has no terminal rule yet).
-    ///
-    /// KNOWN FAILURE — a whole-struct copy into an *array* element raises a
-    /// `TermCreationException` in `storageIndexWriteArrayCopySource`, while the same copy into
-    /// a *mapping* element (`accountMap[2] = accountMap[1];` in `TestSuite.sol`) works. The
-    /// member-wise route below is the workaround.
     /// @custom:key box
     function structArrayElementCopy() public {
         require(pairs1.length == 0);

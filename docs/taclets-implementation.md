@@ -324,27 +324,53 @@ by `SolcSemanticsExamplesTest` — an external cross-check of the calculus again
 of the language SolKey did not write. Provenance table, adaptation rules and the not-ported
 families are in `keyext.solidity.examples/solc/README.md`.
 
-65 of the 72 functions close. The seven that do not are kept in the suite deliberately, each
-with a `KNOWN FAILURE` comment and a backlog entry in `taclet-ideas.md`; they surfaced five
-gaps that no `TestSuite.sol` example reached:
+71 of the 72 functions close. The port found seven gaps no `TestSuite.sol` example reached; six
+were fixed and their examples are now regression tests, one remains.
 
-- `++`/`--` and `+=` **as a statement on a local variable** — the increment family has
-  root/field/index rules plus the `x = i++` result forms, and the compound-assignment family is
-  storage-only, so `i++;` and `r += e;` on a plain local are both open.
+Fixed — see "Rules added or corrected by the solc port" below:
+
+- `++`/`--` and `+=` **as a statement on a local variable**; and a **non-simple RHS in a
+  compound assignment** at any location (`total += a * 16;` was open for storage too).
 - **Indexing a storage alias of a primitive-element array** (`uint[] storage ref = arr;
-  ref[1]`) — open for reads and writes, while `ref.length` and the struct-element twin close.
+  ref[1]`).
 - **Whole-value copy into an array or mapping element** (`pairs2[0] = src;`,
-  `arrayMap[0] = row;`) — raises a `TermCreationException`, although the struct-into-mapping
-  form (`accountMap[2] = accountMap[1];`) works.
-- **A freshly pushed slot is not known to be zero** — there is no axiom tying a slot beyond
-  `length` to its default value, so only the pop-then-push form is observable.
-- **`?:` over memory references assigned into a storage target** — open, while the same
-  selection into a memory target and the `if`/`else` form both close.
+  `arrayMap[0] = row;`), which raised a `TermCreationException`.
+- **`?:` over memory references assigned into a storage target**, a `SolJSONParser` typing bug.
 
-Two more were found and worked around in place: `SolJSONParser` throws on a **self-recursive
-struct type** (`struct s2 { mapping(k => s2) recursive; }`), and a **mapping that is a struct
-member has to be bound to an alias before it can be indexed** (`map[4].z` closes where
-`nested.recursive[4].z` does not).
+Still open:
+
+- **A freshly pushed slot is not known to be zero** — there is no axiom tying a slot beyond
+  `length` to its default value, so only the pop-then-push form is observable
+  (`SolcArrays.pushedSlotIsZeroed`).
+
+Two more are worked around in the examples rather than fixed: `SolJSONParser` throws on a
+**self-recursive struct type** (`struct s2 { mapping(k => s2) recursive; }`), and a **mapping
+that is a struct member has to be bound to an alias before it can be indexed** (`map[4].z`
+closes where `nested.recursive[4].z` does not).
+
+### Rules added or corrected by the solc port
+
+- `local{Pre,Post}{in,de}crement` — `++`/`--` on a local as a statement of its own, the twins
+  of `storageRoot{Pre,Post}{in,de}crement`. The pre-existing `localDecl…`/`localAssign…` rules
+  only cover the result forms (`uint p = a++;`).
+- `local{Add,Sub,Mul,Div,Mod}Assign` — compound assignment on a local; `/=` and `%=` carry the
+  same zero-denominator revert branch as their storage twins.
+- `{add,sub,mul,div,mod}AssignValueRhsCapture` — hoist a non-simple RHS out of a compound
+  assignment. Location-neutral (an `Expression` target, like `fieldWriteValueRhsCapture`), so
+  one rule per operator covers local and storage root/field/index targets.
+- `ternaryToIfStorage` — the `ternaryToIf` twin for a storage-path target, which is not a
+  `Variable`.
+- `storageIndex{Read,Write}{Array,Mapping}*_root` no longer require the `global` flag. They
+  were the only members of the index family that did, which left a `simple`+`local` alias root
+  matching neither the `_root` nor the `_decompose` rule.
+- The index-write *save* rules now take `SimpleExpression[primitive]` for the value, as
+  `storageRootWriteStore` already did. With an unrestricted `SimpleExpression` a storage-alias
+  variable matched and `save(…, path)` was built ill-sorted.
+- `storageIndexWrite{Array,Mapping}CopySource` are sort-generic (`find<[alphaSt]>` with
+  `\hasSort`, the `storageRootDelete` pattern) instead of hard-coding `int` / `Struct`.
+- `SolJSONParser.parseConditional` types a `?:` from its branches instead of always `bool`,
+  matching `SolidityToKeyConverter`. The wrong type made a reference-valued ternary look
+  primitive, so it was captured into a `bool` temp and symbolic execution stalled.
 
 ## Verifying a function directly from a `.sol` file (no `.key` file)
 

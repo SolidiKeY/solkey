@@ -106,12 +106,6 @@ contract SolcArrays {
 
     /// solc: array/storage_array_ref.sol — `uint[] storage ref = arr;` is a reference, so a
     /// write through it is visible on the original array.
-    ///
-    /// KNOWN FAILURE — an alias of an array with *primitive* elements cannot be indexed:
-    /// `ref[1]` leaves an open goal for both reads and writes, and stating the bound on the
-    /// alias itself (`require(ref.length == 2)`) does not help. `ref.length` works, and the
-    /// struct-element twin below works, so the gap is the primitive-element index rules not
-    /// accepting a local alias as the receiver.
     /// @custom:key box
     function storageArrayAliasWritesThrough() public {
         require(storageArray.length == 2);
@@ -122,7 +116,7 @@ contract SolcArrays {
     }
 
     /// solc: array/storage_array_ref.sol — the same reference semantics on an array of
-    /// structs, which the calculus does support.
+    /// structs.
     /// @custom:key box
     function storageStructArrayAliasWritesThrough() public {
         require(structs.length == 2);
