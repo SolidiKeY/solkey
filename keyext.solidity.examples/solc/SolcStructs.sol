@@ -12,6 +12,7 @@ pragma solidity ^0.8.0;
 contract SolcStructs {
     struct Simple { uint value; }
     struct Pair { uint a; uint b; }
+    struct WithArray { uint n; uint[] items; }
     struct Triple { uint x; uint y; uint z; }
     struct Flagged { uint x; bool y; }
 
@@ -23,6 +24,7 @@ contract SolcStructs {
     struct Depth0 { uint z; Flagged flagged; mapping(uint => Depth1) recursive; }
 
     Simple data1;
+    WithArray withArray;
     Triple triple;
     uint neighbourBefore;
     uint neighbourAfter;
@@ -58,6 +60,16 @@ contract SolcStructs {
         assert(triple.z == 0);
         assert(neighbourBefore == 23);
         assert(neighbourAfter == 17);
+    }
+
+    /// solc: structs/struct_delete_storage_with_array.sol — `delete s` on a struct holding a
+    /// dynamic array resets the array's length.
+    /// @custom:key box
+    function deleteStructResetsArrayLength() public {
+        require(withArray.items.length == 2);
+        delete withArray;
+        uint len = withArray.items.length;
+        assert(len == 0);
     }
 
     /// solc: structs/struct_delete_struct_in_mapping.sol — `delete m[k]` resets the whole

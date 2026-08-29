@@ -90,6 +90,38 @@ Type-of metavariable:
 - `length` — the synthetic field holding a dynamic array's current
   length.
 
+Three further operations exist so that a rule which *clears* or *copies* a
+location does not have to know what that location holds. They are sort-free;
+the sort is resolved when the value is read back, through the cast that
+`selectOnStore` (and `readOnWrite` in memory) already inserts:
+
+- `delAt(storage, path)` — the value at `path`, deleted. A struct becomes the
+  lazy `delNode` marker, so its mapping members survive; anything else
+  collapses to its default. Used by `delete` on a root or field, and by
+  `push`/`pop` to clear the slot they add or remove.
+- `valAt(storage, path)` — the value at `path`, for copies. The sort-free twin
+  of `find`.
+- `defVal` — a location reset outright, mapping members included. The
+  sort-free twin of `default`. Used by `delete sp[i]`, which resets a
+  collection element rather than preserving its mapping members. Sorted
+  `Prim`, so it is both an `StValue` and a `MemValue` and serves memory too.
+
+### Field selectors
+
+Field selectors are not a flat sort. Every field constant is stamped at parse
+time (`SolJSONParser#fieldSortFor`) with exactly one sub-sort of `Field`, so a
+rule can say which kind of member it applies to instead of matching all of them:
+
+| Sub-sort | Member kind | `delete` behaviour |
+|---|---|---|
+| `MapField` | mapping | entries preserved |
+| `IdField` | struct / array reference | recursed into |
+| `PrimField` | value | reset to its default |
+
+The partition is total, so the base `Field` sort means "any field" and nothing
+else. `at(i)` stays a plain `Field`: an index's element sort depends on the
+container, not on the index, so it cannot be stamped this way.
+
 **Note:** Both global roots (like `alice`) and local storage aliases
 (like `lp`) are represented as `List`-typed paths. A global root
 `alice` extracts to `cons(alice, nil)` — a single-element list. This
@@ -335,20 +367,22 @@ enumerated).
 - `storageDeleteSimpleTarget`
 
       delete sp
-      ⇝  { storage := save(storage, sp, delValue(find(storage, sp))) }
+      ⇝  { storage := save(storage, sp, delAt(storage, sp)) }
 
-- `delValue(v)` is the reset value of the deleted lvalue: a primitive becomes its
-  `default`; a struct becomes a lazy marker `delNode(v)` wrapping the original
-  value `v`.
+- `delAt(storage, p)` is the reset value of the deleted lvalue, left unresolved:
+  on read it becomes `default` for a primitive, and the lazy marker
+  `delNode(find(storage, p))` for a struct. Writing the marker rather than the
+  resolved value is what lets the rule stay sort-free — the sort arrives with
+  the read.
 - Reading a member `f` of `delNode(v)`:
     - `f` is a **mapping** member → read the original (`v`), i.e. preserved;
     - `f` is a **struct/array** member → recurse (nested mappings survive too);
     - `f` is a **primitive** member → `default`.
 
-The field variant (`delete sp.a`) applies the same `delValue(find(...))` scheme at
-the fully-qualified path, so deleting a struct field also preserves its mappings.
-The index variant (`delete sp[i]`) resets that single entry/element eagerly to
-`default` — `{ storage := save(storage, sp · at(i), default) }`.
+The field variant (`delete sp.a`) applies the same `delAt` scheme at the
+fully-qualified path, so deleting a struct field also preserves its mappings.
+The index variant (`delete sp[i]`) resets that single entry/element outright,
+mapping members included — `{ storage := save(storage, sp · at(i), defVal) }`.
 
 ### Mapping index access  (when `mapping(sp)`)
 
@@ -449,13 +483,13 @@ Each array rule branches on bounds. Out-of-bounds goes to
            || lp := sp · at(n) }
 
 - `storagePopSave` (clears the popped slot with the same mapping-preserving
-  `delValue`/`delNode` marker as `delete`, so a mapping nested in the popped
-  element survives a `pop()` — and, since a later bare `push()` only bumps
-  `length`, survives a subsequent re-`push()` too)
+  `delAt` marker as `delete`, so a mapping nested in the popped element
+  survives a `pop()` — and survives a subsequent re-`push()` too, since
+  `push` clears with the very same marker)
 
       sp.pop();
       ⇝  if ℓ > 0 : { storage := save( save(storage, sp · at(ℓ - 1),
-                                            delValue(find(storage, sp · at(ℓ - 1)))),
+                                            delAt(storage, sp · at(ℓ - 1))),
                                        sp · length, ℓ - 1 ) }
          else    : revert();
 
@@ -590,7 +624,7 @@ extracts to `cons(alice, nil)`. All storage operations use `find`/`save`.
 | `v = sp`                       | `storageRootReadSelect`               | `find`           |
 | `lp = sp.b`                    | `storageFieldReadBindLocalRoot`       | direct assign    |
 | `gp = sp.b`                    | `storageFieldReadStoreRoot`           | `save`/`find`    |
-| `delete sp;`                   | `storageDeleteSimpleTarget`           | `save`/`delValue`|
+| `delete sp;`                   | `storageDeleteSimpleTarget`           | `save`/`delAt`   |
 | `sp[i] = se`  (mapping)        | `storageIndexWriteMappingSave`        | `save`           |
 | `sp1[i] = sp2`  (mapping)      | `storageIndexWriteMappingCopySource`  | `save`           |
 | `v = sp[i]`  (mapping)         | `storageIndexReadMappingFind`         | `find`           |

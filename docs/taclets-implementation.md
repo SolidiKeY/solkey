@@ -35,6 +35,30 @@ Accordingly `storeSt`/`save` take `StValue`, `write` takes `MemValue`, and
 position use the bounded generics `alphaSt`/`alphaMem`
 (`solidityProgramRules.key`).
 
+Field selectors are partitioned by what the member holds (`structHeader.key`),
+stamped at parse time by `SolJSONParser#fieldSortFor`:
+
+```
+Field
+├── MapField    mapping members            delete preserves their entries
+├── IdField     struct/array references    delete recurses into them
+└── PrimField   value members              delete resets them to their default
+```
+
+The partition is total **over named members**, so a rule can say which kind it
+applies to. It does not cover every `Field`: `size` and `at(i)` are plain
+`Field`, because an index's element sort comes from the container rather than
+from the index. `selectStDelNodeDefault` therefore stays Field-generic and
+ranked (`simplify_enlarging`) below the `MapField`/`IdField` rules — restricting
+it to `PrimField` leaves `(delete w).arr.length` stuck, which
+`SolcStructs.deleteStructResetsArrayLength` pins down.
+
+`MapField` is the sub-sort that earns its place: it is the only case that reads
+*through* the delete marker (`selectSt(st, mf)`) instead of re-wrapping it
+(`delNode(selectSt(st, idf))`) or resetting. Classifying a mapping member as a
+reference would leave its entries under the marker and they would read as
+defaults — losing exactly the "delete preserves mappings" rule.
+
 The split follows the `solidity-key-taclets` skill: root rules use
 `SimpleStoragePath`; field/index paths use `Path[...]` schema variables placed
 directly in the resulting terms (the engine lowers the matched AST to logic);
@@ -187,12 +211,12 @@ partition is **total** — every field constant is exactly one of `MapField` (ma
 means "any field" and nothing else, and a rule that matches `Field` is saying so
 deliberately rather than picking up primitives by default.
 
-That makes the three `selectStDelNode*` rules disjoint by sort: `Map`, `Ref` and
-`Prim` each name the case they cover and all sit in `simplify`, with no reliance on
-rule ranking. (`delValue` still uses the ranking trick — `delValueStruct` matches the
-concrete `Struct` sort and outranks the `StValue`-generic `delValueDefault` in
-`simplify_enlarging` — because there the discrimination is on the *value*, not on a
-field.) Complex receivers unfold first (`…_unfold_leftFst`). Storage and memory
+`selectStDelNodeMap` and `selectStDelNodeRef` match their sub-sorts directly;
+`selectStDelNodeDefault` stays Field-generic and ranked below them, because
+`size` and `at(i)` are plain `Field` and would otherwise match nothing.
+(`delValue` uses the same ranking — `delValueStruct` matches the concrete
+`Struct` sort and outranks the `StValue`-generic `delValueDefault` — because
+there the discrimination is on the *value*, not on a field.) Complex receivers unfold first (`…_unfold_leftFst`). Storage and memory
 deletes stay separate by design.
 
 ### Sort-free clearing and copying
