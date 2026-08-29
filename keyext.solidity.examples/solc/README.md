@@ -80,8 +80,8 @@ close. They are noted in place at the affected function.
 
 ## Gaps this port found
 
-Every example closes. Seven were red when first written; the port is what found them, and they
-stay in the suite as regression tests.
+Every example closes except the one listed under "Known open" below. Seven were red when first
+written; the port is what found them, and they stay in the suite as regression tests.
 
 | Function | Was | Fix |
 |---|---|---|
@@ -92,6 +92,16 @@ stay in the suite as regression tests.
 | `SolcStructs.structArrayElementCopy` | `TermCreationException`: the index-write *save* rules took an unrestricted `SimpleExpression`, so a storage-alias variable matched and `save(…, path)` was ill-sorted | restricted the value to `SimpleExpression[primitive]` so the copy routes to `…CopySource`, and made that rule sort-generic (`find<[alphaSt]>` + `\hasSort`) |
 | `SolcMappings.arrayElementsToMapping` | same, plus `storageIndexWriteMappingCopySource` hard-coding `find<[Struct]>` | same generic-sort treatment |
 | `SolcControlFlow.ternarySelectsFirstMemorySource` | `SolJSONParser.parseConditional` typed every `?:` as `bool`, so a reference-typed ternary was captured into a `bool` temp and got stuck | take the type from the branches, as `SolidityToKeyConverter` already did |
+
+## Known open
+
+Examples that do not close yet. Each is skipped by `KNOWN_OPEN` in `SolcSemanticsExamplesTest`,
+so the suite stays green and a red run means new breakage; closing the gap should remove the
+entry in both places.
+
+| Function | Open goal |
+|---|---|
+| `SolcArrays.pushThenPopRestoresLength` | Three `push()`es then three `pop()`s leave `storagePopSave`'s `0 < find<[int]>(storage, sp·size)` guard undischarged: `find`-over-`save` does not reduce through the nested `save` stack the pushes and pops build up, so a trivially-true arithmetic guard survives |
 
 ## Not ported
 

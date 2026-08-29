@@ -12,6 +12,7 @@
 ./gradlew :keyext.solidity.core:test --tests "org.key_project.solidity.SomeTest.methodName"
 ./gradlew spotlessCheck              # Check formatting
 ./gradlew spotlessApply              # Apply formatting
+./gradlew -DENABLE_NULLNESS=true :keyext.solidity.core:compileTestJava   # Nullness checker (~1 min)
 ./gradlew :key.ui:shadowJar          # Build fat JAR
 ./gradlew :keyext.solidity.core:solidityCli                           # Run CLI on default problem2.key
 ./gradlew :keyext.solidity.core:solidityCli -PkeyFile=problem1.key    # Run on specific .key file
@@ -81,6 +82,44 @@ Solidity → ANTLR → SolidityToKeyConverter → AST → TypeResolver → Abstr
 ### ANTLR
 Grammars in `keyext.solidity.core/src/main/antlr/`: `Solidity.g4`, `KeYSolidityDLLexer.g4`/`KeYSolidityDLParser.g4`. Generated: `build/generated-src/antlr/main/`.
 
+## CI Gates — run before committing
+
+CI enforces three gates. **Two of them are off in a normal build**, so `./gradlew classes` and
+`./gradlew test` can both pass while CI fails — this is why the nullness gate historically broke
+on nearly every push.
+
+| Gate | CI job | Local command | Cost |
+|---|---|---|---|
+| Formatting | `CodeQuality / formatting` | `./gradlew spotlessApply` | seconds |
+| Nullness | `CodeQuality / checkerFramework` | `./gradlew -DENABLE_NULLNESS=true :keyext.solidity.core:compileTestJava` | ~1 min |
+| Module tests | `Solidity / test` | `./gradlew :keyext.solidity.core:test` | ~25 min |
+
+The nullness checker only activates under `-DENABLE_NULLNESS=true`, and it is scoped to
+`org.key_project.solidity.program.ast` (`-AonlyDefs` in `keyext.solidity.core/build.gradle`).
+**Only edits under `program/ast/` can trip it** — skip it for work confined to `strategy/`,
+`rule/`, `speclang/`, `parser/`, etc. The CI job runs `compileTestJava` at the root; the
+module-scoped command above is the fast equivalent for this fork's code.
+
+**Nullness idiom.** Nearly every failure is a `@Nullable` value reaching a `@NonNull` parameter or
+return. The checker does not refine a nullable field across two calls, so hoist it into a local
+first:
+
+```java
+// rejected — getTypeReference() is called twice, so the guard does not refine the second read
+if (fd.getTypeReference().referencedType != null) {
+    return fd.getTypeReference().referencedType;
+}
+
+// accepted
+Type referencedType = fd.getTypeReference().referencedType;
+if (referencedType != null) {
+    return referencedType;
+}
+```
+
+`MemoryReferenceTypes.asMemoryReferenceType` is the reference example: hoist to a local, return
+the unchanged input when null. Prefer that over widening a parameter or field to `@Nullable`.
+
 ## Code Style
 
 Spotless enforces formatting (`scripts/tools/checkstyle/keyCodeStyle.xml`). Run `./gradlew spotlessApply` before committing. Fields `@NonNull` by default.
@@ -110,7 +149,12 @@ Program rules live in `keyext.solidity.core/src/main/resources/org/key_project/s
 
 ## Testing
 
-Run `./gradlew :keyext.solidity.core:test` after refactoring. Prefer modifying existing test classes over creating new ones.
+Run `./gradlew :keyext.solidity.core:test` after refactoring (~25 min; see **CI Gates** above for
+the full pre-commit set). Prefer modifying existing test classes over creating new ones.
+
+Examples that do not close yet are skipped via `KNOWN_OPEN` in `SolcSemanticsExamplesTest` and
+listed under "Known open" in `keyext.solidity.examples/solc/README.md`. Keep the two in sync: a
+suite that is green except for tracked entries is what makes a red run mean new breakage.
 
 ## Key KeY Concepts
 - **`Term`** — immutable, has `Operator`, subterms, `Sort`

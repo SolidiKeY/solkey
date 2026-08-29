@@ -72,9 +72,11 @@ public class MemberExp extends SolidityExpression implements Resolver {
     /// fallback for builtins and unresolved members.
     @Override
     public Type getType() {
-        if (rightExp instanceof FieldDeclaration fd
-                && fd.getTypeReference().referencedType != null) {
-            return fd.getTypeReference().referencedType;
+        if (rightExp instanceof FieldDeclaration fd) {
+            Type referencedType = fd.getTypeReference().referencedType;
+            if (referencedType != null) {
+                return referencedType;
+            }
         }
         return type;
     }

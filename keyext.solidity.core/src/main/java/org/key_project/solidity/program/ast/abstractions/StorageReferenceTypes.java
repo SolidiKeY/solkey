@@ -9,6 +9,9 @@ public final class StorageReferenceTypes {
     /// In storage, mappings are reference-typed locations as well, unlike in memory.
     public static boolean isReferenceType(Type type) {
         Type unwrapped = type instanceof KeYSolidityType kst ? kst.getSolidityType() : type;
+        if (unwrapped == null) {
+            return false;
+        }
         return MemoryReferenceTypes.isReferenceType(unwrapped)
                 || unwrapped instanceof MappingType;
     }
