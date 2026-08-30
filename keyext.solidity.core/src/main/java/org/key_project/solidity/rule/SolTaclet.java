@@ -210,6 +210,15 @@ public abstract class SolTaclet extends Taclet implements Rule {
         return null;
     }
 
+    protected final TacletApplPart copyApplPart() {
+        return new TacletApplPart(assumesSequent(), applicationRestriction(), varsNew(),
+            varsNotFreeIn(), varsNewDependingOn(), getVariableConditions());
+    }
+
+    protected final TacletAttributes copyAttrs() {
+        return new TacletAttributes(displayName(), trigger);
+    }
+
     public boolean getSurviveSymbExec() {
         return surviveSymbExec;
     }

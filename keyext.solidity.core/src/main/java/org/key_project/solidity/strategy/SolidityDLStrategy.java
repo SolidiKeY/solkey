@@ -29,7 +29,7 @@ import org.jspecify.annotations.NonNull;
 
 import static org.key_project.prover.strategy.costbased.feature.CompareCostsFeature.leq;
 
-/// Strategy tailored to be used as long as a Rust program can be found in the sequent.
+/// Strategy tailored to be used as long as a Solidity program can be found in the sequent.
 public final class SolidityDLStrategy extends AbstractFeatureStrategy implements ComponentStrategy {
     public static final AtomicLong PERF_COMPUTE = new AtomicLong();
     public static final AtomicLong PERF_APPROVE = new AtomicLong();

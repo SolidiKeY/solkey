@@ -58,12 +58,12 @@ public interface FileRepo extends ProofDisposedListener {
     /// Sets the Solidity path (where the source files are located).
     ///
     /// @param solidityPath the java path to set (the method does nothing if null is given)
-    /// @throws IllegalStateException if the Rust path is already set
+    /// @throws IllegalStateException if the Solidity path is already set
     void setSolidityPath(Path solidityPath) throws IllegalStateException;
 
     /// Sets the base directory of the proof, i.e. the main directory where the proof is loaded
     /// from.
-    /// When loading Rust sources this is the directory the loaded file resides in. When loading
+    /// When loading Solidity sources this is the directory the loaded file resides in. When loading
     /// .key-Files this is the directory specified via "\\programSource" or the directory of the
     /// .key-File, if no source directory is specified.
     /// This is needed by the FileRepo for resolving pathnames.

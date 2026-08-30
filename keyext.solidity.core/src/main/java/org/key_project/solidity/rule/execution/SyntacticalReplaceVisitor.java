@@ -135,7 +135,7 @@ public class SyntacticalReplaceVisitor implements Visitor<Term> {
                 /* svInst.getExecutionContext(), */ services));
             pushNew(newTerm);
         } else {
-            // instantiation of Rust block
+            // instantiation of Solidity block
             boolean rBlockChanged = false;
 
             if (visitedOp instanceof SModality mod) {

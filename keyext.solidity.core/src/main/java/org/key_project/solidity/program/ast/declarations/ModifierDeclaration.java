@@ -16,14 +16,14 @@ import org.jspecify.annotations.NonNull;
 
 public class ModifierDeclaration implements Declaration {
 
-    private final @NonNull ImmutableArray<@NonNull ProgramVariable> inputParameters;
-    private final @NonNull Block body;
-    private final @NonNull Visibility visibility;
-    private final @NonNull Name name;
+    private final ImmutableArray<@NonNull ProgramVariable> inputParameters;
+    private final Block body;
+    private final Visibility visibility;
+    private final Name name;
 
-    public ModifierDeclaration(@NonNull Name name,
-            @NonNull List<@NonNull ProgramVariable> inputParameters, @NonNull Block body,
-            @NonNull Visibility visibility) {
+    public ModifierDeclaration(Name name,
+            List<@NonNull ProgramVariable> inputParameters, Block body,
+            Visibility visibility) {
         this.name = name;
         this.inputParameters = new ImmutableArray<>(inputParameters);
         this.body = body;
@@ -31,12 +31,13 @@ public class ModifierDeclaration implements Declaration {
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         if (n < inputParameters.size())
             return inputParameters.get(n);
         if (n == inputParameters.size())
             return body;
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+        throw new IndexOutOfBoundsException(
+            "Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

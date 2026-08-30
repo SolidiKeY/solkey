@@ -64,6 +64,7 @@ public class SubstOp extends AbstractOperator {
 
     @Override
     public SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+        throw new IndexOutOfBoundsException(
+            "Index should be 0 <= " + n + " < " + getChildCount());
     }
 }

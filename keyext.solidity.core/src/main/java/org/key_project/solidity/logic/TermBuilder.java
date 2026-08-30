@@ -479,6 +479,10 @@ public class TermBuilder {
         }
     }
 
+    public Term mul(Term t1, Term t2) {
+        return func(services.getTheoryInfo().getIntLDT().getMul(), t1, t2);
+    }
+
 
     /// Creates terms to be used in Z/C/FP/DFP/R notations. The result does not have such a
     /// constructor applied yet.

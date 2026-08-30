@@ -12,7 +12,6 @@ import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-import org.jspecify.annotations.NonNull;
 
 public class TernaryExpression extends SolidityExpression {
 
@@ -34,7 +33,7 @@ public class TernaryExpression extends SolidityExpression {
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         if (n == 0)
             return condition;
         else if (n == 1)
@@ -42,8 +41,7 @@ public class TernaryExpression extends SolidityExpression {
         else if (n == 2)
             return trueExpression;
         else
-            throw new IndexOutOfBoundsException(
-                "Index should be 0 <= " + n + " < " + getChildCount());
+            throw outOfBounds(n);
     }
 
     @Override

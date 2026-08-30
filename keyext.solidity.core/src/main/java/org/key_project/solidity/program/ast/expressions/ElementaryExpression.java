@@ -10,7 +10,6 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-import org.jspecify.annotations.NonNull;
 
 // This class is used for expressions like bool(true) where bool is an elementary expression
 public class ElementaryExpression extends SolidityExpression {
@@ -25,8 +24,8 @@ public class ElementaryExpression extends SolidityExpression {
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+    public SyntaxElement getChild(int n) {
+        throw outOfBounds(n);
     }
 
     @Override

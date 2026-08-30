@@ -91,7 +91,8 @@ public class TacletAppIndex {
 
     /// collects all NoFindTacletInstantiations
     ///
-    /// @param services the Services object encapsulating information about the Rust datastructures
+    /// @param services the Services object encapsulating information about the Solidity
+    /// datastructures
     /// like (static)types etc.
     /// @return list of all possible instantiations
     public ImmutableList<NoPosTacletApp> getNoFindTaclet(Services services) {

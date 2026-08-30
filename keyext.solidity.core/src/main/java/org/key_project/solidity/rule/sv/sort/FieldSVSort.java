@@ -9,7 +9,6 @@ import java.util.Map;
 
 import org.key_project.logic.Name;
 import org.key_project.solidity.common.Services;
-import org.key_project.solidity.program.ast.SolidityInfo;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
@@ -52,10 +51,7 @@ public class FieldSVSort extends ProgramSVSort {
         if (typeKind == TypeKind.ANY) {
             return true;
         }
-        Type fieldType = fd.getTypeReference().referencedType;
-        if (fieldType == null && fd.getTypeReference().typeName != null) {
-            fieldType = SolidityInfo.getPrimitiveType(fd.getTypeReference().typeName.toString());
-        }
+        Type fieldType = fd.getTypeReference().resolvedType();
         if (fieldType instanceof KeYSolidityType keyType && keyType.getSolidityType() != null) {
             fieldType = keyType.getSolidityType();
         }

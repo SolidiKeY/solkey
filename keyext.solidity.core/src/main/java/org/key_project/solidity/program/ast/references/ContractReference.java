@@ -14,7 +14,6 @@ import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
-import org.jspecify.annotations.NonNull;
 
 public class ContractReference extends SolidityExpression implements Resolver, VariableReference {
 
@@ -38,8 +37,8 @@ public class ContractReference extends SolidityExpression implements Resolver, V
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+    public SyntaxElement getChild(int n) {
+        throw outOfBounds(n);
     }
 
     @Override

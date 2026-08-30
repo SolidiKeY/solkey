@@ -71,13 +71,8 @@ public class SolNoFindTaclet extends SolTaclet {
 
     @Override
     public @NonNull SolNoFindTaclet setName(@NonNull String s) {
-        final TacletApplPart applPart =
-            new TacletApplPart(assumesSequent(), applicationRestriction(), varsNew(),
-                varsNotFreeIn(),
-                varsNewDependingOn(), getVariableConditions());
-        final TacletAttributes attrs = new TacletAttributes(displayName(), trigger);
-
-        return new SolNoFindTaclet(new Name(s), applPart, goalTemplates(), getRuleSets(), attrs,
+        return new SolNoFindTaclet(new Name(s), copyApplPart(), goalTemplates(), getRuleSets(),
+            copyAttrs(),
             prefixMap, choices, getSurviveSymbExec(), tacletAnnotations, noFreeVarIns);
     }
 }

@@ -59,7 +59,7 @@ public abstract class TacletExecutor extends
     /// @param mc the [MatchConditions] with all instantiations and the constraint
     /// @param goal the [Goal] on which this taclet is applied
     /// @param ruleApp the [RuleApp] with application information
-    /// @param services the [Services] with the Rust model information
+    /// @param services the [Services] with the Solidity model information
     /// @return the (partially) instantiated term
     protected Term syntacticalReplace(Term term, PosInOccurrence applicationPosInOccurrence,
             MatchConditions mc, Goal goal, RuleApp ruleApp, Services services) {
@@ -84,7 +84,7 @@ public abstract class TacletExecutor extends
     ///
     /// @param rules the rules to be added
     /// @param goal the goal describing the node where the rules should be added
-    /// @param p_services the Services encapsulating all Rust information
+    /// @param p_services the Services encapsulating all Solidity information
     /// @param p_matchCond the MatchConditions containing in particular the instantiations of the
     /// schemavariables
     @Override
@@ -194,7 +194,7 @@ public abstract class TacletExecutor extends
     /// rewritten
     /// @param matchCond the MatchConditions containing in particular the instantiations of the
     /// schemavariables
-    /// @param services the Services encapsulating all Rust information
+    /// @param services the Services encapsulating all Solidity information
     protected void addToAntec(Semisequent semi, SequentChangeInfo currentSequent,
             PosInOccurrence pos,
             PosInOccurrence applicationPosInOccurrence, MatchConditions matchCond, Goal goal,

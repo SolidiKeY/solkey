@@ -7,13 +7,11 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.solidity.rule.matching.inst.MatchConditions;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public interface SolidityProgramElement extends SyntaxElement {
 
     @Override
-    @NonNull
     SyntaxElement getChild(int n);
 
     @Override
@@ -83,22 +81,21 @@ public interface SolidityProgramElement extends SyntaxElement {
     /// @param v the Visitor
     void visit(Visitor v);
 
-    /// TODO: Use this method and cache hash
+    /// Structural hash over the children. Recomputing this traverses the whole subtree, so
+    /// classes overriding [Object#hashCode] with it should cache the result in an int field
+    /// (see e.g. [org.key_project.solidity.program.ast.statement.Block#hashCode]).
     default int computeHashCode() {
-        // Cache for hashcode computation would be of advantage as it is for instance recomputed
-        // for each modality
-        // creation and can be rather expensive as the whole AST is repeatedly traversed
-        // at the moment this has to be cached at each subclass
-        /*
-         * if (hashcode != -1) {
-         * return hashcode;
-         * }
-         */
         int hash = 7;
         for (int i = 0; i < this.getChildCount(); i++) {
             hash = hash * 31 + this.getChild(i).hashCode();
         }
-        // this.hashcode = hash;
         return hash;
+    }
+
+    /// Exception for a child index outside `[0, getChildCount())`, thrown by [#getChild(int)]
+    /// implementations.
+    default IndexOutOfBoundsException outOfBounds(int index) {
+        return new IndexOutOfBoundsException(
+            "Index should be 0 <= " + index + " < " + getChildCount());
     }
 }

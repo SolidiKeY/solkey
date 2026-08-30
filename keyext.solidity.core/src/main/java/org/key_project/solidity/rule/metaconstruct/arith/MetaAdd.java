@@ -6,27 +6,14 @@ package org.key_project.solidity.rule.metaconstruct.arith;
 import java.math.BigInteger;
 
 import org.key_project.logic.Name;
-import org.key_project.logic.Term;
-import org.key_project.solidity.common.Services;
-import org.key_project.solidity.rule.matching.inst.SVInstantiations;
-import org.key_project.solidity.rule.metaconstruct.AbstractTermTransformer;
 
-public final class MetaAdd extends AbstractTermTransformer {
+public final class MetaAdd extends MetaBinaryArithOp {
     public MetaAdd() {
-        super(new Name("#add"), 2);
+        super(new Name("#add"));
     }
 
-    public Term transform(Term term, SVInstantiations svInst, Services services) {
-        Term arg1 = term.sub(0);
-        Term arg2 = term.sub(1);
-        BigInteger bigIntArg1;
-        BigInteger bigIntArg2;
-
-        bigIntArg1 = new BigInteger(convertToDecimalString(arg1, services));
-        bigIntArg2 = new BigInteger(convertToDecimalString(arg2, services));
-
-        BigInteger bigIntResult = bigIntArg1.add(bigIntArg2);
-
-        return services.getTermBuilder().zTerm(bigIntResult.toString());
+    @Override
+    protected BigInteger compute(BigInteger left, BigInteger right) {
+        return left.add(right);
     }
 }

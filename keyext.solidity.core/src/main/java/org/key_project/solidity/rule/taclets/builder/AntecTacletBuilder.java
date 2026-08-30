@@ -4,7 +4,6 @@
 package org.key_project.solidity.rule.taclets.builder;
 
 import org.key_project.prover.rules.ApplicationRestriction;
-import org.key_project.prover.rules.TacletApplPart;
 import org.key_project.prover.rules.tacletbuilder.TacletGoalTemplate;
 import org.key_project.prover.sequent.Sequent;
 import org.key_project.solidity.common.Services;
@@ -25,11 +24,7 @@ public class AntecTacletBuilder extends FindTacletBuilder<@NonNull SolAntecTacle
     /// adds a new goal descriptions to the goal descriptions of the Taclet. the TacletGoalTemplate
     /// must not be a RewriteTacletGoalTemplate, otherwise an illegal argument exception is thrown.
     public void addTacletGoalTemplate(TacletGoalTemplate goal) {
-        if (goal instanceof RewriteTacletGoalTemplate) {
-            throw new TacletBuilder.TacletBuilderException(this,
-                "Tried to add a RewriteTaclet" + "GoalTemplate to a Antec" + "Taclet");
-        }
-        goals = goals.prepend(goal);
+        addNonRewriteTacletGoalTemplate(goal, "AntecTaclet");
     }
 
 
@@ -68,10 +63,7 @@ public class AntecTacletBuilder extends FindTacletBuilder<@NonNull SolAntecTacle
 
         SolAntecTaclet t = new SolAntecTaclet(name,
             (Sequent) find,
-            new TacletApplPart(ifseq,
-                applicationRestriction.combine(ApplicationRestriction.ANTECEDENT_POLARITY),
-                varsNew, varsNotFreeIn, varsNewDependingOn,
-                variableConditions),
+            buildApplPart(ApplicationRestriction.ANTECEDENT_POLARITY),
             goals, ruleSets, attrs, prefixBuilder.getPrefixMap(),
             choices, false, tacletAnnotations, noFreeVarIns);
         return t;

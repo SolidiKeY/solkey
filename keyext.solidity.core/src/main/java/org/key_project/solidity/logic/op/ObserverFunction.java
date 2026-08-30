@@ -13,7 +13,8 @@ import org.key_project.util.collection.ImmutableArray;
 /// Objects of this class represent "observer" function or predicate symbols. Observer symbols are
 /// used to
 /// represent model functions as well as occurrences of
-/// pure functions in specifications (via the subclass ProgramFunction). As they come from the Rust
+/// pure functions in specifications (via the subclass ProgramFunction). As they come from the
+/// Solidity
 /// program, both their parameter sorts and their result sorts always have an associated
 /// KeYSolidityType.
 /// Observer symbols serve as the targets of contracts (i.e., as the subjects that the contracts are

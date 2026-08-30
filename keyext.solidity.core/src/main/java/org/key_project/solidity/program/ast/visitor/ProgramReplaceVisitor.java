@@ -30,7 +30,7 @@ public class ProgramReplaceVisitor extends CreatingASTVisitor {
     /// @param svi Schema Variable Instantiations
     public ProgramReplaceVisitor(SolidityProgramElement root, Services services,
             SVInstantiations svi) {
-        super(root, false, services);
+        super(root, services);
         svinsts = svi;
     }
 

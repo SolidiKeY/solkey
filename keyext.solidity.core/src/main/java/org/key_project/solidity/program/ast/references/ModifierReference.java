@@ -8,7 +8,6 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 
-import org.jspecify.annotations.NonNull;
 
 public class ModifierReference implements SolidityProgramElement {
 
@@ -19,8 +18,8 @@ public class ModifierReference implements SolidityProgramElement {
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+    public SyntaxElement getChild(int n) {
+        throw outOfBounds(n);
     }
 
     @Override

@@ -351,9 +351,9 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         FieldDeclaration field = resolved != null ? resolved
                 : new FieldDeclaration(
                     new Name(fieldName), new TypeReference(new Name(fieldName)));
-        Type memberType = resolved != null && resolved.getTypeReference().referencedType != null
-                ? resolved.getTypeReference().referencedType
-                : leftType;
+        Type resolvedType =
+            resolved != null ? resolved.getTypeReference().getReferencedType() : null;
+        Type memberType = resolvedType != null ? resolvedType : leftType;
         return new MemberExp(leftExp, field, memberType);
     }
 

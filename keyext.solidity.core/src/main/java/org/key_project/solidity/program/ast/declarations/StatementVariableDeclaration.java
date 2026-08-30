@@ -15,7 +15,6 @@ import org.key_project.solidity.rule.matching.inst.MatchConditions;
 import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.util.ExtList;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Default;
@@ -78,13 +77,12 @@ public class StatementVariableDeclaration implements Declaration, SolidityProgra
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         if (n == 0) {
             return schemaVariable != null ? schemaVariable
                     : Objects.requireNonNull(programVariable);
         }
-        throw new IndexOutOfBoundsException(
-            "Index should be 0 <= " + n + " < " + getChildCount());
+        throw outOfBounds(n);
     }
 
     @Override

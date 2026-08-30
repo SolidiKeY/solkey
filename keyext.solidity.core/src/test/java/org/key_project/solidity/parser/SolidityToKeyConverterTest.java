@@ -245,13 +245,13 @@ public class SolidityToKeyConverterTest {
     @Test
     void functionCall() {
         FunctionCallExpression exp = (FunctionCallExpression) parseExpression("f()");
-        assertEquals("f", exp.functionExp.toString());
+        assertEquals("f", exp.getFunctionExp().toString());
     }
 
     @Test
     void functionCallArguments() {
         FunctionCallExpression exp = (FunctionCallExpression) parseExpression("f(false)");
-        assertEquals("f", exp.functionExp.toString());
+        assertEquals("f", exp.getFunctionExp().toString());
         assertFalse(((BoolLiteral) exp.getArgument(0)).getValue());
     }
 
@@ -262,7 +262,7 @@ public class SolidityToKeyConverterTest {
         assertSame(VOID, exp.getType());
         assertEquals(0, exp.getArguments().size());
         FunctionReference revertRef = (FunctionReference) exp.getFunctionExp();
-        assertEquals("revert", revertRef.referencedDeclaration.name().toString());
+        assertEquals("revert", revertRef.getReferencedDeclaration().name().toString());
         assertSame(VOID, revertRef.getType());
     }
 

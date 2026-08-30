@@ -42,6 +42,7 @@ public final class Equality extends AbstractSortedOperator {
 
     @Override
     public @NonNull SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+        throw new IndexOutOfBoundsException(
+            "Index should be 0 <= " + n + " < " + getChildCount());
     }
 }

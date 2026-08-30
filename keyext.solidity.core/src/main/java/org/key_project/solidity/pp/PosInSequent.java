@@ -10,7 +10,7 @@ public class PosInSequent {
     private final boolean sequent;
     private PosInOccurrence posInOcc = null;
 
-    private Range firstRustStatementRange = null;
+    private Range firstSolidityStatementRange = null;
 
     /// creates a PosInSequent that points to the whole sequent.
     public static PosInSequent createSequentPos() {
@@ -56,16 +56,16 @@ public class PosInSequent {
     /// corresponding Java program in a string representation of the sequent.
     ///
     /// @param r the range for the first statement in the corresponding program
-    public void setFirstRustStatementRange(Range r) {
-        firstRustStatementRange = r;
+    public void setFirstSolidityStatementRange(Range r) {
+        firstSolidityStatementRange = r;
     }
 
-    /// returns the bounds, i.e. the start and end positions of the first Rust statement, of a
-    /// corresponding Rust program in a string representation of the sequent.
+    /// returns the bounds, i.e. the start and end positions of the first Solidity statement, of a
+    /// corresponding Solidity program in a string representation of the sequent.
     ///
     /// @return the range specifying the first statement in the corresponding program
-    public Range getFirstRustStatementRange() {
-        return firstRustStatementRange;
+    public Range getFirstSolidityStatementRange() {
+        return firstSolidityStatementRange;
     }
 
 

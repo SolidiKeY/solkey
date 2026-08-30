@@ -11,16 +11,15 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-import org.jspecify.annotations.NonNull;
 
 public class ForUpdate implements SolidityProgramElement {
-    private final @NonNull Expression update;
+    private final Expression update;
 
-    public ForUpdate(@NonNull Expression update) {
+    public ForUpdate(Expression update) {
         this.update = update;
     }
 
-    public ForUpdate(@NonNull ExtList children) {
+    public ForUpdate(ExtList children) {
         this.update = Objects.requireNonNull(children.get(Expression.class));
     }
 
@@ -29,10 +28,10 @@ public class ForUpdate implements SolidityProgramElement {
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         if (n == 0)
             return update;
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+        throw outOfBounds(n);
     }
 
     @Override

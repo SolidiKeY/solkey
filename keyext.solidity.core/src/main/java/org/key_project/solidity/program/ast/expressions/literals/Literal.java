@@ -11,7 +11,6 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.rule.matching.inst.MatchConditions;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public abstract class Literal extends SolidityExpression {
@@ -23,8 +22,8 @@ public abstract class Literal extends SolidityExpression {
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+    public SyntaxElement getChild(int n) {
+        throw outOfBounds(n);
     }
 
     @Override

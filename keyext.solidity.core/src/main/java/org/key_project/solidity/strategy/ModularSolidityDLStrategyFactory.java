@@ -145,6 +145,6 @@ public class ModularSolidityDLStrategyFactory implements StrategyFactory {
             componentSettings.toArray(new AbstractStrategyPropertyDefinition[0]);
 
         // Model
-        return new StrategySettingsDefinition("RustyDL Options", properties);
+        return new StrategySettingsDefinition("Solidity DL Options", properties);
     }
 }

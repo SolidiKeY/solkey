@@ -7,14 +7,11 @@ import java.util.Objects;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
-import org.key_project.solidity.program.ast.SourceData;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
-import org.key_project.solidity.rule.matching.inst.MatchConditions;
 import org.key_project.util.ExtList;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.BOOL;
@@ -22,9 +19,9 @@ import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.BO
 public final class BinaryExpression
         implements SolidityProgramElement, Expression, OperatorExpression {
 
-    protected final @NonNull Operator operator;
-    protected final @NonNull Expression left;
-    protected final @NonNull Expression right;
+    protected final Operator operator;
+    protected final Expression left;
+    protected final Expression right;
     private int hashcode = -1;
 
     public BinaryExpression(Operator operator, Expression left, Expression right) {
@@ -40,7 +37,7 @@ public final class BinaryExpression
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         switch (n) {
             case 0:
                 return operator;
@@ -49,8 +46,7 @@ public final class BinaryExpression
             case 2:
                 return right;
             default:
-                throw new IndexOutOfBoundsException(
-                    "Index should be 0 <= " + n + " < " + getChildCount());
+                throw outOfBounds(n);
         }
     }
 
@@ -64,9 +60,9 @@ public final class BinaryExpression
         v.performActionOnBinaryExpression(this);
     }
 
-    public @NonNull Expression getLeft() { return left; }
+    public Expression getLeft() { return left; }
 
-    public @NonNull Expression getRight() { return right; }
+    public Expression getRight() { return right; }
 
     public Operator getOperator() {
         return operator;
@@ -105,32 +101,4 @@ public final class BinaryExpression
         return hashcode;
     }
 
-    @Override
-    public @Nullable MatchConditions match(SourceData sourceData, @Nullable MatchConditions mc) {
-        final var src = sourceData.getSource();
-
-        if (src == null)
-            return null;
-
-        // Check class type
-        if (!(src instanceof BinaryExpression that)) {
-            return null;
-        }
-
-        // CRITICAL FIX: Check operator matches
-        if (!this.operator.equals(that.operator)) {
-            return null;
-        }
-
-        // Match children
-        final SourceData newSource = new SourceData(src, 0, sourceData.getServices());
-        mc = matchChildren(newSource, mc, 0);
-
-        if (mc == null) {
-            return null;
-        }
-
-        sourceData.next();
-        return mc;
-    }
 }

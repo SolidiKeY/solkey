@@ -104,7 +104,7 @@ public class SolidityDLStrategyFactory implements StrategyFactory {
         final OneOfStrategyPropertyDefinition proofSplitting = getProofSplitting();
         final OneOfStrategyPropertyDefinition autoInduction = getAutoInduction();
         // Model
-        return new StrategySettingsDefinition("Rusty DL Options", proofSplitting,
+        return new StrategySettingsDefinition("Solidity DL Options", proofSplitting,
             autoInduction);
     }
 }

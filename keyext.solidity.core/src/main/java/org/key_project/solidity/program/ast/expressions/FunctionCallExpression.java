@@ -13,18 +13,17 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public class FunctionCallExpression extends SolidityExpression {
 
-    private final @NonNull ImmutableArray<Expression> arguments;
+    private final ImmutableArray<Expression> arguments;
 
-    public @NonNull Expression getFunctionExp() {
+    public Expression getFunctionExp() {
         return functionExp;
     }
 
-    public final @NonNull Expression functionExp;
+    private final Expression functionExp;
 
     public FunctionCallExpression(Type type, Expression functionExp, List<Expression> arguments) {
         super(type);
@@ -50,12 +49,12 @@ public class FunctionCallExpression extends SolidityExpression {
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         if (0 <= n && n < arguments.size())
             return arguments.get(n);
         if (n == arguments.size())
             return functionExp;
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+        throw outOfBounds(n);
     }
 
     @Override
@@ -73,7 +72,7 @@ public class FunctionCallExpression extends SolidityExpression {
         v.performActionOnFunctionCallExpression(this);
     }
 
-    public @NonNull ImmutableArray<Expression> getArguments() {
+    public ImmutableArray<Expression> getArguments() {
         return arguments;
     }
 

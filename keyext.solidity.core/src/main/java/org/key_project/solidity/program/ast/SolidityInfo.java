@@ -74,17 +74,15 @@ public class SolidityInfo {
         Sort boolSort = Objects.requireNonNull(theoryInfo.getBoolLDT().targetSort());
 
         for (PrimitiveType primitiveType : PrimitiveType.all()) {
-            String name = primitiveType.name().toString();
-            if (name.contains("int")) {
-                put(new KeYSolidityType(primitiveType, intSort));
-            } else if (name.equals("bool")) {
-                put(new KeYSolidityType(primitiveType, boolSort));
-            } else if (name.equals("address")) {
-                put(new KeYSolidityType(primitiveType, intSort));
-            } else if (name.equals("string")) {
-                put(new KeYSolidityType(primitiveType, intSort));
+            Sort sort = switch (primitiveType.kind()) {
+                case INTEGER, ADDRESS, STRING -> intSort;
+                case BOOLEAN -> boolSort;
+                case BYTES, FIXED, VOID -> null;
+            };
+            if (sort != null) {
+                put(new KeYSolidityType(primitiveType, sort));
             } else {
-                LOGGER.info("{} not yet supported. Type skipped", name);
+                LOGGER.info("{} not yet supported. Type skipped", primitiveType.name());
             }
         }
 

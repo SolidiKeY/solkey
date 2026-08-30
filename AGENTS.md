@@ -106,12 +106,12 @@ first:
 
 ```java
 // rejected — getTypeReference() is called twice, so the guard does not refine the second read
-if (fd.getTypeReference().referencedType != null) {
-    return fd.getTypeReference().referencedType;
+if (fd.getTypeReference().getReferencedType() != null) {
+    return fd.getTypeReference().getReferencedType();
 }
 
 // accepted
-Type referencedType = fd.getTypeReference().referencedType;
+Type referencedType = fd.getTypeReference().getReferencedType();
 if (referencedType != null) {
     return referencedType;
 }
@@ -140,6 +140,7 @@ Read the relevant doc before working on taclets — each is a compact, agent-fac
 | `net.md` | Implementing the payment/ledger model (`net`, `msg.sender`/`msg.value`, `transfer`, contract invariants, proof obligations) — ordered plan from the ISoLA 2020 paper. |
 | `require-assert.md` | Touching `require` / `assert` rules (box vs. diamond false-branch behavior). |
 | `solidity-json-documentation.md` | Parsing `solc --ast-compact-json` (consumed by `SolJSONParser`). |
+| `forked-key-core.md` | Editing code forked from `key.core` — which files are near-verbatim copies and why they must not be restyled. |
 
 Program rules live in `keyext.solidity.core/src/main/resources/org/key_project/solidity/proof/rules/solidityProgramRules.key` (loaded automatically via `standardSolidityRules.key`). Add new taclet examples as functions of `keyext.solidity.examples/TestSuite.sol`, and scenario/invariant examples as contracts plus `.key` proof obligations in `keyext.solidity.examples/net/` — conventions for both: `keyext.solidity.examples/README.md`. After changing a feature update `docs/taclets-implementation.md` (implemented) or `docs/taclet-ideas.md` (backlog).
 

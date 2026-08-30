@@ -66,14 +66,8 @@ public class SolAntecTaclet extends SolFindTaclet {
 
     @Override
     public @NonNull SolAntecTaclet setName(@NonNull String s) {
-        final TacletApplPart applPart =
-            new TacletApplPart(assumesSequent(), applicationRestriction(), varsNew(),
-                varsNotFreeIn(),
-                varsNewDependingOn(), getVariableConditions());
-        final TacletAttributes attrs = new TacletAttributes(displayName(), trigger);
-
-        return new SolAntecTaclet(new Name(s), (Sequent) find, applPart, goalTemplates(),
-            getRuleSets(), attrs,
+        return new SolAntecTaclet(new Name(s), (Sequent) find, copyApplPart(), goalTemplates(),
+            getRuleSets(), copyAttrs(),
             prefixMap, choices, getSurviveSymbExec(), tacletAnnotations, noFreeVarIns);
     }
 }

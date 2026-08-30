@@ -8,7 +8,6 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.declarations.Modifier;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 
-import org.jspecify.annotations.NonNull;
 
 public enum DataLocation implements Modifier {
     Memory("memory"), Storage("storage"), Calldata("calldata"), Default("default");
@@ -41,8 +40,8 @@ public enum DataLocation implements Modifier {
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+    public SyntaxElement getChild(int n) {
+        throw outOfBounds(n);
     }
 
     @Override

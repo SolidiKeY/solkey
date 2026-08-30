@@ -57,7 +57,7 @@ public class OutputStreamProofSaver {
         java.util.regex.Pattern.compile("(\\\\programSource\\s*\")([^\"]*)(\")");
 
     public OutputStreamProofSaver(Proof proof) {
-        this(proof, "2.12.3 (Rusty)");
+        this(proof, "2.12.3 (SolKey)");
     }
 
     public OutputStreamProofSaver(Proof proof, String internalVersion) {

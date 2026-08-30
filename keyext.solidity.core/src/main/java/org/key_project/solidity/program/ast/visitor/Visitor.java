@@ -16,95 +16,95 @@ import org.key_project.solidity.program.ext.ContextStatementBlock;
 import org.key_project.solidity.rule.metaconstruct.ProgramTransformer;
 
 public interface Visitor {
-    void performActionOnProgramVariable(ProgramVariable x);
+    default void performActionOnProgramVariable(ProgramVariable x) {}
 
-    void performActionOnSchemaVariable(SchemaVariable x);
+    default void performActionOnSchemaVariable(SchemaVariable x) {}
 
-    void performActionOnProgramMetaConstruct(ProgramTransformer programTransformer);
+    default void performActionOnProgramMetaConstruct(ProgramTransformer programTransformer) {}
 
-    void performActionOnStatementVariableDeclaration(StatementVariableDeclaration x);
+    default void performActionOnStatementVariableDeclaration(StatementVariableDeclaration x) {}
 
     default void performActionOnFieldDeclaration(FieldDeclaration x) {}
 
     default void performActionOnFunctionDeclaration(FunctionDeclaration x) {}
 
-    void performActionOnElementaryExpression(ElementaryExpression x);
+    default void performActionOnElementaryExpression(ElementaryExpression x) {}
 
-    void performActionOnFunctionCallExpression(FunctionCallExpression x);
+    default void performActionOnFunctionCallExpression(FunctionCallExpression x) {}
 
-    void performActionOnIndexExpression(IndexExpression x);
+    default void performActionOnIndexExpression(IndexExpression x) {}
 
-    void performActionOnIndexRangeExpression(IndexRangeExpression x);
+    default void performActionOnIndexRangeExpression(IndexRangeExpression x) {}
 
-    void performActionOnMemberExp(MemberExp x);
+    default void performActionOnMemberExp(MemberExp x) {}
 
-    void performActionOnTupleExpression(TupleExpression x);
+    default void performActionOnTupleExpression(TupleExpression x) {}
 
-    void performActionOnNewExpression(NewExpression x);
+    default void performActionOnNewExpression(NewExpression x) {}
 
-    void performActionOnUnresolvedTypeException(UnresolvedTypeException x);
+    default void performActionOnUnresolvedTypeException(UnresolvedTypeException x) {}
 
-    void performActionOnBoolLiteral(BoolLiteral x);
+    default void performActionOnBoolLiteral(BoolLiteral x) {}
 
-    void performActionOnUint256Literal(Uint256Literal x);
+    default void performActionOnUint256Literal(Uint256Literal x) {}
 
-    void performActionOnTernaryExpression(TernaryExpression x);
+    default void performActionOnTernaryExpression(TernaryExpression x) {}
 
-    void performActionOnContractReference(ContractReference x);
+    default void performActionOnContractReference(ContractReference x) {}
 
-    void performActionOnEnumReference(EnumReference x);
+    default void performActionOnEnumReference(EnumReference x) {}
 
-    void performActionOnFieldReference(FieldReference x);
+    default void performActionOnFieldReference(FieldReference x) {}
 
-    void performActionOnFunctionReference(FunctionReference x);
+    default void performActionOnFunctionReference(FunctionReference x) {}
 
-    void performActionOnModifierReference(ModifierReference x);
+    default void performActionOnModifierReference(ModifierReference x) {}
 
-    void performActionOnTypeReference(TypeReference x);
+    default void performActionOnTypeReference(TypeReference x) {}
 
-    void performActionOnUnresolvedReferenceException(UnresolvedReferenceException x);
+    default void performActionOnUnresolvedReferenceException(UnresolvedReferenceException x) {}
 
-    void performActionOnBlock(Block x);
+    default void performActionOnBlock(Block x) {}
 
-    void performActionOnCatchClause(CatchClause catchClause);
+    default void performActionOnCatchClause(CatchClause catchClause) {}
 
-    void performActionOnContextStatementBlock(ContextStatementBlock x);
+    default void performActionOnContextStatementBlock(ContextStatementBlock x) {}
 
-    void performActionOnBreakStatement(BreakStatement x);
+    default void performActionOnBreakStatement(BreakStatement x) {}
 
-    void performActionOnConditionStatement(ConditionStatement x);
+    default void performActionOnConditionStatement(ConditionStatement x) {}
 
-    void performActionOnContinueStatement(ContinueStatement x);
+    default void performActionOnContinueStatement(ContinueStatement x) {}
 
-    void performActionOnDeclarationStatement(DeclarationStatement x);
+    default void performActionOnDeclarationStatement(DeclarationStatement x) {}
 
-    void performActionOnDoWhileStatement(DoWhileStatement x);
+    default void performActionOnDoWhileStatement(DoWhileStatement x) {}
 
-    void performActionOnExpressionStatement(ExpressionStatement x);
+    default void performActionOnExpressionStatement(ExpressionStatement x) {}
 
-    void performActionOnForStatement(ForStatement x);
+    default void performActionOnForStatement(ForStatement x) {}
 
-    void performActionOnForInit(ForInit x);
+    default void performActionOnForInit(ForInit x) {}
 
-    void performActionOnForUpdate(ForUpdate x);
+    default void performActionOnForUpdate(ForUpdate x) {}
 
-    void performActionOnPlaceholdStatement(PlaceholdStatement x);
+    default void performActionOnPlaceholdStatement(PlaceholdStatement x) {}
 
-    void performActionOnFunctionBodyStatement(FunctionBodyStatement x);
+    default void performActionOnFunctionBodyStatement(FunctionBodyStatement x) {}
 
-    void performActionOnReturnStatment(ReturnStatement x);
+    default void performActionOnReturnStatement(ReturnStatement x) {}
 
-    void performActionOnTryStatement(TryStatement x);
+    default void performActionOnTryStatement(TryStatement x) {}
 
-    void performActionOnWhileStatement(WhileStatement x);
+    default void performActionOnWhileStatement(WhileStatement x) {}
 
-    void performActionOnDataLocation(DataLocation x);
+    default void performActionOnDataLocation(DataLocation x) {}
 
-    void performActionOnAssignExpression(AssignExpression x);
+    default void performActionOnAssignExpression(AssignExpression x) {}
 
-    void performActionOnBinaryExpression(BinaryExpression x);
+    default void performActionOnBinaryExpression(BinaryExpression x) {}
 
-    void performActionOnOperator(Operator x);
+    default void performActionOnOperator(Operator x) {}
 
-    void performActionOnUnaryExpression(UnaryExpression x);
+    default void performActionOnUnaryExpression(UnaryExpression x) {}
 }

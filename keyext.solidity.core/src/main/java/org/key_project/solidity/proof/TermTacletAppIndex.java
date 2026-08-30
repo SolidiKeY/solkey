@@ -109,7 +109,7 @@ public class TermTacletAppIndex {
     /// constrainedFormula described by a PosInOccurrence
     ///
     /// @param pos the [PosInOccurrence] to focus
-    /// @param services the [Services] object encapsulating information about the Rust
+    /// @param services the [Services] object encapsulating information about the Solidity
     /// datastructures like (static)types etc.
     /// @return list of all possible instantiations
     private static ImmutableList<NoPosTacletApp> getRewriteTaclet(PosInOccurrence pos,
@@ -120,7 +120,8 @@ public class TermTacletAppIndex {
     /// collects all FindTaclets with instantiations for the given heuristics and position
     ///
     /// @param pos the PosInOccurrence to focus
-    /// @param services the Services object encapsulating information about the Rust datastructures
+    /// @param services the Services object encapsulating information about the Solidity
+    /// datastructures
     /// like (static)types etc.
     /// @return list of all possible instantiations
     private static ImmutableList<NoPosTacletApp> getFindTaclet(PosInOccurrence pos,
@@ -143,7 +144,8 @@ public class TermTacletAppIndex {
     /// @param pos the PosInOccurrence of the SequentFormula the taclets have to be connected to
     /// (pos
     /// must point to the top level formula, i.e. <tt>pos.isTopLevel()</tt> must be true)
-    /// @param services the Services object encapsulating information about the Rust datastructures
+    /// @param services the Services object encapsulating information about the Solidity
+    /// datastructures
     /// like (static)types etc.
     /// @return list of all possible instantiations
     private static ImmutableList<NoPosTacletApp> antecTaclet(PosInOccurrence pos,
@@ -156,7 +158,8 @@ public class TermTacletAppIndex {
     /// @param pos the PosInOccurrence of the SequentFormula the taclets have to be connected to
     /// (pos
     /// must point to the top level formula, i.e. <tt>pos.isTopLevel()</tt> must be true)
-    /// @param services the Services object encapsulating information about the Rust datastructures
+    /// @param services the Services object encapsulating information about the Solidity
+    /// datastructures
     /// like (static)types etc.
     /// @return list of all possible instantiations
     private static ImmutableList<NoPosTacletApp> succTaclet(PosInOccurrence pos,

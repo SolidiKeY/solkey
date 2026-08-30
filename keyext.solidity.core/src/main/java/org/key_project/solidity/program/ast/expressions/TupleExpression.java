@@ -13,10 +13,9 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
-import org.jspecify.annotations.NonNull;
 
 public class TupleExpression extends SolidityExpression {
-    private final @NonNull ImmutableArray<Expression> expressions;
+    private final ImmutableArray<Expression> expressions;
 
     public TupleExpression(Type type, List<Expression> expressions) {
         super(type);
@@ -31,10 +30,10 @@ public class TupleExpression extends SolidityExpression {
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         if (0 <= n && n < expressions.size())
             return Objects.requireNonNull(expressions.get(n));
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+        throw outOfBounds(n);
     }
 
     @Override
@@ -42,7 +41,7 @@ public class TupleExpression extends SolidityExpression {
         return expressions.size();
     }
 
-    public @NonNull Expression getExpression(int n) {
+    public Expression getExpression(int n) {
         return Objects.requireNonNull(expressions.get(n));
     }
 

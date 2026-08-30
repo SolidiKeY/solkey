@@ -9,6 +9,7 @@ import java.util.Iterator;
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Operator;
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.TermBuilder;
 import org.key_project.solidity.rule.metaconstruct.AbstractTermTransformer;
 import org.key_project.util.LRUCache;
 import org.key_project.util.collection.ImmutableList;
@@ -209,25 +210,23 @@ public class Polynomial {
     /// @param services the services object
     /// @return the resulting term
     public Term toTerm(Services services) {
-        final Operator add = services.getTheoryInfo().getIntLDT().getAdd();
+        final TermBuilder tb = services.getTermBuilder();
         Term res = null;
 
         final Iterator<Monomial> it = parts.iterator();
         if (it.hasNext()) {
             res = it.next().toTerm(services);
             while (it.hasNext()) {
-                res = services.getTermFactory().createTerm(add, res,
-                    it.next().toTerm(services));
+                res = tb.add(res, it.next().toTerm(services));
             }
         }
 
-        final Term cTerm = services.getTermBuilder().zTerm(constantPart.toString());
+        final Term cTerm = tb.zTerm(constantPart.toString());
 
         if (res == null) {
             res = cTerm;
         } else if (!BigInteger.ZERO.equals(constantPart)) {
-            res = services.getTermFactory().createTerm(add, cTerm,
-                res);
+            res = tb.add(cTerm, res);
         }
 
         return res;

@@ -6,6 +6,7 @@ package org.key_project.solidity.program.ast.visitor;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Objects;
+import java.util.function.Function;
 
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
@@ -25,23 +26,13 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
     protected static final Boolean CHANGED = Boolean.TRUE;
     protected final Deque<ExtList> stack = new ArrayDeque<>();
 
-    boolean preservesPositionInfo = true;
-
-    public CreatingASTVisitor(SolidityProgramElement root, boolean preservesPos,
-            Services services) {
+    public CreatingASTVisitor(SolidityProgramElement root, Services services) {
         super(root, services);
-        this.preservesPositionInfo = preservesPos;
-    }
-
-    public boolean preservesPositionInfo() {
-        return preservesPositionInfo;
     }
 
     @Override
     protected void walk(SolidityProgramElement node) {
-        ExtList l = new ExtList();
-        // l.add(node.getPositionInfo());
-        stack.push(l);
+        stack.push(new ExtList());
         super.walk(node);
     }
 
@@ -78,193 +69,91 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         }
     }
 
-    protected abstract class DefaultAction {
-        protected final SolidityProgramElement pe;
-
-        protected DefaultAction(SolidityProgramElement pe) {
-            this.pe = pe;
-        }
-
-        abstract SolidityProgramElement createNewElement(ExtList changeList);
-
-        public void doAction(SolidityProgramElement x) {
-            ExtList changeList = Objects.requireNonNull(stack.peek());
-            if (changeList.isEmpty()) {
-                doDefaultAction(x);
-                return;
-            }
-            if (changeList.getFirst() == CHANGED) {
-                changeList.removeFirst();
-                /*
-                 * if (!preservesPositionInfo) {
-                 * changeList.removeFirstOccurrence(PositionInfo.class);
-                 * }
-                 */
-                addNewChild(changeList);
-            } else {
-                doDefaultAction(x);
-            }
-        }
-
-        protected void addNewChild(ExtList changeList) {
-            addChild(createNewElement(changeList));
+    /// Pops the change list of `x` from the stack; if any child changed, replaces `x` by the
+    /// element the factory creates from the change list, otherwise keeps `x` unchanged.
+    protected void rebuild(SolidityProgramElement x,
+            Function<ExtList, SolidityProgramElement> factory) {
+        ExtList changeList = getTop();
+        if (!changeList.isEmpty() && changeList.getFirst() == CHANGED) {
+            changeList.removeFirst();
+            addChild(factory.apply(changeList));
             changed();
+        } else {
+            doDefaultAction(x);
         }
     }
 
     @Override
     public void performActionOnDataLocation(DataLocation x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return x;
-            }
-        };
-        def.doAction(x);
+        rebuild(x, changeList -> x);
     }
 
     @Override
     public void performActionOnStatementVariableDeclaration(StatementVariableDeclaration x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new StatementVariableDeclaration(changeList);
-            }
-        };
-        def.doAction(x);
+        rebuild(x, StatementVariableDeclaration::new);
     }
 
     @Override
     public void performActionOnElementaryExpression(ElementaryExpression x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ElementaryExpression(changeList);
-            }
-        };
-        def.doAction(x);
+        rebuild(x, ElementaryExpression::new);
     }
 
     @Override
     public void performActionOnFunctionCallExpression(FunctionCallExpression x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new FunctionCallExpression(changeList, x.getType());
-            }
-        };
-        def.doAction(x);
+        rebuild(x, changeList -> new FunctionCallExpression(changeList, x.getType()));
     }
 
     @Override
     public void performActionOnIndexExpression(IndexExpression x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new IndexExpression(changeList, x.getType());
-            }
-        };
-        def.doAction(x);
+        rebuild(x, changeList -> new IndexExpression(changeList, x.getType()));
     }
 
     @Override
     public void performActionOnIndexRangeExpression(IndexRangeExpression x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new IndexRangeExpression(changeList, x.getType());
-            }
-        };
-        def.doAction(x);
+        rebuild(x, changeList -> new IndexRangeExpression(changeList, x.getType()));
     }
 
     @Override
     public void performActionOnMemberExp(MemberExp x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                changeList.add(x.getType());
-                return new MemberExp(changeList);
-            }
-        };
-        def.doAction(x);
+        rebuild(x, changeList -> {
+            changeList.add(x.getType());
+            return new MemberExp(changeList);
+        });
     }
 
     @Override
     public void performActionOnTupleExpression(TupleExpression x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new TupleExpression(changeList);
-            }
-        };
-        def.doAction(x);
+        rebuild(x, TupleExpression::new);
     }
 
     @Override
     public void performActionOnNewExpression(NewExpression x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new NewExpression(x.getType());
-            }
-        };
-        def.doAction(x);
+        rebuild(x, changeList -> new NewExpression(x.getType()));
     }
 
     @Override
     public void performActionOnUnresolvedTypeException(UnresolvedTypeException x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new UnresolvedTypeException(changeList);
-            }
-        };
-        def.doAction(x);
+        rebuild(x, UnresolvedTypeException::new);
     }
 
     @Override
     public void performActionOnBoolLiteral(BoolLiteral x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new BoolLiteral(changeList);
-            }
-        };
-        def.doAction(x);
+        rebuild(x, BoolLiteral::new);
     }
 
     @Override
     public void performActionOnUint256Literal(Uint256Literal x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new Uint256Literal(changeList);
-            }
-        };
-        def.doAction(x);
+        rebuild(x, Uint256Literal::new);
     }
 
     @Override
     public void performActionOnAssignExpression(AssignExpression x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new AssignExpression(changeList);
-            }
-        };
-        def.doAction(x);
+        rebuild(x, AssignExpression::new);
     }
 
     @Override
     public void performActionOnBinaryExpression(BinaryExpression x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new BinaryExpression(changeList);
-            }
-        };
-        def.doAction(x);
+        rebuild(x, BinaryExpression::new);
     }
 
     @Override
@@ -274,278 +163,127 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
 
     @Override
     public void performActionOnUnaryExpression(UnaryExpression x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new UnaryExpression(changeList);
-            }
-        };
-        def.doAction(x);
+        rebuild(x, UnaryExpression::new);
     }
 
     @Override
     public void performActionOnTernaryExpression(TernaryExpression x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new TernaryExpression(changeList, x.getType());
-            }
-        };
-        def.doAction(x);
+        rebuild(x, changeList -> new TernaryExpression(changeList, x.getType()));
     }
 
     @Override
     public void performActionOnContractReference(ContractReference x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ContractReference(x.getContractDeclaration(), x.getType(), x.id);
-            }
-        };
-        def.doAction(x);
+        rebuild(x,
+            changeList -> new ContractReference(x.getContractDeclaration(), x.getType(), x.id));
     }
 
     @Override
     public void performActionOnEnumReference(EnumReference x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new EnumReference(changeList, x.getType());
-            }
-        };
-        def.doAction(x);
+        rebuild(x, changeList -> new EnumReference(changeList, x.getType()));
     }
 
     @Override
     public void performActionOnFieldReference(FieldReference x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new FieldReference(changeList, x.getType());
-            }
-        };
-        def.doAction(x);
+        rebuild(x, changeList -> new FieldReference(changeList, x.getType()));
     }
 
     @Override
     public void performActionOnFunctionReference(FunctionReference x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new FunctionReference(x.referencedDeclaration, x.getType());
-            }
-        };
-        def.doAction(x);
+        rebuild(x, changeList -> new FunctionReference(x.getReferencedDeclaration(), x.getType()));
     }
 
     @Override
     public void performActionOnModifierReference(ModifierReference x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ModifierReference(x.name);
-            }
-        };
-        def.doAction(x);
+        rebuild(x, changeList -> new ModifierReference(x.name));
     }
 
     @Override
     public void performActionOnTypeReference(TypeReference x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new TypeReference(x.referencedType);
-            }
-        };
-        def.doAction(x);
+        rebuild(x, changeList -> new TypeReference(x.getReferencedType()));
     }
 
     @Override
     public void performActionOnUnresolvedReferenceException(UnresolvedReferenceException x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new UnresolvedReferenceException();
-            }
-        };
-        def.doAction(x);
+        rebuild(x, changeList -> new UnresolvedReferenceException());
     }
 
     @Override
     public void performActionOnBlock(Block x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new Block(changeList);
-            }
-        };
-        def.doAction(x);
+        rebuild(x, Block::new);
     }
 
     @Override
-    public void performActionOnContextStatementBlock(
-            ContextStatementBlock x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ContextStatementBlock(changeList);
-            }
-        };
-        def.doAction(x);
+    public void performActionOnContextStatementBlock(ContextStatementBlock x) {
+        rebuild(x, ContextStatementBlock::new);
     }
 
     @Override
     public void performActionOnCatchClause(CatchClause x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new CatchClause(changeList);
-            }
-        };
-        def.doAction(x);
+        rebuild(x, CatchClause::new);
     }
-
 
     @Override
     public void performActionOnBreakStatement(BreakStatement x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new BreakStatement();
-            }
-        };
-        def.doAction(x);
+        rebuild(x, changeList -> new BreakStatement());
     }
 
     @Override
     public void performActionOnConditionStatement(ConditionStatement x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ConditionStatement(changeList);
-            }
-        };
-        def.doAction(x);
+        rebuild(x, ConditionStatement::new);
     }
 
     @Override
     public void performActionOnContinueStatement(ContinueStatement x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ContinueStatement();
-            }
-        };
-        def.doAction(x);
+        rebuild(x, changeList -> new ContinueStatement());
     }
 
     @Override
     public void performActionOnDeclarationStatement(DeclarationStatement x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new DeclarationStatement(changeList);
-            }
-        };
-        def.doAction(x);
+        rebuild(x, DeclarationStatement::new);
     }
 
     @Override
     public void performActionOnDoWhileStatement(DoWhileStatement x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new DoWhileStatement(changeList);
-            }
-        };
-        def.doAction(x);
+        rebuild(x, DoWhileStatement::new);
     }
 
     @Override
     public void performActionOnExpressionStatement(ExpressionStatement x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ExpressionStatement(changeList);
-            }
-        };
-        def.doAction(x);
+        rebuild(x, ExpressionStatement::new);
     }
 
     @Override
     public void performActionOnForStatement(ForStatement x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ForStatement(changeList);
-            }
-        };
-        def.doAction(x);
+        rebuild(x, ForStatement::new);
     }
 
     @Override
     public void performActionOnForInit(ForInit x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ForInit(changeList);
-            }
-        };
-        def.doAction(x);
+        rebuild(x, ForInit::new);
     }
 
     @Override
     public void performActionOnForUpdate(ForUpdate x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ForUpdate(changeList);
-            }
-        };
-        def.doAction(x);
+        rebuild(x, ForUpdate::new);
     }
 
     @Override
     public void performActionOnPlaceholdStatement(PlaceholdStatement x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new PlaceholdStatement();
-            }
-        };
-        def.doAction(x);
+        rebuild(x, changeList -> new PlaceholdStatement());
     }
 
     @Override
-    public void performActionOnReturnStatment(ReturnStatement x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new ReturnStatement(changeList);
-            }
-        };
-        def.doAction(x);
+    public void performActionOnReturnStatement(ReturnStatement x) {
+        rebuild(x, ReturnStatement::new);
     }
 
     @Override
     public void performActionOnTryStatement(TryStatement x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new TryStatement(changeList);
-            }
-        };
-        def.doAction(x);
+        rebuild(x, TryStatement::new);
     }
 
     @Override
     public void performActionOnWhileStatement(WhileStatement x) {
-        DefaultAction def = new DefaultAction(x) {
-            @Override
-            SolidityProgramElement createNewElement(ExtList changeList) {
-                return new WhileStatement(changeList);
-            }
-        };
-        def.doAction(x);
+        rebuild(x, WhileStatement::new);
     }
 }

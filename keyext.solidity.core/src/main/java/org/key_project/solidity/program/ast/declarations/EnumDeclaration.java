@@ -11,7 +11,6 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.util.collection.ImmutableArray;
 
-import org.jspecify.annotations.NonNull;
 
 public class EnumDeclaration implements Declaration, Type {
     private final ImmutableArray<MemberEnumDeclaration> members;
@@ -38,7 +37,7 @@ public class EnumDeclaration implements Declaration, Type {
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         return members.get(n);
     }
 

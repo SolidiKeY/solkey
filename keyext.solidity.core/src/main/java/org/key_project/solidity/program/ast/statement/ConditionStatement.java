@@ -10,18 +10,17 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public class ConditionStatement implements Statement {
-    Expression condition;
-    Statement thenBody;
-    @Nullable
-    Statement elseBody;
+    private final Expression condition;
+    private final Statement thenBody;
+    private final @Nullable Statement elseBody;
 
     public ConditionStatement(Expression condition, Statement thenBody) {
         this.condition = condition;
         this.thenBody = thenBody;
+        this.elseBody = null;
     }
 
     public ConditionStatement(Expression condition, Statement thenBody, Statement elseBody) {
@@ -37,15 +36,14 @@ public class ConditionStatement implements Statement {
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         return switch (n) {
             case 0 -> condition;
             case 1 -> thenBody;
             default -> {
                 if (getChildCount() == 3 && n == 2)
                     yield Objects.requireNonNull(elseBody);
-                throw new IndexOutOfBoundsException(
-                    "Index should be 0 <= " + n + " < " + getChildCount());
+                throw outOfBounds(n);
             }
         };
     }

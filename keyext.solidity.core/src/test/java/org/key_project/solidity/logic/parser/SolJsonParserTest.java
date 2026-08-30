@@ -1136,7 +1136,7 @@ public class SolJsonParserTest {
         assertSame(VOID, revertCall.getType());
         assertEquals(0, revertCall.getArguments().size());
         FunctionReference revertRef = (FunctionReference) revertCall.getFunctionExp();
-        assertEquals("revert", revertRef.referencedDeclaration.name().toString());
+        assertEquals("revert", revertRef.getReferencedDeclaration().name().toString());
         assertSame(VOID, revertRef.getType());
     }
 
@@ -1423,12 +1423,12 @@ public class SolJsonParserTest {
         FunctionReference fRef =
             (FunctionReference) ((FunctionCallExpression) ((ExpressionStatement) contractDec
                     .getFunctions().getFirst().getBody().getStatements()
-                    .get(0)).getExpression()).functionExp;
+                    .get(0)).getExpression()).getFunctionExp();
         Type type = fRef.getType();
         assertSame(VOID, type);
 
         FunctionDeclaration selfF = contractDec.getFunctions().getFirst();
-        FunctionDeclaration refDecl = fRef.referencedDeclaration;
+        FunctionDeclaration refDecl = fRef.getReferencedDeclaration();
         assertSame(selfF, refDecl);
         assertSame(Public, selfF.getVisibility());
         assertSame(nonpayable, selfF.getStateMutability());
@@ -1651,7 +1651,7 @@ public class SolJsonParserTest {
         FieldDeclaration accountField = (FieldDeclaration) innerMember.getRightExp();
         assertEquals("account", accountField.name().toString());
         assertEquals("Account",
-            accountField.getTypeReference().referencedType.name().toString());
+            accountField.getTypeReference().getReferencedType().name().toString());
 
         // Right-hand side literal value 10
         Uint256Literal rhs = (Uint256Literal) assignExpr.getRight();

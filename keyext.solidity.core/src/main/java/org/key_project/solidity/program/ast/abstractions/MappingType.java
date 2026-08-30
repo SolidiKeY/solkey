@@ -7,7 +7,6 @@ package org.key_project.solidity.program.ast.abstractions;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 
-import org.jspecify.annotations.NonNull;
 
 public class MappingType implements Type {
     private final Name name;
@@ -21,7 +20,7 @@ public class MappingType implements Type {
     }
 
     @Override
-    public @NonNull Name name() {
+    public Name name() {
         return name;
     }
 
@@ -31,12 +30,13 @@ public class MappingType implements Type {
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         if (n == 0)
             return keyType;
         else if (n == 1)
             return valueType;
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+        throw new IndexOutOfBoundsException(
+            "Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

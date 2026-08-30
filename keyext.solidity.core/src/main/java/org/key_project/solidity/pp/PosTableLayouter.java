@@ -122,12 +122,12 @@ public class PosTableLayouter extends Layouter<PosTableLayouter.Mark> {
 
     /// Called before java block is printed and marks current position.
     public void markStartSolidityBlock() {
-        mark(MarkType.MARK_START_RUSTY_BLOCK);
+        mark(MarkType.MARK_START_SOLIDITY_BLOCK);
     }
 
     /// Called after java block is printed and marks current position.
     public void markEndSolidityBlock() {
-        mark(MarkType.MARK_END_RUSTY_BLOCK);
+        mark(MarkType.MARK_END_SOLIDITY_BLOCK);
     }
 
     /// Called after keyword is printed and marks current position.
@@ -185,9 +185,9 @@ public class PosTableLayouter extends Layouter<PosTableLayouter.Mark> {
         /// Mark the end of a keyword.
         MARK_END_KEYWORD,
         /// Mark the beginning of a java block.
-        MARK_START_RUSTY_BLOCK,
+        MARK_START_SOLIDITY_BLOCK,
         /// Mark the end of a java block.
-        MARK_END_RUSTY_BLOCK,
+        MARK_END_SOLIDITY_BLOCK,
     }
 
     public record Mark(MarkType type, int parameter) {
@@ -233,7 +233,7 @@ public class PosTableLayouter extends Layouter<PosTableLayouter.Mark> {
         private final ArrayDeque<Integer> keywordStarts = new ArrayDeque<>();
 
         /// Remembers the start of a java block to create a range.
-        private final ArrayDeque<Integer> javaBlockStarts = new ArrayDeque<>();
+        private final ArrayDeque<Integer> solidityBlockStarts = new ArrayDeque<>();
 
         PosTableStringBackend() {}
 
@@ -310,9 +310,9 @@ public class PosTableLayouter extends Layouter<PosTableLayouter.Mark> {
                 case MARK_START_KEYWORD -> keywordStarts.push(count());
                 case MARK_END_KEYWORD -> initPosTbl
                         .addKeywordRange(new Range(keywordStarts.pop(), count()));
-                case MARK_START_RUSTY_BLOCK -> javaBlockStarts.push(count());
-                case MARK_END_RUSTY_BLOCK -> initPosTbl
-                        .addJavaBlockRange(new Range(javaBlockStarts.pop(), count()));
+                case MARK_START_SOLIDITY_BLOCK -> solidityBlockStarts.push(count());
+                case MARK_END_SOLIDITY_BLOCK -> initPosTbl
+                        .addSolidityBlockRange(new Range(solidityBlockStarts.pop(), count()));
                 default -> {
                 } // LOGGER.error("Unexpected mark: {}", markType);
             }

@@ -10,7 +10,6 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 // v[0:2]
@@ -36,7 +35,7 @@ public class IndexRangeExpression extends SolidityExpression {
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         if (n == 0)
             return baseExp;
         n--;
@@ -50,7 +49,7 @@ public class IndexRangeExpression extends SolidityExpression {
                 return endExp;
             n--;
         }
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+        throw outOfBounds(n);
     }
 
     @Override

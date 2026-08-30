@@ -13,11 +13,10 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public class DeclarationStatement implements Statement {
-    private final @NonNull ImmutableArray<Declaration> declarations;
+    private final ImmutableArray<Declaration> declarations;
     private final @Nullable Expression initialValue;
 
     public DeclarationStatement(List<Declaration> declarations, Expression initialValue) {
@@ -31,16 +30,14 @@ public class DeclarationStatement implements Statement {
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         if (n < 0 || n >= getChildCount())
-            throw new IndexOutOfBoundsException(
-                "Index should be 0 <= " + n + " < " + getChildCount());
+            throw outOfBounds(n);
         if (n < declarations.size())
             return declarations.get(n);
         if (initialValue != null)
             return initialValue;
-        throw new IndexOutOfBoundsException(
-            "Index should be 0 <= " + n + " < " + getChildCount());
+        throw outOfBounds(n);
     }
 
     @Override
@@ -48,7 +45,7 @@ public class DeclarationStatement implements Statement {
         return declarations.size() + (initialValue == null ? 0 : 1);
     }
 
-    public @NonNull ImmutableArray<Declaration> getDeclarations() {
+    public ImmutableArray<Declaration> getDeclarations() {
         return declarations;
     }
 

@@ -15,7 +15,8 @@ public record SolidityBlock(SolidityProgramElement program) implements Program {
     @Override
     public @NonNull SyntaxElement getChild(int n) {
         if (n == 0) return program;
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+        throw new IndexOutOfBoundsException(
+                "Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

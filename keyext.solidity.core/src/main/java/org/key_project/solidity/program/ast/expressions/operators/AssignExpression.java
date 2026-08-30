@@ -7,22 +7,19 @@ import java.util.Objects;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
-import org.key_project.solidity.program.ast.SourceData;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
-import org.key_project.solidity.rule.matching.inst.MatchConditions;
 import org.key_project.util.ExtList;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public final class AssignExpression
         implements SolidityProgramElement, Expression, OperatorExpression {
 
-    private final @NonNull Operator operator;
-    private final @NonNull Expression lhs;
-    private final @NonNull Expression rhs;
+    private final Operator operator;
+    private final Expression lhs;
+    private final Expression rhs;
     private int hashcode = -1;
 
     public AssignExpression(Operator operator, Expression lhs, Expression rhs) {
@@ -43,13 +40,12 @@ public final class AssignExpression
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         return switch (n) {
             case 0 -> operator;
             case 1 -> lhs;
             case 2 -> rhs;
-            default -> throw new IndexOutOfBoundsException(
-                "Index should be 0 <= " + n + " < " + getChildCount());
+            default -> throw outOfBounds(n);
         };
     }
 
@@ -63,9 +59,9 @@ public final class AssignExpression
         v.performActionOnAssignExpression(this);
     }
 
-    public @NonNull Expression getLeft() { return lhs; }
+    public Expression getLeft() { return lhs; }
 
-    public @NonNull Expression getRight() { return rhs; }
+    public Expression getRight() { return rhs; }
 
     @Override
     public Operator getOperator() {
@@ -95,32 +91,4 @@ public final class AssignExpression
         return hashcode;
     }
 
-    @Override
-    public @Nullable MatchConditions match(SourceData sourceData, @Nullable MatchConditions mc) {
-        final var src = sourceData.getSource();
-
-        if (src == null)
-            return null;
-
-        // Check class type
-        if (!(src instanceof AssignExpression that)) {
-            return null;
-        }
-
-        // CRITICAL FIX: Check operator matches
-        if (!this.operator.equals(that.operator)) {
-            return null;
-        }
-
-        // Match children
-        final SourceData newSource = new SourceData(src, 0, sourceData.getServices());
-        mc = matchChildren(newSource, mc, 0);
-
-        if (mc == null) {
-            return null;
-        }
-
-        sourceData.next();
-        return mc;
-    }
 }

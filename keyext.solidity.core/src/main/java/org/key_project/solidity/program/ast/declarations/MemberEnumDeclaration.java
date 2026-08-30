@@ -6,23 +6,23 @@ package org.key_project.solidity.program.ast.declarations;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 
-import org.jspecify.annotations.NonNull;
 
 public class MemberEnumDeclaration implements Declaration {
 
-    public @NonNull Name getName() {
+    public Name getName() {
         return name;
     }
 
-    private final @NonNull Name name;
+    private final Name name;
 
-    public MemberEnumDeclaration(@NonNull Name name) {
+    public MemberEnumDeclaration(Name name) {
         this.name = name;
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+    public SyntaxElement getChild(int n) {
+        throw new IndexOutOfBoundsException(
+            "Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

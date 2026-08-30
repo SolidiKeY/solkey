@@ -6,16 +6,20 @@ package org.key_project.solidity.rule.sv.sort;
 import org.key_project.logic.Name;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
-import org.key_project.solidity.program.ast.expressions.Expression;
 
-public class ExpressionSVSort extends ProgramSVSort {
+/// Program schema variable sort whose match condition is a plain instance-of check against a
+/// single program element class.
+final class ClassSVSort extends ProgramSVSort {
 
-    public ExpressionSVSort() {
-        super(new Name("Expression"));
+    private final Class<?> matchedClass;
+
+    ClassSVSort(String name, Class<?> matchedClass) {
+        super(new Name(name));
+        this.matchedClass = matchedClass;
     }
 
     @Override
     public boolean canStandFor(SolidityProgramElement pe, Services services) {
-        return pe instanceof Expression;
+        return matchedClass.isInstance(pe);
     }
 }

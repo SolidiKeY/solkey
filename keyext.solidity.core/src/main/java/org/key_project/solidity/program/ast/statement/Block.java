@@ -15,35 +15,29 @@ import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.checkerframework.checker.initialization.qual.UnknownInitialization;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public class Block implements Statement, ProgramPrefix {
 
-    private final @NonNull ImmutableArray<Statement> statements;
+    private final ImmutableArray<Statement> statements;
     private final int prefixLength;
     private int hashcode = -1;
 
     public Block(ImmutableArray<Statement> statements) {
         this.statements = statements;
-        ProgramPrefixUtil.ProgramPrefixInfo info = ProgramPrefixUtil.computeEssentials(this);
-        prefixLength = info.length();
+        prefixLength = ProgramPrefixUtil.computeEssentials(this).length();
     }
 
     public Block(List<Statement> statements) {
-        this.statements = new ImmutableArray<>(statements);
-        ProgramPrefixUtil.ProgramPrefixInfo info = ProgramPrefixUtil.computeEssentials(this);
-        prefixLength = info.length();
+        this(new ImmutableArray<>(statements));
     }
 
     public Block(ExtList children) {
-        this.statements = new ImmutableArray<>(children.collect(Statement.class));
-        ProgramPrefixUtil.ProgramPrefixInfo info = ProgramPrefixUtil.computeEssentials(this);
-        prefixLength = info.length();
+        this(new ImmutableArray<>(children.collect(Statement.class)));
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         return statements.get(n);
     }
 
@@ -58,14 +52,14 @@ public class Block implements Statement, ProgramPrefix {
 
     @Override
     public String toString() {
-        String body = "{\n";
+        StringBuilder body = new StringBuilder("{\n");
         for (Statement statement : statements) {
-            body += statement.toString() + "\n";
+            body.append(statement).append("\n");
         }
-        return body + "}\n";
+        return body.append("}\n").toString();
     }
 
-    public @NonNull ImmutableArray<Statement> getStatements() { return statements; }
+    public ImmutableArray<Statement> getStatements() { return statements; }
 
     // These prefix queries run via computeEssentials(this) from the constructor, where the receiver
     // is only @UnknownInitialization; `statements` is already assigned at that point, so the calls

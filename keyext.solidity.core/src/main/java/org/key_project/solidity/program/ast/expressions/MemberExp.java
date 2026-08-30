@@ -14,14 +14,12 @@ import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public class MemberExp extends SolidityExpression implements Resolver {
-    final Expression leftExp;
-    @Nullable
-    SyntaxElement rightExp;
-    final int id;
+    private final Expression leftExp;
+    private @Nullable SyntaxElement rightExp;
+    private final int id;
 
     public MemberExp(Expression leftExp, SyntaxElement rightExp, Type type) {
         super(type);
@@ -50,9 +48,9 @@ public class MemberExp extends SolidityExpression implements Resolver {
         }
         for (Object child : children) {
             if (child instanceof FieldDeclaration fd) {
-                var tref = fd.getTypeReference();
-                if (tref.referencedType != null) {
-                    return tref.referencedType;
+                Type referencedType = fd.getTypeReference().getReferencedType();
+                if (referencedType != null) {
+                    return referencedType;
                 }
             }
         }
@@ -73,7 +71,7 @@ public class MemberExp extends SolidityExpression implements Resolver {
     @Override
     public Type getType() {
         if (rightExp instanceof FieldDeclaration fd) {
-            Type referencedType = fd.getTypeReference().referencedType;
+            Type referencedType = fd.getTypeReference().getReferencedType();
             if (referencedType != null) {
                 return referencedType;
             }
@@ -88,12 +86,12 @@ public class MemberExp extends SolidityExpression implements Resolver {
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         if (n == 0)
             return leftExp;
         if (n == 1 && rightExp != null)
             return rightExp;
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+        throw outOfBounds(n);
     }
 
     @Override

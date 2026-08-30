@@ -123,7 +123,7 @@ public class TacletBuilderManipulators {
 
             }
         };
-    public static final AbstractTacletBuilderCommand NEW_RUSTY_TYPE =
+    public static final AbstractTacletBuilderCommand NEW_SOLIDITY_TYPE =
         new AbstractTacletBuilderCommand("new", SV, KST) {
             @Override
             public void apply(TacletBuilder<?> tacletBuilder, Object[] arguments,
@@ -312,7 +312,7 @@ public class TacletBuilderManipulators {
             FREE_1, FREE_2, FREE_3, FREE_4,
             FREE_5, EQUAL_UNIQUE,
             DROP_EFFECTLESS_ELEMENTARIES, SIMPLIFY_ITE_UPDATE,
-            NEW_TYPE_OF, NEW_RUSTY_TYPE,
+            NEW_TYPE_OF, NEW_SOLIDITY_TYPE,
             IS_SUBTYPE, SAME, HAS_SORT, HAS_FIELD_SORT, HAS_MEMORY_FIELD_SORT, HAS_ELEMENT_SORT,
             HAS_MEMORY_ELEMENT_SORT,
             NEW_LOCAL_VARS, HAS_INVARIANT, GET_INVARIANT, GET_VARIANT, SAME_AS_TERM);

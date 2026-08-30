@@ -22,9 +22,9 @@ import org.key_project.solidity.proof.io.RuleSource;
 
 public abstract class AbstractFileRepo implements FileRepo {
 
-    /// This matcher matches *.java files.
-    protected static final PathMatcher RUST_MATCHER =
-        FileSystems.getDefault().getPathMatcher("glob:**.rs");
+    /// This matcher matches *.sol files.
+    protected static final PathMatcher SOLIDITY_MATCHER =
+        FileSystems.getDefault().getPathMatcher("glob:**.sol");
 
     /// A matcher matches *.key and *.proof files.
     protected static final PathMatcher KEY_MATCHER =
