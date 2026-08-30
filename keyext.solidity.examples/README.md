@@ -87,8 +87,15 @@ Miss one and the proof closes on the out-of-bounds revert branch without checkin
 | Natspec tag | Effect |
 |---|---|
 | `/// @custom:key box` | box modality — `require` becomes an assumption |
+| `/// @custom:key checked` | checked (solc ≥ 0.8) arithmetic — proves under `\withOptions intRules:soliditySemantics;`, so out-of-range results revert |
 
 `@custom:` is solc's extension prefix; any other tag is rejected as invalid documentation.
+
+A checked function still reasons over unbounded logic ints for its inputs: `require` both
+bounds of every parameter the arithmetic relies on (`require(x >= 0 && x <= 100)` — the lower
+bound too, even for `uint`). The `checked*` functions of `TestSuite.sol` are the reference
+examples: each `*Reverts` function closes in box exactly because the overflowing operation
+reverts, and each `*InRange` one shows the guard discharging.
 
 ## Known gaps
 

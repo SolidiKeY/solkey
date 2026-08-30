@@ -19,6 +19,7 @@ import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.MemoryReferenceTypes;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
+import org.key_project.solidity.program.ast.abstractions.StorageReferenceTypes;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
@@ -38,6 +39,7 @@ import org.key_project.solidity.program.ast.references.TypeReference;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.program.ext.ContextStatementBlock;
 import org.key_project.solidity.program.parser.ParserUtils;
+import org.key_project.solidity.program.parser.SolidityParseException;
 import org.key_project.solidity.rule.metaconstruct.ExpandFunctionBody;
 import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.util.collection.ImmutableArray;
@@ -170,7 +172,12 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         String operator = ctx.children.get(1).toString();
         Expression left = exps.get(0);
         Expression right = exps.get(1);
-        return ParserUtils.parseAllBinary(left, right, operator);
+        try {
+            return ParserUtils.parseAllBinary(left, right, operator);
+        } catch (SolidityParseException e) {
+            reportError(e.getMessage(), ctx.start);
+            return null; // unreachable: reportError always throws
+        }
     }
 
     public Expression visitExpression(ExpressionContext ctx) {
@@ -496,6 +503,10 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         }
 
         DataLocation dataLocation = (DataLocation) visitStorageLocation(ctx.storageLocation());
+        if (dataLocation == DataLocation.Memory
+                && StorageReferenceTypes.containsMapping((KeYSolidityType) type)) {
+            reportError(ParserUtils.MEMORY_MAPPING_ERROR, ctx.start);
+        }
         KeYSolidityType kst = asLocalVariableType((KeYSolidityType) type, dataLocation);
         ProgramVariable programVariable =
             new ProgramVariable(new Name(ctx.identifier().Identifier().getText()),

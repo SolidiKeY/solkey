@@ -11,9 +11,9 @@ import org.key_project.logic.Name;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.StaticTypes;
 import org.key_project.solidity.program.ast.abstractions.ArrayType;
 import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
-import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.MappingType;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.abstractions.StorageReferenceTypes;
@@ -21,7 +21,6 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.declarations.StructDeclaration;
-import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
 import org.key_project.solidity.program.ast.expressions.IndexExpression;
 import org.key_project.solidity.program.ast.expressions.MemberExp;
@@ -242,29 +241,11 @@ final class PathSVSort extends ProgramSVSort {
     }
 
     private static Type typeOf(SolidityProgramElement pe) {
-        if (!(pe instanceof Expression expression)) {
-            return null;
-        }
-        if (pe instanceof IndexExpression index) {
-            Type baseType = typeOf(index.getLeftExp());
-            if (baseType instanceof DynamicArrayType arrayType) {
-                return unwrap(arrayType.getElementType());
-            }
-            if (baseType instanceof ArrayType arrayType) {
-                return unwrap(arrayType.getElementType());
-            }
-            if (baseType instanceof MappingType mappingType) {
-                return unwrap(mappingType.valueType());
-            }
-        }
-        return unwrap(expression.getType());
+        return StaticTypes.typeOf(pe);
     }
 
     private static Type unwrap(Type type) {
-        if (type instanceof KeYSolidityType keyType && keyType.getSolidityType() != null) {
-            return keyType.getSolidityType();
-        }
-        return type;
+        return StaticTypes.unwrap(type);
     }
 
     private static final class PathFilters {

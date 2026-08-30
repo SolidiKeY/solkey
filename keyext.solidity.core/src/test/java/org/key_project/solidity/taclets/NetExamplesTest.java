@@ -20,9 +20,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /// Runs the `net` ledger examples — the `.key` problems of `keyext.solidity.examples/net/`
 /// covering `msg.sender`/`msg.value`, `.transfer` under both `transferSemantics` choices, and
 /// the contract-invariant-at-transfer obligations (`CInv` via a per-problem `insertCInv`
-/// taclet, `docs/net.md`). They stay `.key`-based because `SolJSONParser` parses neither
-/// `msg.*` nor `.transfer`, and the synthesized `.sol` obligations cannot carry an invariant
-/// or a taclet option.
+/// taclet, `docs/net.md`). They stay `.key`-based because the synthesized `.sol` obligations
+/// cannot carry an invariant, an antecedent (e.g. on `selfBalance`), or the
+/// `transferSemantics` taclet option; the program bodies themselves load from the `.sol`
+/// beside each problem via `\programSource`.
 public class NetExamplesTest {
 
     @ParameterizedTest(name = "{0}")

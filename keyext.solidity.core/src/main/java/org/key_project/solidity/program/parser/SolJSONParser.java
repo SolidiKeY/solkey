@@ -482,6 +482,10 @@ public class SolJSONParser {
         KeYSolidityType ksType = getOrCreateKeYSolidityType(type);
         DataLocation dataLocation =
             DataLocation.fromString(declaration.get("storageLocation").asString());
+        if (dataLocation == DataLocation.Memory
+                && StorageReferenceTypes.containsMapping(type)) {
+            throw new SolidityParseException(ParserUtils.MEMORY_MAPPING_ERROR, declaration);
+        }
         ProgramVariable programVariable = new ProgramVariable(name,
             MemoryReferenceTypes.asLocalVariableType(ksType, dataLocation, services), dataLocation);
         Declaration decl = new StatementVariableDeclaration(programVariable);

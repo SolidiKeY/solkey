@@ -8,6 +8,10 @@ package org.key_project.solidity.parser;
 }
 
 SAME_AS_TERM   : '\\sameAsTerm';
+TYPE_BOUNDS : '\\typeBounds';
+SIGNED_TYPE_BOUNDS : '\\signedTypeBounds';
+FIELD_TYPE_BOUNDS : '\\fieldTypeBounds';
+ELEMENT_TYPE_BOUNDS : '\\elementTypeBounds';
 HAS_FIELD_SORT: '\\hasFieldSort';
 HAS_MEMORY_FIELD_SORT: '\\hasMemoryFieldSort';
 HAS_ELEMENT_SORT: '\\hasElementSort';

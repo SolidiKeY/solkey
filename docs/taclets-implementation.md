@@ -87,6 +87,13 @@ rules before a terminal rule fires.
   `memoryLocalDeclInitDrop` (one per location) drop a declaration-with-
   initializer to the plain assignment and register the variable;
   `storageLocalDeclSkip` / `valueDeclSkip` consume bare declarations.
+- Mapping-carrying copies are rejected at the front end, not by the rules:
+  solc ≥ 0.7 refuses assignments whose target type transitively contains a
+  mapping, so `ParserUtils.parseAssignmentMaybe` throws for them (both parse
+  paths; storage-pointer rebinds `lp = sp` stay legal), and both parsers
+  reject `memory` declarations of mapping-carrying types
+  (`StorageReferenceTypes.containsMapping`). The copy taclets themselves stay
+  unconditional — the illegal program shapes never reach them.
 
 ### Increment / decrement (`++`/`--`, pre/post, plain and `result = …`)
 Direct storage updates (no program-level desugaring), e.g. `++age;` ⇝
@@ -101,7 +108,9 @@ the AST node class) so `+=` does not match `=`.
 `+=`, `-=`, `*=`, `/=`, `%=` at root / field / index, each with a terminal and a
 `_unfold_leftFst` for complex receivers: `storage{Root,Field,Index}{Add,Sub,Mul,Div,Mod}Assign`.
 `/=` and `%=` guard with `\if(se != 0)\then(…)\else(revert)`; no overflow branch
-(matches `+`). Bitwise `&= |= ^= <<= >>=` parse but are deferred (no bitwise LDT).
+under the default option (matches `+`; see §Checked arithmetic for the
+`intRules:soliditySemantics` twins). Bitwise `&= |= ^= <<= >>=` parse but are
+deferred (no bitwise LDT).
 
 ### Tier-1 expression operators
 Mirror the `+`/`==` families: terminal assigns the logic-level result, non-simple
@@ -110,7 +119,8 @@ operands are captured by `_unfold_left/right` (arith) or `…CaptureLhs/Rhs`
 are gone — a non-simple write target is now served by the per-statement RHS
 captures (§Capture partition below), which also cover nested RHS like
 `total = x + y*z;`. Uses plain LDT ops (`sub`, `mul`, `div`, `mod`, `pow`,
-`neg`), so no overflow branch; `/` and `%` revert on a zero denominator.
+`neg`), so no overflow branch under the default option (see §Checked
+arithmetic); `/` and `%` revert on a zero denominator.
 - Arithmetic: `-`, `*`, `**` (`pow`), `/`, `%`.
 - Relational: `!=`, `<`, `>`, `<=`, `>=` (predicate map `lt/leq/gt/geq`).
 - Logical / unary: `&&`, `||`, `!`, unary `-x`. A non-simple left operand is
@@ -133,8 +143,45 @@ captures (§Capture partition below), which also cover nested RHS like
   the sequent-level `ifElseSplit`, and a formula-level `\if` variant tried here
   made `additionStorageWrite` diverge past 10k nodes
   (examples `ternaryCaptureCond` / `ternarySplit`).
-- Deferred: bitwise (`& | ^ << >> ~`), unary `+` (removed in Solidity ≥0.5),
-  checked-arith overflow.
+- Deferred: bitwise (`& | ^ << >> ~`), unary `+` (removed in Solidity ≥0.5).
+  Checked-arith overflow is implemented as the opt-in
+  `intRules:soliditySemantics` twins (§Checked arithmetic).
+
+### Checked arithmetic (`intRules:soliditySemantics`)
+solc ≥ 0.8 semantics as an opt-in taclet choice. The 58 unguarded terminal
+arithmetic rules (6 binop terminals incl. unary minus, 24 storage inc/dec,
+12 local inc/dec, 16 compound assigns) carry a per-taclet
+`(intRules:ignoreOverFlow)` gate, and each has a `*Checked` twin under
+`(intRules:soliditySemantics)` whose result is guarded by
+`\if(minV <= r & r <= maxV)` with `\else(revert())` — the calculus image of
+Panic 0x11. The bounds are `\term int` schema variables bound at match time by
+the `TypeBoundsCondition` varconds (`\typeBounds(v, minV, maxV)` for the
+target's own declared type, `\signedTypeBounds` restricting to signed types,
+`\fieldTypeBounds` for a matched field, `\elementTypeBounds` for an indexed
+receiver's element type), fed by `PrimitiveType.minValue()/maxValue()` — one
+rule per operation covers every integer width (`uint8` … `int256`). Details:
+
+- Binops check at the LHS variable's type (capture variables are typed by
+  `\newTypeOf` from the LHS, and `BinaryExpression.getType()` is the left
+  operand's type — solc's rule). Known delta: a narrow operation assigned to a
+  wider target is checked at the wide type.
+- Unary minus uses `\signedTypeBounds`: no checked rule fires for `-x` on a
+  uint (solc rejects it at compile time), so that shape is stuck under the
+  option and unchanged under the default.
+- Division twins conjoin the zero guard: `\if(se2 != 0 & minV <= … <= maxV)`;
+  the range conjunct also covers solc's `int.min / -1` panic.
+- Modulo stays unchecked in both semantics: its magnitude is below the
+  divisor's, and solc defines `int.min % -1 == 0` without a panic.
+- Plain assignment (`localValueAssign`) stays unguarded: solc checks
+  assignment convertibility at compile time, not at runtime.
+- Function parameters and storage reads remain unbounded logic ints — the PO
+  does not assume in-range inputs, so checked examples must pin ranges with
+  `require` (both bounds for uint: `require(x >= 0 && x <= 100)`).
+
+Opt in per `.key` problem with `\withOptions intRules:soliditySemantics;`, or
+per `.sol` function with the natspec directive `/// @custom:key checked`
+(`SolidityProblemSynthesizer.CHECKED_DIRECTIVE`). Examples: the `checked*`
+functions of `TestSuite.sol`.
 
 ### Storage aliases
 `storageLocalDeclInitDrop` (decl-with-init decomposition) followed by
@@ -309,9 +356,12 @@ any zero-child `FunctionReference` matched any other). A literal operand
 `docs/net.md` Steps 1–4. `netHeader.key` declares the
 program variables `Struct net` (per-address ledger: read
 `selectSt<[int]>(net, at(a))`, empty ledger `mtSt` ⇒ `net(a) = 0`),
-`msgSender`, `msgValue`, and `self`, plus the uninterpreted contract-invariant
+`msgSender`, `msgValue`, `self`, and `selfBalance` (the contract's own funds),
+plus the uninterpreted contract-invariant
 predicate `CInv(Struct, Struct)` over `(storage, net)` (solidiKeY-style: each
 problem file gives it meaning via its own `insertCInv` rewrite taclet).
+`CInv` deliberately stays binary: the callback havoc leaves `selfBalance`
+unconstrained rather than carrying it in the invariant.
 `msg.sender` / `msg.value` desugar to
 `msgSender` / `msgValue` in `SolidityToKeyConverter.visitMemberAccess`
 (shadowable by a local named `msg`). `transfer` and `send` are registered
@@ -319,21 +369,29 @@ builtins classified like `push`/`pop` (`MemberExp` + `FunctionCallExpression`,
 no dedicated AST node). Transfer semantics is the taclet choice
 `transferSemantics:{noCallback, withCallback}` (`optionsDeclarations.key`,
 default `noCallback`; examples pin the other variant with
-`\withOptions transferSemantics:withCallback;`). Under `noCallback`:
-`transferNoCallback`
-(`a.transfer(v);` ⇝ `{net := storeSt(net, at(a), selectSt<[int]>(net, at(a)) − v)}`).
-Under `withCallback`: `transferWithCallback` splits into "invariant on exit"
-(book `net(a) −= v`, prove `CInv(storage, net)`, drop the continuation) and
-"resume after callback" (havoc `storage` and `net` with `\skolemTerm Struct`
-constants, assume `CInv`, continue). Both share the
+`\withOptions transferSemantics:withCallback;`). Both rules guard on the EVM
+balance check `0 <= v & v <= selfBalance` — an unbacked (or negative) transfer
+reverts. Under `noCallback`: `transferNoCallback`
+(`a.transfer(v);` ⇝ `\if(guard) \then({selfBalance := selfBalance − v ||
+net := storeSt(net, at(a), selectSt<[int]>(net, at(a)) − v)} …)
+\else(revert())`).
+Under `withCallback`: `transferWithCallback` splits into "insufficient funds"
+(`¬guard → ⟨revert⟩φ`), "invariant on exit"
+(book the debit, prove `CInv(storage, net)`, drop the continuation) and
+"resume after callback" (havoc `storage`, `net`, and `selfBalance` with
+skolem constants, assume `CInv`, continue). Both share the
 `transfer_unfold_leftFstReceiver` / `transfer_unfold_rightSndArgument`
-captures. Not yet done: the `\getContractInvariant` varcond +
+captures. The PO pattern credits the incoming payment to the balance
+alongside the ledger:
+`{net := storeSt(net, at(msgSender), … + msgValue) || selfBalance :=
+selfBalance + msgValue}`. Not yet done: the `\getContractInvariant` varcond +
 `ContractSpecification` plumbing (`docs/net.md` Step 4 phase 2),
-`send`/`call{value:}` rules, and proof-obligation
-plumbing (`docs/net.md` Step 5). **No example covers any of this any more**: the seven `net-*`
-starters were `.key`-only (problem-local `\rules` for `CInv`, `\withOptions`, and inline
-`msg.*` / `.transfer` that `SolJSONParser` does not parse) and were deleted with the rest of
-the `.key` examples.
+`send`/`call{value:}` rules, `address(this).balance` reading `selfBalance`,
+and proof-obligation plumbing (`docs/net.md` Step 5). Examples: the `net-*`
+starters and the per-contract `*-invariant.key` / `*-withcallback.key` POs in
+`keyext.solidity.examples/net/`, driven by `NetExamplesTest`
+(`net-transfer-insufficient.key` pins the revert branch; the diamond starters
+carry `selfBalance` antecedents).
 
 ### Paths and lowering
 Path SV sorts: `StoragePath`, `SimpleStoragePath`, `ComplexStoragePath`,
@@ -523,7 +581,6 @@ A test that observes more than one value therefore asserts in the body and uses 
 `true`; a test that observes only storage/memory has no return value at all.
 
 Note that a `.sol` body is parsed by `SolJSONParser` (the solc-JSON path), not by
-`SolidityToKeyConverter` (the ANTLR path used for programs written inline in a modality). The
-two are not equally complete: `msg.sender`, `msg.value`, `.transfer` and `.send` work in the
-ANTLR path but not in the JSON one. That is a **parser** gap, not a taclet gap, and it is why
-the seven `net-*` examples still inline their programs.
+`SolidityToKeyConverter` (the ANTLR path used for programs written inline in a modality). Both
+paths now handle `msg.sender`, `msg.value`, `.transfer` and `.send`, which is why the `net-*`
+examples load their programs from the `.sol` beside them via `\programSource`.

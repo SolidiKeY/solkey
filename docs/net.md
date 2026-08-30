@@ -2,11 +2,19 @@
 
 Roadmap for implementing the `net` ledger model of Ahrendt & Bubel,
 *"Functional Verification of Smart Contracts via Strong Data Integrity"*
-(ISoLA 2020, `paper.pdf`) on top of the current SolKey calculus. Nothing in
-this document is implemented yet; it is the ordered backlog for the
-payment/environment model that `taclet-ideas.md` Tier 5 defers
+(ISoLA 2020, `paper.pdf`) on top of the current SolKey calculus. Steps 1–4
+are implemented (see the status table below and
+`docs/taclets-implementation.md` "Payments"); the rest is the ordered backlog
+for the payment/environment model that `taclet-ideas.md` Tier 5 defers
 ("`msg.sender`, `msg.value`, `.transfer` — require an environment/ledger
 model beyond the storage/memory heaps").
+
+Beyond the paper, the implemented rules add the EVM balance check: the
+program variable `selfBalance` models the contract's own funds, `transfer`
+reverts when `0 <= v & v <= selfBalance` fails and debits `selfBalance`
+otherwise, the callback havoc quantifies over `selfBalance` alongside
+`storage` and `net`, and the PO pattern credits `msgValue` to `selfBalance`
+next to the `net(msgSender)` booking.
 
 Read `storage.md` (calculus conventions), `key-taclets.md` (authoring
 syntax), and `require-assert.md` (box/diamond revert discipline) first.
@@ -46,13 +54,13 @@ maintained by the calculus, not by the program. On top of it:
 |---|---|
 | `require` / `assert` / `revert` | Done, refined (`require-assert.md`) |
 | Storage model | Done, richer than the paper's (paths, aliases, `storage.md`) |
-| Unbounded ints ("Solidity Light") | Done (`intHeader.key`; `in_uint256` exists for later rounding) |
+| Unbounded ints ("Solidity Light") | Done (`intHeader.key`); bounded semantics is the opt-in `intRules:soliditySemantics` choice (`taclets-implementation.md` "Checked arithmetic") |
 | `result = f(args)@C;` call statement | Parses (`Solidity.g4` `FunctionBodyStatement`); inlined by `ExpandFunctionBody`. The `functionBodyExpand` taclet is in the standard rule set (`solidityProgramRules.key`), together with `blockEmpty`, which discards the inlined body block |
 | `address` type | Registered in `SolidityInfo`, mapped to the `int` sort |
 | `net` mapping | **Done** (Step 1): `Struct net` in `netHeader.key`, read/write via `selectSt`/`storeSt` |
 | `msg.sender` / `msg.value` | **Done** (Step 2): desugared to the `msgSender`/`msgValue` program variables in `SolidityToKeyConverter` |
 | `transfer` / `send` / `call{value:}` | `transfer` **done with both semantics** (Step 3: builtin + classification + `transferNoCallback` and both capture rules; Step 4: `transferWithCallback` under the `transferSemantics` choice); `send` has builtin + classification but no rule; `call{value:}` missing |
-| Havoc update | **Done** in `transferWithCallback`: `{storage := storageSk \|\| net := netSk}` with `\skolemTerm Struct` SVs (the `memoryReferenceDeclFreshAlloc` fresh-symbol pattern) |
+| Havoc update | **Done** in `transferWithCallback`: `{storage := storageSk \|\| net := netSk \|\| selfBalance := selfBalanceSk}` with skolem SVs (the `memoryReferenceDeclFreshAlloc` fresh-symbol pattern) |
 | Contract invariant storage + retrieval | **Phase 1 done**: uninterpreted `CInv(Struct, Struct)` predicate (`netHeader.key`) expanded by a per-example `insertCInv` taclet. Repository-backed retrieval still missing; the loop-invariant machinery (`SpecificationRepository`, `\getInvariant`/`\hasInvariant` varconds in `TacletBuilderManipulators`) is the exact template |
 | Proof-obligation generator | **Missing**; `proof/init/` already has `AbstractPO` / `ContractPO` / `FunctionalOperationContractPO` scaffolding. The paper's prototype also wrote POs by hand, so a manual pattern is faithful for phase 1 |
 
@@ -92,8 +100,12 @@ coexist and examples pin the variant they need.
 **POs use the box modality.** The paper proves partial correctness
 (reverting runs are trivially correct). `require` already degenerates to
 `c → φ` in box (`require-assert.md` §5), which is exactly the paper's
-`require` rule. This also lets `transfer` omit an "unbacked funds" branch:
-an unbacked transfer reverts, and box discharges that run.
+`require` rule. The plan originally used this to omit an "unbacked funds"
+branch from `transfer`; the implemented rules carry the branch explicitly
+(`0 <= v & v <= selfBalance`, else `revert()`) — box still discharges the
+reverting run for free, but diamond POs now owe the funds guard, which is
+the EVM's actual behavior (the diamond starters carry `selfBalance`
+antecedents, and `net-transfer-insufficient.key` pins the revert).
 
 ## 4. Next Steps to Implement `net`
 
@@ -146,6 +158,7 @@ Ordered; each step has a runnable milestone. Rules go in
        int msgSender;
        int msgValue;
        int self;        // address of the contract under verification
+       int selfBalance; // funds held by the contract under verification
    }
    ```
 
@@ -237,12 +250,19 @@ transferNoCallback {
     \schemaVar \program SimpleExpression[primitive] se;
 
     \find(\modality{#mod}{c# s#a.transfer(s#se); #c}\endmodality(post))
-    \replacewith({net := storeSt(net, at(a),
+    \replacewith(\if(0 <= se & se <= selfBalance)
+        \then({selfBalance := selfBalance - se
+               || net := storeSt(net, at(a),
                                  selectSt<[int]>(net, at(a)) - se)}
-        \modality{#mod}{c# #c}\endmodality(post))
+            \modality{#mod}{c# #c}\endmodality(post))
+        \else(\modality{#mod}{c# revert(); #c}\endmodality(post)))
     \heuristics(simplify_prog)
 };
 ```
+
+(The guard is the EVM value-transfer check: the implemented rule extends the
+paper's, which could not fail. A negative amount is folded into the same
+revert branch — unsigned in the EVM's value field.)
 
 (Guard the rule set with the `transferSemantics:noCallback` choice. The
 `a ≠ self` side condition can start as a proof obligation added via a second
@@ -269,17 +289,20 @@ invariant varcond described below.
 
 - *Precondition:* same statement shape as Step 3, and a contract invariant
   `I` is available for the contract under verification.
-- *Transformation:* split into two branches. Branch 1 ("control leaves"):
-  after decrementing `net(a)` by `v` — funds move *before* control does —
-  the invariant `I` must be proven; the rest of the program is discarded.
-  Branch 2 ("control returns"): the callee may have done anything,
-  including re-entering this contract, so all knowledge of `storage` *and*
-  `net` is erased (fresh skolem constants); under the assumption that `I`
-  holds again, symbolic execution continues.
+- *Transformation:* split into three branches. Branch 0 ("insufficient
+  funds"): when the guard `0 <= v & v <= selfBalance` fails, the transfer
+  reverts before control leaves. Branch 1 ("control leaves"): under the
+  guard, after debiting `selfBalance` and decrementing `net(a)` by `v` —
+  funds move *before* control does — the invariant `I` must be proven; the
+  rest of the program is discarded. Branch 2 ("control returns"): the callee
+  may have done anything, including re-entering this contract, so all
+  knowledge of `storage`, `net` *and* `selfBalance` is erased (fresh skolem
+  constants); under the assumption that `I` holds again, symbolic execution
+  continues.
 - *Postcondition:* branch 1 guarantees the contract is consistent whenever
   the callee (or any re-entrant execution) runs; branch 2 resumes with only
-  `I` known about storage and ledger. Local/memory state survives: the
-  callee cannot touch this call frame.
+  `I` known about storage and ledger (and nothing about the balance).
+  Local/memory state survives: the callee cannot touch this call frame.
 
 ```key
 transferWithCallback {
@@ -288,23 +311,34 @@ transferWithCallback {
     \schemaVar \program SimpleExpression[primitive] se;
     \skolemTerm Struct storageSk;
     \skolemTerm Struct netSk;
+    \skolemTerm int selfBalanceSk;
 
     \find(\modality{#mod}{c# s#a.transfer(s#se); #c}\endmodality(post))
     \varcond(\getContractInvariant(inv))
+    "insufficient funds":
+        \replacewith(!(0 <= se & se <= selfBalance)
+            -> \modality{#mod}{c# revert(); #c}\endmodality(post));
     "invariant on exit":
-        \replacewith({net := storeSt(net, at(a),
-                                     selectSt<[int]>(net, at(a)) - se)} inv);
+        \replacewith(0 <= se & se <= selfBalance
+            -> {selfBalance := selfBalance - se
+                || net := storeSt(net, at(a),
+                                  selectSt<[int]>(net, at(a)) - se)} inv);
     "resume after callback":
-        \replacewith({storage := storageSk || net := netSk}
-            (inv -> \modality{#mod}{c# #c}\endmodality(post)))
+        \replacewith(0 <= se & se <= selfBalance
+            -> {storage := storageSk || net := netSk
+                || selfBalance := selfBalanceSk}
+               (inv -> \modality{#mod}{c# #c}\endmodality(post)))
     \heuristics(simplify_prog)
 };
 ```
 
 Note one deliberate deviation: the paper's rule writes `havoc(storage)`
 only, but its `I` mentions `net`, and a re-entrant call changes `net`;
-havocking both is the sound reading of "eliminate all knowledge about the
-whole storage".
+havocking both — plus `selfBalance`, which the callee can move funds into
+or out of — is the sound reading of "eliminate all knowledge about the
+whole storage". `CInv` stays binary over `(storage, net)`: after a callback
+nothing is known about `selfBalance`, so a proof of a *funded* transfer
+after a callback would need the ternary extension (`taclet-ideas.md`).
 
 Invariant plumbing, in two phases:
 
@@ -339,7 +373,8 @@ prototype). For contract `C`, function `f`, invariant `I`, pre/post
      & I & pre
   -> {old := storage}
      {net := storeSt(net, at(msgSender),
-                     selectSt<[int]>(net, at(msgSender)) + msgValue)}
+                     selectSt<[int]>(net, at(msgSender)) + msgValue)
+      || selfBalance := selfBalance + msgValue}
      \[{ result = f(args)@C; }\] (I & post)
 }
 ```

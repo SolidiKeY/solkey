@@ -1461,4 +1461,106 @@ contract TestSuite {
         uint v = age;
         assert(v == 42);
     }
+
+    // ── checked arithmetic (intRules:soliditySemantics via @custom:key checked) ──
+    // Each *Reverts function closes in box only because the overflowing operation
+    // reverts (solc >= 0.8, Panic 0x11); each *InRange function shows the guard is
+    // provable once require pins the operand range.
+
+    /// @custom:key box
+    /// @custom:key checked
+    function checkedLocalOverflowReverts() public {
+        uint8 x;
+        x = 250;
+        x += 10;
+        assert(false);
+    }
+
+    /// @custom:key box
+    /// @custom:key checked
+    function checkedLocalArithmeticInRange(uint x) public {
+        require(x >= 1 && x <= 100);
+        uint r;
+        r = x + 1;
+        r -= 1;
+        ++r;
+        assert(r == x + 1);
+    }
+
+    /// @custom:key box
+    /// @custom:key checked
+    function checkedStorageUnderflowReverts() public {
+        require(total == 0);
+        total -= 1;
+        assert(false);
+    }
+
+    /// @custom:key box
+    /// @custom:key checked
+    function checkedStorageDecrementUnderflowReverts() public {
+        require(age == 0);
+        --age;
+        assert(false);
+    }
+
+    /// @custom:key box
+    /// @custom:key checked
+    function checkedFieldDecrementUnderflowReverts() public {
+        require(alice.age == 0);
+        alice.age--;
+        assert(false);
+    }
+
+    /// @custom:key box
+    /// @custom:key checked
+    function checkedMappingEntryDecrementUnderflowReverts() public {
+        require(balances[1] == 0);
+        balances[1]--;
+        assert(false);
+    }
+
+    /// @custom:key box
+    /// @custom:key checked
+    function checkedPowerOverflowReverts() public {
+        uint8 b;
+        uint8 r;
+        b = 16;
+        r = b ** 2;
+        assert(false);
+    }
+
+    /// @custom:key box
+    /// @custom:key checked
+    function checkedDivisionOverflowReverts() public {
+        int8 x;
+        int8 mone;
+        int8 r;
+        x = -127;
+        x -= 1;
+        mone = -1;
+        r = x / mone;
+        assert(false);
+    }
+
+    /// @custom:key box
+    /// @custom:key checked
+    function checkedUnaryMinusMinReverts() public {
+        int8 m;
+        int8 r;
+        m = -127;
+        m -= 1;
+        r = -m;
+        assert(false);
+    }
+
+    /// @custom:key box
+    /// @custom:key checked
+    function checkedSignedUnaryMinusInRange(int8 x) public {
+        require(x == 5);
+        int8 r;
+        int8 expected;
+        r = -x;
+        expected = -5;
+        assert(r == expected);
+    }
 }

@@ -305,6 +305,43 @@ public class TacletBuilderManipulators {
             }
         };
 
+    static class TypeBoundsConditionBuilder extends AbstractConditionBuilder {
+        private final String triggerName;
+        private final TypeBoundsCondition.Mode mode;
+
+        public TypeBoundsConditionBuilder(@NonNull String triggerName,
+                TypeBoundsCondition.Mode mode) {
+            super(triggerName, SV, SV, SV);
+            this.triggerName = triggerName;
+            this.mode = mode;
+        }
+
+        @Override
+        public VariableCondition build(Object[] arguments, List<String> parameters,
+                boolean negated) {
+            if (negated) {
+                throw new IllegalArgumentException(
+                    "\\" + triggerName + " does not support negation");
+            }
+            if (!(arguments[0] instanceof ProgramSV targetSV)) {
+                throw new IllegalArgumentException(
+                    "\\" + triggerName + " expects a program schema variable as its first "
+                        + "argument, but got: " + arguments[0]);
+            }
+            return new TypeBoundsCondition(mode, targetSV,
+                (SchemaVariable) arguments[1], (SchemaVariable) arguments[2]);
+        }
+    }
+
+    public static final AbstractConditionBuilder TYPE_BOUNDS =
+        new TypeBoundsConditionBuilder("typeBounds", TypeBoundsCondition.Mode.SELF);
+    public static final AbstractConditionBuilder SIGNED_TYPE_BOUNDS =
+        new TypeBoundsConditionBuilder("signedTypeBounds", TypeBoundsCondition.Mode.SELF_SIGNED);
+    public static final AbstractConditionBuilder FIELD_TYPE_BOUNDS =
+        new TypeBoundsConditionBuilder("fieldTypeBounds", TypeBoundsCondition.Mode.FIELD);
+    public static final AbstractConditionBuilder ELEMENT_TYPE_BOUNDS =
+        new TypeBoundsConditionBuilder("elementTypeBounds", TypeBoundsCondition.Mode.ELEMENT);
+
     private static final List<TacletBuilderCommand> tacletBuilderCommands = new ArrayList<>(2);
 
     static {
@@ -315,7 +352,8 @@ public class TacletBuilderManipulators {
             NEW_TYPE_OF, NEW_SOLIDITY_TYPE,
             IS_SUBTYPE, SAME, HAS_SORT, HAS_FIELD_SORT, HAS_MEMORY_FIELD_SORT, HAS_ELEMENT_SORT,
             HAS_MEMORY_ELEMENT_SORT,
-            NEW_LOCAL_VARS, HAS_INVARIANT, GET_INVARIANT, GET_VARIANT, SAME_AS_TERM);
+            NEW_LOCAL_VARS, HAS_INVARIANT, GET_INVARIANT, GET_VARIANT, SAME_AS_TERM,
+            TYPE_BOUNDS, SIGNED_TYPE_BOUNDS, FIELD_TYPE_BOUNDS, ELEMENT_TYPE_BOUNDS);
     }
 
     /// Announce a [TacletBuilderCommand] for the use during the interpretation of asts. This

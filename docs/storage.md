@@ -324,6 +324,14 @@ emitted update.
       sp1.a = sp2
       ⇝  { storage := save(storage, sp1 · a, select(storage, sp2)) }
 
+  All the `*CopySource` copy rules assume the copied type carries no
+  mapping: solc ≥ 0.7 rejects assignments whose target type transitively
+  contains one, and both front ends enforce that at parse time
+  (`ParserUtils.parseAssignmentMaybe`,
+  `StorageReferenceTypes.containsMapping`), so the illegal shapes never
+  reach the calculus. Storage-pointer rebinds (`storageLocalRootRebind`)
+  and `delete` (mapping-preserving, §6) are unaffected.
+
 ### Root write (whole struct / primitive at a root)
 
 - `storageRootWriteStore`

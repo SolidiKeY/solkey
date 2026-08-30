@@ -58,8 +58,11 @@ Clone the `+=` family (`storageRootAddAssign` / `…Field…` / `…Index…` +
   and discard the rest of the block. Pairs with `functionBodyStatement`
   inlining (`ExpandFunctionBody`).
 - **`uncheckedStatement`** (`unchecked { … }`): execute the block under a flag
-  that switches arithmetic to wrapping (no overflow revert branch). Initially
-  just strip the wrapper and reuse the checked rules.
+  that switches arithmetic to wrapping (no overflow revert branch). Checked
+  arithmetic itself is implemented (`intRules:soliditySemantics`, see
+  `docs/taclets-implementation.md` "Checked arithmetic"); this item is the
+  wrapping escape hatch. Initially just strip the wrapper and reuse the
+  unchecked (`intRules:ignoreOverFlow`) rule shapes.
 - **`whileStatement`** / **`forStatement`** / **`doWhileStatement`**: loop
   unrolling rule (one iteration + residual loop) for bounded proofs, plus an
   invariant rule later. `for` first desugars init/cond/update into a `while`.
@@ -95,9 +98,10 @@ Clone the `+=` family (`storageRootAddAssign` / `…Field…` / `…Index…` +
   `block.*`, `.balance`, `.transfer`): require an environment/ledger model
   beyond the storage/memory heaps. Ordered implementation plan: `docs/net.md`.
   ✅ First slice done — `net` ledger, `msg.sender`/`msg.value`, and
-  `transfer` with no-callback semantics (see `docs/taclets-implementation.md`
-  "Payments"). Still open: with-callback `transfer`, `send`, `call{value:}`,
-  `block.*`, `.balance`.
+  `transfer` in both callback semantics, now with the EVM balance check
+  against `selfBalance` (see `docs/taclets-implementation.md` "Payments").
+  Still open: `send`, `call{value:}`, `block.*`, and `address(this).balance`
+  reading `selfBalance` in the parsers.
 
 ## Refinements to implemented rules
 
@@ -109,6 +113,17 @@ Edge cases of already-supported constructs (see `docs/taclets-implementation.md`
 - **Dynamic-array `delete arr;` length reset**: not modeled by the current
   memory/storage delete rules. (Struct-`delete` preserving mapping members is now
   implemented via the lazy `delNode` marker — see `docs/storage.md` §6.)
+- **In-range PO antecedents under `intRules:soliditySemantics`**: synthesize
+  `min <= x <= max` assumptions for parameters and storage reads when the
+  checked option is active, so examples need not `require` both bounds by hand.
+- **`mapfree` PathSVSort flag**: optional calculus-level hardening of the
+  storage copy taclets against mapping-carrying sources; today the front ends
+  reject the illegal programs before any rule can see them.
+- **Reject uint unary minus in the parsers** (solc compile error); today the
+  shape is merely stuck under the checked option.
+- **Ternary `CInv(storage, net, selfBalance)`**: needed only if an example ever
+  wants to prove a *funded* transfer after a callback — the havoc currently
+  leaves `selfBalance` unconstrained.
 
 ## Raised by the solc semantic-test ports
 
