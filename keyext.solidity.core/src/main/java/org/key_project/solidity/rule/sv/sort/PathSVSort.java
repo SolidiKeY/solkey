@@ -51,10 +51,6 @@ final class PathSVSort extends ProgramSVSort {
         ANY, PRIMITIVE, REFERENCE
     }
 
-    private enum ElementKind {
-        ANY, PRIMITIVE, REFERENCE
-    }
-
     private record PathInfo(DataArea dataArea, boolean simple, Origin origin,
             TypeCategory typeCategory) {
     }
@@ -64,15 +60,15 @@ final class PathSVSort extends ProgramSVSort {
     private final Origin origin;
     private final TypeCategory typeCategory;
     private final TypeKind typeKind;
-    private final ElementKind elementKind;
+    private final TypeKind elementKind;
 
     PathSVSort(String name, DataArea dataArea, Simplicity simplicity) {
         this(name, dataArea, simplicity, Origin.ANY, TypeCategory.ANY, TypeKind.ANY,
-            ElementKind.ANY);
+            TypeKind.ANY);
     }
 
     private PathSVSort(String name, DataArea dataArea, Simplicity simplicity, Origin origin,
-            TypeCategory typeCategory, TypeKind typeKind, ElementKind elementKind) {
+            TypeCategory typeCategory, TypeKind typeKind, TypeKind elementKind) {
         super(new Name(name));
         this.dataArea = dataArea;
         this.simplicity = simplicity;
@@ -100,7 +96,7 @@ final class PathSVSort extends ProgramSVSort {
         if (typeKind != TypeKind.ANY && typeKindOf(pe) != typeKind) {
             return false;
         }
-        if (elementKind != ElementKind.ANY && elementKindOf(pe) != elementKind) {
+        if (elementKind != TypeKind.ANY && elementKindOf(pe) != elementKind) {
             return false;
         }
         return switch (simplicity) {
@@ -131,8 +127,8 @@ final class PathSVSort extends ProgramSVSort {
                 case "mapping" -> filters.typeCategory.set(TypeCategory.MAPPING, flag);
                 case "primitive" -> filters.typeKind.set(TypeKind.PRIMITIVE, flag);
                 case "reference" -> filters.typeKind.set(TypeKind.REFERENCE, flag);
-                case "primitiveelement" -> filters.elementKind.set(ElementKind.PRIMITIVE, flag);
-                case "referenceelement" -> filters.elementKind.set(ElementKind.REFERENCE, flag);
+                case "primitiveelement" -> filters.elementKind.set(TypeKind.PRIMITIVE, flag);
+                case "referenceelement" -> filters.elementKind.set(TypeKind.REFERENCE, flag);
                 default -> throw new IllegalArgumentException(
                     "Unknown Path sort flag '" + rawFlag + "'");
             }
@@ -215,7 +211,7 @@ final class PathSVSort extends ProgramSVSort {
         return TypeKind.ANY;
     }
 
-    private static ElementKind elementKindOf(SolidityProgramElement pe) {
+    private static TypeKind elementKindOf(SolidityProgramElement pe) {
         Type type = typeOf(pe);
         Type elementType = null;
         if (type instanceof MappingType mappingType) {
@@ -226,12 +222,12 @@ final class PathSVSort extends ProgramSVSort {
             elementType = unwrap(dynamicArrayType.getElementType());
         }
         if (elementType instanceof PrimitiveType) {
-            return ElementKind.PRIMITIVE;
+            return TypeKind.PRIMITIVE;
         }
         if (elementType != null && StorageReferenceTypes.isReferenceType(elementType)) {
-            return ElementKind.REFERENCE;
+            return TypeKind.REFERENCE;
         }
-        return ElementKind.ANY;
+        return TypeKind.ANY;
     }
 
     private static TypeCategory typeCategoryOf(SolidityProgramElement pe) {
@@ -277,7 +273,7 @@ final class PathSVSort extends ProgramSVSort {
         private final Filter<Origin> origin = new Filter<>(Origin.ANY);
         private final Filter<TypeCategory> typeCategory = new Filter<>(TypeCategory.ANY);
         private final Filter<TypeKind> typeKind = new Filter<>(TypeKind.ANY);
-        private final Filter<ElementKind> elementKind = new Filter<>(ElementKind.ANY);
+        private final Filter<TypeKind> elementKind = new Filter<>(TypeKind.ANY);
     }
 
     /** One filter axis: its value plus the flag that set it, so conflicts can be reported. */
