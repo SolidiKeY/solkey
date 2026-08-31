@@ -453,12 +453,13 @@ usefulness:
    (`LoopSpecification`, `\getInvariant`, `\getVariant`) already exists —
    wire it to `whileStatement` before attempting `closeAuction`'s
    reimbursement loop, whose loop invariant must itself speak about `net`.
-7. **Bounded (round-robin) integers**: the paper defers this too, pointing
-   at KeY-Java's approach. The hooks exist (`in_uint256`,
-   `uint256_MIN/MAX`, the `intRules:soliditySemantics` choice referenced by
-   `LoopInvariantCondition.withInRangePredicates`); implementing means
-   adding overflow branches or wrapping semantics to the arithmetic
-   taclets, orthogonal to `net`.
+7. **Bounded (round-robin) integers**: largely done, following KeY-Java's
+   approach — per-type range predicates (`inUint8` … `inInt256`, declared by
+   `IntLDT`), `#inBounds` guards on the arithmetic taclets, and the
+   choice-guarded expansion under `intRules:soliditySemantics`
+   (`docs/taclets-implementation.md` §Checked arithmetic). Wrapping
+   semantics for `unchecked { … }` blocks remains open, orthogonal to
+   `net`.
 8. **Storage/memory distinction**: already **ahead of the paper** — the
    paper's "Solidity Light" collapses them, while this repo implements both
    (`storage.md`, `memory.md`). Nothing to do.

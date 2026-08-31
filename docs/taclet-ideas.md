@@ -61,8 +61,11 @@ Clone the `+=` family (`storageRootAddAssign` / `…Field…` / `…Index…` +
   that switches arithmetic to wrapping (no overflow revert branch). Checked
   arithmetic itself is implemented (`intRules:soliditySemantics`, see
   `docs/taclets-implementation.md` "Checked arithmetic"); this item is the
-  wrapping escape hatch. Initially just strip the wrapper and reuse the
-  unchecked (`intRules:ignoreOverFlow`) rule shapes.
+  wrapping escape hatch. Since the overflow guard is now the single
+  `#inBounds`/`inUintN` predicate layer, a first cut can rewrite the
+  in-bounds predicates originating inside the block to `true` (the
+  `ignoreOverFlow` expansion, scoped); real wrapping needs a `wrap`/modulo
+  function like Java KeY's `moduloInt`.
 - **`whileStatement`** / **`forStatement`** / **`doWhileStatement`**: loop
   unrolling rule (one iteration + residual loop) for bounded proofs, plus an
   invariant rule later. `for` first desugars init/cond/update into a `while`.
@@ -120,7 +123,8 @@ Edge cases of already-supported constructs (see `docs/taclets-implementation.md`
   storage copy taclets against mapping-carrying sources; today the front ends
   reject the illegal programs before any rule can see them.
 - **Reject uint unary minus in the parsers** (solc compile error); today the
-  shape is merely stuck under the checked option.
+  shape gets its ordinary `#inBounds` range check under the checked option
+  (reverting unless the operand is 0) instead of being rejected up front.
 - **Ternary `CInv(storage, net, selfBalance)`**: needed only if an example ever
   wants to prove a *funded* transfer after a callback — the havoc currently
   leaves `selfBalance` unconstrained.

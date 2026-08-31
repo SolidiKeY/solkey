@@ -3,16 +3,25 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.theory;
 
+import java.math.BigInteger;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Function;
 import org.key_project.logic.op.Operator;
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.SolidityDLTheory;
 import org.key_project.solidity.logic.TermBuilder;
+import org.key_project.solidity.logic.op.SFunction;
+import org.key_project.solidity.program.ast.StaticTypes;
+import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.literals.Literal;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.OperatorExpression;
+import org.key_project.util.collection.ImmutableArray;
 
 import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 import org.jspecify.annotations.Nullable;
@@ -43,6 +52,8 @@ public class IntLDT extends LDT {
     private final Term one;
     private final Term zero;
 
+    private final Map<String, Function> inBoundsPredicates = new LinkedHashMap<>();
+
     public IntLDT(Services services) {
         super(NAME, services);
 
@@ -70,6 +81,39 @@ public class IntLDT extends LDT {
         // cache often used constants
         zero = makeDigit(0, services.getTermBuilder());
         one = makeDigit(1, services.getTermBuilder());
+
+        declareInBoundsPredicates(services);
+    }
+
+    private void declareInBoundsPredicates(@UnknownInitialization IntLDT this,
+            Services services) {
+        for (PrimitiveType primitiveType : PrimitiveType.all()) {
+            String predicateName = inBoundsNameFor(primitiveType);
+            if (predicateName == null || inBoundsPredicates.containsKey(predicateName)) {
+                continue;
+            }
+            Name name = new Name(predicateName);
+            Function predicate = services.getNamespaces().functions().lookup(name);
+            if (predicate == null) {
+                predicate = new SFunction(name, SolidityDLTheory.FORMULA,
+                    new ImmutableArray<>(targetSort()), true, false);
+                services.getNamespaces().functions().addSafely(predicate);
+            }
+            inBoundsPredicates.put(predicateName, predicate);
+        }
+    }
+
+    private static @Nullable String inBoundsNameFor(PrimitiveType primitiveType) {
+        if (primitiveType.kind() != PrimitiveType.Kind.INTEGER) {
+            return null;
+        }
+        BigInteger max = primitiveType.maxValue();
+        if (max == null) {
+            return null;
+        }
+        boolean signed = primitiveType.isSignedInteger();
+        int width = signed ? max.bitLength() + 1 : max.bitLength();
+        return (signed ? "inInt" : "inUint") + width;
     }
 
     // -------------------------------------------------------------------------
@@ -218,7 +262,13 @@ public class IntLDT extends LDT {
         };
     }
 
-    public Function getInBounds(Type ty) {
-        throw new IllegalArgumentException("inBounds for type " + ty + " missing");
+    /// @return the range predicate of the given Solidity integer type (e.g. `inUint8` for
+    /// `uint8`), or null if the type is not a bounded integer type
+    public @Nullable Function getInBounds(Type ty) {
+        if (!(StaticTypes.unwrap(ty) instanceof PrimitiveType primitiveType)) {
+            return null;
+        }
+        String predicateName = inBoundsNameFor(primitiveType);
+        return predicateName == null ? null : inBoundsPredicates.get(predicateName);
     }
 }

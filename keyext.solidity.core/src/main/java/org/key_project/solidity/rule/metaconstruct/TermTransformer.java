@@ -18,4 +18,13 @@ public interface TermTransformer extends SortedOperator, Operator,
     /// initiates term transformation of <tt>term</tt>. Note the top level operator of parameter
     /// <tt>term</tt> has to be _this_ term transformer.
     Term transform(Term term, SVInstantiations svInst, Services services);
+
+    /// as [#transform(Term,SVInstantiations,Services)], but additionally receives the
+    /// uninstantiated taclet term this transformer occurred in, so implementations can inspect
+    /// the schema variables (and via <tt>svInst</tt> their program-element instantiations) that
+    /// produced the already instantiated <tt>term</tt>.
+    default Term transform(Term schemaTerm, Term term, SVInstantiations svInst,
+            Services services) {
+        return transform(term, svInst, services);
+    }
 }

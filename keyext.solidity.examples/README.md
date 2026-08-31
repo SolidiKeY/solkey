@@ -87,7 +87,7 @@ Miss one and the proof closes on the out-of-bounds revert branch without checkin
 | Natspec tag | Effect |
 |---|---|
 | `/// @custom:key box` | box modality — `require` becomes an assumption |
-| `/// @custom:key checked` | checked (solc ≥ 0.8) arithmetic — proves under `\withOptions intRules:soliditySemantics;`, so out-of-range results revert |
+| `/// @custom:key checked` | checked (solc ≥ 0.8) arithmetic — proves under `\withOptions intRules:soliditySemantics;`, which expands the `inUintN`/`inIntN` range guards to their bounds, so out-of-range results revert |
 
 `@custom:` is solc's extension prefix; any other tag is rejected as invalid documentation.
 

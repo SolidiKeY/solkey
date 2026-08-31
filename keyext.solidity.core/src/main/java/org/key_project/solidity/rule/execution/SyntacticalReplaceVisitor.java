@@ -383,7 +383,8 @@ public class SyntacticalReplaceVisitor implements Visitor<Term> {
     public void subtreeLeft(Term subtreeRoot) {
         tacletTermStack.pop();
         if (subtreeRoot.op() instanceof TermTransformer mop) {
-            final Term newTerm = mop.transform((Term) subStack.pop(), svInst, services);
+            final Term newTerm =
+                mop.transform(subtreeRoot, (Term) subStack.pop(), svInst, services);
             pushNew(newTerm);
         }
     }
