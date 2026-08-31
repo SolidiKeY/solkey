@@ -33,6 +33,28 @@ being written — nothing has to be registered.
 Check the contract with `solc --ast-compact-json keyext.solidity.examples/TestSuite.sol` before
 running a suite.
 
+## Runtime cross-checking
+
+```bash
+./gradlew :keyext.solidity.core:test --tests "*SolidityRuntimeExecutionTest"
+```
+
+`SolidityRuntimeExecutionTest` compiles `TestSuite.sol` and every `solc/*.sol` with solc,
+deploys each contract on an in-process Besu EVM, and executes every provable function — a
+closed proof must not hit a failing `assert` (Panic 0x01) when actually run. A parameterized
+function runs with the values its leading `require` pins (an equality, or the tightest bound of
+a range). Three kinds of case are skipped rather than failed:
+
+- a box-tagged function whose `require` reverts on the fresh all-zero storage — vacuous at
+  runtime, exactly as the box modality treats it;
+- a parameterized function whose leading requires do not determine a value for every parameter;
+- entries of the test's `KNOWN_DIVERGENT` set: examples proved with KeY's default unbounded
+  integers that panic under the EVM's checked arithmetic (currently none).
+
+A `checked`-tagged function is proved under Solidity's own arithmetic, so proof and EVM must
+agree exactly: the `checked*Reverts` examples pass by executing the very Panic(0x11) their box
+proof closes on, and any other divergence fails the test.
+
 ## Writing an example
 
 Every function is `public` and returns nothing. A function may take arguments: the loader

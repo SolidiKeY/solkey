@@ -12,6 +12,11 @@ configurations {
 
 repositories {
     mavenCentral()
+    // Besu (the EVM used by SolidityRuntimeExecutionTest) is not published to Maven Central
+    maven {
+        url 'https://hyperledger.jfrog.io/artifactory/besu-maven/'
+        content { includeGroupByRegex 'org\\.hyperledger\\..*' }
+    }
 }
 
 dependencies {
@@ -26,6 +31,13 @@ dependencies {
     implementation('com.google.code.gson:gson:2.11.0')
     testImplementation(platform('org.junit:junit-bom:5.10.0'))
     testImplementation('org.junit.jupiter:junit-jupiter')
+
+    // Runtime cross-check of the Solidity examples on a real EVM (SolidityRuntimeExecutionTest)
+    testImplementation('org.hyperledger.besu:evm:24.12.2')
+    testImplementation('org.hyperledger.besu:besu-datatypes:24.12.2')
+    testImplementation('io.tmio:tuweni-bytes:2.4.2')
+    testImplementation('io.tmio:tuweni-units:2.4.2')
+    testImplementation('org.bouncycastle:bcprov-jdk18on:1.78.1')
 
     // Import the Jackson BOM — pick the version you want
     implementation platform("tools.jackson:jackson-bom:3.1.2")

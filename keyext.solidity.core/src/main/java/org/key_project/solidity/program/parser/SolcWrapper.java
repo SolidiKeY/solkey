@@ -89,6 +89,17 @@ public class SolcWrapper {
         return targetPath.toAbsolutePath().toString();
     }
 
+    /// solc `--combined-json bin,bin-runtime` for `contractPath`, as raw JSON. Used by the
+    /// runtime cross-check tests to execute the examples on a real EVM.
+    public static String getCombinedBinJson(Path contractPath) throws IOException {
+        String fileName = contractPath.toAbsolutePath().toString();
+        ProcessBuilder pb =
+            new ProcessBuilder(getSolcCommand(), "--combined-json", "bin,bin-runtime", fileName);
+        Process proc = pb.start();
+        proc.getOutputStream().close();
+        return finishesSolcCommand(proc, false);
+    }
+
     /// Consumes solc's output and waits for it to exit.
     ///
     /// Both pipes have to be drained while the process is still running. The AST JSON of a
@@ -96,6 +107,12 @@ public class SolcWrapper {
     /// buffer, at which point solc blocks writing; waiting for exit before reading then
     /// deadlocks both processes permanently.
     static String finishesSolcCommand(Process proc) throws IOException {
+        return finishesSolcCommand(proc, true);
+    }
+
+    /// `skipAstHeader` drops the four banner lines solc prints before `--ast-compact-json`
+    /// output; `--combined-json` prints bare JSON, which has to be read in full.
+    static String finishesSolcCommand(Process proc, boolean skipAstHeader) throws IOException {
         final StringBuilder errors = new StringBuilder();
         Thread errorDrain = new Thread(() -> {
             try (BufferedReader reader =
@@ -113,7 +130,8 @@ public class SolcWrapper {
 
         final String output;
         try (BufferedReader procInput = proc.inputReader()) {
-            output = extract4lines(procInput);
+            output = skipAstHeader ? extract4lines(procInput)
+                    : procInput.lines().collect(Collectors.joining());
         }
 
         final int exitCode;

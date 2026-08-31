@@ -153,9 +153,14 @@ Program rules live in `keyext.solidity.core/src/main/resources/org/key_project/s
 Run `./gradlew :keyext.solidity.core:test` after refactoring (~25 min; see **CI Gates** above for
 the full pre-commit set). Prefer modifying existing test classes over creating new ones.
 
-Examples that do not close yet are skipped via `KNOWN_OPEN` in `SolcSemanticsExamplesTest` and
-listed under "Known open" in `keyext.solidity.examples/solc/README.md`. Keep the two in sync: a
-suite that is green except for tracked entries is what makes a red run mean new breakage.
+`SolidityRuntimeExecutionTest` additionally executes `TestSuite.sol` and `solc/*.sol` on an
+in-process Besu EVM and fails if a proved function's `assert` fails at runtime (see "Runtime
+cross-checking" in `keyext.solidity.examples/README.md`).
+
+Known-broken examples are tracked in skip sets kept beside the suites that own them
+(`KNOWN_UNSUPPORTED` in `RulesTest`, `KNOWN_DIVERGENT` in `SolidityRuntimeExecutionTest`; both
+currently empty). A suite that is green except for tracked entries is what makes a red run mean
+new breakage.
 
 ## Key KeY Concepts
 - **`Term`** — immutable, has `Operator`, subterms, `Sort`
