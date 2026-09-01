@@ -90,11 +90,14 @@ Type-of metavariable:
 - `length` — the synthetic field holding a dynamic array's current
   length.
 
-Three further operations exist so that a rule which *clears* or *copies* a
-location does not have to know what that location holds. They are sort-free;
-the sort is resolved when the value is read back — for `valAt` and `defVal`
-through the cast that `selectOnStore` (and `readOnWrite` in memory) already
-inserts, for `delAt` through `delValue<[alpha]>` on the select:
+A rule which *clears* or *copies* a location does not have to know what that
+location holds: it stays sort-free by using `find<[StValue]>` (the polymorphic
+`find` at the top storage sort) for copies, and the operations below for
+clears. The sort is resolved when the value is read back — for
+`find<[StValue]>` and `defVal` through the cast that `selectOnStore` (and
+`readOnWrite` in memory) already inserts (`findStValueCast` collapses
+`cast<[alphaSt]>(find<[StValue]>(st, path))` to `find<[alphaSt]>(st, path)`),
+for `delAt` through `delValue<[alpha]>` on the select:
 
 - `delAt(storage, path)` — the storage with the location at `path` reset. A
   struct there becomes the lazy `delNode` marker, so its mapping members
@@ -108,8 +111,6 @@ inserts, for `delAt` through `delValue<[alpha]>` on the select:
   value at path>)` names it twice, which doubles the storage term at every
   `push`/`pop`; a sequence of them then grows exponentially rather than
   linearly, which is what made `SolcArrays.pushThenPopRestoresLength` slow.
-- `valAt(storage, path)` — the value at `path`, for copies. The sort-free twin
-  of `find`.
 - `defVal` — a location reset outright, mapping members included. The
   sort-free twin of `default`. Used by `delete sp[i]`, which resets a
   collection element rather than preserving its mapping members. Sorted
@@ -340,10 +341,10 @@ emitted update.
       ⇝  { storage := save(storage, gp, se) }
 
 - `storageRootWriteCopySource` (one rule for primitive and struct
-  sources — `valAt` is sort-free, the sort is resolved on read)
+  sources — `find<[StValue]>` is sort-free, the sort is resolved on read)
 
       gp = sp
-      ⇝  { storage := save(storage, gp, valAt(storage, sp)) }
+      ⇝  { storage := save(storage, gp, find<[StValue]>(storage, sp)) }
 
 - `storageLocalRootRebind` (rebinds a local storage reference; does
   **not** copy)
@@ -636,23 +637,23 @@ extracts to `cons(alice, nil)`. All storage operations use `find`/`save`.
 | `sp.a = se`                    | `storageFieldWriteSave`               | `save`           |
 | `sp1.a = sp2`                  | `storageFieldWriteCopySource`         | `save`           |
 | `gp = se`                      | `storageRootWriteStore`               | `save`           |
-| `gp = sp`                      | `storageRootWriteCopySource`          | `save`/`valAt`   |
+| `gp = sp`                      | `storageRootWriteCopySource`          | `save`/`find<[StValue]>`|
 | `lp = sp`                      | `storageLocalRootRebind`              | direct assign    |
 | `v = sp.a`                     | `storageFieldReadFind`                | `find`           |
 | `v = sp`                       | `storageRootReadSelect`               | `find`           |
 | `lp = sp.b`                    | `storageFieldReadBindLocalRoot`       | direct assign    |
-| `gp = sp.b`                    | `storageFieldReadStoreRoot`           | `save`/`valAt`   |
+| `gp = sp.b`                    | `storageFieldReadStoreRoot`           | `save`/`find<[StValue]>`|
 | `delete sp;`                   | `storageDeleteSimpleTarget`           | `delAt`        |
 | `sp[i] = se`  (mapping)        | `storageIndexWriteMappingSave`        | `save`           |
 | `sp1[i] = sp2`  (mapping)      | `storageIndexWriteMappingCopySource`  | `save`           |
 | `v = sp[i]`  (mapping)         | `storageIndexReadMappingFind`         | `find`           |
 | `lp = sp[i]`  (mapping)        | `storageIndexReadMappingBindLocalRoot`| direct assign    |
-| `gp = sp[i]`  (mapping)        | `storageIndexReadMappingStoreRoot`    | `save`/`valAt`   |
+| `gp = sp[i]`  (mapping)        | `storageIndexReadMappingStoreRoot`    | `save`/`find<[StValue]>`|
 | `sp[i] = se`  (array)          | `storageIndexWriteArraySave`          | `save`           |
 | `sp1[i] = sp2`  (array)        | `storageIndexWriteArrayCopySource`    | `save`           |
 | `v = sp[i]`  (array)           | `storageIndexReadArrayFind`           | `find`           |
 | `lp = sp[i]`  (array)          | `storageIndexReadArrayBindLocalRoot`  | direct assign    |
-| `gp = sp[i]`  (array)          | `storageIndexReadArrayStoreRoot`      | `save`/`valAt`   |
+| `gp = sp[i]`  (array)          | `storageIndexReadArrayStoreRoot`      | `save`/`find<[StValue]>`|
 | `sp.push(se);`                 | `storagePushValueSave`                | `save`           |
 | `sp1.push(sp2);`               | `storagePushValueCopySource`          | `save`           |
 | `sp.push();`                   | `storagePushLengthSave`               | `save`           |

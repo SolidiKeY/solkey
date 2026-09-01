@@ -70,7 +70,7 @@ rules before a terminal rule fires.
 
 ### Storage read / write / copy
 - Root: `storageRootWriteStore`, `storageRootReadSelect`,
-  `storageRootWriteCopySource` (sort-free `valAt`, primitives and structs alike).
+  `storageRootWriteCopySource` (sort-free `find<[StValue]>`, primitives and structs alike).
 - Field (member access, any depth): `storageFieldWriteSave`,
   `storageFieldReadFind`, `storageFieldWriteCopySource`,
   `storageFieldReadBindLocalRoot`, `storageFieldReadStoreRoot`, plus
@@ -296,7 +296,7 @@ Three sort-free symbols carry the deferred value:
 | Symbol | Means | Resolved by |
 |---|---|---|
 | `delAt(Struct, List)` | the storage with a location reset — a struct keeps its mapping members | `delAtEmpty` / `selectOnDelAtCons` |
-| `valAt(Struct, List)` | the value at a path, for copies | `valAtFind` |
+| `find<[StValue]>(Struct, List)` | the value at a path, for copies (`find` at the top storage sort) | `findStValueCast` |
 | `defVal` | a location reset outright, mapping members included | `defValResolve` |
 
 `defVal` is declared `Prim`, so it is both an `StValue` and a `MemValue` and serves storage
@@ -324,7 +324,7 @@ the `storageIndexRead{Array,Mapping}Find` variants, and the memory twins
 (`\hasMemoryFieldSort` / `\hasMemoryElementSort`) on `memoryFieldReadValue` /
 `memoryIndexReadArrayValue`. `alphaPrim \extends Prim` keeps a struct-typed match
 inapplicable rather than mistyped. The store-position copies (`storageRootWriteCopySource`
-and the `…StoreRoot` rules) carry the value as sort-free `valAt` instead; `size` reads and
+and the `…StoreRoot` rules) carry the value as sort-free `find<[StValue]>` instead; `size` reads and
 all arithmetic contexts keep `find<[int]>`, since every numeric Solidity type shares the
 `int` carrier sort (only `bool` has a distinct primitive sort).
 

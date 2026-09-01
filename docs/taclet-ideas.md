@@ -121,7 +121,7 @@ Edge cases of already-supported constructs (see `docs/taclets-implementation.md`
   checked option is active, so examples need not `require` both bounds by hand.
 - **Remaining `find<[Struct]>` store positions**: `storageFieldWriteCopySource`
   and `storagePushValueCopySource` still hard-code `find<[Struct]>` for the
-  copied value; the same sort-free `valAt` treatment applied to
+  copied value; the same sort-free `find<[StValue]>` treatment applied to
   `storageRootWriteCopySource` and the `…StoreRoot` rules works there too (and
   would let them copy primitive-typed sources).
 - **`mapfree` PathSVSort flag**: optional calculus-level hardening of the
