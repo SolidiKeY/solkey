@@ -340,17 +340,21 @@ builtins classified like `push`/`pop` (`MemberExp` + `FunctionCallExpression`,
 no dedicated AST node). Transfer semantics is the taclet choice
 `transferSemantics:{noCallback, withCallback}` (`optionsDeclarations.key`,
 default `noCallback`; examples pin the other variant with
-`\withOptions transferSemantics:withCallback;`). Both rules guard on the EVM
-balance check `0 <= v & v <= selfBalance` — an unbacked (or negative) transfer
-reverts. Under `noCallback`: `transferNoCallback`
-(`a.transfer(v);` ⇝ `\if(guard) \then({selfBalance := selfBalance − v ||
-net := storeSt(net, at(a), selectSt<[int]>(net, at(a)) − v)} …)
-\else(revert())`).
-Under `withCallback`: `transferWithCallback` splits into "insufficient funds"
-(`¬guard → ⟨revert⟩φ`), "invariant on exit"
-(book the debit, prove `CInv(storage, net)`, drop the continuation) and
-"resume after callback" (havoc `storage`, `net`, and `selfBalance` with
-skolem constants, assume `CInv`, continue). Both share the
+`\withOptions transferSemantics:withCallback;`). Each semantics is split by
+modality: the box rules book the debit unconditionally (a reverting run is
+trivially correct under partial correctness, so no funds check), while the
+diamond rules owe the EVM balance check `0 <= v & v <= selfBalance` as a
+"sufficient funds" goal — an unfunded diamond transfer is unprovable. Under
+`noCallback`: `transferNoCallbackBox`
+(`a.transfer(v);` ⇝ `{selfBalance := selfBalance − v ||
+net := storeSt(net, at(a), selectSt<[int]>(net, at(a)) − v)} …`) and
+`transferNoCallbackDiamond` (the same booking plus the "sufficient funds"
+goal). Under `withCallback`: `transferWithCallbackBox` splits into
+"invariant on exit" (book the debit, prove `CInv(storage, net)`, drop the
+continuation) and "resume after callback" (havoc `storage`, `net`, and
+`selfBalance` with skolem constants, assume `CInv`, continue);
+`transferWithCallbackDiamond` adds the leading "sufficient funds" goal and
+keeps the guard as an assumption on the other two branches. All share the
 `transfer_unfold_leftFstReceiver` / `transfer_unfold_rightSndArgument`
 captures. The PO pattern credits the incoming payment to the balance
 alongside the ledger:
@@ -360,9 +364,12 @@ selfBalance + msgValue}`. Not yet done: the `\getContractInvariant` varcond +
 `send`/`call{value:}` rules, `address(this).balance` reading `selfBalance`,
 and proof-obligation plumbing (`docs/net.md` Step 5). Examples: the `net-*`
 starters and the per-contract `*-invariant.key` / `*-withcallback.key` POs in
-`keyext.solidity.examples/net/`, driven by `NetExamplesTest`
-(`net-transfer-insufficient.key` pins the revert branch; the diamond starters
-carry `selfBalance` antecedents).
+`keyext.solidity.examples/net/`, driven by `NetExamplesTest`; the starters
+run in box with no funding premises (`net-transfer-unfunded.key` pins the
+unconditional booking), the `net-transfer-*diamond-funded.key` starters
+discharge the diamond funding obligation, and
+`NetExamplesTest#unfundedDiamondStaysOpen` asserts the unfunded-diamond
+problems under the core test resources `examples/open/` stay open.
 
 ### Paths and lowering
 Path SV sorts: `StoragePath`, `SimpleStoragePath`, `ComplexStoragePath`,

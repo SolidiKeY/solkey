@@ -9,12 +9,15 @@ for the payment/environment model that `taclet-ideas.md` Tier 5 defers
 ("`msg.sender`, `msg.value`, `.transfer` — require an environment/ledger
 model beyond the storage/memory heaps").
 
-Beyond the paper, the implemented rules add the EVM balance check: the
-program variable `selfBalance` models the contract's own funds, `transfer`
-reverts when `0 <= v & v <= selfBalance` fails and debits `selfBalance`
-otherwise, the callback havoc quantifies over `selfBalance` alongside
-`storage` and `net`, and the PO pattern credits `msgValue` to `selfBalance`
-next to the `net(msgSender)` booking.
+Beyond the paper, the implemented rules add the EVM balance check as a
+**diamond-only proof obligation**: the program variable `selfBalance`
+models the contract's own funds, the diamond transfer rules owe
+`0 <= v & v <= selfBalance` as a "sufficient funds" goal, while the box
+rules book the debit unconditionally (a reverting run is trivially correct
+under partial correctness, so the box does not owe the check). Both
+modalities debit `selfBalance`, the callback havoc quantifies over
+`selfBalance` alongside `storage` and `net`, and the PO pattern credits
+`msgValue` to `selfBalance` next to the `net(msgSender)` booking.
 
 Read `storage.md` (calculus conventions), `key-taclets.md` (authoring
 syntax), and `require-assert.md` (box/diamond revert discipline) first.
@@ -59,8 +62,8 @@ maintained by the calculus, not by the program. On top of it:
 | `address` type | Registered in `SolidityInfo`, mapped to the `int` sort |
 | `net` mapping | **Done** (Step 1): `Struct net` in `netHeader.key`, read/write via `selectSt`/`storeSt` |
 | `msg.sender` / `msg.value` | **Done** (Step 2): desugared to the `msgSender`/`msgValue` program variables in `SolidityToKeyConverter` |
-| `transfer` / `send` / `call{value:}` | `transfer` **done with both semantics** (Step 3: builtin + classification + `transferNoCallback` and both capture rules; Step 4: `transferWithCallback` under the `transferSemantics` choice); `send` has builtin + classification but no rule; `call{value:}` missing |
-| Havoc update | **Done** in `transferWithCallback`: `{storage := storageSk \|\| net := netSk \|\| selfBalance := selfBalanceSk}` with skolem SVs (the `memoryReferenceDeclFreshAlloc` fresh-symbol pattern) |
+| `transfer` / `send` / `call{value:}` | `transfer` **done with both semantics, each split by modality** (Step 3: builtin + classification + `transferNoCallbackBox`/`transferNoCallbackDiamond` and both capture rules; Step 4: `transferWithCallbackBox`/`transferWithCallbackDiamond` under the `transferSemantics` choice); `send` has builtin + classification but no rule; `call{value:}` missing |
+| Havoc update | **Done** in `transferWithCallbackBox`/`Diamond`: `{storage := storageSk \|\| net := netSk \|\| selfBalance := selfBalanceSk}` with skolem SVs (the `memoryReferenceDeclFreshAlloc` fresh-symbol pattern) |
 | Contract invariant storage + retrieval | **Phase 1 done**: uninterpreted `CInv(Struct, Struct)` predicate (`netHeader.key`) expanded by a per-example `insertCInv` taclet. Repository-backed retrieval still missing; the loop-invariant machinery (`SpecificationRepository`, `\getInvariant`/`\hasInvariant` varconds in `TacletBuilderManipulators`) is the exact template |
 | Proof-obligation generator | **Missing**; `proof/init/` already has `AbstractPO` / `ContractPO` / `FunctionalOperationContractPO` scaffolding. The paper's prototype also wrote POs by hand, so a manual pattern is faithful for phase 1 |
 
@@ -100,12 +103,15 @@ coexist and examples pin the variant they need.
 **POs use the box modality.** The paper proves partial correctness
 (reverting runs are trivially correct). `require` already degenerates to
 `c → φ` in box (`require-assert.md` §5), which is exactly the paper's
-`require` rule. The plan originally used this to omit an "unbacked funds"
-branch from `transfer`; the implemented rules carry the branch explicitly
-(`0 <= v & v <= selfBalance`, else `revert()`) — box still discharges the
-reverting run for free, but diamond POs now owe the funds guard, which is
-the EVM's actual behavior (the diamond starters carry `selfBalance`
-antecedents, and `net-transfer-insufficient.key` pins the revert).
+`require` rule. The transfer rules are split by modality along the same
+line: the box rules carry no funds guard at all — the debit is booked
+unconditionally, exactly the paper's rule — while the diamond rules owe
+`0 <= v & v <= selfBalance` as an explicit "sufficient funds" goal, which
+is the EVM's actual behavior under total correctness
+(`net-transfer-unfunded.key` pins the unconditional box booking, the
+`net-transfer-*diamond-funded.key` starters discharge the diamond
+obligation, and the `examples/open/` twins in the core test resources pin
+that an unfunded diamond stays open).
 
 ## 4. Next Steps to Implement `net`
 
@@ -128,19 +134,25 @@ Ordered; each step has a runnable milestone. Rules go in
 > semantics + closeAuction) and `AuctionWithdrawNet` (the effective_net withdrawal
 > pattern; like the course, closeAuction has no PO — the stated invariant provably does
 > not survive it), plus a `CasinoNet` conservation set of our own design. The `net-*`
-> starters cover the raw ledger/transfer machinery. `NetExamplesTest` enumerates the
+> starters cover the raw ledger/transfer machinery in box, with
+> `net-transfer-diamond-funded.key` / `net-transfer-withcallback-diamond-funded.key` as
+> the diamond twins that discharge the funding obligation; the negative twins (an
+> unfunded diamond must stay open) live in the core test resources under
+> `org/key_project/solidity/examples/open/`, asserted by
+> `NetExamplesTest#unfundedDiamondStaysOpen`. `NetExamplesTest` enumerates the
 > directory. Still open from Step 6: the multi-auction `closeAuction` loop (needs loop
 > invariants over `net`) and paper Table 1's expected-open buggy variants.
 
 > **Status:** Steps 1–4 are implemented (`netHeader.key`, the converter
 > desugaring, the `transfer` builtin + no-callback rules, and the
-> with-callback rule); the seven `net-*` starter examples close. The
-> `transferSemantics:{noCallback, withCallback}` choice exists in
+> with-callback rules — each semantics split into a box rule with no funds
+> check and a diamond rule owing it); the `net-*` starter examples close.
+> The `transferSemantics:{noCallback, withCallback}` choice exists in
 > `optionsDeclarations.key` (default `noCallback`; examples select the other
 > variant with `\withOptions transferSemantics:withCallback;`). Step 4 took
 > the CInv-predicate route instead of the `inv` schema formula below:
 > `netHeader.key` declares an uninterpreted `CInv(Struct, Struct)` over
-> `(storage, net)`, `transferWithCallback` references it directly, and each
+> `(storage, net)`, the `transferWithCallback*` rules reference it directly, and each
 > problem file defines it via its own `insertCInv` rewrite taclet (phase 1 of
 > the invariant plumbing; the `\getContractInvariant` varcond remains phase
 > 2). One enabling fix along the way:
@@ -230,39 +242,60 @@ end-to-end; no new AST node and no grammar change (`MemberAccess` +
    (parse + classification), and pretty-printing must survive a proof save
    (`Layouter` handles the statement generically; verify, don't assume).
 
-**`transferNoCallback`** (plain English first):
+**`transferNoCallbackBox` / `transferNoCallbackDiamond`** (plain English
+first):
 
 - *Precondition:* the active statement is `a.transfer(v);` where `a` is a
   simple address-typed expression, `v` a simple uint expression, and the
   recipient is known not to be the contract itself (`a ≠ self`).
 - *Transformation:* consume the statement and emit the ledger update — the
-  contract has now sent `v` to `a`, so `net(a)` decreases by `v`. Symbolic
-  execution continues immediately: a gas-limited `transfer` cannot call
-  back, and the callee's own storage is not modeled, so the paper's
-  `havoc(c)` is a no-op here.
+  contract has now sent `v` to `a`, so `net(a)` decreases by `v` and
+  `selfBalance` is debited. Symbolic execution continues immediately: a
+  gas-limited `transfer` cannot call back, and the callee's own storage is
+  not modeled, so the paper's `havoc(c)` is a no-op here. In **box** the
+  update is unconditional (an unfunded transfer reverts on the EVM and a
+  reverting run is trivially correct — the paper's rule). In **diamond**
+  the EVM value-transfer check `0 <= v & v <= selfBalance` is owed as a
+  separate "sufficient funds" goal.
 - *Postcondition:* the continuation runs with all knowledge intact except
-  the updated `net(a)`; the invariant is *not* consulted.
+  the updated `net(a)`/`selfBalance`; the invariant is *not* consulted. A
+  diamond over an unfunded transfer is unprovable.
 
 ```key
-transferNoCallback {
+transferNoCallbackBox {
     \schemaVar \formula post;
     \schemaVar \program SimpleExpression[primitive] a;
     \schemaVar \program SimpleExpression[primitive] se;
 
-    \find(\modality{#mod}{c# s#a.transfer(s#se); #c}\endmodality(post))
-    \replacewith(\if(0 <= se & se <= selfBalance)
-        \then({selfBalance := selfBalance - se
-               || net := storeSt(net, at(a),
-                                 selectSt<[int]>(net, at(a)) - se)}
-            \modality{#mod}{c# #c}\endmodality(post))
-        \else(\modality{#mod}{c# revert(); #c}\endmodality(post)))
+    \find(\modality{#box}{c# s#a.transfer(s#se); #c}\endmodality(post))
+    \replacewith({selfBalance := selfBalance - se
+                  || net := storeSt(net, at(a),
+                                    selectSt<[int]>(net, at(a)) - se)}
+        \modality{#box}{c# #c}\endmodality(post))
+    \heuristics(simplify_prog)
+};
+
+transferNoCallbackDiamond {
+    \schemaVar \formula post;
+    \schemaVar \program SimpleExpression[primitive] a;
+    \schemaVar \program SimpleExpression[primitive] se;
+
+    \find(\modality{#diamond}{c# s#a.transfer(s#se); #c}\endmodality(post))
+    "sufficient funds":
+        \replacewith(0 <= se & se <= selfBalance);
+    "transfer booked":
+        \replacewith({selfBalance := selfBalance - se
+                      || net := storeSt(net, at(a),
+                                        selectSt<[int]>(net, at(a)) - se)}
+            \modality{#diamond}{c# #c}\endmodality(post))
     \heuristics(simplify_prog)
 };
 ```
 
-(The guard is the EVM value-transfer check: the implemented rule extends the
-paper's, which could not fail. A negative amount is folded into the same
-revert branch — unsigned in the EVM's value field.)
+(The diamond's "sufficient funds" goal is the EVM value-transfer check: the
+implemented rules extend the paper's, which could not fail. A negative
+amount is folded into the same obligation — unsigned in the EVM's value
+field.)
 
 (Guard the rule set with the `transferSemantics:noCallback` choice. The
 `a ≠ self` side condition can start as a proof obligation added via a second
@@ -285,27 +318,31 @@ Front-end-wise this step is free: the rule matches the same
 `ExpressionStatement` shape as Step 3, so all Java-side work is the
 invariant varcond described below.
 
-**`transferWithCallback`** (plain English first):
+**`transferWithCallbackBox` / `transferWithCallbackDiamond`** (plain
+English first):
 
 - *Precondition:* same statement shape as Step 3, and a contract invariant
   `I` is available for the contract under verification.
-- *Transformation:* split into three branches. Branch 0 ("insufficient
-  funds"): when the guard `0 <= v & v <= selfBalance` fails, the transfer
-  reverts before control leaves. Branch 1 ("control leaves"): under the
-  guard, after debiting `selfBalance` and decrementing `net(a)` by `v` —
-  funds move *before* control does — the invariant `I` must be proven; the
-  rest of the program is discarded. Branch 2 ("control returns"): the callee
-  may have done anything, including re-entering this contract, so all
-  knowledge of `storage`, `net` *and* `selfBalance` is erased (fresh skolem
-  constants); under the assumption that `I` holds again, symbolic execution
-  continues.
-- *Postcondition:* branch 1 guarantees the contract is consistent whenever
-  the callee (or any re-entrant execution) runs; branch 2 resumes with only
-  `I` known about storage and ledger (and nothing about the balance).
-  Local/memory state survives: the callee cannot touch this call frame.
+- *Transformation:* branch per obligation. "Invariant on exit": after
+  debiting `selfBalance` and decrementing `net(a)` by `v` — funds move
+  *before* control does — the invariant `I` must be proven; the rest of
+  the program is discarded. "Resume after callback": the callee may have
+  done anything, including re-entering this contract, so all knowledge of
+  `storage`, `net` *and* `selfBalance` is erased (fresh skolem constants);
+  under the assumption that `I` holds again, symbolic execution continues.
+  In **box** these two branches are owed unconditionally — no funds check,
+  the reverting run is vacuous. In **diamond** a leading "sufficient funds"
+  branch owes `0 <= v & v <= selfBalance`, and the other two branches keep
+  the guard as an assumption (it is proven in the first branch but not
+  visible across goals).
+- *Postcondition:* the exit branch guarantees the contract is consistent
+  whenever the callee (or any re-entrant execution) runs; the resume branch
+  continues with only `I` known about storage and ledger (and nothing about
+  the balance). Local/memory state survives: the callee cannot touch this
+  call frame.
 
 ```key
-transferWithCallback {
+transferWithCallbackBox {
     \schemaVar \formula post, inv;
     \schemaVar \program SimpleExpression[primitive] a;
     \schemaVar \program SimpleExpression[primitive] se;
@@ -313,11 +350,24 @@ transferWithCallback {
     \skolemTerm Struct netSk;
     \skolemTerm int selfBalanceSk;
 
-    \find(\modality{#mod}{c# s#a.transfer(s#se); #c}\endmodality(post))
+    \find(\modality{#box}{c# s#a.transfer(s#se); #c}\endmodality(post))
     \varcond(\getContractInvariant(inv))
-    "insufficient funds":
-        \replacewith(!(0 <= se & se <= selfBalance)
-            -> \modality{#mod}{c# revert(); #c}\endmodality(post));
+    "invariant on exit":
+        \replacewith({selfBalance := selfBalance - se
+                      || net := storeSt(net, at(a),
+                                        selectSt<[int]>(net, at(a)) - se)} inv);
+    "resume after callback":
+        \replacewith({storage := storageSk || net := netSk
+                      || selfBalance := selfBalanceSk}
+            (inv -> \modality{#box}{c# #c}\endmodality(post)))
+    \heuristics(simplify_prog)
+};
+
+transferWithCallbackDiamond {
+    // same schema variables and varcond
+    \find(\modality{#diamond}{c# s#a.transfer(s#se); #c}\endmodality(post))
+    "sufficient funds":
+        \replacewith(0 <= se & se <= selfBalance);
     "invariant on exit":
         \replacewith(0 <= se & se <= selfBalance
             -> {selfBalance := selfBalance - se
@@ -327,7 +377,7 @@ transferWithCallback {
         \replacewith(0 <= se & se <= selfBalance
             -> {storage := storageSk || net := netSk
                 || selfBalance := selfBalanceSk}
-               (inv -> \modality{#mod}{c# #c}\endmodality(post)))
+               (inv -> \modality{#diamond}{c# #c}\endmodality(post)))
     \heuristics(simplify_prog)
 };
 ```
@@ -354,10 +404,10 @@ Invariant plumbing, in two phases:
    in the `.sol` source (§6).
 
 **Milestone:** the paper's `makeBid` counterexample behaves as in Table 1 —
-the fixed body (transfer last, paper Fig. 5) closes under
-`transferWithCallback`; the original body (paper Fig. 4) closes only under
-`transferNoCallback` and leaves the "invariant on exit" branch open under
-`transferWithCallback`.
+the fixed body (transfer last, paper Fig. 5) closes under the
+with-callback semantics; the original body (paper Fig. 4) closes only under
+the no-callback semantics and leaves the "invariant on exit" branch open
+with callbacks.
 
 ### Step 5 — Proof obligations
 

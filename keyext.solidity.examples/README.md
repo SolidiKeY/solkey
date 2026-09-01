@@ -194,7 +194,15 @@ The contract sets, ported from the SolidityCalculus course (`maltaCourseKey`):
 
 The `net-*` starters cover the raw machinery: the ledger update, `msg.*` desugaring, and
 `.transfer` under both semantics (simple, capture-argument, capture-receiver,
-with-callback).
+with-callback). The transfer rules are split by modality — box books the debit with no
+funds check, diamond owes `0 <= v & v <= selfBalance` as a "sufficient funds" goal — so
+the starters run in box with no funding premises (`net-transfer-unfunded.key` pins the
+unconditional booking on a fully symbolic balance), while
+`net-transfer-diamond-funded.key` / `net-transfer-withcallback-diamond-funded.key`
+discharge the diamond obligation from a funding antecedent. The negative twins (an
+unfunded diamond must stay open) live in
+`keyext.solidity.core/src/test/resources/org/key_project/solidity/examples/open/`,
+asserted by `NetExamplesTest#unfundedDiamondStaysOpen`.
 
 Symbolic POs occasionally need two kinds of sound antecedent strengthening, always noted
 in the file comment: `geq(field, 0)` uint-range assumptions ("Solidity Light" uses
