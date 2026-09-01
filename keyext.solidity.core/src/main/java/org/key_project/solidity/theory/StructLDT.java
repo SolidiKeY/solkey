@@ -21,9 +21,7 @@ public class StructLDT extends LDT {
     /// Sub-sort of `Field` for mapping members (preserved by `delete`).
     public static final Name MAP_FIELD_SORT_NAME = new Name("MapField");
     /// Sub-sort of `Field` for struct/array reference members (recursed by `delete`).
-    public static final Name ID_FIELD_SORT_NAME = new Name("IdField");
-    /// Sub-sort of `Field` for primitive-valued members (reset to their default by `delete`).
-    public static final Name PRIM_FIELD_SORT_NAME = new Name("PrimField");
+    public static final Name REF_FIELD_SORT_NAME = new Name("RefField");
     /// The contract-storage program variable, declared in the struct theory `.key` files.
     public static final Name STORAGE_NAME = new Name("storage");
     public static final String FIELD_SEPARATOR = "$";
@@ -31,8 +29,7 @@ public class StructLDT extends LDT {
     private final Function mt;
     private final Sort fieldSort;
     private final Sort mapFieldSort;
-    private final Sort idFieldSort;
-    private final Sort primFieldSort;
+    private final Sort refFieldSort;
     private final ProgramVariable storage;
 
     public StructLDT(Services services) {
@@ -42,8 +39,7 @@ public class StructLDT extends LDT {
         storage = services.getNamespaces().programVariables().lookup(STORAGE_NAME);
         fieldSort = services.getNamespaces().sorts().lookup(FIELD_SORT_NAME);
         mapFieldSort = services.getNamespaces().sorts().lookup(MAP_FIELD_SORT_NAME);
-        idFieldSort = services.getNamespaces().sorts().lookup(ID_FIELD_SORT_NAME);
-        primFieldSort = services.getNamespaces().sorts().lookup(PRIM_FIELD_SORT_NAME);
+        refFieldSort = services.getNamespaces().sorts().lookup(REF_FIELD_SORT_NAME);
     }
 
     // -------------------------------------------------------------------------
@@ -75,13 +71,8 @@ public class StructLDT extends LDT {
     }
 
     /// Sub-sort of `Field` for struct/array reference members, or `null` if not loaded.
-    public Sort getIdFieldSort() {
-        return idFieldSort;
-    }
-
-    /// Sub-sort of `Field` for primitive-valued members, or `null` if not loaded.
-    public Sort getPrimFieldSort() {
-        return primFieldSort;
+    public Sort getRefFieldSort() {
+        return refFieldSort;
     }
 
 

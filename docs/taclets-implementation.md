@@ -39,23 +39,22 @@ Field selectors are partitioned by what the member holds (`structHeader.key`),
 stamped at parse time by `SolJSONParser#fieldSortFor`:
 
 ```
-Field
-├── MapField    mapping members            delete preserves their entries
-├── IdField     struct/array references    delete recurses into them
-└── PrimField   value members              delete resets them to their default
+Field           value members, `size`, `at(i)`   delete resets them to their default
+├── MapField    mapping members                  delete preserves their entries
+└── RefField     struct/array references          delete recurses into them
 ```
 
-The partition is total **over named members**, so a rule can say which kind it
-applies to. It does not cover every `Field`: `size` and `at(i)` are plain
-`Field`, because an index's element sort comes from the container rather than
-from the index. `selectStDelNodeDefault` therefore stays Field-generic and
-ranked (`simplify_enlarging`) below the `MapField`/`IdField` rules — restricting
-it to `PrimField` leaves `(delete w).arr.length` stuck, which
+Only the two kinds `delete` must positively recognise get a sub-sort; value
+members stay plain `Field` alongside `size` and `at(i)` (an index's element
+sort comes from the container rather than from the index).
+`selectStDelNodeDefault` therefore stays Field-generic and ranked
+(`simplify_enlarging`) below the `MapField`/`RefField` rules — restricting it
+to a value-member sub-sort would leave `(delete w).arr.length` stuck, which
 `SolcStructs.deleteStructResetsArrayLength` pins down.
 
 `MapField` is the sub-sort that earns its place: it is the only case that reads
 *through* the delete marker (`selectSt(st, mf)`) instead of re-wrapping it
-(`delNode(selectSt(st, idf))`) or resetting. Classifying a mapping member as a
+(`delNode(selectSt(st, rf))`) or resetting. Classifying a mapping member as a
 reference would leave its entries under the marker and they would read as
 defaults — losing exactly the "delete preserves mappings" rule.
 
@@ -156,7 +155,9 @@ not the value: `{lp := cons1(rhsField)}` or `{lp := pathFields}`. Two enablers:
 collection (`Struct`, array, mapping) to `List`; value-reads and path-rebinds
 stay disjoint through the read side, not the target variable — the value-read
 rules require a primitive source (`Path[storage,simple,primitive]` root,
-`Field[primitive]` member, or `Path[...,primitiveElement]` indexed receiver),
+a member whose `\hasFieldSort(a, \sort(alphaPrim))` varcond binds — the
+`alphaPrim \extends Prim` bound rejects reference-typed members — or a
+`Path[...,primitiveElement]` indexed receiver),
 while rebinds keep their `Variable[storage]` target.
 
 ### Push / pop
@@ -217,13 +218,12 @@ a struct becomes a lazy `delNode` marker (structRules.key). This gives Solidity'
 `delete` semantics on structs: value/reference members reset, but **mapping members
 are preserved**. On read, `selectSt` on a `delNode` reads a mapping member
 (`MapField`) through to the original struct, recurses into a reference member
-(`IdField`, so nested structs' mappings also survive), and resets a primitive leaf.
+(`RefField`, so nested structs' mappings also survive), and resets a primitive leaf.
 Member kinds are told apart by `Field` sub-sorts stamped on the field constants at
-parse time (`SolJSONParser#fieldSortFor`, keyed off the member's Solidity type). The
-partition is **total** — every field constant is exactly one of `MapField` (mapping),
-`IdField` (struct/array reference) or `PrimField` (value) — so the base `Field` sort
-means "any field" and nothing else, and a rule that matches `Field` is saying so
-deliberately rather than picking up primitives by default.
+parse time (`SolJSONParser#fieldSortFor`, keyed off the member's Solidity type):
+`MapField` for mappings and `RefField` for struct/array references. Every other
+field constant — value members, `size`, `at(i)` — carries the base `Field` sort
+and is reset by the Field-generic default rule.
 
 `selectStDelNodeMap` and `selectStDelNodeRef` match their sub-sorts directly;
 `selectStDelNodeDefault` stays Field-generic and ranked below them, because
@@ -271,7 +271,7 @@ variable's sort, and nothing in the taclet language names that sort — so every
 read rule recovers it with a matching-time varcond: `\hasSort(sp, \sort(alphaPrim))` on
 `storageRootReadSelect`, `\hasFieldSort` on `storageFieldReadFind`, `\hasElementSort` on
 the `storageIndexRead{Array,Mapping}Find` variants, and the memory twins
-(`\hasMemoryFieldSort` / `\hasMemoryElementSort`) on `memoryFieldReadValue` /
+(`\hasMemoryFieldSort` / `\hasMemoryElementSort`) on `memoryFieldRead` /
 `memoryIndexReadArrayValue`. `alphaPrim \extends Prim` keeps a struct-typed match
 inapplicable rather than mistyped. The store-position copies (`storageRootWriteCopySource`
 and the `…StoreRoot` rules) carry the value as sort-free `find<[StValue]>` instead; `size` reads and
@@ -297,8 +297,9 @@ kind:
   `memory{Field,Index}Read_unfold_rightSndResult` — `nlhs = sp.a;` /
   `nlhs = sp[se];` with `nlhs : Path[complex,primitive]` capture the read into a
   value temp, then the plain write rules fire. `memoryToStorageFieldCopyField`
-  is restricted to a `Field[reference]` member so primitive members take this
-  route instead.
+  is restricted to reference-typed members by its
+  `\hasMemoryFieldSort(b, \sort(alphaId))` varcond so primitive members take
+  this route instead.
 - **Non-simple index** (paper `unfold_leftSnd` / `rightSndIndex`), all with
   `Path[storage]` / `Path[memory]` bases (any simplicity/origin/kind):
   `storageIndexWriteNonSimpleIndexCapture`, `memoryIndexWriteNonSimpleIndexCapture`,

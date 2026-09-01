@@ -47,31 +47,20 @@ class FieldSVSortTest {
         assertTrue(ProgramSVSort.FIELD.canStandFor(primitiveField, services));
         assertTrue(ProgramSVSort.FIELD.canStandFor(structField, services));
         assertTrue(ProgramSVSort.FIELD.canStandFor(mappingField, services));
+        assertTrue(ProgramSVSort.FIELD.canStandFor(arrayField, services));
     }
 
     @Test
-    void primitiveFlagMatchesPrimitiveFieldsOnly() {
-        ProgramSVSort primitive = ProgramSVSort.FIELD.createInstance("primitive");
-
-        assertTrue(primitive.canStandFor(primitiveField, services));
-        assertFalse(primitive.canStandFor(structField, services));
-        assertFalse(primitive.canStandFor(mappingField, services));
-        assertFalse(primitive.canStandFor(arrayField, services));
+    void fieldDoesNotMatchOtherProgramElements() {
+        assertFalse(ProgramSVSort.FIELD.canStandFor(
+            new TypeReference(new Name("uint")), services));
     }
 
     @Test
-    void referenceFlagMatchesStructArrayAndMappingFields() {
-        ProgramSVSort reference = ProgramSVSort.FIELD.createInstance("reference");
-
-        assertFalse(reference.canStandFor(primitiveField, services));
-        assertTrue(reference.canStandFor(structField, services));
-        assertTrue(reference.canStandFor(mappingField, services));
-        assertTrue(reference.canStandFor(arrayField, services));
-    }
-
-    @Test
-    void unknownFlagIsRejected() {
-        assertThrows(IllegalArgumentException.class,
-            () -> ProgramSVSort.FIELD.createInstance("value"));
+    void fieldHasNoParameterizedVariants() {
+        assertThrows(UnsupportedOperationException.class,
+            () -> ProgramSVSort.FIELD.createInstance("primitive"));
+        assertThrows(UnsupportedOperationException.class,
+            () -> ProgramSVSort.FIELD.createInstance("reference"));
     }
 }

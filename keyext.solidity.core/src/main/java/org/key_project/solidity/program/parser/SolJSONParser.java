@@ -636,11 +636,11 @@ public class SolJSONParser {
     }
 
     /// Chooses the `Field` sub-sort for a member, so a rule can say which kind of member it
-    /// applies to instead of matching every field. The partition is total: `MapField` for
-    /// mappings (their entries are preserved by `delete`), `IdField` for struct/array
-    /// references (`delete` recurses into them), and `PrimField` for value members (reset to
-    /// their default). Falls back to the base `Field` (or null) when a sub-sort is
-    /// unavailable, e.g. the struct theory is not loaded.
+    /// applies to instead of matching every field: `MapField` for mappings (their entries are
+    /// preserved by `delete`) and `RefField` for struct/array references (`delete` recurses
+    /// into them). Value members stay base `Field` — the delete-default rule is Field-generic,
+    /// so they need no sub-sort of their own. Also falls back to the base `Field` (or null)
+    /// when a sub-sort is unavailable, e.g. the struct theory is not loaded.
     private Sort fieldSortFor(Type fieldType) {
         var structLDT = services.getTheoryInfo().getStructLDT();
         Sort base = structLDT.getFieldSort();
@@ -655,9 +655,9 @@ public class SolJSONParser {
             return orBase(structLDT.getMapFieldSort(), base);
         }
         if (MemoryReferenceTypes.isReferenceType(unwrapped)) {
-            return orBase(structLDT.getIdFieldSort(), base);
+            return orBase(structLDT.getRefFieldSort(), base);
         }
-        return orBase(structLDT.getPrimFieldSort(), base);
+        return base;
     }
 
     private static Sort orBase(Sort sort, Sort base) {

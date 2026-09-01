@@ -118,19 +118,20 @@ for `delAt` through `delValue<[alpha]>` on the select:
 
 ### Field selectors
 
-Field selectors are not a flat sort. Every field constant is stamped at parse
-time (`SolJSONParser#fieldSortFor`) with exactly one sub-sort of `Field`, so a
-rule can say which kind of member it applies to instead of matching all of them:
+Field selectors are not a flat sort. Mapping and struct/array members are
+stamped at parse time (`SolJSONParser#fieldSortFor`) with a sub-sort of
+`Field`, so a rule can say which kind of member it applies to instead of
+matching all of them:
 
 | Sub-sort | Member kind | `delete` behaviour |
 |---|---|---|
 | `MapField` | mapping | entries preserved |
-| `IdField` | struct / array reference | recursed into |
-| `PrimField` | value | reset to its default |
+| `RefField` | struct / array reference | recursed into |
 
-The partition is total, so the base `Field` sort means "any field" and nothing
-else. `at(i)` stays a plain `Field`: an index's element sort depends on the
-container, not on the index, so it cannot be stamped this way.
+Value members stay plain `Field` — the delete-default rule is Field-generic,
+so they need no sub-sort of their own. `at(i)` stays a plain `Field` too: an
+index's element sort depends on the container, not on the index, so it cannot
+be stamped this way.
 
 **Note:** Both global roots (like `alice`) and local storage aliases
 (like `lp`) are represented as `List`-typed paths. A global root

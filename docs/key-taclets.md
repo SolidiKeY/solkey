@@ -50,10 +50,13 @@ Prefer precise program sorts so rules stay disjoint:
 - `Variable` for stack/value targets; a variable carries no value-mode flag —
   keep rules disjoint via the field/path side instead: `Path[...,primitive]` /
   `Path[...,reference]` type-kind flags, `Path[...,primitiveElement]` /
-  `Path[...,referenceElement]` element-kind flags on indexed receivers,
-  `Field[primitive]` / `Field[reference]` on accessed members, and
+  `Path[...,referenceElement]` element-kind flags on indexed receivers, and
   `SimpleExpression[primitive]` / `NonSimpleExpression[primitive]` on
-  expressions (mappings count as reference throughout).
+  expressions (mappings count as reference throughout). Accessed members carry
+  no flag: a `Field` rule discriminates on the member's declared type through
+  the bound of the generic sort its `\hasFieldSort` / `\hasMemoryFieldSort`
+  varcond binds (`alphaPrim \extends Prim` admits only value-typed members,
+  `alphaId \extends Identity` only reference-typed ones).
 - `Variable[storage]` for local storage aliases.
 - `Variable[memory]` for local memory references.
 - `Path[storage,simple,global]` for contract storage roots.
