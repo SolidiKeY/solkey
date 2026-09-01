@@ -31,15 +31,19 @@ contract TestSuite {
     struct Ledger { uint nonce; mapping(uint => uint) balances; }
     struct LedgerUse { Ledger ledger; }
     struct TokenBucket { Token[] tokens; }
+    struct Toggle { bool on; uint n; }
 
     uint total;
     uint age;
     address owner;
     uint balance;
+    bool flag;
+    bool flag2;
 
     uint[] values;
     uint[] a;
     uint[][] matrix;
+    bool[] boolFlags;
 
     mapping(uint => uint) balances;
     mapping(uint => Person) people;
@@ -50,6 +54,7 @@ contract TestSuite {
     Person[] persons;
     Person alice;
     Person bob;
+    Toggle toggle;
 
     Ledger ledger;
     Token[] tokens;
@@ -132,6 +137,48 @@ contract TestSuite {
         values.push(42);
         assert(values[2] == 42);
         assert(values.length == 3);
+    }
+
+    // ── Storage: bool ──
+
+    function storageBoolRootReadWrite() public {
+        flag = true;
+        bool r = flag;
+        assert(r);
+    }
+
+    function storageBoolRootCopy() public {
+        flag = true;
+        flag2 = flag;
+        bool r = flag2;
+        assert(r);
+    }
+
+    function storageBoolFieldRead() public {
+        toggle.on = true;
+        bool r = toggle.on;
+        assert(r);
+    }
+
+    function storageBoolMappingRead() public {
+        flags[2] = true;
+        bool r = flags[2];
+        assert(r);
+    }
+
+    /// @custom:key box
+    function storageBoolArrayRead() public {
+        require(boolFlags.length == 1);
+        boolFlags[0] = true;
+        bool r = boolFlags[0];
+        assert(r);
+    }
+
+    function storageBoolFieldStoreRoot() public {
+        toggle.on = true;
+        flag = toggle.on;
+        bool r = flag;
+        assert(r);
     }
 
     // ── Memory ──

@@ -70,7 +70,7 @@ rules before a terminal rule fires.
 
 ### Storage read / write / copy
 - Root: `storageRootWriteStore`, `storageRootReadSelect`,
-  `storageRootWriteCopySource` (primitive) and `…_struct` (`find<[Struct]>`).
+  `storageRootWriteCopySource` (sort-free `valAt`, primitives and structs alike).
 - Field (member access, any depth): `storageFieldWriteSave`,
   `storageFieldReadFind`, `storageFieldWriteCopySource`,
   `storageFieldReadBindLocalRoot`, `storageFieldReadStoreRoot`, plus
@@ -285,11 +285,11 @@ deletes stay separate by design.
 
 ### Sort-free clearing and copying
 
-A rule that clears or copies a location used to need the location's value sort, which is
-program-AST information, so it was recovered at matching time by a sort-binding varcond
-(`\hasSort` / `\hasFieldSort` / `\hasElementSort` / `\hasMemoryElementSort`). Those are
-gone: the sort is now resolved **on read** instead, using the cast that `selectOnStore`
-(and `readOnWrite` in memory) already inserts.
+A rule that clears or copies a location needs no sort at all: the sort is resolved **on
+read**, using the cast that `selectOnStore` (and `readOnWrite` in memory) already inserts.
+The read rules are where a sort is genuinely needed, and they bind it at matching time with
+the sort-binding varconds (`\hasSort` / `\hasFieldSort` / `\hasElementSort` and their
+memory twins) — see "Stores can defer their sort; reads cannot" below.
 
 Three sort-free symbols carry the deferred value:
 
@@ -317,10 +317,16 @@ them grew exponentially: `SolcArrays.pushThenPopRestoresLength` peaked at a 6183
 
 **Stores can defer their sort; reads cannot.** A stored value is read later, and the read
 supplies the sort through its cast. A read rule has to *produce* a value of the target
-variable's sort, and nothing in the taclet language names that sort — so
-`memoryIndexReadArrayValue` keeps the one remaining `\hasMemoryElementSort`. (Its storage
-counterparts hard-code `find<[int]>` instead, which is why they would mistype a `bool`
-element; the memory rule is the more correct of the two.)
+variable's sort, and nothing in the taclet language names that sort — so every primitive
+read rule recovers it with a matching-time varcond: `\hasSort(sp, \sort(alphaPrim))` on
+`storageRootReadSelect`, `\hasFieldSort` on `storageFieldReadFind`, `\hasElementSort` on
+the `storageIndexRead{Array,Mapping}Find` variants, and the memory twins
+(`\hasMemoryFieldSort` / `\hasMemoryElementSort`) on `memoryFieldReadValue` /
+`memoryIndexReadArrayValue`. `alphaPrim \extends Prim` keeps a struct-typed match
+inapplicable rather than mistyped. The store-position copies (`storageRootWriteCopySource`
+and the `…StoreRoot` rules) carry the value as sort-free `valAt` instead; `size` reads and
+all arithmetic contexts keep `find<[int]>`, since every numeric Solidity type shares the
+`int` carrier sort (only `bool` has a distinct primitive sort).
 
 ### Capture partition (non-simple RHS / index, storage.md Steps 1–2)
 Non-simple constituents are hoisted into fresh locals by a disjoint rule family,

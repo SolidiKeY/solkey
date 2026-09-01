@@ -11,6 +11,7 @@ import org.key_project.prover.rules.VariableCondition;
 import org.key_project.prover.rules.instantiation.MatchResultInfo;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.sort.GenericSort;
+import org.key_project.solidity.program.ast.StaticTypes;
 import org.key_project.solidity.program.ast.abstractions.ArrayType;
 import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
@@ -53,11 +54,12 @@ public final class IndexedExpressionTypeToSortCondition implements VariableCondi
             return null;
         }
 
-        Type elementType = switch (receiver.getType()) {
-            case MappingType mappingType -> mappingType.valueType();
-            case ArrayType arrayType -> arrayType.getElementType();
-            case DynamicArrayType dynamicArrayType -> dynamicArrayType.getElementType();
-            default -> null;
+        Type elementType = switch (StaticTypes.unwrap(receiver.getType())) {
+            case MappingType mappingType -> StaticTypes.unwrap(mappingType.valueType());
+            case ArrayType arrayType -> StaticTypes.unwrap(arrayType.getElementType());
+            case DynamicArrayType dynamicArrayType ->
+                StaticTypes.unwrap(dynamicArrayType.getElementType());
+            case null, default -> null;
         };
         if (elementType == null) {
             return null;

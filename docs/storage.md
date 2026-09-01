@@ -339,10 +339,11 @@ emitted update.
       gp = se
       ⇝  { storage := save(storage, gp, se) }
 
-- `storageRootWriteCopySource`
+- `storageRootWriteCopySource` (one rule for primitive and struct
+  sources — `valAt` is sort-free, the sort is resolved on read)
 
       gp = sp
-      ⇝  { storage := save(storage, gp, find(storage, sp)) }
+      ⇝  { storage := save(storage, gp, valAt(storage, sp)) }
 
 - `storageLocalRootRebind` (rebinds a local storage reference; does
   **not** copy)
@@ -635,23 +636,23 @@ extracts to `cons(alice, nil)`. All storage operations use `find`/`save`.
 | `sp.a = se`                    | `storageFieldWriteSave`               | `save`           |
 | `sp1.a = sp2`                  | `storageFieldWriteCopySource`         | `save`           |
 | `gp = se`                      | `storageRootWriteStore`               | `save`           |
-| `gp = sp`                      | `storageRootWriteCopySource`          | `save`/`find`    |
+| `gp = sp`                      | `storageRootWriteCopySource`          | `save`/`valAt`   |
 | `lp = sp`                      | `storageLocalRootRebind`              | direct assign    |
 | `v = sp.a`                     | `storageFieldReadFind`                | `find`           |
 | `v = sp`                       | `storageRootReadSelect`               | `find`           |
 | `lp = sp.b`                    | `storageFieldReadBindLocalRoot`       | direct assign    |
-| `gp = sp.b`                    | `storageFieldReadStoreRoot`           | `save`/`find`    |
+| `gp = sp.b`                    | `storageFieldReadStoreRoot`           | `save`/`valAt`   |
 | `delete sp;`                   | `storageDeleteSimpleTarget`           | `delAt`        |
 | `sp[i] = se`  (mapping)        | `storageIndexWriteMappingSave`        | `save`           |
 | `sp1[i] = sp2`  (mapping)      | `storageIndexWriteMappingCopySource`  | `save`           |
 | `v = sp[i]`  (mapping)         | `storageIndexReadMappingFind`         | `find`           |
 | `lp = sp[i]`  (mapping)        | `storageIndexReadMappingBindLocalRoot`| direct assign    |
-| `gp = sp[i]`  (mapping)        | `storageIndexReadMappingStoreRoot`    | `save`/`find`    |
+| `gp = sp[i]`  (mapping)        | `storageIndexReadMappingStoreRoot`    | `save`/`valAt`   |
 | `sp[i] = se`  (array)          | `storageIndexWriteArraySave`          | `save`           |
 | `sp1[i] = sp2`  (array)        | `storageIndexWriteArrayCopySource`    | `save`           |
 | `v = sp[i]`  (array)           | `storageIndexReadArrayFind`           | `find`           |
 | `lp = sp[i]`  (array)          | `storageIndexReadArrayBindLocalRoot`  | direct assign    |
-| `gp = sp[i]`  (array)          | `storageIndexReadArrayStoreRoot`      | `save`/`find`    |
+| `gp = sp[i]`  (array)          | `storageIndexReadArrayStoreRoot`      | `save`/`valAt`   |
 | `sp.push(se);`                 | `storagePushValueSave`                | `save`           |
 | `sp1.push(sp2);`               | `storagePushValueCopySource`          | `save`           |
 | `sp.push();`                   | `storagePushLengthSave`               | `save`           |

@@ -119,6 +119,11 @@ Edge cases of already-supported constructs (see `docs/taclets-implementation.md`
 - **In-range PO antecedents under `intRules:soliditySemantics`**: synthesize
   `min <= x <= max` assumptions for parameters and storage reads when the
   checked option is active, so examples need not `require` both bounds by hand.
+- **Remaining `find<[Struct]>` store positions**: `storageFieldWriteCopySource`
+  and `storagePushValueCopySource` still hard-code `find<[Struct]>` for the
+  copied value; the same sort-free `valAt` treatment applied to
+  `storageRootWriteCopySource` and the `…StoreRoot` rules works there too (and
+  would let them copy primitive-typed sources).
 - **`mapfree` PathSVSort flag**: optional calculus-level hardening of the
   storage copy taclets against mapping-carrying sources; today the front ends
   reject the illegal programs before any rule can see them.

@@ -11,6 +11,7 @@ import org.key_project.prover.rules.VariableCondition;
 import org.key_project.prover.rules.instantiation.MatchResultInfo;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.sort.GenericSort;
+import org.key_project.solidity.program.ast.StaticTypes;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.MemoryReferenceTypes;
 import org.key_project.solidity.program.ast.abstractions.Type;
@@ -53,7 +54,7 @@ public final class FieldExpressionTypeToSortCondition implements VariableConditi
         }
 
         Services services = (Services) lServices;
-        Type fieldType = fd.getTypeReference().resolvedType();
+        Type fieldType = StaticTypes.unwrap(fd.getTypeReference().resolvedType());
         KeYSolidityType keyType = fieldType == null ? null
                 : services.getSolidityInfo().getKeYSolidityType(fieldType);
         if (keyType == null) {
