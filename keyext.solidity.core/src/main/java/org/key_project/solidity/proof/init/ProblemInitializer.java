@@ -92,7 +92,6 @@ public final class ProblemInitializer {
                 KeYFile tacletBaseFile = new KeYFile("taclet base",
                     profile.getStandardRules().getTacletBase(), profile);
                 readEnvInput(tacletBaseFile, currentBaseConfig);
-                InBoundsTacletGenerator.registerTaclets(currentBaseConfig);
             }
             // remove traces of the generic sorts within the base configuration
             cleanupNamespaces(currentBaseConfig);

@@ -107,10 +107,9 @@ the AST node class) so `+=` does not match `=`.
 ### Compound assignment
 `+=`, `-=`, `*=`, `/=`, `%=` at root / field / index, each with a terminal and a
 `_unfold_leftFst` for complex receivers: `storage{Root,Field,Index}{Add,Sub,Mul,Div,Mod}Assign`.
-`/=` and `%=` guard with `\if(se != 0)\then(…)\else(revert)`; the overflow
-guard is the `#inBounds` predicate, which collapses to `true` under the default
-option (see §Checked arithmetic). Bitwise `&= |= ^= <<= >>=` parse but are
-deferred (no bitwise LDT).
+`/=` and `%=` guard with `\if(se != 0)\then(…)\else(revert)`; integers are
+unbounded mathematical integers, so there is no overflow guard. Bitwise
+`&= |= ^= <<= >>=` parse but are deferred (no bitwise LDT).
 
 ### Tier-1 expression operators
 Mirror the `+`/`==` families: terminal assigns the logic-level result, non-simple
@@ -119,8 +118,9 @@ operands are captured by `_unfold_left/right` (arith) or `…CaptureLhs/Rhs`
 are gone — a non-simple write target is now served by the per-statement RHS
 captures (§Capture partition below), which also cover nested RHS like
 `total = x + y*z;`. Uses plain LDT ops (`sub`, `mul`, `div`, `mod`, `pow`,
-`neg`); the overflow guard collapses to `true` under the default option (see
-§Checked arithmetic); `/` and `%` revert on a zero denominator.
+`neg`) over unbounded mathematical integers — overflow is not modeled
+(`keyext.solidity.examples/unprovable/Unprovable.sol` documents the divergence
+from the EVM's checked arithmetic); `/` and `%` revert on a zero denominator.
 - Arithmetic: `-`, `*`, `**` (`pow`), `/`, `%`.
 - Relational: `!=`, `<`, `>`, `<=`, `>=` (predicate map `lt/leq/gt/geq`).
 - Logical / unary: `&&`, `||`, `!`, unary `-x`. A non-simple left operand is
@@ -144,59 +144,9 @@ captures (§Capture partition below), which also cover nested RHS like
   made `additionStorageWrite` diverge past 10k nodes
   (examples `ternaryCaptureCond` / `ternarySplit`).
 - Deferred: bitwise (`& | ^ << >> ~`), unary `+` (removed in Solidity ≥0.5).
-  Checked-arith overflow is the opt-in `intRules:soliditySemantics` expansion
-  of the `#inBounds` guards (§Checked arithmetic).
-
-### Checked arithmetic (`intRules:soliditySemantics`)
-solc ≥ 0.8 semantics, structured like Java KeY's integer calculus (`inInt` /
-`expandInInt`): a semantics-sensitive per-type range predicate whose meaning is
-choice-guarded, and option-independent program rules. The 58 terminal
-arithmetic rules (6 binop terminals incl. unary minus, 24 storage inc/dec,
-12 local inc/dec, 16 compound assigns) exist once, un-gated, and always emit
-`\if(#inBounds(target, r)) \then(…) \else(revert())` — the calculus image of
-Panic 0x11. Three layers:
-
-- **Per-type predicates** `inUint8` … `inUint256`, `inInt8` … `inInt256` (one
-  per signedness × width class; `uint`/`uint256` and `int`/`int256` share a
-  symbol), declared programmatically in `IntLDT` from
-  `PrimitiveType.minValue()/maxValue()` and returned by `IntLDT.getInBounds`.
-- **`#inBounds` term transformers** (`MetaInBounds`): `#inBounds(v, r)`
-  resolves the target's declared type, `#inBoundsField(a, r)` a matched
-  field's type, `#inBoundsElem(sp, r)` an indexed receiver's element type, and
-  rewrite to e.g. `inUint8(r)` when the rule applies. A target without a
-  bounded Solidity integer type (e.g. a `.key`-declared plain KeY-sort `int`
-  variable) degenerates to `true`, i.e. unbounded mathematical integers.
-- **Choice-guarded expansion taclets**, generated in Java by
-  `InBoundsTacletGenerator` (ruleset `concrete`): under
-  `intRules:ignoreOverFlow` (the default) `expandInUint8True` rewrites
-  `inUint8(i)` to `true` and the `\if` collapses to the unchecked update;
-  under `intRules:soliditySemantics` `expandInUint8` rewrites it to
-  `0 <= i & i <= 255`.
-
-Details:
-
-- Binops check at the LHS variable's type (capture variables are typed by
-  `\newTypeOf` from the LHS, and `BinaryExpression.getType()` is the left
-  operand's type — solc's rule). Known delta: a narrow operation assigned to a
-  wider target is checked at the wide type.
-- Unary minus on a uint (rejected by solc at compile time, so unreachable from
-  real programs) is modeled by its ordinary range check: `-x` reverts under
-  the checked option unless `x == 0`, and is plain `neg` under the default.
-- Division conjoins the zero guard: `\if(se2 != 0 & #inBounds(v, se1 / se2))`;
-  the range conjunct also covers solc's `int.min / -1` panic.
-- Modulo stays unchecked in both semantics: its magnitude is below the
-  divisor's, and solc defines `int.min % -1 == 0` without a panic.
-- Plain assignment (`localValueAssign`) stays unguarded: solc checks
-  assignment convertibility at compile time, not at runtime.
-- Function parameters and storage reads remain unbounded logic ints — the PO
-  does not assume in-range inputs, so checked examples must pin ranges with
-  `require` (both bounds for uint: `require(x >= 0 && x <= 100)`).
-
-Opt in per `.key` problem with `\withOptions intRules:soliditySemantics;`, or
-per `.sol` function with the natspec directive `/// @custom:key checked`
-(`SolidityProblemSynthesizer.CHECKED_DIRECTIVE`) — the option only selects the
-predicate expansion; the program rules are shared. Examples: the `checked*`
-functions of `TestSuite.sol`.
+  Overflow is not modeled: integers are unbounded, and examples that depend on
+  the EVM's checked-arithmetic revert live in
+  `keyext.solidity.examples/unprovable/`.
 
 ### Storage aliases
 `storageLocalDeclInitDrop` (decl-with-init decomposition) followed by

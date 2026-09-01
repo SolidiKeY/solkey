@@ -53,13 +53,6 @@ public abstract class AbstractTermTransformer extends AbstractSortedOperator
 
     public static final AbstractTermTransformer LOGIC_SHIFT = new ShiftTransformer();
 
-    public static final AbstractTermTransformer META_IN_BOUNDS =
-        new MetaInBounds(MetaInBounds.Mode.SELF, "#inBounds");
-    public static final AbstractTermTransformer META_IN_BOUNDS_FIELD =
-        new MetaInBounds(MetaInBounds.Mode.FIELD, "#inBoundsField");
-    public static final AbstractTermTransformer META_IN_BOUNDS_ELEM =
-        new MetaInBounds(MetaInBounds.Mode.ELEMENT, "#inBoundsElem");
-
     @SuppressWarnings("argument.type.incompatible")
     protected AbstractTermTransformer(Name name, int arity, Sort sort) {
         super(name, createMetaSortArray(arity), sort, NONE);

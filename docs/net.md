@@ -54,7 +54,7 @@ maintained by the calculus, not by the program. On top of it:
 |---|---|
 | `require` / `assert` / `revert` | Done, refined (`require-assert.md`) |
 | Storage model | Done, richer than the paper's (paths, aliases, `storage.md`) |
-| Unbounded ints ("Solidity Light") | Done (`intHeader.key`); bounded semantics is the opt-in `intRules:soliditySemantics` choice (`taclets-implementation.md` "Checked arithmetic") |
+| Unbounded ints ("Solidity Light") | Done (`intHeader.key`); bounded (checked) semantics is not modeled — see `docs/taclet-ideas.md` Tier 5 |
 | `result = f(args)@C;` call statement | Parses (`Solidity.g4` `FunctionBodyStatement`); inlined by `ExpandFunctionBody`. The `functionBodyExpand` taclet is in the standard rule set (`solidityProgramRules.key`), together with `blockEmpty`, which discards the inlined body block |
 | `address` type | Registered in `SolidityInfo`, mapped to the `int` sort |
 | `net` mapping | **Done** (Step 1): `Struct net` in `netHeader.key`, read/write via `selectSt`/`storeSt` |
@@ -453,13 +453,11 @@ usefulness:
    (`LoopSpecification`, `\getInvariant`, `\getVariant`) already exists —
    wire it to `whileStatement` before attempting `closeAuction`'s
    reimbursement loop, whose loop invariant must itself speak about `net`.
-7. **Bounded (round-robin) integers**: largely done, following KeY-Java's
-   approach — per-type range predicates (`inUint8` … `inInt256`, declared by
-   `IntLDT`), `#inBounds` guards on the arithmetic taclets, and the
-   choice-guarded expansion under `intRules:soliditySemantics`
-   (`docs/taclets-implementation.md` §Checked arithmetic). Wrapping
-   semantics for `unchecked { … }` blocks remains open, orthogonal to
-   `net`.
+7. **Bounded (round-robin) integers**: not modeled — the calculus keeps the
+   paper's unbounded "Solidity Light" integers. A bounded/checked model
+   (per-type range guards reverting out of range, KeY-Java's
+   `inInt`/`expandInInt` structure) is backlogged in `docs/taclet-ideas.md`
+   Tier 5, orthogonal to `net`.
 8. **Storage/memory distinction**: already **ahead of the paper** — the
    paper's "Solidity Light" collapses them, while this repo implements both
    (`storage.md`, `memory.md`). Nothing to do.

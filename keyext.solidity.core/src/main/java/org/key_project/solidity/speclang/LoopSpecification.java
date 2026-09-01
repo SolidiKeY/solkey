@@ -57,6 +57,4 @@ public interface LoopSpecification extends SpecificationElement {
     ///
     /// @return The map storing the operators.
     Map<ProgramVariable, Term> getInternalAtPres();
-
-    LoopSpecification withInRangePredicates(Services services);
 }

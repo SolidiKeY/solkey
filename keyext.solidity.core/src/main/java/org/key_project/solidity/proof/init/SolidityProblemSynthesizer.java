@@ -27,10 +27,6 @@ public final class SolidityProblemSynthesizer {
     /// other tag is rejected as invalid documentation.
     public static final String BOX_DIRECTIVE = "@custom:key box";
 
-    /// Natspec directive selecting checked (solc >= 0.8) arithmetic via the
-    /// `intRules:soliditySemantics` taclet option.
-    public static final String CHECKED_DIRECTIVE = "@custom:key checked";
-
     private SolidityProblemSynthesizer() {}
 
     /// Fills in whatever the caller left open, and fails with the available candidates listed
@@ -70,23 +66,21 @@ public final class SolidityProblemSynthesizer {
                     .orElseThrow(() -> new IllegalArgumentException(
                         "no public function " + spec.function() + " in " + solFile));
         boolean box = function.documentation().contains(BOX_DIRECTIVE);
-        boolean checked = function.documentation().contains(CHECKED_DIRECTIVE);
         List<SolidityOutline.Parameter> parameters = function.parameters();
         String arguments = parameters.stream().map(SolidityOutline.Parameter::name)
                 .collect(Collectors.joining(", "));
         String call = spec.function() + "(" + arguments + ")@" + spec.contract() + ";";
         String modality = box ? "\\[{ " + call + " }\\](true)" : "\\<{ " + call + " }\\>(true)";
-        String options = checked ? "\\withOptions intRules:soliditySemantics;\n\n" : "";
         String programVariables = parameters.isEmpty() ? ""
                 : parameters.stream().map(p -> "    " + p.keySort() + " " + p.name() + ";")
                         .collect(Collectors.joining("\n", "\\programVariables {\n", "\n}\n\n"));
         return """
                 \\programSource "%s";
 
-                %s%s\\problem {
+                %s\\problem {
                     %s
                 }
-                """.formatted(solFile.toAbsolutePath(), options, programVariables, modality);
+                """.formatted(solFile.toAbsolutePath(), programVariables, modality);
     }
 
     /// A path identifying this obligation. It is never created; it only fixes the directory

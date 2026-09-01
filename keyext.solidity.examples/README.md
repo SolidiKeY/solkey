@@ -48,12 +48,8 @@ a range). Three kinds of case are skipped rather than failed:
 - a box-tagged function whose `require` reverts on the fresh all-zero storage — vacuous at
   runtime, exactly as the box modality treats it;
 - a parameterized function whose leading requires do not determine a value for every parameter;
-- entries of the test's `KNOWN_DIVERGENT` set: examples proved with KeY's default unbounded
+- entries of the test's `KNOWN_DIVERGENT` set: examples proved with KeY's unbounded
   integers that panic under the EVM's checked arithmetic (currently none).
-
-A `checked`-tagged function is proved under Solidity's own arithmetic, so proof and EVM must
-agree exactly: the `checked*Reverts` examples pass by executing the very Panic(0x11) their box
-proof closes on, and any other divergence fails the test.
 
 ## Writing an example
 
@@ -109,15 +105,8 @@ Miss one and the proof closes on the out-of-bounds revert branch without checkin
 | Natspec tag | Effect |
 |---|---|
 | `/// @custom:key box` | box modality — `require` becomes an assumption |
-| `/// @custom:key checked` | checked (solc ≥ 0.8) arithmetic — proves under `\withOptions intRules:soliditySemantics;`, which expands the `inUintN`/`inIntN` range guards to their bounds, so out-of-range results revert |
 
 `@custom:` is solc's extension prefix; any other tag is rejected as invalid documentation.
-
-A checked function still reasons over unbounded logic ints for its inputs: `require` both
-bounds of every parameter the arithmetic relies on (`require(x >= 0 && x <= 100)` — the lower
-bound too, even for `uint`). The `checked*` functions of `TestSuite.sol` are the reference
-examples: each `*Reverts` function closes in box exactly because the overflowing operation
-reverts, and each `*InRange` one shows the guard discharging.
 
 ## Known gaps
 
@@ -251,6 +240,15 @@ cross-check the calculus against a description of Solidity semantics SolKey did 
 failures — examples that state upstream semantics the calculus cannot discharge yet and are
 kept red on purpose. `SolcSemanticsExamplesTest` enumerates the directory, so a new example
 joins `./gradlew :keyext.solidity.core:test` by being written.
+
+## The `unprovable/` directory
+
+`unprovable/` holds valid solc ≥ 0.8 examples whose EVM behavior the calculus does not model,
+so their obligations cannot close — currently `Unprovable.sol`, whose functions revert on the
+EVM's checked arithmetic (Panic 0x11) before their `assert(false)`, while SolKey's unbounded
+mathematical integers give the overflowing operation a non-reverting path. No test suite scans
+the directory; moving an example here is how it is retired from the suites while staying
+compilable.
 
 ## Other directories
 

@@ -57,15 +57,11 @@ Clone the `+=` family (`storageRootAddAssign` / `…Field…` / `…Index…` +
 - **`returnStatement`** (`return e;`): bind the function's named return value
   and discard the rest of the block. Pairs with `functionBodyStatement`
   inlining (`ExpandFunctionBody`).
-- **`uncheckedStatement`** (`unchecked { … }`): execute the block under a flag
-  that switches arithmetic to wrapping (no overflow revert branch). Checked
-  arithmetic itself is implemented (`intRules:soliditySemantics`, see
-  `docs/taclets-implementation.md` "Checked arithmetic"); this item is the
-  wrapping escape hatch. Since the overflow guard is now the single
-  `#inBounds`/`inUintN` predicate layer, a first cut can rewrite the
-  in-bounds predicates originating inside the block to `true` (the
-  `ignoreOverFlow` expansion, scoped); real wrapping needs a `wrap`/modulo
-  function like Java KeY's `moduloInt`.
+- **`uncheckedStatement`** (`unchecked { … }`): with the unbounded-integer
+  calculus arithmetic never reverts, so the wrapper carries no semantics — a
+  rule can drop the block marker and execute the body as-is. Real wrapping
+  semantics would only matter together with a bounded/checked integer model
+  (see the Tier-5 entry below).
 - **`whileStatement`** / **`forStatement`** / **`doWhileStatement`**: loop
   unrolling rule (one iteration + residual loop) for bounded proofs, plus an
   invariant rule later. `for` first desugars init/cond/update into a `while`.
@@ -97,6 +93,14 @@ Clone the `+=` family (`storageRootAddAssign` / `…Field…` / `…Index…` +
   on a revert/exception model richer than `revert();`.
 - **Bitwise & fixed-point arithmetic** (`Fixed`/`Ufixed`, full bit-ops):
   needs new LDTs.
+- **Bounded/checked integer semantics** (solc ≥ 0.8 overflow reverts): the
+  calculus treats integers as unbounded mathematical integers, so the
+  overflow-revert examples of `keyext.solidity.examples/unprovable/` are
+  unprovable. A sound model would guard every arithmetic taclet with a
+  per-type range check that reverts out of range (Java KeY's
+  `inInt`/`expandInInt` structure), plus in-range PO antecedents for
+  parameters and storage reads so examples need not `require` both bounds by
+  hand.
 - **Address/payable builtins & globals** (`msg.sender`, `msg.value`,
   `block.*`, `.balance`, `.transfer`): require an environment/ledger model
   beyond the storage/memory heaps. Ordered implementation plan: `docs/net.md`.
@@ -116,9 +120,6 @@ Edge cases of already-supported constructs (see `docs/taclets-implementation.md`
 - **Dynamic-array `delete arr;` length reset**: not modeled by the current
   memory/storage delete rules. (Struct-`delete` preserving mapping members is now
   implemented via the lazy `delNode` marker — see `docs/storage.md` §6.)
-- **In-range PO antecedents under `intRules:soliditySemantics`**: synthesize
-  `min <= x <= max` assumptions for parameters and storage reads when the
-  checked option is active, so examples need not `require` both bounds by hand.
 - **Remaining `find<[Struct]>` store positions**: `storageFieldWriteCopySource`
   and `storagePushValueCopySource` still hard-code `find<[Struct]>` for the
   copied value; the same sort-free `find<[StValue]>` treatment applied to
@@ -128,8 +129,8 @@ Edge cases of already-supported constructs (see `docs/taclets-implementation.md`
   storage copy taclets against mapping-carrying sources; today the front ends
   reject the illegal programs before any rule can see them.
 - **Reject uint unary minus in the parsers** (solc compile error); today the
-  shape gets its ordinary `#inBounds` range check under the checked option
-  (reverting unless the operand is 0) instead of being rejected up front.
+  shape is executed as plain `neg` on the unbounded logic int instead of being
+  rejected up front.
 - **Ternary `CInv(storage, net, selfBalance)`**: needed only if an example ever
   wants to prove a *funded* transfer after a callback — the havoc currently
   leaves `selfBalance` unconstrained.

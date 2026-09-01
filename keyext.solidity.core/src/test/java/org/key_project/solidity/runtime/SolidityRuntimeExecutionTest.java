@@ -38,11 +38,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 /// Runs and proofs do not agree everywhere, and the verdicts reflect that:
 /// - A box-tagged function whose `require` reverts on the fresh all-zero storage is vacuous at
 /// runtime, exactly as the box modality treats it, and is skipped.
-/// - Functions proved with KeY's default unbounded integers (no `@custom:key checked` tag) may
-/// hit a checked-arithmetic Panic (0x11 overflow, ...) on the EVM; expected cases are listed
-/// in [#KNOWN_DIVERGENT].
-/// - A checked-tagged box function that panics (the `checked*Reverts` examples) executed the
-/// very revert its proof closes on, so the run confirms the calculus and passes.
+/// - Functions proved with KeY's unbounded integers may hit a checked-arithmetic Panic (0x11
+/// overflow, ...) on the EVM; expected cases are listed in [#KNOWN_DIVERGENT].
 /// - A parameterized function runs with the values its leading `require` pins, recovered by
 /// [PinnedArguments].
 public class SolidityRuntimeExecutionTest {
@@ -77,8 +74,6 @@ public class SolidityRuntimeExecutionTest {
         Fixture fixture = fixture(contract);
         SolidityOutline.Function fn = fixture.contract().function(function).orElseThrow();
         boolean box = fn.documentation().contains(SolidityProblemSynthesizer.BOX_DIRECTIVE);
-        boolean checked =
-            fn.documentation().contains(SolidityProblemSynthesizer.CHECKED_DIRECTIVE);
 
         List<BigInteger> args = List.of();
         if (!fn.parameters().isEmpty()) {
@@ -99,13 +94,11 @@ public class SolidityRuntimeExecutionTest {
                 + (result.haltReason().contains("INSUFFICIENT_GAS")
                         ? " — raise the gas limit in EvmContractRunner"
                         : ""));
-            case REVERT -> judgeRevert(contract + "." + function, result.revertData(), box,
-                checked);
+            case REVERT -> judgeRevert(contract + "." + function, result.revertData(), box);
         }
     }
 
-    private static void judgeRevert(String example, Bytes revertData, boolean box,
-            boolean checked) {
+    private static void judgeRevert(String example, Bytes revertData, boolean box) {
         int panicCode = panicCode(revertData);
         if (panicCode < 0) {
             if (!box) {
@@ -127,15 +120,9 @@ public class SolidityRuntimeExecutionTest {
                 + " — assert violated at runtime but the proof closes;"
                 + " possible calculus soundness gap");
         }
-        if (checked && box) {
-            return;
-        }
         fail(example + ": " + panic + " (revert data " + revertData + ")"
-            + (checked
-                    ? " — the function is checked-tagged under a diamond, so its proof claims"
-                        + " it completes"
-                    : " — checked-arithmetic divergence; if the unbounded-integer proof is"
-                        + " intended, add the example to KNOWN_DIVERGENT"));
+            + " — checked-arithmetic divergence; if the unbounded-integer proof is"
+            + " intended, add the example to KNOWN_DIVERGENT");
     }
 
     /// The Panic code carried by `revertData`, or `-1` if it is not a Panic payload.

@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.abstractions;
 
-import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -52,53 +51,15 @@ public class PrimitiveType implements Type, SyntaxElement {
 
     private final Name name;
     private final Kind kind;
-    private final boolean signedInteger;
-    private final @Nullable BigInteger minValue;
-    private final @Nullable BigInteger maxValue;
 
     private PrimitiveType(Name name, Kind kind) {
         this.name = name;
         this.kind = kind;
-        if (kind == Kind.INTEGER) {
-            String typeName = name.toString();
-            boolean signed = !typeName.startsWith("u");
-            String widthSuffix =
-                signed ? typeName.substring("int".length()) : typeName.substring("uint".length());
-            int width = widthSuffix.isEmpty() ? 256 : Integer.parseInt(widthSuffix);
-            this.signedInteger = signed;
-            if (signed) {
-                BigInteger half = BigInteger.ONE.shiftLeft(width - 1);
-                this.minValue = half.negate();
-                this.maxValue = half.subtract(BigInteger.ONE);
-            } else {
-                this.minValue = BigInteger.ZERO;
-                this.maxValue = BigInteger.ONE.shiftLeft(width).subtract(BigInteger.ONE);
-            }
-        } else {
-            this.signedInteger = false;
-            this.minValue = null;
-            this.maxValue = null;
-        }
     }
 
     public Kind kind() {
         return kind;
     }
-
-    public boolean isSignedInteger() {
-        return signedInteger;
-    }
-
-    /// @return the smallest representable value, or null if this is not an integer type
-    public @Nullable BigInteger minValue() {
-        return minValue;
-    }
-
-    /// @return the largest representable value, or null if this is not an integer type
-    public @Nullable BigInteger maxValue() {
-        return maxValue;
-    }
-
 
     @Override
     public boolean equals(@Nullable Object o) {

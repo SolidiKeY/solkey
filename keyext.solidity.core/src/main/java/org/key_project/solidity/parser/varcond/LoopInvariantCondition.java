@@ -46,11 +46,6 @@ public class LoopInvariantCondition implements VariableCondition {
             return null;
         }
 
-        if (services.getProof().getInitConfig().getActivatedChoices().stream()
-                .anyMatch(c -> c.name().toString().equals("intRules:soliditySemantics"))) {
-            loopSpec = loopSpec.withInRangePredicates(services);
-        }
-
         final var solidityBlock =
             new SolidityBlock(svInst.getContextInstantiation().contextProgram());
 
