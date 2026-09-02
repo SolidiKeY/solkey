@@ -13,6 +13,7 @@
 ./gradlew spotlessCheck              # Check formatting
 ./gradlew spotlessApply              # Apply formatting
 ./gradlew -DENABLE_NULLNESS=true :keyext.solidity.core:compileTestJava   # Nullness checker (~1 min)
+./gradlew -DENABLE_NULLNESS=true ciGates   # All three CI gates in one run (see "CI Gates" below)
 ./gradlew :key.ui:shadowJar          # Build fat JAR
 ./gradlew :keyext.solidity.core:solidityCli                           # Run CLI on default problem2.key
 ./gradlew :keyext.solidity.core:solidityCli -PkeyFile=problem1.key    # Run on specific .key file
@@ -90,9 +91,24 @@ on nearly every push.
 
 | Gate | CI job | Local command | Cost |
 |---|---|---|---|
+| **All three at once** | — | `./gradlew -DENABLE_NULLNESS=true ciGates` | ~3 min cold |
 | Formatting | `CodeQuality / formatting` | `./gradlew spotlessApply` | seconds |
 | Nullness | `CodeQuality / checkerFramework` | `./gradlew -DENABLE_NULLNESS=true :keyext.solidity.core:compileTestJava` | ~1 min |
-| Module tests | `Solidity / test` | `./gradlew :keyext.solidity.core:test` | ~25 min |
+| Module tests | `Solidity / test` | `./gradlew :keyext.solidity.core:test` | ~2 min |
+
+`ciGates` (root `build.gradle`) runs all three in one invocation and reports **every** failing
+gate rather than stopping at the first. Three things to know about it: it uses `spotlessCheck`,
+so fix formatting with `spotlessApply`; it refuses to start without `-DENABLE_NULLNESS=true`,
+because the checker is wired in at Gradle *configuration* time and a run without the flag would
+be a false green; and it reaches only `keyext.solidity.core` plus its `api` dependencies, so
+edits elsewhere in the repo still need the repo-wide
+`./gradlew -DENABLE_NULLNESS=true compileTestJava` that `CodeQuality / checkerFramework` runs.
+
+One caveat: the build sets `sourceCompatibility = 21` but **no Java toolchain**, so it compiles
+with whatever JDK is on `PATH` while CI always uses 21. On a newer JDK the Checker Framework
+prints `The Checker Framework is tested with JDK 8, 11, 17, and 21` — a green local nullness gate
+on JDK 25 is therefore not a guarantee of a green `CodeQuality / checkerFramework`. Use a
+JDK 21 on `PATH` when the nullness result matters.
 
 The nullness checker only activates under `-DENABLE_NULLNESS=true`, and it is scoped to
 `org.key_project.solidity.program.ast` (`-AonlyDefs` in `keyext.solidity.core/build.gradle`).
@@ -150,7 +166,7 @@ Program rules live in `keyext.solidity.core/src/main/resources/org/key_project/s
 
 ## Testing
 
-Run `./gradlew :keyext.solidity.core:test` after refactoring (~25 min; see **CI Gates** above for
+Run `./gradlew :keyext.solidity.core:test` after refactoring (~2 min; see **CI Gates** above for
 the full pre-commit set). Prefer modifying existing test classes over creating new ones.
 
 `SolidityRuntimeExecutionTest` additionally executes `TestSuite.sol` and `solc/*.sol` on an

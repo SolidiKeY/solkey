@@ -415,6 +415,39 @@ tasks.register('start'){
     }
 }
 
+def ciGatesRequested = gradle.startParameter.taskNames.any {
+    it == "ciGates" || it.endsWith(":ciGates")
+}
+
+if (ciGatesRequested) {
+    if (System.getProperty("ENABLE_NULLNESS") == null) {
+        throw new GradleException("ciGates needs the nullness flag at configuration time. " +
+            "Run: ./gradlew -DENABLE_NULLNESS=true ciGates")
+    }
+    // Report every failing gate in one run instead of stopping at the first.
+    gradle.startParameter.continueOnFailure = true
+}
+
+// The root project has no `spotless { }` block of its own — it lives in `subprojects { }`
+// above — so the root's :spotlessCheck is an empty lifecycle task. Depend on the
+// per-subproject tasks, or this gate silently checks nothing.
+def spotlessCheckTasks = subprojects.collect { it.path + ":spotlessCheck" }
+
+tasks.register('ciGates') {
+    group = "verification"
+    description = "Run the gates CI enforces for this fork: spotlessCheck, the nullness " +
+        "checker, and :keyext.solidity.core:test. " +
+        "Run './gradlew -DENABLE_NULLNESS=true ciGates'."
+
+    dependsOn spotlessCheckTasks                        // CodeQuality / formatting
+    dependsOn ":keyext.solidity.core:compileTestJava"   // CodeQuality / checkerFramework
+    dependsOn ":keyext.solidity.core:test"              // Solidity / test
+
+    doLast {
+        logger.lifecycle("ciGates: formatting, nullness and :keyext.solidity.core:test passed.")
+    }
+}
+
 // Generation of a JavaDoc across sub projects.
 tasks.register('alldoc', Javadoc){
     group = "documentation"

@@ -47,10 +47,16 @@ Field           value members, `size`, `at(i)`   delete resets them to their def
 Only the two kinds `delete` must positively recognise get a sub-sort; value
 members stay plain `Field` alongside `size` and `at(i)` (an index's element
 sort comes from the container rather than from the index).
-`selectStDelNodeDefault` therefore stays Field-generic and ranked
-(`simplify_enlarging`) below the `MapField`/`RefField` rules — restricting it
-to a value-member sub-sort would leave `(delete w).arr.length` stuck, which
-`SolcStructs.deleteStructResetsArrayLength` pins down.
+`selectStDelNodeDefault` therefore stays Field-generic on the *field* —
+restricting it to a value-member sub-sort would leave `(delete w).arr.length`
+stuck, which `SolcStructs.deleteStructResetsArrayLength` pins down. It is kept
+off the struct-sorted reads by its *sort* generic instead: the read cast is
+bound `alphaPrim \extends Prim`, so a `<[Struct]>` read is a failed
+instantiation rather than a ranked race (the `simplify_enlarging` ranking is
+performance-only). Struct-sorted element reads
+`selectSt<[Struct]>(delNode(st), at(i))` — plain-`Field` index, so neither the
+`MapField` nor the `RefField` rule matches — get their own
+`selectStDelNodeIndexStruct`.
 
 `MapField` is the sub-sort that earns its place: it is the only case that reads
 *through* the delete marker (`selectSt(st, mf)`) instead of re-wrapping it
@@ -226,11 +232,17 @@ field constant — value members, `size`, `at(i)` — carries the base `Field` s
 and is reset by the Field-generic default rule.
 
 `selectStDelNodeMap` and `selectStDelNodeRef` match their sub-sorts directly;
-`selectStDelNodeDefault` stays Field-generic and ranked below them, because
-`size` and `at(i)` are plain `Field` and would otherwise match nothing.
-(`delValue` uses the same ranking — `delValueStruct` matches the concrete
-`Struct` sort and outranks the `StValue`-generic `delValueDefault` — because
-there the discrimination is on the *value*, not on a field.) Complex receivers unfold first (`…_unfold_leftFst`). Storage and memory
+`selectStDelNodeDefault` stays Field-generic (because `size` and `at(i)` are
+plain `Field`) but is Prim-bounded on the read sort (`alphaPrim`), which keeps
+it disjoint from the `<[Struct]>` rules by sort rather than by ranking; the
+struct-sorted `at(i)` element read has its own `selectStDelNodeIndexStruct`.
+(`delValue` uses the same discipline — `delValueStruct` matches the concrete
+`Struct` sort, and `delValueDefault` is `alphaPrim`-bounded so a struct payload
+is a failed instantiation. The former `StValue` bounds made the default rules
+overlap the `Struct` rules, with only the `simplify`/`simplify_enlarging`
+ranking — strategy guidance, not a soundness gate — keeping the
+mapping-erasing rewrite away; both rules were applicable to the same term,
+an inconsistency in the rule set.) Complex receivers unfold first (`…_unfold_leftFst`). Storage and memory
 deletes stay separate by design.
 
 ### Sort-free clearing and copying
@@ -255,8 +267,9 @@ and memory alike — the same arrangement `defaultValue<[alpha]>` already has (d
 `defaultValueStruct` in `structRules.key`). A separate memory twin is not needed.
 
 `selectOnDelAtCons` defers to `delValue<[alpha]>` for the reset value, so it inherits the
-`delValueStruct`/`delValueDefault` ranking: the concrete `Struct` case sits in `simplify` and
-outranks the `StValue`-generic case in `simplify_enlarging`. `defVal` is deliberately distinct
+`delValueStruct`/`delValueDefault` split: the concrete `Struct` case recurses via `delNode`,
+the default case is `alphaPrim`-bounded, and the two are disjoint by sort — their
+`simplify`/`simplify_enlarging` ranking is performance-only. `defVal` is deliberately distinct
 from `delAt` — it is what `storageIndexDelete` writes, which resets a collection element
 outright rather than preserving its mapping members.
 
