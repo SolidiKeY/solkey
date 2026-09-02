@@ -147,7 +147,10 @@ function storageRootReadWrite() public {
 ```
 
 An example that needs an assumption states it with `require` and is tagged `/// @custom:key
-box`, which makes `require` an assumption instead of an obligation. Full conventions:
+box`, which makes `require` an assumption instead of an obligation. An example that needs to
+reason about storage it never wrote adds `wellformed` to the same tag (`/// @custom:key box
+wellformed`), assuming that storage matches the contract's declared layout — `0 <= arr.length`,
+`0 <= someUintField` (`docs/storage.md` §8b). Full conventions:
 `keyext.solidity.examples/README.md`.
 
 Verify individual examples with the Solidity CLI:

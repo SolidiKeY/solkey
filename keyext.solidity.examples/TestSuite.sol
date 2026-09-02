@@ -900,6 +900,43 @@ contract TestSuite {
         assert(values.length == 3);
     }
 
+    /// @custom:key wellformed
+    function wellFormedPopAfterPush() public {
+        values.push();
+        values.pop();
+    }
+
+    /// @custom:key wellformed
+    function wellFormedPushLength() public {
+        values.push();
+        assert(values.length > 0);
+    }
+
+    /// @custom:key wellformed
+    function wellFormedPushReadBack() public {
+        values.push(42);
+        uint r = values[values.length - 1];
+        assert(r == 42);
+    }
+
+    /// @custom:key wellformed
+    function wellFormedUintRoot() public {
+        uint r = total;
+        assert(r >= 0);
+    }
+
+    /// @custom:key wellformed
+    function wellFormedUintField() public {
+        uint r = alice.age;
+        assert(r >= 0);
+    }
+
+    /// @custom:key wellformed
+    function wellFormedMappingValue() public {
+        uint r = balances[7];
+        assert(r >= 0);
+    }
+
     function storageRootAddAssign() public {
         age = 10;
         age += 5;

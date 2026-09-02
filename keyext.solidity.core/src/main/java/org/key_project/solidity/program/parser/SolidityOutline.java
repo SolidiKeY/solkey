@@ -19,7 +19,8 @@ import tools.jackson.databind.ObjectMapper;
 /// function to prove. This scan closes that circle.
 public record SolidityOutline(List<Contract> contracts) {
 
-    public record Contract(String name, List<Function> functions) {
+    public record Contract(String name, List<Function> functions,
+            List<Field> stateVariables, List<StructDefinition> structs) {
 
         public Optional<Function> function(String name) {
             return functions.stream().filter(f -> f.name().equals(name)).findFirst();
@@ -27,6 +28,41 @@ public record SolidityOutline(List<Contract> contracts) {
 
         public List<Function> provableFunctions() {
             return functions.stream().filter(Function::isProvable).toList();
+        }
+
+        public Optional<StructDefinition> struct(String name) {
+            return structs.stream().filter(s -> s.name().equals(name)).findFirst();
+        }
+    }
+
+    /// A storage declaration: a state variable of a contract, or a member of a struct.
+    public record Field(String name, StorageType type) {
+    }
+
+    public record StructDefinition(String name, List<Field> members) {
+    }
+
+    /// The declared type of a storage location, in the shape the storage calculus sees it:
+    /// primitives sit at path leaves, structs append a field segment, arrays and mappings an
+    /// `at(_)` segment. This is the `Layout` the wellformedness assumption is generated from.
+    public sealed interface StorageType {
+
+        /// An elementary type, named as solc spells it (`uint256`, `int8`, `bool`, `address`),
+        /// or a user-defined type the storage calculus has no structure for (enum, contract).
+        record Primitive(String name) implements StorageType {
+            /// Whether the type's values are non-negative by declaration.
+            public boolean isUnsigned() {
+                return name.matches("uint\\d*");
+            }
+        }
+
+        record Struct(String name) implements StorageType {
+        }
+
+        record Array(StorageType element) implements StorageType {
+        }
+
+        record Mapping(StorageType key, StorageType value) implements StorageType {
         }
     }
 
@@ -57,7 +93,8 @@ public record SolidityOutline(List<Contract> contracts) {
         List<Contract> contracts = new ArrayList<>();
         for (JsonNode node : root.get("nodes").values()) {
             if ("ContractDefinition".equals(text(node, "nodeType"))) {
-                contracts.add(new Contract(text(node, "name"), functionsOf(node)));
+                contracts.add(new Contract(text(node, "name"), functionsOf(node),
+                    stateVariablesOf(node), structsOf(node)));
             }
         }
         return new SolidityOutline(contracts);
@@ -80,6 +117,49 @@ public record SolidityOutline(List<Contract> contracts) {
                 node.has("documentation") ? text(node.get("documentation"), "text") : ""));
         }
         return functions;
+    }
+
+    private static List<Field> stateVariablesOf(JsonNode contract) {
+        List<Field> fields = new ArrayList<>();
+        for (JsonNode node : contract.get("nodes").values()) {
+            if ("VariableDeclaration".equals(text(node, "nodeType"))
+                    && node.has("stateVariable") && node.get("stateVariable").asBoolean()) {
+                fields.add(fieldOf(node));
+            }
+        }
+        return fields;
+    }
+
+    private static List<StructDefinition> structsOf(JsonNode contract) {
+        List<StructDefinition> structs = new ArrayList<>();
+        for (JsonNode node : contract.get("nodes").values()) {
+            if ("StructDefinition".equals(text(node, "nodeType"))) {
+                List<Field> members = new ArrayList<>();
+                for (JsonNode member : node.get("members").values()) {
+                    members.add(fieldOf(member));
+                }
+                structs.add(new StructDefinition(text(node, "name"), members));
+            }
+        }
+        return structs;
+    }
+
+    private static Field fieldOf(JsonNode declaration) {
+        return new Field(text(declaration, "name"), storageTypeOf(declaration.get("typeName")));
+    }
+
+    private static StorageType storageTypeOf(JsonNode typeName) {
+        String typeString = text(typeName.get("typeDescriptions"), "typeString");
+        return switch (text(typeName, "nodeType")) {
+            case "ArrayTypeName" -> new StorageType.Array(storageTypeOf(typeName.get("baseType")));
+            case "Mapping" -> new StorageType.Mapping(storageTypeOf(typeName.get("keyType")),
+                storageTypeOf(typeName.get("valueType")));
+            case "UserDefinedTypeName" -> typeString.startsWith("struct ")
+                    ? new StorageType.Struct(
+                        typeString.substring(typeString.lastIndexOf('.') + 1))
+                    : new StorageType.Primitive(typeString);
+            default -> new StorageType.Primitive(typeString);
+        };
     }
 
     private static List<Parameter> parametersOf(JsonNode function) {

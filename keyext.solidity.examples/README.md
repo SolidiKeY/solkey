@@ -106,8 +106,22 @@ Miss one and the proof closes on the out-of-bounds revert branch without checkin
 | Natspec tag | Effect |
 |---|---|
 | `/// @custom:key box` | box modality — `require` becomes an assumption |
+| `/// @custom:key wellformed` | assume `wellFormed(storage)`: the initial storage matches the contract's declared layout |
 
-`@custom:` is solc's extension prefix; any other tag is rejected as invalid documentation.
+`@custom:` is solc's extension prefix; any other tag is rejected as invalid documentation. One
+tag carries every directive a function needs — write `/// @custom:key box wellformed`, not two
+tag lines, since solc keeps one tag of a name per function.
+
+The `wellformed` tag is what lets a function reason about storage it never wrote. Symbolic
+execution starts from an unconstrained `storage`, so `values.length` may be *negative* and a
+`uint` state variable may hold anything; that is why every array example above pins its length
+with `require(values.length == N)`. `wellFormed(storage)` states instead that each cell holds a
+value of its declared type — `0 <= values.length`, `0 <= total` — which is what makes
+`values.push(); values.pop();` provable without knowing the length (see the `wellFormed*`
+functions of `TestSuite.sol`). It is assumed, never proved: the Lean formalization's
+`execBlock_preserves_wellTyped` shows it is an inductive invariant of execution, so assuming it
+once in the obligation is sound. What it expands to is generated from the contract's layout by
+`WellFormedTacletGenerator`; `docs/storage.md` §Wellformedness has the details and the limits.
 
 ## Known gaps
 

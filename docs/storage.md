@@ -529,6 +529,70 @@ modalities:
 - `revertDiamond`:   `=> ⟨ π revert(); ω ⟩ φ`   ⇝  `=> ⊥`
 - `revertBox`:       `=> [ π revert(); ω ] φ`   ⇝  `=> ⊤`
 
+## 8b. Wellformedness
+
+Symbolic execution starts from a completely unconstrained `storage`, so
+nothing is known about a cell the proof has not written. In particular
+`find<[int]>(storage, sp · size)` — a dynamic array's length — may be
+**negative**, and a `uint` state variable may hold any integer. That is
+why every array example has to open with `require(arr.length == N)`.
+
+`wellFormed(storage)` (declared in `structHeader.key`) is the assumption
+that closes the gap: storage matches the contract's declared layout,
+i.e. every cell holds a value of its declared type. It is the calculus
+twin of the Lean formalization's `wellTypedStorageB L storage`;
+`TypeSoundness.execBlock_preserves_wellTyped` proves it is an inductive
+invariant of execution, so assuming it once in the proof obligation is
+sound — and reads unfold by read-over-write back to the initial
+`storage`, so no preservation rule is needed in the calculus.
+
+It is uninterpreted, like `CInv`. Its content is generated per contract
+by `WellFormedTacletGenerator`, which emits a `wellFormedExpand` rewrite
+taclet into the obligation. Two consequences of "holds a value of its
+declared type" survive into a calculus of unbounded mathematical
+integers, and they are all it emits:
+
+- `0 <= find<[int]>(storage, p)` for a `uintN` cell;
+- `0 <= find<[int]>(storage, p · size)` for an array's length cell.
+
+Structs recurse into their members, mappings quantify over their keys
+(`\forall int k; …` over `p · at(k)`); `intN`, `bool` and `address`
+cells contribute nothing.
+
+**Why it is generated rather than axiomatized.** The Lean side needs no
+generator because there the layout is data: `wellTypedStorageB L storage`
+takes `L` as a parameter and folds over `L.globals`. In the calculus the
+layout exists only in the parser — a field constant like
+`TestSuite$total : Field` carries no declared type — so no formula can
+range over "every declared `uint` cell". Even the array half, where
+`size` *is* a single global constant, cannot be axiomatized once and for
+all: `consr` is a defined function that `consRcons` / `consREmpty` /
+`cons1Def` eliminate eagerly, so every path in a goal is in `cons`-normal
+form and "a path ending in `size`" has no syntactic shape left to match.
+Both attempts fail for that reason — an `\assumes`-guarded
+`\find(find<[int]>(storage, consr(xs, size))) \add(…)` never matches, and
+`\forall List p; 0 <= find<[int]>(storage, consr(p, size))` in the
+antecedent is never instantiated, because its `consr` trigger occurs
+nowhere in the goal. Enumerating the declared paths is what supplies the
+finite set the logic cannot quantify over; the generator plays the role
+Lean's `L` argument plays.
+
+**Limits.** Array *elements* are not descended into — that needs the
+index quantified under the length bound, and no example is provable with
+it. Nothing states an upper bound (`< 2^256`): the calculus has no
+checked arithmetic to make one useful. And the callback rules
+(`transferWithCallback*`) havoc `storage` without re-assuming
+`wellFormed`, which is sound but incomplete.
+
+Obligations opt in: a `.sol` function is tagged `/// @custom:key
+wellformed` (see `keyext.solidity.examples/README.md`), and a `.key`
+problem writes `wellFormed(storage) -> …` with its own expansion taclet,
+the way the `net/` problems spell out `insertCInv`. The `wellFormed*`
+functions of `TestSuite.sol` are the examples that close only with it —
+`values.push(); values.pop();` is the smallest: `storagePopSave`'s
+`"empty"` branch is `!(0 < n+1) -> false` under a diamond, which needs
+`n >= 0`.
+
 ## 9. Discipline and Termination
 
 **Pairwise disjointness.** Schema-variable kinds, the step

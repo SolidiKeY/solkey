@@ -196,6 +196,28 @@ example. `delAt(st, p)` names `st` once where the equivalent `save`-of-deleted-v
 named it twice; reads commute through it with `selectOnDelAtCons`, and the reset still
 resolves by sort on read through `delValue<[alpha]>`.
 
+### Storage wellformedness (`wellFormed`)
+`wellFormed(Struct)` (`structHeader.key`) is the assumption that storage matches the
+contract's declared layout — the calculus twin of the Lean formalization's
+`wellTypedStorageB L storage`, sound to assume once because
+`TypeSoundness.execBlock_preserves_wellTyped` proves it inductive. It is uninterpreted,
+like `CInv`; `WellFormedTacletGenerator` (`proof/init/`) generates the per-contract
+`wellFormedExpand` rewrite taclet from the state variables, emitting
+`0 <= find<[int]>(storage, p)` for each `uintN` cell and
+`0 <= find<[int]>(storage, p · size)` for each array length cell, recursing into struct
+members and quantifying over mapping keys. Obligations opt in: `/// @custom:key wellformed`
+on a `.sol` function (both directives share one tag: `/// @custom:key box wellformed`), or
+`wellFormed(storage) -> …` plus a hand-written expansion in a `.key` problem. Without it
+nothing bounds a cell the proof never wrote, which is why the array examples pin their
+length with `require`. The `wellFormed*` functions of `TestSuite.sol` are exactly the
+examples that close only with it — `values.push(); values.pop();` (`storagePopSave`'s
+`"empty"` branch needs `0 <= n` under a diamond), `values.push(); assert(values.length > 0)`,
+the push/read-back round trip, and `uint`-typed root, struct-member and mapping reads.
+Limits: array *elements* are not descended into (would need the index quantified under the
+length bound; no example needs it), no upper bound is stated (no checked arithmetic to use
+it), and the callback rules havoc `storage` without re-assuming it. See `docs/storage.md`
+§8b.
+
 ### Memory
 Source-level memory family covers heap field/index read & write, root aliasing,
 fresh allocation (`memoryReferenceDeclFreshAlloc`, with a `new(memory, r)` skolem
