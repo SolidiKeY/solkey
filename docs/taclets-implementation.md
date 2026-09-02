@@ -551,7 +551,11 @@ solc --ast-compact-json keyext.solidity.examples/TestSuite.sol > /dev/null
 ./gradlew :keyext.solidity.core:test --tests "org.key_project.solidity.taclets.PaperTestExamplesTest"
 
 # Check the `// generalized by:` annotations (docs/rule-generalizations.md):
-./gradlew :keyext.solidity.core:test --tests "org.key_project.solidity.taclets.RuleGeneralizationTest"
+./gradlew :keyext.solidity.core:testRuleGeneralization
+
+# The .key/net/solc example suites (RulesTest, NetExamplesTest, SolcSemanticsExamplesTest)
+# are a CI-only group:
+./gradlew :keyext.solidity.core:testSolidityExamples
 
 # Use --no-prove first when debugging a parser/matcher failure (load only).
 ```

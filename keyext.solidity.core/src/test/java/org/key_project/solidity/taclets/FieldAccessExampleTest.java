@@ -10,6 +10,7 @@ import org.key_project.solidity.control.KeYEnvironment;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Proof;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -21,6 +22,7 @@ import static org.key_project.solidity.testutil.SolidityExampleTests.load;
 /// exercises the
 /// `#fieldSymbol` infrastructure: a contract field access resolves to its registered
 /// `Field`-sorted constant `Bank$balance`.
+@Tag("solidityExamples")
 public class FieldAccessExampleTest {
 
     @Test

@@ -13,6 +13,7 @@ import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.init.SolidityProblemSynthesizer;
 import org.key_project.solidity.testutil.SolidityExampleTests;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -30,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /// Seven examples started out red and were fixed by the rule and parser changes the port
 /// prompted; they stay here as regression tests. The gaps they found are listed in
 /// `keyext.solidity.examples/solc/README.md`.
+@Tag("solidityExamples")
 public class SolcSemanticsExamplesTest {
 
     private static final String DIRECTORY = "solc";

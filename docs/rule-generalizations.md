@@ -5,8 +5,8 @@ Many taclets in `solidityProgramRules.key` are instances of one generic pattern
 `storageRootSubAssign`, and `storageRootMulAssign` are the same rule with
 `+=`/`+` swapped for `-=`/`-` and `*=`/`*`. Each such taclet carries a
 machine-checked annotation naming its family, and
-`RuleGeneralizationTest` verifies — deterministically, in the ordinary Gradle
-test run — that the claim is true.
+`RuleGeneralizationTest` verifies — deterministically, in the
+`testRuleGeneralization` Gradle task — that the claim is true.
 
 ## The annotation
 
@@ -69,10 +69,11 @@ where an earlier hole is a substring of a later one.
 ## Running the check
 
 ```bash
-./gradlew :keyext.solidity.core:test --tests "org.key_project.solidity.taclets.RuleGeneralizationTest"
+./gradlew :keyext.solidity.core:testRuleGeneralization
 ```
 
-It runs as part of the normal module test suite (and therefore in CI). The
+It is its own test group, run by the `Solidity / rule-generalization` CI job —
+the common `:keyext.solidity.core:test` task excludes it by tag. The
 suite includes a self-test that injects a divergence into a fabricated member
 and asserts it is detected, so a vacuously green checker also fails.
 

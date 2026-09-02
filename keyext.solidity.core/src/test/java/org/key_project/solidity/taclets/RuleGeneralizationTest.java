@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
@@ -31,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 /// numbered placeholders. All members of a group must produce a byte-identical skeleton, so a
 /// claimed generalization that does not hold (any difference beyond the declared holes) fails
 /// this test. See `docs/rule-generalizations.md`.
+@Tag("ruleGeneralization")
 public class RuleGeneralizationTest {
 
     private static final String RULES_RESOURCE =

@@ -36,7 +36,8 @@ running a suite.
 ## Runtime cross-checking
 
 ```bash
-./gradlew :keyext.solidity.core:test --tests "*SolidityRuntimeExecutionTest"
+./gradlew :keyext.solidity.core:test --tests "*SolidityRuntimeExecutionTest"                # TestSuite.sol half
+./gradlew :keyext.solidity.core:testSolidityExamples --tests "*SolidityRuntimeExecutionTest" # solc/*.sol half (CI group)
 ```
 
 `SolidityRuntimeExecutionTest` compiles `TestSuite.sol` and every `solc/*.sol` with solc,
@@ -211,7 +212,8 @@ will not perform a mapping-alias case split on its own.
 
 Run one with `./gradlew :keyext.solidity.core:solidityCli -PkeyFile=<path>` (or pass the
 path in `--args`); `NetExamplesTest` enumerates the directory, so a new `.key` problem
-joins `./gradlew :keyext.solidity.core:test` by being written.
+joins `./gradlew :keyext.solidity.core:testSolidityExamples` (the CI-only examples group)
+by being written.
 
 ### Calculus conventions the `.sol` bodies follow
 
@@ -247,7 +249,8 @@ cross-check the calculus against a description of Solidity semantics SolKey did 
 (loops unrolled, `return e;` turned into `assert`, `bytesN` dropped), and the list of known
 failures — examples that state upstream semantics the calculus cannot discharge yet and are
 kept red on purpose. `SolcSemanticsExamplesTest` enumerates the directory, so a new example
-joins `./gradlew :keyext.solidity.core:test` by being written.
+joins `./gradlew :keyext.solidity.core:testSolidityExamples` (the CI-only examples group)
+by being written.
 
 ## The `unprovable/` directory
 

@@ -462,6 +462,7 @@ Verification, as for all taclet work:
 ./run-key.sh keyext.solidity.examples/TestSuite.sol <function>
 ./gradlew :keyext.solidity.core:test --tests "org.key_project.solidity.taclets.TacletStarterExamplesTest"
 ./gradlew :keyext.solidity.core:test   # after any Java-side change
+./gradlew :keyext.solidity.core:testSolidityExamples --tests "*NetExamplesTest"   # the net/ problems (CI group)
 ```
 
 ## 5. Implementing the Rest of the Paper

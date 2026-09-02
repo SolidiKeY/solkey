@@ -435,8 +435,10 @@ def spotlessCheckTasks = subprojects.collect { it.path + ":spotlessCheck" }
 
 tasks.register('ciGates') {
     group = "verification"
-    description = "Run the gates CI enforces for this fork: spotlessCheck, the nullness " +
+    description = "Run the fast gates CI enforces for this fork: spotlessCheck, the nullness " +
         "checker, and :keyext.solidity.core:test. " +
+        "The slow example and generalization groups run on CI only " +
+        "(:keyext.solidity.core:testSolidityExamples / :testRuleGeneralization by hand). " +
         "Run './gradlew -DENABLE_NULLNESS=true ciGates'."
 
     dependsOn spotlessCheckTasks                        // CodeQuality / formatting

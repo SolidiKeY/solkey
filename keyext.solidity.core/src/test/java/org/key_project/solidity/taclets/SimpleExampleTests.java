@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 
 import org.key_project.solidity.proof.Proof;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -26,6 +27,7 @@ import static org.key_project.solidity.testutil.SolidityExampleTests.loadAndProv
 /// - `newVariable/newVariable.key` — a rule introduces a fresh program variable with `\new` and
 /// executes two assignments one at a time through a context block, proving `q = 42` (exercises
 /// ProgramContextAdder together with the fresh-variable mechanism).
+@Tag("solidityExamples")
 public class SimpleExampleTests {
 
     @ParameterizedTest(name = "{0}")

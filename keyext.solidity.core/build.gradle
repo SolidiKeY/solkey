@@ -101,6 +101,39 @@ tasks.withType(Test) {
 }
 
 
+// The tag groups CI runs as separate jobs. The common `test` task keeps the untagged unit
+// tests and the TestSuite.sol suites; the tagged groups only run locally on explicit request.
+def ciOnlyTestTags = ["solidityExamples", "ruleGeneralization"]
+
+test {
+    useJUnitPlatform {
+        excludeTags(*ciOnlyTestTags)
+    }
+}
+
+tasks.named('testFast', Test) {
+    useJUnitPlatform {
+        excludeTags(*ciOnlyTestTags)
+    }
+}
+
+tasks.register('testSolidityExamples', Test) {
+    group = "verification"
+    description = "CI test group: the proof example suites over keyext.solidity.examples " +
+        "(net/, solc/, the one-example showcases) and the .key problems run by RulesTest."
+    useJUnitPlatform {
+        includeTags "solidityExamples"
+    }
+}
+
+tasks.register('testRuleGeneralization', Test) {
+    group = "verification"
+    description = "CI test group: RuleGeneralizationTest, the taclet family skeleton checker."
+    useJUnitPlatform {
+        includeTags "ruleGeneralization"
+    }
+}
+
 checkerFramework {
     if(System.getProperty("ENABLE_NULLNESS")) {
         checkers = [

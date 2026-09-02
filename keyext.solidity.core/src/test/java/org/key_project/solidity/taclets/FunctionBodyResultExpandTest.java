@@ -17,6 +17,7 @@ import org.key_project.solidity.program.ast.statement.Statement;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Proof;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -31,6 +32,7 @@ import static org.key_project.solidity.testutil.SolidityExampleTests.modalityPro
 /// (a [FunctionBodyStatement] with a result variable) inside a modality, and the
 /// `functionBodyExpand` taclet rewrites it to the inlined body, ending with the assignment
 /// `r = <named-return>;` that connects the function's return value to the surrounding `r`.
+@Tag("solidityExamples")
 public class FunctionBodyResultExpandTest {
 
     @Test

@@ -164,4 +164,6 @@ For the taclet example set, use the focused harnesses:
 ```
 
 Avoid using the full legacy `RulesTest` suite as the first acceptance gate for
-new taclet examples; it can fail for unrelated older examples.
+new taclet examples; it can fail for unrelated older examples. It now lives in
+the CI-only examples group — run it via
+`./gradlew :keyext.solidity.core:testSolidityExamples --tests "*RulesTest"`.

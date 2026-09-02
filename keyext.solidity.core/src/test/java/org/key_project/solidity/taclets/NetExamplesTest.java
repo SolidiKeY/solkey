@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.testutil.SolidityExampleTests;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -29,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /// beside each problem via `\programSource`. The negative twins under the
 /// `org/key_project/solidity/examples/open/` test resources pin the diamond funding
 /// obligation by staying open.
+@Tag("solidityExamples")
 public class NetExamplesTest {
 
     private static final String OPEN_EXAMPLES_RESOURCE = "org/key_project/solidity/examples/open";

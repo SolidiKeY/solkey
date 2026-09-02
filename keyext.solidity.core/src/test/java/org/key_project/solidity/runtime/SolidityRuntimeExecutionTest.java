@@ -21,6 +21,7 @@ import org.key_project.solidity.testutil.SolidityExampleTests;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -42,6 +43,9 @@ import static org.junit.jupiter.api.Assertions.fail;
 /// overflow, ...) on the EVM; expected cases are listed in [#KNOWN_DIVERGENT].
 /// - A parameterized function runs with the values its leading `require` pins, recovered by
 /// [PinnedArguments].
+///
+/// The `TestSuite.sol` half runs in the common `test` task; the `solc/*.sol` half is tagged
+/// `solidityExamples` and runs in the CI-only `testSolidityExamples` task.
 public class SolidityRuntimeExecutionTest {
 
     /// Examples whose proofs rely on KeY's unbounded mathematical integers and therefore panic
@@ -69,8 +73,20 @@ public class SolidityRuntimeExecutionTest {
     private static final Map<String, Fixture> FIXTURES = new ConcurrentHashMap<>();
 
     @ParameterizedTest(name = "{0}.{1}")
-    @MethodSource("examples")
+    @MethodSource("testSuiteExamples")
     void runsWithoutAssertFailure(String contract, String function) throws IOException {
+        runCase(contract, function);
+    }
+
+    @Tag("solidityExamples")
+    @ParameterizedTest(name = "{0}.{1}")
+    @MethodSource("solcExamples")
+    void solcExampleRunsWithoutAssertFailure(String contract, String function)
+            throws IOException {
+        runCase(contract, function);
+    }
+
+    private static void runCase(String contract, String function) throws IOException {
         Fixture fixture = fixture(contract);
         SolidityOutline.Function fn = fixture.contract().function(function).orElseThrow();
         boolean box = fn.documentation().contains(SolidityProblemSynthesizer.BOX_DIRECTIVE);
@@ -133,9 +149,17 @@ public class SolidityRuntimeExecutionTest {
         return revertData.slice(4).toUnsignedBigInteger().intValueExact();
     }
 
-    static Stream<Arguments> examples() throws IOException {
+    static Stream<Arguments> testSuiteExamples() throws IOException {
+        return examplesOf(List.of(SolidityExampleTests.TEST_SUITE_CONTRACT));
+    }
+
+    static Stream<Arguments> solcExamples() throws IOException {
+        return examplesOf(solcContracts());
+    }
+
+    private static Stream<Arguments> examplesOf(List<String> contracts) throws IOException {
         Stream.Builder<Arguments> args = Stream.builder();
-        for (String contract : contracts()) {
+        for (String contract : contracts) {
             SolidityProblemSynthesizer.provableFunctions(source(contract), contract)
                     .stream()
                     .sorted()
@@ -144,14 +168,12 @@ public class SolidityRuntimeExecutionTest {
         return args.build();
     }
 
-    private static List<String> contracts() throws IOException {
+    private static List<String> solcContracts() throws IOException {
         try (Stream<Path> files = Files.list(SolidityExampleTests.examplesDir("solc"))) {
-            return Stream.concat(
-                Stream.of(SolidityExampleTests.TEST_SUITE_CONTRACT),
-                files.map(p -> p.getFileName().toString())
-                        .filter(name -> name.endsWith(".sol"))
-                        .map(name -> name.substring(0, name.length() - ".sol".length()))
-                        .sorted())
+            return files.map(p -> p.getFileName().toString())
+                    .filter(name -> name.endsWith(".sol"))
+                    .map(name -> name.substring(0, name.length() - ".sol".length()))
+                    .sorted()
                     .toList();
         }
     }

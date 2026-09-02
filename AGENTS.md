@@ -8,8 +8,10 @@
 ./gradlew classes                    # Compile
 ./gradlew test                       # Full test suite (can take hours)
 ./gradlew testFast                   # Fast/lightweight tests
-./gradlew :keyext.solidity.core:test # Module tests
+./gradlew :keyext.solidity.core:test # Module tests: unit tests + TestSuite.sol suites (fast, ~30 s)
 ./gradlew :keyext.solidity.core:test --tests "org.key_project.solidity.SomeTest.methodName"
+./gradlew :keyext.solidity.core:testSolidityExamples   # CI-only group: RulesTest .key problems, net/, solc/, one-example showcases
+./gradlew :keyext.solidity.core:testRuleGeneralization # CI-only group: RuleGeneralizationTest
 ./gradlew spotlessCheck              # Check formatting
 ./gradlew spotlessApply              # Apply formatting
 ./gradlew -DENABLE_NULLNESS=true :keyext.solidity.core:compileTestJava   # Nullness checker (~1 min)
@@ -94,7 +96,18 @@ on nearly every push.
 | **All three at once** | — | `./gradlew -DENABLE_NULLNESS=true ciGates` | ~3 min cold |
 | Formatting | `CodeQuality / formatting` | `./gradlew spotlessApply` | seconds |
 | Nullness | `CodeQuality / checkerFramework` | `./gradlew -DENABLE_NULLNESS=true :keyext.solidity.core:compileTestJava` | ~1 min |
-| Module tests | `Solidity / test` | `./gradlew :keyext.solidity.core:test` | ~2 min |
+| Module tests | `Solidity / test` | `./gradlew :keyext.solidity.core:test` | ~30 s |
+
+CI additionally runs two **CI-only** test groups that are *not* part of `ciGates` (they are the
+slow proof suites, split off by JUnit tag so the local gate stays fast):
+
+| CI job | Local command (only on demand) | Content |
+|---|---|---|
+| `Solidity / examples` | `./gradlew :keyext.solidity.core:testSolidityExamples` | `RulesTest` (`.key` problems), `NetExamplesTest`, `SolcSemanticsExamplesTest`, the one-example showcases, the `solc/*.sol` half of `SolidityRuntimeExecutionTest` |
+| `Solidity / rule-generalization` | `./gradlew :keyext.solidity.core:testRuleGeneralization` | `RuleGeneralizationTest` |
+
+A `--tests` filter naming a class of a CI-only group must go on that group's task — on `test`
+the tag exclusion leaves zero matches and Gradle fails with "No tests found".
 
 `ciGates` (root `build.gradle`) runs all three in one invocation and reports **every** failing
 gate rather than stopping at the first. Three things to know about it: it uses `spotlessCheck`,
@@ -166,12 +179,17 @@ Program rules live in `keyext.solidity.core/src/main/resources/org/key_project/s
 
 ## Testing
 
-Run `./gradlew :keyext.solidity.core:test` after refactoring (~2 min; see **CI Gates** above for
-the full pre-commit set). Prefer modifying existing test classes over creating new ones.
+The module tests are split into three groups by JUnit tag (see **CI Gates** above):
+`./gradlew :keyext.solidity.core:test` is the fast local set — unit tests plus the
+`TestSuite.sol` suites (`TacletStarterExamplesTest`, `PaperTestExamplesTest`, ~30 s); the
+`solidityExamples` and `ruleGeneralization` groups run as their own CI jobs and locally only
+via `testSolidityExamples` / `testRuleGeneralization`. Run `test` after refactoring; prefer
+modifying existing test classes over creating new ones.
 
 `SolidityRuntimeExecutionTest` additionally executes `TestSuite.sol` and `solc/*.sol` on an
 in-process Besu EVM and fails if a proved function's `assert` fails at runtime (see "Runtime
-cross-checking" in `keyext.solidity.examples/README.md`).
+cross-checking" in `keyext.solidity.examples/README.md`). Its `TestSuite.sol` half runs in
+`test`; the `solc/*.sol` half belongs to the examples group.
 
 Known-broken examples are tracked in skip sets kept beside the suites that own them
 (`KNOWN_UNSUPPORTED` in `RulesTest`, `KNOWN_DIVERGENT` in `SolidityRuntimeExecutionTest`; both

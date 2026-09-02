@@ -10,6 +10,7 @@ import org.key_project.solidity.control.KeYEnvironment;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Proof;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -22,6 +23,7 @@ import static org.key_project.solidity.testutil.SolidityExampleTests.load;
 /// `\sameAsTerm` variable condition binds the term schema variable to the program field access:
 /// applying the rule introduces the field constant `Bank$balance`, and the store-then-read
 /// round-trip then closes.
+@Tag("solidityExamples")
 public class SameAsTermExampleTest {
 
     @Test
