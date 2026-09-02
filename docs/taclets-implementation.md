@@ -73,6 +73,11 @@ rules before a terminal rule fires.
 
 ## Implemented
 
+Operator families that differ only by operator token (`op(a,b) = c` instances —
+compound assignment, inc/dec, tier-1 arithmetic) carry `// generalized by:`
+annotations in `solidityProgramRules.key`, verified mechanically by
+`RuleGeneralizationTest` — see `docs/rule-generalizations.md`.
+
 ### Storage read / write / copy
 - Root: `storageRootWriteStore`, `storageRootReadSelect`,
   `storageRootWriteCopySource` (sort-free `find<[StValue]>`, primitives and structs alike).
@@ -107,14 +112,17 @@ at root / field / index level: `storage{Root,Field,Index}{Pre,Post}{in,de}cremen
 and their `…Assignment` twins, plus `…_unfold_leftFst` for complex receivers.
 Local-value twins `localDecl…` / `localAssign…` cover captured temporaries. All
 24 focused examples close. Operator matching checks the operator enum (not just
-the AST node class) so `+=` does not match `=`.
+the AST node class) so `+=` does not match `=`. Annotated as the
+`storageIncDec` / `localIncDec` families (`docs/rule-generalizations.md`).
 
 ### Compound assignment
 `+=`, `-=`, `*=`, `/=`, `%=` at root / field / index, each with a terminal and a
 `_unfold_leftFst` for complex receivers: `storage{Root,Field,Index}{Add,Sub,Mul,Div,Mod}Assign`.
 `/=` and `%=` guard with `\if(se != 0)\then(…)\else(revert)`; integers are
 unbounded mathematical integers, so there is no overflow guard. Bitwise
-`&= |= ^= <<= >>=` parse but are deferred (no bitwise LDT).
+`&= |= ^= <<= >>=` parse but are deferred (no bitwise LDT). Annotated as the
+`storageCompoundAssign` / `localCompoundAssign` / `compoundAssignRhsCapture`
+families (`docs/rule-generalizations.md`).
 
 ### Tier-1 expression operators
 Mirror the `+`/`==` families: terminal assigns the logic-level result, non-simple
@@ -126,7 +134,8 @@ captures (§Capture partition below), which also cover nested RHS like
 `neg`) over unbounded mathematical integers — overflow is not modeled
 (`keyext.solidity.examples/unprovable/Unprovable.sol` documents the divergence
 from the EVM's checked arithmetic); `/` and `%` revert on a zero denominator.
-- Arithmetic: `-`, `*`, `**` (`pow`), `/`, `%`.
+- Arithmetic: `-`, `*`, `**` (`pow`), `/`, `%` — annotated as the `binaryOp`
+  family (`docs/rule-generalizations.md`).
 - Relational: `!=`, `<`, `>`, `<=`, `>=` (predicate map `lt/leq/gt/geq`).
 - Logical / unary: `&&`, `||`, `!`, unary `-x`. A non-simple left operand is
   captured eagerly (Solidity always evaluates it); a non-simple *right* operand
@@ -540,6 +549,9 @@ solc --ast-compact-json keyext.solidity.examples/TestSuite.sol > /dev/null
 # Focused taclet suites:
 ./gradlew :keyext.solidity.core:test --tests "org.key_project.solidity.taclets.TacletStarterExamplesTest"
 ./gradlew :keyext.solidity.core:test --tests "org.key_project.solidity.taclets.PaperTestExamplesTest"
+
+# Check the `// generalized by:` annotations (docs/rule-generalizations.md):
+./gradlew :keyext.solidity.core:test --tests "org.key_project.solidity.taclets.RuleGeneralizationTest"
 
 # Use --no-prove first when debugging a parser/matcher failure (load only).
 ```
