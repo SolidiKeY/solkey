@@ -22,6 +22,7 @@ import org.key_project.solidity.rule.BuiltInRule;
 import org.key_project.solidity.strategy.feature.CountBranchFeature;
 import org.key_project.solidity.strategy.feature.EqNonDuplicateAppFeature;
 import org.key_project.solidity.strategy.feature.NonDuplicateAppFeature;
+import org.key_project.solidity.strategy.feature.NonDuplicateAppModPositionFeature;
 import org.key_project.solidity.strategy.feature.RuleSetDispatchFeature;
 import org.key_project.solidity.strategy.termfeature.IsInductionVariable;
 
@@ -163,6 +164,9 @@ public final class SolidityDLStrategy extends AbstractFeatureStrategy implements
 
         bindRuleSet(d, "nonDuplicateAppCheckEq", EqNonDuplicateAppFeature.INSTANCE);
 
+        bindRuleSet(d, "inReachableStateImplication",
+            add(NonDuplicateAppModPositionFeature.INSTANCE, longConst(100)));
+
         setupUserTaclets(d);
 
         // chrisg: The following rule, if active, must be applied delta rules.
@@ -195,7 +199,8 @@ public final class SolidityDLStrategy extends AbstractFeatureStrategy implements
 
     private RuleSetDispatchFeature setupApprovalDispatcher() {
         var d = new RuleSetDispatchFeature();
-        // TODO
+        bindRuleSet(d, "inReachableStateImplication",
+            NonDuplicateAppModPositionFeature.INSTANCE);
         return d;
     }
 

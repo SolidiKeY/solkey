@@ -196,27 +196,24 @@ example. `delAt(st, p)` names `st` once where the equivalent `save`-of-deleted-v
 named it twice; reads commute through it with `selectOnDelAtCons`, and the reset still
 resolves by sort on read through `delValue<[alpha]>`.
 
-### Storage wellformedness (`wellFormed`)
-`wellFormed(Struct)` (`structHeader.key`) is the assumption that storage matches the
-contract's declared layout — the calculus twin of the Lean formalization's
-`wellTypedStorageB L storage`, sound to assume once because
-`TypeSoundness.execBlock_preserves_wellTyped` proves it inductive. It is uninterpreted,
-like `CInv`; `WellFormedTacletGenerator` (`proof/init/`) generates the per-contract
-`wellFormedExpand` rewrite taclet from the state variables, emitting
-`0 <= find<[int]>(storage, p)` for each `uintN` cell and
-`0 <= find<[int]>(storage, p · size)` for each array length cell, recursing into struct
-members and quantifying over mapping keys. Obligations opt in: `/// @custom:key wellformed`
-on a `.sol` function (both directives share one tag: `/// @custom:key box wellformed`), or
-`wellFormed(storage) -> …` plus a hand-written expansion in a `.key` problem. Without it
-nothing bounds a cell the proof never wrote, which is why the array examples pin their
-length with `require`. The `wellFormed*` functions of `TestSuite.sol` are exactly the
-examples that close only with it — `values.push(); values.pop();` (`storagePopSave`'s
-`"empty"` branch needs `0 <= n` under a diamond), `values.push(); assert(values.length > 0)`,
-the push/read-back round trip, and `uint`-typed root, struct-member and mapping reads.
-Limits: array *elements* are not descended into (would need the index quantified under the
-length bound; no example needs it), no upper bound is stated (no checked arithmetic to use
-it), and the callback rules havoc `storage` without re-assuming it. See `docs/storage.md`
-§8b.
+### Array length non-negativity (`sizeNotNegative`)
+`sizeNotNegative` (`structRules.key`) is the SolKey twin of Java KeY's
+`arrayLengthNotNegative`: `\find(selectSt<[int]>(st, size)) \sameUpdateLevel`
+adds `0 <= selectSt<[int]>(st, size)` to the antecedent, in ruleset
+`inReachableStateImplication` (declared in `ruleSetDeclarations.key`; cost +100
+and `NonDuplicateAppModPositionFeature` bound in `SolidityDLStrategy`'s cost and
+approval dispatchers, so the add-only rule fires once per length term and cannot
+loop when formulas move). One static rule suffices because every length read the
+program rules emit — `find<[int]>(storage, consr(sp, size))` — normalizes to a
+`selectSt<[int]>(st, size)` leaf via the `consr` eliminators and
+`findDefinitionCons`. Sound by the external invariant that `size` cells are only
+written by push (`n+1`) and pop (`n-1` under `0 < n`); see `docs/storage.md`
+§8b. It is what closes `storagePopUnknownLength`, `storagePushLengthPositive`
+and `storagePushReadBack` without a `require` on the length. Landing it also
+required order-guarding the `cnf_andComm`/`cnf_orComm` sorting rules in
+`FOLStrategy` (`termSmallerThan`, mirroring `key.core`'s `JFOLStrategy`) —
+unguarded, `commute_and` ping-pongs on a succedent conjunction and starves
+every positive-cost rule.
 
 ### Memory
 Source-level memory family covers heap field/index read & write, root aliasing,

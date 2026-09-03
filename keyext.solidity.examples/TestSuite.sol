@@ -868,11 +868,21 @@ contract TestSuite {
         assert(values[1] == 0);
     }
 
+    function storagePopUnknownLength() public {
+        values.push();
+        values.pop();
+    }
+
     /// @custom:key box
     function storagePushEmpty() public {
         require(values.length == 2);
         values.push();
         assert(values.length == 3);
+    }
+
+    function storagePushLengthPositive() public {
+        values.push();
+        assert(values.length > 0);
     }
 
     /// @custom:key box
@@ -892,49 +902,18 @@ contract TestSuite {
         assert(values.length == 3);
     }
 
+    function storagePushReadBack() public {
+        values.push(42);
+        uint r = values[values.length - 1];
+        assert(r == 42);
+    }
+
     /// @custom:key box
     function storagePushReturnAssign() public {
         require(values.length == 2);
         values.push() = 42;
         assert(values[2] == 42);
         assert(values.length == 3);
-    }
-
-    /// @custom:key wellformed
-    function wellFormedPopAfterPush() public {
-        values.push();
-        values.pop();
-    }
-
-    /// @custom:key wellformed
-    function wellFormedPushLength() public {
-        values.push();
-        assert(values.length > 0);
-    }
-
-    /// @custom:key wellformed
-    function wellFormedPushReadBack() public {
-        values.push(42);
-        uint r = values[values.length - 1];
-        assert(r == 42);
-    }
-
-    /// @custom:key wellformed
-    function wellFormedUintRoot() public {
-        uint r = total;
-        assert(r >= 0);
-    }
-
-    /// @custom:key wellformed
-    function wellFormedUintField() public {
-        uint r = alice.age;
-        assert(r >= 0);
-    }
-
-    /// @custom:key wellformed
-    function wellFormedMappingValue() public {
-        uint r = balances[7];
-        assert(r >= 0);
     }
 
     function storageRootAddAssign() public {

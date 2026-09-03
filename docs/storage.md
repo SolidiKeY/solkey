@@ -529,69 +529,60 @@ modalities:
 - `revertDiamond`:   `=> ⟨ π revert(); ω ⟩ φ`   ⇝  `=> ⊥`
 - `revertBox`:       `=> [ π revert(); ω ] φ`   ⇝  `=> ⊤`
 
-## 8b. Wellformedness
+## 8b. Array lengths are non-negative (`sizeNotNegative`)
 
-Symbolic execution starts from a completely unconstrained `storage`, so
-nothing is known about a cell the proof has not written. In particular
-`find<[int]>(storage, sp · size)` — a dynamic array's length — may be
-**negative**, and a `uint` state variable may hold any integer. That is
-why every array example has to open with `require(arr.length == N)`.
+Symbolic execution starts from an unconstrained `storage`, so nothing
+is known about a cell the proof has not written — in particular a
+dynamic array's length could be negative. `sizeNotNegative`
+(`structRules.key`) closes exactly that gap, mirroring Java KeY's
+`arrayLengthNotNegative` (`heapRules.key` in `key.core`):
 
-`wellFormed(storage)` (declared in `structHeader.key`) is the assumption
-that closes the gap: storage matches the contract's declared layout,
-i.e. every cell holds a value of its declared type. It is the calculus
-twin of the Lean formalization's `wellTypedStorageB L storage`;
-`TypeSoundness.execBlock_preserves_wellTyped` proves it is an inductive
-invariant of execution, so assuming it once in the proof obligation is
-sound — and reads unfold by read-over-write back to the initial
-`storage`, so no preservation rule is needed in the calculus.
+    sizeNotNegative {
+        \find(selectSt<[int]>(st, size))
+        \sameUpdateLevel
+        \add(0 <= selectSt<[int]>(st, size) ==>)
+        \heuristics(inReachableStateImplication)
+    };
 
-It is uninterpreted, like `CInv`. Its content is generated per contract
-by `WellFormedTacletGenerator`, which emits a `wellFormedExpand` rewrite
-taclet into the obligation. Two consequences of "holds a value of its
-declared type" survive into a calculus of unbounded mathematical
-integers, and they are all it emits:
+One static rule suffices even though a schematic trigger on paths does
+not exist: `consr` is a defined function, so a `\find` on
+`find<[int]>(storage, consr(xs, size))` never matches — but
+normalization does not stop at `cons`-normal paths. `findDefinitionCons`
+peels every `find<[alpha]>(st, cons(a, flds))` down to a
+`selectSt<[alpha]>(st, a)` leaf, so each length read the push/pop/index
+rules emit reaches the stable form `selectSt<[int]>(st, size)` with the
+global `\unique Field size` in matchable position — for a root array,
+a struct member, or a mapping value alike. The normalization rules all
+cost far less than the taclet's +100, so the trigger form is always
+reached before the rule is selected.
 
-- `0 <= find<[int]>(storage, p)` for a `uintN` cell;
-- `0 <= find<[int]>(storage, p · size)` for an array's length cell.
+**Soundness** is an external-invariant argument: `size` cells are
+written only by the push/pop rules — `n+1`, and `n-1` guarded by
+`0 < n`; `.length` is not assignable in Solidity — so in every
+reachable storage a length cell is non-negative (the Lean
+formalization's `wellTypedStorageB`, preserved by
+`TypeSoundness.execBlock_preserves_wellTyped`). The axiom is also
+consistent inside the calculus: `selectSt<[int]>(mtSt, size)` and the
+`delNode`/`delAt` reads reduce to `defaultValue<[int]> = 0`.
 
-Structs recurse into their members, mappings quantify over their keys
-(`\forall int k; …` over `p · at(k)`); `intN`, `bool` and `address`
-cells contribute nothing.
+The rule is always on. Its ruleset `inReachableStateImplication`
+(declared in `ruleSetDeclarations.key`) is costed at +100 and filtered
+by `NonDuplicateAppModPositionFeature` in `SolidityDLStrategy`'s cost
+and approval dispatchers, so the add-only rule fires once per distinct
+length term and cannot loop when formulas move.
 
-**Why it is generated rather than axiomatized.** The Lean side needs no
-generator because there the layout is data: `wellTypedStorageB L storage`
-takes `L` as a parameter and folds over `L.globals`. In the calculus the
-layout exists only in the parser — a field constant like
-`TestSuite$total : Field` carries no declared type — so no formula can
-range over "every declared `uint` cell". Even the array half, where
-`size` *is* a single global constant, cannot be axiomatized once and for
-all: `consr` is a defined function that `consRcons` / `consREmpty` /
-`cons1Def` eliminate eagerly, so every path in a goal is in `cons`-normal
-form and "a path ending in `size`" has no syntactic shape left to match.
-Both attempts fail for that reason — an `\assumes`-guarded
-`\find(find<[int]>(storage, consr(xs, size))) \add(…)` never matches, and
-`\forall List p; 0 <= find<[int]>(storage, consr(p, size))` in the
-antecedent is never instantiated, because its `consr` trigger occurs
-nowhere in the goal. Enumerating the declared paths is what supplies the
-finite set the logic cannot quantify over; the generator plays the role
-Lean's `L` argument plays.
+The motivating case is `values.push(); values.pop();`
+(`storagePopUnknownLength`): `storagePopSave`'s `"empty"` branch is
+`!(0 < n+1) -> ⟨revert⟩false` with
+`n = selectSt<[int]>(selectSt<[Struct]>(storage, C$values), size)`
+over the original storage, which only `0 <= n` closes. Because of this
+rule, array examples no longer have to open with
+`require(arr.length == N)` unless they assert an exact length.
 
-**Limits.** Array *elements* are not descended into — that needs the
-index quantified under the length bound, and no example is provable with
-it. Nothing states an upper bound (`< 2^256`): the calculus has no
-checked arithmetic to make one useful. And the callback rules
-(`transferWithCallback*`) havoc `storage` without re-assuming
-`wellFormed`, which is sound but incomplete.
-
-Obligations opt in: a `.sol` function is tagged `/// @custom:key
-wellformed` (see `keyext.solidity.examples/README.md`), and a `.key`
-problem writes `wellFormed(storage) -> …` with its own expansion taclet,
-the way the `net/` problems spell out `insertCInv`. The `wellFormed*`
-functions of `TestSuite.sol` are the examples that close only with it —
-`values.push(); values.pop();` is the smallest: `storagePopSave`'s
-`"empty"` branch is `!(0 < n+1) -> false` under a diamond, which needs
-`n >= 0`.
+The rule covers lengths only: nothing bounds the value of a `uint`
+cell (that needs per-contract layout knowledge the calculus does not
+have — a field constant like `C$total : Field` carries no declared
+type), and no upper bound (`< 2^256`) is stated.
 
 ## 9. Discipline and Termination
 

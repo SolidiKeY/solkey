@@ -23,18 +23,9 @@ import org.key_project.solidity.program.parser.SolidityOutline;
 /// on with a leading `require(x == 5 && y == 7)`.
 public final class SolidityProblemSynthesizer {
 
-    /// The natspec tag carrying this loader's directives. `@custom:` is solc's extension prefix;
-    /// any other tag is rejected as invalid documentation.
-    public static final String KEY_TAG = "@custom:key";
-
-    /// Natspec directive selecting the box modality.
-    public static final String BOX_DIRECTIVE = KEY_TAG + " box";
-
-    /// Natspec directive assuming that the initial storage matches the contract's declared
-    /// layout. Written in the same `@custom:key` tag as [#BOX_DIRECTIVE] when both are wanted
-    /// (`/// @custom:key box wellformed`), since solc keeps one tag of a name per function.
-    /// See [WellFormedTacletGenerator] for what the assumption says.
-    public static final String WELLFORMED_DIRECTIVE = "wellformed";
+    /// Natspec directive selecting the box modality. `@custom:` is solc's extension prefix; any
+    /// other tag is rejected as invalid documentation.
+    public static final String BOX_DIRECTIVE = "@custom:key box";
 
     private SolidityProblemSynthesizer() {}
 
@@ -69,11 +60,11 @@ public final class SolidityProblemSynthesizer {
     }
 
     public static String problemText(Path solFile, SolidityProblemSpec spec) throws IOException {
-        SolidityOutline.Contract contract =
-            resolveContract(solFile, SolidityOutline.of(solFile), spec.contract());
-        SolidityOutline.Function function = contract.function(spec.function())
-                .orElseThrow(() -> new IllegalArgumentException(
-                    "no public function " + spec.function() + " in " + solFile));
+        SolidityOutline.Function function =
+            resolveContract(solFile, SolidityOutline.of(solFile), spec.contract())
+                    .function(spec.function())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                        "no public function " + spec.function() + " in " + solFile));
         boolean box = function.documentation().contains(BOX_DIRECTIVE);
         List<SolidityOutline.Parameter> parameters = function.parameters();
         String arguments = parameters.stream().map(SolidityOutline.Parameter::name)
@@ -83,33 +74,13 @@ public final class SolidityProblemSynthesizer {
         String programVariables = parameters.isEmpty() ? ""
                 : parameters.stream().map(p -> "    " + p.keySort() + " " + p.name() + ";")
                         .collect(Collectors.joining("\n", "\\programVariables {\n", "\n}\n\n"));
-        String rules = "";
-        String obligation = modality;
-        if (hasDirective(function.documentation(), WELLFORMED_DIRECTIVE)) {
-            rules = WellFormedTacletGenerator.rulesBlock(contract);
-            obligation = "wellFormed(storage) -> " + modality;
-        }
         return """
                 \\programSource "%s";
 
-                %s%s\\problem {
+                %s\\problem {
                     %s
                 }
-                """.formatted(solFile.toAbsolutePath(), programVariables, rules, obligation);
-    }
-
-    /// Whether the function's `@custom:key` natspec tag lists `directive`. One tag carries all
-    /// directives of a function (`/// @custom:key box wellformed`), because solc keeps a single
-    /// tag per name.
-    private static boolean hasDirective(String documentation, String directive) {
-        int tag = documentation.indexOf(KEY_TAG);
-        if (tag < 0) {
-            return false;
-        }
-        int lineEnd = documentation.indexOf('\n', tag);
-        String line = lineEnd < 0 ? documentation.substring(tag)
-                : documentation.substring(tag, lineEnd);
-        return List.of(line.substring(KEY_TAG.length()).trim().split("\\s+")).contains(directive);
+                """.formatted(solFile.toAbsolutePath(), programVariables, modality);
     }
 
     /// A path identifying this obligation. It is never created; it only fixes the directory

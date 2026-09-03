@@ -100,11 +100,10 @@ Clone the `+=` family (`storageRootAddAssign` / `…Field…` / `…Index…` +
   per-type range check that reverts out of range (Java KeY's
   `inInt`/`expandInInt` structure), plus in-range PO antecedents for
   parameters and storage reads so examples need not `require` both bounds by
-  hand. ✅ The lower half of that last point is done for storage:
-  `wellFormed(storage)` gives every `uint` cell and every array length cell
-  `0 <=` (`docs/storage.md` §8b). Still open: upper bounds (`< 2^256`), which
-  are useless until arithmetic is checked, and the same treatment for
-  parameters.
+  hand. ✅ Done for array lengths: `sizeNotNegative` gives every storage
+  length cell `0 <=` unconditionally (`docs/storage.md` §8b). Still open:
+  `0 <=` for `uint` value cells (needs per-contract layout knowledge the
+  calculus does not have), upper bounds (`< 2^256`), and parameters.
 - **Address/payable builtins & globals** (`msg.sender`, `msg.value`,
   `block.*`, `.balance`, `.transfer`): require an environment/ledger model
   beyond the storage/memory heaps. Ordered implementation plan: `docs/net.md`.
@@ -138,13 +137,6 @@ Edge cases of already-supported constructs (see `docs/taclets-implementation.md`
 - **Ternary `CInv(storage, net, selfBalance)`**: needed only if an example ever
   wants to prove a *funded* transfer after a callback — the havoc currently
   leaves `selfBalance` unconstrained.
-- **`wellFormed` through array elements**: `WellFormedTacletGenerator` stops at an
-  array's length cell instead of descending into `p · at(i)` under a quantified
-  index bound, because no example is provable with the element facts — the reads
-  that would use them are the ones a `require` already pins. Same for re-assuming
-  `wellFormed(storage)` after the `transferWithCallback*` storage havoc: sound
-  (`execBlock_preserves_wellTyped`), but no example needs it. See
-  `docs/storage.md` §8b.
 
 ## Raised by the solc semantic-test ports
 
