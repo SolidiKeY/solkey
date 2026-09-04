@@ -37,6 +37,9 @@ include 'keyext.client.java'
 
 include 'keyext.solidity.core'
 include 'keyext.solidity.gui'
+// keyext.solidity.idea is a standalone Gradle build and must NOT be included here: an include
+// would enrol an IDE plugin in spotless, the nullness gate and the nightly Maven publish, and pull
+// a ~1 GB IDE download into every repo-wide assemble/test. See docs/idea-setup.md.
 
 // ENABLE NULLNESS here or on the CLI
 // This flag is activated to enable the checker framework.

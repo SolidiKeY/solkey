@@ -12,6 +12,9 @@ repositories {
 dependencies {
     api project(':keyext.solidity.core')
 
+    // core declares picocli as `implementation`, so it is on our runtime classpath (and already
+    // in the shadow jar) but not on our compile classpath.
+    implementation 'info.picocli:picocli:4.7.7'
     implementation 'org.jspecify:jspecify:1.0.0'
     implementation 'ch.qos.logback:logback-classic:1.5.32'
     implementation 'com.formdev:flatlaf:3.7.1'
@@ -31,13 +34,23 @@ run {
 tasks.register('solidityGui', JavaExec) {
     group = "application"
     description = "Open KeYther on a file. Use -PsolFile=Contract.sol (or -PkeyFile=file.key); " +
-        "without it the GUI starts empty and the file is picked from File -> Open."
+        "without it the GUI starts empty and the file is picked from File -> Open. " +
+        "-Pfunction=name (with -Pcontract=Name when the file declares several) goes straight to " +
+        "that function's proof instead of showing the picker."
     mainClass.set("org.key_project.solidity.gui.SolidityMain")
     classpath = sourceSets.main.runtimeClasspath
     workingDir = rootProject.projectDir
     def requested = project.findProperty('solFile') ?: project.findProperty('keyFile')
     if (requested) {
         args rootProject.ext.resolveSolidityFile(requested)
+    }
+    def contract = project.findProperty('contract')
+    if (contract) {
+        args('--contract', contract.toString())
+    }
+    def function = project.findProperty('function')
+    if (function) {
+        args('--function', function.toString())
     }
     // forward extra arguments, e.g. -PguiArgs="--some-flag"
     def extra = project.findProperty('guiArgs')

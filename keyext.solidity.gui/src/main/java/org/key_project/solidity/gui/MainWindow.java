@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.prefs.Preferences;
@@ -46,6 +47,8 @@ import org.key_project.solidity.program.parser.SolidityOutline;
 import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.Statistics;
+import org.key_project.solidity.proof.init.SolidityProblemSpec;
+import org.key_project.solidity.proof.init.SolidityProblemSynthesizer;
 import org.key_project.solidity.proof.io.LoadErrors;
 import org.key_project.solidity.proof.io.ProofSaver;
 
@@ -394,7 +397,7 @@ public final class MainWindow extends JFrame {
             File f = new File(path);
             JMenuItem item = new JMenuItem(f.getName());
             item.setToolTipText(path);
-            item.addActionListener(e -> openProof(f));
+            item.addActionListener(e -> openProof(f, null));
             recentMenu.add(item);
         }
         recentMenu.addSeparator();
@@ -421,18 +424,25 @@ public final class MainWindow extends JFrame {
             "Solidity source, KeY problem or proof (*.sol, *.key, *.proof)", "sol", "key",
             "proof"));
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            openProof(chooser.getSelectedFile());
+            openProof(chooser.getSelectedFile(), null);
         }
     }
 
     /// Opens `file`, as the Open action does.
     public void open(File file) {
-        openProof(file);
+        openProof(file, null);
     }
 
-    /// Opens a file by what it is: a Solidity source asks which of its functions to verify, a
-    /// `.key` problem or `.proof` loads directly.
-    private void openProof(File file) {
+    /// Opens `file` on one specific function, skipping the picker. When no obligation can be
+    /// generated for that function, the load is refused with the reason instead of falling back
+    /// to the picker.
+    public void open(File file, SolidityProblemSpec spec) {
+        openProof(file, spec);
+    }
+
+    /// Opens a file by what it is: a Solidity source asks which of its functions to verify (unless
+    /// `requested` already names one), a `.key` problem or `.proof` loads directly.
+    private void openProof(File file, @Nullable SolidityProblemSpec requested) {
         if (busy) {
             showError("Another file is still loading.");
             return;
@@ -442,25 +452,46 @@ public final class MainWindow extends JFrame {
             return;
         }
         if (file.getName().endsWith(".sol")) {
-            openSolidity(file);
+            openSolidity(file, requested);
+        } else if (requested != null) {
+            showError("--function and --contract apply to .sol files only");
         } else {
             loadEnvironment(file, file.getName(), () -> KeYEnvironment.load(file.toPath()));
         }
     }
 
-    /// Reads what `file` declares, asks which function to verify, and loads that function's
+    /// Reads what `file` declares, settles which function to verify, and loads that function's
     /// obligation. Both steps run off the EDT: solc is forked to read the outline, and building
     /// the obligation parses the taclet base.
-    private void openSolidity(File file) {
+    private void openSolidity(File file, @Nullable SolidityProblemSpec requested) {
         Path path = file.toPath();
         inBackground("solidity-outline", "Reading " + file.getName() + " ...",
             () -> new SolidityFile(SolidityOutline.of(path), Files.readAllBytes(path)),
-            read -> FunctionSelectionDialog
-                    .select(this, path, read.outline(), read.source(), fontFor("sequent"))
+            read -> chooseFunction(path, read, requested)
                     .ifPresent(spec -> loadEnvironment(file,
                         file.getName() + "  ·  " + spec.contract() + "." + spec.function(),
                         () -> KeYEnvironment.load(path, spec.contract(), spec.function()))),
             "Could not read " + file);
+    }
+
+    /// What to prove: the picker when nothing was requested, otherwise the requested function —
+    /// refused with the reason when no obligation can be generated for it. Resolving against the
+    /// outline just read means no second solc fork, so the refusal is immediate.
+    private Optional<SolidityProblemSpec> chooseFunction(Path path, SolidityFile read,
+            @Nullable SolidityProblemSpec requested) {
+        if (requested == null) {
+            return FunctionSelectionDialog.select(this, path, read.outline(), read.source(),
+                fontFor("sequent"));
+        }
+        try {
+            return Optional
+                    .of(SolidityProblemSynthesizer.resolve(path, read.outline(), requested));
+        } catch (RuntimeException ex) {
+            // Also on stderr, so a launch from an IDE shows the reason in its console.
+            System.err.println(ex.getMessage());
+            showError(ex.getMessage());
+            return Optional.empty();
+        }
     }
 
     /// Loads an environment off the EDT and installs its proof.
@@ -552,7 +583,7 @@ public final class MainWindow extends JFrame {
             showError("No recently opened files.");
             return;
         }
-        openProof(new File(recent.get(0)));
+        openProof(new File(recent.get(0)), null);
     }
 
     /// Prunes the proof at the currently selected node (the node becomes an open goal again).

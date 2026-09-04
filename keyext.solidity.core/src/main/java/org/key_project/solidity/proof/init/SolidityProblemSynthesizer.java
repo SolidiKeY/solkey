@@ -33,7 +33,13 @@ public final class SolidityProblemSynthesizer {
     /// when the request cannot be met.
     public static SolidityProblemSpec resolve(Path solFile, SolidityProblemSpec requested)
             throws IOException {
-        SolidityOutline outline = SolidityOutline.of(solFile);
+        return resolve(solFile, SolidityOutline.of(solFile), requested);
+    }
+
+    /// Resolves against an outline the caller already read, so a GUI that has just shown what the
+    /// file declares does not fork solc a second time.
+    public static SolidityProblemSpec resolve(Path solFile, SolidityOutline outline,
+            SolidityProblemSpec requested) {
         SolidityOutline.Contract contract = resolveContract(solFile, outline,
             requested == null ? null : requested.contract());
         String function = requested == null ? null : requested.function();
@@ -44,10 +50,17 @@ public final class SolidityProblemSynthesizer {
                     + "; use --function with one of: " + names(provable));
             }
             function = provable.get(0).name();
-        } else if (contract.function(function).isEmpty()) {
-            throw new IllegalArgumentException("contract " + contract.name() + " in " + solFile
-                + " has no public function " + function + "; candidates: "
-                + names(contract.provableFunctions()));
+        } else {
+            String name = function;
+            SolidityOutline.Function declared = contract.function(name)
+                    .orElseThrow(() -> new IllegalArgumentException("contract " + contract.name()
+                        + " in " + solFile + " has no public function " + name + "; candidates: "
+                        + names(contract.provableFunctions())));
+            String reason = declared.unsupportedReason().orElse(null);
+            if (reason != null) {
+                throw new IllegalArgumentException(contract.name() + "." + name + " in " + solFile
+                    + " cannot be proved: " + reason);
+            }
         }
         return SolidityProblemSpec.of(contract.name(), function);
     }

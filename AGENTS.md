@@ -25,17 +25,35 @@
 ./run-key.sh keyext.solidity.examples/TestSuite.sol testSimpleAssert   # One function
 ./gradlew :keyext.solidity.gui:solidityGui                             # KeYther, the Swing GUI
 ./gradlew :keyext.solidity.gui:solidityGui -PsolFile=keyext.solidity.examples/TestSuite.sol  # open a file
+./gradlew :keyext.solidity.gui:solidityGui -PsolFile=…/TestSuite.sol -Pcontract=TestSuite -Pfunction=testSimpleAssert  # one proof, no picker
 ./gradlew :keyext.solidity.gui:test                                   # GUI module tests
+./gradlew -p keyext.solidity.idea buildPlugin                         # the IDEA plugin (standalone Gradle build)
+./gradlew -p keyext.solidity.idea test                                # its scanner tests
+./gradlew -p keyext.solidity.idea runIde                              # sandbox IDE with the plugin loaded
 ```
 
 Java 21 required. Test max heap: 4GB, max parallel forks: 1.
 
 ## IntelliJ IDEA
 
+`keyext.solidity.idea` is an IDEA plugin that draws a ▶ in the gutter beside every public function
+of an open `.sol` file; clicking it opens KeYther straight on that function's proof, skipping the
+picker, and refuses a function with no obligation by naming the reason. Build it with
+`./gradlew -p keyext.solidity.idea buildPlugin`, then **Settings → Plugins → ⚙ → Install Plugin
+from Disk…** on `keyext.solidity.idea/build/distributions/keyext.solidity.idea-0.1.0.zip` and
+restart. It must be reinstalled after every change to it — no hot reload; `runIde` is the
+development loop. It needs no Solidity language plugin: the icons go into the editor's markup
+model and the functions come from `SolFunctionScanner`, a text scan.
+
+**`keyext.solidity.idea` is a standalone Gradle build and is deliberately *not* in the root
+`settings.gradle`** — including it would enrol an IDE plugin in spotless, the nullness gate and the
+nightly Maven publish, and pull a ~1 GB IDE download into every repo-wide `assemble`/`test`.
+
 Run `scripts/install-idea-external-tools.sh` once per machine and restart the IDE: it installs the
 `SolKey` External Tools, so right-clicking a `.sol` file offers **External Tools → SolKey → Verify
-in KeYther (GUI)** (and the CLI equivalent). External Tools live in the IDE configuration, not the
-project, so they cannot be checked in — hence the script.
+in KeYther (GUI)** (and the CLI equivalent) — the whole-file entry point, where the gutter icon is
+the single-function one. External Tools live in the IDE configuration, not the project, so they
+cannot be checked in — hence the script.
 
 `.run/` holds shared run configurations, which IDEA picks up automatically on any machine that
 opens the project:
@@ -69,6 +87,9 @@ gitignored — store new configurations in `.run/` via **Store as project file**
 
 **Always use `solidityCli` to run/verify a problem.** Gradle's `--args` replaces the default arguments—put the entire CLI argument list in one `--args` value. CLI options: `--no-prove` (load only), `--no-replay`, `-m/--max`, `-t/--timeout`, `-s/--print-stats`, `-v/--verbose`, `-f/--function`, `-c/--contract`, `--help`.
 
+`-f/--function` fails with the reason when the named function has no obligation (it returns a
+value, or takes a parameter with no `.key` sort) instead of generating a malformed one.
+
 `solidityCli` accepts a `.sol` file directly — no `.key` needed. The loader synthesizes one obligation per function (`\<{ f(x, y)@C; }\>(true)`, with one unconstrained program variable per parameter), so the specification lives in the Solidity body as `assert` — a parameterized function is box-tagged and assumes its argument values with `require`. Without `--function` every function is proved and a `N/M closed` summary is printed.
 
 ## File Locations
@@ -90,6 +111,7 @@ gitignored — store new configurations in `.run/` via **Store as project file**
 | `key.ui`                           | GUI + CLI entry point |
 | `keyext.solidity.core`             | **Solidity verification** — main focus |
 | `keyext.solidity.gui`              | **KeYther**, the standalone Swing GUI for the Solidity prover |
+| `keyext.solidity.idea`             | IntelliJ IDEA plugin — ▶ gutter icon on public Solidity functions (standalone Gradle build, not in `settings.gradle`) |
 | `keyext.solidity.examples`         | **Main taclets examples** (`TestSuite.sol`) |
 
 Dependencies: `keyext.*` → `key.core` → `key.ncore` → `key.util`.
@@ -210,7 +232,7 @@ Read the relevant doc before working on taclets — each is a compact, agent-fac
 | `require-assert.md` | Touching `require` / `assert` rules (box vs. diamond false-branch behavior). |
 | `solidity-json-documentation.md` | Parsing `solc --ast-compact-json` (consumed by `SolJSONParser`). |
 | `forked-key-core.md` | Editing code forked from `key.core` — which files are near-verbatim copies and why they must not be restyled. |
-| `idea-setup.md` | Setting up IntelliJ IDEA — right-click External Tools, shared `.run/` configurations, what must stay out of git. |
+| `idea-setup.md` | Setting up IntelliJ IDEA — the ▶ gutter-icon plugin, right-click External Tools, shared `.run/` configurations, what must stay out of git. |
 
 Program rules live in `keyext.solidity.core/src/main/resources/org/key_project/solidity/proof/rules/solidityProgramRules.key` (loaded automatically via `standardSolidityRules.key`). Add new taclet examples as functions of `keyext.solidity.examples/TestSuite.sol`, and scenario/invariant examples as contracts plus `.key` proof obligations in `keyext.solidity.examples/net/` — conventions for both: `keyext.solidity.examples/README.md`. After changing a feature update `docs/taclets-implementation.md` (implemented) or `docs/taclet-ideas.md` (backlog).
 
