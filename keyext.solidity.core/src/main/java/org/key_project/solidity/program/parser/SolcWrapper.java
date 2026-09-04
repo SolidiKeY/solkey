@@ -62,6 +62,9 @@ public class SolcWrapper {
 
     private static void exportSolc(Path targetPath) throws IOException {
         InputStream is = SolcWrapper.class.getResourceAsStream("/solc");
+        if (is == null) {
+            throw new IOException("no solc on PATH and none bundled with this build");
+        }
         Files.copy(is, targetPath, StandardCopyOption.REPLACE_EXISTING);
         targetPath.toFile().setExecutable(true);
     }

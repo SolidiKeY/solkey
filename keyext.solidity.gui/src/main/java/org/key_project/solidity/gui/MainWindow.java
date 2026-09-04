@@ -10,9 +10,13 @@ import java.awt.Font;
 import java.awt.Image;
 import java.io.File;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 import java.util.prefs.Preferences;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
@@ -38,8 +42,11 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.key_project.solidity.control.KeYEnvironment;
 import org.key_project.solidity.pp.NotationInfo;
+import org.key_project.solidity.program.parser.SolidityOutline;
 import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.proof.Proof;
+import org.key_project.solidity.proof.Statistics;
+import org.key_project.solidity.proof.io.LoadErrors;
 import org.key_project.solidity.proof.io.ProofSaver;
 
 import org.jspecify.annotations.Nullable;
@@ -55,6 +62,7 @@ public final class MainWindow extends JFrame {
     private static final int MAX_RECENT = 12;
     private static final String RECENT_KEY = "recentFiles";
     private static final int BASE_FONT_SIZE = 13; // font size at 100% zoom
+    private static final String TITLE = "KeYther";
 
     private final ProofContext context = new ProofContext();
     private final Preferences prefs = Preferences.userNodeForPackage(MainWindow.class);
@@ -66,9 +74,11 @@ public final class MainWindow extends JFrame {
     private final NodeInfoView infoView = new NodeInfoView(context);
     private final EditorArea editor = new EditorArea(context, this::runAutoMode);
     private int zoomPercent = 100;
+    private boolean busy;
+    private boolean proofClosedAnnounced;
 
     public MainWindow() {
-        super("KeYther");
+        super(TITLE);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         applyPrettyPrinting(prefs.getBoolean("pp.pretty", true));
         setJMenuBar(buildMenuBar());
@@ -123,16 +133,21 @@ public final class MainWindow extends JFrame {
             mainSplit.setDividerLocation(mainSplit.getHeight() - 150);
         });
 
-        // Keep the status bar in sync with the proof state.
+        // Keep the status bar in sync with the proof state, and announce a proof that closes.
         context.addListener(new ProofContext.Listener() {
             @Override
             public void proofLoaded() {
+                Proof loaded = context.getProof();
+                // A proof that arrives closed (a replayed .proof) is not news: only a proof that
+                // closes here is announced.
+                proofClosedAnnounced = loaded != null && loaded.closed();
                 updateStatus();
             }
 
             @Override
             public void proofChanged() {
                 updateStatus();
+                announceProofClosed();
             }
         });
 
@@ -141,25 +156,38 @@ public final class MainWindow extends JFrame {
         setLocationRelativeTo(null);
     }
 
-    /// Reflects the live proof state (node count, remaining goals, closed) in the status bar.
+    /// Reflects the live proof state (what is being proved, node count, remaining goals, closed)
+    /// in the status bar and the window title.
     private void updateStatus() {
         Proof proof = context.getProof();
         if (proof == null) {
             statusLabel.setText("No proof loaded");
+            setTitle(TITLE);
             return;
         }
         int nodes = proof.countNodes();
         int open = proof.openGoals().size();
         String state = proof.closed() ? "proof closed ✓"
                 : open + (open == 1 ? " open goal" : " open goals");
-        statusLabel.setText(nodes + (nodes == 1 ? " node" : " nodes") + "   ·   " + state);
+        String subject = describe(proof);
+        statusLabel.setText(subject + "   ·   " + nodes + (nodes == 1 ? " node" : " nodes")
+            + "   ·   " + state);
+        setTitle(TITLE + " — " + subject);
+    }
+
+    /// What a proof is about: for an obligation synthesized from a Solidity source, the file and
+    /// the `Contract.function` it was generated for; otherwise the problem's own name.
+    private static String describe(Proof proof) {
+        Path source = proof.getSoliditySource();
+        return source == null ? proof.name().toString()
+                : source.getFileName() + "  ·  " + proof.name();
     }
 
     private JMenuBar buildMenuBar() {
         JMenuBar bar = new JMenuBar();
 
         JMenu file = new JMenu("File");
-        file.add(menuItem("Open .key / .proof ...", this::openProof));
+        file.add(menuItem("Open Solidity source or problem ...", this::openProof));
         file.add(menuItem("Reopen most recent", this::openMostRecent));
         file.add(recentMenu);
         file.add(menuItem("Save proof ...", this::saveProof));
@@ -217,8 +245,8 @@ public final class MainWindow extends JFrame {
         bar.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createMatteBorder(1, 0, 1, 0, Theme.hairline()),
             BorderFactory.createEmptyBorder(3, 6, 3, 6)));
-        bar.add(toolButton("Open", "Load a .key problem or .proof", icon("open.png", 18),
-            this::openProof));
+        bar.add(toolButton("Open", "Load a .sol source, a .key problem or a .proof",
+            icon("open.png", 18), this::openProof));
         bar.add(toolButton("Reopen", "Reopen the most recently opened file",
             icon("openMostRecent.png", 18), this::openMostRecent));
         bar.add(toolButton("Save", "Save the current proof", icon("saveFile.png", 18),
@@ -385,16 +413,60 @@ public final class MainWindow extends JFrame {
 
     private void openProof() {
         JFileChooser chooser = new JFileChooser(lastDirectory());
-        chooser.setFileFilter(
+        chooser.addChoosableFileFilter(
+            new FileNameExtensionFilter("Solidity source (*.sol)", "sol"));
+        chooser.addChoosableFileFilter(
             new FileNameExtensionFilter("KeY problem or proof (*.key, *.proof)", "key", "proof"));
+        chooser.setFileFilter(new FileNameExtensionFilter(
+            "Solidity source, KeY problem or proof (*.sol, *.key, *.proof)", "sol", "key",
+            "proof"));
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             openProof(chooser.getSelectedFile());
         }
     }
 
+    /// Opens `file`, as the Open action does.
+    public void open(File file) {
+        openProof(file);
+    }
+
+    /// Opens a file by what it is: a Solidity source asks which of its functions to verify, a
+    /// `.key` problem or `.proof` loads directly.
     private void openProof(File file) {
-        try {
-            KeYEnvironment<?> env = KeYEnvironment.load(file.toPath());
+        if (busy) {
+            showError("Another file is still loading.");
+            return;
+        }
+        if (!file.isFile()) {
+            showError("No such file: " + file);
+            return;
+        }
+        if (file.getName().endsWith(".sol")) {
+            openSolidity(file);
+        } else {
+            loadEnvironment(file, file.getName(), () -> KeYEnvironment.load(file.toPath()));
+        }
+    }
+
+    /// Reads what `file` declares, asks which function to verify, and loads that function's
+    /// obligation. Both steps run off the EDT: solc is forked to read the outline, and building
+    /// the obligation parses the taclet base.
+    private void openSolidity(File file) {
+        Path path = file.toPath();
+        inBackground("solidity-outline", "Reading " + file.getName() + " ...",
+            () -> new SolidityFile(SolidityOutline.of(path), Files.readAllBytes(path)),
+            read -> FunctionSelectionDialog
+                    .select(this, path, read.outline(), read.source(), fontFor("sequent"))
+                    .ifPresent(spec -> loadEnvironment(file,
+                        file.getName() + "  ·  " + spec.contract() + "." + spec.function(),
+                        () -> KeYEnvironment.load(path, spec.contract(), spec.function()))),
+            "Could not read " + file);
+    }
+
+    /// Loads an environment off the EDT and installs its proof.
+    private void loadEnvironment(File file, String subtitle,
+            Callable<KeYEnvironment<?>> loader) {
+        inBackground("solidity-load", "Loading " + subtitle + " ...", loader, env -> {
             Proof proof = env.getLoadedProof();
             if (proof == null) {
                 showError("No proof was loaded from " + file);
@@ -402,9 +474,52 @@ public final class MainWindow extends JFrame {
             }
             context.setProof(env, proof);
             addRecentFile(file);
-        } catch (Exception ex) {
-            showError("Could not load " + file + ":\n" + ex.getMessage());
+        }, "Could not load " + file);
+    }
+
+    /// Runs `work` on a background thread and hands the result to `onSuccess` on the EDT, with the
+    /// window marked busy in between so a second load cannot start on top of the first.
+    ///
+    /// `work` may throw anything: solc reports a rejected source as an unchecked exception, so
+    /// narrowing this to [java.io.IOException] would let real failures escape onto the thread.
+    private <T> void inBackground(String threadName, String status, Callable<T> work,
+            Consumer<T> onSuccess, String errorContext) {
+        setBusy(true, status);
+        Thread worker = new Thread(() -> {
+            final T value;
+            try {
+                value = work.call();
+            } catch (Exception ex) {
+                SwingUtilities.invokeLater(() -> {
+                    setBusy(false, null);
+                    showError(errorContext + ":\n" + LoadErrors.describe(ex));
+                });
+                return;
+            }
+            SwingUtilities.invokeLater(() -> {
+                setBusy(false, null);
+                onSuccess.accept(value);
+            });
+        }, threadName);
+        worker.setDaemon(true);
+        worker.start();
+    }
+
+    /// Marks the window busy: the strategy controls are locked and further loads are refused
+    /// until the running one finishes.
+    private void setBusy(boolean running, @Nullable String status) {
+        busy = running;
+        strategyView.setRunning(running);
+        if (status != null) {
+            statusLabel.setText(status);
+        } else {
+            updateStatus();
         }
+    }
+
+    /// What a background read of a `.sol` produced: its outline and the bytes its source spans
+    /// index into.
+    private record SolidityFile(SolidityOutline outline, byte[] source) {
     }
 
     private void saveProof() {
@@ -461,11 +576,15 @@ public final class MainWindow extends JFrame {
             return;
         }
         try {
-            proof.pruneProof(node);
+            if (proof.pruneProof(node) == null) {
+                showError("Nothing was pruned: node " + node.getSerialNr()
+                    + " is an open goal or lies in a closed branch.");
+                return;
+            }
             context.fireProofChanged();
             context.setSelectedNode(node);
         } catch (Exception ex) {
-            showError("Could not prune the proof:\n" + ex.getMessage());
+            showError("Could not prune the proof:\n" + LoadErrors.describe(ex));
         }
     }
 
@@ -476,24 +595,40 @@ public final class MainWindow extends JFrame {
             showError("No proof is open.");
             return;
         }
-        // Lock the strategy controls so a live edit cannot mutate the settings mid-run, then run
-        // the (blocking) strategy off the EDT and refresh the views.
-        strategyView.setRunning(true);
-        new Thread(() -> {
-            try {
-                env.getProofControl().startAndWaitForAutoMode(proof);
-            } catch (Exception ex) {
-                SwingUtilities.invokeLater(() -> {
-                    strategyView.setRunning(false);
-                    showError("Auto mode failed:\n" + ex.getMessage());
-                });
-                return;
-            }
-            SwingUtilities.invokeLater(() -> {
-                strategyView.setRunning(false);
-                context.fireProofChanged();
-            });
-        }, "solidity-auto-mode").start();
+        if (busy) {
+            showError("A file is still loading.");
+            return;
+        }
+        // Locking the window also locks the strategy controls, so a live edit cannot mutate the
+        // settings mid-run, and no load can replace the proof under the running strategy.
+        inBackground("solidity-auto-mode", "Running the prover ...", () -> {
+            env.getProofControl().startAndWaitForAutoMode(proof);
+            return proof;
+        }, done -> context.fireProofChanged(), "Auto mode failed");
+    }
+
+    /// Tells the user when the proof closes, the way KeY-Java does when the prover finishes, and
+    /// re-arms once the proof is reopened by pruning.
+    private void announceProofClosed() {
+        Proof proof = context.getProof();
+        if (proof == null || !proof.closed()) {
+            proofClosedAnnounced = false;
+            return;
+        }
+        if (proofClosedAnnounced) {
+            return;
+        }
+        proofClosedAnnounced = true;
+        StringBuilder message = new StringBuilder(
+            "<html><body style='text-align: center'><b>Proved.</b><br><br><table>");
+        for (Statistics.Entry entry : proof.getStatistics().getSummary()) {
+            message.append("<tr><td align='left'>").append(entry.label())
+                    .append("</td><td align='right'>").append(entry.value())
+                    .append("</td></tr>");
+        }
+        message.append("</table></body></html>");
+        JOptionPane.showMessageDialog(this, new JLabel(message.toString()), "Proof closed",
+            JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void showError(String message) {

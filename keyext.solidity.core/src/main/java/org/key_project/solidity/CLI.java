@@ -11,6 +11,7 @@ import java.util.List;
 import org.key_project.solidity.control.KeYEnvironment;
 import org.key_project.solidity.proof.init.SolidityProblemSpec;
 import org.key_project.solidity.proof.init.SolidityProblemSynthesizer;
+import org.key_project.solidity.proof.io.LoadErrors;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
 import org.key_project.solidity.proof.io.ProofSaver;
 
@@ -87,6 +88,10 @@ public class CLI {
 
     private static boolean run(CLI cli) {
         Path f = cli.file.toPath();
+        if (!cli.file.isFile()) {
+            System.err.println("No such file: " + cli.file.getAbsolutePath());
+            return false;
+        }
         if (!f.getFileName().toString().endsWith(".sol")) {
             if (cli.function != null || cli.contract != null) {
                 System.err.println("--function and --contract apply to .sol files only");
@@ -100,9 +105,11 @@ public class CLI {
         final List<String> functions;
         try {
             functions = SolidityProblemSynthesizer.provableFunctions(f, cli.contract);
-        } catch (IOException | IllegalArgumentException e) {
+        } catch (Exception e) {
+            // solc reports a rejected source as an unchecked exception, so this cannot narrow to
+            // IOException without letting a compile error escape as a stack trace.
             System.err.println("Error while reading " + cli.file + ":");
-            System.err.println("  " + e.getMessage());
+            System.err.println("  " + LoadErrors.describe(e));
             return false;
         }
         int closed = 0;
@@ -185,11 +192,8 @@ public class CLI {
                 }
             }
         } catch (ProblemLoaderException e) {
-            // surface the most specific (root) cause: parser/builder/converter exceptions carry
-            // the helpful, location-annotated message, while the outer exception is generic.
-            Throwable root = rootCause(e);
             System.err.println("Error while loading " + cli.file + ":");
-            System.err.println("  " + root.getMessage());
+            System.err.println("  " + LoadErrors.describe(e));
             if (cli.verbose) {
                 e.printStackTrace();
             } else {
@@ -197,15 +201,5 @@ public class CLI {
             }
             return false;
         }
-    }
-
-    /// Returns the innermost cause of a throwable, whose message is usually the most specific
-    /// (and, for parser/converter errors, location-annotated).
-    private static Throwable rootCause(Throwable t) {
-        Throwable cur = t;
-        while (cur.getCause() != null && cur.getCause() != cur) {
-            cur = cur.getCause();
-        }
-        return cur;
     }
 }

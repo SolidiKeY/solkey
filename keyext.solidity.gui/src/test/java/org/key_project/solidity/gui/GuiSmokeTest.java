@@ -13,6 +13,7 @@ import org.key_project.solidity.proof.io.OutputStreamProofSaver;
 
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -26,9 +27,13 @@ public class GuiSmokeTest {
     }
 
     private static Path example() {
-        Path p = Path.of("keyext.solidity.examples/functionBody/archive.key");
+        return example("functionBody/archive.key");
+    }
+
+    private static Path example(String relativePath) {
+        Path p = Path.of("keyext.solidity.examples").resolve(relativePath);
         return Files.exists(p) ? p
-                : Path.of("../keyext.solidity.examples/functionBody/archive.key");
+                : Path.of("../keyext.solidity.examples").resolve(relativePath);
     }
 
     @Test
@@ -65,5 +70,25 @@ public class GuiSmokeTest {
         context.fireProofChanged();
         assertTrue(proof.closed(), "archive example should close under auto mode");
         assertTrue(proof.openGoals().isEmpty(), "closed proof has no open goals");
+    }
+
+    @Test
+    void loadsAChosenSolidityFunction() throws Exception {
+        Path file = example("TestSuite.sol");
+        assertTrue(Files.exists(file), "example must exist: " + file.toAbsolutePath());
+
+        KeYEnvironment<?> env = KeYEnvironment.load(file, "TestSuite", "testSimpleAssert");
+        Proof proof = env.getLoadedProof();
+        assertNotNull(proof);
+        assertEquals("TestSuite.testSimpleAssert", proof.name().toString());
+        assertNotNull(proof.getSoliditySource());
+
+        ProofContext context = new ProofContext();
+        context.setProof(env, proof);
+        assertTrue(context.getSelectedNode() == proof.root());
+
+        env.getProofControl().startAndWaitForAutoMode(proof);
+        context.fireProofChanged();
+        assertTrue(proof.closed(), "testSimpleAssert should close under auto mode");
     }
 }

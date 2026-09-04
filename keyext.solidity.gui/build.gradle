@@ -24,8 +24,13 @@ application {
     mainClass = "org.key_project.solidity.gui.SolidityMain"
 }
 
+run {
+    workingDir = rootProject.projectDir
+}
+
 test {
     useJUnitPlatform()
+    systemProperty 'java.awt.headless', 'true'
 }
 
 shadowJar {

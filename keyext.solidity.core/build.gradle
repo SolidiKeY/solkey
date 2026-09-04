@@ -239,6 +239,17 @@ tasks.jar {
 def solidityCliMainClass = "org.key_project.solidity.CLI"
 def solidityExamplesDir = rootProject.file("keyext.solidity.core/src/test/resources/org/key_project/solidity/examples")
 
+def resolveKeyFile = { requested ->
+    def name = requested.toString()
+    if (new File(name).isAbsolute() || new File(solidityExamplesDir, name).exists()) {
+        return name
+    }
+    def candidates = [new File(rootProject.projectDir, name),
+                      new File(rootProject.file("keyext.solidity.examples"), name)]
+    def found = candidates.find { it.exists() }
+    return found ? found.absolutePath : name
+}
+
 tasks.register('solidityCli', JavaExec) {
     group = "application"
     description = "Run the Solidity CLI. Use -PkeyFile=file.key|file.sol to specify the file, " +
@@ -246,7 +257,7 @@ tasks.register('solidityCli', JavaExec) {
     mainClass.set(solidityCliMainClass)
     classpath = sourceSets.main.runtimeClasspath
     workingDir = solidityExamplesDir
-    args project.findProperty('keyFile') ?: "problem2.key"
+    args resolveKeyFile(project.findProperty('keyFile') ?: "problem2.key")
     def function = project.findProperty('function')
     if (function) {
         args('--function', function.toString())

@@ -23,9 +23,32 @@
 ./run-key.sh problem1.key                                 # Wrapper script (same as above)
 ./run-key.sh keyext.solidity.examples/TestSuite.sol       # Every function of a .sol
 ./run-key.sh keyext.solidity.examples/TestSuite.sol testSimpleAssert   # One function
+./gradlew :keyext.solidity.gui:run                                    # KeYther, the Swing GUI
+./gradlew :keyext.solidity.gui:run --args="keyext.solidity.examples/TestSuite.sol"  # open a file
+./gradlew :keyext.solidity.gui:test                                   # GUI module tests
 ```
 
 Java 21 required. Test max heap: 4GB, max parallel forks: 1.
+
+## IntelliJ IDEA
+
+`.run/` holds shared run configurations, which IDEA picks up automatically on any machine that
+opens the project:
+
+| Configuration | What it does |
+|---|---|
+| **KeYther on current file** | Launches the GUI on the file open in the editor (`$FilePath$`) |
+| **KeYther** | Launches the GUI with no file, so you pick one from `File → Open` |
+
+Open a `.sol`, select **KeYther on current file** and press Run: the function picker lists the
+contract's functions, and **Start Proof** loads the one you choose.
+
+Both are `Application` configurations, not Gradle ones, because IDEA expands `$FilePath$` only
+for run configurations that go through `ProgramParametersConfigurator` (Application, JAR, …); the
+Gradle plugin does no macro expansion and would pass the literal `$FilePath$` to the program. They
+name the module `solkey.keyext.solidity.gui.main`, which is why `settings.gradle` pins
+`rootProject.name` — otherwise the module name follows the checkout directory's name and a clone
+into a differently named directory breaks them.
 
 ## Verifying Problems
 
@@ -51,6 +74,7 @@ Java 21 required. Test max heap: 4GB, max parallel forks: 1.
 | `key.core`                         | Java-specific logic, parsers, proof management |
 | `key.ui`                           | GUI + CLI entry point |
 | `keyext.solidity.core`             | **Solidity verification** — main focus |
+| `keyext.solidity.gui`              | **KeYther**, the standalone Swing GUI for the Solidity prover |
 | `keyext.solidity.examples`         | **Main taclets examples** (`TestSuite.sol`) |
 
 Dependencies: `keyext.*` → `key.core` → `key.ncore` → `key.util`.
@@ -98,13 +122,14 @@ on nearly every push.
 | Nullness | `CodeQuality / checkerFramework` | `./gradlew -DENABLE_NULLNESS=true :keyext.solidity.core:compileTestJava` | ~1 min |
 | Module tests | `Solidity / test` | `./gradlew :keyext.solidity.core:test` | ~30 s |
 
-CI additionally runs two **CI-only** test groups that are *not* part of `ciGates` (they are the
-slow proof suites, split off by JUnit tag so the local gate stays fast):
+CI additionally runs three **CI-only** test groups that are *not* part of `ciGates` — the two slow
+proof suites, split off by JUnit tag so the local gate stays fast, and the GUI module's own tests:
 
 | CI job | Local command (only on demand) | Content |
 |---|---|---|
 | `Solidity / examples` | `./gradlew :keyext.solidity.core:testSolidityExamples` | `RulesTest` (`.key` problems), `NetExamplesTest`, `SolcSemanticsExamplesTest`, the one-example showcases, the `solc/*.sol` half of `SolidityRuntimeExecutionTest` |
 | `Solidity / rule-generalization` | `./gradlew :keyext.solidity.core:testRuleGeneralization` | `RuleGeneralizationTest` |
+| `Solidity / gui` | `./gradlew :keyext.solidity.gui:test` | the `keyext.solidity.gui` tests (headless; not in `ciGates`) |
 
 A `--tests` filter naming a class of a CI-only group must go on that group's task — on `test`
 the tag exclusion leaves zero matches and Gradle fails with "No tests found".

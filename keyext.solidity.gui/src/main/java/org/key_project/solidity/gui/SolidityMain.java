@@ -3,12 +3,16 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.gui;
 
+import java.io.File;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 import com.formdev.flatlaf.FlatLightLaf;
 
 /// Entry point of KeYther, the minimal Solidity prover GUI.
+///
+/// An optional argument is the file to open on startup — a `.sol` source (which asks which of its
+/// functions to verify), a `.key` problem or a `.proof`.
 public final class SolidityMain {
 
     private SolidityMain() {}
@@ -28,7 +32,11 @@ public final class SolidityMain {
                     // fall back to the default look and feel
                 }
             }
-            new MainWindow().setVisible(true);
+            MainWindow window = new MainWindow();
+            window.setVisible(true);
+            if (args.length > 0) {
+                window.open(new File(args[0]));
+            }
         });
     }
 }
