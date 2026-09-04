@@ -39,16 +39,26 @@ opens the project:
 |---|---|
 | **KeYther on current file** | Launches the GUI on the file open in the editor (`$FilePath$`) |
 | **KeYther** | Launches the GUI with no file, so you pick one from `File → Open` |
+| **SolidityCLI on current file** | Runs `org.key_project.solidity.CLI` on the file open in the editor |
+| **solkey [:keyext.solidity.gui:run]** | Gradle task, GUI with no file |
+| **solkey [:keyext.solidity.core:test]** | Gradle task, the fast module test group |
 
 Open a `.sol`, select **KeYther on current file** and press Run: the function picker lists the
 contract's functions, and **Start Proof** loads the one you choose.
 
-Both are `Application` configurations, not Gradle ones, because IDEA expands `$FilePath$` only
-for run configurations that go through `ProgramParametersConfigurator` (Application, JAR, …); the
-Gradle plugin does no macro expansion and would pass the literal `$FilePath$` to the program. They
-name the module `solkey.keyext.solidity.gui.main`, which is why `settings.gradle` pins
-`rootProject.name` — otherwise the module name follows the checkout directory's name and a clone
-into a differently named directory breaks them.
+The three file-driven ones are `Application` configurations, not Gradle ones, because IDEA expands
+`$FilePath$` only for run configurations that go through `ProgramParametersConfigurator`
+(Application, JAR, …); the Gradle plugin does no macro expansion and would pass the literal
+`$FilePath$` to the program. They name modules `solkey.keyext.solidity.gui.main` and
+`solkey.keyext.solidity.core.main`, which is why `settings.gradle` pins `rootProject.name` —
+otherwise the module name follows the checkout directory's name and a clone into a differently
+named directory breaks them.
+
+Keep these files free of absolute paths and named SDKs (`ALTERNATIVE_JRE_PATH`): both are
+machine-local and make a shared configuration run only where it was created. `.idea/` stays
+gitignored — store new configurations in `.run/` via **Store as project file**. Full setup guide,
+including the per-machine External Tools recipe for the Project-view context menu:
+`docs/idea-setup.md`.
 
 ## Verifying Problems
 
@@ -195,6 +205,7 @@ Read the relevant doc before working on taclets — each is a compact, agent-fac
 | `require-assert.md` | Touching `require` / `assert` rules (box vs. diamond false-branch behavior). |
 | `solidity-json-documentation.md` | Parsing `solc --ast-compact-json` (consumed by `SolJSONParser`). |
 | `forked-key-core.md` | Editing code forked from `key.core` — which files are near-verbatim copies and why they must not be restyled. |
+| `idea-setup.md` | Setting up IntelliJ IDEA — shared `.run/` configurations, what must stay out of git. |
 
 Program rules live in `keyext.solidity.core/src/main/resources/org/key_project/solidity/proof/rules/solidityProgramRules.key` (loaded automatically via `standardSolidityRules.key`). Add new taclet examples as functions of `keyext.solidity.examples/TestSuite.sol`, and scenario/invariant examples as contracts plus `.key` proof obligations in `keyext.solidity.examples/net/` — conventions for both: `keyext.solidity.examples/README.md`. After changing a feature update `docs/taclets-implementation.md` (implemented) or `docs/taclet-ideas.md` (backlog).
 

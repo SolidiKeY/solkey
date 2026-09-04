@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="SolidityCLI on current file" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="org.key_project.solidity.CLI" />
+    <module name="solkey.keyext.solidity.core.main" />
+    <option name="PROGRAM_PARAMETERS" value="$FilePath$" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
