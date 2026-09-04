@@ -38,6 +38,22 @@ def build = System.env.BUILD_NUMBER == null ? "-dev" : "-${System.env.BUILD_NUMB
 group = "org.key-project"
 version = "3.0.0$build"
 
+// Resolves a user supplied .key/.sol file for the Solidity launchers (`solidityCli`,
+// `solidityGui`). A relative name is looked up in the example directories and always turned into
+// an absolute path, so it does not depend on the working directory of the launched process.
+ext.resolveSolidityFile = { requested ->
+    def name = requested.toString()
+    if (new File(name).isAbsolute()) {
+        return name
+    }
+    def candidates = [
+        new File(rootProject.file("keyext.solidity.core/src/test/resources/org/key_project/solidity/examples"), name),
+        new File(rootProject.projectDir, name),
+        new File(rootProject.file("keyext.solidity.examples"), name)]
+    def found = candidates.find { it.exists() }
+    return found ? found.absolutePath : name
+}
+
 subprojects {
     apply plugin: "java"
     apply plugin: "java-library"

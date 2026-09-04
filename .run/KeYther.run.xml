@@ -1,10 +1,27 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="KeYther" type="Application" factoryName="Application">
-    <option name="MAIN_CLASS_NAME" value="org.key_project.solidity.gui.SolidityMain" />
-    <module name="solkey.keyext.solidity.gui.main" />
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-    <method v="2">
-      <option name="Make" enabled="true" />
-    </method>
+  <configuration default="false" name="KeYther" type="GradleRunConfiguration" factoryName="Gradle">
+    <ExternalSystemSettings>
+      <option name="executionName" />
+      <option name="externalProjectPath" value="$PROJECT_DIR$" />
+      <option name="externalSystemIdString" value="GRADLE" />
+      <option name="scriptParameters" value="" />
+      <option name="taskDescriptions">
+        <list />
+      </option>
+      <option name="taskNames">
+        <list>
+          <option value=":keyext.solidity.gui:solidityGui" />
+        </list>
+      </option>
+      <option name="vmOptions" />
+    </ExternalSystemSettings>
+    <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
+    <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+    <ExternalSystemDebugDisabled>false</ExternalSystemDebugDisabled>
+    <DebugAllEnabled>false</DebugAllEnabled>
+    <RunAsTest>false</RunAsTest>
+    <GradleProfilingDisabled>false</GradleProfilingDisabled>
+    <GradleCoverageDisabled>false</GradleCoverageDisabled>
+    <method v="2" />
   </configuration>
 </component>

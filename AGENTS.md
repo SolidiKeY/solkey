@@ -23,8 +23,8 @@
 ./run-key.sh problem1.key                                 # Wrapper script (same as above)
 ./run-key.sh keyext.solidity.examples/TestSuite.sol       # Every function of a .sol
 ./run-key.sh keyext.solidity.examples/TestSuite.sol testSimpleAssert   # One function
-./gradlew :keyext.solidity.gui:run                                    # KeYther, the Swing GUI
-./gradlew :keyext.solidity.gui:run --args="keyext.solidity.examples/TestSuite.sol"  # open a file
+./gradlew :keyext.solidity.gui:solidityGui                             # KeYther, the Swing GUI
+./gradlew :keyext.solidity.gui:solidityGui -PsolFile=keyext.solidity.examples/TestSuite.sol  # open a file
 ./gradlew :keyext.solidity.gui:test                                   # GUI module tests
 ```
 
@@ -32,32 +32,37 @@ Java 21 required. Test max heap: 4GB, max parallel forks: 1.
 
 ## IntelliJ IDEA
 
+Run `scripts/install-idea-external-tools.sh` once per machine and restart the IDE: it installs the
+`SolKey` External Tools, so right-clicking a `.sol` file offers **External Tools → SolKey → Verify
+in KeYther (GUI)** (and the CLI equivalent). External Tools live in the IDE configuration, not the
+project, so they cannot be checked in — hence the script.
+
 `.run/` holds shared run configurations, which IDEA picks up automatically on any machine that
 opens the project:
 
 | Configuration | What it does |
 |---|---|
+| **KeYther** | Gradle `:keyext.solidity.gui:solidityGui`, GUI with no file — pick one from `File → Open` |
 | **KeYther on current file** | Launches the GUI on the file open in the editor (`$FilePath$`) |
-| **KeYther** | Launches the GUI with no file, so you pick one from `File → Open` |
 | **SolidityCLI on current file** | Runs `org.key_project.solidity.CLI` on the file open in the editor |
-| **solkey [:keyext.solidity.gui:run]** | Gradle task, GUI with no file |
 | **solkey [:keyext.solidity.core:test]** | Gradle task, the fast module test group |
 
 Open a `.sol`, select **KeYther on current file** and press Run: the function picker lists the
 contract's functions, and **Start Proof** loads the one you choose.
 
-The three file-driven ones are `Application` configurations, not Gradle ones, because IDEA expands
-`$FilePath$` only for run configurations that go through `ProgramParametersConfigurator`
-(Application, JAR, …); the Gradle plugin does no macro expansion and would pass the literal
-`$FilePath$` to the program. They name modules `solkey.keyext.solidity.gui.main` and
-`solkey.keyext.solidity.core.main`, which is why `settings.gradle` pins `rootProject.name` —
-otherwise the module name follows the checkout directory's name and a clone into a differently
-named directory breaks them.
+**Never put a `<module name="…"/>` element in a shared configuration** — that rules out
+`Application` configurations. IDEA derives Gradle module names from the project path and changed
+how it sanitizes the dots in `keyext.solidity.gui` between releases (2025.3 imported
+`solkey.keyext.solidity.gui.main`, 2026.2 `solkey.keyext_solidity_gui.main`), so a hardcoded
+module name is red in some IDEA versions by construction. The two file-driven configurations are
+therefore `JarApplication` ones pointing at `…/build/libs/keyext.solidity.{gui,core}-exe.jar` with
+a `shadowJar` before-launch step — the only module-free type that still expands `$FilePath$`,
+which the Gradle plugin does not. Both `shadowJar` tasks set `archiveVersion = ""` to keep that
+path stable.
 
 Keep these files free of absolute paths and named SDKs (`ALTERNATIVE_JRE_PATH`): both are
 machine-local and make a shared configuration run only where it was created. `.idea/` stays
-gitignored — store new configurations in `.run/` via **Store as project file**. Full setup guide,
-including the per-machine External Tools recipe for the Project-view context menu:
+gitignored — store new configurations in `.run/` via **Store as project file**. Full setup guide:
 `docs/idea-setup.md`.
 
 ## Verifying Problems
@@ -205,7 +210,7 @@ Read the relevant doc before working on taclets — each is a compact, agent-fac
 | `require-assert.md` | Touching `require` / `assert` rules (box vs. diamond false-branch behavior). |
 | `solidity-json-documentation.md` | Parsing `solc --ast-compact-json` (consumed by `SolJSONParser`). |
 | `forked-key-core.md` | Editing code forked from `key.core` — which files are near-verbatim copies and why they must not be restyled. |
-| `idea-setup.md` | Setting up IntelliJ IDEA — shared `.run/` configurations, what must stay out of git. |
+| `idea-setup.md` | Setting up IntelliJ IDEA — right-click External Tools, shared `.run/` configurations, what must stay out of git. |
 
 Program rules live in `keyext.solidity.core/src/main/resources/org/key_project/solidity/proof/rules/solidityProgramRules.key` (loaded automatically via `standardSolidityRules.key`). Add new taclet examples as functions of `keyext.solidity.examples/TestSuite.sol`, and scenario/invariant examples as contracts plus `.key` proof obligations in `keyext.solidity.examples/net/` — conventions for both: `keyext.solidity.examples/README.md`. After changing a feature update `docs/taclets-implementation.md` (implemented) or `docs/taclet-ideas.md` (backlog).
 
