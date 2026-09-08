@@ -336,7 +336,7 @@ Memory-to-storage assignment stores a storage struct view of a memory identity:
 
 Effect shape:
 
-    storage := save(storage, alice, copyMem(emptyStruct, memory, carol))
+    storage := save(storage, alice, copyMem(mtSt, memory, carol))
 
 For fields:
 
@@ -345,7 +345,11 @@ For fields:
 Effect shape:
 
     storage := save(storage, alice account,
-                    copyMem(emptyStruct, memory, read(memory, carol, account)))
+                    copyMem(mtSt, memory, read(memory, carol, account)))
+
+The first argument is the empty struct: the lazy view answers every
+`find` from memory, so the value previously stored at the target is
+not carried along.
 
 The lazy `copyMem` view delegates storage reads back to memory:
 

@@ -46,6 +46,7 @@ still verified as uniform across operators:
 | `plain` | the unguarded effect rule |
 | `guarded` | `/=`, `%=` and `/`, `%` wrap the effect in `\if(se != 0) … \else(revert)`; div and mod must be identical to each other |
 | `unfold` | receiver capture (`_unfold_leftFst`); uniform across all five ops, no guard |
+| `loc=indexMapping` vs `loc=indexArray` | the indexed terminals are split by the receiver's sort: the array groups wrap the effect in the `inBounds` / `outOfBounds` (`revert();`) goal pair, the mapping groups do not |
 | `stmt` / `assign` / `decl` | inc/dec as a statement vs `result = …` vs declaration form |
 | `fixity=pre` vs `fixity=post` | pre writes storage before binding the result, post binds first — separate groups |
 
@@ -57,14 +58,14 @@ where an earlier hole is a substring of a later one.
 
 | Family | Members | Covers |
 |---|---|---|
-| `storageCompoundAssign` | 25 | `storage{Root,Field,Index}{Add,Sub,Mul,Div,Mod}Assign` (+ `_unfold_leftFst`) |
+| `storageCompoundAssign` | 30 | `storage{Root,Field}{Add,Sub,Mul,Div,Mod}Assign`, `storageIndex{Mapping,Array}{Add,Sub,Mul,Div,Mod}Assign` (+ `storageIndex…_unfold_leftFst`) |
 | `binaryOp` | 18 | `{addition,…,modulo}_unfold_left/right` + `…Assignment` |
-| `storageIncDec` | 32 | `storage{Root,Field,Index}{Pre,Post}{in,de}crement` (+ `Assignment`, `_unfold_leftFst`) |
+| `storageIncDec` | 40 | `storage{Root,Field}{Pre,Post}{in,de}crement`, `storageIndex{Mapping,Array}{Pre,Post}{in,de}crement` (+ `Assignment`, `_unfold_leftFst`) |
 | `localIncDec` | 12 | `localDecl…` / `localAssign…` / `local…` inc/dec |
 | `localCompoundAssign` | 5 | `local{Add,Sub,Mul,Div,Mod}Assign` |
 | `compoundAssignRhsCapture` | 5 | `{add,…,mod}AssignValueRhsCapture` |
 
-97 annotated taclets in total.
+110 annotated taclets in total.
 
 ## Running the check
 

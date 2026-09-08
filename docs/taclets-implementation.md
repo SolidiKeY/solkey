@@ -82,15 +82,21 @@ annotations in `solidityProgramRules.key`, verified mechanically by
 - Root: `storageRootWriteStore`, `storageRootReadSelect`,
   `storageRootWriteCopySource` (sort-free `find<[StValue]>`, primitives and structs alike).
 - Field (member access, any depth): `storageFieldWriteSave`,
-  `storageFieldReadFind`, `storageFieldWriteCopySource`,
-  `storageFieldReadBindLocalRoot`, `storageFieldReadStoreRoot`, plus
-  `_unfold_leftFst` / `_unfold_rightFst` receiver capture for complex paths.
+  `storageFieldReadFind`, `storageFieldWriteCopySource` (sort-free
+  `find<[StValue]>`, like the root copy), `storageFieldReadBindLocalRoot`,
+  `storageFieldReadStoreRoot`, plus `_unfold_leftFst` / `_unfold_rightFst`
+  receiver capture for complex paths.
   Field constants are namespaced `Contract$Struct$field` and `\unique`;
   `Services.memberFieldTerm` reconstructs them by walking the member chain.
-- Index: array rules branch on `0 <= i < find(storage, sp·size)`, mapping rules
-  do not. `storageIndexWrite{Array,Mapping}Save`,
+- Index: array rules branch on `0 <= i < find(storage, sp·size)` with an
+  `outOfBounds` goal that executes `revert();` (reads and writes alike), mapping
+  rules do not. `storageIndexWrite{Array,Mapping}Save`,
   `storageIndexRead{Array,Mapping}Find`, plus `…CopySource`, `…BindLocalRoot`,
-  `…StoreRoot`, and `_decompose` variants for nested indexed paths.
+  `…StoreRoot`; all take a simple receiver. A complex receiver is aliased first
+  by `storageIndexRead_unfold_rightFst` / `storageIndexWrite_unfold_leftFst`
+  (simple index; a nonsimple index is captured before the receiver by the
+  `…NonSimpleIndexCapture` rules, which take any storage path), so every target
+  and source shape of the simple rules is reached through one alias step.
 - Local declarations: the location keyword in a schematic declaration pattern
   is matched against the concrete variable's `DataLocation`, so
   `localValueDeclInitDrop` / `storageLocalDeclInitDrop` /
@@ -108,8 +114,11 @@ annotations in `solidityProgramRules.key`, verified mechanically by
 ### Increment / decrement (`++`/`--`, pre/post, plain and `result = …`)
 Direct storage updates (no program-level desugaring), e.g. `++age;` ⇝
 `{storage := save(storage, path, find<[int]>(storage, path) + 1)}`. Full matrix
-at root / field / index level: `storage{Root,Field,Index}{Pre,Post}{in,de}crement`
-and their `…Assignment` twins, plus `…_unfold_leftFst` for complex receivers.
+at root / field / index level: `storage{Root,Field}{Pre,Post}{in,de}crement`,
+`storageIndex{Mapping,Array}{Pre,Post}{in,de}crement` and their `…Assignment`
+twins, plus `…_unfold_leftFst` for complex receivers. The indexed forms are
+split by the receiver's sort like the plain index rules: the array form carries
+the `inBounds` / `outOfBounds` (`revert();`) goal pair, the mapping form does not.
 Local-value twins `localDecl…` / `localAssign…` cover captured temporaries. All
 24 focused examples close. Operator matching checks the operator enum (not just
 the AST node class) so `+=` does not match `=`. Annotated as the
@@ -117,7 +126,10 @@ the AST node class) so `+=` does not match `=`. Annotated as the
 
 ### Compound assignment
 `+=`, `-=`, `*=`, `/=`, `%=` at root / field / index, each with a terminal and a
-`_unfold_leftFst` for complex receivers: `storage{Root,Field,Index}{Add,Sub,Mul,Div,Mod}Assign`.
+`_unfold_leftFst` for complex receivers: `storage{Root,Field}{Add,Sub,Mul,Div,Mod}Assign`
+and `storageIndex{Mapping,Array}{Add,Sub,Mul,Div,Mod}Assign` (the array form with the
+bounds goal pair of `storageIndexWriteArraySave`; the `_unfold_leftFst` twins are
+`storageIndex…Assign_unfold_leftFst`, one per operator).
 `/=` and `%=` guard with `\if(se != 0)\then(…)\else(revert)`; integers are
 unbounded mathematical integers, so there is no overflow guard. Bitwise
 `&= |= ^= <<= >>=` parse but are deferred (no bitwise LDT). Annotated as the
@@ -181,9 +193,11 @@ Push-lvalue `sp.push() = se` is desugared to `sp.push(se)` at **parse time**
 `arr.push()` is classified as a **complex storage path**, so the ordinary
 complex-receiver unfold rules capture its return slot — no dedicated push-field
 rules needed. Terminals: `storagePushValueSave`, `storagePushValueCopySource`
-(`find<[Struct]>`), `storagePushLengthSave`, `storagePopSave` (nonempty + empty/
+(sort-free `find<[StValue]>`), `storagePushLengthSave`, `storagePopSave` (nonempty + empty/
 revert branch), `storagePushValue_unfold_rightSndArgument` (non-simple argument
-capture), `storage{Push,…}_unfold_leftFstReceiver`. Array bounds/length are read
+capture on a simple receiver), `storage{Push,…}_unfold_leftFstReceiver` (a complex
+receiver is aliased first, whatever the argument — `storagePushValue_unfold_leftFstReceiver`
+takes any `Expression`). Array bounds/length are read
 from **post-update** storage (bound emitted inside `\replacewith`, not via `\add`).
 `storagePopSave`'s nonempty branch clears the popped slot with the mapping-preserving
 `delAt(storage, sp · at(ℓ-1))` (not eager `defaultValue`), reusing the `delNode`
@@ -362,8 +376,9 @@ Per `require-assert.md`: `requireConditionCapture` / `requireSimple` and
 `revertDiamond`/`revertBox` this yields `c ∧ φ` (diamond) / `c → φ` (box), while
 `assert` keeps `c ∧ φ` in both modalities. `FunctionReference.match` compares
 callee names, so `assert`/`require`/`revert` patterns are disjoint (previously
-any zero-child `FunctionReference` matched any other). A literal operand
-(`require(true)`) still matches neither rule (pre-existing `assert` gap).
+any zero-child `FunctionReference` matched any other). The simple rules take a
+`SimpleExpression[primitive]`, so a literal operand (`require(true)`,
+`assert(false)`) is handled like a variable.
 
 ### Payments (`net` ledger, `msg`, `transfer`)
 `docs/net.md` Steps 1–4. `netHeader.key` declares the
@@ -505,9 +520,10 @@ closes where `nested.recursive[4].z` does not).
   one rule per operator covers local and storage root/field/index targets.
 - `ternaryToIfStorage` — the `ternaryToIf` twin for a storage-path target, which is not a
   `Variable`.
-- `storageIndex{Read,Write}{Array,Mapping}*_root` no longer require the `global` flag. They
+- `storageIndex{Read,Write}{Array,Mapping}*` no longer require the `global` flag. They
   were the only members of the index family that did, which left a `simple`+`local` alias root
-  matching neither the `_root` nor the `_decompose` rule.
+  matching no rule. (Their former `_decompose` twins for a complex receiver are gone: the
+  receiver is now aliased by `storageIndex{Read,Write}_unfold_{rightFst,leftFst}`.)
 - The index-write *save* rules now take `SimpleExpression[primitive]` for the value, as
   `storageRootWriteStore` already did. With an unrestricted `SimpleExpression` a storage-alias
   variable matched and `save(…, path)` was built ill-sorted.

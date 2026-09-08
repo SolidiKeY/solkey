@@ -180,19 +180,23 @@ storage read that produces a value.
     -----------------------------------------------
               => ⟨ π  lhs = nsp.a; ω ⟩ φ
 
-**`storageIndexRead_unfold_rightFst`** — `lhs = nsp[e]`
+**`storageIndexRead_unfold_rightFst`** — `lhs = nsp[i]`
 
-    nsp => ⟨ π  storage sp = nsp; lhs = sp[e]; ω ⟩ φ
+    nsp => ⟨ π  storage sp = nsp; lhs = sp[i]; ω ⟩ φ
     ------------------------------------------------
-              => ⟨ π  lhs = nsp[e]; ω ⟩ φ
+              => ⟨ π  lhs = nsp[i]; ω ⟩ φ
+
+The index is captured before the receiver: `unfold_rightSnd` below
+takes any storage path as receiver, so this rule only ever sees a
+simple index.
 
 ### Instances of unfold_rightSnd
 
-**`storageIndexRead_unfold_rightSndIndex`** — `lhs = sp[nse]`
+**`storageIndexRead_unfold_rightSndIndex`** — `lhs = path[nse]`
 
-    nse => ⟨ π  T pv = nse; lhs = sp[pv]; ω ⟩ φ
-    ---------------------------------------------
-          => ⟨ π  lhs = sp[nse]; ω ⟩ φ
+    nse => ⟨ π  T pv = nse; lhs = path[pv]; ω ⟩ φ
+    -----------------------------------------------
+          => ⟨ π  lhs = path[nse]; ω ⟩ φ
 
 ### Instances of unfold_rightSndResult
 
@@ -241,19 +245,24 @@ the push update fires.
     ----------------------------------------------
             => ⟨ π  nsp.a = se; ω ⟩ φ
 
-**`storageIndexWrite_unfold_leftFst`** — `nsp[e] = se`
+**`storageIndexWrite_unfold_leftFst`** — `nsp[i] = se`
 
-    nsp => ⟨ π  storage sp = nsp; sp[e] = se; ω ⟩ φ
+    nsp => ⟨ π  storage sp = nsp; sp[i] = se; ω ⟩ φ
     -----------------------------------------------
-            => ⟨ π  nsp[e] = se; ω ⟩ φ
+            => ⟨ π  nsp[i] = se; ω ⟩ φ
+
+As on the right-hand side, the index is captured first
+(`storageIndexWrite_unfold_leftSndIndex` takes any storage path), so
+the receiver unfold only sees a simple index.
 
 ### Instances of unfold_leftSnd
 
-**`storageIndexWrite_unfold_leftSndIndex`** — `sp[nse] = se`
+**`storageIndexWrite_unfold_leftSndIndex`** — `path[nse] = se`
+(taclet `storageIndexWriteNonSimpleIndexCapture`)
 
-    nse => ⟨ π  T pv = nse; sp[pv] = se; ω ⟩ φ
-    --------------------------------------------
-         => ⟨ π  sp[nse] = se; ω ⟩ φ
+    nse => ⟨ π  T pv = nse; path[pv] = se; ω ⟩ φ
+    ----------------------------------------------
+         => ⟨ π  path[nse] = se; ω ⟩ φ
 
 ### Standalone receiver / delete-target simplifications
 
@@ -262,11 +271,21 @@ These exist because their active statement is not assignment-shaped
 binding. Each replaces `nsp` with a fresh `storage sp = nsp;` capture,
 then continues against `sp`.
 
-**`storageDelete_unfold_leftFst`** — `delete nsp;`
+**`storageFieldDelete_unfold_leftFst`** — `delete nsp.a;`
 
-    nsp => ⟨ π  storage sp = nsp; delete sp; ω ⟩ φ
-    ----------------------------------------------
-            => ⟨ π  delete nsp; ω ⟩ φ
+    nsp => ⟨ π  storage sp = nsp; delete sp.a; ω ⟩ φ
+    ------------------------------------------------
+            => ⟨ π  delete nsp.a; ω ⟩ φ
+
+**`storageIndexDelete_unfold_leftFst`** — `delete nsp[i];`
+
+    nsp => ⟨ π  storage sp = nsp; delete sp[i]; ω ⟩ φ
+    -------------------------------------------------
+            => ⟨ π  delete nsp[i]; ω ⟩ φ
+
+A delete keeps its last selector and aliases only the receiver, like
+every other left-hand side: `delete lp;` on a local storage pointer is
+not Solidity, so there is no whole-target alias.
 
 **`storagePushValue_unfold_leftFstReceiver`** — `nsp.push(e);`
 
@@ -321,10 +340,11 @@ emitted update.
       ⇝  { storage := save(storage, sp · a, se) }
 
 - `storageFieldWriteCopySource` (RHS is itself a storage path —
-  the *value at* `sp2` is copied, not the path)
+  the *value at* `sp2` is copied, not the path; sort-free
+  `find<[StValue]>`, like `storageRootWriteCopySource`)
 
       sp1.a = sp2
-      ⇝  { storage := save(storage, sp1 · a, select(storage, sp2)) }
+      ⇝  { storage := save(storage, sp1 · a, find<[StValue]>(storage, sp2)) }
 
   All the `*CopySource` copy rules assume the copied type carries no
   mapping: solc ≥ 0.7 rejects assignments whose target type transitively
@@ -384,10 +404,15 @@ emitted update.
 members survive** — Solidity's `delete` does not clear mappings (they cannot be
 enumerated).
 
-- `storageDeleteSimpleTarget`
+- `storageRootDelete` (a contract root)
 
-      delete sp
-      ⇝  { storage := delAt(storage, sp) }
+      delete gp
+      ⇝  { storage := delAt(storage, gp) }
+
+- `storageFieldDelete`
+
+      delete sp.a
+      ⇝  { storage := delAt(storage, sp · a) }
 
 - `delAt(storage, p)` leaves the reset lvalue unresolved: on read it becomes
   `default` for a primitive, and the lazy marker `delNode(…)` for a struct.
@@ -481,11 +506,12 @@ Each array rule branches on bounds. Out-of-bounds goes to
       ⇝  { storage := save( save(storage, sp · at(n), se),
                             sp · length, n + 1 ) }
 
-- `storagePushValueCopySource`
+- `storagePushValueCopySource` (sort-free `find<[StValue]>` for the
+  copied value, like `storageFieldWriteCopySource`)
 
       sp1.push(sp2)
       ⇝  { storage := save( save(storage, sp1 · at(n),
-                                 select(storage, sp2)),
+                                 find<[StValue]>(storage, sp2)),
                             sp1 · length, n + 1 ) }
 
 - `storagePushLengthSave` (zero-arg push: append the default-valued
@@ -516,9 +542,15 @@ Each array rule branches on bounds. Out-of-bounds goes to
 ## 7. Compound Updates
 
 Compound storage updates such as `s.x += e`, `s.a++`, etc., are
-desugared into explicit read–compute–write statements **before** the
-rules above apply. The calculus does not contain dedicated
-compound-update rules.
+handled by dedicated terminal rules that read, compute and write in
+one update (`storage{Root,Field}{Add,Sub,Mul,Div,Mod}Assign`, the
+`storageIncDec` family); complex receivers unfold first through their
+`_unfold_leftFst` twins, exactly as for plain assignments. The indexed
+terminals come in a mapping and an array form, split by the receiver's
+sort like the plain index rules: `storageIndexMapping…` rewrites to the
+single update, `storageIndexArray…` carries the same `0 ≤ i < ℓ` /
+`revert();` branch pair as `storageIndexWriteArraySave`, so
+`values[i] += 1` on an out-of-range `i` reverts instead of writing.
 
 ## 8. Abrupt Termination
 
@@ -605,9 +637,10 @@ ensure that exactly one rule applies to any storage statement.
   consumed by `revertDiamond` or `revertBox`, again decreasing the
   number of statements.
 
-**Root-write convention.** In root-write rules, `gp` and `lp` denote
-the **whole** storage lvalue, including any final field or index
-segment.
+**Roots are bare.** `gp` is a bare contract root (a `FieldReference`)
+and `lp` a bare local storage pointer; a final field or index segment
+is always spelled out (`sp.a`, `sp[i]`), which is what keeps
+`storageRootWriteStore` and `storageFieldWriteSave` disjoint.
 
 ## 10. Worked Examples (terse traces)
 
@@ -691,7 +724,7 @@ extracts to `cons(alice, nil)`. All storage operations use `find`/`save`.
 | Source statement                | Rule                                  | Update operation |
 |--------------------------------|---------------------------------------|------------------|
 | `sp.a = se`                    | `storageFieldWriteSave`               | `save`           |
-| `sp1.a = sp2`                  | `storageFieldWriteCopySource`         | `save`           |
+| `sp1.a = sp2`                  | `storageFieldWriteCopySource`         | `save`/`find<[StValue]>`|
 | `gp = se`                      | `storageRootWriteStore`               | `save`           |
 | `gp = sp`                      | `storageRootWriteCopySource`          | `save`/`find<[StValue]>`|
 | `lp = sp`                      | `storageLocalRootRebind`              | direct assign    |
@@ -699,7 +732,9 @@ extracts to `cons(alice, nil)`. All storage operations use `find`/`save`.
 | `v = sp`                       | `storageRootReadSelect`               | `find`           |
 | `lp = sp.b`                    | `storageFieldReadBindLocalRoot`       | direct assign    |
 | `gp = sp.b`                    | `storageFieldReadStoreRoot`           | `save`/`find<[StValue]>`|
-| `delete sp;`                   | `storageDeleteSimpleTarget`           | `delAt`        |
+| `delete gp;`                   | `storageRootDelete`                   | `delAt`          |
+| `delete sp.a;`                 | `storageFieldDelete`                  | `delAt`          |
+| `delete sp[i];`                | `storageIndexDelete`                  | `save`/`defVal`  |
 | `sp[i] = se`  (mapping)        | `storageIndexWriteMappingSave`        | `save`           |
 | `sp1[i] = sp2`  (mapping)      | `storageIndexWriteMappingCopySource`  | `save`           |
 | `v = sp[i]`  (mapping)         | `storageIndexReadMappingFind`         | `find`           |
@@ -711,7 +746,7 @@ extracts to `cons(alice, nil)`. All storage operations use `find`/`save`.
 | `lp = sp[i]`  (array)          | `storageIndexReadArrayBindLocalRoot`  | direct assign    |
 | `gp = sp[i]`  (array)          | `storageIndexReadArrayStoreRoot`      | `save`/`find<[StValue]>`|
 | `sp.push(se);`                 | `storagePushValueSave`                | `save`           |
-| `sp1.push(sp2);`               | `storagePushValueCopySource`          | `save`           |
+| `sp1.push(sp2);`               | `storagePushValueCopySource`          | `save`/`find<[StValue]>`|
 | `sp.push();`                   | `storagePushLengthSave`               | `save`           |
 | `lp = sp.push();`              | `storageLocalRootPushBind`            | `save`           |
 | `path.push() = se;`            | `storagePushLhsToPushValue` (desugar) | —                |

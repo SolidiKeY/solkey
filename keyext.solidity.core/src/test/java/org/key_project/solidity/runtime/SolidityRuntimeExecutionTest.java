@@ -38,7 +38,10 @@ import static org.junit.jupiter.api.Assertions.fail;
 ///
 /// Runs and proofs do not agree everywhere, and the verdicts reflect that:
 /// - A box-tagged function whose `require` reverts on the fresh all-zero storage is vacuous at
-/// runtime, exactly as the box modality treats it, and is skipped.
+/// runtime, exactly as the box modality treats it, and is skipped. So is a box-tagged function
+/// that hits one of the panics the calculus models as an explicit `revert();` (an array index
+/// out of bounds, a `pop` on an empty array, a zero divisor): the proof closes on that revert
+/// branch without claiming anything about the run.
 /// - Functions proved with KeY's unbounded integers may hit a checked-arithmetic Panic (0x11
 /// overflow, ...) on the EVM; expected cases are listed in [#KNOWN_DIVERGENT].
 /// - A parameterized function runs with the values its leading `require` pins, recovered by
@@ -54,6 +57,8 @@ public class SolidityRuntimeExecutionTest {
     private static final Set<String> KNOWN_DIVERGENT = Set.of();
 
     private static final Bytes PANIC_SELECTOR = Bytes.fromHexString("0x4e487b71");
+
+    private static final Set<Integer> PANICS_MODELED_AS_REVERT = Set.of(0x12, 0x31, 0x32);
 
     private static final Map<Integer, String> PANIC_NAMES = Map.of(
         0x01, "assert failed",
@@ -130,6 +135,11 @@ public class SolidityRuntimeExecutionTest {
         if (KNOWN_DIVERGENT.contains(example)) {
             Assumptions.assumeTrue(false,
                 example + ": " + panic + " — known unbounded-integer divergence");
+        }
+        if (box && PANICS_MODELED_AS_REVERT.contains(panicCode)) {
+            Assumptions.assumeTrue(false, example + ": " + panic
+                + " on fresh storage — the box proof closes on the revert branch, so the"
+                + " runtime check is vacuous");
         }
         if (panicCode == 0x01) {
             fail(example + ": " + panic

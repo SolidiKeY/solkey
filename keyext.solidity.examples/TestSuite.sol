@@ -129,6 +129,46 @@ contract TestSuite {
         assert(r == 42);
     }
 
+    function storageIndexMappingAddAssign() public {
+        balances[1] = 40;
+        balances[1] += 2;
+        uint r = balances[1];
+        assert(r == 42);
+    }
+
+    /// @custom:key box
+    function storageIndexArrayAddAssignOutOfBoundsReverts() public {
+        require(values.length == 0);
+        values[1] += 2;
+        assert(false);
+    }
+
+    /// @custom:key box
+    function storageIndexArrayReadOutOfBoundsReverts() public {
+        require(values.length == 0);
+        uint r = values[1];
+        assert(r != r);
+    }
+
+    /// @custom:key box
+    function storageIndexReadComplexReceiverBindLocalRoot() public {
+        require(0 < bucket.tokens.length);
+        bucket.tokens[0].value = 9;
+        Token storage t = bucket.tokens[0];
+        uint r = t.value;
+        assert(r == 9);
+    }
+
+    /// @custom:key box
+    function storageIndexWriteComplexReceiverCopySource() public {
+        require(0 < bucket.tokens.length);
+        alice.account.token.value = 7;
+        Token storage tokRef = alice.account.token;
+        bucket.tokens[0] = tokRef;
+        uint r = bucket.tokens[0].value;
+        assert(r == 7);
+    }
+
     // ── Storage: push ──
 
     /// @custom:key box
@@ -137,6 +177,29 @@ contract TestSuite {
         values.push(42);
         assert(values[2] == 42);
         assert(values.length == 3);
+    }
+
+    /// @custom:key box
+    function storagePushComplexReceiverNonsimpleArg(uint x, uint y) public {
+        require(0 < matrix.length);
+        require(matrix[0].length == 0);
+        require(x == 40 && y == 2);
+        matrix[0].push(x + y);
+        uint r = matrix[0][0];
+        assert(r == 42);
+    }
+
+    // ── Require / assert: literal operand ──
+
+    function requireTrueLiteral() public {
+        require(true);
+        assert(true);
+    }
+
+    /// @custom:key box
+    function requireFalseLiteral() public {
+        require(false);
+        assert(false);
     }
 
     // ── Storage: bool ──

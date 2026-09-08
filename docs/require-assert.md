@@ -53,8 +53,10 @@ Boolean type is fixed by the substitution.
 
 ## 4. Simple Rules — The Modality-Sensitive Step
 
-Both simple rules split on the Boolean value `se`. The true branch
-drops the statement. The false branch differs.
+Both simple rules split on the Boolean value `se`, a
+`SimpleExpression[primitive]`: a Boolean variable or a literal
+(`require(true)`, `assert(false)`). The true branch drops the
+statement. The false branch differs.
 
 - `requireSimple`
 

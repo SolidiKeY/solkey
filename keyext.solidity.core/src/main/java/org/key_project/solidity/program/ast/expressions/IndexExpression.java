@@ -43,9 +43,15 @@ public class IndexExpression extends SolidityExpression {
     }
 
     public IndexExpression(ExtList children, Type type) {
-        super(type);
+        super(type != null ? type : elementTypeOf(containerTypeOf(children)));
         this.leftExp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
         this.indexExp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+    }
+
+    @SuppressWarnings("return.type.incompatible")
+    private static Type containerTypeOf(ExtList children) {
+        Expression leftExp = children.get(Expression.class);
+        return leftExp == null ? null : leftExp.getType();
     }
 
     @Override

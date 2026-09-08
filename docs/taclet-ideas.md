@@ -123,11 +123,6 @@ Edge cases of already-supported constructs (see `docs/taclets-implementation.md`
 - **Dynamic-array `delete arr;` length reset**: not modeled by the current
   memory/storage delete rules. (Struct-`delete` preserving mapping members is now
   implemented via the lazy `delNode` marker — see `docs/storage.md` §6.)
-- **Remaining `find<[Struct]>` store positions**: `storageFieldWriteCopySource`
-  and `storagePushValueCopySource` still hard-code `find<[Struct]>` for the
-  copied value; the same sort-free `find<[StValue]>` treatment applied to
-  `storageRootWriteCopySource` and the `…StoreRoot` rules works there too (and
-  would let them copy primitive-typed sources).
 - **`mapfree` PathSVSort flag**: optional calculus-level hardening of the
   storage copy taclets against mapping-carrying sources; today the front ends
   reject the illegal programs before any rule can see them.
