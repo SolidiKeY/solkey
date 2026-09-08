@@ -347,6 +347,17 @@ Effect shape:
     storage := save(storage, alice account,
                     copyMem(mtSt, memory, read(memory, carol, account)))
 
+For indexed targets, the terminal splits by the receiver's sort like the
+plain index writes (`memoryToStorageIndexMappingCopyRoot`,
+`memoryToStorageIndexArrayCopyRoot`; the array form carries the
+`inBounds`/`outOfBounds` goal pair):
+
+    people[k] = carol;
+
+Effect shape:
+
+    storage := save(storage, people at(k), copyMem(mtSt, memory, carol))
+
 The first argument is the empty struct: the lazy view answers every
 `find` from memory, so the value previously stored at the target is
 not carried along.

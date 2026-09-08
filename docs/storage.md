@@ -255,6 +255,26 @@ As on the right-hand side, the index is captured first
 (`storageIndexWrite_unfold_leftSndIndex` takes any storage path), so
 the receiver unfold only sees a simple index.
 
+A bare contract root on the right-hand side is a `FieldReference`, which
+`SimpleExpression` excludes, so the two `se` unfolds above cannot fire on
+`nsp.a = gp;` or `nsp[i] = gp;`. Two twins with a
+`Path[storage,simple,global]` right-hand side cover that case:
+
+**`storageFieldWriteRootRhs_unfold_leftFst`** — `nsp.a = gp`
+
+    nsp => ⟨ π  storage sp = nsp; sp.a = gp; ω ⟩ φ
+    ----------------------------------------------
+            => ⟨ π  nsp.a = gp; ω ⟩ φ
+
+**`storageIndexWriteRootRhs_unfold_leftFst`** — `nsp[i] = gp`
+
+    nsp => ⟨ π  storage sp = nsp; sp[i] = gp; ω ⟩ φ
+    -----------------------------------------------
+            => ⟨ π  nsp[i] = gp; ω ⟩ φ
+
+After unfolding, the CopySource terminals consume `sp.a = gp` and
+`sp[i] = gp` (their source `Path[storage,simple]` accepts a global root).
+
 ### Instances of unfold_leftSnd
 
 **`storageIndexWrite_unfold_leftSndIndex`** — `path[nse] = se`
@@ -737,11 +757,13 @@ extracts to `cons(alice, nil)`. All storage operations use `find`/`save`.
 | `delete sp[i];`                | `storageIndexDelete`                  | `save`/`defVal`  |
 | `sp[i] = se`  (mapping)        | `storageIndexWriteMappingSave`        | `save`           |
 | `sp1[i] = sp2`  (mapping)      | `storageIndexWriteMappingCopySource`  | `save`           |
+| `sp[i] = mp`  (mapping)        | `memoryToStorageIndexMappingCopyRoot` | `save`/`copyMem` |
 | `v = sp[i]`  (mapping)         | `storageIndexReadMappingFind`         | `find`           |
 | `lp = sp[i]`  (mapping)        | `storageIndexReadMappingBindLocalRoot`| direct assign    |
 | `gp = sp[i]`  (mapping)        | `storageIndexReadMappingStoreRoot`    | `save`/`find<[StValue]>`|
 | `sp[i] = se`  (array)          | `storageIndexWriteArraySave`          | `save`           |
 | `sp1[i] = sp2`  (array)        | `storageIndexWriteArrayCopySource`    | `save`           |
+| `sp[i] = mp`  (array)          | `memoryToStorageIndexArrayCopyRoot`   | `save`/`copyMem` |
 | `v = sp[i]`  (array)           | `storageIndexReadArrayFind`           | `find`           |
 | `lp = sp[i]`  (array)          | `storageIndexReadArrayBindLocalRoot`  | direct assign    |
 | `gp = sp[i]`  (array)          | `storageIndexReadArrayStoreRoot`      | `save`/`find<[StValue]>`|

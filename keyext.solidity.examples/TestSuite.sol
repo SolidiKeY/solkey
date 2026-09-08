@@ -57,6 +57,7 @@ contract TestSuite {
     Toggle toggle;
 
     Ledger ledger;
+    Token tok;
     Token[] tokens;
     TokenBucket bucket;
     LedgerUse[] ledgerUses;
@@ -167,6 +168,20 @@ contract TestSuite {
         bucket.tokens[0] = tokRef;
         uint r = bucket.tokens[0].value;
         assert(r == 7);
+    }
+
+    function storageFieldWriteRootRhsComplexReceiver() public {
+        tok.value = 7;
+        alice.account.token = tok;
+        uint r = alice.account.token.value;
+        assert(r == 7);
+    }
+
+    function storageIndexWriteRootRhsComplexReceiver() public {
+        total = 9;
+        ledger.balances[3] = total;
+        uint r = ledger.balances[3];
+        assert(r == 9);
     }
 
     // ── Storage: push ──
@@ -453,6 +468,32 @@ contract TestSuite {
         alice = carol;
         uint r = alice.age;
         assert(r == 44);
+    }
+
+    function memoryToStorageIndexMappingCopyRootExample() public {
+        Person memory carol;
+        carol.age = 6;
+        people[1] = carol;
+        uint r = people[1].age;
+        assert(r == 6);
+    }
+
+    /// @custom:key box
+    function memoryToStorageIndexArrayCopyRootExample() public {
+        require(0 < persons.length);
+        Person memory carol;
+        carol.age = 6;
+        persons[0] = carol;
+        uint r = persons[0].age;
+        assert(r == 6);
+    }
+
+    /// @custom:key box
+    function memoryToStorageIndexArrayCopyRootOutOfBoundsReverts() public {
+        require(persons.length == 0);
+        Person memory carol;
+        persons[0] = carol;
+        assert(false);
     }
 
     function moduloSimple() public {
