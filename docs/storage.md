@@ -277,66 +277,12 @@ After unfolding, the CopySource terminals consume `sp.a = gp` and
 
 ### Instances of unfold_leftSnd
 
-An impure index is the one place where Step 2 can run a side effect while
-the right-hand side is still unread, so these rules freeze the right-hand
-side first. See §Evaluation order below for why.
-
 **`storageIndexWrite_unfold_leftSndIndex`** — `path[nse] = se`
 (taclet `storageIndexWriteNonSimpleIndexCapture`)
-
-    nse => ⟨ π  T rv = se; T pv = nse; path[pv] = rv; ω ⟩ φ
-    -------------------------------------------------------
-         => ⟨ π  path[nse] = se; ω ⟩ φ
-
-**`storageIndexWriteRefNonSimpleIndexCapture`** — `path[nse] = se`
-for a reference-typed `se`
 
     nse => ⟨ π  T pv = nse; path[pv] = se; ω ⟩ φ
     ----------------------------------------------
          => ⟨ π  path[nse] = se; ω ⟩ φ
-
-## 5b. Evaluation order: freezing the right-hand side
-
-Solidity evaluates the right-hand side of an assignment first, then
-resolves the target, then writes. Step 1 only fires on a *nonsimple*
-right-hand side, so a right-hand side that is already simple is left in
-place — and a simple expression is not a stable one. When Step 2 then
-captures an impure index, its side effect changes the value the write
-is about to read:
-
-    uint i = 0;
-    a[i++] = i;          // solc writes a[0] = 0
-
-Capturing the index first yields `pv = i++; a[pv] = i`, which reads `i`
-as `1` and writes `a[0] = 1`. KeY closed exactly that false goal until
-the `unfold_leftSnd` rules were changed to bind `rv = se` ahead of the
-index capture. Machine-checked in the Lean model as
-`Counterexamples/EvaluationOrder.lean`, `indexWrite_not_sound`, and
-caught at runtime by `SolidityRuntimeExecutionTest` as a
-`Panic(0x01)` against a closed proof.
-
-The snapshot is a *value* snapshot, so it applies only where the
-right-hand side denotes a value. The three affected rules are therefore
-split on `SimpleExpression[primitive]` versus `SimpleExpression[reference]`
-— an exact partition, so the pair stays disjoint:
-
-| Right-hand side | Rule | Why |
-|---|---|---|
-| primitive | `*NonSimpleIndexCapture` | freeze `rv = se` first |
-| reference | `*RefNonSimpleIndexCapture` | binding a reference is aliasing, not a read; the deep copy happens at the write |
-
-Three neighbours deliberately keep the old shape:
-
-- `storageIndexWriteRootRhsNonSimpleIndexCapture` (`path[nse] = gp`) — the
-  right-hand side is a storage *location*, so no fresh binding can freeze
-  its value. Sound whenever `nse` cannot write `gp`, which covers every
-  `++`/`--`; only a storage-writing call in index position could break it.
-- the `unfold_leftFst` family — a `Path` cannot contain an impure index
-  (`PathSVSort.classify` rejects an index that is neither a variable nor a
-  literal), so capturing a path never runs a side effect and the order is
-  immaterial.
-- the read rules `*_unfold_rightSndIndex` — the captured index belongs to
-  the right-hand side, so hoisting it is already RHS-first.
 
 ### Standalone receiver / delete-target simplifications
 

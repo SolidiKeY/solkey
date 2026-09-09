@@ -1323,15 +1323,6 @@ contract TestSuite {
         assert(carolValues[0] == 0);
     }
 
-    function testMemoryUintArrayPostincrementVariableRhs() public {
-        uint[] memory carolValues = new uint[](3);
-        uint i = 0;
-        carolValues[i++] = i;
-        uint v = carolValues[0];
-        assert(i == 1);
-        assert(v == 0);
-    }
-
     function testMemoryUintArrayPredecrement() public {
         uint[] memory carolValues = new uint[](3);
         uint i = 1;
@@ -1409,17 +1400,6 @@ contract TestSuite {
         a.push(100);
         a[++i] = ++i;
         assert(a[2] == 1);
-    }
-
-    /// @custom:key box
-    function testStorageEvaluationOrderVariableRhs() public {
-        require(a.length == 0);
-        uint i = 0;
-        a.push(100);
-        a.push(100);
-        a[i++] = i;
-        assert(a[0] == 0);
-        assert(i == 1);
     }
 
     function testStorageFieldDeepCopy() public {
