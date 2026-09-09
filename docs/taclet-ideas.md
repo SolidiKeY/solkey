@@ -132,6 +132,16 @@ Edge cases of already-supported constructs (see `docs/taclets-implementation.md`
 - **Ternary `CInv(storage, net, selfBalance)`**: needed only if an example ever
   wants to prove a *funded* transfer after a callback — the havoc currently
   leaves `selfBalance` unconstrained.
+- **Impure index under a member base** (`persons[i++].age = v;`): no rule matches
+  `e1[nse].a = se`, so the statement is stuck. `PathSVSort.classify` rejects an
+  index that is neither a variable nor a literal, so `persons[i++]` is not a
+  `Path` and the `unfold_leftFst` family cannot see it either. A rule here must
+  freeze the right-hand side first, like the `*NonSimpleIndexCapture` writes
+  (`storage.md` §5b).
+- **Impure index in a compound assignment** (`a[i++] += v;`): likewise stuck —
+  the compound family has index captures only for simple indices. Same freeze
+  requirement, and the target is read as well as written, so the l-value must be
+  resolved exactly once.
 
 ## Raised by the solc semantic-test ports
 

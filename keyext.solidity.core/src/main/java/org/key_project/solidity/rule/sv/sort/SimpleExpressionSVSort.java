@@ -19,9 +19,10 @@ public class SimpleExpressionSVSort extends ProgramSVSort {
     /// `ANY` admits every simple expression. `PRIMITIVE` (`SimpleExpression[primitive]`)
     /// restricts matching to expressions of primitive static type: literals and primitive-typed
     /// variables. Storage aliases and memory references carry struct/array/mapping types and are
-    /// therefore excluded.
+    /// therefore excluded. `REFERENCE` (`SimpleExpression[reference]`) is its exact complement:
+    /// the non-primitive variables, and no literal.
     public enum Filter {
-        ANY, PRIMITIVE
+        ANY, PRIMITIVE, REFERENCE
     }
 
     private static final Map<String, ProgramSVSort> PARAMETERIZED_SORTS = new HashMap<>();
@@ -40,11 +41,15 @@ public class SimpleExpressionSVSort extends ProgramSVSort {
     @Override
     public boolean canStandFor(SolidityProgramElement pe, Services services) {
         if (pe instanceof Literal) {
-            return true;
+            return filter != Filter.REFERENCE;
         }
 
         if (pe instanceof ProgramVariable pv) {
-            return filter == Filter.ANY || pv.getType() instanceof PrimitiveType;
+            return switch (filter) {
+                case ANY -> true;
+                case PRIMITIVE -> pv.getType() instanceof PrimitiveType;
+                case REFERENCE -> !(pv.getType() instanceof PrimitiveType);
+            };
         }
 
         return false;
@@ -56,13 +61,15 @@ public class SimpleExpressionSVSort extends ProgramSVSort {
         if (cached != null) {
             return cached;
         }
-        if (!"primitive".equals(parameter.toLowerCase(Locale.ROOT))) {
-            throw new IllegalArgumentException(
+        Filter parsed = switch (parameter.toLowerCase(Locale.ROOT)) {
+            case "primitive" -> Filter.PRIMITIVE;
+            case "reference" -> Filter.REFERENCE;
+            default -> throw new IllegalArgumentException(
                 "Unknown SimpleExpression sort flag '" + parameter
-                    + "' (expected 'primitive')");
-        }
+                    + "' (expected 'primitive' or 'reference')");
+        };
         ProgramSVSort result = new SimpleExpressionSVSort(
-            new Name("SimpleExpression[" + parameter + "]"), Filter.PRIMITIVE);
+            new Name("SimpleExpression[" + parameter + "]"), parsed);
         PARAMETERIZED_SORTS.put(parameter, result);
         return result;
     }

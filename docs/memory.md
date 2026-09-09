@@ -284,6 +284,20 @@ Index evaluation follows the usual RHS-before-LHS discipline:
 
 The value-producing RHS is captured before the indexed LHS update fires.
 
+That example only shows the easy half: a *nonsimple* RHS is captured by
+Step 1 anyway. A RHS that is already simple needs freezing too, because
+simple is not stable —
+
+    uint i = 0;
+    xs[i++] = i;          // solc writes xs[0] = 0
+
+so `memoryIndexWriteNonSimpleIndexCapture` binds `rv = se` ahead of the
+index capture. It is restricted to `SimpleExpression[primitive]`; a
+reference-typed RHS goes to `memoryIndexWriteRefNonSimpleIndexCapture`,
+which keeps the plain index capture because binding a memory reference
+is aliasing rather than a value read. Full rationale in `storage.md`
+§5b.
+
 Arrays of structs still alias through identity-valued elements:
 
     Token[] memory carolTokens = new Token[](4);

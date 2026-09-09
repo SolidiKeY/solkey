@@ -374,6 +374,14 @@ kind:
   `indexWriteInnerNonSimpleIndexCapture` / `indexReadInnerNonSimpleIndexCapture`;
   NSE indices at depth ≥ 3 or under member bases (`people[k+1].age`) are still
   unsupported.
+  The three *write* rules of this group freeze the right-hand side before
+  capturing the index, because an impure index would otherwise change the value
+  the write is about to read (`a[i++] = i`; `storage.md` §5b). They are restricted
+  to `SimpleExpression[primitive]`, with `storageIndexWriteRefNonSimpleIndexCapture`
+  / `memoryIndexWriteRefNonSimpleIndexCapture` /
+  `indexWriteInnerRefNonSimpleIndexCapture` taking the `SimpleExpression[reference]`
+  half unchanged — an exact partition, so the pairs stay disjoint. The read and
+  delete rules need no freeze (nothing pending to read).
 Also `storageIndexReadMappingStoreRoot` closes the paper's §11 table
 (`gp = sp[i]` for mappings, no bounds branch).
 
