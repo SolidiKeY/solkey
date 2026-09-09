@@ -30,10 +30,17 @@ Sort hierarchy (declared across the `*Header.key` files; `StValue`/`MemValue`/
 `StValue` (`Struct` + `Prim`), values storable in memory have sort `MemValue`
 (`Identity` + `Prim`); `Prim` (`int`, `bool`, contract sorts) extends both.
 Accordingly `storeSt`/`save` take `StValue`, `write` takes `MemValue`, and
-`copySt` takes `Struct` as last argument. Array/mapping sorts created by
-`SolJSONParser` extend `StValue`; taclets whose generic sort flows into a value
-position use the bounded generics `alphaSt`/`alphaMem`
-(`solidityProgramRules.key`).
+`copySt` takes `Struct` as last argument. The array and mapping sorts
+`SolJSONParser` creates per declared type (`uint256[]`, `uint256[3]`,
+`mapping(bool => int256)`) extend **`Struct`**, not `StValue` directly: the value
+at such a path *is* a struct node at run time — `mtSt` extended with `at(i)`
+fields, which is why `memoryStorageCopy` reads it `find<[Struct]>` — so every
+`selectSt`/`find`/`save`/`copySt` rule, all stated on `Struct`, applies to it.
+Siblings of `Struct` under `StValue` would be incomparable with it, and a
+generic bound at such a sort would produce terms no rule could consume.
+`SolJsonParserTest#arrayAndMappingSortsExtendStruct` pins this down. Taclets
+whose generic sort flows into a value position use the bounded generics
+`alphaSt`/`alphaMem` (`solidityProgramRules.key`).
 
 Field selectors are partitioned by what the member holds (`structHeader.key`),
 stamped at parse time by `SolJSONParser#fieldSortFor`:
@@ -129,6 +136,11 @@ Local-value twins `localDecl…` / `localAssign…` cover captured temporaries. 
 the AST node class) so `+=` does not match `=`. Annotated as the
 `storageIncDec` / `localIncDec` families (`docs/rule-generalizations.md`).
 
+The memory twins `memory{Field,IndexArray}{Pre,Post}{in,de}crement`, their
+`…Assignment` forms and `…_unfold_leftFst` are the same rules with
+`find`/`save` replaced by `read`/`write` — see "Memory arithmetic" below for
+why the matrix has no root and no mapping member (`memoryIncDec` family).
+
 ### Compound assignment
 `+=`, `-=`, `*=`, `/=`, `%=` at root / field / index, each with a terminal and a
 `_unfold_leftFst` for complex receivers: `storage{Root,Field}{Add,Sub,Mul,Div,Mod}Assign`
@@ -140,6 +152,31 @@ unbounded mathematical integers, so there is no overflow guard. Bitwise
 `&= |= ^= <<= >>=` parse but are deferred (no bitwise LDT). Annotated as the
 `storageCompoundAssign` / `localCompoundAssign` / `compoundAssignRhsCapture`
 families (`docs/rule-generalizations.md`).
+
+### Memory arithmetic
+`memoryField{Add,Sub,Mul,Div,Mod}Assign`,
+`memoryIndexArray{Add,Sub,Mul,Div,Mod}Assign`, the `memoryIncDec` matrix above,
+and the `_unfold_leftFst` twins of both. Each is its storage counterpart with
+`find<[int]>(storage, path)` / `save(storage, path, v)` replaced by
+`read<[int]>(memory, mp, sel)` / `write(memory, mp, sel, v)` — a single update,
+no program-level desugaring, and no varcond, since an arithmetic context is
+always `int`-carried (see "Stores can defer their sort; reads cannot").
+
+Two axes of the storage matrix are absent by construction, not by omission:
+there is **no root form**, because a memory root variable holds an `Identity`
+and never an int cell, and **no mapping form**, because memory has no mappings
+(`docs/memory.md`). The matrix is therefore `{field, indexArray}`.
+
+The indexed terminals state their bounds the way `memoryIndexWriteArray` does —
+`\sameUpdateLevel` plus `\add(0 <= i & i < read<[int]>(memory, mp, size) ==>)`
+on the `inBounds` goal and the negation on `outOfBounds` — where the storage
+twins use an implication inside `\replacewith`. That difference is real, so the
+memory indexed groups are their own `RuleGeneralizationTest` groups rather than
+members of the storage ones.
+
+No new capture rules were needed: `addAssignValueRhsCapture` and its siblings
+take a plain `Expression` target and so already cover a memory left-hand side,
+and `memoryIndexWriteNonSimpleIndexCapture` already covers a non-simple index.
 
 ### Tier-1 expression operators
 Mirror the `+`/`==` families: terminal assigns the logic-level result, non-simple
@@ -165,15 +202,30 @@ from the EVM's checked arithmetic); `/` and `%` revert on a zero denominator.
   `v = false;` / `v = true;` on the short-circuit branch
   (examples `logicalAndShortCircuitRhs` / `logicalOrShortCircuitRhs`).
 - Conditional operator `?:`: `ternaryCaptureCond` hoists a non-simple
-  condition (always evaluated); `ternarySplit` is the Java KeY
-  `ifElseSplit`-style sequent-level two-goal split
-  (`\find( ==> \modality...)` with `\add(se = TRUE/FALSE ==>)`, the update
-  context is applied to the added guard) continuing with `v = e1;` / `v = e2;`.
-  The sequent-level shape is deliberate: Java KeY's formula-level `if`/`ifElse`
-  taclets have their heuristics commented out — automation there also runs on
-  the sequent-level `ifElseSplit`, and a formula-level `\if` variant tried here
-  made `additionStorageWrite` diverge past 10k nodes
-  (examples `ternaryCaptureCond` / `ternarySplit`).
+  condition (always evaluated); `ternaryToIf` (and `ternaryToIfStorage`, its
+  twin for a storage-path target, which is not a `Variable`) rewrites the
+  remaining `v = se ? e1 : e2;` to `if (se) v = e1; else v = e2;`, handing the
+  split to the `if` rules below.
+- `if` / `if`-`else` statements: `ifUnfold` / `ifElseUnfold` hoist a non-simple
+  guard into a fresh variable; `ifSplit` / `ifElseSplit` are the Java KeY
+  `ifElseSplit`-style sequent-level two-goal split (`\find( ==> \modality...)`
+  with `\add(se = TRUE/FALSE ==>)`, the update context applied to the added
+  guard). The sequent-level shape is deliberate: Java KeY's formula-level
+  `if`/`ifElse` taclets have their heuristics commented out — automation there
+  also runs on the sequent-level `ifElseSplit`, and a formula-level `\if`
+  variant tried here made `additionStorageWrite` diverge past 10k nodes.
+- Guard simplifiers, in `concrete_solidity` so they outrank the split and the
+  unfold: `ifTrue` / `ifFalse` / `ifElseTrue` / `ifElseFalse` drop the dead
+  branch of a literal guard outright, where `ifSplit` would leave a second,
+  trivially closed goal; `ifElseNegated` rewrites `if (!se) s0 else s1` to
+  `if (se) s1 else s0`, so the negation never has to be captured into a fresh
+  variable by `ifElseUnfold`. `concrete_solidity` was a declared but unused
+  rule set (`ruleSetDeclarations.key`, costed in `SymExStrategy`); these five
+  are its first members. Matching a literal guard needs `BoolLiteral` to have
+  value equality — `Literal#match` compares with `equals`, and the two parsers
+  disagree on identity (the `.key` path builds a fresh instance, the `.sol`
+  path returns the `TRUE`/`FALSE` singletons) — so `BoolLiteral` overrides
+  `equals`/`hashCode` like `Uint256Literal` does.
 - Deferred: bitwise (`& | ^ << >> ~`), unary `+` (removed in Solidity ≥0.5).
   Overflow is not modeled: integers are unbounded, and examples that depend on
   the EVM's checked-arithmetic revert live in
@@ -269,9 +321,10 @@ marker, resolved on read (see "Sort-free clearing and copying" below).
 (`storageIndexDelete` saves `defVal` instead: deleting a single collection
 entry/element resets it outright, mapping members included — the
 `storage-index-delete-mapping-struct` starter asserts the whole entry `= mtSt`.)
-`delValue` picks the reset value by sort: any
-non-struct sort collapses to `defaultValue<[alpha]>` (`int→0`, `bool→FALSE`), while
-a struct becomes a lazy `delNode` marker (structRules.key). This gives Solidity's
+`delValue` picks the reset value by sort: a primitive sort (`alphaPrim \extends Prim`)
+collapses to `defaultValue<[alphaPrim]>` (`int→0`, `bool→FALSE`), while
+a struct becomes a lazy `delNode` marker (structRules.key). A read at `StValue`
+itself is neither, and is routed to one of the two by `delValueStValueCast` (below). This gives Solidity's
 `delete` semantics on structs: value/reference members reset, but **mapping members
 are preserved**. On read, `selectSt` on a `delNode` reads a mapping member
 (`MapField`) through to the original struct, recurses into a reference member
@@ -310,6 +363,7 @@ Three sort-free symbols carry the deferred value:
 |---|---|---|
 | `delAt(Struct, List)` | the storage with a location reset — a struct keeps its mapping members | `delAtEmpty` / `selectOnDelAtCons` |
 | `find<[StValue]>(Struct, List)` | the value at a path, for copies (`find` at the top storage sort) | `findStValueCast` |
+| `delValue<[StValue]>(StValue)` | a reset value a sort-free copy carried out of a cleared location | `delValueStValueCast` |
 | `defVal` | a location reset outright, mapping members included | `defValResolve` |
 
 `defVal` is declared `Prim`, so it is both an `StValue` and a `MemValue` and serves storage
@@ -323,6 +377,16 @@ the default case is `alphaPrim`-bounded, and the two are disjoint by sort — th
 `simplify`/`simplify_enlarging` ranking is performance-only. `defVal` is deliberately distinct
 from `delAt` — it is what `storageIndexDelete` writes, which resets a collection element
 outright rather than preserving its mapping members.
+
+Disjoint, but not exhaustive: `selectOnDelAtCons` instantiates its generic at the *reader's*
+sort, and a sort-free copy reads at `StValue`, which is neither `Struct` nor `\extends Prim`.
+`delete sp; gp = sp;` therefore stopped at `delValue<[StValue]>(…)` until
+`delValueStValueCast` — the twin of `findStValueCast` for that shape — pushed the read's cast
+inward: `cast<[alphaSt]>(delValue<[StValue]>(v))` ⇝ `delValue<[alphaSt]>(cast<[alphaSt]>(v))`.
+The `alphaSt` it binds is the sort the read supplies, so one of the two `delValue` rules then
+matches. Widening `delValueDefault` to `StValue` would close the same gap by reintroducing the
+overlap the paragraph above records; pushing the cast keeps the split. The three
+`*DeleteThenCopy` examples all fail without it.
 
 `delAt` names its storage argument once, where the `save(st, p, <deleted value at p>)` form it
 replaced named it twice. That doubled the storage term at every `push`/`pop`, so a sequence of
@@ -465,14 +529,16 @@ See `taclet-ideas.md` for the full backlog. Headline gaps:
 - Whole-struct write from a struct **value** (`alice = pVal;`) and struct
   literals (`Token(42)`) — need step-1 unfolding for struct constructors.
 - Dynamic-array `delete arr;` length reset (whole-array delete).
-- Control flow (`if`, loops, `return`), calls beyond `ExpandFunctionBody`,
+- Control flow beyond `if` (loops, `return`), calls beyond `ExpandFunctionBody`,
   events, casts — see `taclet-ideas.md` Tiers 3–5.
+- `arr.push(sp);` with a struct-typed storage path argument — the argument is
+  aliased and execution then stops at the rebind; `arr.push() = sp;` works.
 
 ## End-to-end examples (the `test*` functions)
 
 `TestSuite.sol` holds 40 end-to-end `test*` functions driven by `PaperTestExamplesTest.java`;
 each is called with postcondition `true`, the obligations being carried by in-body `assert`s.
-The other 127 functions are the focused starters run by `TacletStarterExamplesTest`.
+The other 195 functions are the focused starters run by `TacletStarterExamplesTest`.
 
 **Passing (most close automatically):** storage write/read, nested + deep copy,
 aliases, mapping read/write/delete, struct-`delete` preserving mapping members
@@ -536,8 +602,9 @@ closes where `nested.recursive[4].z` does not).
 - The index-write *save* rules now take `SimpleExpression[primitive]` for the value, as
   `storageRootWriteStore` already did. With an unrestricted `SimpleExpression` a storage-alias
   variable matched and `save(…, path)` was built ill-sorted.
-- `storageIndexWrite{Array,Mapping}CopySource` are sort-generic (`find<[alphaSt]>` with
-  `\hasSort`, the `storageRootDelete` pattern) instead of hard-coding `int` / `Struct`.
+- `storageIndexWrite{Array,Mapping}CopySource` carry the copied value sort-free, as
+  `find<[StValue]>`, instead of hard-coding `int` / `Struct` — the sort arrives with the
+  read (see "Sort-free clearing and copying").
 - `storagePushLengthSave` clears the appended slot as well as bumping `size`, mirroring
   `storagePopSave`. It writes the lazy delete marker rather than an eager `defaultValue`, so the
   reset resolves by sort: a primitive element becomes 0 (which is what makes

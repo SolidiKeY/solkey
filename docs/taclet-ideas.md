@@ -11,8 +11,9 @@ Already done (for reference, do **not** re-add): local assign/decl, `+`,
 storage/memory read/write/copy/push/pop family, the non-simple RHS/index
 capture partition (`docs/taclets-implementation.md` §Capture partition),
 **all of Tier 1 below except the deferred
-bitwise / unary-plus / short-circuit items**, and the **Tier 2 arithmetic
-compound assignments `-=`, `*=`, `/=`, `%=`**. See
+bitwise / unary-plus / short-circuit items**, the **Tier 2 arithmetic
+compound assignments `-=`, `*=`, `/=`, `%=`** at storage, local *and* memory
+targets, and the **Tier 3 `if` / `if`-`else` rules**. See
 `docs/taclets-implementation.md`.
 
 ## Tier 1 — Pure expression evaluation (easiest)
@@ -46,14 +47,20 @@ Clone the `+=` family (`storageRootAddAssign` / `…Field…` / `…Index…` +
 - `-=`, `*=`, `/=`, `%=`. ✅ Done — twins of `+=` with the infix operator swapped;
   `/=`, `%=` add a `se != 0` revert branch on the terminals. See
   `docs/taclets-implementation.md` ("Compound assignment operators").
+- **Memory targets** (`mp.x += se`, `mp[i] *= se`, `++mp.x`, `v = mp[i]--`).
+  ✅ Done — `memoryCompoundAssign` and `memoryIncDec`, the storage matrix with
+  `read`/`write` for `find`/`save`, over `{field, indexArray}` only. See
+  `docs/taclets-implementation.md` ("Memory arithmetic") and `docs/memory.md` §11b.
 - `&=`, `|=`, `^=`, `<<=`, `>>=`. ⏳ Deferred — gated on Tier-1 bitwise support.
 
 ## Tier 3 — Control flow
 
-- **`ifStatement`** (`if (c) s1 else s2`): the keystone rule. Evaluate the
-  guard to a bool term, then split into `c ⇒ ⟨s1⟩φ` and `¬c ⇒ ⟨s2⟩φ`
-  (else-less variant: second branch is `¬c ⇒ ⟨⟩φ`). Port KeY's
-  `ifElseSplit`. Unblocks most real contract bodies.
+- **`ifStatement`** (`if (c) s1 else s2`): ✅ Done — `ifUnfold`/`ifElseUnfold`
+  hoist a non-simple guard, `ifSplit`/`ifElseSplit` do the sequent-level split
+  (`c ⇒ ⟨s1⟩φ` and `¬c ⇒ ⟨s2⟩φ`; the else-less variant continues with `⟨⟩φ`),
+  and `ifTrue`/`ifFalse`/`ifElseTrue`/`ifElseFalse`/`ifElseNegated` simplify a
+  literal or negated guard before any split. `?:` routes here through
+  `ternaryToIf`/`ternaryToIfStorage`.
 - **`returnStatement`** (`return e;`): bind the function's named return value
   and discard the rest of the block. Pairs with `functionBodyStatement`
   inlining (`ExpandFunctionBody`).
@@ -120,6 +127,12 @@ Edge cases of already-supported constructs (see `docs/taclets-implementation.md`
 - **Whole-struct write from a struct *value*** (`alice = pVal;`, vs. the
   supported root-to-root `alice = bob;`): needs Step-1 unfolding for struct
   constructors / memory-struct sources.
+- **`arr.push(sp);` with a struct-typed storage path argument** (`tokens.push(tok);`):
+  the argument is hoisted into a storage alias and symbolic execution then stops at
+  the rebind, so `storagePushValueCopySource` never fires. `arr.push() = sp;`
+  (`testStorageComplexReceiverPushAssignFromAlias`) is the working spelling. Found while
+  adding the delete-then-copy examples for `delValueStValueCast`; the delete half is
+  unrelated — the shape is stuck with or without a preceding `delete`.
 - **Dynamic-array `delete arr;` length reset**: not modeled by the current
   memory/storage delete rules. (Struct-`delete` preserving mapping members is now
   implemented via the lazy `delNode` marker — see `docs/storage.md` §6.)

@@ -301,6 +301,31 @@ Then:
 If `delete carolTokens[1]` runs afterward, the array slot is reset/freshened,
 but `tok.value` remains `9` because `tok` still points to the old identity.
 
+## 11b. Compound Updates
+
+`mp.x += e`, `++mp.x`, `mp[i] *= e`, `v = mp[i]++` and the rest are handled by
+dedicated terminal rules that read, compute and write in one update — the
+storage rules of `storage.md` §7 with `find`/`save` replaced by `read`/`write`:
+
+    mp.a += se
+    ⇝  { memory := write(memory, mp, a, read<[int]>(memory, mp, a) + se) }
+
+    ++mp.a
+    ⇝  { memory := write(memory, mp, a, read<[int]>(memory, mp, a) + 1) }
+
+`memoryField{Add,Sub,Mul,Div,Mod}Assign`,
+`memoryField{Pre,Post}{in,de}crement` and their `…Assignment` forms; complex
+receivers unfold first through the `_unfold_leftFst` twins, exactly as for
+plain assignments. `/=` and `%=` guard with `\if(se != 0)\then(…)\else(revert)`.
+
+The indexed forms (`memoryIndexArray…`) carry the `0 ≤ i < length` /
+`revert();` goal pair of `memoryIndexWriteArray`, so `xs[i] += 1` on an
+out-of-range `i` reverts instead of writing.
+
+Two forms the storage matrix has do not exist here: there is no **root** rule,
+because a memory root variable holds an `Identity` rather than an int cell, and
+no **mapping** rule, because memory has no mappings.
+
 ## 12. Storage to Memory
 
 Storage-to-memory declaration copies allocate a fresh memory identity and
