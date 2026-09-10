@@ -1014,20 +1014,20 @@ public class SolJSONParser {
         return getOrCreateKST(dynamicArrayKSTs, dynamicArrayType,
             () -> new DynamicArraySort(
                 getComponentSort(dynamicArrayType, dynamicArrayType.getElementType()),
-                valueSupersort("StValue")));
+                valueSupersort("Struct")));
     }
 
     private KeYSolidityType getOrCreateArrayKeYSolidityType(ArrayType arrayType) {
         return getOrCreateKST(arrayKSTs, arrayType,
             () -> new ArraySort(getComponentSort(arrayType, arrayType.getElementType()),
-                arrayType.length(), valueSupersort("StValue")));
+                arrayType.length(), valueSupersort("Struct")));
     }
 
     private KeYSolidityType getOrCreateMappingKeYSolidityType(MappingType mappingType) {
         return getOrCreateKST(mappingKSTs, mappingType,
             () -> new MappingSort(getComponentSort(mappingType, mappingType.keyType()),
                 getComponentSort(mappingType, mappingType.valueType()),
-                valueSupersort("StValue")));
+                valueSupersort("Struct")));
     }
 
     private Sort getComponentSort(Type owner, Type componentType) {

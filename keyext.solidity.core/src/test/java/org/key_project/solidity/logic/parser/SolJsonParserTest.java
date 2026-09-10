@@ -1309,6 +1309,26 @@ public class SolJsonParserTest {
     }
 
     @Test
+    void arrayAndMappingSortsExtendStruct() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    uint256[] values;
+                    uint256[3] triple;
+                    mapping(bool => int256) balances;
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract, services);
+        Sort structSort = services.getTheoryInfo().getStructLDT().targetSort();
+
+        for (StateVariableDeclaration field : contractDec.getFieldDeclarations()) {
+            Sort sort = field.getKeYSolidityType().getSort();
+            assertNotNull(sort, field.getName() + " should have a sort");
+            assertTrue(sort.extendsTrans(structSort),
+                () -> sort.name() + " should extend Struct");
+        }
+    }
+
+    @Test
     void nestedMapping() throws IOException {
         // language=solidity
         String contract = """

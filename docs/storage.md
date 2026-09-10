@@ -81,8 +81,10 @@ Type-of metavariable:
 - `save(storage, path, val)` — write `val` at `path`. Used universally
   for both global roots and local paths. `val` has sort `StValue`, the
   supersort of everything storable in storage: `Struct` (incl. the
-  dynamically created array/mapping sorts) and `Prim` (`int`, `bool`,
-  contract sorts). `Identity`, `List` and `Memory` are not storable.
+  dynamically created array/mapping sorts, which `SolJSONParser` builds as
+  sub-sorts of `Struct` because an array or mapping value *is* a struct node
+  — `mtSt` plus `at(i)` fields) and `Prim` (`int`, `bool`, contract sorts).
+  `Identity`, `List` and `Memory` are not storable.
 - `default` — the default value of a type (used by `delete` and
   `pop`).
 - `at(i)` — coerces an index/key into a field selector so it can
@@ -111,6 +113,22 @@ for `delAt` through `delValue<[alpha]>` on the select:
   value at path>)` names it twice, which doubles the storage term at every
   `push`/`pop`; a sequence of them then grows exponentially rather than
   linearly, which is what made `SolcArrays.pushThenPopRestoresLength` slow.
+
+  The two deferrals meet when a sort-free copy reads a *cleared* location —
+  `delete sp; gp = sp;` and its field, root and `push` variants.
+  `selectOnDelAtCons` instantiates its generic at the reader's sort, so a
+  `find<[StValue]>` copy leaves `delValue<[StValue]>(…)`, which neither
+  `delValueStruct` (concrete `Struct`) nor `delValueDefault` (`alphaPrim
+  \extends Prim`) matches. `delValueStValueCast` is the twin of
+  `findStValueCast` for that shape: it pushes the read's cast inward,
+  `cast<[alphaSt]>(delValue<[StValue]>(v))` ⇝
+  `delValue<[alphaSt]>(cast<[alphaSt]>(v))`, so the reset resolves at the sort
+  the read supplies. Same coherence assumption as `findStValueCast` — observing
+  a sort-parametric family at a smaller sort is that family's smaller-sort
+  instance — and it leaves the `delValueStruct`/`delValueDefault` split
+  disjoint, where widening `delValueDefault` back to `StValue` would make the
+  two overlap again. Pinned by `storage{Field,Root}DeleteThenCopy` and
+  `storageFieldDeleteThenCopyDeep`.
 - `defVal` — a location reset outright, mapping members included. The
   sort-free twin of `default`. Used by `delete sp[i]`, which resets a
   collection element rather than preserving its mapping members. Sorted
@@ -775,3 +793,7 @@ extracts to `cons(alice, nil)`. All storage operations use `find`/`save`.
 | `sp.pop();`                    | `storagePopSave`                      | `save`           |
 | `revert();` (in `⟨·⟩`)         | `revertDiamond`                       | —                |
 | `revert();` (in `[·]`)         | `revertBox`                           | —                |
+
+The memory twins of the compound-update rows (`mp.a += se`, `++mp.a`,
+`mp[i] += se`, …) are in `memory.md` §11b; they use `read`/`write` in place of
+`find`/`save` and have no root or mapping form.

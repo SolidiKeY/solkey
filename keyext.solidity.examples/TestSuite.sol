@@ -400,6 +400,37 @@ contract TestSuite {
         assert(r == 2);
     }
 
+    function ifTrue() public {
+        uint r = 0;
+        if (true) r = 1;
+        assert(r == 1);
+    }
+
+    function ifFalse() public {
+        uint r = 0;
+        if (false) r = 1;
+        assert(r == 0);
+    }
+
+    function ifElseTrue() public {
+        uint r = 0;
+        if (true) r = 1; else r = 2;
+        assert(r == 1);
+    }
+
+    function ifElseFalse() public {
+        uint r = 0;
+        if (false) r = 1; else r = 2;
+        assert(r == 2);
+    }
+
+    function ifElseNegated() public {
+        bool b = false;
+        uint r = 0;
+        if (!b) r = 1; else r = 2;
+        assert(r == 1);
+    }
+
     function memoryDeclFresh() public {
         Person memory carol;
     }
@@ -409,6 +440,134 @@ contract TestSuite {
         carol.account.balance = 10;
         uint r = carol.account.balance;
         assert(r == 10);
+    }
+
+    function memoryFieldAddAssign() public {
+        Person memory carol;
+        carol.age = 30;
+        carol.age += 4;
+        uint r = carol.age;
+        assert(r == 34);
+    }
+
+    function memoryFieldSubAssign() public {
+        Person memory carol;
+        carol.age = 30;
+        carol.age -= 4;
+        uint r = carol.age;
+        assert(r == 26);
+    }
+
+    function memoryFieldMulAssign() public {
+        Person memory carol;
+        carol.age = 7;
+        carol.age *= 4;
+        uint r = carol.age;
+        assert(r == 28);
+    }
+
+    function memoryFieldDivAssign() public {
+        Person memory carol;
+        carol.age = 30;
+        carol.age /= 5;
+        uint r = carol.age;
+        assert(r == 6);
+    }
+
+    function memoryFieldModAssign() public {
+        Person memory carol;
+        carol.age = 30;
+        carol.age %= 7;
+        uint r = carol.age;
+        assert(r == 2);
+    }
+
+    function memoryFieldAddAssignUnfold() public {
+        Person memory carol;
+        carol.account.balance = 20;
+        carol.account.balance += 4;
+        uint r = carol.account.balance;
+        assert(r == 24);
+    }
+
+    function memoryFieldAddAssignNse() public {
+        Person memory carol;
+        carol.age = 30;
+        carol.age += 2 * 3;
+        uint r = carol.age;
+        assert(r == 36);
+    }
+
+    function memoryFieldPreincrement() public {
+        Person memory carol;
+        carol.age = 30;
+        ++carol.age;
+        uint r = carol.age;
+        assert(r == 31);
+    }
+
+    function memoryFieldPostincrement() public {
+        Person memory carol;
+        carol.age = 30;
+        carol.age++;
+        uint r = carol.age;
+        assert(r == 31);
+    }
+
+    function memoryFieldPredecrement() public {
+        Person memory carol;
+        carol.age = 30;
+        --carol.age;
+        uint r = carol.age;
+        assert(r == 29);
+    }
+
+    function memoryFieldPostdecrement() public {
+        Person memory carol;
+        carol.age = 30;
+        carol.age--;
+        uint r = carol.age;
+        assert(r == 29);
+    }
+
+    function memoryFieldPreincrementAssignment() public {
+        Person memory carol;
+        carol.age = 30;
+        uint r = ++carol.age;
+        assert(r == 31);
+        assert(carol.age == 31);
+    }
+
+    function memoryFieldPostincrementAssignment() public {
+        Person memory carol;
+        carol.age = 30;
+        uint r = carol.age++;
+        assert(r == 30);
+        assert(carol.age == 31);
+    }
+
+    function memoryFieldPredecrementAssignment() public {
+        Person memory carol;
+        carol.age = 30;
+        uint r = --carol.age;
+        assert(r == 29);
+        assert(carol.age == 29);
+    }
+
+    function memoryFieldPostdecrementAssignment() public {
+        Person memory carol;
+        carol.age = 30;
+        uint r = carol.age--;
+        assert(r == 30);
+        assert(carol.age == 29);
+    }
+
+    function memoryFieldPreincrementUnfold() public {
+        Person memory carol;
+        carol.account.balance = 20;
+        ++carol.account.balance;
+        uint r = carol.account.balance;
+        assert(r == 21);
     }
 
     function memoryFieldAlias() public {
@@ -427,6 +586,98 @@ contract TestSuite {
         carol.account.balance = 60;
         uint r = david.account.balance;
         assert(r == 60);
+    }
+
+    function memoryIndexArrayAddAssign() public {
+        uint[] memory xs = new uint[](4);
+        xs[1] = 40;
+        xs[1] += 2;
+        uint r = xs[1];
+        assert(r == 42);
+    }
+
+    function memoryIndexArraySubAssign() public {
+        uint[] memory xs = new uint[](4);
+        xs[1] = 40;
+        xs[1] -= 2;
+        uint r = xs[1];
+        assert(r == 38);
+    }
+
+    function memoryIndexArrayMulAssign() public {
+        uint[] memory xs = new uint[](4);
+        xs[1] = 7;
+        xs[1] *= 6;
+        uint r = xs[1];
+        assert(r == 42);
+    }
+
+    function memoryIndexArrayDivAssign() public {
+        uint[] memory xs = new uint[](4);
+        xs[1] = 40;
+        xs[1] /= 8;
+        uint r = xs[1];
+        assert(r == 5);
+    }
+
+    function memoryIndexArrayModAssign() public {
+        uint[] memory xs = new uint[](4);
+        xs[1] = 40;
+        xs[1] %= 7;
+        uint r = xs[1];
+        assert(r == 5);
+    }
+
+    function memoryIndexArrayAddAssignUnfold() public {
+        Basket memory basket;
+        uint[] memory xs = new uint[](4);
+        basket.items = xs;
+        basket.items[1] = 40;
+        basket.items[1] += 2;
+        uint r = basket.items[1];
+        assert(r == 42);
+    }
+
+    function memoryIndexArrayPreincrementUnfold() public {
+        Basket memory basket;
+        uint[] memory xs = new uint[](4);
+        basket.items = xs;
+        basket.items[1] = 40;
+        ++basket.items[1];
+        uint r = basket.items[1];
+        assert(r == 41);
+    }
+
+    function memoryIndexArrayPreincrement() public {
+        uint[] memory xs = new uint[](4);
+        xs[1] = 40;
+        ++xs[1];
+        uint r = xs[1];
+        assert(r == 41);
+    }
+
+    function memoryIndexArrayPostdecrement() public {
+        uint[] memory xs = new uint[](4);
+        xs[1] = 40;
+        xs[1]--;
+        uint r = xs[1];
+        assert(r == 39);
+    }
+
+    function memoryIndexArrayPostincrementAssignment() public {
+        uint[] memory xs = new uint[](4);
+        xs[1] = 40;
+        uint r = xs[1]++;
+        assert(r == 40);
+        assert(xs[1] == 41);
+    }
+
+    function memoryIndexArrayPredecrementAssignment() public {
+        uint[] memory xs = new uint[](4);
+        xs[1] = 40;
+        uint r = --xs[1];
+        assert(r == 39);
+        assert(xs[1] == 39);
     }
 
     /// @custom:key box
@@ -614,6 +865,22 @@ contract TestSuite {
         alice.age = 30;
         delete alice.age;
         uint r = alice.age;
+        assert(r == 0);
+    }
+
+    function storageFieldDeleteThenCopy() public {
+        bob.account.balance = 10;
+        delete bob.account;
+        alice.account = bob.account;
+        uint r = alice.account.balance;
+        assert(r == 0);
+    }
+
+    function storageFieldDeleteThenCopyDeep() public {
+        bob.account.token.value = 7;
+        delete bob.account;
+        alice.account = bob.account;
+        uint r = alice.account.token.value;
         assert(r == 0);
     }
 
@@ -1044,6 +1311,14 @@ contract TestSuite {
     function storageRootDeleteStruct() public {
         alice.age = 30;
         delete alice;
+        uint r = alice.age;
+        assert(r == 0);
+    }
+
+    function storageRootDeleteThenCopy() public {
+        bob.age = 30;
+        delete bob;
+        alice = bob;
         uint r = alice.age;
         assert(r == 0);
     }
