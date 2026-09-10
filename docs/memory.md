@@ -303,15 +303,15 @@ but `tok.value` remains `9` because `tok` still points to the old identity.
 
 ## 11b. Compound Updates
 
-`mp.x += e`, `++mp.x`, `mp[i] *= e`, `v = mp[i]++` and the rest are handled by
+`mv.x += e`, `++mv.x`, `mv[i] *= e`, `v = mv[i]++` and the rest are handled by
 dedicated terminal rules that read, compute and write in one update — the
 storage rules of `storage.md` §7 with `find`/`save` replaced by `read`/`write`:
 
-    mp.a += se
-    ⇝  { memory := write(memory, mp, a, read<[int]>(memory, mp, a) + se) }
+    mv.a += se
+    ⇝  { memory := write(memory, mv, a, read<[int]>(memory, mv, a) + se) }
 
-    ++mp.a
-    ⇝  { memory := write(memory, mp, a, read<[int]>(memory, mp, a) + 1) }
+    ++mv.a
+    ⇝  { memory := write(memory, mv, a, read<[int]>(memory, mv, a) + 1) }
 
 `memoryField{Add,Sub,Mul,Div,Mod}Assign`,
 `memoryField{Pre,Post}{in,de}crement` and their `…Assignment` forms; complex

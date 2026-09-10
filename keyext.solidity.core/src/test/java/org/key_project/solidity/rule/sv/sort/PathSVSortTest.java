@@ -88,7 +88,7 @@ public class PathSVSortTest {
     @Test
     void explicitStorageAndMemoryVariablesAreSimplePaths() {
         ProgramVariable storage = variable("sp", DataLocation.Storage);
-        ProgramVariable memory = variable("mp", DataLocation.Memory);
+        ProgramVariable memory = variable("mv", DataLocation.Memory);
 
         assertTrue(ProgramSVSort.SIMPLE_STORAGE_PATH.canStandFor(storage, services));
         assertFalse(ProgramSVSort.MEMORY_PATH.canStandFor(storage, services));
@@ -225,7 +225,7 @@ public class PathSVSortTest {
         StructDeclaration accountStruct =
             new StructDeclaration(new Name("Account"), List.of(field("balance")), -1);
         FieldReference alice = storageField("alice", accountStruct);
-        ProgramVariable alias = variable("lp",
+        ProgramVariable alias = variable("lsv",
             new DynamicArrayType(PrimitiveType.UINT), DataLocation.Storage);
 
         assertTrue(primitiveRoot.canStandFor(count, services));

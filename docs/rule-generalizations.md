@@ -51,7 +51,7 @@ still verified as uniform across operators:
 | `fixity=pre` vs `fixity=post` | pre writes storage before binding the result, post binds first — separate groups |
 
 Hole ordering rule: holes apply in spec order, so a string must come before
-its substrings (`+=` before `+`, `++s#gp` before `+`); the test rejects a spec
+its substrings (`+=` before `+`, `++s#gsp` before `+`); the test rejects a spec
 where an earlier hole is a substring of a later one.
 
 ## Families

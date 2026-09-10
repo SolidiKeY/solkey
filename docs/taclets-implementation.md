@@ -105,7 +105,7 @@ annotations in `solidityProgramRules.key`, verified mechanically by
   `…NonSimpleIndexCapture` rules, which take any storage path), so every target
   and source shape of the simple rules is reached through one alias step.
   A bare contract root on the right-hand side is a `FieldReference`, which
-  `SimpleExpression` excludes, so `nsp.a = gp` / `nsp[i] = gp` unfold through
+  `SimpleExpression` excludes, so `nsp.a = gsp` / `nsp[i] = gsp` unfold through
   the dedicated twins `storageFieldWriteRootRhs_unfold_leftFst` /
   `storageIndexWriteRootRhs_unfold_leftFst` (RHS `Path[storage,simple,global]`),
   after which the `…CopySource` terminals fire.
@@ -118,7 +118,7 @@ annotations in `solidityProgramRules.key`, verified mechanically by
 - Mapping-carrying copies are rejected at the front end, not by the rules:
   solc ≥ 0.7 refuses assignments whose target type transitively contains a
   mapping, so `ParserUtils.parseAssignmentMaybe` throws for them (both parse
-  paths; storage-pointer rebinds `lp = sp` stay legal), and both parsers
+  paths; storage-pointer rebinds `lsv = sp` stay legal), and both parsers
   reject `memory` declarations of mapping-carrying types
   (`StorageReferenceTypes.containsMapping`). The copy taclets themselves stay
   unconditional — the illegal program shapes never reach them.
@@ -158,7 +158,7 @@ families (`docs/rule-generalizations.md`).
 `memoryIndexArray{Add,Sub,Mul,Div,Mod}Assign`, the `memoryIncDec` matrix above,
 and the `_unfold_leftFst` twins of both. Each is its storage counterpart with
 `find<[int]>(storage, path)` / `save(storage, path, v)` replaced by
-`read<[int]>(memory, mp, sel)` / `write(memory, mp, sel, v)` — a single update,
+`read<[int]>(memory, mv, sel)` / `write(memory, mv, sel, v)` — a single update,
 no program-level desugaring, and no varcond, since an arithmetic context is
 always `int`-carried (see "Stores can defer their sort; reads cannot").
 
@@ -168,7 +168,7 @@ and never an int cell, and **no mapping form**, because memory has no mappings
 (`docs/memory.md`). The matrix is therefore `{field, indexArray}`.
 
 The indexed terminals state their bounds the way `memoryIndexWriteArray` does —
-`\sameUpdateLevel` plus `\add(0 <= i & i < read<[int]>(memory, mp, size) ==>)`
+`\sameUpdateLevel` plus `\add(0 <= i & i < read<[int]>(memory, mv, size) ==>)`
 on the `inBounds` goal and the negation on `outOfBounds` — where the storage
 twins use an implication inside `\replacewith`. That difference is real, so the
 memory indexed groups are their own `RuleGeneralizationTest` groups rather than
@@ -233,8 +233,8 @@ from the EVM's checked arithmetic); `/` and `%` revert on a zero denominator.
 
 ### Storage aliases
 `storageLocalDeclInitDrop` (decl-with-init decomposition) followed by
-`storageLocalRootRebind` (standalone `lp = sp;`). The alias binds to the **path**,
-not the value: `{lp := cons1(rhsField)}` or `{lp := pathFields}`. Two enablers:
+`storageLocalRootRebind` (standalone `lsv = sp;`). The alias binds to the **path**,
+not the value: `{lsv := cons1(rhsField)}` or `{lsv := pathFields}`. Two enablers:
 `SolidityToKeyConverter#asStorageAliasType` re-sorts any storage-held reference
 collection (`Struct`, array, mapping) to `List`; value-reads and path-rebinds
 stay disjoint through the read side, not the target variable — the value-read
@@ -290,7 +290,7 @@ every positive-cost rule.
 Source-level memory family covers heap field/index read & write, root aliasing,
 fresh allocation (`memoryReferenceDeclFreshAlloc`, with a `new(memory, r)` skolem
 branch), fixed-length array allocation (`memoryArrayFreshAlloc`, assignment form
-`mp = new T(len);`), primitive-default vs. reference-slot
+`mv = new T(len);`), primitive-default vs. reference-slot
 delete (`memoryRootDeleteFreshRebind` and field/index delete), and lazy
 storage↔memory copies via `copySt` / `copyMem` (`memoryStorageCopy` for
 `m = <simple storage path>;`, `memoryStorageCopyUnfold` captures a complex
@@ -380,7 +380,7 @@ outright rather than preserving its mapping members.
 
 Disjoint, but not exhaustive: `selectOnDelAtCons` instantiates its generic at the *reader's*
 sort, and a sort-free copy reads at `StValue`, which is neither `Struct` nor `\extends Prim`.
-`delete sp; gp = sp;` therefore stopped at `delValue<[StValue]>(…)` until
+`delete sp; gsp = sp;` therefore stopped at `delValue<[StValue]>(…)` until
 `delValueStValueCast` — the twin of `findStValueCast` for that shape — pushed the read's cast
 inward: `cast<[alphaSt]>(delValue<[StValue]>(v))` ⇝ `delValue<[alphaSt]>(cast<[alphaSt]>(v))`.
 The `alphaSt` it binds is the sort the read supplies, so one of the two `delValue` rules then
@@ -412,7 +412,7 @@ partitioned by the RHS's *static type* so each capture picks the right variable
 kind:
 - **Value RHS** (`NonSimpleExpression[primitive]`: operator-shaped,
   primitive-typed, not path-shaped): `storageRootWriteValueRhsCapture`
-  (`gp = nse;`), `fieldWriteValueRhsCapture` (`e.a = nse;`, location-neutral),
+  (`gsp = nse;`), `fieldWriteValueRhsCapture` (`e.a = nse;`, location-neutral),
   `indexWriteValueRhsCapture` (`e1[e2] = nse;`, location-neutral) → fresh plain
   `Variable`.
 - **Reference-path RHS** (`Path[…,complex,reference]`):
@@ -439,7 +439,7 @@ kind:
   NSE indices at depth ≥ 3 or under member bases (`people[k+1].age`) are still
   unsupported.
 Also `storageIndexReadMappingStoreRoot` closes the paper's §11 table
-(`gp = sp[i]` for mappings, no bounds branch).
+(`gsp = sp[i]` for mappings, no bounds branch).
 
 ### Require / assert
 Per `require-assert.md`: `requireConditionCapture` / `requireSimple` and

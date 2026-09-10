@@ -47,7 +47,7 @@ Clone the `+=` family (`storageRootAddAssign` / `…Field…` / `…Index…` +
 - `-=`, `*=`, `/=`, `%=`. ✅ Done — twins of `+=` with the infix operator swapped;
   `/=`, `%=` add a `se != 0` revert branch on the terminals. See
   `docs/taclets-implementation.md` ("Compound assignment operators").
-- **Memory targets** (`mp.x += se`, `mp[i] *= se`, `++mp.x`, `v = mp[i]--`).
+- **Memory targets** (`mv.x += se`, `mv[i] *= se`, `++mv.x`, `v = mv[i]--`).
   ✅ Done — `memoryCompoundAssign` and `memoryIncDec`, the storage matrix with
   `read`/`write` for `find`/`save`, over `{field, indexArray}` only. See
   `docs/taclets-implementation.md` ("Memory arithmetic") and `docs/memory.md` §11b.
@@ -178,3 +178,21 @@ an array or mapping element, the `?:` type bug in `SolJSONParser.parseConditiona
   those forms load; the `net/` examples now call real `PiggyBankNet.sol` functions
   (`f(args)@PiggyBankNet`). Still `.key`-based: the synthesized obligations cannot carry an
   `insertCInv` rules block or a taclet option. See `net.md`.
+
+## Schema-variable sort cleanups (from the naming pass)
+
+Names were aligned with their sorts across `solidityProgramRules.key` (`gp` →
+`gsp`, `lp` → `lsv`, `mp` → `mv`, the over-general `Path[storage] sp` /
+`Path[memory] mp` → `path` / `mpath`, the transfer receiver `a` → `sadr`).
+Two sort-level oddities were found and deliberately left alone, because fixing
+them changes what the taclets match:
+
+- **`nlhs` is declared `Path[complex,primitive]`** in the four
+  `..._unfold_rightSndResult` taclets — no data-area flag, so it matches
+  storage *and* memory complex paths. Every other complex-path schema variable
+  pins the area. Decide whether the cross-area match is intended, and if not,
+  split the taclets by area.
+- **`mv` is declared at two sorts**, `Variable[memory]` and
+  `Path[memory,simple]`, in taclets of the same shape. Both match exactly one
+  thing — a memory `ProgramVariable` — so the name is right either way, but
+  one of the two declarations should win.

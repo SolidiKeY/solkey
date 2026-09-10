@@ -148,21 +148,21 @@ public class RenamingProgramElementProperty implements Property<SolidityProgramE
 
     /// Handles the special case of comparing a [ProgramVariable] to a [SyntaxElement].
     ///
-    /// @param se1 the [ProgramVariable]
+    /// @param pv the [ProgramVariable]
     /// @param se2 the [SyntaxElement] to be compared
-    /// @param nat the [NameAbstractionTable] that should be used to check whether `se1`
+    /// @param nat the [NameAbstractionTable] that should be used to check whether `pv`
     /// and `se2` have the same abstract name
-    /// @return `true` iff `se1` and `se2` have the same abstract name
-    private boolean handleProgramVariable(ProgramVariable se1, SyntaxElement se2,
+    /// @return `true` iff `pv` and `se2` have the same abstract name
+    private boolean handleProgramVariable(ProgramVariable pv, SyntaxElement se2,
             NameAbstractionTable nat) {
-        if (se1 == se2) {
+        if (pv == se2) {
             return true;
         }
-        if (se1.getClass() != se2.getClass()) {
+        if (pv.getClass() != se2.getClass()) {
             return false;
         }
 
-        return nat.sameAbstractName(se1.name(), ((ProgramVariable) se2).name());
+        return nat.sameAbstractName(pv.name(), ((ProgramVariable) se2).name());
     }
 
 

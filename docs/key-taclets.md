@@ -23,11 +23,11 @@ Most program rules follow this shape:
 ```key
 ruleName {
     \schemaVar \formula post;
-    \schemaVar \program Path[storage,simple,global] gp;
+    \schemaVar \program Path[storage,simple,global] gsp;
     \schemaVar \program SimpleExpression se;
 
-    \find(\modality{#mod}{c# s#gp = s#se; #c}\endmodality(post))
-    \replacewith({storage := save(storage, gp, se)}
+    \find(\modality{#mod}{c# s#gsp = s#se; #c}\endmodality(post))
+    \replacewith({storage := save(storage, gsp, se)}
         \modality{#mod}{c# #c}\endmodality(post))
     \heuristics(simplify_prog)
 };
@@ -62,8 +62,6 @@ Prefer precise program sorts so rules stay disjoint:
 - `Path[storage,simple,global]` for contract storage roots.
 - `Path[storage,simple]` for simple storage roots or aliases.
 - `Path[storage,complex]` for member/index paths that need unfolding.
-- `StoragePath`, `SimpleStoragePath`, `MemoryPath`, and related path sorts when
-  the exact path kind is the point of the rule.
 - `SimpleExpression`, `NonSimpleExpression`, `Expression`, `Field`, and `Type`
   for statement pieces.
 
@@ -79,21 +77,35 @@ of the same shape uses the same name for the same role:
 | Simple index expression | `i` |
 | Stack variable read target | `v` |
 | Assignment target (arbitrary / nonsimple) | `lhs` / `nlhs` |
-| Global storage root | `gp` |
+| Global storage root (`Path[storage,simple,global]`) | `gsp` |
 | Simple / nonsimple storage path | `sp` (`sp1`, `sp2`) / `nsp` |
-| Local storage alias variable | `lp` |
-| Simple / nonsimple memory path | `mp` / `nmp` |
+| Storage path of any simplicity (`Path[storage]`) | `path` |
+| Local storage variable (`Variable[storage]`) | `lsv` |
+| Memory variable / nonsimple memory path | `mv` (`mv1`, `mv2`) / `nmp` |
+| Memory path of any simplicity (`Path[memory]`) | `mpath` |
 | Field (second field) | `a` (`b`) |
 | Fresh captured value temp and its type | `pv`, `pvType` |
 | Type of a fresh path alias | `aliasType` |
 | Declared type in value declarations | `varType` |
-| Address in transfer rules (`net(a)`) | `a` |
+| Simple / nonsimple address in transfer rules (`net(sadr)`) | `sadr` / `nadr` |
+
+A trailing `p` means the name denotes a path and a trailing `v` that it denotes
+a variable, so `gsp` is a storage location a write addresses while `lsv` and
+`mv` are program variables an update assigns to. The type of a fresh temporary
+is named after the temporary (`pvType`, `sadrType`, `seType`) except for a path
+alias, which uses the role name `aliasType`.
+
+One apparent exception is deliberate: the fresh alias of an `_unfold_` taclet
+is declared `Variable[storage]` (or `Variable[memory]`) because `\newTypeOf`
+needs a program variable to introduce, yet it is named `sp` (`mv`) for the
+simple path it plays the part of in the rest of the rule. Reserve `lsv` for a
+storage variable the taclet did not create.
 
 Matched program schema variables can be used directly in the term positions of
 `\replacewith`/`\add`: the engine lowers the matched AST piece to its logic
 form automatically (storage paths become `List` terms, fields become `Field`
 constants, simple expressions become value terms). Write `save(storage,
-gp, se)` directly — no bridging `\term` variable is needed. (Only in
+gsp, se)` directly — no bridging `\term` variable is needed. (Only in
 `\find`/`\assumes` term positions are program schema variables not allowed;
 there the `\sameAsTerm(programPart, termPart)` varcond still bridges them.)
 

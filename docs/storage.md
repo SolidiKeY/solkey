@@ -58,9 +58,12 @@ Assignment targets (LHS):
 
 Storage paths:
 - `sp` — simple storage path: a contract root or a generated alias.
-- `lp` — simple path that is a **local** storage reference declared
-  inside a function (e.g. `Person storage p`).
-- `gp` — simple path that is a **global** contract root.
+  Never an assignment target.
+- `lsv` — a **local** storage variable, i.e. a reference declared inside a
+  function (e.g. `Person storage p`). Sort `Variable[storage]`: a program
+  variable whose value is a path, so an update assigns to it.
+- `gsp` — a **global** simple path: a contract root, the storage location a
+  write to it addresses. Sort `Path[storage,simple,global]`.
 - `nsp` — nonsimple storage path (unresolved base, receiver, or
   index).
 - `path` — plain storage path when the simple/nonsimple distinction
@@ -115,7 +118,7 @@ for `delAt` through `delValue<[alpha]>` on the select:
   linearly, which is what made `SolcArrays.pushThenPopRestoresLength` slow.
 
   The two deferrals meet when a sort-free copy reads a *cleared* location —
-  `delete sp; gp = sp;` and its field, root and `push` variants.
+  `delete sp; gsp = sp;` and its field, root and `push` variants.
   `selectOnDelAtCons` instantiates its generic at the reader's sort, so a
   `find<[StValue]>` copy leaves `delValue<[StValue]>(…)`, which neither
   `delValueStruct` (concrete `Struct`) nor `delValueDefault` (`alphaPrim
@@ -152,7 +155,7 @@ index's element sort depends on the container, not on the index, so it cannot
 be stamped this way.
 
 **Note:** Both global roots (like `alice`) and local storage aliases
-(like `lp`) are represented as `List`-typed paths. A global root
+(like `lsv`) are represented as `List`-typed paths. A global root
 `alice` extracts to `cons(alice, nil)` — a single-element list. This
 unification allows all storage operations to use `find`/`save`
 uniformly.
@@ -275,23 +278,23 @@ the receiver unfold only sees a simple index.
 
 A bare contract root on the right-hand side is a `FieldReference`, which
 `SimpleExpression` excludes, so the two `se` unfolds above cannot fire on
-`nsp.a = gp;` or `nsp[i] = gp;`. Two twins with a
+`nsp.a = gsp;` or `nsp[i] = gsp;`. Two twins with a
 `Path[storage,simple,global]` right-hand side cover that case:
 
-**`storageFieldWriteRootRhs_unfold_leftFst`** — `nsp.a = gp`
+**`storageFieldWriteRootRhs_unfold_leftFst`** — `nsp.a = gsp`
 
-    nsp => ⟨ π  storage sp = nsp; sp.a = gp; ω ⟩ φ
+    nsp => ⟨ π  storage sp = nsp; sp.a = gsp; ω ⟩ φ
     ----------------------------------------------
-            => ⟨ π  nsp.a = gp; ω ⟩ φ
+            => ⟨ π  nsp.a = gsp; ω ⟩ φ
 
-**`storageIndexWriteRootRhs_unfold_leftFst`** — `nsp[i] = gp`
+**`storageIndexWriteRootRhs_unfold_leftFst`** — `nsp[i] = gsp`
 
-    nsp => ⟨ π  storage sp = nsp; sp[i] = gp; ω ⟩ φ
+    nsp => ⟨ π  storage sp = nsp; sp[i] = gsp; ω ⟩ φ
     -----------------------------------------------
-            => ⟨ π  nsp[i] = gp; ω ⟩ φ
+            => ⟨ π  nsp[i] = gsp; ω ⟩ φ
 
-After unfolding, the CopySource terminals consume `sp.a = gp` and
-`sp[i] = gp` (their source `Path[storage,simple]` accepts a global root).
+After unfolding, the CopySource terminals consume `sp.a = gsp` and
+`sp[i] = gsp` (their source `Path[storage,simple]` accepts a global root).
 
 ### Instances of unfold_leftSnd
 
@@ -322,7 +325,7 @@ then continues against `sp`.
             => ⟨ π  delete nsp[i]; ω ⟩ φ
 
 A delete keeps its last selector and aliases only the receiver, like
-every other left-hand side: `delete lp;` on a local storage pointer is
+every other left-hand side: `delete lsv;` on a local storage pointer is
 not Solidity, so there is no whole-target alias.
 
 **`storagePushValue_unfold_leftFstReceiver`** — `nsp.push(e);`
@@ -343,11 +346,11 @@ not Solidity, so there is no whole-target alias.
     ---------------------------------------------
             => ⟨ π  nsp.pop(); ω ⟩ φ
 
-**`storageLocalRootPush_unfold_leftFstReceiver`** — `lp = nsp.push();`
+**`storageLocalRootPush_unfold_leftFstReceiver`** — `lsv = nsp.push();`
 
-    nsp => ⟨ π  storage sp = nsp; lp = sp.push(); ω ⟩ φ
+    nsp => ⟨ π  storage sp = nsp; lsv = sp.push(); ω ⟩ φ
     ---------------------------------------------------
-            => ⟨ π  lp = nsp.push(); ω ⟩ φ
+            => ⟨ π  lsv = nsp.push(); ω ⟩ φ
 
 ## 6. Step 3: Generating an Update
 
@@ -362,13 +365,13 @@ emitted update.
   `memoryLocalDeclInitDrop` handle the other locations; the declared
   variable is registered as a program variable)
 
-      T storage lp = path;
-      ⇝  lp = path;                        (lp not occurring in path)
+      T storage lsv = path;
+      ⇝  lsv = path;                        (lsv not occurring in path)
 
 - `storageLocalDeclSkip`
 
-      T storage lp ;
-      ⇝  (skip; produces no update)        (lp not used)
+      T storage lsv ;
+      ⇝  (skip; produces no update)        (lsv not used)
 
 ### Field write
 
@@ -396,22 +399,22 @@ emitted update.
 
 - `storageRootWriteStore`
 
-      gp = se
-      ⇝  { storage := save(storage, gp, se) }
+      gsp = se
+      ⇝  { storage := save(storage, gsp, se) }
 
 - `storageRootWriteCopySource` (one rule for primitive and struct
   sources — `find<[StValue]>` is sort-free, the sort is resolved on read)
 
-      gp = sp
-      ⇝  { storage := save(storage, gp, find<[StValue]>(storage, sp)) }
+      gsp = sp
+      ⇝  { storage := save(storage, gsp, find<[StValue]>(storage, sp)) }
 
 - `storageLocalRootRebind` (rebinds a local storage reference; does
   **not** copy)
 
-      lp = sp
-      ⇝  { lp := sp }
+      lsv = sp
+      ⇝  { lsv := sp }
 
-  Note: Since both `lp` and `sp` are now `List`-typed paths, this is
+  Note: Since both `lsv` and `sp` are now `List`-typed paths, this is
   a direct assignment without any wrapping.
 
 ### Field / root read
@@ -428,13 +431,13 @@ emitted update.
 
 - `storageFieldReadBindLocalRoot`
 
-      lp = sp.b
-      ⇝  { lp := sp · b }
+      lsv = sp.b
+      ⇝  { lsv := sp · b }
 
 - `storageFieldReadStoreRoot`
 
-      gp = sp.b
-      ⇝  { storage := save(storage, gp, find(storage, sp · b)) }
+      gsp = sp.b
+      ⇝  { storage := save(storage, gsp, find(storage, sp · b)) }
 
 ### Delete
 
@@ -444,8 +447,8 @@ enumerated).
 
 - `storageRootDelete` (a contract root)
 
-      delete gp
-      ⇝  { storage := delAt(storage, gp) }
+      delete gsp
+      ⇝  { storage := delAt(storage, gsp) }
 
 - `storageFieldDelete`
 
@@ -485,13 +488,13 @@ mapping members included — `{ storage := save(storage, sp · at(i), defVal) }`
 
 - `storageIndexReadMappingBindLocalRoot`
 
-      lp = sp[i]
-      ⇝  { lp := sp · at(i) }
+      lsv = sp[i]
+      ⇝  { lsv := sp · at(i) }
 
 - `storageIndexReadMappingStoreRoot`
 
-      gp = sp[i]
-      ⇝  { storage := save(storage, gp, find(storage, sp · at(i))) }
+      gsp = sp[i]
+      ⇝  { storage := save(storage, gsp, find(storage, sp · at(i))) }
 
 ### Array index access  (when `array(sp)`, with `ℓ = find(storage, sp · length)`)
 
@@ -519,14 +522,14 @@ Each array rule branches on bounds. Out-of-bounds goes to
 
 - `storageIndexReadArrayBindLocalRoot`
 
-      lp = sp[i]
-      ⇝  if 0 ≤ i < ℓ : { lp := sp · at(i) }
+      lsv = sp[i]
+      ⇝  if 0 ≤ i < ℓ : { lsv := sp · at(i) }
          else         : revert();
 
 - `storageIndexReadArrayStoreRoot`
 
-      gp = sp[i]
-      ⇝  if 0 ≤ i < ℓ : { storage := save(storage, gp,
+      gsp = sp[i]
+      ⇝  if 0 ≤ i < ℓ : { storage := save(storage, gsp,
                                            find(storage, sp · at(i))) }
          else         : revert();
 
@@ -563,9 +566,9 @@ Each array rule branches on bounds. Out-of-bounds goes to
 - `storageLocalRootPushBind` (zero-arg push whose returned slot is
   captured into a local reference)
 
-      lp = sp.push();
+      lsv = sp.push();
       ⇝  { storage := save(storage, sp · length, n + 1)
-           || lp := sp · at(n) }
+           || lsv := sp · at(n) }
 
 - `storagePopSave` (clears the popped slot with `delAt`, which is
   mapping-preserving in the same way `delete` is, so a mapping
@@ -675,8 +678,8 @@ ensure that exactly one rule applies to any storage statement.
   consumed by `revertDiamond` or `revertBox`, again decreasing the
   number of statements.
 
-**Roots are bare.** `gp` is a bare contract root (a `FieldReference`)
-and `lp` a bare local storage pointer; a final field or index segment
+**Roots are bare.** `gsp` is a bare contract root (a `FieldReference`)
+and `lsv` a bare local storage pointer; a final field or index segment
 is always spelled out (`sp.a`, `sp[i]`), which is what keeps
 `storageRootWriteStore` and `storageFieldWriteSave` disjoint.
 
@@ -755,45 +758,45 @@ where both `alice` and `bob` extract to single-element lists. The path
 
 Use this when looking up which Step-3 rule fires.
 
-**Unified path representation:** Both global roots (`gp`) and local
-storage aliases (`lp`) are `List`-typed paths. A global root `alice`
+**Unified path representation:** Both global roots (`gsp`) and local
+storage aliases (`lsv`) are `List`-typed paths. A global root `alice`
 extracts to `cons(alice, nil)`. All storage operations use `find`/`save`.
 
 | Source statement                | Rule                                  | Update operation |
 |--------------------------------|---------------------------------------|------------------|
 | `sp.a = se`                    | `storageFieldWriteSave`               | `save`           |
 | `sp1.a = sp2`                  | `storageFieldWriteCopySource`         | `save`/`find<[StValue]>`|
-| `gp = se`                      | `storageRootWriteStore`               | `save`           |
-| `gp = sp`                      | `storageRootWriteCopySource`          | `save`/`find<[StValue]>`|
-| `lp = sp`                      | `storageLocalRootRebind`              | direct assign    |
+| `gsp = se`                      | `storageRootWriteStore`               | `save`           |
+| `gsp = sp`                      | `storageRootWriteCopySource`          | `save`/`find<[StValue]>`|
+| `lsv = sp`                      | `storageLocalRootRebind`              | direct assign    |
 | `v = sp.a`                     | `storageFieldReadFind`                | `find`           |
 | `v = sp`                       | `storageRootReadSelect`               | `find`           |
-| `lp = sp.b`                    | `storageFieldReadBindLocalRoot`       | direct assign    |
-| `gp = sp.b`                    | `storageFieldReadStoreRoot`           | `save`/`find<[StValue]>`|
-| `delete gp;`                   | `storageRootDelete`                   | `delAt`          |
+| `lsv = sp.b`                    | `storageFieldReadBindLocalRoot`       | direct assign    |
+| `gsp = sp.b`                    | `storageFieldReadStoreRoot`           | `save`/`find<[StValue]>`|
+| `delete gsp;`                   | `storageRootDelete`                   | `delAt`          |
 | `delete sp.a;`                 | `storageFieldDelete`                  | `delAt`          |
 | `delete sp[i];`                | `storageIndexDelete`                  | `save`/`defVal`  |
 | `sp[i] = se`  (mapping)        | `storageIndexWriteMappingSave`        | `save`           |
 | `sp1[i] = sp2`  (mapping)      | `storageIndexWriteMappingCopySource`  | `save`           |
-| `sp[i] = mp`  (mapping)        | `memoryToStorageIndexMappingCopyRoot` | `save`/`copyMem` |
+| `sp[i] = mv`  (mapping)        | `memoryToStorageIndexMappingCopyRoot` | `save`/`copyMem` |
 | `v = sp[i]`  (mapping)         | `storageIndexReadMappingFind`         | `find`           |
-| `lp = sp[i]`  (mapping)        | `storageIndexReadMappingBindLocalRoot`| direct assign    |
-| `gp = sp[i]`  (mapping)        | `storageIndexReadMappingStoreRoot`    | `save`/`find<[StValue]>`|
+| `lsv = sp[i]`  (mapping)        | `storageIndexReadMappingBindLocalRoot`| direct assign    |
+| `gsp = sp[i]`  (mapping)        | `storageIndexReadMappingStoreRoot`    | `save`/`find<[StValue]>`|
 | `sp[i] = se`  (array)          | `storageIndexWriteArraySave`          | `save`           |
 | `sp1[i] = sp2`  (array)        | `storageIndexWriteArrayCopySource`    | `save`           |
-| `sp[i] = mp`  (array)          | `memoryToStorageIndexArrayCopyRoot`   | `save`/`copyMem` |
+| `sp[i] = mv`  (array)          | `memoryToStorageIndexArrayCopyRoot`   | `save`/`copyMem` |
 | `v = sp[i]`  (array)           | `storageIndexReadArrayFind`           | `find`           |
-| `lp = sp[i]`  (array)          | `storageIndexReadArrayBindLocalRoot`  | direct assign    |
-| `gp = sp[i]`  (array)          | `storageIndexReadArrayStoreRoot`      | `save`/`find<[StValue]>`|
+| `lsv = sp[i]`  (array)          | `storageIndexReadArrayBindLocalRoot`  | direct assign    |
+| `gsp = sp[i]`  (array)          | `storageIndexReadArrayStoreRoot`      | `save`/`find<[StValue]>`|
 | `sp.push(se);`                 | `storagePushValueSave`                | `save`           |
 | `sp1.push(sp2);`               | `storagePushValueCopySource`          | `save`/`find<[StValue]>`|
 | `sp.push();`                   | `storagePushLengthSave`               | `save`           |
-| `lp = sp.push();`              | `storageLocalRootPushBind`            | `save`           |
+| `lsv = sp.push();`              | `storageLocalRootPushBind`            | `save`           |
 | `path.push() = se;`            | `storagePushLhsToPushValue` (desugar) | —                |
 | `sp.pop();`                    | `storagePopSave`                      | `save`           |
 | `revert();` (in `⟨·⟩`)         | `revertDiamond`                       | —                |
 | `revert();` (in `[·]`)         | `revertBox`                           | —                |
 
-The memory twins of the compound-update rows (`mp.a += se`, `++mp.a`,
-`mp[i] += se`, …) are in `memory.md` §11b; they use `read`/`write` in place of
+The memory twins of the compound-update rows (`mv.a += se`, `++mv.a`,
+`mv[i] += se`, …) are in `memory.md` §11b; they use `read`/`write` in place of
 `find`/`save` and have no root or mapping form.
