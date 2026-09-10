@@ -343,10 +343,7 @@ public abstract class Notation {
                         svType = "\\term";
                         specificSort = tsv.sort().name().toString();
                     }
-                    case FormulaSV fsv -> {
-                        svType = "\\formula";
-                        specificSort = fsv.sort().name().toString();
-                    }
+                    case FormulaSV ignored -> svType = "\\formula";
                     case VariableSV varSV -> {
                         svType = "\\variables";
                         specificSort = varSV.sort().name().toString();
@@ -362,8 +359,11 @@ public abstract class Notation {
                     }
                     default -> throw new RuntimeException("Unknown variable type: " + v.getClass());
                 }
-                sp.layouter().print("\\schemaVar ").print(svType + " ").print(specificSort)
-                        .print(" ").print(v.name().toString());
+                sp.layouter().print("\\schemaVar ").print(svType).print(" ");
+                if (!specificSort.isEmpty()) {
+                    sp.layouter().print(specificSort).print(" ");
+                }
+                sp.layouter().print(v.name().toString());
             } else if (v instanceof ModalOperatorSV modalOperatorSV) {
                 sp.layouter().beginC(0).beginC().print("\\schemaVar \\modalOperator {").brk(0);
                 boolean first = true;

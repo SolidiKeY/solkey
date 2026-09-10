@@ -42,19 +42,6 @@ public class ContextStatementBlock extends Block {
         v.performActionOnContextStatementBlock(this);
     }
 
-    @Override
-    public String toString() {
-        var sb = new StringBuilder();
-        sb.append("{c#\n");
-        for (int i = 0; i < getStatements().size(); i++) {
-            if (i > 0) {
-                sb.append("\n");
-            }
-            sb.append('\t').append(getStatements().get(i));
-        }
-        return sb.append("\n#c}").toString();
-    }
-
     /// overrides the check of the superclass as unmatched elements will disappear in the suffix of
     /// this ContextStatementBlock
     @Override

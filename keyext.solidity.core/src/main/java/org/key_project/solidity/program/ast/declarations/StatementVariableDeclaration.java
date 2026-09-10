@@ -125,4 +125,14 @@ public class StatementVariableDeclaration implements Declaration, SolidityProgra
     public @Nullable ProgramSV getSchemaVariable() {
         return schemaVariable;
     }
+
+    /// @return the declared type of a schematic declaration, or `null` if none was written
+    public @Nullable Object getSchemaType() {
+        return schemaType;
+    }
+
+    /// @return the data location written in a schematic declaration, or `null` for a concrete one
+    public @Nullable DataLocation getSchemaDataLocation() {
+        return schemaDataLocation;
+    }
 }

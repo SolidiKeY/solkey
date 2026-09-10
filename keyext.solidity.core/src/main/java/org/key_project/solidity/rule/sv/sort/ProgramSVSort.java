@@ -67,6 +67,12 @@ public abstract class ProgramSVSort extends SortImpl {
         throw new UnsupportedOperationException();
     }
 
+    /// The sort as written in a `\schemaVar \program` declaration, e.g. `Path[storage,simple]`.
+    @Override
+    public String declarationString() {
+        return name().toString();
+    }
+
     /// Whether this sort may stand for the given program element (inside a modality).
     public abstract boolean canStandFor(SolidityProgramElement pe, Services services);
 
