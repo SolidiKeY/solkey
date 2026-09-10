@@ -124,7 +124,7 @@ final class TacletCompletionDialog extends JDialog {
     private JPanel buildRuleSection() {
         JPanel section = new JPanel(new BorderLayout(0, 4));
         section.add(sectionLabel("Rule: " + app.taclet().name()), BorderLayout.NORTH);
-        JTextArea body = new JTextArea(app.taclet().toString());
+        JTextArea body = new JTextArea(TacletText.of(app, goal.proof().getServices()));
         body.setEditable(false);
         body.setFocusable(false);
         body.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
