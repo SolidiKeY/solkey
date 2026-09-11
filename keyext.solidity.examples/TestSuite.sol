@@ -1667,6 +1667,28 @@ contract TestSuite {
     }
 
     /// @custom:key box
+    function testStorageIndexWriteImpureIndexPrimitiveRhs() public {
+        require(a.length == 0);
+        uint i = 0;
+        a.push(100);
+        a.push(100);
+        a[i++] = i;
+        assert(i == 1);
+        assert(a[0] == 0);
+    }
+
+    /// @custom:key box
+    function testStorageIndexWriteImpureIndexRefRhs() public {
+        require(persons.length == 0);
+        persons.push();
+        persons.push();
+        bob.age = 0;
+        persons[bob.age++] = bob;
+        assert(bob.age == 1);
+        assert(persons[0].age == 1);
+    }
+
+    /// @custom:key box
     function testStorageEvaluationOrder() public {
         require(a.length == 0);
         uint i = 0;
