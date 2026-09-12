@@ -127,12 +127,6 @@ Edge cases of already-supported constructs (see `docs/taclets-implementation.md`
 - **Whole-struct write from a struct *value*** (`alice = pVal;`, vs. the
   supported root-to-root `alice = bob;`): needs Step-1 unfolding for struct
   constructors / memory-struct sources.
-- **`arr.push(sp);` with a struct-typed storage path argument** (`tokens.push(tok);`):
-  the argument is hoisted into a storage alias and symbolic execution then stops at
-  the rebind, so `storagePushValueCopySource` never fires. `arr.push() = sp;`
-  (`testStorageComplexReceiverPushAssignFromAlias`) is the working spelling. Found while
-  adding the delete-then-copy examples for `delValueStValueCast`; the delete half is
-  unrelated — the shape is stuck with or without a preceding `delete`.
 - **Dynamic-array `delete arr;` length reset**: not modeled by the current
   memory/storage delete rules. (Struct-`delete` preserving mapping members is now
   implemented via the lazy `delNode` marker — see `docs/storage.md` §6.)

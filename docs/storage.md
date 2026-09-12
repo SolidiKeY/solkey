@@ -244,6 +244,13 @@ the push update fires.
     ------------------------------------------
         => ⟨ π  sp.push(nse); ω ⟩ φ
 
+`nse` is `NonSimpleExpression[primitive]`, not plain `NonSimpleExpression`: the
+hoisted `T pv = nse;` is a *value* declaration, so a path-shaped argument must
+not match. A bare contract root such as `tok` in `tokens.push(tok);` is a
+`FieldReference` and hence non-simple, and hoisting it would bind a value local
+to a storage path — a rebind no rule consumes. Excluded here, it reaches
+`storagePushValueCopySource` directly.
+
 ## 5. Step 2: Unfolding the Left-Hand Side
 
 **unfold_leftFst** — capture a nonsimple receiver on the LHS.

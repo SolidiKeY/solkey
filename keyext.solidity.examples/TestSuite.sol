@@ -205,6 +205,14 @@ contract TestSuite {
         assert(r == 42);
     }
 
+    /// @custom:key box
+    function storagePushValueCopySource() public {
+        require(tokens.length == 0);
+        tok.value = 7;
+        tokens.push(tok);
+        assert(tokens[0].value == 7);
+    }
+
     // ── Require / assert: literal operand ──
 
     function requireTrueLiteral() public {
@@ -2123,29 +2131,5 @@ contract TestSuite {
         tbs[i++].tokens[0] = src;
         assert(i == 2);
         assert(tbs[1].tokens[0].value == 2);
-    }
-
-    // ── Not provable yet ──
-    //
-    // Shapes the calculus does not close. Stuck, not unsound: neither the true
-    // assertion nor a false one closes. The asserted values are the ones a real
-    // EVM produces (`SolidityRuntimeExecutionTest` runs these too).
-    //
-    // Named `unprovable*` so `TacletStarterExamplesTest` skips them (its
-    // `KNOWN_STUCK_PREFIX`): the point is to keep the shape as compiling Solidity
-    // next to its provable siblings, not to assert that it closes.
-
-    /// Stuck. A storage-path argument to `push` is hoisted into a storage alias
-    /// and symbolic execution stops at the rebind, so `storagePushValueCopySource`
-    /// never fires. This is the shape
-    /// `storagePushValueUnfoldRightSndArgument_sound` leaves as a documented
-    /// `sorry` (its storage-argument case) in the Lean model.
-    /// `tokens.push() = tok;` is the working spelling.
-    /// @custom:key box
-    function unprovablePushStoragePathArgument() public {
-        require(tokens.length == 0);
-        tok.value = 7;
-        tokens.push(tok);
-        assert(tokens[0].value == 7);
     }
 }

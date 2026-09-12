@@ -252,8 +252,10 @@ Push-lvalue `sp.push() = se` is desugared to `sp.push(se)` at **parse time**
 complex-receiver unfold rules capture its return slot — no dedicated push-field
 rules needed. Terminals: `storagePushValueSave`, `storagePushValueCopySource`
 (sort-free `find<[StValue]>`), `storagePushLengthSave`, `storagePopSave` (nonempty + empty/
-revert branch), `storagePushValue_unfold_rightSndArgument` (non-simple argument
-capture on a simple receiver), `storage{Push,…}_unfold_leftFstReceiver` (a complex
+revert branch), `storagePushValue_unfold_rightSndArgument` (non-simple *primitive*
+argument capture on a simple receiver — a path-shaped argument stays for
+`storagePushValueCopySource`, which consumes `tokens.push(tok)` without an
+intervening alias), `storage{Push,…}_unfold_leftFstReceiver` (a complex
 receiver is aliased first, whatever the argument — `storagePushValue_unfold_leftFstReceiver`
 takes any `Expression`). Array bounds/length are read
 from **post-update** storage (bound emitted inside `\replacewith`, not via `\add`).
