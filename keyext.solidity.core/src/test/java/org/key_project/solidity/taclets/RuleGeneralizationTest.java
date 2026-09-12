@@ -325,7 +325,51 @@ public class RuleGeneralizationTest {
             m("subAssignValueRhsCapture", "sub", "sub", "-="),
             m("mulAssignValueRhsCapture", "mul", "mul", "*="),
             m("divAssignValueRhsCapture", "div", "div", "/="),
-            m("modAssignValueRhsCapture", "mod", "mod", "%=")));
+            m("modAssignValueRhsCapture", "mod", "mod", "%=")),
+        g("indexCapture", "rhsCapture", null,
+            m("storageRootWriteValueRhsCapture", "storageRootWrite", "storageRootWrite",
+                "Path[storage,simple,global] gsp", "s#gsp"),
+            m("fieldWriteValueRhsCapture", "fieldWrite", "fieldWrite",
+                "Expression e1; \\schemaVar \\program Field a", "s#e1.s#a"),
+            m("indexWriteValueRhsCapture", "indexWrite", "indexWrite",
+                "Expression e1; \\schemaVar \\program Expression e2", "s#e1[s#e2]")),
+        g("indexCapture", "valueSnapshot", null,
+            m("storageIndexWriteNonSimpleIndexCapture", "storage", "storageIndexWrite",
+                "Path[storage] path", "s#path[s#nse]", "s#path[s#pv]"),
+            m("memoryIndexWriteNonSimpleIndexCapture", "memory", "memoryIndexWrite",
+                "Path[memory] mpath", "s#mpath[s#nse]", "s#mpath[s#pv]")),
+        g("indexedReceiverCapture", "field", null,
+            m("storageFieldWriteIndexedReceiver_unfold_leftFst", "storage", "storage",
+                "Path[storage,complex,nonSimpleIndex] nsp", "Variable[storage] sp",
+                "newTypeOf(sp, nsp)", "s#nsp.s#a", "s#sp.s#a", "s#aliasType storage",
+                "s#nsp", "s#sp"),
+            m("memoryFieldWriteIndexedReceiver_unfold_leftFst", "memory", "memory",
+                "Path[memory,complex,nonSimpleIndex] nmp", "Variable[memory] mv",
+                "newTypeOf(mv, nmp)", "s#nmp.s#a", "s#mv.s#a", "s#aliasType memory",
+                "s#nmp", "s#mv")),
+        g("indexedReceiverCapture", "index", null,
+            m("storageIndexWriteIndexedReceiver_unfold_leftFst", "storage", "storage",
+                "Path[storage,complex,nonSimpleIndex] nsp", "Variable[storage] sp",
+                "newTypeOf(sp, nsp)", "s#nsp[s#i]", "s#sp[s#i]", "s#aliasType storage",
+                "s#nsp", "s#sp"),
+            m("memoryIndexWriteIndexedReceiver_unfold_leftFst", "memory", "memory",
+                "Path[memory,complex,nonSimpleIndex] nmp", "Variable[memory] mv",
+                "newTypeOf(mv, nmp)", "s#nmp[s#i]", "s#mv[s#i]", "s#aliasType memory",
+                "s#nmp", "s#mv")),
+        g("indexCapture", "refPassthrough", null,
+            m("storageIndexWriteStorageRefNonSimpleIndexCapture", "storageRef",
+                "storageIndexWriteStorageRef", "Path[storage] path",
+                "Variable[storage] sv", "s#path[s#nse]", "s#path[s#pv]", "s#sv"),
+            m("memoryIndexWriteMemRefNonSimpleIndexCapture", "memRef",
+                "memoryIndexWriteMemRef", "Path[memory] mpath",
+                "Variable[memory] mv", "s#mpath[s#nse]", "s#mpath[s#pv]", "s#mv"),
+            m("storageIndexWriteRootRefRhsNonSimpleIndexCapture", "rootRef",
+                "storageIndexWriteRootRefRhs", "Path[storage] path",
+                "Path[storage,simple,global,reference] gsp", "s#path[s#nse]",
+                "s#path[s#pv]", "s#gsp"),
+            m("memoryToStorageIndexNonSimpleIndexCapture", "memToStorage",
+                "memoryToStorageIndex", "Path[storage] path",
+                "Variable[memory] mv", "s#path[s#nse]", "s#path[s#pv]", "s#mv")));
 
     private static String annotation(Group group, Member member) {
         StringBuilder sb = new StringBuilder(MARKER);
@@ -493,7 +537,7 @@ public class RuleGeneralizationTest {
         assertEquals(List.of(), markers,
             "annotations in the file without a corresponding spec entry in "
                 + RuleGeneralizationTest.class.getSimpleName());
-        assertEquals(154, expectedByName.size(), "spec member count");
+        assertEquals(167, expectedByName.size(), "spec member count");
     }
 
     @Test

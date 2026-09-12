@@ -51,7 +51,7 @@ final class PathSVSort extends ProgramSVSort {
     }
 
     private record PathInfo(DataArea dataArea, boolean simple, Origin origin,
-            TypeCategory typeCategory) {
+            TypeCategory typeCategory, boolean nonSimpleIndex) {
     }
 
     private final DataArea dataArea;
@@ -60,15 +60,20 @@ final class PathSVSort extends ProgramSVSort {
     private final TypeCategory typeCategory;
     private final TypeKind typeKind;
     private final TypeKind elementKind;
+    private final boolean anyIndex;
+    private final boolean requireNonSimpleIndex;
 
     PathSVSort(String name, DataArea dataArea, Simplicity simplicity) {
         this(name, dataArea, simplicity, Origin.ANY, TypeCategory.ANY, TypeKind.ANY,
-            TypeKind.ANY);
+            TypeKind.ANY, false, false);
     }
 
     private PathSVSort(String name, DataArea dataArea, Simplicity simplicity, Origin origin,
-            TypeCategory typeCategory, TypeKind typeKind, TypeKind elementKind) {
+            TypeCategory typeCategory, TypeKind typeKind, TypeKind elementKind,
+            boolean anyIndex, boolean requireNonSimpleIndex) {
         super(new Name(name));
+        this.anyIndex = anyIndex || requireNonSimpleIndex;
+        this.requireNonSimpleIndex = requireNonSimpleIndex;
         this.dataArea = dataArea;
         this.simplicity = simplicity;
         this.origin = origin;
@@ -79,8 +84,11 @@ final class PathSVSort extends ProgramSVSort {
 
     @Override
     public boolean canStandFor(SolidityProgramElement pe, Services services) {
-        PathInfo info = classify(pe, services);
+        PathInfo info = classify(pe, services, anyIndex);
         if (info == null) {
+            return false;
+        }
+        if (requireNonSimpleIndex && !info.nonSimpleIndex()) {
             return false;
         }
         if (dataArea != DataArea.ANY && info.dataArea() != dataArea) {
@@ -128,6 +136,8 @@ final class PathSVSort extends ProgramSVSort {
                 case "reference" -> filters.typeKind.set(TypeKind.REFERENCE, flag);
                 case "primitiveelement" -> filters.elementKind.set(TypeKind.PRIMITIVE, flag);
                 case "referenceelement" -> filters.elementKind.set(TypeKind.REFERENCE, flag);
+                case "anyindex" -> filters.anyIndex = true;
+                case "nonsimpleindex" -> filters.requireNonSimpleIndex = true;
                 default -> throw new IllegalArgumentException(
                     "Unknown Path sort flag '" + rawFlag + "'");
             }
@@ -138,51 +148,59 @@ final class PathSVSort extends ProgramSVSort {
         }
         ProgramSVSort result = new PathSVSort("Path[" + parameter + "]", filters.dataArea.value,
             filters.simplicity.value, filters.origin.value, filters.typeCategory.value,
-            filters.typeKind.value, filters.elementKind.value);
+            filters.typeKind.value, filters.elementKind.value, filters.anyIndex,
+            filters.requireNonSimpleIndex);
         PARAMETERIZED_SORTS.put(parameter, result);
         return result;
     }
 
-    private static PathInfo classify(SolidityProgramElement pe, Services services) {
+    private static PathInfo classify(SolidityProgramElement pe, Services services,
+            boolean anyIndex) {
         if (pe instanceof FieldReference) {
-            return new PathInfo(DataArea.STORAGE, true, Origin.GLOBAL, typeCategoryOf(pe));
+            return new PathInfo(DataArea.STORAGE, true, Origin.GLOBAL, typeCategoryOf(pe), false);
         }
         if (pe instanceof ProgramVariable pv) {
             DataLocation dataLocation = pv.getDataLocation();
             if (dataLocation == DataLocation.Storage) {
-                return new PathInfo(DataArea.STORAGE, true, Origin.LOCAL, typeCategoryOf(pe));
+                return new PathInfo(DataArea.STORAGE, true, Origin.LOCAL, typeCategoryOf(pe),
+                    false);
             }
             if (dataLocation == DataLocation.Memory) {
-                return new PathInfo(DataArea.MEMORY, true, Origin.LOCAL, typeCategoryOf(pe));
+                return new PathInfo(DataArea.MEMORY, true, Origin.LOCAL, typeCategoryOf(pe),
+                    false);
             }
-            return new PathInfo(DataArea.ANY, true, Origin.LOCAL, typeCategoryOf(pe));
+            return new PathInfo(DataArea.ANY, true, Origin.LOCAL, typeCategoryOf(pe), false);
         }
         if (pe instanceof MemberExp member) {
-            PathInfo base = classify(member.getLeftExp(), services);
+            PathInfo base = classify(member.getLeftExp(), services, anyIndex);
             if (base == null) {
                 return null;
             }
-            return new PathInfo(base.dataArea(), false, base.origin(), typeCategoryOf(pe));
+            return new PathInfo(base.dataArea(), false, base.origin(), typeCategoryOf(pe),
+                base.nonSimpleIndex());
         }
         if (pe instanceof IndexExpression index) {
-            if (!isSimpleIndex(index.getIndexExp())) {
+            if (!anyIndex && !isSimpleIndex(index.getIndexExp())) {
                 return null;
             }
-            PathInfo base = classify(index.getLeftExp(), services);
+            PathInfo base = classify(index.getLeftExp(), services, anyIndex);
             if (base == null) {
                 return null;
             }
-            return new PathInfo(base.dataArea(), false, base.origin(), typeCategoryOf(pe));
+            return new PathInfo(base.dataArea(), false, base.origin(), typeCategoryOf(pe),
+                base.nonSimpleIndex() || !isSimpleIndex(index.getIndexExp()));
         }
         // A no-arg `arr.push()` returns the freshly appended slot: a complex storage
         // location rooted at the array receiver, with the array's element type. Treating
         // it as a complex path lets the ordinary complex-receiver unfold rules capture it.
         if (pe instanceof FunctionCallExpression call && isNoArgPush(call)) {
-            PathInfo base = classify(((MemberExp) call.getFunctionExp()).getLeftExp(), services);
+            PathInfo base =
+                classify(((MemberExp) call.getFunctionExp()).getLeftExp(), services, anyIndex);
             if (base == null) {
                 return null;
             }
-            return new PathInfo(base.dataArea(), false, base.origin(), typeCategoryOf(pe));
+            return new PathInfo(base.dataArea(), false, base.origin(), typeCategoryOf(pe),
+                base.nonSimpleIndex());
         }
         return null;
     }
@@ -255,6 +273,8 @@ final class PathSVSort extends ProgramSVSort {
         private final Filter<TypeCategory> typeCategory = new Filter<>(TypeCategory.ANY);
         private final Filter<TypeKind> typeKind = new Filter<>(TypeKind.ANY);
         private final Filter<TypeKind> elementKind = new Filter<>(TypeKind.ANY);
+        private boolean anyIndex;
+        private boolean requireNonSimpleIndex;
     }
 
     /** One filter axis: its value plus the flag that set it, so conflicts can be reported. */

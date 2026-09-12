@@ -1489,6 +1489,14 @@ contract TestSuite {
         assert(carol.age == 0);
     }
 
+    function testMemoryEvaluationOrder() public {
+        uint[] memory xs = new uint[](3);
+        uint i = 0;
+        xs[++i] = ++i;
+        assert(i == 2);
+        assert(xs[2] == 1);
+    }
+
     function testMemoryFieldShallowCopy() public {
         Person memory carol;
         Person memory david;
@@ -1497,6 +1505,24 @@ contract TestSuite {
         carol.account.balance = 60;
         assert(david.account.balance == 60);
         assert(carol.account.balance == 60);
+    }
+
+    function testMemoryIndexWriteImpureIndexPrimitiveRhs() public {
+        uint[] memory xs = new uint[](2);
+        uint i = 0;
+        xs[i++] = i;
+        assert(i == 1);
+        assert(xs[0] == 0);
+    }
+
+    function testMemoryIndexWriteImpureIndexRefRhs() public {
+        Token[] memory toks = new Token[](2);
+        Token memory tmp;
+        tmp.value = 5;
+        uint j = 0;
+        toks[j++] = tmp;
+        assert(j == 1);
+        assert(toks[0].value == 5);
     }
 
     function testMemoryRootAlias() public {
@@ -1548,6 +1574,19 @@ contract TestSuite {
         alice = carol;
         carol.age = 43;
         assert(alice.age == 42);
+    }
+
+    /// @custom:key box
+    function testMemoryToStorageIndexCopyImpureIndex() public {
+        require(persons.length == 0);
+        persons.push();
+        persons.push();
+        Person memory carol;
+        carol.age = 7;
+        uint i = 0;
+        persons[i++] = carol;
+        assert(i == 1);
+        assert(persons[0].age == 7);
     }
 
     function testMemoryTokenArrayAuxiliaryCases() public {
@@ -1607,6 +1646,18 @@ contract TestSuite {
         assert(i == 0);
         assert(v == 77);
         assert(carolValues[0] == 0);
+    }
+
+    /// @custom:key box
+    function testNestedIndexWriteImpureIndexPrimitiveRhs() public {
+        require(matrix.length == 0);
+        matrix.push();
+        matrix.push();
+        matrix[1].push(100);
+        uint i = 1;
+        matrix[i++][0] = i;
+        assert(i == 2);
+        assert(matrix[1][0] == 1);
     }
 
     function testNestedStorageWrites() public {

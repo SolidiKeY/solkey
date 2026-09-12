@@ -284,6 +284,18 @@ Index evaluation follows the usual RHS-before-LHS discipline:
 
 The value-producing RHS is captured before the indexed LHS update fires.
 
+The discipline also binds when the RHS is *already* simple, because capturing
+the index can change what the RHS reads. `memoryIndexWriteNonSimpleIndexCapture`
+therefore snapshots a primitive RHS ahead of the index:
+
+    xs[nse] = se;   ⟹   T_{se} rv = se; T pv = nse; xs[pv] = rv;
+
+so `xs[i++] = i;` writes the *old* `i`, as the EVM does
+(`testMemoryIndexWriteImpureIndexPrimitiveRhs`). A reference RHS is bound
+rather than read, so `memoryIndexWriteMemRefNonSimpleIndexCapture` captures the
+index alone. Both are storage-twin-checked by `RuleGeneralizationTest`'s
+`indexCapture` family.
+
 Arrays of structs still alias through identity-valued elements:
 
     Token[] memory carolTokens = new Token[](4);

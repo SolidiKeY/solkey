@@ -175,8 +175,9 @@ memory indexed groups are their own `RuleGeneralizationTest` groups rather than
 members of the storage ones.
 
 No new capture rules were needed: `addAssignValueRhsCapture` and its siblings
-take a plain `Expression` target and so already cover a memory left-hand side,
-and `memoryIndexWriteNonSimpleIndexCapture` already covers a non-simple index.
+take a plain `Expression` target and so already cover a memory left-hand side.
+A non-simple index under a compound assignment has no capture rule on either
+side and stays unsupported.
 
 ### Tier-1 expression operators
 Mirror the `+`/`==` families: terminal assigns the logic-level result, non-simple
@@ -429,15 +430,59 @@ kind:
   `\hasMemoryFieldSort(b, \sort(alphaId))` varcond so primitive members take
   this route instead.
 - **Non-simple index** (paper `unfold_leftSnd` / `rightSndIndex`), all with
-  `Path[storage]` / `Path[memory]` bases (any simplicity/origin/kind):
-  `storageIndexWriteNonSimpleIndexCapture`, `memoryIndexWriteNonSimpleIndexCapture`,
-  `storageIndexWriteRootRhsNonSimpleIndexCapture` (root-reference RHS),
-  `storageIndexRead_unfold_rightSndIndex`, `memoryIndexRead_unfold_rightSndIndex`,
-  `storageIndexDeleteNonSimpleIndexCapture`, `memoryIndexDeleteNonSimpleIndexCapture`.
-  Depth-2 inner indices (`e1[nse][e2]`) have dedicated location-neutral captures
-  `indexWriteInnerNonSimpleIndexCapture` / `indexReadInnerNonSimpleIndexCapture`;
-  NSE indices at depth ≥ 3 or under member bases (`people[k+1].age`) are still
-  unsupported.
+  `Path[storage]` / `Path[memory]` bases (any simplicity/origin/kind). A *write*
+  is split by the right-hand side's kind, because Solidity evaluates the
+  right-hand side before the left-hand side and the hoisted index may mutate
+  what the right-hand side reads:
+  - **primitive RHS** — the value is read into a snapshot ahead of the index:
+    `path[nse] = se;` ⟹ `rvType rv = se; pvType pv = nse; path[pv] = rv;`.
+    `storageIndexWriteNonSimpleIndexCapture`,
+    `memoryIndexWriteNonSimpleIndexCapture`,
+    `storageIndexWriteRootRhsNonSimpleIndexCapture` (primitive global root),
+    `{storage,memory}{Field,Index}WriteIndexedReceiver_unfold_leftFst` when the
+    *receiver* carries the non-simple index (`matrix[i++][0] = v`). Without
+    the snapshot the calculus proves `a[0] == 1` for `a[i++] = i;` where the EVM
+    writes `0` — the witnesses are `test{Storage,Memory,Nested}…ImpureIndex…`
+    in `TestSuite.sol`.
+  - **reference RHS** — binding a reference is aliasing, not a read, so the
+    index capture stands alone: `storageIndexWriteStorageRefNonSimpleIndexCapture`,
+    `memoryIndexWriteMemRefNonSimpleIndexCapture`,
+    `storageIndexWriteRootRefRhsNonSimpleIndexCapture`,
+    `memoryToStorageIndexNonSimpleIndexCapture` (`path[nse] = mv`, feeding the
+    `memoryToStorageIndex{Mapping,Array}CopyRoot` terminals). The
+    receiver-capture rules have no reference half, so a reference right-hand
+    side through a receiver with a non-simple index is stuck.
+
+  Reads and deletes read no value across the captured index and so need no
+  split: `storageIndexRead_unfold_rightSndIndex`,
+  `memoryIndexRead_unfold_rightSndIndex`,
+  `storageIndexDeleteNonSimpleIndexCapture`,
+  `memoryIndexDeleteNonSimpleIndexCapture`. A non-simple index under a compound
+  assignment (`a[i++] += x`) has no capture rule.
+
+  **Nesting recurses; it is not enumerated.** A receiver that itself carries a
+  non-simple index (`matrix[i++]`) is no `Path` under the default sort, because
+  `PathSVSort.classify` accepts only a variable or a literal as an index. Two
+  sort flags lift that: `anyIndex` allows such an index, `nonSimpleIndex`
+  requires one. The four
+  `{storage,memory}{Field,Index}WriteIndexedReceiver_unfold_leftFst` rules take
+  a `nonSimpleIndex` receiver, snapshot the value, and alias the receiver; the
+  four `_unfold_rightFst` read unfolds take an `anyIndex` receiver and an
+  arbitrary index. The alias declaration they emit is stripped to a plain
+  assignment by `*DeclInitDrop`, which re-enters the read unfolds — so each step
+  peels one level and the decomposition reaches any depth. That replaces the
+  former `indexWriteInnerNonSimpleIndexCapture` / `indexReadInnerNonSimpleIndexCapture`,
+  which were keyed to the literal shape `e1[nse][e2]` and could not reach depth
+  3. **No depth-keyed rule belongs in this file**; `grep '\]\['` over
+  `solidityProgramRules.key` must stay empty.
+
+  The receiver capture must keep the value snapshot: without it, relaxing the
+  sort reproduces the Lean model's `fieldWrite_not_sound` evaluation-order bug
+  (`lean/solidity/…/Counterexamples/EvaluationOrder.lean`).
+
+  The whole family is skeleton-checked as `RuleGeneralizationTest`'s
+  `indexCapture` family (variants `rhsCapture` / `valueSnapshot` /
+  `refPassthrough`), so the storage and memory halves cannot drift apart again.
 Also `storageIndexReadMappingStoreRoot` closes the paper's §11 table
 (`gsp = sp[i]` for mappings, no bounds branch).
 
@@ -545,7 +590,9 @@ aliases, mapping read/write/delete, struct-`delete` preserving mapping members
 (`testStorageStructDeleteSkipsMappingMember`), mapping-element struct deep copy
 (`testStorageMapStructCopy`); the full push/pop family
 (`testStoragePush*`, `testStorageComplexReceiverPush*`, `testStorageArrayReadWrite`,
-`testStorageEvaluationOrder` — RHS-before-LHS index order); memory aliasing,
+`testStorageEvaluationOrder`, `testMemoryEvaluationOrder` — RHS-before-LHS index
+order, and `test{Storage,Memory,Nested}IndexWriteImpureIndex*` for the value
+snapshot an impure index forces); memory aliasing,
 delete, and inc/dec in array indices (`testMemoryUintArray*`); cross-location
 storage↔memory copies. Push examples assume a fresh-slot precondition
 (`require(tokens.length == 0);` under `/// @custom:key box`) since execution starts from

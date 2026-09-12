@@ -49,6 +49,9 @@ still verified as uniform across operators:
 | `loc=indexMapping` vs `loc=indexArray` | the indexed terminals are split by the receiver's sort: the array groups wrap the effect in the `inBounds` / `outOfBounds` (`revert();`) goal pair, the mapping groups do not |
 | `stmt` / `assign` / `decl` | inc/dec as a statement vs `result = …` vs declaration form |
 | `fixity=pre` vs `fixity=post` | pre writes storage before binding the result, post binds first — separate groups |
+| `rhsCapture` | a non-simple right-hand side is hoisted; the target is untouched |
+| `valueSnapshot` | a non-simple index is hoisted out of a write whose right-hand side is a *primitive* value, so the value is read into a snapshot first: Solidity evaluates the right-hand side before the left-hand side, and the hoisted index may mutate what the right-hand side reads |
+| `refPassthrough` | the same, for a *reference* right-hand side: binding a reference is aliasing rather than a read, so there is nothing to snapshot and the index capture stands alone |
 
 Hole ordering rule: holes apply in spec order, so a string must come before
 its substrings (`+=` before `+`, `++s#gsp` before `+`); the test rejects a spec
@@ -63,9 +66,12 @@ where an earlier hole is a substring of a later one.
 | `storageIncDec` | 40 | `storage{Root,Field}{Pre,Post}{in,de}crement`, `storageIndex{Mapping,Array}{Pre,Post}{in,de}crement` (+ `Assignment`, `_unfold_leftFst`) |
 | `localIncDec` | 12 | `localDecl…` / `localAssign…` / `local…` inc/dec |
 | `localCompoundAssign` | 5 | `local{Add,Sub,Mul,Div,Mod}Assign` |
+| `memoryCompoundAssign` | 20 | `memory{Field,IndexArray}{Add,Sub,Mul,Div,Mod}Assign` |
+| `memoryIncDec` | 24 | `memory{Field,IndexArray}{Pre,Post}{in,de}crement` (+ `Assignment`) |
 | `compoundAssignRhsCapture` | 5 | `{add,…,mod}AssignValueRhsCapture` |
+| `indexCapture` | 10 | the capture rules that hoist a fragment out of an indexed or field write — see the variant table above |
 
-110 annotated taclets in total.
+164 annotated taclets in total.
 
 ## Running the check
 

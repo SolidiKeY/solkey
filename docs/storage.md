@@ -252,11 +252,16 @@ the push update fires.
     ---------------------------------------------------
             => ⟨ π  op(nsp, a) = se; ω ⟩ φ
 
-**unfold_leftSnd** — capture a nonsimple index on the LHS.
+**unfold_leftSnd** — capture a nonsimple index on the LHS. Because Solidity
+evaluates the right-hand side first and `nse` may mutate what `se` reads, a
+*primitive* `se` is snapshotted into `rv` ahead of the index:
 
-    nse => ⟨ π  T pv = nse; op(sp, pv) = se; ω ⟩ φ
-    ------------------------------------------------
+    nse => ⟨ π  T_{se} rv = se; T pv = nse; op(sp, pv) = rv; ω ⟩ φ
+    --------------------------------------------------------------
         => ⟨ π  op(sp, nse) = se; ω ⟩ φ
+
+A *reference* right-hand side is bound, not read, so its instances keep the
+plain shape with the index capture alone.
 
 ### Instances of unfold_leftFst
 
@@ -273,8 +278,10 @@ the push update fires.
             => ⟨ π  nsp[i] = se; ω ⟩ φ
 
 As on the right-hand side, the index is captured first
-(`storageIndexWrite_unfold_leftSndIndex` takes any storage path), so
-the receiver unfold only sees a simple index.
+(`storageIndexWriteNonSimpleIndexCapture` takes any storage path), so
+the receiver unfold only sees a simple index. Receiver-before-index is
+unobservable here: `PathSVSort` only classifies an index that is a variable or
+a literal, so a receiver never carries a side effect.
 
 A bare contract root on the right-hand side is a `FieldReference`, which
 `SimpleExpression` excludes, so the two `se` unfolds above cannot fire on
@@ -298,12 +305,24 @@ After unfolding, the CopySource terminals consume `sp.a = gsp` and
 
 ### Instances of unfold_leftSnd
 
-**`storageIndexWrite_unfold_leftSndIndex`** — `path[nse] = se`
-(taclet `storageIndexWriteNonSimpleIndexCapture`)
+**`storageIndexWriteNonSimpleIndexCapture`** — `path[nse] = se`, primitive `se`
 
-    nse => ⟨ π  T pv = nse; path[pv] = se; ω ⟩ φ
-    ----------------------------------------------
+    nse => ⟨ π  T_{se} rv = se; T pv = nse; path[pv] = rv; ω ⟩ φ
+    ------------------------------------------------------------
          => ⟨ π  path[nse] = se; ω ⟩ φ
+
+The snapshot is what makes `a[i++] = i;` write the *old* `i`. Dropping it
+closes a proof of `a[0] == 1` where the EVM writes `0`; the witnesses are
+`testStorageIndexWriteImpureIndexPrimitiveRhs` and its memory and depth-2 twins
+in `TestSuite.sol`.
+
+**`storageIndexWriteStorageRefNonSimpleIndexCapture`** — `path[nse] = sv`,
+and likewise `storageIndexWriteRootRefRhsNonSimpleIndexCapture` (`gsp`) and
+`memoryToStorageIndexNonSimpleIndexCapture` (`mv`)
+
+    nse => ⟨ π  T pv = nse; path[pv] = sv; ω ⟩ φ
+    ----------------------------------------------
+         => ⟨ π  path[nse] = sv; ω ⟩ φ
 
 ### Standalone receiver / delete-target simplifications
 

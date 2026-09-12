@@ -124,6 +124,21 @@ Clone the `+=` family (`storageRootAddAssign` / `…Field…` / `…Index…` +
 
 Edge cases of already-supported constructs (see `docs/taclets-implementation.md`):
 
+- **The recursive receiver capture does not fire yet (two red tests).**
+  `{storage,memory}{Field,Index}WriteIndexedReceiver_unfold_leftFst` replaced the
+  depth-2 captures and are never applied, so `storageMatrixNseIndex`
+  (`matrix[i+1][j+1] = x+y`) and `testNestedIndexWriteImpureIndexPrimitiveRhs`
+  (`matrix[i++][0] = i`) are stuck on the nested write. Bisected to the
+  `\varcond(\newTypeOf(sp, nsp))`: replacing the peer with `se` makes the rule
+  fire, yet instrumenting `TacletApp.getProgramElement` shows that varcond
+  resolving correctly (`peer='matrix[i_0 + 1]' rawType=uint[]
+  kst=KeYSolidityType(uint[],int[])`), so the rejection is elsewhere in taclet
+  instantiation. Two things to check first: two fresh program variables of
+  different data locations in one taclet (`rv` at `Default`, `sp` at `Storage`),
+  and `aliasType` and `rvType` coexisting in one rule.
+  Also missing: there is no example anywhere for a nested *read* with a
+  non-simple index (`v = matrix[i++][0]`), so the read half of the change has no
+  regression net.
 - **Whole-struct write from a struct *value*** (`alice = pVal;`, vs. the
   supported root-to-root `alice = bob;`): needs Step-1 unfolding for struct
   constructors / memory-struct sources.
