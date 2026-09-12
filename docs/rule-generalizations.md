@@ -52,6 +52,8 @@ still verified as uniform across operators:
 | `rhsCapture` | a non-simple right-hand side is hoisted; the target is untouched |
 | `valueSnapshot` | a non-simple index is hoisted out of a write whose right-hand side is a *primitive* value, so the value is read into a snapshot first: Solidity evaluates the right-hand side before the left-hand side, and the hoisted index may mutate what the right-hand side reads |
 | `refPassthrough` | the same, for a *reference* right-hand side: binding a reference is aliasing rather than a read, so there is nothing to snapshot and the index capture stands alone |
+| `field` vs `index` | in `indexedReceiverCapture`, the operation whose receiver is aliased: `nsp.a = …` vs `nsp[i] = …` |
+| `refPassthroughField` / `refPassthroughIndex` | the reference halves of those two: the receiver alias stands alone, since a reference source needs no snapshot ahead of the receiver's index |
 
 Hole ordering rule: holes apply in spec order, so a string must come before
 its substrings (`+=` before `+`, `++s#gsp` before `+`); the test rejects a spec
@@ -69,9 +71,10 @@ where an earlier hole is a substring of a later one.
 | `memoryCompoundAssign` | 20 | `memory{Field,IndexArray}{Add,Sub,Mul,Div,Mod}Assign` |
 | `memoryIncDec` | 24 | `memory{Field,IndexArray}{Pre,Post}{in,de}crement` (+ `Assignment`) |
 | `compoundAssignRhsCapture` | 5 | `{add,…,mod}AssignValueRhsCapture` |
-| `indexCapture` | 10 | the capture rules that hoist a fragment out of an indexed or field write — see the variant table above |
+| `indexCapture` | 9 | the capture rules that hoist a fragment out of an indexed or field write — see the variant table above |
+| `indexedReceiverCapture` | 12 | the receiver-alias rules for a receiver whose index is non-simple (`nsp.a = c`, `nsp[i] = c`), split by primitive vs reference source |
 
-164 annotated taclets in total.
+175 annotated taclets in total.
 
 ## Running the check
 

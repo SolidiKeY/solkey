@@ -60,6 +60,7 @@ contract TestSuite {
     Token tok;
     Token[] tokens;
     TokenBucket bucket;
+    TokenBucket[] buckets;
     LedgerUse[] ledgerUses;
 
     // ── Arithmetic ──
@@ -2022,28 +2023,117 @@ contract TestSuite {
         assert(persons[0].age == 1);
     }
 
-    // ── Not provable yet ──
-    //
-    // Shapes the calculus does not close. Both are *stuck*, not unsound: neither
-    // the true assertion nor a false one closes. The asserted values are the ones
-    // a real EVM produces (`SolidityRuntimeExecutionTest` runs these too).
-    //
-    // Named `unprovable*` so `TacletStarterExamplesTest` skips them: the point is
-    // to keep the shape as compiling Solidity next to its provable siblings, not
-    // to assert that it closes.
-
-    /// Stuck. No taclet fires: `PathSVSort.classify` refuses a receiver whose
-    /// index is not a variable or a literal, so `persons[acc.balance++]` is no
-    /// `Path` and the leftFst family does not match. As above, the EVM copies the
-    /// struct after the index has run, so the stored balance is `1`.
+    /// The receiver, not the index, carries the side effect: the EVM copies the
+    /// struct after `acc.balance++` has run, so the stored balance is `1`.
     /// @custom:key box
-    function unprovableRefSourceImpurePath() public {
+    function storageFieldWriteRefSourceImpureReceiver() public {
         require(persons.length == 0);
         persons.push();
         Account memory acc;
         persons[acc.balance++].account = acc;
         assert(persons[0].account.balance == 1);
     }
+
+    /// @custom:key box
+    function storageFieldWriteStorageRefImpureReceiver() public {
+        require(persons.length == 0);
+        persons.push();
+        persons.push();
+        alice.account.balance = 9;
+        Account storage src = alice.account;
+        uint i = 0;
+        persons[i++].account = src;
+        assert(i == 1);
+        assert(persons[0].account.balance == 9);
+    }
+
+    /// @custom:key box
+    function storageFieldWriteRootRefImpureReceiver() public {
+        require(persons.length == 0);
+        persons.push();
+        persons.push();
+        tok.value = 4;
+        uint i = 0;
+        persons[i++].account.token = tok;
+        assert(i == 1);
+        assert(persons[0].account.token.value == 4);
+    }
+
+    function memoryFieldWriteMemRefImpureReceiver() public {
+        Person[] memory ps = new Person[](2);
+        Account memory src;
+        src.balance = 6;
+        uint i = 0;
+        ps[i++].account = src;
+        assert(i == 1);
+        assert(ps[0].account.balance == 6);
+    }
+
+    /// @custom:key box
+    function storageIndexWriteRootRefImpureReceiver() public {
+        require(buckets.length == 0);
+        buckets.push();
+        buckets.push();
+        require(buckets[1].tokens.length == 0);
+        buckets[1].tokens.push();
+        tok.value = 3;
+        uint i = 1;
+        buckets[i++].tokens[0] = tok;
+        assert(i == 2);
+        assert(buckets[1].tokens[0].value == 3);
+    }
+
+    /// @custom:key box
+    function storageIndexWriteStorageRefImpureReceiver() public {
+        require(buckets.length == 0);
+        buckets.push();
+        buckets.push();
+        require(buckets[1].tokens.length == 0);
+        buckets[1].tokens.push();
+        tok.value = 8;
+        Token storage src = tok;
+        uint i = 1;
+        buckets[i++].tokens[0] = src;
+        assert(i == 2);
+        assert(buckets[1].tokens[0].value == 8);
+    }
+
+    /// @custom:key box
+    function memoryToStorageIndexImpureReceiver() public {
+        require(buckets.length == 0);
+        buckets.push();
+        buckets.push();
+        require(buckets[1].tokens.length == 0);
+        buckets[1].tokens.push();
+        Token memory src;
+        src.value = 5;
+        uint i = 1;
+        buckets[i++].tokens[0] = src;
+        assert(i == 2);
+        assert(buckets[1].tokens[0].value == 5);
+    }
+
+    function memoryIndexWriteMemRefImpureReceiver() public {
+        TokenBucket[] memory tbs = new TokenBucket[](2);
+        Token[] memory slots = new Token[](2);
+        tbs[1].tokens = slots;
+        Token memory src;
+        src.value = 2;
+        uint i = 1;
+        tbs[i++].tokens[0] = src;
+        assert(i == 2);
+        assert(tbs[1].tokens[0].value == 2);
+    }
+
+    // ── Not provable yet ──
+    //
+    // Shapes the calculus does not close. Stuck, not unsound: neither the true
+    // assertion nor a false one closes. The asserted values are the ones a real
+    // EVM produces (`SolidityRuntimeExecutionTest` runs these too).
+    //
+    // Named `unprovable*` so `TacletStarterExamplesTest` skips them (its
+    // `KNOWN_STUCK_PREFIX`): the point is to keep the shape as compiling Solidity
+    // next to its provable siblings, not to assert that it closes.
 
     /// Stuck. A storage-path argument to `push` is hoisted into a storage alias
     /// and symbolic execution stops at the rebind, so `storagePushValueCopySource`

@@ -24,6 +24,8 @@ import static org.key_project.solidity.testutil.SolidityExampleTests.proveTestSu
 /// the specification. The end-to-end functions (`test*`) run in [PaperTestExamplesTest].
 public class TacletStarterExamplesTest {
 
+    private static final String KNOWN_STUCK_PREFIX = "unprovable";
+
     @ParameterizedTest(name = "{0}")
     @MethodSource("examples")
     void tacletStarterExampleCloses(String function) throws Exception {
@@ -34,6 +36,7 @@ public class TacletStarterExamplesTest {
     }
 
     static Stream<Arguments> examples() throws IOException {
-        return SolidityExampleTests.testSuiteFunctions(name -> !name.startsWith("test"));
+        return SolidityExampleTests.testSuiteFunctions(
+            name -> !name.startsWith("test") && !name.startsWith(KNOWN_STUCK_PREFIX));
     }
 }

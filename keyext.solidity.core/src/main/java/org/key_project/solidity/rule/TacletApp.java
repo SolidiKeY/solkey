@@ -493,7 +493,9 @@ public abstract class TacletApp implements RuleApp {
                 SolidityProgramElement pe =
                     app.getProgramElement(proposal, (ProgramSV) operatorSv, services);
                 app = app.addCheckedInstantiation(operatorSv, pe, services, true);
-                proposals = proposals.append(proposal);
+                if (proposal != null) {
+                    proposals = proposals.append(proposal);
+                }
             } else if (operatorSv instanceof SkolemTermSV) {
                 // if the sort of the schema variable is generic,
                 // ensure that it is instantiated

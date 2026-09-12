@@ -39,6 +39,17 @@ Largest near-verbatim copies (diff vs. upstream ≤ ~20%):
 plus ~80 further files that differ by ≤10 lines. When in doubt, diff a candidate file against the
 same path (or basename) under `key.core/src/main/java/de/uka/ilkd/key/` before editing it.
 
+### Deliberate deltas that must survive an upstream port
+
+- **`common/naming/VariableNamer` and `rule/TacletApp` test `instanceof ProgramVariableSVSort`
+  where `logic/VariableNamer` and `rule/TacletApp` upstream test `== ProgramSVSort.VARIABLE`.**
+  Upstream has one `Variable` sort; this fork parameterizes it (`Variable[storage]`,
+  `Variable[memory]`), so an identity test silently drops those sorts. In `VariableNamer` that
+  produced a `null` name proposal, which `TacletApp.instantiationHelper` appended to the
+  previous-proposal list and the *next* fresh variable then dereferenced — the NPE that kept the
+  `…IndexedReceiver_unfold_leftFst` taclets (two fresh program variables, one of them
+  location-qualified) from ever applying.
+
 ## Known future work (out of scope for the readability pass)
 
 - Merge `SolJSONParser`'s parser-local type caches with the `SolidityInfo` registry — a semantic

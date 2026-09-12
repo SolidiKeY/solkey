@@ -279,9 +279,11 @@ plain shape with the index capture alone.
 
 As on the right-hand side, the index is captured first
 (`storageIndexWriteNonSimpleIndexCapture` takes any storage path), so
-the receiver unfold only sees a simple index. Receiver-before-index is
-unobservable here: `PathSVSort` only classifies an index that is a variable or
-a literal, so a receiver never carries a side effect.
+the receiver unfold only sees a simple index at the top of the statement. The
+two rules above never see a side-effecting receiver either: their
+`Path[storage,complex]` classifies an index only when it is a variable or a
+literal. A receiver that *does* carry one (`persons[acc.balance++].account`) is
+no `Path` under that sort and is handled by the `IndexedReceiver` family below.
 
 A bare contract root on the right-hand side is a `FieldReference`, which
 `SimpleExpression` excludes, so the two `se` unfolds above cannot fire on
@@ -324,12 +326,45 @@ and likewise `storageIndexWriteRootRefRhsNonSimpleIndexCapture` (`gsp`) and
     ----------------------------------------------
          => ⟨ π  path[nse] = sv; ω ⟩ φ
 
+### Receivers that carry a side effect
+
+`Path[storage,complex]` rejects an index that is not a variable or a literal, so
+`persons[acc.balance++].account = c;` matches none of the unfolds above. The
+`nonSimpleIndex` flag lifts that restriction, and the `IndexedReceiver` family
+uses it. It splits by right-hand side exactly as `unfold_leftSnd` does: a
+*primitive* value is snapshotted into `rv` before the receiver is aliased,
+because aliasing runs the receiver's index and that may mutate what the value
+reads; a *reference* is bound rather than read, so it needs no snapshot.
+
+**`storageFieldWriteIndexedReceiver_unfold_leftFst`** — `nsp.a = se`, primitive `se`
+
+    nsp => ⟨ π  T_{se} rv = se; storage sp = nsp; sp.a = rv; ω ⟩ φ
+    --------------------------------------------------------------
+            => ⟨ π  nsp.a = se; ω ⟩ φ
+
+**`storageFieldWriteStorageRefIndexedReceiver_unfold_leftFst`** — `nsp.a = sv`,
+and likewise `memoryToStorageFieldIndexedReceiver_unfold_leftFst` (`mv`) and
+`storageFieldWriteRootRefRhsIndexedReceiver_unfold_leftFst` (`gsp`)
+
+    nsp => ⟨ π  storage sp = nsp; sp.a = sv; ω ⟩ φ
+    ----------------------------------------------
+            => ⟨ π  nsp.a = sv; ω ⟩ φ
+
+`storageIndexWrite…IndexedReceiver_unfold_leftFst` is the `nsp[i]` twin of each,
+and `memory…MemRefIndexedReceiver_unfold_leftFst` the memory-receiver one. The
+declaration the rule emits is dropped by `storageLocalDeclInitDrop`, which
+re-enters the unfold, so a receiver nested any number of levels deep decomposes
+by recursion rather than by enumeration. Witnesses in `TestSuite.sol`:
+`storageFieldWriteRefSourceImpureReceiver` and its `*ImpureReceiver` siblings,
+plus `testNestedIndexWriteImpureIndexPrimitiveRhs` for the primitive half.
+
 ### Standalone receiver / delete-target simplifications
 
 These exist because their active statement is not assignment-shaped
-(`op(sp,a) = se`); it is `delete`, `push`, `pop`, or a push-return
-binding. Each replaces `nsp` with a fresh `storage sp = nsp;` capture,
-then continues against `sp`.
+(`op(nsp,a) = se`); it is `delete`, `push`, `pop`, or a push-return
+binding. The receiver *is* an `op(nsp, ·)` in each of them — what differs is
+that nothing is assigned to it. Each replaces `nsp` with a fresh
+`storage sp = nsp;` capture, then continues against `sp`.
 
 **`storageFieldDelete_unfold_leftFst`** — `delete nsp.a;`
 

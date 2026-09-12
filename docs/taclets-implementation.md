@@ -450,8 +450,12 @@ kind:
     `storageIndexWriteRootRefRhsNonSimpleIndexCapture`,
     `memoryToStorageIndexNonSimpleIndexCapture` (`path[nse] = mv`, feeding the
     `memoryToStorageIndex{Mapping,Array}CopyRoot` terminals). The
-    receiver-capture rules have no reference half, so a reference right-hand
-    side through a receiver with a non-simple index is stuck.
+    receiver-capture rules have the same split: the eight
+    `…IndexedReceiver_unfold_leftFst` members annotated
+    `indexedReceiverCapture(variant=refPassthrough{Field,Index})` alias the
+    receiver with no snapshot, covering a reference right-hand side reached
+    through a receiver with a non-simple index
+    (`persons[acc.balance++].account = acc;`).
 
   Reads and deletes read no value across the captured index and so need no
   split: `storageIndexRead_unfold_rightSndIndex`,
@@ -466,7 +470,10 @@ kind:
   sort flags lift that: `anyIndex` allows such an index, `nonSimpleIndex`
   requires one. The four
   `{storage,memory}{Field,Index}WriteIndexedReceiver_unfold_leftFst` rules take
-  a `nonSimpleIndex` receiver, snapshot the value, and alias the receiver; the
+  a `nonSimpleIndex` receiver, snapshot the value, and alias the receiver, and
+  their eight `…{StorageRef,MemRef,RootRefRhs}IndexedReceiver…` /
+  `memoryToStorage{Field,Index}IndexedReceiver…` siblings do the same for a
+  reference source without the snapshot; the
   four `_unfold_rightFst` read unfolds take an `anyIndex` receiver and an
   arbitrary index. The alias declaration they emit is stripped to a plain
   assignment by `*DeclInitDrop`, which re-enters the read unfolds — so each step
@@ -476,13 +483,18 @@ kind:
   3. **No depth-keyed rule belongs in this file**; `grep '\]\['` over
   `solidityProgramRules.key` must stay empty.
 
-  The receiver capture must keep the value snapshot: without it, relaxing the
-  sort reproduces the Lean model's `fieldWrite_not_sound` evaluation-order bug
-  (`lean/solidity/…/Counterexamples/EvaluationOrder.lean`).
+  The receiver capture must keep the value snapshot on its *primitive* members:
+  without it, relaxing the sort reproduces the Lean model's
+  `fieldWrite_not_sound` evaluation-order bug
+  (`lean/solidity/…/Counterexamples/EvaluationOrder.lean`). The reference
+  members are exempt for the same reason as `refPassthrough` on the index side —
+  a reference is bound, not read.
 
   The whole family is skeleton-checked as `RuleGeneralizationTest`'s
   `indexCapture` family (variants `rhsCapture` / `valueSnapshot` /
-  `refPassthrough`), so the storage and memory halves cannot drift apart again.
+  `refPassthrough`) and `indexedReceiverCapture` family (variants `field` /
+  `index` / `refPassthroughField` / `refPassthroughIndex`), so the storage and
+  memory halves cannot drift apart again.
 Also `storageIndexReadMappingStoreRoot` closes the paper's §11 table
 (`gsp = sp[i]` for mappings, no bounds branch).
 

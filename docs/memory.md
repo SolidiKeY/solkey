@@ -296,6 +296,17 @@ rather than read, so `memoryIndexWriteMemRefNonSimpleIndexCapture` captures the
 index alone. Both are storage-twin-checked by `RuleGeneralizationTest`'s
 `indexCapture` family.
 
+When the impure index sits in the *receiver* rather than at the top of the
+statement (`ps[i++].account = acc;`), the same split applies one level up:
+`memoryFieldWriteIndexedReceiver_unfold_leftFst` snapshots a primitive source
+before aliasing the receiver, `memoryFieldWriteMemRefIndexedReceiver_unfold_leftFst`
+aliases it alone for a reference source, and `memoryIndexWrite…` are the `[i]`
+twins. Their receivers carry the `Path[memory,complex,nonSimpleIndex]` sort,
+which is what admits an index the default `Path` refuses; the alias declaration
+is dropped by `memoryLocalDeclInitDrop`, so nesting recurses. Checked as
+`RuleGeneralizationTest`'s `indexedReceiverCapture` family; witnesses
+`memory{Field,Index}WriteMemRefImpureReceiver` in `TestSuite.sol`.
+
 Arrays of structs still alias through identity-valued elements:
 
     Token[] memory carolTokens = new Token[](4);
