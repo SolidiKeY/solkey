@@ -1660,10 +1660,6 @@ contract TestSuite {
         assert(matrix[1][0] == 1);
     }
 
-    /// The read half of the recursive receiver capture. `matrix[i++]` is a
-    /// receiver with a non-simple index, so the read unfold has to take it
-    /// through `Path[...,anyIndex]`; before the widening there was no example
-    /// exercising that at all.
     /// @custom:key box
     function testNestedIndexReadImpureIndex() public {
         require(matrix.length == 0);
@@ -2017,15 +2013,6 @@ contract TestSuite {
 
     // ── Reference-source evaluation order ──
 
-    /// solc is **not** right-hand-side-first when the source is a struct: it
-    /// resolves the target slot and then copies field by field, reading the
-    /// source at copy time. So `p.age++` runs before the copy and storage gets
-    /// the *incremented* value. Verified on a real EVM by
-    /// `SolidityRuntimeExecutionTest`; KeY agrees.
-    ///
-    /// Contrast `testStorageIndexWriteImpureIndexPrimitiveRhs`, where a
-    /// *primitive* source is read first and storage gets the old value. The
-    /// order depends on whether the assignment copies a value or a struct.
     /// @custom:key box
     function storageIndexWriteRefSourceImpureIndex() public {
         require(persons.length == 0);
