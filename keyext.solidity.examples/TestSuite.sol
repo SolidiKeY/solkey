@@ -1660,6 +1660,22 @@ contract TestSuite {
         assert(matrix[1][0] == 1);
     }
 
+    /// The read half of the recursive receiver capture. `matrix[i++]` is a
+    /// receiver with a non-simple index, so the read unfold has to take it
+    /// through `Path[...,anyIndex]`; before the widening there was no example
+    /// exercising that at all.
+    /// @custom:key box
+    function testNestedIndexReadImpureIndex() public {
+        require(matrix.length == 0);
+        matrix.push();
+        matrix.push();
+        matrix[1].push(100);
+        uint i = 1;
+        uint v = matrix[i++][0];
+        assert(i == 2);
+        assert(v == 100);
+    }
+
     function testNestedStorageWrites() public {
         alice.account.balance = 10;
         alice.account.token.value = 5;
@@ -1997,5 +2013,62 @@ contract TestSuite {
         r = -x;
         expected = -5;
         assert(r == expected);
+    }
+
+    // ── Reference-source evaluation order ──
+
+    /// solc is **not** right-hand-side-first when the source is a struct: it
+    /// resolves the target slot and then copies field by field, reading the
+    /// source at copy time. So `p.age++` runs before the copy and storage gets
+    /// the *incremented* value. Verified on a real EVM by
+    /// `SolidityRuntimeExecutionTest`; KeY agrees.
+    ///
+    /// Contrast `testStorageIndexWriteImpureIndexPrimitiveRhs`, where a
+    /// *primitive* source is read first and storage gets the old value. The
+    /// order depends on whether the assignment copies a value or a struct.
+    /// @custom:key box
+    function storageIndexWriteRefSourceImpureIndex() public {
+        require(persons.length == 0);
+        persons.push();
+        Person memory p;
+        persons[p.age++] = p;
+        assert(persons[0].age == 1);
+    }
+
+    // ── Not provable yet ──
+    //
+    // Shapes the calculus does not close. Both are *stuck*, not unsound: neither
+    // the true assertion nor a false one closes. The asserted values are the ones
+    // a real EVM produces (`SolidityRuntimeExecutionTest` runs these too).
+    //
+    // Named `unprovable*` so `TacletStarterExamplesTest` skips them: the point is
+    // to keep the shape as compiling Solidity next to its provable siblings, not
+    // to assert that it closes.
+
+    /// Stuck. No taclet fires: `PathSVSort.classify` refuses a receiver whose
+    /// index is not a variable or a literal, so `persons[acc.balance++]` is no
+    /// `Path` and the leftFst family does not match. As above, the EVM copies the
+    /// struct after the index has run, so the stored balance is `1`.
+    /// @custom:key box
+    function unprovableRefSourceImpurePath() public {
+        require(persons.length == 0);
+        persons.push();
+        Account memory acc;
+        persons[acc.balance++].account = acc;
+        assert(persons[0].account.balance == 1);
+    }
+
+    /// Stuck. A storage-path argument to `push` is hoisted into a storage alias
+    /// and symbolic execution stops at the rebind, so `storagePushValueCopySource`
+    /// never fires. This is the shape
+    /// `storagePushValueUnfoldRightSndArgument_sound` leaves as a documented
+    /// `sorry` (its storage-argument case) in the Lean model.
+    /// `tokens.push() = tok;` is the working spelling.
+    /// @custom:key box
+    function unprovablePushStoragePathArgument() public {
+        require(tokens.length == 0);
+        tok.value = 7;
+        tokens.push(tok);
+        assert(tokens[0].value == 7);
     }
 }
