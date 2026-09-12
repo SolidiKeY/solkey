@@ -2031,8 +2031,6 @@ contract TestSuite {
         assert(persons[0].age == 1);
     }
 
-    /// The receiver, not the index, carries the side effect: the EVM copies the
-    /// struct after `acc.balance++` has run, so the stored balance is `1`.
     /// @custom:key box
     function storageFieldWriteRefSourceImpureReceiver() public {
         require(persons.length == 0);
