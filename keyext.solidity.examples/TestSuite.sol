@@ -1681,6 +1681,93 @@ contract TestSuite {
         assert(v == 100);
     }
 
+    /// @custom:key box
+    function testNestedIndexWriteImpureReceiverAndIndex() public {
+        require(matrix.length == 0);
+        matrix.push();
+        matrix.push();
+        matrix[0].push(0);
+        matrix[0].push(0);
+        matrix[1].push(0);
+        matrix[1].push(0);
+        uint i = 0;
+        matrix[i++][i++] = 77;
+        assert(i == 2);
+        assert(matrix[0][1] == 77);
+        assert(matrix[1][0] == 0);
+    }
+
+    /// @custom:key box
+    function testNestedIndexReadImpureReceiverAndIndex() public {
+        require(matrix.length == 0);
+        matrix.push();
+        matrix.push();
+        matrix[0].push(0);
+        matrix[0].push(11);
+        matrix[1].push(22);
+        uint i = 0;
+        uint v = matrix[i++][i++];
+        assert(i == 2);
+        assert(v == 11);
+    }
+
+    /// @custom:key box
+    function testStorageDeleteImpureReceiver() public {
+        require(matrix.length == 0);
+        matrix.push();
+        matrix.push();
+        matrix[0].push(9);
+        uint i = 0;
+        delete matrix[i++][0];
+        assert(i == 1);
+        assert(matrix[0][0] == 0);
+    }
+
+    /// @custom:key box
+    function testStoragePushImpureReceiver() public {
+        require(matrix.length == 0);
+        matrix.push();
+        matrix.push();
+        uint i = 0;
+        matrix[i++].push(i);
+        assert(i == 1);
+        assert(matrix[0][0] == 1);
+    }
+
+    /// @custom:key box
+    function testCompoundAssignImpureReceiver() public {
+        require(persons.length == 0);
+        persons.push();
+        persons.push();
+        persons[0].age = 5;
+        uint i = 0;
+        persons[i++].age += i;
+        assert(i == 1);
+        assert(persons[0].age == 5);
+    }
+
+    function testMemoryFieldWriteImpureReceiver() public {
+        Token[] memory toks = new Token[](2);
+        uint i = 0;
+        toks[i++].value = i;
+        assert(i == 1);
+        assert(toks[0].value == 0);
+    }
+
+    /// @custom:key box
+    function testIndexWriteReceiverReadsMutatedVar() public {
+        require(matrix.length == 0);
+        matrix.push();
+        matrix.push();
+        matrix[0].push(0);
+        matrix[1].push(0);
+        uint k = 0;
+        matrix[k][k++] = 77;
+        assert(k == 1);
+        assert(matrix[0][0] == 77);
+        assert(matrix[1][0] == 0);
+    }
+
     function testNestedStorageWrites() public {
         alice.account.balance = 10;
         alice.account.token.value = 5;

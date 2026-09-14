@@ -51,8 +51,11 @@ Prefer precise program sorts so rules stay disjoint:
   keep rules disjoint via the field/path side instead: `Path[...,primitive]` /
   `Path[...,reference]` type-kind flags, `Path[...,primitiveElement]` /
   `Path[...,referenceElement]` element-kind flags on indexed receivers, and
-  `SimpleExpression[primitive]` / `NonSimpleExpression[primitive]` on
-  expressions (mappings count as reference throughout). Accessed members carry
+  `SimpleExpression[primitive]` / `NonSimpleExpression[primitive]` /
+  `Expression[primitive]` on expressions (mappings count as reference
+  throughout). There is no index-purity flag: a path may carry a side-effecting
+  index, and write rules stay sound by capturing the right-hand side, then the
+  receiver, then the index. Accessed members carry
   no flag: a `Field` rule discriminates on the member's declared type through
   the bound of the generic sort its `\hasFieldSort` / `\hasMemoryFieldSort`
   varcond binds (`alphaPrim \extends Prim` admits only value-typed members,
@@ -62,8 +65,11 @@ Prefer precise program sorts so rules stay disjoint:
 - `Path[storage,simple,global]` for contract storage roots.
 - `Path[storage,simple]` for simple storage roots or aliases.
 - `Path[storage,complex]` for member/index paths that need unfolding.
+- `Path[simple]` for a simple target of either data location.
 - `SimpleExpression`, `NonSimpleExpression`, `Expression`, `Field`, and `Type`
-  for statement pieces.
+  for statement pieces; `Expression[primitive]` for a right-hand side a capture
+  rule may hoist into a value temporary in one step (primitive-typed and not a
+  complex path).
 
 ### Naming conventions
 
@@ -80,6 +86,8 @@ of the same shape uses the same name for the same role:
 | Global storage root (`Path[storage,simple,global]`) | `gsp` |
 | Simple / nonsimple storage path | `sp` (`sp1`, `sp2`) / `nsp` |
 | Storage path of any simplicity (`Path[storage]`) | `path` |
+| Captured right-hand side and its type | `rv`, `rvType` |
+| Reference right-hand side of a capture rule | `src` |
 | Local storage variable (`Variable[storage]`) | `lsv` |
 | Memory variable / nonsimple memory path | `mv` (`mv1`, `mv2`) / `nmp` |
 | Memory path of any simplicity (`Path[memory]`) | `mpath` |

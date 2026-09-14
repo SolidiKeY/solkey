@@ -124,7 +124,7 @@ public class PathSVSortTest {
     }
 
     @Test
-    void indexPathIsComplexWithSimpleIndexAndNoPathWithNonSimpleIndex() {
+    void indexPathIsComplexRegardlessOfIndexPurity() {
         ProgramVariable simpleIndex = variable("i", DataLocation.Default);
         IndexExpression simplePath = new IndexExpression(storageField("balances"), simpleIndex);
 
@@ -136,9 +136,12 @@ public class PathSVSortTest {
         assertTrue(ProgramSVSort.COMPLEX_STORAGE_PATH.canStandFor(simplePath, services));
         assertFalse(ProgramSVSort.SIMPLE_STORAGE_PATH.canStandFor(simplePath, services));
 
-        assertFalse(ProgramSVSort.STORAGE_PATH.canStandFor(complexPath, services));
+        assertTrue(ProgramSVSort.STORAGE_PATH.canStandFor(complexPath, services));
+        assertTrue(ProgramSVSort.COMPLEX_STORAGE_PATH.canStandFor(complexPath, services));
         assertFalse(ProgramSVSort.SIMPLE_STORAGE_PATH.canStandFor(complexPath, services));
-        assertFalse(ProgramSVSort.COMPLEX_STORAGE_PATH.canStandFor(complexPath, services));
+
+        IndexExpression nestedPath = new IndexExpression(complexPath, complexIndex);
+        assertTrue(ProgramSVSort.COMPLEX_STORAGE_PATH.canStandFor(nestedPath, services));
     }
 
     @Test

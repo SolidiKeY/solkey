@@ -12,7 +12,6 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
-import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.references.FieldReference;
 import org.key_project.solidity.program.ast.statement.FunctionBodyStatement;
 import org.key_project.solidity.program.ast.statement.Statement;
@@ -27,8 +26,7 @@ public abstract class ProgramSVSort extends SortImpl {
 
     public static final ProgramSVSort VARIABLE = new ProgramVariableSVSort(new Name("Variable"));
     public static final ProgramSVSort SIMPLE_EXPRESSION = new SimpleExpressionSVSort();
-    public static final ProgramSVSort EXPRESSION =
-        new ClassSVSort("Expression", Expression.class);
+    public static final ProgramSVSort EXPRESSION = new ExpressionSVSort();
     public static final ProgramSVSort NON_SIMPLE_EXPRESSION = new NonSimpleExpressionSVSort();
     public static final ProgramSVSort FUNCTION_BODY =
         new ClassSVSort("FunctionBody", FunctionBodyStatement.class);

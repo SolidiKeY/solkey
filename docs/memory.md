@@ -286,26 +286,32 @@ The value-producing RHS is captured before the indexed LHS update fires.
 
 The discipline also binds when the RHS is *already* simple, because capturing
 the index can change what the RHS reads. `memoryIndexWriteNonSimpleIndexCapture`
-therefore snapshots a primitive RHS ahead of the index:
+therefore snapshots the RHS ahead of the index:
 
     xs[nse] = se;   ⟹   T_{se} rv = se; T pv = nse; xs[pv] = rv;
 
 so `xs[i++] = i;` writes the *old* `i`, as the EVM does
-(`testMemoryIndexWriteImpureIndexPrimitiveRhs`). A reference RHS is bound
-rather than read, so `memoryIndexWriteMemRefNonSimpleIndexCapture` captures the
-index alone. Both are storage-twin-checked by `RuleGeneralizationTest`'s
-`indexCapture` family.
+(`testMemoryIndexWriteImpureIndexPrimitiveRhs`). A reference RHS is captured the
+same way by `memoryIndexWriteMemRefNonSimpleIndexCapture`, into a
+`T memory rv = src;` alias rather than a value snapshot — the declaration is
+what differs between the two, not the order. Both are storage-twin-checked by
+`RuleGeneralizationTest`'s `indexCapture` family.
 
 When the impure index sits in the *receiver* rather than at the top of the
-statement (`ps[i++].account = acc;`), the same split applies one level up:
-`memoryFieldWriteIndexedReceiver_unfold_leftFst` snapshots a primitive source
-before aliasing the receiver, `memoryFieldWriteMemRefIndexedReceiver_unfold_leftFst`
-aliases it alone for a reference source, and `memoryIndexWrite…` are the `[i]`
-twins. Their receivers carry the `Path[memory,complex,nonSimpleIndex]` sort,
-which is what admits an index the default `Path` refuses; the alias declaration
-is dropped by `memoryLocalDeclInitDrop`, so nesting recurses. Checked as
-`RuleGeneralizationTest`'s `indexedReceiverCapture` family; witnesses
-`memory{Field,Index}WriteMemRefImpureReceiver` in `TestSuite.sol`.
+statement (`ps[i++].account = acc;`), the receiver-capture rules take over and
+capture all three constituents at once, right-hand side first:
+
+    nmp.a = e;   ⟹   T_{e} rv = e; T_{nmp} memory mv = nmp; mv.a = rv;
+
+`memoryFieldWrite_unfold_leftFst` is the primitive form and
+`memoryFieldWriteMemRef_unfold_leftFst` the reference one, with
+`memoryIndexWrite…` the `[i]` twins (those also capture the index, after the
+receiver). Their receivers are ordinary `Path[memory,complex]` — the sort places
+no purity requirement on an index, because the capture order is what keeps the
+rule sound. The alias declaration is dropped by `memoryLocalDeclInitDrop`, so
+nesting recurses. Checked as `RuleGeneralizationTest`'s `receiverCapture` family;
+witnesses `memory{Field,Index}WriteMemRefImpureReceiver` and
+`testMemoryFieldWriteImpureReceiver` in `TestSuite.sol`.
 
 Arrays of structs still alias through identity-valued elements:
 

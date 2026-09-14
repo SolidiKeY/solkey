@@ -101,14 +101,13 @@ annotations in `solidityProgramRules.key`, verified mechanically by
   `storageIndexRead{Array,Mapping}Find`, plus `…CopySource`, `…BindLocalRoot`,
   `…StoreRoot`; all take a simple receiver. A complex receiver is aliased first
   by `storageIndexRead_unfold_rightFst` / `storageIndexWrite_unfold_leftFst`
-  (simple index; a nonsimple index is captured before the receiver by the
-  `…NonSimpleIndexCapture` rules, which take any storage path), so every target
-  and source shape of the simple rules is reached through one alias step.
+  (any index; the receiver is captured first, and the `…NonSimpleIndexCapture`
+  rules then take the simple receiver that leaves), so every target and source
+  shape of the simple rules is reached through one alias step.
   A bare contract root on the right-hand side is a `FieldReference`, which
-  `SimpleExpression` excludes, so `nsp.a = gsp` / `nsp[i] = gsp` unfold through
-  the dedicated twins `storageFieldWriteRootRhs_unfold_leftFst` /
-  `storageIndexWriteRootRhs_unfold_leftFst` (RHS `Path[storage,simple,global]`),
-  after which the `…CopySource` terminals fire.
+  `SimpleExpression` excludes but `Expression[primitive]` admits, so
+  `nsp.a = gsp` / `nsp[i] = gsp` are the ordinary value members of the
+  receiver-capture family, after which the `…CopySource` terminals fire.
 - Local declarations: the location keyword in a schematic declaration pattern
   is matched against the concrete variable's `DataLocation`, so
   `localValueDeclInitDrop` / `storageLocalDeclInitDrop` /
@@ -431,72 +430,68 @@ kind:
   is restricted to reference-typed members by its
   `\hasMemoryFieldSort(b, \sort(alphaId))` varcond so primitive members take
   this route instead.
-- **Non-simple index** (paper `unfold_leftSnd` / `rightSndIndex`), all with
-  `Path[storage]` / `Path[memory]` bases (any simplicity/origin/kind). A *write*
-  is split by the right-hand side's kind, because Solidity evaluates the
-  right-hand side before the left-hand side and the hoisted index may mutate
-  what the right-hand side reads:
-  - **primitive RHS** — the value is read into a snapshot ahead of the index:
-    `path[nse] = se;` ⟹ `rvType rv = se; pvType pv = nse; path[pv] = rv;`.
-    `storageIndexWriteNonSimpleIndexCapture`,
-    `memoryIndexWriteNonSimpleIndexCapture`,
-    `storageIndexWriteRootRhsNonSimpleIndexCapture` (primitive global root),
-    `{storage,memory}{Field,Index}WriteIndexedReceiver_unfold_leftFst` when the
-    *receiver* carries the non-simple index (`matrix[i++][0] = v`). Without
-    the snapshot the calculus proves `a[0] == 1` for `a[i++] = i;` where the EVM
-    writes `0` — the witnesses are `test{Storage,Memory,Nested}…ImpureIndex…`
-    in `TestSuite.sol`.
-  - **reference RHS** — binding a reference is aliasing, not a read, so the
-    index capture stands alone: `storageIndexWriteStorageRefNonSimpleIndexCapture`,
-    `memoryIndexWriteMemRefNonSimpleIndexCapture`,
-    `storageIndexWriteRootRefRhsNonSimpleIndexCapture`,
-    `memoryToStorageIndexNonSimpleIndexCapture` (`path[nse] = mv`, feeding the
-    `memoryToStorageIndex{Mapping,Array}CopyRoot` terminals). The
-    receiver-capture rules have the same split: the eight
-    `…IndexedReceiver_unfold_leftFst` members annotated
-    `indexedReceiverCapture(variant=refPassthrough{Field,Index})` alias the
-    receiver with no snapshot, covering a reference right-hand side reached
-    through a receiver with a non-simple index
-    (`persons[acc.balance++].account = acc;`).
+- **Non-simple index and non-simple receiver** (paper `unfold_leftSnd` /
+  `unfold_leftFst` / `rightSndIndex`). A write `op(recv, i) = rhs` is decomposed
+  by three rules partitioned on which constituent is not yet simple, each
+  capturing in the EVM's order — **right-hand side, then receiver, then index**:
+  - **Rule 1, receiver complex** (`Path[…,complex]`): captures all three at
+    once. `nsp[i] = e;` ⟹ `rvType rv = e; aliasType storage sp = nsp;
+    pvType pv = i; sp[pv] = rv;`. Ten members —
+    `{storage,memory}{Field,Index}Write_unfold_leftFst` (primitive RHS),
+    `{storage,memory}{Field,Index}Write{StorageRef,MemRef}_unfold_leftFst` and
+    `memoryToStorage{Field,Index}_unfold_leftFst` (reference RHS).
+  - **Rule 2, receiver simple and index non-simple** (`Path[…,simple]`):
+    `sp[nse] = e;` ⟹ `rvType rv = e; pvType pv = nse; sp[pv] = rv;`. Five
+    members, the `…NonSimpleIndexCapture` rules.
+  - **Rule 3, receiver and index simple, RHS non-simple**:
+    `{field,index}WriteValueRhsCapture` (data-location neutral),
+    `{storage,memory}FieldWriteCaptureSrc`,
+    `storageIndexWriteStorageRefRhsCapture`, `memoryIndexWriteMemRefRhsCapture`,
+    plus the root-target `storageRootWriteValueRhsCapture`.
 
-  Reads and deletes read no value across the captured index and so need no
-  split: `storageIndexRead_unfold_rightSndIndex`,
-  `memoryIndexRead_unfold_rightSndIndex`,
-  `storageIndexDeleteNonSimpleIndexCapture`,
-  `memoryIndexDeleteNonSimpleIndexCapture`. A non-simple index under a compound
-  assignment (`a[i++] += x`) has no capture rule.
+  What differs between the members of a rule is only the *declaration* the
+  capture emits, which follows the right-hand side's kind: `T rv = e;` for
+  `Expression[primitive]`, `T storage rv = src;` for `Path[storage,reference]`,
+  `T memory rv = src;` for `Path[memory,reference]`. `Expression[primitive]` is
+  primitive-typed and not a *complex* path; a complex path such as `p.age` has
+  its own receiver resolved by the read unfolds first, which also evaluates it
+  ahead of the target.
 
-  **Nesting recurses; it is not enumerated.** A receiver that itself carries a
-  non-simple index (`matrix[i++]`) is no `Path` under the default sort, because
-  `PathSVSort.classify` accepts only a variable or a literal as an index. Two
-  sort flags lift that: `anyIndex` allows such an index, `nonSimpleIndex`
-  requires one. The four
-  `{storage,memory}{Field,Index}WriteIndexedReceiver_unfold_leftFst` rules take
-  a `nonSimpleIndex` receiver, snapshot the value, and alias the receiver, and
-  their eight `…{StorageRef,MemRef,RootRefRhs}IndexedReceiver…` /
-  `memoryToStorage{Field,Index}IndexedReceiver…` siblings do the same for a
-  reference source without the snapshot; the
-  four `_unfold_rightFst` read unfolds take an `anyIndex` receiver and an
-  arbitrary index. The alias declaration they emit is stripped to a plain
-  assignment by `*DeclInitDrop`, which re-enters the read unfolds — so each step
-  peels one level and the decomposition reaches any depth. That replaces the
-  former `indexWriteInnerNonSimpleIndexCapture` / `indexReadInnerNonSimpleIndexCapture`,
-  which were keyed to the literal shape `e1[nse][e2]` and could not reach depth
-  3. **No depth-keyed rule belongs in this file**; `grep '\]\['` over
+  The value snapshot is what keeps the order: without it the calculus proves
+  `a[0] == 1` for `a[i++] = i;` where the EVM writes `0`, and relaxing the
+  receiver sort without it reproduces the Lean model's `fieldWrite_not_sound`
+  evaluation-order bug (`lean/solidity/…/Counterexamples/EvaluationOrder.lean`).
+  A reference source needs no snapshot for order — a reference is bound, not
+  read — but is captured anyway, so one rule covers a source of any shape.
+
+  Reads and deletes have no right-hand side and capture receiver then index:
+  `{storage,memory}{Field,Index}Read_unfold_rightFst`,
+  `{storage,memory}IndexRead_unfold_rightSndIndex`,
+  `{storage,memory}Index{Delete_unfold_leftFst,DeleteNonSimpleIndexCapture}`.
+  A non-simple index under a compound assignment (`a[i++] += x`) still has no
+  capture rule; a compound assignment with an impure *receiver*
+  (`persons[i++].age += i`) is handled, its RHS snapshotted like Rule 1's.
+
+  **Nesting recurses; it is not enumerated.** `PathSVSort.classify` places no
+  purity requirement on an index, so `matrix[i++]` is an ordinary
+  `Path[storage,complex]` and the same rules apply at every level. The alias
+  declaration a capture emits is stripped to a plain assignment by
+  `*DeclInitDrop`, which re-enters the unfolds — so each step peels one level
+  and the decomposition reaches any depth (`matrix[i++][i++] = k`,
+  `testNestedIndexWriteImpureReceiverAndIndex`).
+  **No depth-keyed rule belongs in this file**; `grep '\]\['` over
   `solidityProgramRules.key` must stay empty.
 
-  The receiver capture must keep the value snapshot on its *primitive* members:
-  without it, relaxing the sort reproduces the Lean model's
-  `fieldWrite_not_sound` evaluation-order bug
-  (`lean/solidity/…/Counterexamples/EvaluationOrder.lean`). The reference
-  members are exempt for the same reason as `refPassthrough` on the index side —
-  a reference is bound, not read.
+  Soundness rests on the capture order, not on the sort: no rule evaluates a
+  receiver before its right-hand side, and no `Path` SV lacking the `simple`
+  flag is ever lowered into a term or an update. The one rule that emits such a
+  path twice is `ternaryToIfStorage`, whose two occurrences are in mutually
+  exclusive `if`/`else` branches, so the path is resolved exactly once per trace.
 
   The whole family is skeleton-checked as `RuleGeneralizationTest`'s
-  `indexCapture` family (variants `rhsCapture` / `valueSnapshot` /
-  `refPassthrough`) and `indexedReceiverCapture` family (variants `field` /
-  `index` / `refPassthroughField` / `refPassthroughIndex`), so the storage and
-  memory halves cannot drift apart again.
+  `indexCapture` family (variants `rhsCapture` / `value` / `ref`) and
+  `receiverCapture` family (variants `valueField` / `valueIndex` / `refField` /
+  `refIndex`), so the storage and memory halves cannot drift apart again.
 Also `storageIndexReadMappingStoreRoot` closes the paper's §11 table
 (`gsp = sp[i]` for mappings, no bounds branch).
 
@@ -566,16 +561,20 @@ Path SV sorts: `StoragePath`, `SimpleStoragePath`, `ComplexStoragePath`,
 `Path[...]` with comma-separated flags (`storage`/`memory`, `simple`/`complex`,
 `root`/`field`/`index`, `array`/`mapping`, `primitive`/`reference`,
 `local`/`global`). Roots are simple; member/indexed paths and no-arg `arr.push()`
-are complex. An `IndexExpression` whose index is not simple (variable/literal) is
-**not** a path at all — it must be normalized by the index-capture rules first,
-which keeps "matches a `Path[...]` SV" aligned with "lowerable by
-`convertToLogicElement`". The `primitive`/`reference` flags filter by the path's
+are complex. The sort places no purity requirement on an index, so
+`matrix[i++]` is an ordinary complex path; what keeps "lowerable by
+`convertToLogicElement`" intact is that only `simple`-flagged Path SVs ever
+occur in a term or update position, and a simple path is a root. The
+`primitive`/`reference` flags filter by the path's
 static type; for index expressions rebuilt during taclet instantiation the type
 is re-derived from the base's element type (`PathSVSort.typeOf`).
 `NonSimpleExpression[primitive]` filters non-simple expressions to
 operator-shaped, primitive-typed, non-path ones (`NonSimpleExpressionSVSort`);
 `SimpleExpression[primitive]` analogously restricts literals/variables to
-primitive static type (`SimpleExpressionSVSort`). Path schema
+primitive static type (`SimpleExpressionSVSort`); `Expression[primitive]`
+(`ExpressionSVSort`) is the union a capture rule needs — primitive-typed and not
+a *complex* path, so literals, primitive variables, operator expressions and
+bare contract roots, but not `p.age`. Path schema
 variables used directly in `\replacewith`/`\add` term
 positions lower to logic `List` terms automatically; indexed segments lower to
 `at(index)` (sort `Field`); `arr.length` lowers to the `size` field. A `push()`

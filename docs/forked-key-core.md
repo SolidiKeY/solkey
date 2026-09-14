@@ -47,8 +47,8 @@ same path (or basename) under `key.core/src/main/java/de/uka/ilkd/key/` before e
   `Variable[memory]`), so an identity test silently drops those sorts. In `VariableNamer` that
   produced a `null` name proposal, which `TacletApp.instantiationHelper` appended to the
   previous-proposal list and the *next* fresh variable then dereferenced — the NPE that kept the
-  `…IndexedReceiver_unfold_leftFst` taclets (two fresh program variables, one of them
-  location-qualified) from ever applying.
+  receiver-capture taclets (`…_unfold_leftFst`, which introduce two or three fresh program
+  variables, some of them location-qualified) from ever applying.
 
 ## Known future work (out of scope for the readability pass)
 

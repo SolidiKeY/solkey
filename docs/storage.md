@@ -37,7 +37,10 @@ For every storage statement, the calculus applies in this order:
    replace the statement with a parallel update on the continuation
    `⟨ π ω ⟩ φ`.
 
-This mirrors Solidity's evaluation order: RHS is evaluated before LHS.
+This mirrors Solidity's evaluation order, which the calculus pins as
+**right-hand side, then receiver, then index**. Every capture rule emits
+its fragments in that order, and `SolidityRuntimeExecutionTest` checks
+each of the three hand-offs against a real EVM.
 
 ## 2. Schema Variables
 
@@ -207,9 +210,11 @@ storage read that produces a value.
     ------------------------------------------------
               => ⟨ π  lhs = nsp[i]; ω ⟩ φ
 
-The index is captured before the receiver: `unfold_rightSnd` below
-takes any storage path as receiver, so this rule only ever sees a
-simple index.
+The receiver is captured before the index: `unfold_rightSnd` below
+takes a *simple* storage path as receiver, so a complex receiver is
+aliased by the rule above first, whatever its index looks like. That
+is the order solc commits to — `testNestedIndexReadImpureReceiverAndIndex`
+pins it against the EVM.
 
 ### Instances of unfold_rightSnd
 
@@ -251,119 +256,142 @@ not match. A bare contract root such as `tok` in `tokens.push(tok);` is a
 to a storage path — a rebind no rule consumes. Excluded here, it reaches
 `storagePushValueCopySource` directly.
 
-## 5. Step 2: Unfolding the Left-Hand Side
+## 5. Step 2: Writing to a Nonsimple Target
 
-**unfold_leftFst** — capture a nonsimple receiver on the LHS.
+A write `op(recv, i) = rhs` is decomposed by three rules that partition on which
+constituent is not yet simple. All three capture in the order the EVM evaluates
+in — **right-hand side, then receiver, then index** — which is what the runtime
+cross-check pins (`testNestedIndexWriteImpureReceiverAndIndex`,
+`testIndexWriteReceiverReadsMutatedVar`, `testCompoundAssignImpureReceiver`).
+Each capture emits a *declaration*, which `storageLocalDeclInitDrop` /
+`localValueDeclInitDrop` then strip, so the rules re-enter and a target nested
+any number of levels deep decomposes by recursion rather than by enumeration.
 
-    nsp => ⟨ π  T_{nsp} sp = nsp; op(sp, a) = se; ω ⟩ φ
-    ---------------------------------------------------
-            => ⟨ π  op(nsp, a) = se; ω ⟩ φ
+**Rule 1 — receiver nonsimple.** Capture right-hand side, receiver and index in
+one step; the residual is terminal-ready.
 
-**unfold_leftSnd** — capture a nonsimple index on the LHS. Because Solidity
-evaluates the right-hand side first and `nse` may mutate what `se` reads, a
-*primitive* `se` is snapshotted into `rv` ahead of the index:
+    nsp => ⟨ π  T_{e} rv = e; T_{nsp} sp = nsp; T_{i} pv = i; sp[pv] = rv; ω ⟩ φ
+    -----------------------------------------------------------------------------
+                        => ⟨ π  nsp[i] = e; ω ⟩ φ
 
-    nse => ⟨ π  T_{se} rv = se; T pv = nse; op(sp, pv) = rv; ω ⟩ φ
-    --------------------------------------------------------------
-        => ⟨ π  op(sp, nse) = se; ω ⟩ φ
+**Rule 2 — receiver simple, index nonsimple.** The receiver is already a root or
+an alias, so only the right-hand side and the index are captured.
 
-A *reference* right-hand side is bound, not read, so its instances keep the
-plain shape with the index capture alone.
+    nse => ⟨ π  T_{e} rv = e; T pv = nse; sp[pv] = rv; ω ⟩ φ
+    --------------------------------------------------------
+              => ⟨ π  sp[nse] = e; ω ⟩ φ
 
-### Instances of unfold_leftFst
+**Rule 3 — receiver and index simple, right-hand side nonsimple.**
 
-**`storageFieldWrite_unfold_leftFst`** — `nsp.a = se`
+    nse => ⟨ π  T_{nse} rv = nse; sp[se] = rv; ω ⟩ φ
+    ------------------------------------------------
+            => ⟨ π  sp[se] = nse; ω ⟩ φ
 
-    nsp => ⟨ π  storage sp = nsp; sp.a = se; ω ⟩ φ
-    ----------------------------------------------
-            => ⟨ π  nsp.a = se; ω ⟩ φ
+The partition is by sort alone and is therefore disjoint: Rule 1 needs
+`Path[…,complex]`, Rule 2 `Path[…,simple]` with a `NonSimpleExpression` index,
+Rule 3 `Path[…,simple]` with a `SimpleExpression` index and a right-hand side
+the terminals reject. The field forms (`recv.a = rhs`) are the same three rules
+without the index capture.
 
-**`storageIndexWrite_unfold_leftFst`** — `nsp[i] = se`
+### The right-hand-side kind
 
-    nsp => ⟨ π  storage sp = nsp; sp[i] = se; ω ⟩ φ
-    -----------------------------------------------
-            => ⟨ π  nsp[i] = se; ω ⟩ φ
+The capture a rule emits depends on what kind of value the right-hand side is,
+because the declaration it introduces differs:
 
-As on the right-hand side, the index is captured first
-(`storageIndexWriteNonSimpleIndexCapture` takes any storage path), so
-the receiver unfold only sees a simple index at the top of the statement. The
-two rules above never see a side-effecting receiver either: their
-`Path[storage,complex]` classifies an index only when it is a variable or a
-literal. A receiver that *does* carry one (`persons[acc.balance++].account`) is
-no `Path` under that sort and is handled by the `IndexedReceiver` family below.
+| Kind | Sort | Capture |
+|---|---|---|
+| primitive value | `Expression[primitive]` (Rules 1–2), `NonSimpleExpression[primitive]` (Rule 3) | `T rv = e;` |
+| storage reference | `Path[storage,reference]` (Rules 1–2), `Path[storage,complex,reference]` (Rule 3) | `T storage rv = src;` |
+| memory reference | `Path[memory,reference]` (Rules 1–2), `Path[memory,complex,reference]` (Rule 3) | `T memory rv = src;` |
 
-A bare contract root on the right-hand side is a `FieldReference`, which
-`SimpleExpression` excludes, so the two `se` unfolds above cannot fire on
-`nsp.a = gsp;` or `nsp[i] = gsp;`. Two twins with a
-`Path[storage,simple,global]` right-hand side cover that case:
+`Expression[primitive]` is "primitive-typed and not a *complex* path": literals,
+primitive variables, operator expressions and bare contract roots. A complex
+path such as `p.age` is excluded, because its own receiver must be resolved by
+the read unfolds first — which also evaluate it ahead of the target, so the
+right-hand-side-first order is preserved either way.
 
-**`storageFieldWriteRootRhs_unfold_leftFst`** — `nsp.a = gsp`
+That table is the whole `kindof` dispatch; it is why Rule 1 has ten instances
+(storage receiver × {field, index} × three kinds, memory receiver × {field,
+index} × two kinds — a memory location cannot hold a storage reference), Rule 2
+five, and Rule 3 six.
 
-    nsp => ⟨ π  storage sp = nsp; sp.a = gsp; ω ⟩ φ
-    ----------------------------------------------
-            => ⟨ π  nsp.a = gsp; ω ⟩ φ
+### Instances of Rule 1
 
-**`storageIndexWriteRootRhs_unfold_leftFst`** — `nsp[i] = gsp`
+**`storageFieldWrite_unfold_leftFst`** — `nsp.a = e`, primitive `e`
 
-    nsp => ⟨ π  storage sp = nsp; sp[i] = gsp; ω ⟩ φ
-    -----------------------------------------------
-            => ⟨ π  nsp[i] = gsp; ω ⟩ φ
-
-After unfolding, the CopySource terminals consume `sp.a = gsp` and
-`sp[i] = gsp` (their source `Path[storage,simple]` accepts a global root).
-
-### Instances of unfold_leftSnd
-
-**`storageIndexWriteNonSimpleIndexCapture`** — `path[nse] = se`, primitive `se`
-
-    nse => ⟨ π  T_{se} rv = se; T pv = nse; path[pv] = rv; ω ⟩ φ
+    nsp => ⟨ π  T_{e} rv = e; storage sp = nsp; sp.a = rv; ω ⟩ φ
     ------------------------------------------------------------
-         => ⟨ π  path[nse] = se; ω ⟩ φ
+                => ⟨ π  nsp.a = e; ω ⟩ φ
 
-The snapshot is what makes `a[i++] = i;` write the *old* `i`. Dropping it
-closes a proof of `a[0] == 1` where the EVM writes `0`; the witnesses are
+**`storageIndexWrite_unfold_leftFst`** — `nsp[i] = e`, primitive `e`
+
+    nsp => ⟨ π  T_{e} rv = e; storage sp = nsp; T_{i} pv = i; sp[pv] = rv; ω ⟩ φ
+    ----------------------------------------------------------------------------
+                        => ⟨ π  nsp[i] = e; ω ⟩ φ
+
+**`storageFieldWriteStorageRef_unfold_leftFst`** — `nsp.a = src`, storage `src`,
+and likewise `memoryToStorageField_unfold_leftFst` (memory `src`)
+
+    nsp => ⟨ π  T_{src} storage rv = src; storage sp = nsp; sp.a = rv; ω ⟩ φ
+    ------------------------------------------------------------------------
+                    => ⟨ π  nsp.a = src; ω ⟩ φ
+
+`storageIndexWrite…_unfold_leftFst` is the `nsp[i]` twin of each, and
+`memoryFieldWriteMemRef_unfold_leftFst` / `memoryIndexWriteMemRef_unfold_leftFst`
+the memory-receiver ones.
+
+The value snapshot is what keeps evaluation order: aliasing the receiver runs
+its index, and that may mutate what the value reads. Dropping it reproduces the
+Lean model's `fieldWrite_not_sound` counterexample. Capturing a *reference*
+source is not needed for order (a reference is bound, not read) but is done
+anyway, so that one rule covers a receiver-level source of any shape; the
+redundant alias collapses in one rebind step.
+
+### Instances of Rule 2
+
+**`storageIndexWriteNonSimpleIndexCapture`** — `sp[nse] = e`, primitive `e`
+
+    nse => ⟨ π  T_{e} rv = e; T pv = nse; sp[pv] = rv; ω ⟩ φ
+    --------------------------------------------------------
+              => ⟨ π  sp[nse] = e; ω ⟩ φ
+
+The snapshot is what makes `a[i++] = i;` write the *old* `i`. Dropping it closes
+a proof of `a[0] == 1` where the EVM writes `0`; the witnesses are
 `testStorageIndexWriteImpureIndexPrimitiveRhs` and its memory and depth-2 twins
 in `TestSuite.sol`.
 
-**`storageIndexWriteStorageRefNonSimpleIndexCapture`** — `path[nse] = sv`,
-and likewise `storageIndexWriteRootRefRhsNonSimpleIndexCapture` (`gsp`) and
-`memoryToStorageIndexNonSimpleIndexCapture` (`mv`)
+**`storageIndexWriteStorageRefNonSimpleIndexCapture`** — `sp[nse] = src`, and
+likewise `memoryToStorageIndexNonSimpleIndexCapture` and
+`memoryIndexWriteMemRefNonSimpleIndexCapture`
 
-    nse => ⟨ π  T pv = nse; path[pv] = sv; ω ⟩ φ
-    ----------------------------------------------
-         => ⟨ π  path[nse] = sv; ω ⟩ φ
+    nse => ⟨ π  T_{src} storage rv = src; T pv = nse; sp[pv] = rv; ω ⟩ φ
+    --------------------------------------------------------------------
+                 => ⟨ π  sp[nse] = src; ω ⟩ φ
 
-### Receivers that carry a side effect
+### Instances of Rule 3
 
-`Path[storage,complex]` rejects an index that is not a variable or a literal, so
-`persons[acc.balance++].account = c;` matches none of the unfolds above. The
-`nonSimpleIndex` flag lifts that restriction, and the `IndexedReceiver` family
-uses it. It splits by right-hand side exactly as `unfold_leftSnd` does: a
-*primitive* value is snapshotted into `rv` before the receiver is aliased,
-because aliasing runs the receiver's index and that may mutate what the value
-reads; a *reference* is bound rather than read, so it needs no snapshot.
+**`fieldWriteValueRhsCapture`** / **`indexWriteValueRhsCapture`** capture a
+nonsimple primitive right-hand side at a simple target; they are data-location
+neutral (`Path[simple]`), so one rule serves storage and memory.
+**`storageFieldWriteCaptureSrc`** / **`storageIndexWriteStorageRefRhsCapture`**
+and their `memory…` twins capture a complex reference source.
+**`storageRootWriteValueRhsCapture`** is the root-target form, which has no
+receiver and no index.
 
-**`storageFieldWriteIndexedReceiver_unfold_leftFst`** — `nsp.a = se`, primitive `se`
+### Why the index may carry a side effect
 
-    nsp => ⟨ π  T_{se} rv = se; storage sp = nsp; sp.a = rv; ω ⟩ φ
-    --------------------------------------------------------------
-            => ⟨ π  nsp.a = se; ω ⟩ φ
+`Path[…]` classifies `persons[acc.balance++]` as an ordinary complex path — the
+sort places no purity requirement on an index. Soundness comes from the capture
+order instead: every rule above captures the right-hand side before it evaluates
+the receiver, and the receiver before the index. The one rule that emits a
+side-effect-capable path twice is `ternaryToIfStorage`
+(`path = se ? e1 : e2` ⟹ `if (se) path = e1; else path = e2;`); its two
+occurrences sit in mutually exclusive branches, so the path is still resolved
+exactly once per trace, and its guard is a `SimpleExpression`.
 
-**`storageFieldWriteStorageRefIndexedReceiver_unfold_leftFst`** — `nsp.a = sv`,
-and likewise `memoryToStorageFieldIndexedReceiver_unfold_leftFst` (`mv`) and
-`storageFieldWriteRootRefRhsIndexedReceiver_unfold_leftFst` (`gsp`)
-
-    nsp => ⟨ π  storage sp = nsp; sp.a = sv; ω ⟩ φ
-    ----------------------------------------------
-            => ⟨ π  nsp.a = sv; ω ⟩ φ
-
-`storageIndexWrite…IndexedReceiver_unfold_leftFst` is the `nsp[i]` twin of each,
-and `memory…MemRefIndexedReceiver_unfold_leftFst` the memory-receiver one. The
-declaration the rule emits is dropped by `storageLocalDeclInitDrop`, which
-re-enters the unfold, so a receiver nested any number of levels deep decomposes
-by recursion rather than by enumeration. Witnesses in `TestSuite.sol`:
-`storageFieldWriteRefSourceImpureReceiver` and its `*ImpureReceiver` siblings,
-plus `testNestedIndexWriteImpureIndexPrimitiveRhs` for the primitive half.
+No complex path SV is ever lowered into a term or an update — only
+`Path[…,simple]` SVs occur there, and a simple path is a root, so the
+"matches a `Path` SV ⟹ lowerable" direction the terminals rely on still holds.
 
 ### Standalone receiver / delete-target simplifications
 

@@ -50,10 +50,10 @@ still verified as uniform across operators:
 | `stmt` / `assign` / `decl` | inc/dec as a statement vs `result = …` vs declaration form |
 | `fixity=pre` vs `fixity=post` | pre writes storage before binding the result, post binds first — separate groups |
 | `rhsCapture` | a non-simple right-hand side is hoisted; the target is untouched |
-| `valueSnapshot` | a non-simple index is hoisted out of a write whose right-hand side is a *primitive* value, so the value is read into a snapshot first: Solidity evaluates the right-hand side before the left-hand side, and the hoisted index may mutate what the right-hand side reads |
-| `refPassthrough` | the same, for a *reference* right-hand side: binding a reference is aliasing rather than a read, so there is nothing to snapshot and the index capture stands alone |
-| `field` vs `index` | in `indexedReceiverCapture`, the operation whose receiver is aliased: `nsp.a = …` vs `nsp[i] = …` |
-| `refPassthroughField` / `refPassthroughIndex` | the reference halves of those two: the receiver alias stands alone, since a reference source needs no snapshot ahead of the receiver's index |
+| `value` | the right-hand side is a *primitive* value, captured into a snapshot (`T rv = e;`) before the index is hoisted: Solidity evaluates the right-hand side first, and the hoisted index may mutate what it reads |
+| `ref` | the same for a *reference* right-hand side, captured into an alias (`T storage rv = src;` / `T memory rv = src;`) — the declaration is what differs, not the order |
+| `valueField` / `valueIndex` | in `receiverCapture`, the operation whose receiver is aliased, with a primitive right-hand side: `nsp.a = e` vs `nsp[i] = e` (the index form also captures the index, after the receiver) |
+| `refField` / `refIndex` | the reference-source halves of those two |
 
 Hole ordering rule: holes apply in spec order, so a string must come before
 its substrings (`+=` before `+`, `++s#gsp` before `+`); the test rejects a spec
@@ -71,10 +71,10 @@ where an earlier hole is a substring of a later one.
 | `memoryCompoundAssign` | 20 | `memory{Field,IndexArray}{Add,Sub,Mul,Div,Mod}Assign` |
 | `memoryIncDec` | 24 | `memory{Field,IndexArray}{Pre,Post}{in,de}crement` (+ `Assignment`) |
 | `compoundAssignRhsCapture` | 5 | `{add,…,mod}AssignValueRhsCapture` |
-| `indexCapture` | 9 | the capture rules that hoist a fragment out of an indexed or field write — see the variant table above |
-| `indexedReceiverCapture` | 12 | the receiver-alias rules for a receiver whose index is non-simple (`nsp.a = c`, `nsp[i] = c`), split by primitive vs reference source |
+| `indexCapture` | 8 | the capture rules that hoist a fragment out of an indexed or field write with a *simple* receiver — see the variant table above |
+| `receiverCapture` | 10 | the rules for a *complex* receiver (`nsp.a = e`, `nsp[i] = e`), which capture right-hand side, receiver and index in one step, split by primitive vs reference source |
 
-175 annotated taclets in total.
+172 annotated taclets in total.
 
 ## Running the check
 

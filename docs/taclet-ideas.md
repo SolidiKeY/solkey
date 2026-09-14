@@ -190,3 +190,20 @@ them changes what the taclets match:
   `Path[memory,simple]`, in taclets of the same shape. Both match exactly one
   thing — a memory `ProgramVariable` — so the name is right either way, but
   one of the two declarations should win.
+
+## Gaps left by the flat write decomposition
+
+The three write rules (`docs/storage.md` §5) cover every `op(recv, i) = rhs`
+shape. Two neighbouring statement forms are not yet as general:
+
+- **A non-simple index under a compound assignment or an inc/dec**
+  (`a[j++] += x`, `++a[f()]`) still has no capture rule: those unfolds take a
+  `SimpleExpression` index, so the statement goes stuck. An impure *receiver*
+  (`persons[i++].age += i`) is handled — the receiver unfolds snapshot the
+  right-hand side first, exactly as Rule 1 does. Either add an index-capture
+  rule per compound family, or desugar `a[i] += x` to `a[i] = a[i] + x` first.
+- **Writing a storage reference into a memory location** (`mv.a = sp`,
+  `mv[i] = sp`) has no rule, and neither has writing a *complex* memory
+  reference into a storage location outside the receiver-capture path. A
+  storage-to-memory element copy is a deep copy (`copySt`) and needs its own
+  terminal, not just a capture.
