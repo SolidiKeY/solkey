@@ -71,14 +71,14 @@ maintained by the calculus, not by the program. On top of it:
 
 **`net` is a second `Struct`-sorted program variable.** Declare
 `Struct net;` next to `Struct storage;`. Since `address` is the `int`
-sort, `net(a)` is expressed with the existing struct primitives:
+sort, `net(sadr)` is expressed with the existing struct primitives:
 
-    read   :  selectSt<[int]>(net, at(a))
-    write  :  {net := storeSt(net, at(a), selectSt<[int]>(net, at(a)) + v)}
+    read   :  selectSt<[int]>(net, at(sadr))
+    write  :  {net := storeSt(net, at(sadr), selectSt<[int]>(net, at(sadr)) + v)}
 
 Everything needed already exists in `structRules.key`: read-over-write
 (`selectOnStore`), and `selectOnEmpty` + `defaultValue<[int]> = 0`, which
-gives the paper's implicit "initially `net(a) = 0`" from `net = mtSt` in the
+gives the paper's implicit "initially `net(sadr) = 0`" from `net = mtSt` in the
 constructor PO. Zero new sorts, functions, or simplification rules.
 
 Rejected alternatives: a reserved field inside `storage` (would entangle the
@@ -226,8 +226,8 @@ end-to-end; no new AST node and no grammar change (`MemberAccess` +
    to the declaration's own type (`VOID`) for non-push names. As a
    statement, the call sits in the existing `ExpressionStatement`.
 4. **Taclet matching comes free** — the `\find` pattern
-   `s#a.transfer(s#se);` is parsed by the same converter in schema mode:
-   `s#a` is an SV receiver, the literal member name `transfer` resolves to
+   `s#sadr.transfer(s#se);` is parsed by the same converter in schema mode:
+   `s#sadr` is an SV receiver, the literal member name `transfer` resolves to
    the same builtin `FunctionDeclaration` object, so structural matching
    works exactly as it does for `s#sp.push(s#se);` today. Receiver SV sort:
    `SimpleExpression[primitive]` (matches literals and primitive-typed
@@ -264,29 +264,29 @@ first):
 ```key
 transferNoCallbackBox {
     \schemaVar \formula post;
-    \schemaVar \program SimpleExpression[primitive] a;
+    \schemaVar \program SimpleExpression[primitive] sadr;
     \schemaVar \program SimpleExpression[primitive] se;
 
-    \find(\modality{#box}{c# s#a.transfer(s#se); #c}\endmodality(post))
+    \find(\modality{#box}{c# s#sadr.transfer(s#se); #c}\endmodality(post))
     \replacewith({selfBalance := selfBalance - se
-                  || net := storeSt(net, at(a),
-                                    selectSt<[int]>(net, at(a)) - se)}
+                  || net := storeSt(net, at(sadr),
+                                    selectSt<[int]>(net, at(sadr)) - se)}
         \modality{#box}{c# #c}\endmodality(post))
     \heuristics(simplify_prog)
 };
 
 transferNoCallbackDiamond {
     \schemaVar \formula post;
-    \schemaVar \program SimpleExpression[primitive] a;
+    \schemaVar \program SimpleExpression[primitive] sadr;
     \schemaVar \program SimpleExpression[primitive] se;
 
-    \find(\modality{#diamond}{c# s#a.transfer(s#se); #c}\endmodality(post))
+    \find(\modality{#diamond}{c# s#sadr.transfer(s#se); #c}\endmodality(post))
     "sufficient funds":
         \replacewith(0 <= se & se <= selfBalance);
     "transfer booked":
         \replacewith({selfBalance := selfBalance - se
-                      || net := storeSt(net, at(a),
-                                        selectSt<[int]>(net, at(a)) - se)}
+                      || net := storeSt(net, at(sadr),
+                                        selectSt<[int]>(net, at(sadr)) - se)}
             \modality{#diamond}{c# #c}\endmodality(post))
     \heuristics(simplify_prog)
 };
@@ -344,18 +344,18 @@ English first):
 ```key
 transferWithCallbackBox {
     \schemaVar \formula post, inv;
-    \schemaVar \program SimpleExpression[primitive] a;
+    \schemaVar \program SimpleExpression[primitive] sadr;
     \schemaVar \program SimpleExpression[primitive] se;
     \skolemTerm Struct storageSk;
     \skolemTerm Struct netSk;
     \skolemTerm int selfBalanceSk;
 
-    \find(\modality{#box}{c# s#a.transfer(s#se); #c}\endmodality(post))
+    \find(\modality{#box}{c# s#sadr.transfer(s#se); #c}\endmodality(post))
     \varcond(\getContractInvariant(inv))
     "invariant on exit":
         \replacewith({selfBalance := selfBalance - se
-                      || net := storeSt(net, at(a),
-                                        selectSt<[int]>(net, at(a)) - se)} inv);
+                      || net := storeSt(net, at(sadr),
+                                        selectSt<[int]>(net, at(sadr)) - se)} inv);
     "resume after callback":
         \replacewith({storage := storageSk || net := netSk
                       || selfBalance := selfBalanceSk}
@@ -365,14 +365,14 @@ transferWithCallbackBox {
 
 transferWithCallbackDiamond {
     // same schema variables and varcond
-    \find(\modality{#diamond}{c# s#a.transfer(s#se); #c}\endmodality(post))
+    \find(\modality{#diamond}{c# s#sadr.transfer(s#se); #c}\endmodality(post))
     "sufficient funds":
         \replacewith(0 <= se & se <= selfBalance);
     "invariant on exit":
         \replacewith(0 <= se & se <= selfBalance
             -> {selfBalance := selfBalance - se
-                || net := storeSt(net, at(a),
-                                  selectSt<[int]>(net, at(a)) - se)} inv);
+                || net := storeSt(net, at(sadr),
+                                  selectSt<[int]>(net, at(sadr)) - se)} inv);
     "resume after callback":
         \replacewith(0 <= se & se <= selfBalance
             -> {storage := storageSk || net := netSk
@@ -490,7 +490,7 @@ usefulness:
    parse from the solc AST `documentation` nodes in `SolJSONParser` (see
    `solidity-json-documentation.md`), build `speclang/` objects, register in
    `SpecificationRepository`. `net(a)` in specs lowers to
-   `selectSt<[int]>(net, at(a))`; `\old(e)` lowers against the `old`
+   `selectSt<[int]>(net, at(sadr))`; `\old(e)` lowers against the `old`
    variable. This feeds both the Step-4 varcond and the Step-5 PO
    generator.
 5. **`send` and `call{value: v}(data)`**: `b = a.send(v)` is `transfer`

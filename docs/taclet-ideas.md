@@ -178,6 +178,22 @@ an array or mapping element, the `?:` type bug in `SolJSONParser.parseConditiona
 Names were aligned with their sorts across `solidityProgramRules.key` (`gp` →
 `gsp`, `lp` → `lsv`, `mp` → `mv`, the over-general `Path[storage] sp` /
 `Path[memory] mp` → `path` / `mpath`, the transfer receiver `a` → `sadr`).
+
+A second pass then renamed the single letters whose spelling said nothing
+about their role: the index expression `i` → `ie`, the field selector `a` →
+`fld` (and the source field of the one two-field copy, `b` → `srcFld`), the
+if-branches `s0` / `s1` → `thenStm` / `elseStm`, and the ternary arms `e1` /
+`e2` → `thenExpr` / `elseExpr`. Five taclets that used `se` in an *index*
+position were renamed to `ie` at the same time, so the name again follows the
+role. `fld` also ends the shadowing of the global `\term Field a` declared in
+`memoryRules.key` and `structRules.key`. The dead `mpath` row was dropped from
+the convention table in `key-taclets.md` and the undocumented `lv` added.
+
+`v` was deliberately kept: it is a program variable, and the bare letter is
+the established name for one.  Note it still shadows the global `\term
+MemValue v` / `\term StValue v` of `memoryRules.key` and `structRules.key`,
+as `a` did before the rename.
+
 Two sort-level oddities were found and deliberately left alone, because fixing
 them changes what the taclets match:
 

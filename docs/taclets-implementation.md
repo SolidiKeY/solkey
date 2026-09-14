@@ -234,8 +234,9 @@ from the EVM's checked arithmetic); `/` and `%` revert on a zero denominator.
 - Guard simplifiers, in `concrete_solidity` so they outrank the split and the
   unfold: `ifTrue` / `ifFalse` / `ifElseTrue` / `ifElseFalse` drop the dead
   branch of a literal guard outright, where `ifSplit` would leave a second,
-  trivially closed goal; `ifElseNegated` rewrites `if (!se) s0 else s1` to
-  `if (se) s1 else s0`, so the negation never has to be captured into a fresh
+  trivially closed goal; `ifElseNegated` rewrites
+  `if (!se) thenStm else elseStm` to `if (se) elseStm else thenStm`, so the
+  negation never has to be captured into a fresh
   variable by `ifElseUnfold`. `concrete_solidity` was a declared but unused
   rule set (`ruleSetDeclarations.key`, costed in `SymExStrategy`); these five
   are its first members. Matching a literal guard needs `BoolLiteral` to have

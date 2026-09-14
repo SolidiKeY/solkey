@@ -301,11 +301,11 @@ When the impure index sits in the *receiver* rather than at the top of the
 statement (`ps[i++].account = acc;`), the receiver-capture rules take over and
 capture all three constituents at once, right-hand side first:
 
-    nmp.a = e;   ⟹   T_{e} rv = e; T_{nmp} memory mv = nmp; mv.a = rv;
+    nmp.fld = e;   ⟹   T_{e} rv = e; T_{nmp} memory mv = nmp; mv.fld = rv;
 
 `memoryFieldWrite_unfold_leftFst` is the primitive form and
 `memoryFieldWriteMemRef_unfold_leftFst` the reference one, with
-`memoryIndexWrite…` the `[i]` twins (those also capture the index, after the
+`memoryIndexWrite…` the `[ie]` twins (those also capture the index, after the
 receiver). Their receivers are ordinary `Path[memory,complex]` — the sort places
 no purity requirement on an index, because the capture order is what keeps the
 rule sound. The alias declaration is dropped by `memoryLocalDeclInitDrop`, so
@@ -332,22 +332,23 @@ but `tok.value` remains `9` because `tok` still points to the old identity.
 
 ## 11b. Compound Updates
 
-`mv.x += e`, `++mv.x`, `mv[i] *= e`, `v = mv[i]++` and the rest are handled by
+`mv.fld += e`, `++mv.fld`, `mv[ie] *= e`, `v = mv[ie]++` and the rest are
+handled by
 dedicated terminal rules that read, compute and write in one update — the
 storage rules of `storage.md` §7 with `find`/`save` replaced by `read`/`write`:
 
-    mv.a += se
-    ⇝  { memory := write(memory, mv, a, read<[int]>(memory, mv, a) + se) }
+    mv.fld += se
+    ⇝  { memory := write(memory, mv, fld, read<[int]>(memory, mv, fld) + se) }
 
-    ++mv.a
-    ⇝  { memory := write(memory, mv, a, read<[int]>(memory, mv, a) + 1) }
+    ++mv.fld
+    ⇝  { memory := write(memory, mv, fld, read<[int]>(memory, mv, fld) + 1) }
 
 `memoryField{Add,Sub,Mul,Div,Mod}Assign`,
 `memoryField{Pre,Post}{in,de}crement` and their `…Assignment` forms; complex
 receivers unfold first through the `_unfold_leftFst` twins, exactly as for
 plain assignments. `/=` and `%=` guard with `\if(se != 0)\then(…)\else(revert)`.
 
-The indexed forms (`memoryIndexArray…`) carry the `0 ≤ i < length` /
+The indexed forms (`memoryIndexArray…`) carry the `0 ≤ ie < length` /
 `revert();` goal pair of `memoryIndexWriteArray`, so `xs[i] += 1` on an
 out-of-range `i` reverts instead of writing.
 

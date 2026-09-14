@@ -79,8 +79,8 @@ of the same shape uses the same name for the same role:
 | Role | Name |
 |---|---|
 | Postcondition formula | `post` |
-| Simple / nonsimple / arbitrary expression | `se` (`se1`, `se2`) / `nse` / `e` (`e1`, `e2`) |
-| Simple index expression | `i` |
+| Simple / nonsimple / arbitrary expression | `se` (`se1`, `se2`) / `nse` / `e` |
+| Simple index expression | `ie` |
 | Stack variable read target | `v` |
 | Assignment target (arbitrary / nonsimple) | `lhs` / `nlhs` |
 | Global storage root (`Path[storage,simple,global]`) | `gsp` |
@@ -90,8 +90,10 @@ of the same shape uses the same name for the same role:
 | Reference right-hand side of a capture rule | `src` |
 | Local storage variable (`Variable[storage]`) | `lsv` |
 | Memory variable / nonsimple memory path | `mv` (`mv1`, `mv2`) / `nmp` |
-| Memory path of any simplicity (`Path[memory]`) | `mpath` |
-| Field (second field) | `a` (`b`) |
+| Field (source field of a two-field copy) | `fld` (`srcFld`) |
+| Local value variable (`Variable`) | `lv` |
+| Then / else branch statement | `thenStm` / `elseStm` |
+| Then / else arm of a ternary | `thenExpr` / `elseExpr` |
 | Fresh captured value temp and its type | `pv`, `pvType` |
 | Double capture: right-operand snapshot, then left operand | `pv1`/`pv1Type`, `pv2`/`pv2Type` |
 | Type of a fresh path alias | `aliasType` |
@@ -99,8 +101,10 @@ of the same shape uses the same name for the same role:
 | Simple / nonsimple address in transfer rules (`net(sadr)`) | `sadr` / `nadr` |
 
 A trailing `p` means the name denotes a path and a trailing `v` that it denotes
-a variable, so `gsp` is a storage location a write addresses while `lsv` and
-`mv` are program variables an update assigns to. The type of a fresh temporary
+a variable, so `gsp` is a storage location a write addresses while `lsv`, `lv`,
+`mv` and `v` are program variables an update assigns to. A trailing `e` means
+the name denotes an expression, as in `ie` and `se`. The type of a fresh
+temporary
 is named after the temporary (`pvType`, `sadrType`, `seType`) except for a path
 alias, which uses the role name `aliasType`.
 
@@ -127,10 +131,10 @@ type as another expression/path.
 Example unfold rule:
 
 ```key
-\find(\modality{#mod}{c# s#nsp.s#a = s#se; #c}\endmodality(post))
+\find(\modality{#mod}{c# s#nsp.s#fld = s#se; #c}\endmodality(post))
 \varcond(\newTypeOf(sp, nsp), \newTypeOf(aliasType, nsp))
 \replacewith(\modality{#mod}{c# s#aliasType storage s#sp = s#nsp;
-                              s#sp.s#a = s#se; #c}\endmodality(post))
+                              s#sp.s#fld = s#se; #c}\endmodality(post))
 ```
 
 ## Storage Rule Pattern
