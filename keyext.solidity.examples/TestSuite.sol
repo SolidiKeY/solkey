@@ -2217,4 +2217,41 @@ contract TestSuite {
         assert(i == 2);
         assert(tbs[1].tokens[0].value == 2);
     }
+
+    // ── Binary operand evaluation order: solc evaluates the right operand first ──
+
+    function additionLeftImpureRightReadFirst() public {
+        uint i = 1;
+        uint x = i++ + i;
+        assert(x == 2);
+        assert(i == 2);
+    }
+
+    function additionRightImpure() public {
+        uint i = 1;
+        uint x = i + i++;
+        assert(x == 3);
+        assert(i == 2);
+    }
+
+    function additionBothOperandsImpure() public {
+        uint i = 1;
+        uint x = i++ + i++;
+        assert(x == 3);
+        assert(i == 3);
+    }
+
+    function subtractionLeftImpureRightReadFirst() public {
+        uint i = 5;
+        uint x = i++ - i;
+        assert(x == 0);
+        assert(i == 6);
+    }
+
+    function lessThanLeftImpureRightReadFirst() public {
+        uint i = 1;
+        bool b = i++ < i;
+        assert(!b);
+        assert(i == 2);
+    }
 }

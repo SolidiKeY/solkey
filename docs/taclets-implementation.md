@@ -181,7 +181,8 @@ side and stays unsupported.
 ### Tier-1 expression operators
 Mirror the `+`/`==` families: terminal assigns the logic-level result, non-simple
 operands are captured by `_unfold_left/right` (arith) or `…CaptureLhs/Rhs`
-(relational/logical). The former `<op>_unfold_result` rules (`nlhs = se1 OP se2`)
+(relational/logical), in the order given under §Operand evaluation order below.
+The former `<op>_unfold_result` rules (`nlhs = se1 OP se2`)
 are gone — a non-simple write target is now served by the per-statement RHS
 captures (§Capture partition below), which also cover nested RHS like
 `total = x + y*z;`. Uses plain LDT ops (`sub`, `mul`, `div`, `mod`, `pow`,
@@ -201,6 +202,22 @@ from the EVM's checked arithmetic); `/` and `%` revert on a zero denominator.
   continuing with `v = nse;` on the branch that reaches the right operand and
   `v = false;` / `v = true;` on the short-circuit branch
   (examples `logicalAndShortCircuitRhs` / `logicalOrShortCircuitRhs`).
+- Operand evaluation order: solc compiles the **right** operand of a binary
+  operation before the left (`libsolidity/codegen/ExpressionCompiler.cpp`,
+  `visit(BinaryOperation)` — the left-first branch fires only when the right
+  operand is a literal, so it never changes semantics). The capture partition
+  reproduces that order: `_unfold_right` / `…CaptureRhs` take an arbitrary left
+  operand and capture the non-simple right one first, so the both-non-simple
+  case lands there too; `_unfold_left` / `…CaptureLhs` fire only once the right
+  operand is simple, and snapshot it into a temporary *before* the left
+  operand's side effects run, using two fresh variables (`pv1`, `pv2`). Without
+  that snapshot the calculus proves `x == 3` for `uint i = 1; x = i++ + i;`
+  where the EVM computes `2`. Examples `additionLeftImpureRightReadFirst`,
+  `additionRightImpure`, `additionBothOperandsImpure`,
+  `subtractionLeftImpureRightReadFirst`, `lessThanLeftImpureRightReadFirst`.
+  `&&`, `||` and `?:` are excluded — they are left-/condition-first by language
+  semantics, not by codegen. Note that via-IR evaluates left-to-right, so these
+  examples pin the legacy pipeline the runtime cross-check compiles with.
 - Conditional operator `?:`: `ternaryCaptureCond` hoists a non-simple
   condition (always evaluated); `ternaryToIf` (and `ternaryToIfStorage`, its
   twin for a storage-path target, which is not a `Variable`) rewrites the
@@ -484,7 +501,10 @@ kind:
 
   Soundness rests on the capture order, not on the sort: no rule evaluates a
   receiver before its right-hand side, and no `Path` SV lacking the `simple`
-  flag is ever lowered into a term or an update. The one rule that emits such a
+  flag is ever lowered into a term or an update. The binary operand rules follow
+  the same principle one level down — the right operand is captured before the
+  left, matching solc (§Tier-1 expression operators, "Operand evaluation
+  order"). The one rule that emits such a
   path twice is `ternaryToIfStorage`, whose two occurrences are in mutually
   exclusive `if`/`else` branches, so the path is resolved exactly once per trace.
 

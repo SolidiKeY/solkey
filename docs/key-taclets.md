@@ -93,6 +93,7 @@ of the same shape uses the same name for the same role:
 | Memory path of any simplicity (`Path[memory]`) | `mpath` |
 | Field (second field) | `a` (`b`) |
 | Fresh captured value temp and its type | `pv`, `pvType` |
+| Double capture: right-operand snapshot, then left operand | `pv1`/`pv1Type`, `pv2`/`pv2Type` |
 | Type of a fresh path alias | `aliasType` |
 | Declared type in value declarations | `varType` |
 | Simple / nonsimple address in transfer rules (`net(sadr)`) | `sadr` / `nadr` |
