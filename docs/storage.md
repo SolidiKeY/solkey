@@ -71,7 +71,7 @@ Storage paths:
   index).
 - `path` — plain storage path when the simple/nonsimple distinction
   is irrelevant.
-- `i` — simple index expression.
+- `ie` — simple index expression.
 
 Type-of metavariable:
 - `T_{expr}` (written `Tkindof(expr)` in the PDF) — the Solidity
@@ -174,7 +174,7 @@ index access does not (mappings have no length).
 
 General presentation schemas (these are templates; only the named
 instances below are rules of the calculus). `op(path, e)` ranges over
-the base operations `path.a` and `path[e]`.
+the base operations `path.fld` and `path[e]`.
 
 **unfold_rightFst** — capture a nonsimple receiver on the RHS.
 
@@ -198,17 +198,17 @@ storage read that produces a value.
 
 ### Instances of unfold_rightFst
 
-**`storageFieldRead_unfold_rightFst`** — `lhs = nsp.a`
+**`storageFieldRead_unfold_rightFst`** — `lhs = nsp.fld`
 
-    nsp => ⟨ π  storage sp = nsp; lhs = sp.a; ω ⟩ φ
+    nsp => ⟨ π  storage sp = nsp; lhs = sp.fld; ω ⟩ φ
     -----------------------------------------------
-              => ⟨ π  lhs = nsp.a; ω ⟩ φ
+              => ⟨ π  lhs = nsp.fld; ω ⟩ φ
 
-**`storageIndexRead_unfold_rightFst`** — `lhs = nsp[i]`
+**`storageIndexRead_unfold_rightFst`** — `lhs = nsp[ie]`
 
-    nsp => ⟨ π  storage sp = nsp; lhs = sp[i]; ω ⟩ φ
+    nsp => ⟨ π  storage sp = nsp; lhs = sp[ie]; ω ⟩ φ
     ------------------------------------------------
-              => ⟨ π  lhs = nsp[i]; ω ⟩ φ
+              => ⟨ π  lhs = nsp[ie]; ω ⟩ φ
 
 The receiver is captured before the index: `unfold_rightSnd` below
 takes a *simple* storage path as receiver, so a complex receiver is
@@ -226,11 +226,11 @@ pins it against the EVM.
 
 ### Instances of unfold_rightSndResult
 
-**`storageFieldRead_unfold_rightSndResult`** — `nlhs = sp.a`
+**`storageFieldRead_unfold_rightSndResult`** — `nlhs = sp.fld`
 
-    nlhs => ⟨ π  T_{nlhs} pv = sp.a; nlhs = pv; ω ⟩ φ
+    nlhs => ⟨ π  T_{nlhs} pv = sp.fld; nlhs = pv; ω ⟩ φ
     -------------------------------------------------
-              => ⟨ π  nlhs = sp.a; ω ⟩ φ
+              => ⟨ π  nlhs = sp.fld; ω ⟩ φ
 
 **`storageIndexRead_unfold_rightSndResult`** — `nlhs = sp[se]`
 
@@ -258,7 +258,8 @@ to a storage path — a rebind no rule consumes. Excluded here, it reaches
 
 ## 5. Step 2: Writing to a Nonsimple Target
 
-A write `op(recv, i) = rhs` is decomposed by three rules that partition on which
+A write `op(recv, ie) = rhs` is decomposed by three rules that partition on
+which
 constituent is not yet simple. All three capture in the order the EVM evaluates
 in — **right-hand side, then receiver, then index** — which is what the runtime
 cross-check pins (`testNestedIndexWriteImpureReceiverAndIndex`,
@@ -270,9 +271,9 @@ any number of levels deep decomposes by recursion rather than by enumeration.
 **Rule 1 — receiver nonsimple.** Capture right-hand side, receiver and index in
 one step; the residual is terminal-ready.
 
-    nsp => ⟨ π  T_{e} rv = e; T_{nsp} sp = nsp; T_{i} pv = i; sp[pv] = rv; ω ⟩ φ
+    nsp => ⟨ π  T_{e} rv = e; T_{nsp} sp = nsp; T_{ie} pv = ie; sp[pv] = rv; ω ⟩ φ
     -----------------------------------------------------------------------------
-                        => ⟨ π  nsp[i] = e; ω ⟩ φ
+                        => ⟨ π  nsp[ie] = e; ω ⟩ φ
 
 **Rule 2 — receiver simple, index nonsimple.** The receiver is already a root or
 an alias, so only the right-hand side and the index are captured.
@@ -290,7 +291,8 @@ an alias, so only the right-hand side and the index are captured.
 The partition is by sort alone and is therefore disjoint: Rule 1 needs
 `Path[…,complex]`, Rule 2 `Path[…,simple]` with a `NonSimpleExpression` index,
 Rule 3 `Path[…,simple]` with a `SimpleExpression` index and a right-hand side
-the terminals reject. The field forms (`recv.a = rhs`) are the same three rules
+the terminals reject. The field forms (`recv.fld = rhs`) are the same three
+rules
 without the index capture.
 
 ### The right-hand-side kind
@@ -317,26 +319,27 @@ five, and Rule 3 six.
 
 ### Instances of Rule 1
 
-**`storageFieldWrite_unfold_leftFst`** — `nsp.a = e`, primitive `e`
+**`storageFieldWrite_unfold_leftFst`** — `nsp.fld = e`, primitive `e`
 
-    nsp => ⟨ π  T_{e} rv = e; storage sp = nsp; sp.a = rv; ω ⟩ φ
+    nsp => ⟨ π  T_{e} rv = e; storage sp = nsp; sp.fld = rv; ω ⟩ φ
     ------------------------------------------------------------
-                => ⟨ π  nsp.a = e; ω ⟩ φ
+                => ⟨ π  nsp.fld = e; ω ⟩ φ
 
-**`storageIndexWrite_unfold_leftFst`** — `nsp[i] = e`, primitive `e`
+**`storageIndexWrite_unfold_leftFst`** — `nsp[ie] = e`, primitive `e`
 
-    nsp => ⟨ π  T_{e} rv = e; storage sp = nsp; T_{i} pv = i; sp[pv] = rv; ω ⟩ φ
+    nsp => ⟨ π  T_{e} rv = e; storage sp = nsp; T_{ie} pv = ie; sp[pv] = rv; ω ⟩ φ
     ----------------------------------------------------------------------------
-                        => ⟨ π  nsp[i] = e; ω ⟩ φ
+                        => ⟨ π  nsp[ie] = e; ω ⟩ φ
 
-**`storageFieldWriteStorageRef_unfold_leftFst`** — `nsp.a = src`, storage `src`,
+**`storageFieldWriteStorageRef_unfold_leftFst`** — `nsp.fld = src`,
+storage `src`,
 and likewise `memoryToStorageField_unfold_leftFst` (memory `src`)
 
-    nsp => ⟨ π  T_{src} storage rv = src; storage sp = nsp; sp.a = rv; ω ⟩ φ
+    nsp => ⟨ π  T_{src} storage rv = src; storage sp = nsp; sp.fld = rv; ω ⟩ φ
     ------------------------------------------------------------------------
-                    => ⟨ π  nsp.a = src; ω ⟩ φ
+                    => ⟨ π  nsp.fld = src; ω ⟩ φ
 
-`storageIndexWrite…_unfold_leftFst` is the `nsp[i]` twin of each, and
+`storageIndexWrite…_unfold_leftFst` is the `nsp[ie]` twin of each, and
 `memoryFieldWriteMemRef_unfold_leftFst` / `memoryIndexWriteMemRef_unfold_leftFst`
 the memory-receiver ones.
 
@@ -355,8 +358,9 @@ redundant alias collapses in one rebind step.
     --------------------------------------------------------
               => ⟨ π  sp[nse] = e; ω ⟩ φ
 
-The snapshot is what makes `a[i++] = i;` write the *old* `i`. Dropping it closes
-a proof of `a[0] == 1` where the EVM writes `0`; the witnesses are
+The snapshot is what makes `xs[i++] = i;` write the *old* `i`. Dropping it
+closes
+a proof of `xs[0] == 1` where the EVM writes `0`; the witnesses are
 `testStorageIndexWriteImpureIndexPrimitiveRhs` and its memory and depth-2 twins
 in `TestSuite.sol`.
 
@@ -396,22 +400,22 @@ No complex path SV is ever lowered into a term or an update — only
 ### Standalone receiver / delete-target simplifications
 
 These exist because their active statement is not assignment-shaped
-(`op(nsp,a) = se`); it is `delete`, `push`, `pop`, or a push-return
+(`op(nsp,fld) = se`); it is `delete`, `push`, `pop`, or a push-return
 binding. The receiver *is* an `op(nsp, ·)` in each of them — what differs is
 that nothing is assigned to it. Each replaces `nsp` with a fresh
 `storage sp = nsp;` capture, then continues against `sp`.
 
-**`storageFieldDelete_unfold_leftFst`** — `delete nsp.a;`
+**`storageFieldDelete_unfold_leftFst`** — `delete nsp.fld;`
 
-    nsp => ⟨ π  storage sp = nsp; delete sp.a; ω ⟩ φ
+    nsp => ⟨ π  storage sp = nsp; delete sp.fld; ω ⟩ φ
     ------------------------------------------------
-            => ⟨ π  delete nsp.a; ω ⟩ φ
+            => ⟨ π  delete nsp.fld; ω ⟩ φ
 
-**`storageIndexDelete_unfold_leftFst`** — `delete nsp[i];`
+**`storageIndexDelete_unfold_leftFst`** — `delete nsp[ie];`
 
-    nsp => ⟨ π  storage sp = nsp; delete sp[i]; ω ⟩ φ
+    nsp => ⟨ π  storage sp = nsp; delete sp[ie]; ω ⟩ φ
     -------------------------------------------------
-            => ⟨ π  delete nsp[i]; ω ⟩ φ
+            => ⟨ π  delete nsp[ie]; ω ⟩ φ
 
 A delete keeps its last selector and aliases only the receiver, like
 every other left-hand side: `delete lsv;` on a local storage pointer is
@@ -466,15 +470,15 @@ emitted update.
 
 - `storageFieldWriteSave`
 
-      sp.a = se
-      ⇝  { storage := save(storage, sp · a, se) }
+      sp.fld = se
+      ⇝  { storage := save(storage, sp · fld, se) }
 
 - `storageFieldWriteCopySource` (RHS is itself a storage path —
   the *value at* `sp2` is copied, not the path; sort-free
   `find<[StValue]>`, like `storageRootWriteCopySource`)
 
-      sp1.a = sp2
-      ⇝  { storage := save(storage, sp1 · a, find<[StValue]>(storage, sp2)) }
+      sp1.fld = sp2
+      ⇝  { storage := save(storage, sp1 · fld, find<[StValue]>(storage, sp2)) }
 
   All the `*CopySource` copy rules assume the copied type carries no
   mapping: solc ≥ 0.7 rejects assignments whose target type transitively
@@ -510,8 +514,8 @@ emitted update.
 
 - `storageFieldReadFind`
 
-      v = sp.a
-      ⇝  { v := find(storage, sp · a) }
+      v = sp.fld
+      ⇝  { v := find(storage, sp · fld) }
 
 - `storageRootReadSelect`
 
@@ -541,8 +545,8 @@ enumerated).
 
 - `storageFieldDelete`
 
-      delete sp.a
-      ⇝  { storage := delAt(storage, sp · a) }
+      delete sp.fld
+      ⇝  { storage := delAt(storage, sp · fld) }
 
 - `delAt(storage, p)` leaves the reset lvalue unresolved: on read it becomes
   `default` for a primitive, and the lazy marker `delNode(…)` for a struct.
@@ -553,37 +557,37 @@ enumerated).
     - `f` is a **struct/array** member → recurse (nested mappings survive too);
     - `f` is a **primitive** member → `default`.
 
-The field variant (`delete sp.a`) applies the same `delAt` scheme at the
+The field variant (`delete sp.fld`) applies the same `delAt` scheme at the
 fully-qualified path, so deleting a struct field also preserves its mappings.
-The index variant (`delete sp[i]`) resets that single entry/element outright,
-mapping members included — `{ storage := save(storage, sp · at(i), defVal) }`.
+The index variant (`delete sp[ie]`) resets that single entry/element outright,
+mapping members included — `{ storage := save(storage, sp · at(ie), defVal) }`.
 
 ### Mapping index access  (when `mapping(sp)`)
 
 - `storageIndexWriteMappingSave`
 
-      sp[i] = se
-      ⇝  { storage := save(storage, sp · at(i), se) }
+      sp[ie] = se
+      ⇝  { storage := save(storage, sp · at(ie), se) }
 
 - `storageIndexWriteMappingCopySource`
 
-      sp1[i] = sp2
-      ⇝  { storage := save(storage, sp1 · at(i), select(storage, sp2)) }
+      sp1[ie] = sp2
+      ⇝  { storage := save(storage, sp1 · at(ie), select(storage, sp2)) }
 
 - `storageIndexReadMappingFind`
 
-      v = sp[i]
-      ⇝  { v := find(storage, sp · at(i)) }
+      v = sp[ie]
+      ⇝  { v := find(storage, sp · at(ie)) }
 
 - `storageIndexReadMappingBindLocalRoot`
 
-      lsv = sp[i]
-      ⇝  { lsv := sp · at(i) }
+      lsv = sp[ie]
+      ⇝  { lsv := sp · at(ie) }
 
 - `storageIndexReadMappingStoreRoot`
 
-      gsp = sp[i]
-      ⇝  { storage := save(storage, gsp, find(storage, sp · at(i))) }
+      gsp = sp[ie]
+      ⇝  { storage := save(storage, gsp, find(storage, sp · at(ie))) }
 
 ### Array index access  (when `array(sp)`, with `ℓ = find(storage, sp · length)`)
 
@@ -592,34 +596,34 @@ Each array rule branches on bounds. Out-of-bounds goes to
 
 - `storageIndexWriteArraySave`
 
-      sp[i] = se
-      ⇝  if 0 ≤ i < ℓ : { storage := save(storage, sp · at(i), se) }
+      sp[ie] = se
+      ⇝  if 0 ≤ ie < ℓ : { storage := save(storage, sp · at(ie), se) }
          else         : revert();
 
 - `storageIndexWriteArrayCopySource`
 
-      sp1[i] = sp2
-      ⇝  if 0 ≤ i < ℓ : { storage := save(storage, sp1 · at(i),
+      sp1[ie] = sp2
+      ⇝  if 0 ≤ ie < ℓ : { storage := save(storage, sp1 · at(ie),
                                           select(storage, sp2)) }
          else         : revert();
 
 - `storageIndexReadArrayFind`
 
-      v = sp[i]
-      ⇝  if 0 ≤ i < ℓ : { v := find(storage, sp · at(i)) }
+      v = sp[ie]
+      ⇝  if 0 ≤ ie < ℓ : { v := find(storage, sp · at(ie)) }
          else         : revert();
 
 - `storageIndexReadArrayBindLocalRoot`
 
-      lsv = sp[i]
-      ⇝  if 0 ≤ i < ℓ : { lsv := sp · at(i) }
+      lsv = sp[ie]
+      ⇝  if 0 ≤ ie < ℓ : { lsv := sp · at(ie) }
          else         : revert();
 
 - `storageIndexReadArrayStoreRoot`
 
-      gsp = sp[i]
-      ⇝  if 0 ≤ i < ℓ : { storage := save(storage, gsp,
-                                           find(storage, sp · at(i))) }
+      gsp = sp[ie]
+      ⇝  if 0 ≤ ie < ℓ : { storage := save(storage, gsp,
+                                           find(storage, sp · at(ie))) }
          else         : revert();
 
 ### Push / pop  (let `n = find(storage, sp · length)` and `ℓ` likewise)
@@ -678,7 +682,7 @@ one update (`storage{Root,Field}{Add,Sub,Mul,Div,Mod}Assign`, the
 `_unfold_leftFst` twins, exactly as for plain assignments. The indexed
 terminals come in a mapping and an array form, split by the receiver's
 sort like the plain index rules: `storageIndexMapping…` rewrites to the
-single update, `storageIndexArray…` carries the same `0 ≤ i < ℓ` /
+single update, `storageIndexArray…` carries the same `0 ≤ ie < ℓ` /
 `revert();` branch pair as `storageIndexWriteArraySave`, so
 `values[i] += 1` on an out-of-range `i` reverts instead of writing.
 
@@ -769,7 +773,7 @@ ensure that exactly one rule applies to any storage statement.
 
 **Roots are bare.** `gsp` is a bare contract root (a `FieldReference`)
 and `lsv` a bare local storage pointer; a final field or index segment
-is always spelled out (`sp.a`, `sp[i]`), which is what keeps
+is always spelled out (`sp.fld`, `sp[ie]`), which is what keeps
 `storageRootWriteStore` and `storageFieldWriteSave` disjoint.
 
 ## 10. Worked Examples (terse traces)
@@ -851,41 +855,41 @@ Use this when looking up which Step-3 rule fires.
 storage aliases (`lsv`) are `List`-typed paths. A global root `alice`
 extracts to `cons(alice, nil)`. All storage operations use `find`/`save`.
 
-| Source statement                | Rule                                  | Update operation |
-|--------------------------------|---------------------------------------|------------------|
-| `sp.a = se`                    | `storageFieldWriteSave`               | `save`           |
-| `sp1.a = sp2`                  | `storageFieldWriteCopySource`         | `save`/`find<[StValue]>`|
-| `gsp = se`                      | `storageRootWriteStore`               | `save`           |
-| `gsp = sp`                      | `storageRootWriteCopySource`          | `save`/`find<[StValue]>`|
-| `lsv = sp`                      | `storageLocalRootRebind`              | direct assign    |
-| `v = sp.a`                     | `storageFieldReadFind`                | `find`           |
-| `v = sp`                       | `storageRootReadSelect`               | `find`           |
-| `lsv = sp.b`                    | `storageFieldReadBindLocalRoot`       | direct assign    |
-| `gsp = sp.b`                    | `storageFieldReadStoreRoot`           | `save`/`find<[StValue]>`|
-| `delete gsp;`                   | `storageRootDelete`                   | `delAt`          |
-| `delete sp.a;`                 | `storageFieldDelete`                  | `delAt`          |
-| `delete sp[i];`                | `storageIndexDelete`                  | `save`/`defVal`  |
-| `sp[i] = se`  (mapping)        | `storageIndexWriteMappingSave`        | `save`           |
-| `sp1[i] = sp2`  (mapping)      | `storageIndexWriteMappingCopySource`  | `save`           |
-| `sp[i] = mv`  (mapping)        | `memoryToStorageIndexMappingCopyRoot` | `save`/`copyMem` |
-| `v = sp[i]`  (mapping)         | `storageIndexReadMappingFind`         | `find`           |
-| `lsv = sp[i]`  (mapping)        | `storageIndexReadMappingBindLocalRoot`| direct assign    |
-| `gsp = sp[i]`  (mapping)        | `storageIndexReadMappingStoreRoot`    | `save`/`find<[StValue]>`|
-| `sp[i] = se`  (array)          | `storageIndexWriteArraySave`          | `save`           |
-| `sp1[i] = sp2`  (array)        | `storageIndexWriteArrayCopySource`    | `save`           |
-| `sp[i] = mv`  (array)          | `memoryToStorageIndexArrayCopyRoot`   | `save`/`copyMem` |
-| `v = sp[i]`  (array)           | `storageIndexReadArrayFind`           | `find`           |
-| `lsv = sp[i]`  (array)          | `storageIndexReadArrayBindLocalRoot`  | direct assign    |
-| `gsp = sp[i]`  (array)          | `storageIndexReadArrayStoreRoot`      | `save`/`find<[StValue]>`|
-| `sp.push(se);`                 | `storagePushValueSave`                | `save`           |
-| `sp1.push(sp2);`               | `storagePushValueCopySource`          | `save`/`find<[StValue]>`|
-| `sp.push();`                   | `storagePushLengthSave`               | `save`           |
-| `lsv = sp.push();`              | `storageLocalRootPushBind`            | `save`           |
-| `path.push() = se;`            | `storagePushLhsToPushValue` (desugar) | —                |
-| `sp.pop();`                    | `storagePopSave`                      | `save`           |
-| `revert();` (in `⟨·⟩`)         | `revertDiamond`                       | —                |
-| `revert();` (in `[·]`)         | `revertBox`                           | —                |
+| Source statement           | Rule                                   | Update operation         |
+|----------------------------|----------------------------------------|--------------------------|
+| `sp.fld = se`              | `storageFieldWriteSave`                | `save`                   |
+| `sp1.fld = sp2`            | `storageFieldWriteCopySource`          | `save`/`find<[StValue]>` |
+| `gsp = se`                 | `storageRootWriteStore`                | `save`                   |
+| `gsp = sp`                 | `storageRootWriteCopySource`           | `save`/`find<[StValue]>` |
+| `lsv = sp`                 | `storageLocalRootRebind`               | direct assign            |
+| `v = sp.fld`               | `storageFieldReadFind`                 | `find`                   |
+| `v = sp`                   | `storageRootReadSelect`                | `find`                   |
+| `lsv = sp.b`               | `storageFieldReadBindLocalRoot`        | direct assign            |
+| `gsp = sp.b`               | `storageFieldReadStoreRoot`            | `save`/`find<[StValue]>` |
+| `delete gsp;`              | `storageRootDelete`                    | `delAt`                  |
+| `delete sp.fld;`           | `storageFieldDelete`                   | `delAt`                  |
+| `delete sp[ie];`           | `storageIndexDelete`                   | `save`/`defVal`          |
+| `sp[ie] = se`  (mapping)   | `storageIndexWriteMappingSave`         | `save`                   |
+| `sp1[ie] = sp2`  (mapping) | `storageIndexWriteMappingCopySource`   | `save`                   |
+| `sp[ie] = mv`  (mapping)   | `memoryToStorageIndexMappingCopyRoot`  | `save`/`copyMem`         |
+| `v = sp[ie]`  (mapping)    | `storageIndexReadMappingFind`          | `find`                   |
+| `lsv = sp[ie]`  (mapping)  | `storageIndexReadMappingBindLocalRoot` | direct assign            |
+| `gsp = sp[ie]`  (mapping)  | `storageIndexReadMappingStoreRoot`     | `save`/`find<[StValue]>` |
+| `sp[ie] = se`  (array)     | `storageIndexWriteArraySave`           | `save`                   |
+| `sp1[ie] = sp2`  (array)   | `storageIndexWriteArrayCopySource`     | `save`                   |
+| `sp[ie] = mv`  (array)     | `memoryToStorageIndexArrayCopyRoot`    | `save`/`copyMem`         |
+| `v = sp[ie]`  (array)      | `storageIndexReadArrayFind`            | `find`                   |
+| `lsv = sp[ie]`  (array)    | `storageIndexReadArrayBindLocalRoot`   | direct assign            |
+| `gsp = sp[ie]`  (array)    | `storageIndexReadArrayStoreRoot`       | `save`/`find<[StValue]>` |
+| `sp.push(se);`             | `storagePushValueSave`                 | `save`                   |
+| `sp1.push(sp2);`           | `storagePushValueCopySource`           | `save`/`find<[StValue]>` |
+| `sp.push();`               | `storagePushLengthSave`                | `save`                   |
+| `lsv = sp.push();`         | `storageLocalRootPushBind`             | `save`                   |
+| `path.push() = se;`        | `storagePushLhsToPushValue` (desugar)  | —                        |
+| `sp.pop();`                | `storagePopSave`                       | `save`                   |
+| `revert();` (in `⟨·⟩`)     | `revertDiamond`                        | —                        |
+| `revert();` (in `[·]`)     | `revertBox`                            | —                        |
 
-The memory twins of the compound-update rows (`mv.a += se`, `++mv.a`,
-`mv[i] += se`, …) are in `memory.md` §11b; they use `read`/`write` in place of
+The memory twins of the compound-update rows (`mv.fld += se`, `++mv.fld`,
+`mv[ie] += se`, …) are in `memory.md` §11b; they use `read`/`write` in place of
 `find`/`save` and have no root or mapping form.
