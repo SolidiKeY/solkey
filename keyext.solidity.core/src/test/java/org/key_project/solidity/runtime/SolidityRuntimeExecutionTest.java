@@ -210,11 +210,12 @@ public class SolidityRuntimeExecutionTest {
     }
 
     private static String runtimeBin(Path source, String contract) throws IOException {
-        JsonNode contracts = new ObjectMapper()
-                .readTree(SolcWrapper.getCombinedBinJson(source)).get("contracts");
-        for (Map.Entry<String, JsonNode> entry : contracts.properties()) {
-            if (entry.getKey().endsWith(":" + contract)) {
-                return entry.getValue().get("bin-runtime").asString();
+        JsonNode contracts =
+            new ObjectMapper().readTree(SolcWrapper.getBinJson(source)).get("contracts");
+        for (Map.Entry<String, JsonNode> unit : contracts.properties()) {
+            JsonNode compiled = unit.getValue().get(contract);
+            if (compiled != null) {
+                return compiled.get("evm").get("deployedBytecode").get("object").asString();
             }
         }
         throw new IllegalArgumentException("no contract " + contract + " compiled from "

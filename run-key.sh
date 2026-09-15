@@ -14,6 +14,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 JAR="$SCRIPT_DIR/keyext.solidity.core/build/libs/keyext.solidity.core-exe.jar"
 EXAMPLES_DIR="$SCRIPT_DIR/keyext.solidity.core/src/test/resources/org/key_project/solidity/examples"
+GRAAL_DIR="$SCRIPT_DIR/keyext.solidity.core/build/libs/graal-compiler"
 
 if [ $# -eq 0 ]; then
     echo "Usage: $0 <file.key|file.sol> [function] [CLI options...]"
@@ -37,6 +38,7 @@ fi
 
 needs_build() {
     [ ! -f "$JAR" ] && return 0
+    [ ! -d "$GRAAL_DIR" ] && return 0
     [ -n "$(find "$SCRIPT_DIR/keyext.solidity.core/src/main" "$SCRIPT_DIR/key.core/src/main" \
         -newer "$JAR" -print -quit 2>/dev/null)" ]
 }
@@ -49,8 +51,21 @@ if [ "${SOLKEY_REBUILD:-}" = "1" ] || needs_build; then
     touch "$JAR"
 fi
 
+# solc runs on the JVM as WebAssembly, which Truffle interprets — about ten times slower —
+# unless the Graal compiler is put in the boot layer. Only JDK 21 has the module it upgrades,
+# so the flags are tried once and dropped if this JVM will not take them.
+JVM_ARGS=()
+UPGRADE_PATH="$(find "$GRAAL_DIR" -name '*.jar' 2>/dev/null | paste -sd: -)"
+if [ -n "$UPGRADE_PATH" ]; then
+    JIT=(-XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI
+         --upgrade-module-path="$UPGRADE_PATH")
+    if java "${JIT[@]}" -version >/dev/null 2>&1; then
+        JVM_ARGS=("${JIT[@]}")
+    fi
+fi
+
 cd "$EXAMPLES_DIR"
 if [ -z "$FILE" ]; then
-    exec java -jar "$JAR" "$@"
+    exec java "${JVM_ARGS[@]}" -jar "$JAR" "$@"
 fi
-exec java -jar "$JAR" "$FILE" "$@"
+exec java "${JVM_ARGS[@]}" -jar "$JAR" "$FILE" "$@"

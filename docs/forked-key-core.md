@@ -55,6 +55,6 @@ same path (or basename) under `key.core/src/main/java/de/uka/ilkd/key/` before e
 - Merge `SolJSONParser`'s parser-local type caches with the `SolidityInfo` registry — a semantic
   ownership question, not a rename.
 - Unify the two Solidity frontends (`parser/SolidityToKeyConverter` for ANTLR and
-  `program/parser/SolJSONParser` for `solc --ast-compact-json`) behind a shared AST-builder
+  `program/parser/SolJSONParser` for solc's compact JSON AST) behind a shared AST-builder
   abstraction; today they build the same 29 AST node types independently and are kept honest only
   by `BothParsersTest`.

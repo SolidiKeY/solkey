@@ -6,7 +6,7 @@ package org.key_project.solidity.program.parser;
 import org.jspecify.annotations.Nullable;
 import tools.jackson.databind.JsonNode;
 
-/// Signals that the `solc --ast-compact-json` output could not be converted into a KeY for
+/// Signals that solc's compact JSON AST could not be converted into a KeY for
 /// Solidity AST. Carries the `src` position of the offending JSON node when one is available.
 public class SolidityParseException extends RuntimeException {
 

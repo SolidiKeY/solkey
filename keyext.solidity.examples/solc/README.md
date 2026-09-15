@@ -29,11 +29,11 @@ Six contracts, one per upstream theme:
 ```
 
 `SolcSemanticsExamplesTest` enumerates the directory and derives the contract name from the file
-name, so a new example joins the suite by being written. Type-check first — it costs ~150 ms and
-catches a Solidity error before a multi-minute proof run:
+name, so a new example joins the suite by being written. Load it first — that compiles and
+type-checks the contract without proving, catching a Solidity error before a multi-minute run:
 
 ```bash
-solc --ast-compact-json keyext.solidity.examples/solc/SolcArrays.sol > /dev/null
+./run-key.sh keyext.solidity.examples/solc/SolcArrays.sol --no-prove
 ```
 
 ## Adaptation rules

@@ -93,7 +93,9 @@ Solidity → ANTLR → SolidityToKeyConverter → AST → TypeResolver → Abstr
 - **`strategy/`** — `Strategy`, `ApplyStrategy`
 - **`common/`** — `SolidityInfo`, the registry for Solidity types (int8–int256, uint8–uint256,
   bytes1–bytes32, bool, address). Register new types here.
-- **`program/parser/SolJSONParser`** — parses `solc --ast-compact-json`; see `docs/solc-ast.md`
+- **`program/parser/SolJSONParser`** — parses solc's compact JSON AST; `SolcWrapper` and
+  `WasmSolcCompiler` produce it by running solc's WebAssembly build on the JVM, with no
+  external compiler. See `docs/solc-ast.md`
 
 ANTLR grammars live in `keyext.solidity.core/src/main/antlr/`, generated sources in
 `build/generated-src/antlr/main/`.
@@ -142,7 +144,7 @@ Read the relevant doc before working on taclets. Each is a compact, agent-facing
 | `net.md` | The payment/ledger model (`net`, `msg.sender`/`msg.value`, `transfer`, invariants) |
 | `require-assert.md` | `require` / `assert` rules (box vs. diamond false-branch behavior) |
 | `rule-generalizations.md` | The `// generalized by:` annotations and `RuleGeneralizationTest` |
-| `solc-ast.md` | Parsing `solc --ast-compact-json` (consumed by `SolJSONParser`) |
+| `solc-ast.md` | The solc AST and the in-JVM compiler that produces it |
 | `ci.md` | CI gates in detail, the nullness idiom, CI-only test groups |
 | `forked-key-core.md` | Editing code forked from `key.core` — which files must not be restyled |
 | `idea-setup.md` | IntelliJ setup — gutter-icon plugin, External Tools, `.run/` configurations |

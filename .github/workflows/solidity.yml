@@ -2,7 +2,8 @@ name: Solidity
 
 # Fork-only workflow for keyext.solidity.core. tests.yml and code_quality.yml come from
 # upstream KeY, so editing them to cover this module would conflict on every upstream rebase.
-# ubuntu-only is required: processResources downloads solc-static-linux.
+# ubuntu-only by choice, not by need: solc now runs inside the JVM (see docs/solc-ast.md),
+# so nothing here is platform-specific any more.
 
 on:
   workflow_dispatch:

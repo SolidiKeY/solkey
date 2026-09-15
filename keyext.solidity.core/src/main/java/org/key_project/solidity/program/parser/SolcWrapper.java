@@ -3,169 +3,153 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.parser;
 
-
-import java.io.*;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+/// The Solidity compiler, addressed through its Standard JSON interface.
+///
+/// The compiler runs inside this JVM ([WasmSolcCompiler]); nothing is forked and no
+/// platform-specific executable is needed. The AST handed out is solc's own — the `ast` output of
+/// Standard JSON is the node format `--ast-compact-json` prints — so [SolJSONParser] sees exactly
+/// what it saw when solc was a child process.
 public class SolcWrapper {
 
-    /// Identifies a contract file revision: the same path with the same size and modification
-    /// time yields the same AST, so the JSON can be reused instead of forking solc again.
-    private record ContractRevision(Path path, long size, long lastModified) {
+    /// A compilation request. The same source under the same unit name always yields the same
+    /// AST, so it is compiled once: one obligation asks for a contract twice — to enumerate its
+    /// functions and again while loading — and taclet loading re-reads the same snippets.
+    private record CompilationUnit(String name, String source) {
     }
 
-    private static final Map<ContractRevision, String> JSON_CACHE = new ConcurrentHashMap<>();
+    private static final Map<CompilationUnit, String> AST_CACHE = new ConcurrentHashMap<>();
 
-    /// The solc AST JSON of `contractPath`, memoized per file revision.
-    ///
-    /// A single obligation forks solc twice — once to enumerate the contract's functions, once
-    /// while loading — and a suite run repeats that for every function of the same file.
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    private static final String STDIN_UNIT = "<stdin>";
+
+    private static final long UNSIGNED_32_BIT = 1L << 32;
+
+    private static final SolcCompiler COMPILER = WasmSolcCompiler.get();
+
+    /// The solc AST JSON of `contractPath`.
     public static String getJsonSolidity(Path contractPath) throws IOException {
-        ContractRevision revision = revisionOf(contractPath);
-        if (revision == null) {
-            return runSolcOn(contractPath);
+        return astOf(unitNameOf(contractPath), readSource(contractPath));
+    }
+
+    private static String unitNameOf(Path contractPath) {
+        return contractPath.toAbsolutePath().normalize().toString();
+    }
+
+    private static String readSource(Path contractPath) throws IOException {
+        return Files.readString(contractPath, UTF_8);
+    }
+
+    /// The `SourceUnit` node of `source`, as a JSON string.
+    private static String astOf(String unitName, String source) throws IOException {
+        CompilationUnit unit = new CompilationUnit(unitName, source);
+        String cached = AST_CACHE.get(unit);
+        if (cached != null) {
+            return cached;
         }
-        String cached = JSON_CACHE.get(revision);
-        if (cached == null) {
-            cached = runSolcOn(contractPath);
-            JSON_CACHE.put(revision, cached);
+        ObjectNode outputSelection = MAPPER.createObjectNode();
+        outputSelection.putArray("").add("ast");
+        JsonNode ast =
+            compile(unitName, source, outputSelection).path("sources").path(unitName).path("ast");
+        if (ast.isMissingNode() || ast.isNull()) {
+            throw new RuntimeException(
+                "Not possible to compile solidity code:\nno AST produced for " + unitName);
         }
-        return cached;
+        restoreNegativeIds(ast);
+        String json = ast.toString();
+        AST_CACHE.put(unit, json);
+        return json;
     }
 
-    private static ContractRevision revisionOf(Path contractPath) {
-        try {
-            Path real = contractPath.toRealPath();
-            return new ContractRevision(real, Files.size(real),
-                Files.getLastModifiedTime(real).toMillis());
-        } catch (IOException e) {
-            return null;
-        }
-    }
-
-    private static String runSolcOn(Path contractPath) throws IOException {
-        String fileName = contractPath.toAbsolutePath().toString();
-        ProcessBuilder pb = new ProcessBuilder(getSolcCommand(), "--ast-compact-json", fileName);
-        Process proc = pb.start();
-        OutputStream out = proc.getOutputStream();
-        out.close();
-        return finishesSolcCommand(proc);
-    }
-
-    private static void exportSolc(Path targetPath) throws IOException {
-        InputStream is = SolcWrapper.class.getResourceAsStream("/solc");
-        if (is == null) {
-            throw new IOException("no solc on PATH and none bundled with this build");
-        }
-        Files.copy(is, targetPath, StandardCopyOption.REPLACE_EXISTING);
-        targetPath.toFile().setExecutable(true);
-    }
-
-    private static boolean canRunCommand(String cmd) {
-        try {
-            // We run a simple version check to see if it exists
-            Process process = new ProcessBuilder(cmd, "--version").start();
-            process.waitFor();
-            return true;
-        } catch (IOException | InterruptedException e) {
-            // IOException happens if the command isn't found in PATH
-            return false;
-        }
-    }
-
-    static String getSolcCommand() throws IOException {
-        if (canRunCommand("solc"))
-            return "solc";
-        Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"));
-        Path targetPath = tempDir.resolve("solc");
-
-        if (!Files.exists(targetPath))
-            exportSolc(targetPath);
-        return targetPath.toAbsolutePath().toString();
-    }
-
-    /// solc `--combined-json bin,bin-runtime` for `contractPath`, as raw JSON. Used by the
-    /// runtime cross-check tests to execute the examples on a real EVM.
-    public static String getCombinedBinJson(Path contractPath) throws IOException {
-        String fileName = contractPath.toAbsolutePath().toString();
-        ProcessBuilder pb =
-            new ProcessBuilder(getSolcCommand(), "--combined-json", "bin,bin-runtime", fileName);
-        Process proc = pb.start();
-        proc.getOutputStream().close();
-        return finishesSolcCommand(proc, false);
-    }
-
-    /// Consumes solc's output and waits for it to exit.
-    ///
-    /// Both pipes have to be drained while the process is still running. The AST JSON of a
-    /// contract with more than a handful of function bodies exceeds the operating system's pipe
-    /// buffer, at which point solc blocks writing; waiting for exit before reading then
-    /// deadlocks both processes permanently.
-    static String finishesSolcCommand(Process proc) throws IOException {
-        return finishesSolcCommand(proc, true);
-    }
-
-    /// `skipAstHeader` drops the four banner lines solc prints before `--ast-compact-json`
-    /// output; `--combined-json` prints bare JSON, which has to be read in full.
-    static String finishesSolcCommand(Process proc, boolean skipAstHeader) throws IOException {
-        final StringBuilder errors = new StringBuilder();
-        Thread errorDrain = new Thread(() -> {
-            try (BufferedReader reader =
-                new BufferedReader(new InputStreamReader(proc.getErrorStream(), UTF_8))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    errors.append(line).append('\n');
+    /// solc targets 32 bits when compiled to WebAssembly, and there the negative ids it gives
+    /// Solidity's builtin declarations — `require` is -18, `msg` is -15 — are exported as their
+    /// unsigned complement. Subtracting 2^32 back restores the ids a native solc prints, so the
+    /// AST is the one the rest of the pipeline was written against.
+    private static void restoreNegativeIds(JsonNode node) {
+        if (node instanceof ObjectNode object) {
+            for (Map.Entry<String, JsonNode> property : object.properties()) {
+                if (isUnsignedNegative(property.getValue())) {
+                    object.put(property.getKey(), signed(property.getValue()));
+                } else {
+                    restoreNegativeIds(property.getValue());
                 }
-            } catch (IOException ignored) {
-                // the diagnostics are best-effort; the exit code decides the outcome
             }
-        }, "solc-stderr");
-        errorDrain.setDaemon(true);
-        errorDrain.start();
+        } else if (node instanceof ArrayNode array) {
+            for (int i = 0; i < array.size(); i++) {
+                if (isUnsignedNegative(array.get(i))) {
+                    array.set(i, array.numberNode(signed(array.get(i))));
+                } else {
+                    restoreNegativeIds(array.get(i));
+                }
+            }
+        }
+    }
 
-        final String output;
-        try (BufferedReader procInput = proc.inputReader()) {
-            output = skipAstHeader ? extract4lines(procInput)
-                    : procInput.lines().collect(Collectors.joining());
-        }
+    private static boolean isUnsignedNegative(JsonNode node) {
+        return node.isIntegralNumber() && node.asLong() > Integer.MAX_VALUE
+                && node.asLong() < UNSIGNED_32_BIT;
+    }
 
-        final int exitCode;
-        try {
-            exitCode = proc.waitFor();
-            errorDrain.join();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
-        }
-        if (exitCode != 0) {
-            throw new RuntimeException("Not possible to compile solidity code:\n" + errors);
-        }
+    private static int signed(JsonNode node) {
+        return (int) (node.asLong() - UNSIGNED_32_BIT);
+    }
+
+    /// The deployment and runtime bytecode of every contract in `contractPath`, as solc's
+    /// Standard JSON output. Used by the runtime cross-check tests to execute the examples on a
+    /// real EVM.
+    public static String getBinJson(Path contractPath) throws IOException {
+        ObjectNode outputSelection = MAPPER.createObjectNode();
+        outputSelection.putArray("*")
+                .add("evm.bytecode.object")
+                .add("evm.deployedBytecode.object");
+        return compile(unitNameOf(contractPath), readSource(contractPath), outputSelection)
+                .toString();
+    }
+
+    private static JsonNode compile(String unitName, String source, ObjectNode outputSelection)
+            throws IOException {
+        ObjectNode input = MAPPER.createObjectNode();
+        input.put("language", "Solidity");
+        input.putObject("sources").putObject(unitName).put("content", source);
+        input.putObject("settings").putObject("outputSelection").set("*", outputSelection);
+
+        JsonNode output = MAPPER.readTree(COMPILER.compile(input.toString()));
+        failOnErrors(output);
         return output;
     }
 
+    private static void failOnErrors(JsonNode output) {
+        StringBuilder errors = new StringBuilder();
+        for (JsonNode error : output.path("errors").values()) {
+            if ("error".equals(error.path("severity").asString(""))) {
+                errors.append(error.path("formattedMessage").asString(
+                    error.path("message").asString(""))).append('\n');
+            }
+        }
+        if (!errors.isEmpty()) {
+            throw new RuntimeException("Not possible to compile solidity code:\n" + errors);
+        }
+    }
+
     public static String readSolBuff(byte[] contract) throws IOException {
-        ProcessBuilder pb = new ProcessBuilder(getSolcCommand(), "--ast-compact-json", "-");
-        Process proc = pb.start();
-        OutputStream out = proc.getOutputStream();
-        out.write(contract);
-        out.close();
-        return finishesSolcCommand(proc);
+        return readSolString(new String(contract, UTF_8));
     }
 
     public static String readSolString(String contract) throws IOException {
-        return readSolBuff(contract.getBytes(UTF_8));
-    }
-
-    private static String extract4lines(BufferedReader reader) {
-        return reader.lines().skip(4).collect(Collectors.joining());
+        return astOf(STDIN_UNIT, contract);
     }
 
     public static String readSol(String s) throws IOException {

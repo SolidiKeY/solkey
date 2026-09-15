@@ -5,9 +5,23 @@ plugins {
 
 description = "The core data structures for KeY for Solidity"
 
+// 23.1.x is the Graal line built against JDK 21: its compiler jar upgrades the module this JDK
+// actually has, which is what lets Truffle compile the WebAssembly solc instead of interpreting
+// it. A newer line ships a module JDK 21 will not load.
+ext.graalVersion = "23.1.7"
+ext.graalRuntimeDir = "graal-runtime"
+ext.graalCompilerDir = "graal-compiler"
+
+// The solc build hosted on the JVM. Pinned: the AST shape the taclet examples were written
+// against must not shift underneath them. Metadata: https://binaries.soliditylang.org/wasm/list.json
+ext.soljsonFile = "soljson-v0.8.34+commit.80d5c536.js"
+ext.soljsonSha256 = "c8649f8d57f81b3244c7d2dd662efc0620d1ae296f623b347a2c616a6cfd11d8"
+
 configurations {
     antlr4
     proguardTool
+    graalCompiler
+    graalRuntime
 }
 
 repositories {
@@ -45,6 +59,17 @@ dependencies {
     implementation "tools.jackson.core:jackson-core"
 
     implementation 'ch.qos.logback:logback-classic:1.5.32'
+
+    // solc runs inside the JVM: GraalJS hosts soljson.js, GraalWasm provides its WebAssembly.
+    // graalRuntime holds the same artifacts a second time, to be laid down next to the fat jar
+    // rather than shaded into it.
+    ["org.graalvm.polyglot:polyglot:$graalVersion",
+     "org.graalvm.polyglot:js-community:$graalVersion",
+     "org.graalvm.polyglot:wasm-community:$graalVersion"].each {
+        implementation it
+        graalRuntime it
+    }
+    graalCompiler "org.graalvm.compiler:compiler:$graalVersion"
 
     implementation('info.picocli:picocli:4.7.7')
     annotationProcessor('info.picocli:picocli-codegen:4.7.7')
@@ -156,28 +181,41 @@ checkerFramework {
     }
 }
 
-def downloadedFile = layout.buildDirectory.file("resources/main/solc")
+def soljsonCache = layout.buildDirectory.file("soljson/${soljsonFile}")
+def soljsonResource = layout.buildDirectory.file("resources/main/soljson.js")
 
-tasks.register("downloadBinary") {
-    outputs.file(downloadedFile)
+tasks.register("downloadSoljson") {
+    inputs.property("file", soljsonFile)
+    inputs.property("sha256", soljsonSha256)
+    outputs.file(soljsonResource)
 
     doLast {
-        def file = downloadedFile.get().asFile
-        file.parentFile.mkdirs()
-
-        new URL("https://github.com/argotorg/solidity/releases/download/v0.8.34/solc-static-linux")
-                .withInputStream { input ->
-                    file.withOutputStream { it << input }
-                }
-
-        // Make executable (Linux/macOS)
-        if (!file.setExecutable(true)) {
-            throw new GradleException("Failed to make solc executable")
+        def cached = soljsonCache.get().asFile
+        if (!cached.exists() || digestOf(cached) != soljsonSha256) {
+            cached.parentFile.mkdirs()
+            new URL("https://binaries.soliditylang.org/wasm/${soljsonFile}")
+                    .withInputStream { input -> cached.withOutputStream { it << input } }
+            def actual = digestOf(cached)
+            if (actual != soljsonSha256) {
+                cached.delete()
+                throw new GradleException(
+                        "${soljsonFile} has sha256 ${actual}, expected ${soljsonSha256}")
+            }
         }
+        def target = soljsonResource.get().asFile
+        target.parentFile.mkdirs()
+        target.bytes = cached.bytes
     }
 }
 
-processResources.dependsOn("downloadBinary")
+static String digestOf(File file) {
+    file.withInputStream { input ->
+        java.security.MessageDigest.getInstance("SHA-256").digest(input.bytes)
+                .encodeHex().toString()
+    }
+}
+
+processResources.dependsOn("downloadSoljson")
 
 task proguardAnalyze(dependsOn: jar) {
     group = 'verification'
@@ -271,4 +309,55 @@ shadowJar {
     archiveBaseName = "keyext.solidity.core"
     // no version in the name, so that .run/ configurations can point at a stable path
     archiveVersion = ""
+    // Truffle locates GraalJS and GraalWasm by the jars they ship in, and shading them into one
+    // archive loses the language registrations. They are staged beside the fat jar and reached
+    // through the manifest instead.
+    dependsOn "stageGraalRuntime"
+    dependencies {
+        exclude { it.moduleGroup.startsWith("org.graalvm") }
+    }
+    manifest {
+        attributes["Class-Path"] = project.configurations.graalRuntime.files
+                .collect { "${graalRuntimeDir}/${it.name}" }.join(" ")
+    }
 }
+
+// Truffle interprets the WebAssembly solc unless the Graal compiler sits in the boot layer,
+// which costs roughly a factor of ten. JDK 21 ships the module this jar upgrades; another JDK
+// names it differently and would refuse to start, so the flags are added only where they are
+// known to load. Without them nothing breaks — solc just runs interpreted.
+def graalJit = new org.gradle.process.CommandLineArgumentProvider() {
+    @Override
+    Iterable<String> asArguments() {
+        if (JavaVersion.current() != JavaVersion.VERSION_21) {
+            return []
+        }
+        return ["-XX:+UnlockExperimentalVMOptions", "-XX:+EnableJVMCI",
+                "--upgrade-module-path=" + configurations.graalCompiler.asPath]
+    }
+}
+
+tasks.withType(Test).configureEach {
+    jvmArgumentProviders.add(graalJit)
+}
+
+tasks.named('solidityCli', JavaExec) {
+    jvmArgumentProviders.add(graalJit)
+}
+
+// run-key.sh runs the fat jar directly, so both sets of Graal jars have to be on disk next to
+// it: the languages on the class path, the compiler on the upgrade module path.
+tasks.register('stageGraalRuntime', Copy) {
+    from configurations.graalRuntime
+    into layout.buildDirectory.dir("libs/$graalRuntimeDir")
+}
+
+tasks.register('stageGraalCompiler', Copy) {
+    from configurations.graalCompiler
+    into layout.buildDirectory.dir("libs/$graalCompilerDir")
+}
+
+tasks.named('shadowJar') {
+    finalizedBy('stageGraalCompiler')
+}
+
