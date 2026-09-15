@@ -175,11 +175,26 @@ An example that needs an assumption states it with `require` and is tagged `/// 
 box`, which makes `require` an assumption instead of an obligation. Full conventions:
 `keyext.solidity.examples/README.md`.
 
+## `\addprogvars` — common mistake
+
+Do **not** put `\addprogvars(pv)` on a capture/unfold taclet whose `\replacewith`
+re-emits a declaration for the fresh variable (`s#pvType s#pv = s#nse; ...`).
+That declaration is consumed later by `memoryLocalDeclInitDrop`, which registers
+the variable itself, so the early `\addprogvars` is redundant. `\addprogvars`
+belongs only on the rules that consume the declaration statement itself:
+`memoryLocalDeclInitDrop`, `storageLocalDeclSkip`, `valueDeclSkip`,
+`memoryReferenceDeclFreshAlloc`, and the `localDecl*crement` family.
+
 Verify individual examples with the Solidity CLI:
 
 ```bash
 ./run-key.sh keyext.solidity.examples/TestSuite.sol <function>
+./run-key.sh keyext.solidity.examples/TestSuite.sol -f <function> --open-goals
 ```
+
+To read an existing rule without opening the whole file, use
+`scripts/taclet.sh NAME` (`--index` for the section banners, `--list` for every
+rule name).
 
 For the taclet example set, use the focused harnesses:
 

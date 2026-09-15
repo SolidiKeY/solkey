@@ -82,9 +82,12 @@ compileJava.dependsOn runAntlr4Key
 tasks.withType(Test) {
     enableAssertions = true
     // Surface skipped/aborted tests (e.g. @ExpectedToFail and known-unsupported examples) as
-    // warnings in the console, so they stay visible without failing the build.
-    testLogging {
-        events "skipped"
+    // warnings in the console, so they stay visible without failing the build. A local run
+    // reports only failures unless -PverboseTests asks for the rest; CI always gets both.
+    if (System.getenv("CI") != null || project.hasProperty("verboseTests")) {
+        testLogging {
+            events "skipped"
+        }
     }
     doFirst {
         def rulesTestInvocation = ~/^org\.key_project\.solidity\.taclets\.RulesTest\.exampleLoads(?:\(String, Path\))?\[(\d+)]$/

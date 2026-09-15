@@ -163,21 +163,33 @@ subprojects {
             excludeTags "owntest", "interactive", "performance"
         }
 
-        addTestListener(new TestListener() {
-                void afterTest(TestDescriptor desc, TestResult result) {
-                    logger.error("${result.getResultType()}: ${desc.getClassName()}#${desc.getName()}")
+        // The per-test progress lines are what CI logs want and what an interactive reader does
+        // not: they add two lines per test to every local run. Keep them for CI and for anyone
+        // who asks with -PverboseTests; otherwise report only failures.
+        def verboseTests = System.getenv("CI") != null || project.hasProperty("verboseTests")
+
+        if (verboseTests) {
+            addTestListener(new TestListener() {
+                    void afterTest(TestDescriptor desc, TestResult result) {
+                        logger.error("${result.getResultType()}: ${desc.getClassName()}#${desc.getName()}")
+                    }
+                })
+
+            addTestListener(new TestListener() {
+                void beforeTest(TestDescriptor descriptor) {
+                    logger.error("> ${descriptor.getClassName()}#${descriptor.getName()}")
                 }
             })
+        }
 
-        addTestListener(new TestListener() {
-            void beforeTest(TestDescriptor descriptor) {
-                logger.error("> ${descriptor.getClassName()}#${descriptor.getName()}")
-            }
-        })
+        outputs.upToDateWhen { false }
 
         testLogging {
-            outputs.upToDateWhen { false }
-            showStandardStreams = true
+            showStandardStreams = verboseTests
+            if (!verboseTests) {
+                events = ["failed"]
+                exceptionFormat = "full"
+            }
         }
     }
 

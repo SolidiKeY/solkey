@@ -6,12 +6,15 @@ package org.key_project.solidity;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.key_project.solidity.control.KeYEnvironment;
+import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.init.SolidityProblemSpec;
 import org.key_project.solidity.proof.init.SolidityProblemSynthesizer;
 import org.key_project.solidity.proof.io.LoadErrors;
+import org.key_project.solidity.proof.io.OutputStreamProofSaver;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
 import org.key_project.solidity.proof.io.ProofSaver;
 
@@ -44,7 +47,8 @@ public class CLI {
         description = "whether to print additional information; implies `--print-stats`")
     boolean verbose;
 
-    @Option(names = { "--print-stats", "-s" })
+    @Option(names = { "--print-stats", "-s" },
+        description = "print proof statistics (nodes, branches, time)")
     boolean printStats;
 
     @Option(names = { "-t", "--timeout" }, defaultValue = "-1",
@@ -63,6 +67,19 @@ public class CLI {
         description = "for a .sol FILE: the contract to prove against, if it declares several")
     String contract;
 
+    @Option(names = "--open-goals", arity = "0..1", fallbackValue = "2000",
+        description = "on an unclosed proof, print each open goal's sequent, truncated to this "
+            + "many characters (default ${FALLBACK-VALUE}); implied by --verbose")
+    Integer openGoalChars;
+
+    @Option(names = "--max-goals", defaultValue = "3",
+        description = "how many open goals --open-goals prints at most")
+    int maxGoals;
+
+    @Option(names = { "-q", "--quiet" },
+        description = "for a .sol FILE: suppress per-function progress and statistics")
+    boolean quiet;
+
     public static void main(String[] args) {
         System.exit(execute(args));
     }
@@ -78,8 +95,12 @@ public class CLI {
             cmd.printVersionHelp(System.out);
             return 0;
         }
-        if (cli.verbose)
+        if (cli.verbose) {
             cli.printStats = true;
+            if (cli.openGoalChars == null) {
+                cli.openGoalChars = 2000;
+            }
+        }
         boolean success = run(cli);
         System.out.flush();
         System.err.flush();
@@ -97,10 +118,10 @@ public class CLI {
                 System.err.println("--function and --contract apply to .sol files only");
                 return false;
             }
-            return prove(cli, null);
+            return prove(cli, null).closed();
         }
         if (cli.function != null) {
-            return prove(cli, new SolidityProblemSpec(cli.contract, cli.function));
+            return prove(cli, new SolidityProblemSpec(cli.contract, cli.function)).closed();
         }
         final List<String> functions;
         try {
@@ -113,20 +134,49 @@ public class CLI {
             return false;
         }
         int closed = 0;
+        List<String> failures = new ArrayList<>();
         for (String function : functions) {
-            boolean ok = prove(cli, new SolidityProblemSpec(cli.contract, function));
+            Outcome outcome = prove(cli, new SolidityProblemSpec(cli.contract, function));
             System.out.flush();
             System.err.flush();
-            System.out.println((ok ? "PASS " : "FAIL ") + function);
-            if (ok) {
+            System.out.println((outcome.closed() ? "PASS " : "FAIL ") + function);
+            if (outcome.closed()) {
                 closed++;
+            } else {
+                failures.add(function + " (" + outcome.describe() + ")");
             }
         }
         System.out.println(closed + "/" + functions.size() + " closed");
+        if (!failures.isEmpty()) {
+            System.out.println("FAILED (" + failures.size() + "): " + String.join(", ", failures));
+        }
         return closed == functions.size();
     }
 
-    private static boolean prove(CLI cli, SolidityProblemSpec spec) {
+    /// The result of one proof attempt: whether it closed, how many goals were left open, and how
+    /// long the attempt took, so that a whole-file run can recap its failures in one block.
+    private record Outcome(boolean closed, int openGoals, long millis) {
+        static Outcome closed(long millis) {
+            return new Outcome(true, 0, millis);
+        }
+
+        static Outcome open(int openGoals, long millis) {
+            return new Outcome(false, openGoals, millis);
+        }
+
+        static Outcome error() {
+            return new Outcome(false, -1, -1);
+        }
+
+        String describe() {
+            if (openGoals < 0) {
+                return "error";
+            }
+            return openGoals + (openGoals == 1 ? " goal, " : " goals, ") + millis + " ms";
+        }
+    }
+
+    private static Outcome prove(CLI cli, SolidityProblemSpec spec) {
         try {
             if (cli.verbose)
                 System.out.println("Loading...");
@@ -138,7 +188,7 @@ public class CLI {
                 if (cli.prove) {
                     System.err.println(
                         "Error: The loaded file already contains a proof.\nUse `--no-prove` to only load the proof.");
-                    return false;
+                    return Outcome.error();
                 }
                 if (cli.replay) {
                     if (cli.verbose)
@@ -153,21 +203,25 @@ public class CLI {
                                 System.err.println("Error " + (i + 1) + ": " + error);
                             }
                         }
-                        return false;
+                        return Outcome.error();
                     }
                     System.out.println("Loading and proof replay successful");
-                    return true;
+                    return Outcome.closed(0);
                 }
                 System.out.println("Loading successful");
-                return true;
+                return Outcome.closed(0);
             } else {
                 if (cli.prove) {
-                    System.out.println("Proving...");
+                    if (!cli.quiet) {
+                        System.out.println("Proving...");
+                    }
                     var stratSettings = loadedProof.getSettings().getStrategySettings();
                     stratSettings.setTimeout(cli.timeout);
                     stratSettings.setMaxSteps(cli.max);
+                    long started = System.currentTimeMillis();
                     env.getProofControl().startAndWaitForAutoMode(loadedProof);
-                    if (cli.printStats) {
+                    long elapsed = System.currentTimeMillis() - started;
+                    if (cli.printStats && !cli.quiet) {
                         System.out.println(loadedProof.getStatistics());
                     }
                     if (cli.outputFile != null) {
@@ -175,20 +229,23 @@ public class CLI {
                             ProofSaver.saveToFile(cli.outputFile.getAbsoluteFile(), loadedProof);
                         } catch (IOException e) {
                             System.err.println("Error saving proof to file: " + e.getMessage());
-                            return false;
+                            return Outcome.error();
                         }
                     }
                     if (!loadedProof.closed()) {
-                        System.err.println("Proof not closed. " + loadedProof.openGoals().size()
-                            + " goals remaining");
-                        return false;
+                        int open = loadedProof.openGoals().size();
+                        if (!cli.quiet) {
+                            System.err.println("Proof not closed. " + open + " goals remaining");
+                        }
+                        printOpenGoals(cli, loadedProof.openGoals());
+                        return Outcome.open(open, elapsed);
                     } else {
                         System.out.println("Loading and proof successful");
-                        return true;
+                        return Outcome.closed(elapsed);
                     }
                 } else {
                     System.out.println("Loading successful");
-                    return true;
+                    return Outcome.closed(0);
                 }
             }
         } catch (ProblemLoaderException e) {
@@ -199,7 +256,41 @@ public class CLI {
             } else {
                 System.err.println("(run with --verbose for the full stack trace)");
             }
-            return false;
+            return Outcome.error();
         }
+    }
+
+    private static boolean hintPrinted = false;
+
+    /// Prints the sequent of each open goal, so that an unclosed proof explains itself in the run
+    /// that produced it instead of needing a second, differently instrumented one.
+    private static void printOpenGoals(CLI cli, Iterable<Goal> goals) {
+        if (cli.openGoalChars == null) {
+            if (!hintPrinted) {
+                hintPrinted = true;
+                System.err.println("(run with --open-goals to print the remaining sequents)");
+            }
+            return;
+        }
+        int printed = 0;
+        for (Goal goal : goals) {
+            if (printed >= cli.maxGoals) {
+                System.err.println("... (raise --max-goals to see the rest)");
+                break;
+            }
+            String sequent =
+                OutputStreamProofSaver.printSequent(goal.sequent(), goal.getOverlayServices());
+            System.err.println("--- open goal " + (printed + 1) + " ---");
+            System.err.println(truncate(sequent, cli.openGoalChars));
+            printed++;
+        }
+    }
+
+    private static String truncate(String text, int limit) {
+        if (limit <= 0 || text.length() <= limit) {
+            return text;
+        }
+        return text.substring(0, limit) + "... (" + (text.length() - limit)
+            + " more characters, raise --open-goals to see them)";
     }
 }

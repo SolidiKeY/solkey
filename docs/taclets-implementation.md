@@ -24,6 +24,10 @@ constraints this imposes.
 - Authoring syntax → `key-taclets.md`
 - Calculus spec → `storage.md`, `memory.md`
 - Open backlog (next constructs to implement) → `taclet-ideas.md`
+- `require`/`assert` branch behavior → `require-assert.md`
+- The `net` ledger, `msg`, `transfer` → `net.md`
+- Rule names and section banners → `scripts/taclet.sh --list` / `--index`
+- Commands to run any of this → `AGENTS.md`
 
 Sort hierarchy (declared across the `*Header.key` files; `StValue`/`MemValue`/
 `Prim` in `solidityDLHeader.key`): values storable in storage have sort
@@ -71,7 +75,7 @@ performance-only). Struct-sorted element reads
 reference would leave its entries under the marker and they would read as
 defaults — losing exactly the "delete preserves mappings" rule.
 
-The split follows the `solidity-key-taclets` skill: root rules use
+The path-shape split: root rules use
 `SimpleStoragePath`; field/index paths use `Path[...]` schema variables placed
 directly in the resulting terms (the engine lowers the matched AST to logic);
 complex member/index receivers stay as structural `.key` source patterns and are
@@ -86,76 +90,57 @@ annotations in `solidityProgramRules.key`, verified mechanically by
 `RuleGeneralizationTest` — see `docs/rule-generalizations.md`.
 
 ### Storage read / write / copy
-- Root: `storageRootWriteStore`, `storageRootReadSelect`,
-  `storageRootWriteCopySource` (sort-free `find<[StValue]>`, primitives and structs alike).
-- Field (member access, any depth): `storageFieldWriteSave`,
-  `storageFieldReadFind`, `storageFieldWriteCopySource` (sort-free
-  `find<[StValue]>`, like the root copy), `storageFieldReadBindLocalRoot`,
-  `storageFieldReadStoreRoot`, plus `_unfold_leftFst` / `_unfold_rightFst`
-  receiver capture for complex paths.
-  Field constants are namespaced `Contract$Struct$field` and `\unique`;
+Root, field (member access, any depth) and index rules, each with a terminal
+and a `_unfold_leftFst` / `_unfold_rightFst` receiver capture for complex paths
+(`scripts/taclet.sh --list` for the names, `--index` for the section banners).
+Notes that are not derivable from the rule names:
+
+- Field constants are namespaced `Contract$Struct$field` and `\unique`;
   `Services.memberFieldTerm` reconstructs them by walking the member chain.
-- Index: array rules branch on `0 <= i < find(storage, sp·size)` with an
-  `outOfBounds` goal that executes `revert();` (reads and writes alike), mapping
-  rules do not. `storageIndexWrite{Array,Mapping}Save`,
-  `storageIndexRead{Array,Mapping}Find`, plus `…CopySource`, `…BindLocalRoot`,
-  `…StoreRoot`; all take a simple receiver. A complex receiver is aliased first
-  by `storageIndexRead_unfold_rightFst` / `storageIndexWrite_unfold_leftFst`
-  (any index; the receiver is captured first, and the `…NonSimpleIndexCapture`
-  rules then take the simple receiver that leaves), so every target and source
-  shape of the simple rules is reached through one alias step.
-  A bare contract root on the right-hand side is a `FieldReference`, which
+- Array index rules branch on `0 <= i < find(storage, sp·size)` with an
+  `outOfBounds` goal that executes `revert();` (reads and writes alike); mapping
+  rules do not. All index terminals take a simple receiver, so every target and
+  source shape is reached through one alias step.
+- A bare contract root on the right-hand side is a `FieldReference`, which
   `SimpleExpression` excludes but `Expression[primitive]` admits, so
-  `nsp.a = gsp` / `nsp[i] = gsp` are the ordinary value members of the
-  receiver-capture family, after which the `…CopySource` terminals fire.
-- Local declarations: the location keyword in a schematic declaration pattern
-  is matched against the concrete variable's `DataLocation`, so
-  `localValueDeclInitDrop` / `storageLocalDeclInitDrop` /
-  `memoryLocalDeclInitDrop` (one per location) drop a declaration-with-
-  initializer to the plain assignment and register the variable;
-  `storageLocalDeclSkip` / `valueDeclSkip` consume bare declarations.
-- Mapping-carrying copies are rejected at the front end, not by the rules:
-  solc ≥ 0.7 refuses assignments whose target type transitively contains a
-  mapping, so `ParserUtils.parseAssignmentMaybe` throws for them (both parse
-  paths; storage-pointer rebinds `lsv = sp` stay legal), and both parsers
-  reject `memory` declarations of mapping-carrying types
-  (`StorageReferenceTypes.containsMapping`). The copy taclets themselves stay
-  unconditional — the illegal program shapes never reach them.
+  `nsp.a = gsp` / `nsp[i] = gsp` are ordinary receiver-capture members, after
+  which the `…CopySource` terminals fire.
+- The location keyword in a schematic declaration pattern is matched against the
+  concrete variable's `DataLocation`, so there is one `…LocalDeclInitDrop` per
+  location; `storageLocalDeclSkip` / `valueDeclSkip` consume bare declarations.
+- Mapping-carrying copies are rejected at the front end, not by the rules: solc
+  ≥ 0.7 refuses assignments whose target type transitively contains a mapping,
+  so `ParserUtils.parseAssignmentMaybe` throws for them (storage-pointer rebinds
+  `lsv = sp` stay legal), and both parsers reject `memory` declarations of
+  mapping-carrying types (`StorageReferenceTypes.containsMapping`). The copy
+  taclets themselves stay unconditional — the illegal shapes never reach them.
 
 ### Increment / decrement (`++`/`--`, pre/post, plain and `result = …`)
 Direct storage updates (no program-level desugaring), e.g. `++age;` ⇝
-`{storage := save(storage, path, find<[int]>(storage, path) + 1)}`. Full matrix
-at root / field / index level: `storage{Root,Field}{Pre,Post}{in,de}crement`,
-`storageIndex{Mapping,Array}{Pre,Post}{in,de}crement` and their `…Assignment`
-twins, plus `…_unfold_leftFst` for complex receivers. The indexed forms are
-split by the receiver's sort like the plain index rules: the array form carries
-the `inBounds` / `outOfBounds` (`revert();`) goal pair, the mapping form does not.
-Local-value twins `localDecl…` / `localAssign…` cover captured temporaries. All
-24 focused examples close. Operator matching checks the operator enum (not just
-the AST node class) so `+=` does not match `=`. Annotated as the
-`storageIncDec` / `localIncDec` families (`docs/rule-generalizations.md`).
+`{storage := save(storage, path, find<[int]>(storage, path) + 1)}`. Full
+root / field / index matrix, pre and post, plain and `…Assignment`, plus
+`…_unfold_leftFst` for complex receivers. The indexed forms are split by the
+receiver's sort like the plain index rules: the array form carries the
+`inBounds` / `outOfBounds` (`revert();`) goal pair, the mapping form does not.
+Operator matching checks the operator enum (not just the AST node class) so
+`+=` does not match `=`. Annotated as the `storageIncDec` / `localIncDec` /
+`memoryIncDec` families (`docs/rule-generalizations.md`).
 
-The memory twins `memory{Field,IndexArray}{Pre,Post}{in,de}crement`, their
-`…Assignment` forms and `…_unfold_leftFst` are the same rules with
-`find`/`save` replaced by `read`/`write` — see "Memory arithmetic" below for
-why the matrix has no root and no mapping member (`memoryIncDec` family).
+The memory twins are the same rules with `find`/`save` replaced by
+`read`/`write` — see "Memory arithmetic" for why that matrix has no root and no
+mapping member.
 
 ### Compound assignment
 `+=`, `-=`, `*=`, `/=`, `%=` at root / field / index, each with a terminal and a
-`_unfold_leftFst` for complex receivers: `storage{Root,Field}{Add,Sub,Mul,Div,Mod}Assign`
-and `storageIndex{Mapping,Array}{Add,Sub,Mul,Div,Mod}Assign` (the array form with the
-bounds goal pair of `storageIndexWriteArraySave`; the `_unfold_leftFst` twins are
-`storageIndex…Assign_unfold_leftFst`, one per operator).
-`/=` and `%=` guard with `\if(se != 0)\then(…)\else(revert)`; integers are
-unbounded mathematical integers, so there is no overflow guard. Bitwise
-`&= |= ^= <<= >>=` parse but are deferred (no bitwise LDT). Annotated as the
-`storageCompoundAssign` / `localCompoundAssign` / `compoundAssignRhsCapture`
-families (`docs/rule-generalizations.md`).
+`_unfold_leftFst` for complex receivers (the array form carrying the bounds goal
+pair of `storageIndexWriteArraySave`). `/=` and `%=` guard with
+`\if(se != 0)\then(…)\else(revert)`; integers are unbounded mathematical
+integers, so there is no overflow guard. Bitwise `&= |= ^= <<= >>=` parse but
+are deferred (no bitwise LDT). Annotated as the `storageCompoundAssign` /
+`localCompoundAssign` / `compoundAssignRhsCapture` families.
 
 ### Memory arithmetic
-`memoryField{Add,Sub,Mul,Div,Mod}Assign`,
-`memoryIndexArray{Add,Sub,Mul,Div,Mod}Assign`, the `memoryIncDec` matrix above,
-and the `_unfold_leftFst` twins of both. Each is its storage counterpart with
+Each memory arithmetic rule is its storage counterpart with
 `find<[int]>(storage, path)` / `save(storage, path, v)` replaced by
 `read<[int]>(memory, mv, sel)` / `write(memory, mv, sel, v)` — a single update,
 no program-level desugaring, and no varcond, since an arithmetic context is
@@ -431,15 +416,11 @@ Non-simple constituents are hoisted into fresh locals by a disjoint rule family,
 partitioned by the RHS's *static type* so each capture picks the right variable
 kind:
 - **Value RHS** (`NonSimpleExpression[primitive]`: operator-shaped,
-  primitive-typed, not path-shaped): `storageRootWriteValueRhsCapture`
-  (`gsp = nse;`), `fieldWriteValueRhsCapture` (`e.a = nse;`, location-neutral),
-  `indexWriteValueRhsCapture` (`e1[e2] = nse;`, location-neutral) → fresh plain
-  `Variable`.
-- **Reference-path RHS** (`Path[…,complex,reference]`):
-  `storageIndexWriteStorageRefRhsCapture`, `storageFieldWriteCaptureSrc`,
-  `memoryIndexWriteMemRefRhsCapture`, `memoryFieldWriteCaptureSrc` → fresh
-  storage/memory alias. Primitive-typed complex paths are excluded (they go
-  through the value-read captures below).
+  primitive-typed, not path-shaped) → fresh plain `Variable`. The
+  `…ValueRhsCapture` rules; the field and index ones are location-neutral.
+- **Reference-path RHS** (`Path[…,complex,reference]`) → fresh storage/memory
+  alias. The `…RefRhsCapture` / `…CaptureSrc` rules. Primitive-typed complex
+  paths are excluded (they go through the value-read captures below).
 - **Value path RHS into a non-simple target** (paper `unfold_rightSndResult`):
   `storage{Field,Index}Read_unfold_rightSndResult`,
   `memory{Field,Index}Read_unfold_rightSndResult` — `nlhs = sp.a;` /
@@ -454,18 +435,14 @@ kind:
   capturing in the EVM's order — **right-hand side, then receiver, then index**:
   - **Rule 1, receiver complex** (`Path[…,complex]`): captures all three at
     once. `nsp[i] = e;` ⟹ `rvType rv = e; aliasType storage sp = nsp;
-    pvType pv = i; sp[pv] = rv;`. Ten members —
-    `{storage,memory}{Field,Index}Write_unfold_leftFst` (primitive RHS),
-    `{storage,memory}{Field,Index}Write{StorageRef,MemRef}_unfold_leftFst` and
-    `memoryToStorage{Field,Index}_unfold_leftFst` (reference RHS).
+    pvType pv = i; sp[pv] = rv;`. Ten members, the `…_unfold_leftFst`
+    rules, one per location × field/index × primitive/reference RHS.
   - **Rule 2, receiver simple and index non-simple** (`Path[…,simple]`):
     `sp[nse] = e;` ⟹ `rvType rv = e; pvType pv = nse; sp[pv] = rv;`. Five
     members, the `…NonSimpleIndexCapture` rules.
-  - **Rule 3, receiver and index simple, RHS non-simple**:
-    `{field,index}WriteValueRhsCapture` (data-location neutral),
-    `{storage,memory}FieldWriteCaptureSrc`,
-    `storageIndexWriteStorageRefRhsCapture`, `memoryIndexWriteMemRefRhsCapture`,
-    plus the root-target `storageRootWriteValueRhsCapture`.
+  - **Rule 3, receiver and index simple, RHS non-simple**: the RHS capture
+    rules of the two bullets above, plus the root-target
+    `storageRootWriteValueRhsCapture`.
 
   What differs between the members of a rule is only the *declaration* the
   capture emits, which follows the right-hand side's kind: `T rv = e;` for
@@ -482,10 +459,8 @@ kind:
   A reference source needs no snapshot for order — a reference is bound, not
   read — but is captured anyway, so one rule covers a source of any shape.
 
-  Reads and deletes have no right-hand side and capture receiver then index:
-  `{storage,memory}{Field,Index}Read_unfold_rightFst`,
-  `{storage,memory}IndexRead_unfold_rightSndIndex`,
-  `{storage,memory}Index{Delete_unfold_leftFst,DeleteNonSimpleIndexCapture}`.
+  Reads and deletes have no right-hand side and capture receiver then index
+  (the `…_unfold_rightFst` / `…_unfold_rightSndIndex` rules).
   A non-simple index under a compound assignment (`a[i++] += x`) still has no
   capture rule; a compound assignment with an impure *receiver*
   (`persons[i++].age += i`) is handled, its RHS snapshotted like Rule 1's.
@@ -516,66 +491,6 @@ kind:
 Also `storageIndexReadMappingStoreRoot` closes the paper's §11 table
 (`gsp = sp[i]` for mappings, no bounds branch).
 
-### Require / assert
-Per `require-assert.md`: `requireConditionCapture` / `requireSimple` and
-`assertConditionCapture` / `assertSimple`. `requireSimple` branches
-`pv = FALSE | ⟨ω⟩φ` ("Holds") and `pv = TRUE | ⟨revert();⟩φ` ("Reverts") inside
-`\replacewith` so the update context binding `pv` is preserved; combined with
-`revertDiamond`/`revertBox` this yields `c ∧ φ` (diamond) / `c → φ` (box), while
-`assert` keeps `c ∧ φ` in both modalities. `FunctionReference.match` compares
-callee names, so `assert`/`require`/`revert` patterns are disjoint (previously
-any zero-child `FunctionReference` matched any other). The simple rules take a
-`SimpleExpression[primitive]`, so a literal operand (`require(true)`,
-`assert(false)`) is handled like a variable.
-
-### Payments (`net` ledger, `msg`, `transfer`)
-`docs/net.md` Steps 1–4. `netHeader.key` declares the
-program variables `Struct net` (per-address ledger: read
-`selectSt<[int]>(net, at(a))`, empty ledger `mtSt` ⇒ `net(a) = 0`),
-`msgSender`, `msgValue`, `self`, and `selfBalance` (the contract's own funds),
-plus the uninterpreted contract-invariant
-predicate `CInv(Struct, Struct)` over `(storage, net)` (solidiKeY-style: each
-problem file gives it meaning via its own `insertCInv` rewrite taclet).
-`CInv` deliberately stays binary: the callback havoc leaves `selfBalance`
-unconstrained rather than carrying it in the invariant.
-`msg.sender` / `msg.value` desugar to
-`msgSender` / `msgValue` in `SolidityToKeyConverter.visitMemberAccess`
-(shadowable by a local named `msg`). `transfer` and `send` are registered
-builtins classified like `push`/`pop` (`MemberExp` + `FunctionCallExpression`,
-no dedicated AST node). Transfer semantics is the taclet choice
-`transferSemantics:{noCallback, withCallback}` (`optionsDeclarations.key`,
-default `noCallback`; examples pin the other variant with
-`\withOptions transferSemantics:withCallback;`). Each semantics is split by
-modality: the box rules book the debit unconditionally (a reverting run is
-trivially correct under partial correctness, so no funds check), while the
-diamond rules owe the EVM balance check `0 <= v & v <= selfBalance` as a
-"sufficient funds" goal — an unfunded diamond transfer is unprovable. Under
-`noCallback`: `transferNoCallbackBox`
-(`a.transfer(v);` ⇝ `{selfBalance := selfBalance − v ||
-net := storeSt(net, at(a), selectSt<[int]>(net, at(a)) − v)} …`) and
-`transferNoCallbackDiamond` (the same booking plus the "sufficient funds"
-goal). Under `withCallback`: `transferWithCallbackBox` splits into
-"invariant on exit" (book the debit, prove `CInv(storage, net)`, drop the
-continuation) and "resume after callback" (havoc `storage`, `net`, and
-`selfBalance` with skolem constants, assume `CInv`, continue);
-`transferWithCallbackDiamond` adds the leading "sufficient funds" goal and
-keeps the guard as an assumption on the other two branches. All share the
-`transfer_unfold_leftFstReceiver` / `transfer_unfold_rightSndArgument`
-captures. The PO pattern credits the incoming payment to the balance
-alongside the ledger:
-`{net := storeSt(net, at(msgSender), … + msgValue) || selfBalance :=
-selfBalance + msgValue}`. Not yet done: the `\getContractInvariant` varcond +
-`ContractSpecification` plumbing (`docs/net.md` Step 4 phase 2),
-`send`/`call{value:}` rules, `address(this).balance` reading `selfBalance`,
-and proof-obligation plumbing (`docs/net.md` Step 5). Examples: the `net-*`
-starters and the per-contract `*-invariant.key` / `*-withcallback.key` POs in
-`keyext.solidity.examples/net/`, driven by `NetExamplesTest`; the starters
-run in box with no funding premises (`net-transfer-unfunded.key` pins the
-unconditional booking), the `net-transfer-*diamond-funded.key` starters
-discharge the diamond funding obligation, and
-`NetExamplesTest#unfundedDiamondStaysOpen` asserts the unfunded-diamond
-problems under the core test resources `examples/open/` stay open.
-
 ### Paths and lowering
 Path SV sorts: `StoragePath`, `SimpleStoragePath`, `ComplexStoragePath`,
 `MemoryPath`, `SimpleMemoryPath`, `ComplexMemoryPath`, plus precise
@@ -601,23 +516,11 @@ positions lower to logic `List` terms automatically; indexed segments lower to
 `at(index)` (sort `Field`); `arr.length` lowers to the `size` field. A `push()`
 path is only ever captured via `\newTypeOf`, never lowered directly.
 
-## Not yet implemented
-
-See `taclet-ideas.md` for the full backlog. Headline gaps:
-- Bitwise operators and bitwise compound assignments (need bitwise LDTs).
-- Whole-struct write from a struct **value** (`alice = pVal;`) and struct
-  literals (`Token(42)`) — need step-1 unfolding for struct constructors.
-- Dynamic-array `delete arr;` length reset (whole-array delete).
-- Control flow beyond `if` (loops, `return`), calls beyond `ExpandFunctionBody`,
-  events, casts — see `taclet-ideas.md` Tiers 3–5.
-- `arr.push(sp);` with a struct-typed storage path argument — the argument is
-  aliased and execution then stops at the rebind; `arr.push() = sp;` works.
-
 ## End-to-end examples (the `test*` functions)
 
-`TestSuite.sol` holds 40 end-to-end `test*` functions driven by `PaperTestExamplesTest.java`;
+`TestSuite.sol` holds 55 end-to-end `test*` functions driven by `PaperTestExamplesTest.java`;
 each is called with postcondition `true`, the obligations being carried by in-body `assert`s.
-The other 195 functions are the focused starters run by `TacletStarterExamplesTest`.
+The other 210 functions are the focused starters run by `TacletStarterExamplesTest`.
 
 **Passing (most close automatically):** storage write/read, nested + deep copy,
 aliases, mapping read/write/delete, struct-`delete` preserving mapping members
@@ -700,60 +603,6 @@ closes where `nested.recursive[4].z` does not).
 - `SolJSONParser.parseConditional` types a `?:` from its branches instead of always `bool`,
   matching `SolidityToKeyConverter`. The wrong type made a reference-valued ternary look
   primitive, so it was captured into a `bool` temp and symbolic execution stalled.
-
-## Verifying a function directly from a `.sol` file (no `.key` file)
-
-A single Solidity function can be verified without writing a `.key` problem file. The
-proof obligation `\[{ body }\] true` is synthesized in memory
-(`FunctionVerificationPO`): leading `require` statements act as preconditions (their
-false branch reverts and closes trivially in box) and every `assert` is an obligation.
-Function parameters and named return parameters are registered as free program
-variables (symbolic inputs).
-
-```bash
-# CLI: --function is required, --contract optional when the name is unambiguous
-./gradlew :keyext.solidity.core:solidityCli --args="--contract MyContract --function deposit /abs/path/MyContract.sol"
-```
-
-```java
-// Tests: KeYEnvironment.loadFunction / SolidityExampleTests.loadAndProveFunction
-KeYEnvironment env = KeYEnvironment.loadFunction(solPath, "MyContract", "deposit");
-Proof proof = SolidityExampleTests.prove(env, 10000, KEEP_TIMEOUT);
-```
-
-Example: `keyext.solidity.examples/taclets/FunctionVerification.sol`, exercised by
-`FunctionVerificationTest`. Scope: the body must stay within the implemented rule set
-above; a value-carrying top-level `return` has no consuming rule yet (assign to named
-return parameters instead).
-
-## Verification
-
-```bash
-# Type-check the contract first — ~150ms, and it catches a Solidity error before a
-# multi-minute test run:
-solc --ast-compact-json keyext.solidity.examples/TestSuite.sol > /dev/null
-
-# One example, or every function of the contract (absolute path — the CLI resolves relative
-# paths against test-resources, not the repo root):
-./run-key.sh keyext.solidity.examples/TestSuite.sol <function>
-./run-key.sh keyext.solidity.examples/TestSuite.sol
-
-# Focused taclet suites:
-./gradlew :keyext.solidity.core:test --tests "org.key_project.solidity.taclets.TacletStarterExamplesTest"
-./gradlew :keyext.solidity.core:test --tests "org.key_project.solidity.taclets.PaperTestExamplesTest"
-
-# Check the `// generalized by:` annotations (docs/rule-generalizations.md):
-./gradlew :keyext.solidity.core:testRuleGeneralization
-
-# The .key/net/solc example suites (RulesTest, NetExamplesTest, SolcSemanticsExamplesTest)
-# are a CI-only group:
-./gradlew :keyext.solidity.core:testSolidityExamples
-
-# Use --no-prove first when debugging a parser/matcher failure (load only).
-```
-
-Both example suites enumerate the contract, so a new function is picked up without editing the
-test class.
 
 ## Function-body inlining
 

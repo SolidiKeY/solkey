@@ -22,6 +22,7 @@ import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.init.SolidityProblemSynthesizer;
+import org.key_project.solidity.proof.io.OutputStreamProofSaver;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
 import org.key_project.solidity.rule.TacletApp;
 import org.key_project.util.collection.ImmutableList;
@@ -103,6 +104,35 @@ public final class SolidityExampleTests {
     public static KeYEnvironment load(Path solFile, String contract, String function)
             throws ProblemLoaderException {
         return KeYEnvironment.load(solFile, contract, function);
+    }
+
+    /// Describes why a proof is still open: the goal count and each remaining sequent, pretty
+    /// printed and truncated, so that a failing run says what is left without a second run.
+    /// An unbounded raw `Sequent#toString` of a Solidity heap runs to tens of kilobytes.
+    public static String describeOpenGoals(String name, Proof proof) {
+        return describeOpenGoals(name, proof, 3, 2000);
+    }
+
+    public static String describeOpenGoals(String name, Proof proof, int maxGoals, int maxChars) {
+        StringBuilder message = new StringBuilder(name)
+                .append(" should close; open goals: ").append(proof.openGoals().size());
+        int printed = 0;
+        for (Goal goal : proof.openGoals()) {
+            if (printed >= maxGoals) {
+                message.append("\n... (").append(proof.openGoals().size() - printed)
+                        .append(" further open goals not shown)");
+                break;
+            }
+            String sequent =
+                OutputStreamProofSaver.printSequent(goal.sequent(), goal.getOverlayServices());
+            if (sequent.length() > maxChars) {
+                sequent = sequent.substring(0, maxChars) + "... ("
+                    + (sequent.length() - maxChars) + " more characters)";
+            }
+            message.append("\n--- open goal ").append(printed + 1).append(" ---\n").append(sequent);
+            printed++;
+        }
+        return message.append('\n').append(proof.getStatistics()).toString();
     }
 
     /// Load the obligation for one function of [#testSuite] and run automode on it.

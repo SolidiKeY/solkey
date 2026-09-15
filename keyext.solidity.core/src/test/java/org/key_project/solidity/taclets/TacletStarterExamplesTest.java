@@ -31,8 +31,7 @@ public class TacletStarterExamplesTest {
     void tacletStarterExampleCloses(String function) throws Exception {
         Proof proof = proveTestSuiteFunction(function, 10000, SolidityExampleTests.KEEP_TIMEOUT);
         assertTrue(proof.closed(),
-            () -> function + " should close; open goals: " + proof.openGoals().size()
-                + "; first open goal: " + proof.openGoals().head().sequent());
+            () -> SolidityExampleTests.describeOpenGoals(function, proof));
     }
 
     static Stream<Arguments> examples() throws IOException {

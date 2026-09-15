@@ -3,42 +3,13 @@
 `TestSuite.sol` holds the taclet examples; `net/` holds the scenario contracts with their
 invariant-based `.key` proof obligations (see "The `net/` directory").
 
-`TestSuite.sol` holds the taclet examples. There are no `.key` problem files beside it: the
-loader reads the contract, and for each function synthesizes
-
-```
-\programSource "<abs path>/TestSuite.sol";
-\problem { \<{ someFunction()@TestSuite; }\>(true) }
-```
-
-(a function with parameters additionally gets a `\programVariables` block declaring one
-unconstrained variable per parameter, passed as the call's arguments)
-
-so the whole specification lives in the Solidity body and every test program is real Solidity,
-type-checked by `solc` on load.
-
-## Running
-
-```bash
-./run-key.sh keyext.solidity.examples/TestSuite.sol                    # every function
-./run-key.sh keyext.solidity.examples/TestSuite.sol testSimpleAssert   # one function
-./gradlew :keyext.solidity.core:test --tests "*TacletStarterExamplesTest"
-./gradlew :keyext.solidity.core:test --tests "*PaperTestExamplesTest"
-```
-
-`TacletStarterExamplesTest` runs the focused one-rule-each functions, `PaperTestExamplesTest`
-the end-to-end `test*` ones. Both enumerate the contract, so a new function joins the suite by
-being written — nothing has to be registered.
-
-Check the contract with `solc --ast-compact-json keyext.solidity.examples/TestSuite.sol` before
-running a suite.
+There are no `.key` problem files beside `TestSuite.sol`: the loader reads the contract and
+synthesizes one obligation per function, so the whole specification lives in the Solidity body
+and every test program is real Solidity, type-checked by `solc` on load. `AGENTS.md` has the
+commands to run any of it, and `docs/taclets-implementation.md` the synthesized obligation's
+exact shape.
 
 ## Runtime cross-checking
-
-```bash
-./gradlew :keyext.solidity.core:test --tests "*SolidityRuntimeExecutionTest"                # TestSuite.sol half
-./gradlew :keyext.solidity.core:testSolidityExamples --tests "*SolidityRuntimeExecutionTest" # solc/*.sol half (CI group)
-```
 
 `SolidityRuntimeExecutionTest` compiles `TestSuite.sol` and every `solc/*.sol` with solc,
 deploys each contract on an in-process Besu EVM, and executes every provable function — a

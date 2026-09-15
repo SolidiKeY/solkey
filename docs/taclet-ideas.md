@@ -6,61 +6,25 @@ not a spec. For each item: the grammar rule, the program shape, and a one-line
 note on the intended sequent transformation. Implement against the conventions
 in `docs/key-taclets.md`; storage/memory shapes follow `docs/storage.md`.
 
-Already done (for reference, do **not** re-add): local assign/decl, `+`,
-`+=`, `==`, `assert`, `require`, `revert`, `++`/`--`, `delete`, the
-storage/memory read/write/copy/push/pop family, the non-simple RHS/index
-capture partition (`docs/taclets-implementation.md` §Capture partition),
-**all of Tier 1 below except the deferred
-bitwise / unary-plus / short-circuit items**, the **Tier 2 arithmetic
-compound assignments `-=`, `*=`, `/=`, `%=`** at storage, local *and* memory
-targets, and the **Tier 3 `if` / `if`-`else` rules**. See
-`docs/taclets-implementation.md`.
+What is already implemented is **not** listed here — see
+`docs/taclets-implementation.md` for that, and do not re-add it. In short: all
+pure expression evaluation except bitwise, all arithmetic compound assignments
+at storage/local/memory targets, `++`/`--`, `delete`, `if`/`if`-`else`, the
+storage and memory read/write/copy/push/pop families, the capture partition,
+and the `net` payment model.
 
-## Tier 1 — Pure expression evaluation (easiest)
+## Tier 1 — Pure expression evaluation
 
-These mirror the existing `addition_unfold_*` / `boolEqualityAssignment`
-rules: capture non-simple operands into fresh value locals, then assign the
-logic-level result of the operator to the target var. Pattern to copy:
-`v = se1 ⊕ se2;` ⇝ `{v := t1 ⊕ t2}`.
-
-- **Arithmetic** (`BinaryOp`): `-`, `*`, `/`, `%`, `**`. ✅ Done — see
-  `docs/taclets-implementation.md` ("Tier 1 expression operators"). `/` and `%`
-  revert on a zero denominator.
-- **Relational** (`BinaryOp`): `!=`, `<`, `>`, `<=`, `>=`. ✅ Done — twins of
-  `==`: `v = se1 < se2;` ⇝ `{v := \if(lt(t1, t2))\then(TRUE)\else(FALSE)}`.
-- **Logical** (`BinaryOp`/`UnaryPrefix`): `&&`, `||`, `!`. ✅ Done —
-  both-simple operands, left-operand capture, and right-operand short-circuit
-  (`logicalAnd/OrShortCircuitRhs` split directly at the sequent level, the
-  Solidity analog of Java KeY's `compound_assignment_3/5_nonsimple` if-else
-  rewrite; no `if` rule needed).
-- **Unary prefix** (`UnaryPrefix`): `-x` ✅ Done (`v = -x;` ⇝ `{v := -t}`).
-  `+x` is skipped (Solidity ≥0.5 removed it; Java has no rule). `~x` is bitwise
-  (see below).
-- **Bitwise** (`BinaryOp`): `&`, `|`, `^`, `<<`, `>>` (and `~x`). ⏳ Deferred —
-  need bitwise LDT operators; lower priority until int bit-ops are modelled.
+- **Bitwise** (`BinaryOp`): `&`, `|`, `^`, `<<`, `>>` (and `~x`). Deferred —
+  needs bitwise LDT operators; lower priority until int bit-ops are modelled.
+  `+x` is skipped for good (Solidity ≥0.5 removed it; Java KeY has no rule).
 
 ## Tier 2 — Remaining compound assignments
 
-Clone the `+=` family (`storageRootAddAssign` / `…Field…` / `…Index…` +
-`_unfold_leftFst`) for each operator at root/field/index level:
-
-- `-=`, `*=`, `/=`, `%=`. ✅ Done — twins of `+=` with the infix operator swapped;
-  `/=`, `%=` add a `se != 0` revert branch on the terminals. See
-  `docs/taclets-implementation.md` ("Compound assignment operators").
-- **Memory targets** (`mv.x += se`, `mv[i] *= se`, `++mv.x`, `v = mv[i]--`).
-  ✅ Done — `memoryCompoundAssign` and `memoryIncDec`, the storage matrix with
-  `read`/`write` for `find`/`save`, over `{field, indexArray}` only. See
-  `docs/taclets-implementation.md` ("Memory arithmetic") and `docs/memory.md` §11b.
-- `&=`, `|=`, `^=`, `<<=`, `>>=`. ⏳ Deferred — gated on Tier-1 bitwise support.
+- `&=`, `|=`, `^=`, `<<=`, `>>=`. Deferred — gated on Tier-1 bitwise support.
 
 ## Tier 3 — Control flow
 
-- **`ifStatement`** (`if (c) s1 else s2`): ✅ Done — `ifUnfold`/`ifElseUnfold`
-  hoist a non-simple guard, `ifSplit`/`ifElseSplit` do the sequent-level split
-  (`c ⇒ ⟨s1⟩φ` and `¬c ⇒ ⟨s2⟩φ`; the else-less variant continues with `⟨⟩φ`),
-  and `ifTrue`/`ifFalse`/`ifElseTrue`/`ifElseFalse`/`ifElseNegated` simplify a
-  literal or negated guard before any split. `?:` routes here through
-  `ternaryToIf`/`ternaryToIfStorage`.
 - **`returnStatement`** (`return e;`): bind the function's named return value
   and discard the rest of the block. Pairs with `functionBodyStatement`
   inlining (`ExpandFunctionBody`).
@@ -107,14 +71,14 @@ Clone the `+=` family (`storageRootAddAssign` / `…Field…` / `…Index…` +
   per-type range check that reverts out of range (Java KeY's
   `inInt`/`expandInInt` structure), plus in-range PO antecedents for
   parameters and storage reads so examples need not `require` both bounds by
-  hand. ✅ Done for array lengths: `sizeNotNegative` gives every storage
+  hand. Done for array lengths: `sizeNotNegative` gives every storage
   length cell `0 <=` unconditionally (`docs/storage.md` §8b). Still open:
   `0 <=` for `uint` value cells (needs per-contract layout knowledge the
   calculus does not have), upper bounds (`< 2^256`), and parameters.
 - **Address/payable builtins & globals** (`msg.sender`, `msg.value`,
   `block.*`, `.balance`, `.transfer`): require an environment/ledger model
   beyond the storage/memory heaps. Ordered implementation plan: `docs/net.md`.
-  ✅ First slice done — `net` ledger, `msg.sender`/`msg.value`, and
+  First slice done — `net` ledger, `msg.sender`/`msg.value`, and
   `transfer` in both callback semantics, now with the EVM balance check
   against `selfBalance` (see `docs/taclets-implementation.md` "Payments").
   Still open: `send`, `call{value:}`, `block.*`, and `address(this).balance`
@@ -153,25 +117,12 @@ Each has a failing example in the suite naming it, so closing the gap is observa
   where `map[4].z` with `map = nested.recursive` closes; the member-mapping index rules need
   the same complex-receiver capture the other index families have.
 
-✅ Fixed by the port (examples kept as regression tests, details in
-`taclets-implementation.md`, "Rules added or corrected by the solc port"): `++`/`--` and
-compound assignment on a local, a non-simple RHS in a compound assignment at any location,
-indexing a storage alias of a primitive-element array, the ill-sorted whole-value copy into
-an array or mapping element, the `?:` type bug in `SolJSONParser.parseConditional`, and
-`push` leaving the appended slot symbolic instead of clearing it with `delValue`.
-
 ## Raised in priority by the TestSuite.sol migration
 
 - **`return e;` (Tier 3).** Now on the critical path: every example in `TestSuite.sol` has to
   use a *named* return and assign to it, because no taclet consumes a `ReturnStatement`. A
   companion fix belongs in `ExpandFunctionBody`, which currently wires only the first named
   return and silently drops the rest.
-- **`msg.*` / `.transfer` / `.send` in `SolJSONParser`.** ✅ Done — `parseMemberAccess`
-  desugars `msg.sender`/`msg.value` to the `msgSender`/`msgValue` program variables and
-  resolves `transfer`/`send` to the builtin declarations, so `.sol` function bodies with
-  those forms load; the `net/` examples now call real `PiggyBankNet.sol` functions
-  (`f(args)@PiggyBankNet`). Still `.key`-based: the synthesized obligations cannot carry an
-  `insertCInv` rules block or a taclet option. See `net.md`.
 
 ## Schema-variable sort cleanups (from the naming pass)
 
