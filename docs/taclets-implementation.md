@@ -369,6 +369,8 @@ Three sort-free symbols carry the deferred value:
 | `delAt(Struct, List)` | the storage with a location reset — a struct keeps its mapping members | `delAtEmpty` / `selectOnDelAtCons` |
 | `find<[StValue]>(Struct, List)` | the value at a path, for copies (`find` at the top storage sort) | `findStValueCast` |
 | `delValue<[StValue]>(StValue)` | a reset value a sort-free copy carried out of a cleared location | `delValueStValueCast` |
+| `copyAt(Struct, List, StValue)` | the storage with a location overwritten by a copied value — a struct keeps its mapping members | `copyAtEmpty` / `selectOnCopyAtCons` |
+| `merge<[StValue]>(StValue, StValue)` | a copied location as read: old value on the left, copied value on the right | `mergeStValueCast` |
 | `defVal` | a location reset outright, mapping members included | `defValResolve` |
 
 `defVal` is declared `Prim`, so it is both an `StValue` and a `MemValue` and serves storage
@@ -393,6 +395,25 @@ matches. Widening `delValueDefault` to `StValue` would close the same gap by rei
 overlap the paragraph above records; pushing the cast keeps the split. The three
 `*DeleteThenCopy` examples all fail without it.
 
+`copyAt` is `delAt`'s twin for copies. Every storage-to-storage copy (`storageRootWriteCopySource`,
+`storageFieldWriteCopySource`, `storageIndexWrite{Array,Mapping}CopySource`,
+`storagePushValueCopySource` and the three `…StoreRoot` reads) writes
+`copyAt(storage, target, find<[StValue]>(storage, source))` rather than `save(…)` of the same
+value: Solidity never copies a mapping, and `find<[StValue]>` would have carried the source's
+mapping members over. `selectOnCopyAtCons` walks the target path like `selectOnDelAtCons` and,
+at the location itself, yields `merge<[alpha]>(<old value>, cast<[alpha]>(<copied value>))` at the
+reader's sort. `merge` is then resolved by what is read from it: a `MapField` member comes from
+the old value (`selectStMergeMap`), a `RefField` member recurses (`selectStMergeRef`, since a
+nested struct may carry a mapping), an element `at(i)` and every primitive member come from the
+copied value (`selectStMergeIndexStruct`, `selectStMergeDefault`), and a primitive `merge` *is*
+the copied value (`mergePrim`). A sort-free read of a copied location leaves `merge<[StValue]>`,
+which `mergeStValueCast` pushes the reader's cast into, like `delValueStValueCast`;
+`selectStValueCast` does the same for `cast<[alphaSt]>(selectSt<[StValue]>(st, a))`, which the
+`.key` shape below reaches when `findDefinitionCons` unfolds the copied value before the cast
+collapses. No `.sol` example can exercise the mapping half — both front ends reject a copy whose
+type carries a mapping — so `keyext.solidity.examples/storage/copyKeepsMapping.key` pins it and
+the `testCopy*` group of `TestSuite.sol` pins the mapping-free half of every `merge` rule.
+
 `delAt` names its storage argument once, where the `save(st, p, <deleted value at p>)` form it
 replaced named it twice. That doubled the storage term at every `push`/`pop`, so a sequence of
 them grew exponentially: `SolcArrays.pushThenPopRestoresLength` peaked at a 6183-node sequent,
@@ -407,7 +428,7 @@ the `storageIndexRead{Array,Mapping}Find` variants, and the memory twins
 (`\hasMemoryFieldSort` / `\hasMemoryElementSort`) on `memoryFieldRead` /
 `memoryIndexReadArrayValue`. `alphaPrim \extends Prim` keeps a struct-typed match
 inapplicable rather than mistyped. The store-position copies (`storageRootWriteCopySource`
-and the `…StoreRoot` rules) carry the value as sort-free `find<[StValue]>` instead; `size` reads and
+and the `…StoreRoot` rules) carry the value as sort-free `find<[StValue]>` inside `copyAt` instead; `size` reads and
 all arithmetic contexts keep `find<[int]>`, since every numeric Solidity type shares the
 `int` carrier sort (only `bool` has a distinct primitive sort).
 

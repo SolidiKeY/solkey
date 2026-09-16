@@ -94,9 +94,6 @@ Edge cases of already-supported constructs (see `docs/taclets-implementation.md`
 - **Dynamic-array `delete arr;` length reset**: not modeled by the current
   memory/storage delete rules. (Struct-`delete` preserving mapping members is now
   implemented via the lazy `delNode` marker — see `docs/storage.md` §6.)
-- **`mapfree` PathSVSort flag**: optional calculus-level hardening of the
-  storage copy taclets against mapping-carrying sources; today the front ends
-  reject the illegal programs before any rule can see them.
 - **Reject uint unary minus in the parsers** (solc compile error); today the
   shape is executed as plain `neg` on the unbounded logic int instead of being
   rejected up front.

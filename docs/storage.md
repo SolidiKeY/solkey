@@ -135,6 +135,23 @@ for `delAt` through `delValue<[alpha]>` on the select:
   disjoint, where widening `delValueDefault` back to `StValue` would make the
   two overlap again. Pinned by `storage{Field,Root}DeleteThenCopy` and
   `storageFieldDeleteThenCopyDeep`.
+- `copyAt(storage, path, val)` — the storage with the location at `path`
+  overwritten by `val`, except that mapping members keep what the target
+  held: Solidity never copies a mapping. Every storage-to-storage copy
+  writes `copyAt(storage, p1, find<[StValue]>(storage, p2))` (two mentions
+  of `storage`, as the `save`-of-`find` form it replaced). Lazy like
+  `delAt`: `selectOnCopyAtCons` walks the path and, at the location, reads
+  `merge<[alpha]>(old, cast<[alpha]>(val))` at the reader's sort.
+- `merge<[alpha]>(old, new)` — a copied location as seen by a read. A
+  `MapField` member comes from `old` (`selectStMergeMap`), a `RefField`
+  member recurses (`selectStMergeRef`), an `at(i)` element and every
+  primitive member come from `new` (`selectStMergeIndexStruct`,
+  `selectStMergeDefault`), and at a primitive sort `merge` is `new`
+  (`mergePrim`). `mergeStValueCast` pushes a reader's cast into a
+  `merge<[StValue]>` left by a sort-free copy of a copied location, and
+  `selectStValueCast` collapses `cast<[alphaSt]>(selectSt<[StValue]>(st, a))`.
+  Pinned by `storage/copyKeepsMapping.key` (the mapping half, which no
+  `.sol` can state) and the `testCopy*` group of `TestSuite.sol`.
 - `defVal` — a location reset outright, mapping members included. The
   sort-free twin of `default`. Used by `delete sp[i]`, which resets a
   collection element rather than preserving its mapping members. Sorted
@@ -478,15 +495,16 @@ emitted update.
   `find<[StValue]>`, like `storageRootWriteCopySource`)
 
       sp1.fld = sp2
-      ⇝  { storage := save(storage, sp1 · fld, find<[StValue]>(storage, sp2)) }
+      ⇝  { storage := copyAt(storage, sp1 · fld, find<[StValue]>(storage, sp2)) }
 
-  All the `*CopySource` copy rules assume the copied type carries no
-  mapping: solc ≥ 0.7 rejects assignments whose target type transitively
-  contains one, and both front ends enforce that at parse time
-  (`ParserUtils.parseAssignmentMaybe`,
-  `StorageReferenceTypes.containsMapping`), so the illegal shapes never
-  reach the calculus. Storage-pointer rebinds (`storageLocalRootRebind`)
-  and `delete` (mapping-preserving, §6) are unaffected.
+  Every `*CopySource` / `…StoreRoot` rule copies through `copyAt` (§3), so
+  a mapping member of the target is never overwritten. solc ≥ 0.7 rejects
+  a copy whose type carries a mapping and both front ends enforce that at
+  parse time (`ParserUtils.parseAssignmentMaybe`,
+  `StorageReferenceTypes.containsMapping`); the calculus nevertheless
+  gives the shape the mapping-preserving meaning. Storage-pointer rebinds
+  (`storageLocalRootRebind`) and `delete` (mapping-preserving, §6) are
+  unaffected.
 
 ### Root write (whole struct / primitive at a root)
 
@@ -499,7 +517,7 @@ emitted update.
   sources — `find<[StValue]>` is sort-free, the sort is resolved on read)
 
       gsp = sp
-      ⇝  { storage := save(storage, gsp, find<[StValue]>(storage, sp)) }
+      ⇝  { storage := copyAt(storage, gsp, find<[StValue]>(storage, sp)) }
 
 - `storageLocalRootRebind` (rebinds a local storage reference; does
   **not** copy)
@@ -530,7 +548,7 @@ emitted update.
 - `storageFieldReadStoreRoot`
 
       gsp = sp.b
-      ⇝  { storage := save(storage, gsp, find(storage, sp · b)) }
+      ⇝  { storage := copyAt(storage, gsp, find(storage, sp · b)) }
 
 ### Delete
 
@@ -572,7 +590,7 @@ mapping members included — `{ storage := save(storage, sp · at(ie), defVal) }
 - `storageIndexWriteMappingCopySource`
 
       sp1[ie] = sp2
-      ⇝  { storage := save(storage, sp1 · at(ie), select(storage, sp2)) }
+      ⇝  { storage := copyAt(storage, sp1 · at(ie), find<[StValue]>(storage, sp2)) }
 
 - `storageIndexReadMappingFind`
 
@@ -587,7 +605,7 @@ mapping members included — `{ storage := save(storage, sp · at(ie), defVal) }
 - `storageIndexReadMappingStoreRoot`
 
       gsp = sp[ie]
-      ⇝  { storage := save(storage, gsp, find(storage, sp · at(ie))) }
+      ⇝  { storage := copyAt(storage, gsp, find(storage, sp · at(ie))) }
 
 ### Array index access  (when `array(sp)`, with `ℓ = find(storage, sp · length)`)
 
@@ -603,8 +621,8 @@ Each array rule branches on bounds. Out-of-bounds goes to
 - `storageIndexWriteArrayCopySource`
 
       sp1[ie] = sp2
-      ⇝  if 0 ≤ ie < ℓ : { storage := save(storage, sp1 · at(ie),
-                                          select(storage, sp2)) }
+      ⇝  if 0 ≤ ie < ℓ : { storage := copyAt(storage, sp1 · at(ie),
+                                            find<[StValue]>(storage, sp2)) }
          else         : revert();
 
 - `storageIndexReadArrayFind`
@@ -622,8 +640,8 @@ Each array rule branches on bounds. Out-of-bounds goes to
 - `storageIndexReadArrayStoreRoot`
 
       gsp = sp[ie]
-      ⇝  if 0 ≤ ie < ℓ : { storage := save(storage, gsp,
-                                           find(storage, sp · at(ie))) }
+      ⇝  if 0 ≤ ie < ℓ : { storage := copyAt(storage, gsp,
+                                             find(storage, sp · at(ie))) }
          else         : revert();
 
 ### Push / pop  (let `n = find(storage, sp · length)` and `ℓ` likewise)
@@ -644,8 +662,8 @@ Each array rule branches on bounds. Out-of-bounds goes to
   copied value, like `storageFieldWriteCopySource`)
 
       sp1.push(sp2)
-      ⇝  { storage := save( save(storage, sp1 · at(n),
-                                 find<[StValue]>(storage, sp2)),
+      ⇝  { storage := save( copyAt(storage, sp1 · at(n),
+                                   find<[StValue]>(storage, sp2)),
                             sp1 · length, n + 1 ) }
 
 - `storagePushLengthSave` (zero-arg push: append the default-valued
@@ -842,10 +860,11 @@ where `alice` extracts to `cons(alice, nil)`.
 ### `alice = bob;`  (whole-struct root-to-root copy)
 
     ⟨[ alice = bob; ]⟩ φ
-    ⇝ { storage := save(storage, alice, find(storage, bob)) } φ
+    ⇝ { storage := copyAt(storage, alice, find(storage, bob)) } φ
 
 where both `alice` and `bob` extract to single-element lists. The path
-`bob` is *not* stored as the value; its struct value is read and stored.
+`bob` is *not* stored as the value; its struct value is read and stored,
+and a mapping member of `alice` keeps its own entries (§3, `merge`).
 
 ## 11. Quick Reference: Statement → Rule
 
@@ -858,31 +877,31 @@ extracts to `cons(alice, nil)`. All storage operations use `find`/`save`.
 | Source statement           | Rule                                   | Update operation         |
 |----------------------------|----------------------------------------|--------------------------|
 | `sp.fld = se`              | `storageFieldWriteSave`                | `save`                   |
-| `sp1.fld = sp2`            | `storageFieldWriteCopySource`          | `save`/`find<[StValue]>` |
+| `sp1.fld = sp2`            | `storageFieldWriteCopySource`          | `copyAt`/`find<[StValue]>` |
 | `gsp = se`                 | `storageRootWriteStore`                | `save`                   |
-| `gsp = sp`                 | `storageRootWriteCopySource`           | `save`/`find<[StValue]>` |
+| `gsp = sp`                 | `storageRootWriteCopySource`           | `copyAt`/`find<[StValue]>` |
 | `lsv = sp`                 | `storageLocalRootRebind`               | direct assign            |
 | `v = sp.fld`               | `storageFieldReadFind`                 | `find`                   |
 | `v = sp`                   | `storageRootReadSelect`                | `find`                   |
 | `lsv = sp.b`               | `storageFieldReadBindLocalRoot`        | direct assign            |
-| `gsp = sp.b`               | `storageFieldReadStoreRoot`            | `save`/`find<[StValue]>` |
+| `gsp = sp.b`               | `storageFieldReadStoreRoot`            | `copyAt`/`find<[StValue]>` |
 | `delete gsp;`              | `storageRootDelete`                    | `delAt`                  |
 | `delete sp.fld;`           | `storageFieldDelete`                   | `delAt`                  |
 | `delete sp[ie];`           | `storageIndexDelete`                   | `save`/`defVal`          |
 | `sp[ie] = se`  (mapping)   | `storageIndexWriteMappingSave`         | `save`                   |
-| `sp1[ie] = sp2`  (mapping) | `storageIndexWriteMappingCopySource`   | `save`                   |
+| `sp1[ie] = sp2`  (mapping) | `storageIndexWriteMappingCopySource`   | `copyAt`/`find<[StValue]>` |
 | `sp[ie] = mv`  (mapping)   | `memoryToStorageIndexMappingCopyRoot`  | `save`/`copyMem`         |
 | `v = sp[ie]`  (mapping)    | `storageIndexReadMappingFind`          | `find`                   |
 | `lsv = sp[ie]`  (mapping)  | `storageIndexReadMappingBindLocalRoot` | direct assign            |
-| `gsp = sp[ie]`  (mapping)  | `storageIndexReadMappingStoreRoot`     | `save`/`find<[StValue]>` |
+| `gsp = sp[ie]`  (mapping)  | `storageIndexReadMappingStoreRoot`     | `copyAt`/`find<[StValue]>` |
 | `sp[ie] = se`  (array)     | `storageIndexWriteArraySave`           | `save`                   |
-| `sp1[ie] = sp2`  (array)   | `storageIndexWriteArrayCopySource`     | `save`                   |
+| `sp1[ie] = sp2`  (array)   | `storageIndexWriteArrayCopySource`     | `copyAt`/`find<[StValue]>` |
 | `sp[ie] = mv`  (array)     | `memoryToStorageIndexArrayCopyRoot`    | `save`/`copyMem`         |
 | `v = sp[ie]`  (array)      | `storageIndexReadArrayFind`            | `find`                   |
 | `lsv = sp[ie]`  (array)    | `storageIndexReadArrayBindLocalRoot`   | direct assign            |
-| `gsp = sp[ie]`  (array)    | `storageIndexReadArrayStoreRoot`       | `save`/`find<[StValue]>` |
+| `gsp = sp[ie]`  (array)    | `storageIndexReadArrayStoreRoot`       | `copyAt`/`find<[StValue]>` |
 | `sp.push(se);`             | `storagePushValueSave`                 | `save`                   |
-| `sp1.push(sp2);`           | `storagePushValueCopySource`           | `save`/`find<[StValue]>` |
+| `sp1.push(sp2);`           | `storagePushValueCopySource`           | `copyAt`/`find<[StValue]>` |
 | `sp.push();`               | `storagePushLengthSave`                | `save`                   |
 | `lsv = sp.push();`         | `storageLocalRootPushBind`             | `save`                   |
 | `path.push() = se;`        | `storagePushLhsToPushValue` (desugar)  | —                        |

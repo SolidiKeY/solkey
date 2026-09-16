@@ -61,6 +61,8 @@ contract TestSuite {
     Token[] tokens;
     TokenBucket bucket;
     TokenBucket[] buckets;
+    Basket basketA;
+    Basket basketB;
     LedgerUse[] ledgerUses;
 
     // ── Arithmetic ──
@@ -2253,5 +2255,86 @@ contract TestSuite {
         bool b = i++ < i;
         assert(!b);
         assert(i == 2);
+    }
+
+    // ── Storage copy through copyAt ──
+
+    function testCopyRootKeepsValueMembers() public {
+        bob.age = 7;
+        bob.account.balance = 3;
+        alice = bob;
+        bob.age = 8;
+        assert(alice.age == 7);
+        assert(alice.account.balance == 3);
+    }
+
+    function testCopyFieldNested() public {
+        Account storage acc = bob.account;
+        acc.token.value = 5;
+        alice.account = acc;
+        acc.token.value = 6;
+        assert(alice.account.token.value == 5);
+    }
+
+    /// @custom:key box
+    function testCopyOfCopy() public {
+        require(persons.length == 0);
+        bob.age = 4;
+        alice = bob;
+        persons.push();
+        persons[0] = alice;
+        assert(persons[0].age == 4);
+    }
+
+    /// @custom:key box
+    function testCopyIntoMappingEntry(uint k) public {
+        require(k == 3);
+        alice.age = 6;
+        people[k] = alice;
+        alice.age = 7;
+        assert(people[k].age == 6);
+    }
+
+    /// @custom:key box
+    function testCopyArrayMemberElements() public {
+        require(basketA.items.length == 0);
+        require(basketB.items.length == 0);
+        basketA.items.push(9);
+        basketB = basketA;
+        basketA.items[0] = 1;
+        assert(basketB.items.length == 1);
+        assert(basketB.items[0] == 9);
+    }
+
+    function testCopyPrimitiveRoot() public {
+        age = 3;
+        balance = age;
+        age = 4;
+        assert(balance == 3);
+    }
+
+    function testCopyStoreRootFromField() public {
+        alice.account.token.value = 2;
+        tok = alice.account.token;
+        alice.account.token.value = 1;
+        assert(tok.value == 2);
+    }
+
+    function testCopyStoreRootFromIndex() public {
+        people[1].age = 2;
+        alice = people[1];
+        people[1].age = 3;
+        assert(alice.age == 2);
+    }
+
+    /// @custom:key box
+    function testPushCopyThenDeleteTarget() public {
+        require(tokens.length == 0);
+        tok.value = 4;
+        Token storage src = tok;
+        tokens.push() = src;
+        delete tokens[0];
+        assert(tokens[0].value == 0);
+        assert(tok.value == 4);
     }
 }
