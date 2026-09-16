@@ -52,7 +52,7 @@ still verified as uniform across operators:
 | `rhsCapture` | a non-simple right-hand side is hoisted; the target is untouched |
 | `value` | the right-hand side is a *primitive* value, captured into a snapshot (`T rv = e;`) before the index is hoisted: Solidity evaluates the right-hand side first, and the hoisted index may mutate what it reads |
 | `ref` | the same for a *reference* right-hand side, captured into an alias (`T storage rv = src;` / `T memory rv = src;`) — the declaration is what differs, not the order |
-| `valueField` / `valueIndex` | in `receiverCapture`, the operation whose receiver is aliased, with a primitive right-hand side: `nsp.a = e` vs `nsp[i] = e` (the index form also captures the index, after the receiver) |
+| `valueField` / `valueIndex` | in `receiverCapture`, the operation whose receiver is aliased, with a primitive right-hand side: `nsp.a = e` vs `nsp[i] = e` (the index form leaves the index in place for the `indexCapture` rules) |
 | `refField` / `refIndex` | the reference-source halves of those two |
 
 Hole ordering rule: holes apply in spec order, so a string must come before
@@ -72,7 +72,8 @@ where an earlier hole is a substring of a later one.
 | `memoryIncDec` | 24 | `memory{Field,IndexArray}{Pre,Post}{in,de}crement` (+ `Assignment`) |
 | `compoundAssignRhsCapture` | 5 | `{add,…,mod}AssignValueRhsCapture` |
 | `indexCapture` | 8 | the capture rules that hoist a fragment out of an indexed or field write with a *simple* receiver — see the variant table above |
-| `receiverCapture` | 10 | the rules for a *complex* receiver (`nsp.a = e`, `nsp[i] = e`), which capture right-hand side, receiver and index in one step, split by primitive vs reference source |
+| `indexCaptureAll` | 5 | the `…CaptureAll` rules of `\rules(indexWriteCapture:allAtOnce)`, which capture right-hand side, receiver and index in one application for a receiver of any simplicity, split by primitive vs reference source |
+| `receiverCapture` | 10 | the rules for a *complex* receiver (`nsp.a = e`, `nsp[i] = e`), which capture the right-hand side and alias the receiver, split by primitive vs reference source |
 
 172 annotated taclets in total.
 

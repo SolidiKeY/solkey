@@ -31,6 +31,7 @@ These keep a task to few tool calls. Cost is dominated by round-trips, not by ou
 ./run-key.sh FILE.sol fnName                   # prove one function
 ./run-key.sh FILE.sol -f fnName --open-goals   # ... and show why it did not close
 ./run-key.sh FILE.key -m 20000 --no-prove      # a .key problem; any CLI option works
+./run-key.sh FILE.sol -O indexWriteCapture:allAtOnce   # prove under a non-default taclet option
 ./run-key.sh --help                            # every CLI option
 
 scripts/taclet.sh requireSimple      # print one taclet with its file:line

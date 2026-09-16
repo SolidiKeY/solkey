@@ -62,7 +62,8 @@ public final class SolidityProblemSynthesizer {
                     + " cannot be proved: " + reason);
             }
         }
-        return SolidityProblemSpec.of(contract.name(), function);
+        return new SolidityProblemSpec(contract.name(), function,
+            requested == null ? List.of() : requested.choices());
     }
 
     /// Every function of `contract` an obligation can be generated for, in declaration order.
@@ -87,13 +88,16 @@ public final class SolidityProblemSynthesizer {
         String programVariables = parameters.isEmpty() ? ""
                 : parameters.stream().map(p -> "    " + p.keySort() + " " + p.name() + ";")
                         .collect(Collectors.joining("\n", "\\programVariables {\n", "\n}\n\n"));
+        String options = spec.choices().isEmpty() ? ""
+                : spec.choices().stream()
+                        .collect(Collectors.joining(", ", "\\withOptions ", ";\n\n"));
         return """
                 \\programSource "%s";
 
-                %s\\problem {
+                %s%s\\problem {
                     %s
                 }
-                """.formatted(solFile.toAbsolutePath(), programVariables, modality);
+                """.formatted(solFile.toAbsolutePath(), options, programVariables, modality);
     }
 
     /// A path identifying this obligation. It is never created; it only fixes the directory

@@ -46,6 +46,9 @@ public class TacletBuilderManipulators {
     public static final AbstractConditionBuilder DIFFERENT =
         new ConstructorBasedBuilder("different", DifferentInstantiationCondition.class, SV, SV);
 
+    public static final AbstractConditionBuilder NOT_ALL_SIMPLE =
+        new ConstructorBasedBuilder("notAllSimple", NotAllSimpleCondition.class, SV, SV);
+
     public static final AbstractConditionBuilder APPLY_UPDATE_ON_RIGID =
         new ConstructorBasedBuilder(
             "applyUpdateOnRigid", ApplyUpdateOnRigidCondition.class, USV, SV, SV);
@@ -315,7 +318,8 @@ public class TacletBuilderManipulators {
             NEW_TYPE_OF, NEW_SOLIDITY_TYPE,
             IS_SUBTYPE, SAME, HAS_SORT, HAS_FIELD_SORT, HAS_MEMORY_FIELD_SORT, HAS_ELEMENT_SORT,
             HAS_MEMORY_ELEMENT_SORT,
-            NEW_LOCAL_VARS, HAS_INVARIANT, GET_INVARIANT, GET_VARIANT, SAME_AS_TERM);
+            NEW_LOCAL_VARS, HAS_INVARIANT, GET_INVARIANT, GET_VARIANT, SAME_AS_TERM,
+            NOT_ALL_SIMPLE);
     }
 
     /// Announce a [TacletBuilderCommand] for the use during the interpretation of asts. This

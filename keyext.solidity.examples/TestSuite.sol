@@ -2337,4 +2337,68 @@ contract TestSuite {
         assert(tokens[0].value == 0);
         assert(tok.value == 4);
     }
+
+    // ── Index writes whose receiver and index are both impure (docs/storage.md section 5) ──
+
+    /// @custom:key box
+    function indexWriteBothImpureStorageRef() public {
+        require(buckets.length == 0);
+        buckets.push();
+        buckets.push();
+        require(buckets[1].tokens.length == 0);
+        buckets[1].tokens.push();
+        buckets[1].tokens.push();
+        tok.value = 8;
+        Token storage src = tok;
+        uint i = 1;
+        uint j = 0;
+        buckets[i++].tokens[j++] = src;
+        assert(i == 2);
+        assert(j == 1);
+        assert(buckets[1].tokens[0].value == 8);
+    }
+
+    /// @custom:key box
+    function indexWriteBothImpureMemToStorage() public {
+        require(buckets.length == 0);
+        buckets.push();
+        buckets.push();
+        require(buckets[1].tokens.length == 0);
+        buckets[1].tokens.push();
+        buckets[1].tokens.push();
+        Token memory src;
+        src.value = 5;
+        uint i = 1;
+        uint j = 0;
+        buckets[i++].tokens[j++] = src;
+        assert(i == 2);
+        assert(j == 1);
+        assert(buckets[1].tokens[0].value == 5);
+    }
+
+    function indexWriteBothImpureMemoryValue() public {
+        Basket[] memory bs = new Basket[](2);
+        uint[] memory slots = new uint[](2);
+        bs[1].items = slots;
+        uint i = 1;
+        uint j = 0;
+        bs[i++].items[j++] = 42;
+        assert(i == 2);
+        assert(j == 1);
+        assert(bs[1].items[0] == 42);
+    }
+
+    function indexWriteBothImpureMemRef() public {
+        TokenBucket[] memory tbs = new TokenBucket[](2);
+        Token[] memory slots = new Token[](2);
+        tbs[1].tokens = slots;
+        Token memory src;
+        src.value = 2;
+        uint i = 1;
+        uint j = 0;
+        tbs[i++].tokens[j++] = src;
+        assert(i == 2);
+        assert(j == 1);
+        assert(tbs[1].tokens[0].value == 2);
+    }
 }

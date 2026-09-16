@@ -91,9 +91,10 @@ Three shapes have no `assert` form and are not covered by any example:
 
 - **"this always reverts"** — was `\[{ … }\](false)`. `require`'s box false-branch and
   out-of-bounds array access used to be checked this way.
-- **The `net` payment ledger** (`docs/net.md`) — needs `\rules` blocks to define `CInv`
-  and `\withOptions transferSemantics:withCallback`, which a synthesized obligation cannot
-  carry. Covered by the `.key` problems of `net/` instead, which call real functions of
+- **The `net` payment ledger** (`docs/net.md`) — needs `\rules` blocks to define `CInv`,
+  which a synthesized obligation cannot carry. (Taclet *options* it can: a `.sol` obligation
+  takes them from `run-key.sh -O category:choice`, which is how the `indexWriteCapture`
+  examples are proved under both calculi.) Covered by the `.key` problems of `net/` instead, which call real functions of
   the contracts beside them (see "The `net/` directory" below).
 - **Whole-subtree equality** — `find<[int]>(storage, cons2(matrix, at(0))) = find<[int]>(storage,
   cons1(values))` compares two storage subtrees; Solidity cannot state it, and reading

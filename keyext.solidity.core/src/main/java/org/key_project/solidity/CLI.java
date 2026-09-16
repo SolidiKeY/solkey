@@ -8,7 +8,14 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
+import org.key_project.logic.Choice;
+import org.key_project.logic.Namespace;
 import org.key_project.solidity.control.KeYEnvironment;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.init.SolidityProblemSpec;
@@ -18,6 +25,8 @@ import org.key_project.solidity.proof.io.OutputStreamProofSaver;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
 import org.key_project.solidity.proof.io.ProofSaver;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -67,6 +76,11 @@ public class CLI {
         description = "for a .sol FILE: the contract to prove against, if it declares several")
     String contract;
 
+    @Option(names = { "-O", "--option" }, paramLabel = "<category:choice>",
+        description = "for a .sol FILE: a taclet option to prove under; repeatable. A .key FILE "
+            + "declares its own options with \\withOptions instead.")
+    List<String> choices = new ArrayList<>();
+
     @Option(names = "--open-goals", arity = "0..1", fallbackValue = "2000",
         description = "on an unclosed proof, print each open goal's sequent, truncated to this "
             + "many characters (default ${FALLBACK-VALUE}); implied by --verbose")
@@ -113,15 +127,22 @@ public class CLI {
             System.err.println("No such file: " + cli.file.getAbsolutePath());
             return false;
         }
+        String malformed = malformedChoice(cli.choices);
+        if (malformed != null) {
+            System.err.println("Error: " + malformed);
+            return false;
+        }
         if (!f.getFileName().toString().endsWith(".sol")) {
-            if (cli.function != null || cli.contract != null) {
-                System.err.println("--function and --contract apply to .sol files only");
+            if (cli.function != null || cli.contract != null || !cli.choices.isEmpty()) {
+                System.err.println(
+                    "--function, --contract and --option apply to .sol files only");
                 return false;
             }
             return prove(cli, null).closed();
         }
         if (cli.function != null) {
-            return prove(cli, new SolidityProblemSpec(cli.contract, cli.function)).closed();
+            return prove(cli, new SolidityProblemSpec(cli.contract, cli.function, cli.choices))
+                    .closed();
         }
         final List<String> functions;
         try {
@@ -136,7 +157,8 @@ public class CLI {
         int closed = 0;
         List<String> failures = new ArrayList<>();
         for (String function : functions) {
-            Outcome outcome = prove(cli, new SolidityProblemSpec(cli.contract, function));
+            Outcome outcome =
+                prove(cli, new SolidityProblemSpec(cli.contract, function, cli.choices));
             System.out.flush();
             System.err.flush();
             System.out.println((outcome.closed() ? "PASS " : "FAIL ") + function);
@@ -181,8 +203,14 @@ public class CLI {
             if (cli.verbose)
                 System.out.println("Loading...");
             Path f = cli.file.toPath();
-            var env = spec == null ? KeYEnvironment.load(f)
-                    : KeYEnvironment.load(f, spec.contract(), spec.function());
+            var env = spec == null ? KeYEnvironment.load(f) : KeYEnvironment.load(f, spec);
+            if (spec != null) {
+                String rejected = unknownChoice(spec.choices(), env.getInitConfig().choiceNS());
+                if (rejected != null) {
+                    System.err.println("Error: " + rejected);
+                    return Outcome.error();
+                }
+            }
             var loadedProof = env.getLoadedProof();
             if (loadedProof.closed()) {
                 if (cli.prove) {
@@ -258,6 +286,43 @@ public class CLI {
             }
             return Outcome.error();
         }
+    }
+
+    private static @Nullable String unknownChoice(List<String> choices,
+            Namespace<@NonNull Choice> declared) {
+        if (choices.isEmpty()) {
+            return null;
+        }
+        Map<String, Set<String>> byCategory = new TreeMap<>();
+        for (Choice c : declared.allElements()) {
+            byCategory.computeIfAbsent(c.category(), k -> new TreeSet<>())
+                    .add(c.name().toString());
+        }
+        for (String choice : choices) {
+            String category = choice.substring(0, choice.indexOf(':'));
+            Set<String> known = byCategory.get(category);
+            if (known == null) {
+                return "no such taclet option category: " + category + "; known categories: "
+                    + String.join(", ", byCategory.keySet());
+            }
+            if (!known.contains(choice)) {
+                return "no such choice for " + category + ": "
+                    + choice.substring(choice.indexOf(':') + 1) + "; known choices: "
+                    + known.stream().map(k -> k.substring(k.indexOf(':') + 1))
+                            .collect(Collectors.joining(", "));
+            }
+        }
+        return null;
+    }
+
+    private static @Nullable String malformedChoice(List<String> choices) {
+        for (String choice : choices) {
+            int colon = choice.indexOf(':');
+            if (colon < 1 || colon != choice.lastIndexOf(':') || colon == choice.length() - 1) {
+                return "--option expects <category>:<choice>, but got: " + choice;
+            }
+        }
+        return null;
     }
 
     private static boolean hintPrinted = false;

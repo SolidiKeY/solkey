@@ -21,6 +21,7 @@ import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.proof.Proof;
+import org.key_project.solidity.proof.init.SolidityProblemSpec;
 import org.key_project.solidity.proof.init.SolidityProblemSynthesizer;
 import org.key_project.solidity.proof.io.OutputStreamProofSaver;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
@@ -138,7 +139,16 @@ public final class SolidityExampleTests {
     /// Load the obligation for one function of [#testSuite] and run automode on it.
     public static Proof proveTestSuiteFunction(String function, int maxSteps, long timeout)
             throws ProblemLoaderException {
-        return prove(load(testSuite(), TEST_SUITE_CONTRACT, function), maxSteps, timeout);
+        return proveTestSuiteFunction(function, maxSteps, timeout, List.of());
+    }
+
+    /// Load the obligation for one function of [#testSuite] under the named taclet options
+    /// (each `category:choice`) and run automode on it.
+    public static Proof proveTestSuiteFunction(String function, int maxSteps, long timeout,
+            List<String> choices) throws ProblemLoaderException {
+        KeYEnvironment env = KeYEnvironment.load(testSuite(),
+            new SolidityProblemSpec(TEST_SUITE_CONTRACT, function, choices));
+        return prove(env, maxSteps, timeout);
     }
 
     /// Run automode on the environment's loaded proof, optionally overriding the strategy's step

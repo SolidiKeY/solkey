@@ -198,7 +198,7 @@ public class KeYEnvironment<U extends UserInterfaceControl> {
 
     public static KeYEnvironment<DefaultUserInterfaceControl> load(Path keyFile)
             throws ProblemLoaderException {
-        return load(keyFile, null);
+        return load(keyFile, (List<Path>) null);
     }
 
     /// Loads the obligation for one function of a Solidity source file: the function is called in
@@ -211,8 +211,17 @@ public class KeYEnvironment<U extends UserInterfaceControl> {
     /// @throws ProblemLoaderException Occurred Exception
     public static KeYEnvironment<DefaultUserInterfaceControl> load(Path solFile,
             @Nullable String contract, String function) throws ProblemLoaderException {
-        return load(null, solFile, null, null, null, false,
-            new SolidityProblemSpec(contract, function));
+        return load(solFile, new SolidityProblemSpec(contract, function));
+    }
+
+    /// Loads the obligation described by `spec`, including the taclet options it names.
+    ///
+    /// @param solFile the `.sol` source to verify
+    /// @param spec which function to prove, and under which taclet options
+    /// @throws ProblemLoaderException Occurred Exception
+    public static KeYEnvironment<DefaultUserInterfaceControl> load(Path solFile,
+            SolidityProblemSpec spec) throws ProblemLoaderException {
+        return load(null, solFile, null, null, null, false, spec);
     }
 
     public void dispose() {
