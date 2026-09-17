@@ -421,6 +421,15 @@ The lazy `copyMem` view delegates storage reads back to memory:
 
     find(copyMem(st, memory, id), path primitiveField)
       = readR(memory, id, path primitiveField)
+    selectSt(copyMem(st, memory, id), primitiveField)
+      = read(memory, id, primitiveField)
+    selectSt<[Struct]>(copyMem(st, memory, id), refField)
+      = copyMem(mtSt, memory, read<[Identity]>(memory, id, refField))
+
+The `selectSt` forms are what a read reaches once the storage side has
+unfolded the path: the copy sits under the leaf `save(old, nil, copyMem(…))`,
+which `structRules.key` reads by member sort (a mapping member of the storage
+target stays the target's own), one selector at a time.
 
 Use the eager variant only when a fully materialized struct is required.
 

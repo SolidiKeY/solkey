@@ -2257,7 +2257,7 @@ contract TestSuite {
         assert(i == 2);
     }
 
-    // ── Storage copy through copyAt ──
+    // ── Storage copy: mapping members stay the target's own ──
 
     function testCopyRootKeepsValueMembers() public {
         bob.age = 7;

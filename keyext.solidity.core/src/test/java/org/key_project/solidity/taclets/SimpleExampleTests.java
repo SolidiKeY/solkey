@@ -27,7 +27,8 @@ import static org.key_project.solidity.testutil.SolidityExampleTests.loadAndProv
 /// - `newVariable/newVariable.key` — a rule introduces a fresh program variable with `\new` and
 /// executes two assignments one at a time through a context block, proving `q = 42` (exercises
 /// ProgramContextAdder together with the fresh-variable mechanism).
-/// - `storage/copyKeepsMapping.key` — a storage-to-storage copy read back through `copyAt`:
+/// - `storage/copyKeepsMapping.key` — a storage-to-storage copy read back through the leaf of
+/// `save`:
 /// value members come from the source, mapping members stay the target's own.
 @Tag("solidityExamples")
 public class SimpleExampleTests {
