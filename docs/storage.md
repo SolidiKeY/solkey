@@ -323,7 +323,7 @@ so it does not fire on a fully simple `sp[se] = e` and re-match its own output.
 Both options evaluate in the same order and close the same proofs; they differ
 only in proof size, and which is smaller depends on the shape — see
 `docs/taclets-implementation.md`, "Capture partition", for the measurement and
-`scripts/compare-index-write-capture.sh` to reproduce it.
+`./gradlew :keyext.solidity.core:testProofSize` to reproduce it.
 
 **Rule 3 — receiver and index simple, right-hand side nonsimple.**
 

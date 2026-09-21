@@ -128,8 +128,8 @@ comments untouched unless the change makes them wrong.
 `./gradlew :keyext.solidity.core:test` is the fast local set: unit tests plus the `TestSuite.sol`
 suites (`TacletStarterExamplesTest`, `PaperTestExamplesTest`), ~30 s. It prints failures only;
 `-PverboseTests` restores the per-test progress lines. The `solidityExamples` and
-`ruleGeneralization` groups are CI-only — see `docs/ci.md`. Run `test` after refactoring, and
-prefer modifying existing test classes over creating new ones.
+`ruleGeneralization` groups are CI-only, and `testProofSize` is manual-only — see `docs/ci.md`.
+Run `test` after refactoring, and prefer modifying existing test classes over creating new ones.
 
 ## Documentation
 

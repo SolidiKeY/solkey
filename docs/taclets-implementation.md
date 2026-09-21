@@ -484,14 +484,21 @@ kind:
     (`parser/varcond/NotAllSimpleCondition.java`).
 
   Both close every example; they differ only in proof size, measured over all
-  278 functions of `TestSuite.sol` by `scripts/compare-index-write-capture.sh`:
+  278 functions of `TestSuite.sol` by
+  `./gradlew :keyext.solidity.core:testProofSize`
+  (`IndexWriteCaptureProofSizeTest`, which pins these numbers — see `docs/ci.md`):
 
   | shape | applications | `receiverThenIndex` | `allAtOnce` |
   |---|---|---|---|
-  | `nsp[se] = rhs` (14 functions) | 1 each | — | ≈ +20 nodes each |
-  | `nsp[nse] = rhs` (7 functions) | 2 vs 1 | ≈ +16 nodes each | — |
+  | `nsp[se] = rhs` (16 functions) | 1 each | — | +9 … +21 nodes each |
+  | `nsp[nse] = rhs` (7 functions) | 2 vs 1 | +13 … +16 nodes each | — |
   | `sp[nse] = rhs` | 1 each | identical | identical |
-  | **whole file, total nodes** | | **78 408** | 78 601 |
+  | **whole file, rule applications** | | 46 | **39** |
+  | **whole file, total nodes** | | **82 336** | 82 536 |
+
+  The 38 functions that apply a capture rule at all need 1.21 applications each
+  under `receiverThenIndex` and 1.03 under `allAtOnce` — that merged application
+  is exactly what `allAtOnce` buys, and the extra nodes are what it costs.
 
   `receiverThenIndex` is the default because the simple-index shape dominates
   real code: `allAtOnce` saves an application only when receiver *and* index are

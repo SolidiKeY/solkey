@@ -133,15 +133,20 @@ tasks.withType(Test) {
 // tests and the TestSuite.sol suites; the tagged groups only run locally on explicit request.
 def ciOnlyTestTags = ["solidityExamples", "ruleGeneralization"]
 
+// Tags CI does not run at all: slow measurements that are only meaningful on demand.
+def manualOnlyTestTags = ["proofSize"]
+
+def nonDefaultTestTags = ciOnlyTestTags + manualOnlyTestTags
+
 test {
     useJUnitPlatform {
-        excludeTags(*ciOnlyTestTags)
+        excludeTags(*nonDefaultTestTags)
     }
 }
 
 tasks.named('testFast', Test) {
     useJUnitPlatform {
-        excludeTags(*ciOnlyTestTags)
+        excludeTags(*nonDefaultTestTags)
     }
 }
 
@@ -159,6 +164,23 @@ tasks.register('testRuleGeneralization', Test) {
     description = "CI test group: RuleGeneralizationTest, the taclet family skeleton checker."
     useJUnitPlatform {
         includeTags "ruleGeneralization"
+    }
+}
+
+tasks.register('testProofSize', Test) {
+    group = "verification"
+    description = "Manual (not CI): IndexWriteCaptureProofSizeTest, which proves every function " +
+        "of TestSuite.sol under both indexWriteCapture options and checks the node counts " +
+        "against the checked-in baseline."
+    useJUnitPlatform {
+        includeTags "proofSize"
+    }
+    testLogging {
+        exceptionFormat "full"
+    }
+    def updateProperty = "org.key_project.solidity.taclets.IndexWriteCaptureProofSizeTest.update"
+    if (System.getProperty(updateProperty) != null) {
+        systemProperty updateProperty, System.getProperty(updateProperty)
     }
 }
 
