@@ -344,26 +344,30 @@ shadowJar {
     }
 }
 
-// Truffle interprets the WebAssembly solc unless the Graal compiler sits in the boot layer,
-// which costs roughly a factor of ten. JDK 21 ships the module this jar upgrades; another JDK
-// names it differently and would refuse to start, so the flags are added only where they are
-// known to load. Without them nothing breaks — solc just runs interpreted.
+// Truffle 23.1 reaches for sun.misc.Unsafe.ensureClassInitialized, which JDK 24 removed, so
+// anything that runs solc has to fork on JDK 21 rather than on whatever JVM the Gradle daemon
+// happens to use. JDK 21 is also the only one that ships the module the Graal compiler jar
+// upgrades — without it in the boot layer Truffle interprets the WebAssembly solc, which costs
+// roughly a factor of ten.
+def solcLauncher = javaToolchains.launcherFor {
+    languageVersion = JavaLanguageVersion.of(21)
+}
+
 def graalJit = new org.gradle.process.CommandLineArgumentProvider() {
     @Override
     Iterable<String> asArguments() {
-        if (JavaVersion.current() != JavaVersion.VERSION_21) {
-            return []
-        }
         return ["-XX:+UnlockExperimentalVMOptions", "-XX:+EnableJVMCI",
                 "--upgrade-module-path=" + configurations.graalCompiler.asPath]
     }
 }
 
 tasks.withType(Test).configureEach {
+    javaLauncher = solcLauncher
     jvmArgumentProviders.add(graalJit)
 }
 
 tasks.named('solidityCli', JavaExec) {
+    javaLauncher = solcLauncher
     jvmArgumentProviders.add(graalJit)
 }
 
