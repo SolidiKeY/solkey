@@ -65,6 +65,10 @@ contract TestSuite {
     Basket basketB;
     LedgerUse[] ledgerUses;
 
+    mapping(uint => mapping(uint => uint)) grid;
+    mapping(uint => Ledger) ledgerMap;
+    mapping(uint => uint)[] mapArray;
+
     // ── Arithmetic ──
 
     /// @custom:key box
@@ -2400,5 +2404,68 @@ contract TestSuite {
         assert(i == 2);
         assert(j == 1);
         assert(tbs[1].tokens[0].value == 2);
+    }
+
+    // ── Mapping indices: nesting, aliases and memory keys ──
+
+    function nestedMappingWriteRead() public {
+        grid[1][2] = 7;
+        uint r = grid[1][2];
+        assert(r == 7);
+    }
+
+    function nestedMappingRowAlias() public {
+        mapping(uint => uint) storage row = grid[1];
+        row[2] = 5;
+        uint r = grid[1][2];
+        assert(r == 5);
+    }
+
+    function arrayOfMappingsIndex() public {
+        mapArray.push();
+        mapArray[0][1] = 2;
+        uint r = mapArray[0][1];
+        assert(r == 2);
+    }
+
+    function mappingOfLedgerMember() public {
+        ledgerMap[1].nonce = 4;
+        ledgerMap[1].balances[2] = 3;
+        uint n = ledgerMap[1].nonce;
+        uint r = ledgerMap[1].balances[2];
+        assert(n == 4);
+        assert(r == 3);
+    }
+
+    function mappingPointerTernary() public {
+        flag = true;
+        mapping(uint => uint) storage ptr = flag ? balances : valuesMap;
+        ptr[1] = 2;
+        uint r = balances[1];
+        assert(r == 2);
+    }
+
+    function mappingReadAsKey() public {
+        balances[1] = 3;
+        balances[3] = 9;
+        uint r = balances[balances[1]];
+        assert(r == 9);
+    }
+
+    function memoryFieldAsMappingKey() public {
+        Person memory carol;
+        carol.age = 3;
+        balances[carol.age] = 7;
+        uint r = balances[3];
+        assert(r == 7);
+    }
+
+    function mappingEntryThroughMemoryToMappingEntry() public {
+        people[1].age = 3;
+        Person memory p = people[1];
+        people[2] = p;
+        people[1].age = 4;
+        uint r = people[2].age;
+        assert(r == 3);
     }
 }

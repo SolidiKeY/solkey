@@ -247,6 +247,20 @@ a member whose `\hasFieldSort(a, \sort(alphaPrim))` varcond binds — the
 `Path[...,primitiveElement]` indexed receiver),
 while rebinds keep their `Variable[storage]` target.
 
+### Mapping indices (nesting, aliases, memory keys)
+Nothing beyond the index families above was needed for the weirder mapping shapes. A sweep over
+nested mappings, arrays of mappings, mappings of structs that themselves carry a mapping,
+mappings of arrays, storage pointers into a mapping or into one nested row, keys read out of
+another mapping, and keys or values crossing the memory border found no rule missing: every one
+closes. `TestSuite.sol`, section "Mapping indices: nesting, aliases and memory keys", keeps one
+example per shape that the older sections do not already cover —
+`mapping(k => mapping(k => v))`, `mapping(uint => uint)[]`, `mapping(uint => Ledger)`, a
+nested row bound as a storage pointer, a ternary choosing between two mappings,
+`balances[balances[1]]`, a memory field as the key, and a mapping entry copied to another
+through memory. The shapes Solidity refuses outright are recorded in
+`keyext.solidity.examples/illegal/IllegalMappings.sol`, and the two gaps the sweep did find are
+in `taclet-ideas.md` ("Raised by the mapping-index probe").
+
 ### Push / pop
 Push-lvalue `sp.push() = se` is desugared to `sp.push(se)` at **parse time**
 (`ParserUtils.parseAssignmentMaybe`), so it never reaches the prover. A no-arg
@@ -586,9 +600,9 @@ path is only ever captured via `\newTypeOf`, never lowered directly.
 
 ## End-to-end examples (the `test*` functions)
 
-`TestSuite.sol` holds 55 end-to-end `test*` functions driven by `PaperTestExamplesTest.java`;
+`TestSuite.sol` holds 64 end-to-end `test*` functions driven by `PaperTestExamplesTest.java`;
 each is called with postcondition `true`, the obligations being carried by in-body `assert`s.
-The other 210 functions are the focused starters run by `TacletStarterExamplesTest`.
+The other 223 functions are the focused starters run by `TacletStarterExamplesTest`.
 
 **Passing (most close automatically):** storage write/read, nested + deep copy,
 aliases, mapping read/write/delete, struct-`delete` preserving mapping members

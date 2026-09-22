@@ -238,6 +238,36 @@ mathematical integers give the overflowing operation a non-reverting path. No te
 the directory; moving an example here is how it is retired from the suites while staying
 compilable.
 
+## The `illegal/` directory
+
+`illegal/` holds the mapping shapes Solidity itself rejects — currently `IllegalMappings.sol`.
+A mapping lives only in storage: it has no memory or calldata representation, it cannot be
+copied, assigned or deleted as a whole, and its key must be elementary. Each construct is a
+commented-out line with the verbatim solc diagnostic above it, so the file compiles and no suite
+scans the directory; uncommenting a line must reproduce the quoted error. The record says which
+rules the calculus never has to have, and its legal counterparts are the "Mapping indices"
+section of `TestSuite.sol`.
+
+`illegal/nocompile/` is the executable half of that record: one **minimal contract per construct**,
+written out rather than commented out, so each file really does fail to compile.
+`IllegalExamplesCompileTest` enumerates the directory and asserts solc rejects every contract with
+the diagnostic the file names on its single
+
+```solidity
+/// solc: <substring of the diagnostic>
+```
+
+line, so a new case joins the suite by being written, and a solc release that started accepting one
+of them turns the test red instead of going unnoticed. The directory also holds the one non-mapping
+case, `NestedArrayCalldataToStorage.sol`.
+
+The test compiles through `SolcWrapper.getBinJson` (bytecode), not `getJsonSolidity` (AST only),
+because the two stages reject different things. Every mapping case is an analysis-stage
+`TypeError`/`ParserError` and shows up either way, but `NestedArrayCalldataToStorage` is rejected
+during **code generation** — so it passes an AST-only request, and therefore passes
+`./run-key.sh … --no-prove`, while still being uncompilable. Checking a `.sol` file with
+`--no-prove` proves it parses and type-checks, not that solc can compile it.
+
 ## Other directories
 
 `fieldAccess/`, `functionBody/` and `newVariable/` still use `.key` problems — they exercise

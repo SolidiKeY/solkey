@@ -114,6 +114,22 @@ Each has a failing example in the suite naming it, so closing the gap is observa
   where `map[4].z` with `map = nested.recursive` closes; the member-mapping index rules need
   the same complex-receiver capture the other index families have.
 
+## Raised by the mapping-index probe
+
+Found by pushing mapping indexing into its odd corners (nested mappings, arrays of mappings,
+storage pointers, memory-valued keys). Everything else in that sweep closes; these two are what
+is left, and neither is worked around anywhere in the suites.
+
+- **Non-integer mapping keys.** `mapping(bool => uint)` loads, then the first index write dies
+  with a `TermCreationException`: `at(Field)` expects an `int` argument and gets `TRUE:bool`.
+  `address` keys are reachable only from a `.key` problem, since the obligation generator
+  refuses an `address` parameter (`net/AuctionWithdrawNet.sol` indexes one that way). Either the
+  key sort has to widen or the loader has to reject the declaration with its reason.
+- **An assignment used as an expression.** `balances[balances[1] = 2] = 7;` captures the index
+  correctly and then gets stuck on `u = (balances[1] = 2);` — no rule consumes an assignment in
+  value position. Related to `return e;` (Tier 3): both are expression forms the calculus only
+  handles as statements.
+
 ## Raised in priority by the TestSuite.sol migration
 
 - **`return e;` (Tier 3).** Now on the critical path: every example in `TestSuite.sol` has to
