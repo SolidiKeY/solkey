@@ -53,7 +53,11 @@ public final class MemoryReferenceTypes {
         if (listSort == null) {
             return original;
         }
-        return new KeYSolidityType(original.getSolidityType(), listSort);
+        Type solidityType = original.getSolidityType();
+        if (solidityType == null) {
+            return original;
+        }
+        return new KeYSolidityType(solidityType, listSort);
     }
 
     public static boolean isStoragePathType(KeYSolidityType original, Sort sort) {

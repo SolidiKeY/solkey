@@ -31,10 +31,6 @@ public abstract class SolidityASTVisitor extends SolidityASTWalker implements Vi
         node.visit(this);
     }
 
-    @Override
-    protected void walk(SolidityProgramElement node) {
-        super.walk(node);
-    }
 
     protected abstract void doDefaultAction(SolidityProgramElement node);
 
@@ -244,7 +240,7 @@ public abstract class SolidityASTVisitor extends SolidityASTWalker implements Vi
     }
 
     @Override
-    public void performActionOnReturnStatment(ReturnStatement x) {
+    public void performActionOnReturnStatement(ReturnStatement x) {
         doDefaultAction(x);
     }
 

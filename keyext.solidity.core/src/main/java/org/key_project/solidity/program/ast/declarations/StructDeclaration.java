@@ -16,14 +16,14 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public class StructDeclaration implements Declaration, Type, Resolver {
-    public final @NonNull Name name;
-    private final @NonNull ImmutableArray<@NonNull FieldDeclaration> fields;
+    private final Name name;
+    private final ImmutableArray<@NonNull FieldDeclaration> fields;
     private final int contractId;
     @Nullable
     ContractDeclaration contract;
 
 
-    public StructDeclaration(@NonNull Name name, List<FieldDeclaration> fields, int contractId) {
+    public StructDeclaration(Name name, List<FieldDeclaration> fields, int contractId) {
         this.name = name;
         this.fields = new ImmutableArray<>(fields);
         this.contractId = contractId;
@@ -38,7 +38,7 @@ public class StructDeclaration implements Declaration, Type, Resolver {
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         if (0 <= n && n < getChildCount())
             return fields.get(n);
         throw new RuntimeException("Child " + n + " out of bound");

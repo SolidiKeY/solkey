@@ -14,6 +14,7 @@ import org.key_project.solidity.program.ast.statement.FunctionBodyStatement;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Proof;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -27,6 +28,7 @@ import static org.key_project.solidity.testutil.SolidityExampleTests.modalityPro
 /// End-to-end test: a `.key` problem loads a Solidity contract via `\programSource`, places a
 /// `withdraw(a)@Contract;` call (a [FunctionBodyStatement]) inside a modality, and the
 /// `functionBodyExpand` taclet declared in the same file rewrites it to the inlined function body.
+@Tag("solidityExamples")
 public class FunctionBodyExpandTest {
 
     @Test

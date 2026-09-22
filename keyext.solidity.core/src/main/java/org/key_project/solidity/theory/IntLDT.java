@@ -9,7 +9,6 @@ import org.key_project.logic.op.Function;
 import org.key_project.logic.op.Operator;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.TermBuilder;
-import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.literals.Literal;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.OperatorExpression;
@@ -216,9 +215,5 @@ public class IntLDT extends LDT {
             case "neg" -> getNeg();
             default -> null;
         };
-    }
-
-    public Function getInBounds(Type ty) {
-        throw new IllegalArgumentException("inBounds for type " + ty + " missing");
     }
 }

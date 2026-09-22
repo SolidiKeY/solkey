@@ -202,7 +202,7 @@ public final class SequentView extends JPanel implements ProofContext.Listener {
             text.setForeground(Theme.mutedText());
             text.setFont(
                 new Font(Font.SANS_SERIF, Font.ITALIC, Math.max(contentFont.getSize(), 13)));
-            text.setText("\n    Open a .key problem or .proof to begin.\n\n"
+            text.setText("\n    Open a .sol source, a .key problem or a .proof to begin.\n\n"
                 + "    Use File ▸ Open, or the Open button in the toolbar.");
             text.setCaretPosition(0);
             positionTable = null;

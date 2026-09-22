@@ -78,7 +78,9 @@ public class SolJsonParserTest {
         // the field's logic symbol is registered under the namespaced constant name ...
         assertEquals("SimpleContract$balance", balanceDecl.getFieldConstantName().toString());
         // ... as a Field-sorted constant, so the selectSt/storeSt theory covers it uniformly
-        // with struct members (phase 2 unification).
+        // with struct members (phase 2 unification). Mapping and reference members carry a
+        // Field sub-sort so rules dispatch on it instead of recovering the value kind from
+        // the AST; a value member stays base Field (SolJSONParser#fieldSortFor).
         var fieldConstant =
             services.getNamespaces().functions().lookup(balanceDecl.getFieldConstantName());
         assertNotNull(fieldConstant, "field constant should be registered");
@@ -562,7 +564,8 @@ public class SolJsonParserTest {
         assertEquals(1, field.getChildCount());
 
         // a unique Field-sorted constant is registered for the member, namespaced by the full
-        // enclosing name: contract$struct$member
+        // enclosing name: contract$struct$member; a value member stays base Field
+        // (SolJSONParser#fieldSortFor)
         var ageField = services.getNamespaces().functions()
                 .lookup(new Name("SimpleContract$Person$age"));
         assertNotNull(ageField, "struct member field constant should be registered");
@@ -773,7 +776,8 @@ public class SolJsonParserTest {
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract, services);
-        assertTrue(contractDec.toString().contains("bool(true);"));
+        assertFalse(contractDec.toString().contains("bool(true);"));
+        assertTrue(contractDec.toString().contains("true;"));
     }
 
     @Test
@@ -1132,7 +1136,7 @@ public class SolJsonParserTest {
         assertSame(VOID, revertCall.getType());
         assertEquals(0, revertCall.getArguments().size());
         FunctionReference revertRef = (FunctionReference) revertCall.getFunctionExp();
-        assertEquals("revert", revertRef.referencedDeclaration.name().toString());
+        assertEquals("revert", revertRef.getReferencedDeclaration().name().toString());
         assertSame(VOID, revertRef.getType());
     }
 
@@ -1305,6 +1309,26 @@ public class SolJsonParserTest {
     }
 
     @Test
+    void arrayAndMappingSortsExtendStruct() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    uint256[] values;
+                    uint256[3] triple;
+                    mapping(bool => int256) balances;
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract, services);
+        Sort structSort = services.getTheoryInfo().getStructLDT().targetSort();
+
+        for (StateVariableDeclaration field : contractDec.getFieldDeclarations()) {
+            Sort sort = field.getKeYSolidityType().getSort();
+            assertNotNull(sort, field.getName() + " should have a sort");
+            assertTrue(sort.extendsTrans(structSort),
+                () -> sort.name() + " should extend Struct");
+        }
+    }
+
+    @Test
     void nestedMapping() throws IOException {
         // language=solidity
         String contract = """
@@ -1419,12 +1443,12 @@ public class SolJsonParserTest {
         FunctionReference fRef =
             (FunctionReference) ((FunctionCallExpression) ((ExpressionStatement) contractDec
                     .getFunctions().getFirst().getBody().getStatements()
-                    .get(0)).getExpression()).functionExp;
+                    .get(0)).getExpression()).getFunctionExp();
         Type type = fRef.getType();
         assertSame(VOID, type);
 
         FunctionDeclaration selfF = contractDec.getFunctions().getFirst();
-        FunctionDeclaration refDecl = fRef.referencedDeclaration;
+        FunctionDeclaration refDecl = fRef.getReferencedDeclaration();
         assertSame(selfF, refDecl);
         assertSame(Public, selfF.getVisibility());
         assertSame(nonpayable, selfF.getStateMutability());
@@ -1647,7 +1671,7 @@ public class SolJsonParserTest {
         FieldDeclaration accountField = (FieldDeclaration) innerMember.getRightExp();
         assertEquals("account", accountField.name().toString());
         assertEquals("Account",
-            accountField.getTypeReference().referencedType.name().toString());
+            accountField.getTypeReference().getReferencedType().name().toString());
 
         // Right-hand side literal value 10
         Uint256Literal rhs = (Uint256Literal) assignExpr.getRight();

@@ -177,14 +177,8 @@ public class SolRewriteTaclet extends SolFindTaclet {
 
     @Override
     public @NonNull SolRewriteTaclet setName(@NonNull String s) {
-        final TacletApplPart applPart =
-            new TacletApplPart(assumesSequent(), applicationRestriction(), varsNew(),
-                varsNotFreeIn(),
-                varsNewDependingOn(), getVariableConditions());
-        final TacletAttributes attrs = new TacletAttributes(displayName(), trigger);
-
-        return new SolRewriteTaclet(new Name(s), (Term) find, applPart, goalTemplates(),
-            getRuleSets(), attrs,
+        return new SolRewriteTaclet(new Name(s), (Term) find, copyApplPart(), goalTemplates(),
+            getRuleSets(), copyAttrs(),
             prefixMap, choices, getSurviveSymbExec(), tacletAnnotations, noFreeVarIns);
     }
 }

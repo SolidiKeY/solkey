@@ -188,8 +188,13 @@ public abstract class AbstractProblemLoader {
                 callbackProofLoaded.accept(proof);
             }
             // OneStepSimplifier.refreshOSS(proof);
-            result = replayProof(proof);
-            // LOGGER.info("Replay result: {}", result.getStatus());
+            if (envInput instanceof KeYUserProblemFile) {
+                result = replayProof(proof);
+                // LOGGER.info("Replay result: {}", result.getStatus());
+            } else {
+                result = new ReplayResult("Fresh proof obligation, nothing to replay.",
+                    List.of(), proof.root());
+            }
         }
     }
 

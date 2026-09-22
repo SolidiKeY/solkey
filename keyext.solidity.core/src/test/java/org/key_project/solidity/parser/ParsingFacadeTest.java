@@ -9,18 +9,23 @@ import org.key_project.logic.*;
 import org.key_project.logic.op.Function;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.SolidityBlock;
 import org.key_project.solidity.logic.SolidityDLTheory;
 import org.key_project.solidity.logic.op.*;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.expressions.operators.AssignExpression;
 import org.key_project.solidity.program.ast.statement.*;
+import org.key_project.solidity.rule.sv.ModalOperatorSV;
+import org.key_project.solidity.rule.sv.SchemaVariableFactory;
+import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -188,6 +193,30 @@ public class ParsingFacadeTest {
         assert (((SModality) term.op()).programBlock().program() instanceof Block);
         Block block = (Block) ((SModality) term.op()).programBlock().program();
         assertTrue(block.getStatements().isEmpty());
+    }
+
+    @Test
+    void modalityToStringPrintsTheBracketsOfItsKind() {
+        KeYIO io = new KeYIO(services);
+        final Term dia = io.parseExpression("\\<{ int i = 1; }\\>true");
+        final Term box = io.parseExpression("\\[{ int i = 1; }\\]true");
+
+        assertTrue(dia.toString().startsWith("\\<"), dia.toString());
+        assertTrue(box.toString().startsWith("\\["), box.toString());
+
+        final SolidityBlock block = ((SModality) dia.op()).programBlock();
+        final ModalOperatorSV sv = SchemaVariableFactory.createModalOperatorSV(
+            new Name("#allmodal"), SolidityDLTheory.FORMULA,
+            DefaultImmutableSet.<SModality.SolidityModalityKind>nil()
+                    .add(SModality.SolidityModalityKind.DIA)
+                    .add(SModality.SolidityModalityKind.BOX));
+        final Term schema = services.getTermFactory().createTerm(
+            SModality.getModality(sv, block), new Term[] { dia.sub(0) }, null);
+
+        final String printed = schema.toString();
+        assertTrue(printed.startsWith("#allmodal|{"), printed);
+        assertFalse(printed.contains("\\["), printed);
+        assertFalse(printed.contains("\\<"), printed);
     }
 
     @Test

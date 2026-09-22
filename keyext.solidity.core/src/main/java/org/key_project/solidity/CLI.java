@@ -6,14 +6,27 @@ package org.key_project.solidity;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
+import org.key_project.logic.Choice;
+import org.key_project.logic.Namespace;
 import org.key_project.solidity.control.KeYEnvironment;
+import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.init.SolidityProblemSpec;
 import org.key_project.solidity.proof.init.SolidityProblemSynthesizer;
+import org.key_project.solidity.proof.io.LoadErrors;
+import org.key_project.solidity.proof.io.OutputStreamProofSaver;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
 import org.key_project.solidity.proof.io.ProofSaver;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -43,7 +56,8 @@ public class CLI {
         description = "whether to print additional information; implies `--print-stats`")
     boolean verbose;
 
-    @Option(names = { "--print-stats", "-s" })
+    @Option(names = { "--print-stats", "-s" },
+        description = "print proof statistics (nodes, branches, time)")
     boolean printStats;
 
     @Option(names = { "-t", "--timeout" }, defaultValue = "-1",
@@ -62,6 +76,24 @@ public class CLI {
         description = "for a .sol FILE: the contract to prove against, if it declares several")
     String contract;
 
+    @Option(names = { "-O", "--option" }, paramLabel = "<category:choice>",
+        description = "for a .sol FILE: a taclet option to prove under; repeatable. A .key FILE "
+            + "declares its own options with \\withOptions instead.")
+    List<String> choices = new ArrayList<>();
+
+    @Option(names = "--open-goals", arity = "0..1", fallbackValue = "2000",
+        description = "on an unclosed proof, print each open goal's sequent, truncated to this "
+            + "many characters (default ${FALLBACK-VALUE}); implied by --verbose")
+    Integer openGoalChars;
+
+    @Option(names = "--max-goals", defaultValue = "3",
+        description = "how many open goals --open-goals prints at most")
+    int maxGoals;
+
+    @Option(names = { "-q", "--quiet" },
+        description = "for a .sol FILE: suppress per-function progress and statistics")
+    boolean quiet;
+
     public static void main(String[] args) {
         System.exit(execute(args));
     }
@@ -77,8 +109,12 @@ public class CLI {
             cmd.printVersionHelp(System.out);
             return 0;
         }
-        if (cli.verbose)
+        if (cli.verbose) {
             cli.printStats = true;
+            if (cli.openGoalChars == null) {
+                cli.openGoalChars = 2000;
+            }
+        }
         boolean success = run(cli);
         System.out.flush();
         System.err.flush();
@@ -87,51 +123,100 @@ public class CLI {
 
     private static boolean run(CLI cli) {
         Path f = cli.file.toPath();
+        if (!cli.file.isFile()) {
+            System.err.println("No such file: " + cli.file.getAbsolutePath());
+            return false;
+        }
+        String malformed = malformedChoice(cli.choices);
+        if (malformed != null) {
+            System.err.println("Error: " + malformed);
+            return false;
+        }
         if (!f.getFileName().toString().endsWith(".sol")) {
-            if (cli.function != null || cli.contract != null) {
-                System.err.println("--function and --contract apply to .sol files only");
+            if (cli.function != null || cli.contract != null || !cli.choices.isEmpty()) {
+                System.err.println(
+                    "--function, --contract and --option apply to .sol files only");
                 return false;
             }
-            return prove(cli, null);
+            return prove(cli, null).closed();
         }
         if (cli.function != null) {
-            return prove(cli, new SolidityProblemSpec(cli.contract, cli.function));
+            return prove(cli, new SolidityProblemSpec(cli.contract, cli.function, cli.choices))
+                    .closed();
         }
         final List<String> functions;
         try {
             functions = SolidityProblemSynthesizer.provableFunctions(f, cli.contract);
-        } catch (IOException | IllegalArgumentException e) {
+        } catch (Exception e) {
+            // solc reports a rejected source as an unchecked exception, so this cannot narrow to
+            // IOException without letting a compile error escape as a stack trace.
             System.err.println("Error while reading " + cli.file + ":");
-            System.err.println("  " + e.getMessage());
+            System.err.println("  " + LoadErrors.describe(e));
             return false;
         }
         int closed = 0;
+        List<String> failures = new ArrayList<>();
         for (String function : functions) {
-            boolean ok = prove(cli, new SolidityProblemSpec(cli.contract, function));
+            Outcome outcome =
+                prove(cli, new SolidityProblemSpec(cli.contract, function, cli.choices));
             System.out.flush();
             System.err.flush();
-            System.out.println((ok ? "PASS " : "FAIL ") + function);
-            if (ok) {
+            System.out.println((outcome.closed() ? "PASS " : "FAIL ") + function);
+            if (outcome.closed()) {
                 closed++;
+            } else {
+                failures.add(function + " (" + outcome.describe() + ")");
             }
         }
         System.out.println(closed + "/" + functions.size() + " closed");
+        if (!failures.isEmpty()) {
+            System.out.println("FAILED (" + failures.size() + "): " + String.join(", ", failures));
+        }
         return closed == functions.size();
     }
 
-    private static boolean prove(CLI cli, SolidityProblemSpec spec) {
+    /// The result of one proof attempt: whether it closed, how many goals were left open, and how
+    /// long the attempt took, so that a whole-file run can recap its failures in one block.
+    private record Outcome(boolean closed, int openGoals, long millis) {
+        static Outcome closed(long millis) {
+            return new Outcome(true, 0, millis);
+        }
+
+        static Outcome open(int openGoals, long millis) {
+            return new Outcome(false, openGoals, millis);
+        }
+
+        static Outcome error() {
+            return new Outcome(false, -1, -1);
+        }
+
+        String describe() {
+            if (openGoals < 0) {
+                return "error";
+            }
+            return openGoals + (openGoals == 1 ? " goal, " : " goals, ") + millis + " ms";
+        }
+    }
+
+    private static Outcome prove(CLI cli, SolidityProblemSpec spec) {
         try {
             if (cli.verbose)
                 System.out.println("Loading...");
             Path f = cli.file.toPath();
-            var env = spec == null ? KeYEnvironment.load(f)
-                    : KeYEnvironment.load(f, spec.contract(), spec.function());
+            var env = spec == null ? KeYEnvironment.load(f) : KeYEnvironment.load(f, spec);
+            if (spec != null) {
+                String rejected = unknownChoice(spec.choices(), env.getInitConfig().choiceNS());
+                if (rejected != null) {
+                    System.err.println("Error: " + rejected);
+                    return Outcome.error();
+                }
+            }
             var loadedProof = env.getLoadedProof();
             if (loadedProof.closed()) {
                 if (cli.prove) {
                     System.err.println(
                         "Error: The loaded file already contains a proof.\nUse `--no-prove` to only load the proof.");
-                    return false;
+                    return Outcome.error();
                 }
                 if (cli.replay) {
                     if (cli.verbose)
@@ -146,21 +231,25 @@ public class CLI {
                                 System.err.println("Error " + (i + 1) + ": " + error);
                             }
                         }
-                        return false;
+                        return Outcome.error();
                     }
                     System.out.println("Loading and proof replay successful");
-                    return true;
+                    return Outcome.closed(0);
                 }
                 System.out.println("Loading successful");
-                return true;
+                return Outcome.closed(0);
             } else {
                 if (cli.prove) {
-                    System.out.println("Proving...");
+                    if (!cli.quiet) {
+                        System.out.println("Proving...");
+                    }
                     var stratSettings = loadedProof.getSettings().getStrategySettings();
                     stratSettings.setTimeout(cli.timeout);
                     stratSettings.setMaxSteps(cli.max);
+                    long started = System.currentTimeMillis();
                     env.getProofControl().startAndWaitForAutoMode(loadedProof);
-                    if (cli.printStats) {
+                    long elapsed = System.currentTimeMillis() - started;
+                    if (cli.printStats && !cli.quiet) {
                         System.out.println(loadedProof.getStatistics());
                     }
                     if (cli.outputFile != null) {
@@ -168,44 +257,105 @@ public class CLI {
                             ProofSaver.saveToFile(cli.outputFile.getAbsoluteFile(), loadedProof);
                         } catch (IOException e) {
                             System.err.println("Error saving proof to file: " + e.getMessage());
-                            return false;
+                            return Outcome.error();
                         }
                     }
                     if (!loadedProof.closed()) {
-                        System.err.println("Proof not closed. " + loadedProof.openGoals().size()
-                            + " goals remaining");
-                        return false;
+                        int open = loadedProof.openGoals().size();
+                        if (!cli.quiet) {
+                            System.err.println("Proof not closed. " + open + " goals remaining");
+                        }
+                        printOpenGoals(cli, loadedProof.openGoals());
+                        return Outcome.open(open, elapsed);
                     } else {
                         System.out.println("Loading and proof successful");
-                        return true;
+                        return Outcome.closed(elapsed);
                     }
                 } else {
                     System.out.println("Loading successful");
-                    return true;
+                    return Outcome.closed(0);
                 }
             }
         } catch (ProblemLoaderException e) {
-            // surface the most specific (root) cause: parser/builder/converter exceptions carry
-            // the helpful, location-annotated message, while the outer exception is generic.
-            Throwable root = rootCause(e);
             System.err.println("Error while loading " + cli.file + ":");
-            System.err.println("  " + root.getMessage());
+            System.err.println("  " + LoadErrors.describe(e));
             if (cli.verbose) {
                 e.printStackTrace();
             } else {
                 System.err.println("(run with --verbose for the full stack trace)");
             }
-            return false;
+            return Outcome.error();
         }
     }
 
-    /// Returns the innermost cause of a throwable, whose message is usually the most specific
-    /// (and, for parser/converter errors, location-annotated).
-    private static Throwable rootCause(Throwable t) {
-        Throwable cur = t;
-        while (cur.getCause() != null && cur.getCause() != cur) {
-            cur = cur.getCause();
+    private static @Nullable String unknownChoice(List<String> choices,
+            Namespace<@NonNull Choice> declared) {
+        if (choices.isEmpty()) {
+            return null;
         }
-        return cur;
+        Map<String, Set<String>> byCategory = new TreeMap<>();
+        for (Choice c : declared.allElements()) {
+            byCategory.computeIfAbsent(c.category(), k -> new TreeSet<>())
+                    .add(c.name().toString());
+        }
+        for (String choice : choices) {
+            String category = choice.substring(0, choice.indexOf(':'));
+            Set<String> known = byCategory.get(category);
+            if (known == null) {
+                return "no such taclet option category: " + category + "; known categories: "
+                    + String.join(", ", byCategory.keySet());
+            }
+            if (!known.contains(choice)) {
+                return "no such choice for " + category + ": "
+                    + choice.substring(choice.indexOf(':') + 1) + "; known choices: "
+                    + known.stream().map(k -> k.substring(k.indexOf(':') + 1))
+                            .collect(Collectors.joining(", "));
+            }
+        }
+        return null;
+    }
+
+    private static @Nullable String malformedChoice(List<String> choices) {
+        for (String choice : choices) {
+            int colon = choice.indexOf(':');
+            if (colon < 1 || colon != choice.lastIndexOf(':') || colon == choice.length() - 1) {
+                return "--option expects <category>:<choice>, but got: " + choice;
+            }
+        }
+        return null;
+    }
+
+    private static boolean hintPrinted = false;
+
+    /// Prints the sequent of each open goal, so that an unclosed proof explains itself in the run
+    /// that produced it instead of needing a second, differently instrumented one.
+    private static void printOpenGoals(CLI cli, Iterable<Goal> goals) {
+        if (cli.openGoalChars == null) {
+            if (!hintPrinted) {
+                hintPrinted = true;
+                System.err.println("(run with --open-goals to print the remaining sequents)");
+            }
+            return;
+        }
+        int printed = 0;
+        for (Goal goal : goals) {
+            if (printed >= cli.maxGoals) {
+                System.err.println("... (raise --max-goals to see the rest)");
+                break;
+            }
+            String sequent =
+                OutputStreamProofSaver.printSequent(goal.sequent(), goal.getOverlayServices());
+            System.err.println("--- open goal " + (printed + 1) + " ---");
+            System.err.println(truncate(sequent, cli.openGoalChars));
+            printed++;
+        }
+    }
+
+    private static String truncate(String text, int limit) {
+        if (limit <= 0 || text.length() <= limit) {
+            return text;
+        }
+        return text.substring(0, limit) + "... (" + (text.length() - limit)
+            + " more characters, raise --open-goals to see them)";
     }
 }

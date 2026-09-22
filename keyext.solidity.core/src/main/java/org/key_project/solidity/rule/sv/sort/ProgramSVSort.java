@@ -11,6 +11,10 @@ import org.key_project.logic.Term;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.solidity.program.ast.references.FieldReference;
+import org.key_project.solidity.program.ast.statement.FunctionBodyStatement;
+import org.key_project.solidity.program.ast.statement.Statement;
 import org.key_project.util.collection.DefaultImmutableSet;
 
 public abstract class ProgramSVSort extends SortImpl {
@@ -24,8 +28,10 @@ public abstract class ProgramSVSort extends SortImpl {
     public static final ProgramSVSort SIMPLE_EXPRESSION = new SimpleExpressionSVSort();
     public static final ProgramSVSort EXPRESSION = new ExpressionSVSort();
     public static final ProgramSVSort NON_SIMPLE_EXPRESSION = new NonSimpleExpressionSVSort();
-    public static final ProgramSVSort FUNCTION_BODY = new FunctionBodySVSort();
-    public static final ProgramSVSort FIELD_REFERENCE = new FieldReferenceSVSort();
+    public static final ProgramSVSort FUNCTION_BODY =
+        new ClassSVSort("FunctionBody", FunctionBodyStatement.class);
+    public static final ProgramSVSort FIELD_REFERENCE =
+        new ClassSVSort("FieldReference", FieldReference.class);
     public static final ProgramSVSort FIELD = new FieldSVSort();
     public static final ProgramSVSort PATH =
         new PathSVSort("Path", PathSVSort.DataArea.ANY, PathSVSort.Simplicity.ANY);
@@ -45,7 +51,8 @@ public abstract class ProgramSVSort extends SortImpl {
     public static final ProgramSVSort COMPLEX_MEMORY_PATH =
         new PathSVSort("ComplexMemoryPath", PathSVSort.DataArea.MEMORY,
             PathSVSort.Simplicity.COMPLEX);
-    public static final ProgramSVSort TYPE = new TypeSVSort();
+    public static final ProgramSVSort TYPE = new ClassSVSort("Type", Type.class);
+    public static final ProgramSVSort STATEMENT = new ClassSVSort("Statement", Statement.class);
 
 
     @SuppressWarnings("argument.type.incompatible")
@@ -56,6 +63,12 @@ public abstract class ProgramSVSort extends SortImpl {
 
     public ProgramSVSort createInstance(String parameter) {
         throw new UnsupportedOperationException();
+    }
+
+    /// The sort as written in a `\schemaVar \program` declaration, e.g. `Path[storage,simple]`.
+    @Override
+    public String declarationString() {
+        return name().toString();
     }
 
     /// Whether this sort may stand for the given program element (inside a modality).

@@ -10,6 +10,7 @@ import org.key_project.logic.Term;
 import org.key_project.logic.op.Operator;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.LexPathOrdering;
+import org.key_project.solidity.logic.TermBuilder;
 import org.key_project.solidity.rule.metaconstruct.AbstractTermTransformer;
 import org.key_project.solidity.theory.IntLDT;
 import org.key_project.util.LRUCache;
@@ -178,23 +179,23 @@ public class Monomial {
 
 
     public Term toTerm(Services services) {
-        final Operator mul = services.getTheoryInfo().getIntLDT().getMul();
+        final TermBuilder tb = services.getTermBuilder();
         Term res = null;
 
         final Iterator<Term> it = parts.iterator();
         if (it.hasNext()) {
             res = it.next();
             while (it.hasNext()) {
-                res = services.getTermFactory().createTerm(mul, res, it.next());
+                res = tb.mul(res, it.next());
             }
         }
 
-        final Term cTerm = services.getTermBuilder().zTerm(coefficient.toString());
+        final Term cTerm = tb.zTerm(coefficient.toString());
 
         if (res == null) {
             res = cTerm;
         } else if (!BigInteger.ONE.equals(coefficient)) {
-            res = services.getTermFactory().createTerm(mul, res, cTerm);
+            res = tb.mul(res, cTerm);
         }
 
         return res;

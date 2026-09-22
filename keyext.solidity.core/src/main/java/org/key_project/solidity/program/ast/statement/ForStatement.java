@@ -9,7 +9,6 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public class ForStatement extends LoopStatement {
@@ -30,7 +29,7 @@ public class ForStatement extends LoopStatement {
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         if (init != null) {
             if (n == 0)
                 return init;
@@ -48,7 +47,7 @@ public class ForStatement extends LoopStatement {
         }
         if (n == 0)
             return body;
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+        throw outOfBounds(n);
     }
 
     @Override

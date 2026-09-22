@@ -12,27 +12,26 @@ import org.key_project.solidity.program.ast.references.TypeReference;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.solidity.rule.matching.inst.MatchConditions;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public class FieldDeclaration implements Declaration, SolidityProgramElement {
 
-    private final @NonNull TypeReference typeReference;
+    private final TypeReference typeReference;
     private final @Nullable Expression initializer;
-    private final @NonNull Name name;
+    private final Name name;
     private @Nullable StructDeclaration containingStruct;
 
-    public FieldDeclaration(@NonNull Name name, @NonNull TypeReference type) {
+    public FieldDeclaration(Name name, TypeReference type) {
         this.name = name;
         this.typeReference = type;
         this.initializer = null;
     }
 
-    public @NonNull Name name() {
+    public Name name() {
         return name;
     }
 
-    public @NonNull TypeReference getTypeReference() {
+    public TypeReference getTypeReference() {
         return typeReference;
     }
 
@@ -44,7 +43,7 @@ public class FieldDeclaration implements Declaration, SolidityProgramElement {
         return containingStruct;
     }
 
-    public void setContainingStruct(@NonNull StructDeclaration containingStruct) {
+    public void setContainingStruct(StructDeclaration containingStruct) {
         this.containingStruct = containingStruct;
     }
 
@@ -79,8 +78,7 @@ public class FieldDeclaration implements Declaration, SolidityProgramElement {
     @Override
     public SolidityProgramElement getChild(int i) {
         if (i < 0 || i >= getChildCount()) {
-            throw new IndexOutOfBoundsException(
-                "Index should be 0 <= " + i + " < " + getChildCount());
+            throw outOfBounds(i);
         }
         if (i == 0) {
             return typeReference;
@@ -88,7 +86,7 @@ public class FieldDeclaration implements Declaration, SolidityProgramElement {
         if (initializer != null) {
             return initializer;
         }
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + i + " < " + getChildCount());
+        throw outOfBounds(i);
     }
 
 

@@ -361,12 +361,15 @@ public class LogicPrinter {
 
     protected void printNewVarcond(NewVarcond sv) {
         layouter.beginC();
-        layouter.print("\\new(");
+        final SchemaVariable peer = sv.getPeerSchemaVariable();
+        layouter.print(peer == null ? "\\new(" : "\\newTypeOf(");
         printSchemaVariable(sv.getSchemaVariable());
         layouter.print(",").brk();
-        layouter.print("\\typeof(").brk(0);
-        printSchemaVariable(sv.getPeerSchemaVariable());
-        layouter.brk(0, -2).print(")").brk(0);
+        if (peer == null) {
+            layouter.print(String.valueOf(sv.getType()));
+        } else {
+            printSchemaVariable(peer);
+        }
         layouter.brk(0, -2).print(")").end();
     }
 
@@ -481,7 +484,7 @@ public class LogicPrinter {
         layouter.beginC().print("\\addprogvars(");
         Iterator<SchemaVariable> it = apv.iterator();
         if (it.hasNext()) {
-            layouter.brk();
+            layouter.brk(0);
             while (true) {
                 SchemaVariable tgt = it.next();
                 printSchemaVariable(tgt);
@@ -498,11 +501,7 @@ public class LogicPrinter {
     protected void printSchemaVariable(SchemaVariable sv) {
         Object o = getInstantiations().getInstantiation(sv);
         if (o == null) {
-            if (sv instanceof ProgramSV psv) {
-                printProgramSV(psv);
-            } else {
-                printConstant(sv.name().toString());
-            }
+            printConstant(sv.name().toString());
         } else {
             if (o instanceof Term) {
                 printTerm((Term) o);

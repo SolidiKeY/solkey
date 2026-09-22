@@ -258,6 +258,10 @@ public class FOLStrategy extends AbstractFeatureStrategy implements ComponentStr
                     ScaleFeature.createScaled(FindDepthFeature.getInstance(), 20)),
                 inftyConst()));
 
+        bindRuleSet(d, "cnf_andComm", termSmallerThan("commRight", "commLeft"));
+
+        bindRuleSet(d, "cnf_orComm", termSmallerThan("commRight", "commLeft"));
+
         bindRuleSet(d, "elimQuantifier", -1000);
         bindRuleSet(d, "elimQuantifierWithCast", 50);
 

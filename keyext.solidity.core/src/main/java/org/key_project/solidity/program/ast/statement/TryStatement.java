@@ -20,18 +20,18 @@ import org.jspecify.annotations.Nullable;
 /// Java and we may not want it to disappear in the prefix, this has to be checked
 public class TryStatement implements Statement {
 
-    private final @NonNull Expression expression;
-    private final @NonNull ImmutableArray<@NonNull ProgramVariable> returnDeclaration;
-    private final @NonNull Block body;
-    private final @NonNull ImmutableArray<@NonNull CatchClause> catchClauses;
+    private final Expression expression;
+    private final ImmutableArray<@NonNull ProgramVariable> returnDeclaration;
+    private final Block body;
+    private final ImmutableArray<@NonNull CatchClause> catchClauses;
 
     // cache hash
     private int hashcode = -1;
 
-    public TryStatement(@NonNull Expression expression,
-            @NonNull ImmutableArray<@NonNull ProgramVariable> returnDeclaration,
-            @NonNull Block body,
-            @NonNull ImmutableArray<@NonNull CatchClause> clauses) {
+    public TryStatement(Expression expression,
+            ImmutableArray<@NonNull ProgramVariable> returnDeclaration,
+            Block body,
+            ImmutableArray<@NonNull CatchClause> clauses) {
         this.expression = expression;
         this.returnDeclaration = returnDeclaration;
         this.body = body;
@@ -46,7 +46,7 @@ public class TryStatement implements Statement {
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         if (n == 0)
             return expression;
         n -= 1;
@@ -92,7 +92,7 @@ public class TryStatement implements Statement {
         return returnDeclaration.get(i);
     }
 
-    public @NonNull ImmutableArray<CatchClause> getCatchClauses() {
+    public ImmutableArray<CatchClause> getCatchClauses() {
         return catchClauses;
     }
 
@@ -100,7 +100,7 @@ public class TryStatement implements Statement {
         return catchClauses.size();
     }
 
-    public @NonNull CatchClause getCatchClause(int i) {
+    public CatchClause getCatchClause(int i) {
         return catchClauses.get(i);
     }
 

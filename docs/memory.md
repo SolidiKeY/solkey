@@ -284,6 +284,35 @@ Index evaluation follows the usual RHS-before-LHS discipline:
 
 The value-producing RHS is captured before the indexed LHS update fires.
 
+The discipline also binds when the RHS is *already* simple, because capturing
+the index can change what the RHS reads. `memoryIndexWriteNonSimpleIndexCapture`
+therefore snapshots the RHS ahead of the index:
+
+    xs[nse] = se;   ⟹   T_{se} rv = se; T pv = nse; xs[pv] = rv;
+
+so `xs[i++] = i;` writes the *old* `i`, as the EVM does
+(`testMemoryIndexWriteImpureIndexPrimitiveRhs`). A reference RHS is captured the
+same way by `memoryIndexWriteMemRefNonSimpleIndexCapture`, into a
+`T memory rv = src;` alias rather than a value snapshot — the declaration is
+what differs between the two, not the order. Both are storage-twin-checked by
+`RuleGeneralizationTest`'s `indexCapture` family.
+
+When the impure index sits in the *receiver* rather than at the top of the
+statement (`ps[i++].account = acc;`), the receiver-capture rules take over and
+capture all three constituents at once, right-hand side first:
+
+    nmp.fld = e;   ⟹   T_{e} rv = e; T_{nmp} memory mv = nmp; mv.fld = rv;
+
+`memoryFieldWrite_unfold_leftFst` is the primitive form and
+`memoryFieldWriteMemRef_unfold_leftFst` the reference one, with
+`memoryIndexWrite…` the `[ie]` twins (those also capture the index, after the
+receiver). Their receivers are ordinary `Path[memory,complex]` — the sort places
+no purity requirement on an index, because the capture order is what keeps the
+rule sound. The alias declaration is dropped by `memoryLocalDeclInitDrop`, so
+nesting recurses. Checked as `RuleGeneralizationTest`'s `receiverCapture` family;
+witnesses `memory{Field,Index}WriteMemRefImpureReceiver` and
+`testMemoryFieldWriteImpureReceiver` in `TestSuite.sol`.
+
 Arrays of structs still alias through identity-valued elements:
 
     Token[] memory carolTokens = new Token[](4);
@@ -300,6 +329,32 @@ Then:
 
 If `delete carolTokens[1]` runs afterward, the array slot is reset/freshened,
 but `tok.value` remains `9` because `tok` still points to the old identity.
+
+## 11b. Compound Updates
+
+`mv.fld += e`, `++mv.fld`, `mv[ie] *= e`, `v = mv[ie]++` and the rest are
+handled by
+dedicated terminal rules that read, compute and write in one update — the
+storage rules of `storage.md` §7 with `find`/`save` replaced by `read`/`write`:
+
+    mv.fld += se
+    ⇝  { memory := write(memory, mv, fld, read<[int]>(memory, mv, fld) + se) }
+
+    ++mv.fld
+    ⇝  { memory := write(memory, mv, fld, read<[int]>(memory, mv, fld) + 1) }
+
+`memoryField{Add,Sub,Mul,Div,Mod}Assign`,
+`memoryField{Pre,Post}{in,de}crement` and their `…Assignment` forms; complex
+receivers unfold first through the `_unfold_leftFst` twins, exactly as for
+plain assignments. `/=` and `%=` guard with `\if(se != 0)\then(…)\else(revert)`.
+
+The indexed forms (`memoryIndexArray…`) carry the `0 ≤ ie < length` /
+`revert();` goal pair of `memoryIndexWriteArray`, so `xs[i] += 1` on an
+out-of-range `i` reverts instead of writing.
+
+Two forms the storage matrix has do not exist here: there is no **root** rule,
+because a memory root variable holds an `Identity` rather than an int cell, and
+no **mapping** rule, because memory has no mappings.
 
 ## 12. Storage to Memory
 
@@ -336,7 +391,7 @@ Memory-to-storage assignment stores a storage struct view of a memory identity:
 
 Effect shape:
 
-    storage := save(storage, alice, copyMem(emptyStruct, memory, carol))
+    storage := save(storage, alice, copyMem(mtSt, memory, carol))
 
 For fields:
 
@@ -345,12 +400,36 @@ For fields:
 Effect shape:
 
     storage := save(storage, alice account,
-                    copyMem(emptyStruct, memory, read(memory, carol, account)))
+                    copyMem(mtSt, memory, read(memory, carol, account)))
+
+For indexed targets, the terminal splits by the receiver's sort like the
+plain index writes (`memoryToStorageIndexMappingCopyRoot`,
+`memoryToStorageIndexArrayCopyRoot`; the array form carries the
+`inBounds`/`outOfBounds` goal pair):
+
+    people[k] = carol;
+
+Effect shape:
+
+    storage := save(storage, people at(k), copyMem(mtSt, memory, carol))
+
+The first argument is the empty struct: the lazy view answers every
+`find` from memory, so the value previously stored at the target is
+not carried along.
 
 The lazy `copyMem` view delegates storage reads back to memory:
 
     find(copyMem(st, memory, id), path primitiveField)
       = readR(memory, id, path primitiveField)
+    selectSt(copyMem(st, memory, id), primitiveField)
+      = read(memory, id, primitiveField)
+    selectSt<[Struct]>(copyMem(st, memory, id), refField)
+      = copyMem(mtSt, memory, read<[Identity]>(memory, id, refField))
+
+The `selectSt` forms are what a read reaches once the storage side has
+unfolded the path: the copy sits under the leaf `save(old, nil, copyMem(…))`,
+which `structRules.key` reads by member sort (a mapping member of the storage
+target stays the target's own), one selector at a time.
 
 Use the eager variant only when a fully materialized struct is required.
 

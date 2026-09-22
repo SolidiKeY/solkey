@@ -7,13 +7,13 @@ import java.math.BigInteger;
 
 import org.key_project.logic.Name;
 
-public final class MetaBinaryXor extends MetaArithBitMaskOp {
+public final class MetaBinaryXor extends MetaBinaryArithOp {
     public MetaBinaryXor() {
         super(new Name("#BinaryXOr"));
     }
 
     @Override
-    protected BigInteger bitmaskOp(BigInteger left, BigInteger right) {
+    protected BigInteger compute(BigInteger left, BigInteger right) {
         return left.xor(right);
     }
 }

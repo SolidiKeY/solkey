@@ -424,8 +424,8 @@ public class ExpressionBuilder extends DefaultBuilder {
     private Term termForParsedVariable(ParsableVariable v, ParserRuleContext ctx) {
         if (v instanceof LogicVariable lv) {
             return capsulateTf(ctx, () -> getTermFactory().createTerm(lv));
-        } else if (v instanceof ProgramVariable lv) {
-            return capsulateTf(ctx, () -> getTermFactory().createTerm(lv));
+        } else if (v instanceof ProgramVariable pv) {
+            return capsulateTf(ctx, () -> getTermFactory().createTerm(pv));
         } else {
             if (v instanceof OperatorSV sv) {
                 return capsulateTf(ctx, () -> getTermFactory().createTerm(sv));

@@ -22,7 +22,6 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.solidity.rule.matching.inst.MatchConditions;
 import org.key_project.util.collection.ImmutableArray;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public class FunctionDeclaration implements Declaration, Named, SolidityProgramElement {
@@ -74,7 +73,7 @@ public class FunctionDeclaration implements Declaration, Named, SolidityProgramE
     // Interface SolidityProgramElement
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         if (n < returnParameters.size())
             return returnParameters.get(n);
         n -= returnParameters.size();
@@ -86,8 +85,7 @@ public class FunctionDeclaration implements Declaration, Named, SolidityProgramE
         n -= modifiers.size();
         if (body != null && n == 0)
             return body;
-        throw new IndexOutOfBoundsException(
-            "Index should be 0 <= " + n + " < " + getChildCount());
+        throw outOfBounds(n);
     }
 
     @Override
@@ -115,7 +113,7 @@ public class FunctionDeclaration implements Declaration, Named, SolidityProgramE
 
     @Override
     public String toString() {
-        StringBuffer strBuffer = new StringBuffer();
+        StringBuilder strBuffer = new StringBuilder();
         String params = inputParameters.stream().map(ProgramVariable::typeAndName)
                 .collect(Collectors.joining(", "));
         strBuffer.append("function ");

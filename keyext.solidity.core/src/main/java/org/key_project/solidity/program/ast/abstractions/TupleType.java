@@ -10,7 +10,6 @@ import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.util.collection.ImmutableArray;
 
-import org.jspecify.annotations.NonNull;
 
 public class TupleType implements Type {
     private final Name name;
@@ -30,10 +29,11 @@ public class TupleType implements Type {
     public ImmutableArray<Type> getTypes() { return types; }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         if (0 <= n && n < getChildCount())
             return types.get(n);
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+        throw new IndexOutOfBoundsException(
+            "Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

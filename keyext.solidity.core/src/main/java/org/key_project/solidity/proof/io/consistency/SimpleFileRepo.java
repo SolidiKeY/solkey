@@ -21,9 +21,9 @@ public class SimpleFileRepo extends AbstractFileRepo {
 
         Path norm = path.normalize(); // TODO: is this necessary?
 
-        if (RUST_MATCHER.matches(norm)) { // .rs
+        if (SOLIDITY_MATCHER.matches(norm)) { // .rs
             // copy to src (depending on path)
-            return getRustFilePath(norm);
+            return getSolidityFilePath(norm);
         } else if (KEY_MATCHER.matches(norm)) { // .key/.proof
             // copy to top level
             // adapt file references
@@ -32,7 +32,7 @@ public class SimpleFileRepo extends AbstractFileRepo {
         return null;
     }
 
-    private Path getRustFilePath(Path path) {
+    private Path getSolidityFilePath(Path path) {
         // assumes that path is an actual *.rs file, path has to be absolute and normalized
         // return value: the path of the file relative to its proof bundle root
 

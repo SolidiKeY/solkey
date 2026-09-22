@@ -13,7 +13,6 @@ import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-import org.jspecify.annotations.NonNull;
 
 /// A purely syntactic reference to a contract state variable (a field access, possibly with an
 /// implicit `this` receiver). Unlike the old KeY-Java-style design, this node carries **no** logic
@@ -23,9 +22,9 @@ import org.jspecify.annotations.NonNull;
 /// term). This keeps program syntax decoupled from the logic encoding and avoids any
 /// `convertToTerm`-style translation in Java.
 public class FieldReference extends SolidityExpression implements VariableReference {
-    private final @NonNull StateVariableDeclaration field;
+    private final StateVariableDeclaration field;
 
-    public FieldReference(@NonNull StateVariableDeclaration field, Type type) {
+    public FieldReference(StateVariableDeclaration field, Type type) {
         super(type);
         this.field = field;
     }
@@ -37,7 +36,7 @@ public class FieldReference extends SolidityExpression implements VariableRefere
     }
 
     /// The (namespaced) name under which the field's logic symbol is registered.
-    public @NonNull Name getFieldConstantName() {
+    public Name getFieldConstantName() {
         return field.getFieldConstantName();
     }
 
@@ -47,8 +46,8 @@ public class FieldReference extends SolidityExpression implements VariableRefere
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+    public SyntaxElement getChild(int n) {
+        throw outOfBounds(n);
     }
 
     @Override

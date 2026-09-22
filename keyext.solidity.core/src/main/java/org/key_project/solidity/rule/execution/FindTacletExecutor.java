@@ -134,7 +134,7 @@ public abstract class FindTacletExecutor
     /// @param matchCond the [MatchConditions] with all required instantiations
     /// @param goal the Goal where the taclet is applied to
     /// @param ruleApp the [TacletApp] describing the current ongoing taclet application
-    /// @param services the [Services] encapsulating all Rust model information
+    /// @param services the [Services] encapsulating all Solidity model information
     protected abstract void applyAdd(org.key_project.prover.sequent.Sequent add,
             SequentChangeInfo currentSequent,
             PosInOccurrence whereToAdd, PosInOccurrence posOfFind,
@@ -150,7 +150,7 @@ public abstract class FindTacletExecutor
     /// @param matchCond the [MatchConditions] with all required instantiations
     /// @param goal the [Goal] on which the taclet is applied
     /// @param ruleApp the [TacletApp] describing the current ongoing taclet application
-    /// @param services the [Services] encapsulating all Rust model information
+    /// @param services the [Services] encapsulating all Solidity model information
     protected abstract void applyReplacewith(TacletGoalTemplate gt,
             SequentChangeInfo currentSequent, PosInOccurrence posOfFind, MatchConditions matchCond,
             Goal goal, RuleApp ruleApp, Services services);

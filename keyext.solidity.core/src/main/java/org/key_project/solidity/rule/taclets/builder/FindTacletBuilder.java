@@ -5,6 +5,8 @@ package org.key_project.solidity.rule.taclets.builder;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.prover.rules.ApplicationRestriction;
+import org.key_project.prover.rules.TacletApplPart;
+import org.key_project.prover.rules.tacletbuilder.TacletGoalTemplate;
 import org.key_project.solidity.rule.taclets.BoundUniquenessChecker;
 import org.key_project.solidity.rule.taclets.SolFindTaclet;
 
@@ -44,5 +46,20 @@ public abstract class FindTacletBuilder<T extends SolFindTaclet> extends TacletB
             ApplicationRestriction p_applicationRestriction) {
         applicationRestriction = p_applicationRestriction;
         return this;
+    }
+
+    /// rejects goal templates that carry a rewrite replacewith — they are only meaningful for a
+    /// [org.key_project.solidity.rule.taclets.SolRewriteTaclet]
+    protected void addNonRewriteTacletGoalTemplate(TacletGoalTemplate goal, String tacletKind) {
+        if (goal instanceof RewriteTacletGoalTemplate) {
+            throw new TacletBuilder.TacletBuilderException(this,
+                "Tried to add a RewriteTacletGoalTemplate to a " + tacletKind);
+        }
+        goals = goals.prepend(goal);
+    }
+
+    protected TacletApplPart buildApplPart(int polarity) {
+        return new TacletApplPart(ifseq, applicationRestriction.combine(polarity), varsNew,
+            varsNotFreeIn, varsNewDependingOn, variableConditions);
     }
 }

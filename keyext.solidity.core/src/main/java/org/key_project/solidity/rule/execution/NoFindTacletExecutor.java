@@ -98,7 +98,7 @@ public class NoFindTacletExecutor extends TacletExecutor {
     /// @param add the Sequent to be added
     /// @param currentSequent the Sequent which is the current (intermediate) result of applying the
     /// taclet
-    /// @param services the Services encapsulating all Rust information
+    /// @param services the Services encapsulating all Solidity information
     /// @param matchCond the MatchConditions with all required instantiations
     protected void applyAdd(Sequent add,
             SequentChangeInfo currentSequent, Services services, MatchConditions matchCond,

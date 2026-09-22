@@ -39,7 +39,7 @@ public class InitialPositionTable extends PositionTable {
         pis.setBounds(r);
         Range firstStatement = firstStatementRangeForIndex(index);
         if (firstStatement != null) {
-            pis.setFirstRustStatementRange(firstStatement);
+            pis.setFirstSolidityStatementRange(firstStatement);
         }
         return pis;
     }
@@ -133,7 +133,7 @@ public class InitialPositionTable extends PositionTable {
     /// Adds a range for a java block to the java block list.
     ///
     /// @param r Range of keyword to be added
-    public void addJavaBlockRange(Range r) {
+    public void addSolidityBlockRange(Range r) {
         solidityBlockRanges = solidityBlockRanges.prepend(r);
     }
 

@@ -13,14 +13,11 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-import org.jspecify.annotations.NonNull;
 
 public class IndexExpression extends SolidityExpression {
 
-    @NonNull
-    Expression leftExp;
-    @NonNull
-    Expression indexExp;
+    private final Expression leftExp;
+    private final Expression indexExp;
 
     public IndexExpression(Expression leftExp, Expression indexExp) {
         super(elementTypeOf(leftExp.getType()));
@@ -46,18 +43,23 @@ public class IndexExpression extends SolidityExpression {
     }
 
     public IndexExpression(ExtList children, Type type) {
-        super(type);
+        super(type != null ? type : elementTypeOf(containerTypeOf(children)));
         this.leftExp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
         this.indexExp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
     }
 
+    @SuppressWarnings("return.type.incompatible")
+    private static Type containerTypeOf(ExtList children) {
+        Expression leftExp = children.get(Expression.class);
+        return leftExp == null ? null : leftExp.getType();
+    }
+
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         return switch (n) {
             case 0 -> leftExp;
             case 1 -> indexExp;
-            default -> throw new IndexOutOfBoundsException(
-                "Index should be 0 <= " + n + " < " + getChildCount());
+            default -> throw outOfBounds(n);
         };
     }
 
@@ -66,9 +68,9 @@ public class IndexExpression extends SolidityExpression {
         return 2;
     }
 
-    public @NonNull Expression getLeftExp() { return leftExp; }
+    public Expression getLeftExp() { return leftExp; }
 
-    public @NonNull Expression getIndexExp() { return indexExp; }
+    public Expression getIndexExp() { return indexExp; }
 
     public String toString() {
         return leftExp + "[" + indexExp + "]";

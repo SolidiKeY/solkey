@@ -115,7 +115,7 @@ public final class NodeInfoView extends JPanel implements ProofContext.Listener 
         RuleApp app = node == null ? null : node.getAppliedRuleApp();
         if (app instanceof TacletApp tacletApp) {
             tacletName = tacletApp.taclet().name().toString();
-            tacletText.setText(tacletApp.taclet().toString());
+            tacletText.setText(TacletText.of(tacletApp, node.proof().getServices()));
             tacletText.setCaretPosition(0);
         } else {
             tacletName = null;

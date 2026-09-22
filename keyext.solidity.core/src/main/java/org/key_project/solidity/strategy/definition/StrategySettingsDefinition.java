@@ -66,9 +66,9 @@ public final class StrategySettingsDefinition {
     static {
         STD_FURTHER_DEFAULTS = new ArrayList<>();
 
-        // Rust verification standard preset (tested in TimSort case study)
+        // Solidity verification standard preset (tested in TimSort case study)
         STD_FURTHER_DEFAULTS.add(new StrategySettingEntry(
-            "Rust verif. std.", 7000, () -> {
+            "Solidity verif. std.", 7000, () -> {
                 final StrategyProperties newProps =
                     IDefaultStrategyPropertiesFactory.DEFAULT_FACTORY
                             .createDefaultStrategyProperties();

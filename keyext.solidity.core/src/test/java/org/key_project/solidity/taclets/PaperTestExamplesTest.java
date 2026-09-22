@@ -30,8 +30,7 @@ public class PaperTestExamplesTest {
     void paperTestExampleCloses(String function) throws Exception {
         Proof proof = proveTestSuiteFunction(function, 50000, 30000);
         assertTrue(proof.closed(),
-            () -> function + " should close; open goals: " + proof.openGoals().size()
-                + "; first open goal: " + proof.openGoals().head().sequent());
+            () -> SolidityExampleTests.describeOpenGoals(function, proof));
     }
 
     static Stream<Arguments> examples() throws IOException {

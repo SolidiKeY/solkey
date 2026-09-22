@@ -7,14 +7,13 @@ import java.math.BigInteger;
 
 import org.key_project.logic.Name;
 
-public final class MetaBinaryOr extends MetaArithBitMaskOp {
+public final class MetaBinaryOr extends MetaBinaryArithOp {
     public MetaBinaryOr() {
         super(new Name("#BinaryOr"));
     }
 
-
     @Override
-    protected BigInteger bitmaskOp(BigInteger left, BigInteger right) {
+    protected BigInteger compute(BigInteger left, BigInteger right) {
         return left.or(right);
     }
 }

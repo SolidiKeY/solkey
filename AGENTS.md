@@ -1,119 +1,162 @@
 # AGENTS.md
 
-**SolKey** is a fork of [KeY](https://github.com/KeYProject/key) — an interactive theorem prover for Java — extended with `keyext.solidity.core` for formal verification of **Solidity smart contracts**.
+**SolKey** is a fork of [KeY](https://github.com/KeYProject/key) — an interactive theorem prover
+for Java — extended with `keyext.solidity.core` for formal verification of **Solidity smart
+contracts**. Java 21 required.
 
-## Build Commands
+## Working efficiently
+
+These keep a task to few tool calls. Cost is dominated by round-trips, not by output size.
+
+- **Never read a rules `.key` file whole** (`solidityProgramRules.key` is 4 800 lines). Use
+  `scripts/taclet.sh NAME` for one taclet, `--index` for the section banners, `--list` for every
+  rule name with its `file:line`.
+- **Prove with `./run-key.sh`**, not with Gradle: it runs the fat jar, so there is no Gradle
+  banner and no startup cost, and `--open-goals` prints the remaining sequents of an unclosed
+  proof in the same run that produced it.
+- **Read a long doc by section** (`grep -n '^#' doc`, then `sed -n`), not whole.
+- **Batch independent shell commands** into one call.
+- Read a doc from the table below only when the task needs it.
+
+## Build and run
 
 ```bash
 ./gradlew classes                    # Compile
-./gradlew test                       # Full test suite (can take hours)
-./gradlew testFast                   # Fast/lightweight tests
-./gradlew :keyext.solidity.core:test # Module tests
+./gradlew :keyext.solidity.core:test # Module tests: unit + TestSuite.sol suites (~30 s)
 ./gradlew :keyext.solidity.core:test --tests "org.key_project.solidity.SomeTest.methodName"
-./gradlew spotlessCheck              # Check formatting
+./gradlew -DENABLE_NULLNESS=true ciGates   # All three CI gates (see docs/ci.md)
 ./gradlew spotlessApply              # Apply formatting
-./gradlew :key.ui:shadowJar          # Build fat JAR
-./gradlew :keyext.solidity.core:solidityCli                           # Run CLI on default problem2.key
-./gradlew :keyext.solidity.core:solidityCli -PkeyFile=problem1.key    # Run on specific .key file
-./gradlew :keyext.solidity.core:solidityCli --args="--no-prove -m 20000 problem1.key"
-./run-key.sh problem1.key                                 # Wrapper script (same as above)
-./run-key.sh keyext.solidity.examples/TestSuite.sol       # Every function of a .sol
-./run-key.sh keyext.solidity.examples/TestSuite.sol testSimpleAssert   # One function
+
+./run-key.sh FILE.sol                          # prove every function
+./run-key.sh FILE.sol fnName                   # prove one function
+./run-key.sh FILE.sol -f fnName --open-goals   # ... and show why it did not close
+./run-key.sh FILE.key -m 20000 --no-prove      # a .key problem; any CLI option works
+./run-key.sh FILE.sol -O indexWriteCapture:allAtOnce   # prove under a non-default taclet option
+./run-key.sh --help                            # every CLI option
+
+scripts/taclet.sh requireSimple      # print one taclet with its file:line
+scripts/taclet.sh --index            # the rule-section banners
+scripts/taclet.sh --list             # every rule name with its file:line
+
+./gradlew :keyext.solidity.gui:solidityGui     # KeYther, the Swing GUI
+./gradlew :key.ui:shadowJar                    # fat JAR
 ```
 
-Java 21 required. Test max heap: 4GB, max parallel forks: 1.
+`run-key.sh` rebuilds `keyext.solidity.core-exe.jar` only when the sources are newer;
+`SOLKEY_REBUILD=1` forces it. The Gradle task `:keyext.solidity.core:solidityCli` still exists
+for CI and the IDE — note that its `--args` **replaces** the whole argument list.
 
-## Verifying Problems
+`-f/--function` fails with the reason when the named function has no obligation (it returns a
+value, or takes a parameter with no `.key` sort) instead of generating a malformed one. Without
+`-f`, every function is proved and a `N/M closed` summary plus a `FAILED (k): …` recap is
+printed; `--quiet` drops the per-function progress lines.
 
-**Always use `solidityCli` to run/verify a problem.** Gradle's `--args` replaces the default arguments—put the entire CLI argument list in one `--args` value. CLI options: `--no-prove` (load only), `--no-replay`, `-m/--max`, `-t/--timeout`, `-s/--print-stats`, `-v/--verbose`, `-f/--function`, `-c/--contract`, `--help`.
+## Default scope
 
-`solidityCli` accepts a `.sol` file directly — no `.key` needed. The loader synthesizes one obligation per function (`\<{ f(x, y)@C; }\>(true)`, with one unconstrained program variable per parameter), so the specification lives in the Solidity body as `assert` — a parameterized function is box-tagged and assumes its argument values with `require`. Without `--function` every function is proved and a `N/M closed` summary is printed.
-
-## File Locations
+All tasks are assumed to be about **`keyext.solidity.core`** (source:
+`keyext.solidity.core/src/main/java/org/key_project/solidity/`, tests in `src/test/`). Only look
+outside if explicitly instructed.
 
 | Purpose | Location |
 |---|---|
-| **Taclet examples (`.sol`)** | `keyext.solidity.examples/TestSuite.sol` — see `keyext.solidity.examples/README.md` |
+| **Taclet examples (`.sol`)** | `keyext.solidity.examples/TestSuite.sol` — see its `README.md` |
 | **Problem files (`.key`)** | `keyext.solidity.core/src/test/resources/org/key_project/solidity/examples/` |
 | **Proof rules (`.key`)** | `keyext.solidity.core/src/main/resources/org/key_project/solidity/proof/rules/` |
 
-## Module Architecture
+## Modules
 
-| Module                             | Role |
-|------------------------------------|---|
-| `key.util`                         | Foundation utilities |
-| `key.ncore`                        | Language-independent AST/logic (`Term`, `Sort`, `Operator`) |
-| `key.ncore.calculus`               | Proof rule infrastructure |
-| `key.core`                         | Java-specific logic, parsers, proof management |
-| `key.ui`                           | GUI + CLI entry point |
-| `keyext.solidity.core`             | **Solidity verification** — main focus |
-| `keyext.solidity.examples`         | **Main taclets examples** (`TestSuite.sol`) |
+| Module | Role |
+|---|---|
+| `key.util` | Foundation utilities |
+| `key.ncore` | Language-independent AST/logic (`Term`, `Sort`, `Operator`) |
+| `key.ncore.calculus` | Proof rule infrastructure |
+| `key.core` | Java-specific logic, parsers, proof management |
+| `key.ui` | GUI + CLI entry point |
+| `keyext.solidity.core` | **Solidity verification** — main focus |
+| `keyext.solidity.gui` | **KeYther**, the standalone Swing GUI for the Solidity prover |
+| `keyext.solidity.idea` | IntelliJ IDEA plugin — ▶ gutter icon on public functions. Standalone Gradle build, deliberately **not** in `settings.gradle`. See `docs/idea-setup.md` |
+| `keyext.solidity.examples` | **Main taclet examples** (`TestSuite.sol`) |
 
 Dependencies: `keyext.*` → `key.core` → `key.ncore` → `key.util`.
 
-## Default Scope
+## keyext.solidity.core architecture
 
-All tasks are assumed to be about **`keyext.solidity.core`** (source: `keyext.solidity.core/src/main/java/org/key_project/solidity/`, tests in `src/test/`). Only look outside if explicitly instructed.
-
-## keyext.solidity.core Architecture
-
-### Pipeline
 ```
 Solidity → ANTLR → SolidityToKeyConverter → AST → TypeResolver → AbstractPO → Strategy + Rules → Proof
 ```
 
-### Key Packages
-- **`program/ast/`** — AST nodes (`ContractDeclaration`, `FunctionDeclaration`, `StateVariableDeclaration`)
-- **`program/ast/expressions/`** — Expression nodes; **`statement/`** — Statement nodes
-- **`program/ast/abstractions/`** — Type system (`Type`, `KeYSolidityType`, `PrimitiveType`)
+- **`program/ast/`** — AST nodes; **`expressions/`**, **`statement/`** beneath it;
+  **`abstractions/`** — type system (`Type`, `KeYSolidityType`, `PrimitiveType`)
 - **`parser/`** — `ParsingFacade`, `SolidityToKeyConverter`; **`builder/`** — AST builders
 - **`logic/`** — `TermFactory`, `TermBuilder`; **`logic/op/`** — `ProgramVariable`
 - **`proof/`** — `Proof`, `Goal`; **`proof/init/`** — proof obligations
-- **`rule/`** — Rule interface, meta-constructs (`MetaMul`, `Polynomial`)
-- **`speclang/`** — Contracts, specifications
+- **`rule/`** — Rule interface, meta-constructs; **`speclang/`** — contracts and specifications
 - **`strategy/`** — `Strategy`, `ApplyStrategy`
-- **`common/`** — `SolidityInfo` (central type registry)
+- **`common/`** — `SolidityInfo`, the registry for Solidity types (int8–int256, uint8–uint256,
+  bytes1–bytes32, bool, address). Register new types here.
+- **`program/parser/SolJSONParser`** — parses solc's compact JSON AST; `SolcWrapper` and
+  `WasmSolcCompiler` produce it by running solc's WebAssembly build on the JVM, with no
+  external compiler. See `docs/solc-ast.md`
 
-### Key Classes
-- **`SolidityInfo`** — Registry for Solidity types (int8–int256, uint8–uint256, bytes1–bytes32, bool, address). Register new types here.
-- **`SolJSONParser`** — Parses `solc --ast-compact-json`. See `docs/solidity-json-documentation.md`.
+ANTLR grammars live in `keyext.solidity.core/src/main/antlr/`, generated sources in
+`build/generated-src/antlr/main/`.
 
-### ANTLR
-Grammars in `keyext.solidity.core/src/main/antlr/`: `Solidity.g4`, `KeYSolidityDLLexer.g4`/`KeYSolidityDLParser.g4`. Generated: `build/generated-src/antlr/main/`.
+## CI gates — run before committing
 
-## Code Style
-
-Spotless enforces formatting (`scripts/tools/checkstyle/keyCodeStyle.xml`). Run `./gradlew spotlessApply` before committing. Fields `@NonNull` by default.
-
-**Do not add comments to the code.** Write self-explanatory code instead; leave existing comments untouched unless the change makes them wrong.
-
-## Documentation (`docs/`)
-
-Read the relevant doc before working on taclets — each is a compact, agent-facing reference:
-
-| Doc | Read when |
+| Gate | Local command |
 |---|---|
-| `key-taclets.md` | **Start here** to author a taclet — rule shape, schema-variable choices, varconds, verification commands. |
-| `taclets-implementation.md` | Checking what is already implemented (rule families + example files) and how to run/verify it. |
-| `taclet-ideas.md` | Picking the next unimplemented construct — the backlog, ordered simple → complex. |
-| `storage.md` | Working on storage rules — calculus spec (schema vars, three-step strategy, statement→rule table, worked traces). |
-| `memory.md` | Working on memory rules — calculus spec (identity heap, aliasing, delete, cross-domain `copySt`/`copyMem`). |
-| `net.md` | Implementing the payment/ledger model (`net`, `msg.sender`/`msg.value`, `transfer`, contract invariants, proof obligations) — ordered plan from the ISoLA 2020 paper. |
-| `require-assert.md` | Touching `require` / `assert` rules (box vs. diamond false-branch behavior). |
-| `solidity-json-documentation.md` | Parsing `solc --ast-compact-json` (consumed by `SolJSONParser`). |
+| All three at once | `./gradlew -DENABLE_NULLNESS=true ciGates` |
+| Formatting | `./gradlew spotlessApply` |
+| Nullness | `./gradlew -DENABLE_NULLNESS=true :keyext.solidity.core:compileTestJava` |
+| Module tests | `./gradlew :keyext.solidity.core:test` |
 
-Program rules live in `keyext.solidity.core/src/main/resources/org/key_project/solidity/proof/rules/solidityProgramRules.key` (loaded automatically via `standardSolidityRules.key`). Add new examples as functions of `keyext.solidity.examples/TestSuite.sol` (conventions: `keyext.solidity.examples/README.md`), and after changing a feature update `docs/taclets-implementation.md` (implemented) or `docs/taclet-ideas.md` (backlog).
+`ciGates` refuses to start without `-DENABLE_NULLNESS=true`. The nullness checker is scoped to
+`org.key_project.solidity.program.ast`, so **only edits under `program/ast/` can trip it**. CI
+also runs three test groups that `ciGates` does not. Details, the nullness idiom and the JDK
+caveat: `docs/ci.md`.
 
-**When planning a new taclet:** always begin the plan with a plain-English explanation of what the taclet does — state the precondition (what must be true before the rule fires), the transformation (what sequent change it performs), and the postcondition (what is true after). Write this before any KeY syntax.
+## Code style
 
-**`\addprogvars` — common mistake:** do NOT put `\addprogvars(pv)` on a capture/unfold taclet whose `\replacewith` re-emits a declaration for the fresh variable (`s#pvType s#pv = s#nse; ...`) — that declaration is consumed later by `memoryLocalDeclInitDrop`, which registers the variable itself, so the early `\addprogvars` is redundant. `\addprogvars` belongs only on the rules that consume the declaration statement itself (`memoryLocalDeclInitDrop`, `storageLocalDeclSkip`, `valueDeclSkip`, `memoryReferenceDeclFreshAlloc`, the `localDecl*crement` family).
+Spotless enforces formatting (`scripts/tools/checkstyle/keyCodeStyle.xml`). Fields are
+`@NonNull` by default.
+
+**Do not add comments to the code.** Write self-explanatory code instead; leave existing
+comments untouched unless the change makes them wrong.
 
 ## Testing
 
-Run `./gradlew :keyext.solidity.core:test` after refactoring. Prefer modifying existing test classes over creating new ones.
+`./gradlew :keyext.solidity.core:test` is the fast local set: unit tests plus the `TestSuite.sol`
+suites (`TacletStarterExamplesTest`, `PaperTestExamplesTest`), ~30 s. It prints failures only;
+`-PverboseTests` restores the per-test progress lines. The `solidityExamples` and
+`ruleGeneralization` groups are CI-only, and `testProofSize` is manual-only — see `docs/ci.md`.
+Run `test` after refactoring, and prefer modifying existing test classes over creating new ones.
 
-## Key KeY Concepts
-- **`Term`** — immutable, has `Operator`, subterms, `Sort`
-- **`Services`** — main DI object; provides namespaces, type info
-- **`ImmutableArray`/`ImmutableList`** — prefer over mutable collections
-- **Sequent** — proof state (antecedent + succedent); rules transform sequents
+## Documentation
+
+Read the relevant doc before working on taclets. Each is a compact, agent-facing reference.
+
+| Doc | Read when |
+|---|---|
+| `key-taclets.md` | **Start here** to author a taclet — rule shape, schema variables, varconds |
+| `taclets-implementation.md` | Checking what is already implemented and why it is shaped that way |
+| `taclet-ideas.md` | Picking the next unimplemented construct (the backlog) |
+| `storage.md` | Storage rules — calculus spec, three-step strategy, statement→rule table |
+| `memory.md` | Memory rules — identity heap, aliasing, delete, cross-domain copies |
+| `net.md` | The payment/ledger model (`net`, `msg.sender`/`msg.value`, `transfer`, invariants) |
+| `require-assert.md` | `require` / `assert` rules (box vs. diamond false-branch behavior) |
+| `rule-generalizations.md` | The `// generalized by:` annotations and `RuleGeneralizationTest` |
+| `solc-ast.md` | The solc AST and the in-JVM compiler that produces it |
+| `ci.md` | CI gates in detail, the nullness idiom, CI-only test groups |
+| `forked-key-core.md` | Editing code forked from `key.core` — which files must not be restyled |
+| `idea-setup.md` | IntelliJ setup — gutter-icon plugin, External Tools, `.run/` configurations |
+
+Program rules live in `…/proof/rules/solidityProgramRules.key`, loaded via
+`standardSolidityRules.key`. Add new taclet examples as functions of
+`keyext.solidity.examples/TestSuite.sol`, and scenario/invariant examples as contracts plus
+`.key` obligations in `keyext.solidity.examples/net/`; conventions for both are in
+`keyext.solidity.examples/README.md`. After changing a feature, update
+`docs/taclets-implementation.md` (implemented) or `docs/taclet-ideas.md` (backlog).
+
+**When planning a new taclet:** begin with a plain-English statement of the precondition (what
+must hold before the rule fires), the transformation (what sequent change it performs) and the
+postcondition. Write that before any KeY syntax.

@@ -1,0 +1,132 @@
+name: Solidity
+
+# Fork-only workflow for keyext.solidity.core. tests.yml and code_quality.yml come from
+# upstream KeY, so editing them to cover this module would conflict on every upstream rebase.
+# ubuntu-only by choice, not by need: solc now runs inside the JVM (see docs/solc-ast.md),
+# so nothing here is platform-specific any more.
+
+on:
+  workflow_dispatch:
+  merge_group:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  nullness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: 21
+          distribution: 'corretto'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Nullness checker
+        run: ./gradlew -DENABLE_NULLNESS=true :keyext.solidity.core:compileTestJava
+
+  # The module tests are split by JUnit tag into three groups (see
+  # keyext.solidity.core/build.gradle) so the slow proof suites run here in parallel
+  # while `test` stays the fast local pre-commit gate.
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: 21
+          distribution: 'corretto'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Test with Gradle
+        run: ./gradlew --continue :keyext.solidity.core:test
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v7
+        if: success() || failure()
+        with:
+          name: solidity-test-results
+          path: |
+            **/build/test-results/*/*.xml
+            **/build/reports/
+            !**/jacocoTestReport.xml
+
+  gui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: 21
+          distribution: 'corretto'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: GUI tests with Gradle
+        run: ./gradlew --continue :keyext.solidity.gui:test
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v7
+        if: success() || failure()
+        with:
+          name: solidity-gui-test-results
+          path: |
+            **/build/test-results/*/*.xml
+            **/build/reports/
+            !**/jacocoTestReport.xml
+
+  examples:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: 21
+          distribution: 'corretto'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Example suites with Gradle
+        run: ./gradlew --continue :keyext.solidity.core:testSolidityExamples
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v7
+        if: success() || failure()
+        with:
+          name: solidity-examples-test-results
+          path: |
+            **/build/test-results/*/*.xml
+            **/build/reports/
+            !**/jacocoTestReport.xml
+
+  rule-generalization:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: 21
+          distribution: 'corretto'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Rule generalization check with Gradle
+        run: ./gradlew --continue :keyext.solidity.core:testRuleGeneralization
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v7
+        if: success() || failure()
+        with:
+          name: solidity-generalization-test-results
+          path: |
+            **/build/test-results/*/*.xml
+            **/build/reports/
+            !**/jacocoTestReport.xml

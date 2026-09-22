@@ -55,15 +55,15 @@ public abstract class MatchSchemaVariableInstruction
     }
 
     /// tries to match the schema variable of this instruction with the specified
-    /// [RustyProgramElement] `instantiationCandidate` w.r.t. the given constraints by
+    /// [SolidityProgramElement] `instantiationCandidate` w.r.t. the given constraints by
     /// [MatchResultInfo]
     ///
-    /// @param instantiationCandidate the [RustyProgramElement] to be matched
+    /// @param instantiationCandidate the [SolidityProgramElement] to be matched
     /// @param mc the [MatchResultInfo] with additional constraints (e.g. previous matches of
     /// this instructions [SchemaVariable])
     /// @param services the [Services]
     /// @return `null` if no matches have been found or the new [MatchResultInfo] with
-    /// the pair ([SchemaVariable], [RustyProgramElement]) added
+    /// the pair ([SchemaVariable], [SolidityProgramElement]) added
     public MatchResultInfo match(SolidityProgramElement instantiationCandidate,
             MatchResultInfo mc,
             LogicServices services) {

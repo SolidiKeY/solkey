@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.pp;
 
+import org.key_project.logic.Term;
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
@@ -245,8 +246,9 @@ public class PrettyPrinter implements Visitor {
 
     @Override
     public void performActionOnFunctionReference(FunctionReference x) {
-        if (x.referencedDeclaration != null) {
-            layouter.print(x.referencedDeclaration.name().toString());
+        FunctionDeclaration referencedDeclaration = x.getReferencedDeclaration();
+        if (referencedDeclaration != null) {
+            layouter.print(referencedDeclaration.name().toString());
         } else {
             // Not yet resolved; fall back to the numeric reference.
             layouter.print("fn#" + x.id);
@@ -336,18 +338,7 @@ public class PrettyPrinter implements Visitor {
 
     @Override
     public void performActionOnContextStatementBlock(ContextStatementBlock x) {
-        if (x.getStatements().isEmpty()) {
-            layouter.print("{c# #c}");
-        } else {
-            layouter.beginRelativeC();
-            layouter.print("{ c#");
-            for (Statement stmt : x.getStatements()) {
-                layouter.nl();
-                stmt.visit(this);
-            }
-            layouter.end().nl();
-            layouter.print("#c }");
-        }
+        performActionOnBlock(x);
     }
 
     @Override
@@ -503,7 +494,7 @@ public class PrettyPrinter implements Visitor {
     }
 
     @Override
-    public void performActionOnReturnStatment(ReturnStatement x) {
+    public void performActionOnReturnStatement(ReturnStatement x) {
         markStart(x);
         layouter.keyWord("return");
         if (x.getChildCount() > 0) {
@@ -578,14 +569,44 @@ public class PrettyPrinter implements Visitor {
 
     @Override
     public void performActionOnStatementVariableDeclaration(StatementVariableDeclaration x) {
+        var schemaVariable = x.getSchemaVariable();
+        if (schemaVariable != null) {
+            ProgramVariable matched = instantiatedVariable(schemaVariable);
+            if (matched != null) {
+                printDeclarationHead(matched.getType(), matched.getDataLocation());
+            } else {
+                printDeclarationHead(x.getSchemaType(), x.getSchemaDataLocation());
+            }
+            schemaVariable.visit(this);
+            return;
+        }
         var pv = x.getProgramVariable();
-        layouter.print(pv.getType().toString()).print(" ");
-        var loc = pv.getDataLocation();
+        printDeclarationHead(pv.getType(), pv.getDataLocation());
+        pv.visit(this);
+    }
+
+    private @Nullable ProgramVariable instantiatedVariable(SchemaVariable sv) {
+        Object instantiation = instantiations.getInstantiation(sv);
+        if (instantiation instanceof ProgramVariable pv) {
+            return pv;
+        }
+        if (instantiation instanceof Term term && term.op() instanceof ProgramVariable pv) {
+            return pv;
+        }
+        return null;
+    }
+
+    private void printDeclarationHead(@Nullable Object type, @Nullable DataLocation loc) {
+        if (type instanceof SolidityProgramElement pe) {
+            pe.visit(this);
+            layouter.print(" ");
+        } else if (type != null) {
+            layouter.print(type.toString()).print(" ");
+        }
         if (loc != null && loc != DataLocation.Default) {
             loc.visit(this);
             layouter.print(" ");
         }
-        pv.visit(this);
     }
 
     @Override
@@ -600,7 +621,7 @@ public class PrettyPrinter implements Visitor {
 
     @Override
     public void performActionOnFunctionCallExpression(FunctionCallExpression x) {
-        x.functionExp.visit(this);
+        x.getFunctionExp().visit(this);
         layouter.print("(");
         for (int i = 0; i < x.getArguments().size(); i++) {
             final Expression arg = x.getArguments().get(i);

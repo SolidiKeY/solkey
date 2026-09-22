@@ -7,7 +7,8 @@ package org.key_project.solidity.rule.matching.inst;
 import org.key_project.solidity.program.PosInProgram;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 
-/// this class is created if the scheme given by a context term has matched to a Rust program. The
+/// this class is created if the scheme given by a context term has matched to a Solidity program.
+/// The
 /// ContextBlockExpressionInstantiation class stores the instantiations of the prefix and the
 /// suffix.
 public class ContextBlockExpressionInstantiation {

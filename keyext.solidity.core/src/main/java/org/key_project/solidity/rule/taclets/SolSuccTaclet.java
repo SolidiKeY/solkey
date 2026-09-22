@@ -65,13 +65,8 @@ public class SolSuccTaclet extends SolFindTaclet {
 
     @Override
     public @NonNull SolSuccTaclet setName(@NonNull String s) {
-        final TacletApplPart applPart =
-            new TacletApplPart(assumesSequent(), applicationRestriction(), varsNew(),
-                varsNotFreeIn(),
-                varsNewDependingOn(), getVariableConditions());
-        final TacletAttributes attrs = new TacletAttributes(displayName(), trigger);
-        return new SolSuccTaclet(new Name(s), (Sequent) find, applPart, goalTemplates(),
-            getRuleSets(), attrs,
+        return new SolSuccTaclet(new Name(s), (Sequent) find, copyApplPart(), goalTemplates(),
+            getRuleSets(), copyAttrs(),
             prefixMap, choices, getSurviveSymbExec(), tacletAnnotations, noFreeVarIns);
     }
 

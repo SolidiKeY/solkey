@@ -1,0 +1,39 @@
+<idea-plugin>
+    <id>org.key_project.solidity.idea</id>
+    <name>SolKey</name>
+    <vendor url="https://key-project.org">The KeY Project</vendor>
+
+    <description><![CDATA[
+        Prove a Solidity function with KeY.
+        <p>
+        Click the ▶ beside any public function in a <code>.sol</code> file to open KeYther, the
+        SolKey prover GUI, on that function's proof obligation — no function picker in between.
+        A function no obligation can be generated for (one that returns a value, or takes a
+        parameter with no <code>.key</code> sort) is refused with the reason.
+        <p>
+        No Solidity language plugin is required: the functions are found by scanning the file.
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.gradle</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <postStartupActivity
+            implementation="org.key_project.solidity.idea.SolKeyStartupActivity"/>
+        <applicationConfigurable
+            parentId="tools"
+            id="org.key_project.solidity.idea.settings"
+            displayName="SolKey"
+            instance="org.key_project.solidity.idea.SolKeyConfigurable"/>
+        <notificationGroup id="SolKey" displayType="BALLOON"/>
+    </extensions>
+
+    <actions>
+        <action id="SolKey.ProveFunction"
+                class="org.key_project.solidity.idea.ProveFunctionAction"
+                text="Prove Function in KeYther"
+                description="Open KeYther on the Solidity function at the caret">
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+        </action>
+    </actions>
+</idea-plugin>

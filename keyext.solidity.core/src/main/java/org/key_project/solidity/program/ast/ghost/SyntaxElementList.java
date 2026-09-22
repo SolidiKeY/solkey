@@ -3,40 +3,16 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.ghost;
 
-
 import java.util.List;
 
 import org.key_project.logic.SyntaxElement;
-import org.key_project.solidity.program.ast.SolidityProgramElement;
-import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
 
-public class SyntaxElementList implements SolidityProgramElement {
-    public ImmutableArray<SyntaxElement> getElements() {
-        return elements;
+public class SyntaxElementList extends ElementList<@NonNull SyntaxElement> {
+
+    public SyntaxElementList(List<@NonNull SyntaxElement> elements) {
+        super(new ImmutableArray<>(elements));
     }
-
-    private final @NonNull ImmutableArray<@NonNull SyntaxElement> elements;
-
-    public SyntaxElementList(List<SyntaxElement> elements) {
-        this.elements = new ImmutableArray<>(elements);
-    }
-
-    @Override
-    public @NonNull SyntaxElement getChild(int n) {
-        return elements.get(n);
-    }
-
-    @Override
-    public int getChildCount() {
-        return elements.size();
-    }
-
-    @Override
-    public void visit(Visitor v) {
-    }
-
-
 }

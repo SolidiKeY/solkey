@@ -12,7 +12,6 @@ import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.util.ExtList;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 /// Pairs a Solidity AST [Type] with its logic-side [Sort].
@@ -97,7 +96,7 @@ public class KeYSolidityType implements Type, Resolver {
     }
 
     @Override
-    public @NonNull Name name() {
+    public Name name() {
         return solidityType == null ? Objects.requireNonNull(sort).name() : solidityType.name();
     }
 
@@ -112,8 +111,14 @@ public class KeYSolidityType implements Type, Resolver {
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+    public int hashCode() {
+        return Objects.hash(solidityType, sort);
+    }
+
+    @Override
+    public SyntaxElement getChild(int n) {
+        throw new IndexOutOfBoundsException(
+            "Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

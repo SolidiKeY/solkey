@@ -13,6 +13,7 @@ import org.key_project.logic.op.QuantifiableVariable;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.logic.op.LogicVariable;
 import org.key_project.solidity.logic.op.SModality;
+import org.key_project.solidity.rule.sv.ModalOperatorSV;
 import org.key_project.util.Strings;
 import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableArray;
@@ -263,10 +264,14 @@ public class TermImpl implements Term {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         if (op() instanceof Modality mod) {
-            if (mod.kind() == SModality.SolidityModalityKind.DIA) {
+            final Modality.Kind kind = mod.kind();
+            final boolean concrete = !(kind instanceof ModalOperatorSV);
+            if (concrete && SModality.SolidityModalityKind.DIA.equals(kind)) {
                 sb.append("\\<").append(mod.programBlock()).append("\\>");
-            } else {
+            } else if (concrete && SModality.SolidityModalityKind.BOX.equals(kind)) {
                 sb.append("\\[").append(mod.programBlock()).append("\\]");
+            } else {
+                sb.append(op()).append("|{").append(mod.programBlock()).append("}|");
             }
             sb.append("(").append(sub(0)).append(")");
             return sb.toString();

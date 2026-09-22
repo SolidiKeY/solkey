@@ -13,7 +13,9 @@ import org.key_project.solidity.proof.io.OutputStreamProofSaver;
 
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /// Headless smoke test: load an example proof, wire it through the [ProofContext] and the three
@@ -26,9 +28,13 @@ public class GuiSmokeTest {
     }
 
     private static Path example() {
-        Path p = Path.of("keyext.solidity.examples/functionBody/archive.key");
+        return example("functionBody/archive.key");
+    }
+
+    private static Path example(String relativePath) {
+        Path p = Path.of("keyext.solidity.examples").resolve(relativePath);
         return Files.exists(p) ? p
-                : Path.of("../keyext.solidity.examples/functionBody/archive.key");
+                : Path.of("../keyext.solidity.examples").resolve(relativePath);
     }
 
     @Test
@@ -65,5 +71,49 @@ public class GuiSmokeTest {
         context.fireProofChanged();
         assertTrue(proof.closed(), "archive example should close under auto mode");
         assertTrue(proof.openGoals().isEmpty(), "closed proof has no open goals");
+    }
+
+    @Test
+    void loadsAChosenSolidityFunction() throws Exception {
+        Path file = example("TestSuite.sol");
+        assertTrue(Files.exists(file), "example must exist: " + file.toAbsolutePath());
+
+        KeYEnvironment<?> env = KeYEnvironment.load(file, "TestSuite", "testSimpleAssert");
+        Proof proof = env.getLoadedProof();
+        assertNotNull(proof);
+        assertEquals("TestSuite.testSimpleAssert", proof.name().toString());
+        assertNotNull(proof.getSoliditySource());
+
+        ProofContext context = new ProofContext();
+        context.setProof(env, proof);
+        assertTrue(context.getSelectedNode() == proof.root());
+
+        env.getProofControl().startAndWaitForAutoMode(proof);
+        context.fireProofChanged();
+        assertTrue(proof.closed(), "testSimpleAssert should close under auto mode");
+    }
+
+    /// Naming a function no obligation can be generated for is refused with the reason. This is
+    /// what a gutter click on an unsupported function has to produce: `MainWindow` shows this
+    /// message instead of falling back to the picker.
+    @Test
+    void refusesAFunctionThatCannotBeProved() {
+        Path file = example("net/PiggyBankNet.sol");
+        assertTrue(Files.exists(file), "example must exist: " + file.toAbsolutePath());
+
+        Exception e = assertThrows(Exception.class,
+            () -> KeYEnvironment.load(file, "PiggyBankNet", "payTo"));
+
+        assertTrue(describe(e).contains("cannot be proved"), describe(e));
+        assertTrue(describe(e).contains("address payable"), describe(e));
+    }
+
+    /// The reason may be wrapped by the loader, so match against the whole cause chain.
+    private static String describe(Throwable t) {
+        StringBuilder sb = new StringBuilder();
+        for (Throwable c = t; c != null; c = c.getCause()) {
+            sb.append(c).append('\n');
+        }
+        return sb.toString();
     }
 }

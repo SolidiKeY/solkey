@@ -12,7 +12,6 @@ import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-import org.jspecify.annotations.NonNull;
 
 /// TODO: Unclear what an enumreference is? Is it the name of a member or of the type
 /// In the first case, why is it a variable reference?
@@ -36,8 +35,8 @@ public class EnumReference extends SolidityExpression implements VariableReferen
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+    public SyntaxElement getChild(int n) {
+        throw outOfBounds(n);
     }
 
     @Override

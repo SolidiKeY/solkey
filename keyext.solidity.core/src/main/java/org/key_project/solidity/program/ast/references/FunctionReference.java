@@ -15,13 +15,16 @@ import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.solidity.rule.matching.inst.MatchConditions;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public class FunctionReference extends SolidityExpression implements Resolver, VariableReference {
 
     public final int id;
-    public @Nullable FunctionDeclaration referencedDeclaration;
+    private @Nullable FunctionDeclaration referencedDeclaration;
+
+    public @Nullable FunctionDeclaration getReferencedDeclaration() {
+        return referencedDeclaration;
+    }
 
     public FunctionReference(int id, Type type) {
         super(type);
@@ -29,7 +32,7 @@ public class FunctionReference extends SolidityExpression implements Resolver, V
         this.referencedDeclaration = null;
     }
 
-    public FunctionReference(FunctionDeclaration referencedDeclaration, Type type) {
+    public FunctionReference(@Nullable FunctionDeclaration referencedDeclaration, Type type) {
         super(type);
         this.referencedDeclaration = referencedDeclaration;
         this.id = -1;
@@ -52,8 +55,8 @@ public class FunctionReference extends SolidityExpression implements Resolver, V
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+    public SyntaxElement getChild(int n) {
+        throw outOfBounds(n);
     }
 
     @Override

@@ -15,6 +15,7 @@ import org.key_project.solidity.rule.TacletApp;
 
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ModalityTacletTest {
@@ -22,13 +23,34 @@ public class ModalityTacletTest {
         System.setProperty("java.awt.headless", "true");
     }
 
+    private Proof proof;
+
     @Test
     void offersModalityRuleForTheModalityFormula() throws Exception {
+        List<TacletApp> apps = appsOnTheModalityFormula();
+        List<String> names = apps.stream().map(a -> a.taclet().name().toString()).toList();
+        assertTrue(names.contains("functionBodyExpand"),
+            "the modality formula should offer functionBodyExpand; got: " + names);
+    }
+
+    @Test
+    void rendersADiamondInstantiatedTacletWithDiamondBrackets() throws Exception {
+        List<TacletApp> apps = appsOnTheModalityFormula();
+        TacletApp app = apps.stream()
+                .filter(a -> a.taclet().name().toString().equals("functionBodyExpand"))
+                .findFirst().orElseThrow();
+
+        String text = TacletText.of(app, proof.getServices());
+        assertTrue(text.contains("\\<"), "expected a diamond in:\n" + text);
+        assertFalse(text.contains("\\["), "expected no box in:\n" + text);
+    }
+
+    private List<TacletApp> appsOnTheModalityFormula() throws Exception {
         Path file = Path.of("keyext.solidity.examples/functionBody/archive.key");
         if (!Files.exists(file))
             file = Path.of("../keyext.solidity.examples/functionBody/archive.key");
         KeYEnvironment<?> env = KeYEnvironment.load(file);
-        Proof proof = env.getLoadedProof();
+        proof = env.getLoadedProof();
         ProofContext context = new ProofContext();
         SequentView view = new SequentView(context);
         context.setProof(env, proof);
@@ -37,9 +59,6 @@ public class ModalityTacletTest {
         int off = s.indexOf("archive"); // inside the modality program
         PosInSequent pis = view.posAt(off);
         Goal goal = proof.openGoals().head();
-        List<TacletApp> apps = view.applicableTaclets(goal, pis.getPosInOccurrence());
-        List<String> names = apps.stream().map(a -> a.taclet().name().toString()).toList();
-        assertTrue(names.contains("functionBodyExpand"),
-            "the modality formula should offer functionBodyExpand; got: " + names);
+        return view.applicableTaclets(goal, pis.getPosInOccurrence());
     }
 }

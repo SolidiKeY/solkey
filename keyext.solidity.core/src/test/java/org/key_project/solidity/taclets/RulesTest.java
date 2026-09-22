@@ -22,6 +22,7 @@ import org.key_project.solidity.proof.io.ProblemLoaderException;
 import org.key_project.solidity.proof.io.ProofSaver;
 
 import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -31,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.key_project.solidity.testutil.SolidityExampleTests.loadAndProve;
 import static org.key_project.solidity.testutil.SolidityExampleTests.treeSignature;
 
+@Tag("solidityExamples")
 public class RulesTest {
 
     private static final String EXAMPLES_RESOURCE = "org/key_project/solidity/examples";

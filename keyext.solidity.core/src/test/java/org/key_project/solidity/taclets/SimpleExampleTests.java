@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 
 import org.key_project.solidity.proof.Proof;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -26,6 +27,10 @@ import static org.key_project.solidity.testutil.SolidityExampleTests.loadAndProv
 /// - `newVariable/newVariable.key` — a rule introduces a fresh program variable with `\new` and
 /// executes two assignments one at a time through a context block, proving `q = 42` (exercises
 /// ProgramContextAdder together with the fresh-variable mechanism).
+/// - `storage/copyKeepsMapping.key` — a storage-to-storage copy read back through the leaf of
+/// `save`:
+/// value members come from the source, mapping members stay the target's own.
+@Tag("solidityExamples")
 public class SimpleExampleTests {
 
     @ParameterizedTest(name = "{0}")
@@ -40,7 +45,8 @@ public class SimpleExampleTests {
         return Stream.of(
             Arguments.of("archive", example("functionBody/archive.key")),
             Arguments.of("expFctBdy", example("functionBody/expFctBdy.key")),
-            Arguments.of("newVariable", example("newVariable/newVariable.key")));
+            Arguments.of("newVariable", example("newVariable/newVariable.key")),
+            Arguments.of("copyKeepsMapping", example("storage/copyKeepsMapping.key")));
     }
 
     /// Per-statement execution of `expFctBdy` produces intermediate empty blocks; computing a

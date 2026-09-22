@@ -34,6 +34,7 @@ varexpId
  | HAS_ELEMENT_SORT
  | HAS_MEMORY_ELEMENT_SORT
  | NO_FREE_VAR_IN
+ | NOT_ALL_SIMPLE
  ;
 
  one_sort_decl

@@ -29,7 +29,7 @@ import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.rule.TacletApp;
 import org.key_project.solidity.rule.matching.inst.ContextInstantiationEntry;
 import org.key_project.solidity.rule.sv.ProgramSV;
-import org.key_project.solidity.rule.sv.sort.ProgramSVSort;
+import org.key_project.solidity.rule.sv.sort.ProgramVariableSVSort;
 import org.key_project.solidity.rule.taclets.NewVarcond;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.KeYCollections;
@@ -102,7 +102,7 @@ public class VariableNamer {
             app.posInOccurrence(), posOfDeclaration, previousProposals, services);
     }
 
-    // precondition: sv.sort()==ProgramSVSort.VARIABLE
+    // precondition: sv.sort() instanceof ProgramVariableSVSort
     public @Nullable String getSuggestiveNameProposalForProgramVariable(
             SchemaVariable sv, TacletApp app,
             Services services, ImmutableList<String> previousProposals) {
@@ -200,7 +200,7 @@ public class VariableNamer {
         if (sv instanceof ProgramSV psv) {
             Sort svSort = psv.sort();
 
-            if (svSort == ProgramSVSort.VARIABLE) {
+            if (svSort instanceof ProgramVariableSVSort) {
                 if (basename == null || basename.isEmpty()) {
                     basename = DEFAULT_BASENAME;
                 }

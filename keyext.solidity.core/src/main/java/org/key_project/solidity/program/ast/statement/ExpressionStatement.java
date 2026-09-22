@@ -10,11 +10,10 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public class ExpressionStatement implements Statement {
-    final @NonNull Expression expression;
+    final Expression expression;
     private int hashcode = -1;
 
     public ExpressionStatement(Expression expression) {
@@ -26,10 +25,10 @@ public class ExpressionStatement implements Statement {
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         if (n == 0)
             return expression;
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+        throw outOfBounds(n);
     }
 
     @Override
@@ -46,7 +45,7 @@ public class ExpressionStatement implements Statement {
         v.performActionOnExpressionStatement(this);
     }
 
-    public @NonNull Expression getExpression() {
+    public Expression getExpression() {
         return expression;
     }
 

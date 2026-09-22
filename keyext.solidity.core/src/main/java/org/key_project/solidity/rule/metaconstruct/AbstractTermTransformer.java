@@ -34,8 +34,6 @@ public abstract class AbstractTermTransformer extends AbstractSortedOperator
     public static final Map<String, AbstractTermTransformer> NAME_TO_META_OP =
         new LinkedHashMap<>(17);
 
-    // public static final AbstractTermTransformer META_SHIFTRIGHT = new MetaShiftRight();
-    // public static final AbstractTermTransformer META_SHIFTLEFT = new MetaShiftLeft();
     public static final AbstractTermTransformer META_AND = new MetaBinaryAnd();
     public static final AbstractTermTransformer META_OR = new MetaBinaryOr();
     public static final AbstractTermTransformer META_XOR = new MetaBinaryXor();

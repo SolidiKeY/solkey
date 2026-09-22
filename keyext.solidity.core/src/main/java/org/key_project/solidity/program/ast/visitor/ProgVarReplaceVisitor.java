@@ -36,7 +36,7 @@ public class ProgVarReplaceVisitor extends CreatingASTVisitor {
             Map<ProgramVariable, ProgramVariable> map,
             boolean replaceAllByNew,
             Services services) {
-        super(st, true, services);
+        super(st, services);
         this.replaceAllByNew = replaceAllByNew;
         this.replaceMap = map;
         assert services != null;

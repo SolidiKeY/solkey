@@ -10,7 +10,6 @@ import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
-import org.jspecify.annotations.NonNull;
 
 public class UnresolvedTypeException extends RuntimeException implements SolidityProgramElement {
     public UnresolvedTypeException(String s) {
@@ -22,7 +21,7 @@ public class UnresolvedTypeException extends RuntimeException implements Solidit
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         throw new IndexOutOfBoundsException();
     }
 

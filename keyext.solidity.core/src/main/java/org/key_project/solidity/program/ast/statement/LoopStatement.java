@@ -9,14 +9,13 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.util.ExtList;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public abstract class LoopStatement implements Statement {
     protected final @Nullable Expression condition;
-    protected final @NonNull Statement body;
+    protected final Statement body;
 
-    protected LoopStatement(@Nullable Expression condition, @NonNull Statement body) {
+    protected LoopStatement(@Nullable Expression condition, Statement body) {
         this.condition = condition;
         this.body = Objects.requireNonNull(body);
     }
@@ -27,12 +26,11 @@ public abstract class LoopStatement implements Statement {
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         return switch (n) {
             case 0 -> Objects.requireNonNull(condition);
             case 1 -> body;
-            default -> throw new IndexOutOfBoundsException(
-                "Index should be 0 <= " + n + " < " + getChildCount());
+            default -> throw outOfBounds(n);
         };
     }
 
@@ -45,7 +43,7 @@ public abstract class LoopStatement implements Statement {
         return condition;
     }
 
-    public @NonNull Statement getBody() {
+    public Statement getBody() {
         return body;
     }
 }

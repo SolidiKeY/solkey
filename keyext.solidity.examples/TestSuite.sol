@@ -31,15 +31,19 @@ contract TestSuite {
     struct Ledger { uint nonce; mapping(uint => uint) balances; }
     struct LedgerUse { Ledger ledger; }
     struct TokenBucket { Token[] tokens; }
+    struct Toggle { bool on; uint n; }
 
     uint total;
     uint age;
     address owner;
     uint balance;
+    bool flag;
+    bool flag2;
 
     uint[] values;
     uint[] a;
     uint[][] matrix;
+    bool[] boolFlags;
 
     mapping(uint => uint) balances;
     mapping(uint => Person) people;
@@ -50,10 +54,15 @@ contract TestSuite {
     Person[] persons;
     Person alice;
     Person bob;
+    Toggle toggle;
 
     Ledger ledger;
+    Token tok;
     Token[] tokens;
     TokenBucket bucket;
+    TokenBucket[] buckets;
+    Basket basketA;
+    Basket basketB;
     LedgerUse[] ledgerUses;
 
     // ── Arithmetic ──
@@ -124,6 +133,60 @@ contract TestSuite {
         assert(r == 42);
     }
 
+    function storageIndexMappingAddAssign() public {
+        balances[1] = 40;
+        balances[1] += 2;
+        uint r = balances[1];
+        assert(r == 42);
+    }
+
+    /// @custom:key box
+    function storageIndexArrayAddAssignOutOfBoundsReverts() public {
+        require(values.length == 0);
+        values[1] += 2;
+        assert(false);
+    }
+
+    /// @custom:key box
+    function storageIndexArrayReadOutOfBoundsReverts() public {
+        require(values.length == 0);
+        uint r = values[1];
+        assert(r != r);
+    }
+
+    /// @custom:key box
+    function storageIndexReadComplexReceiverBindLocalRoot() public {
+        require(0 < bucket.tokens.length);
+        bucket.tokens[0].value = 9;
+        Token storage t = bucket.tokens[0];
+        uint r = t.value;
+        assert(r == 9);
+    }
+
+    /// @custom:key box
+    function storageIndexWriteComplexReceiverCopySource() public {
+        require(0 < bucket.tokens.length);
+        alice.account.token.value = 7;
+        Token storage tokRef = alice.account.token;
+        bucket.tokens[0] = tokRef;
+        uint r = bucket.tokens[0].value;
+        assert(r == 7);
+    }
+
+    function storageFieldWriteRootRhsComplexReceiver() public {
+        tok.value = 7;
+        alice.account.token = tok;
+        uint r = alice.account.token.value;
+        assert(r == 7);
+    }
+
+    function storageIndexWriteRootRhsComplexReceiver() public {
+        total = 9;
+        ledger.balances[3] = total;
+        uint r = ledger.balances[3];
+        assert(r == 9);
+    }
+
     // ── Storage: push ──
 
     /// @custom:key box
@@ -132,6 +195,79 @@ contract TestSuite {
         values.push(42);
         assert(values[2] == 42);
         assert(values.length == 3);
+    }
+
+    /// @custom:key box
+    function storagePushComplexReceiverNonsimpleArg(uint x, uint y) public {
+        require(0 < matrix.length);
+        require(matrix[0].length == 0);
+        require(x == 40 && y == 2);
+        matrix[0].push(x + y);
+        uint r = matrix[0][0];
+        assert(r == 42);
+    }
+
+    /// @custom:key box
+    function storagePushValueCopySource() public {
+        require(tokens.length == 0);
+        tok.value = 7;
+        tokens.push(tok);
+        assert(tokens[0].value == 7);
+    }
+
+    // ── Require / assert: literal operand ──
+
+    function requireTrueLiteral() public {
+        require(true);
+        assert(true);
+    }
+
+    /// @custom:key box
+    function requireFalseLiteral() public {
+        require(false);
+        assert(false);
+    }
+
+    // ── Storage: bool ──
+
+    function storageBoolRootReadWrite() public {
+        flag = true;
+        bool r = flag;
+        assert(r);
+    }
+
+    function storageBoolRootCopy() public {
+        flag = true;
+        flag2 = flag;
+        bool r = flag2;
+        assert(r);
+    }
+
+    function storageBoolFieldRead() public {
+        toggle.on = true;
+        bool r = toggle.on;
+        assert(r);
+    }
+
+    function storageBoolMappingRead() public {
+        flags[2] = true;
+        bool r = flags[2];
+        assert(r);
+    }
+
+    /// @custom:key box
+    function storageBoolArrayRead() public {
+        require(boolFlags.length == 1);
+        boolFlags[0] = true;
+        bool r = boolFlags[0];
+        assert(r);
+    }
+
+    function storageBoolFieldStoreRoot() public {
+        toggle.on = true;
+        flag = toggle.on;
+        bool r = flag;
+        assert(r);
     }
 
     // ── Memory ──
@@ -231,6 +367,81 @@ contract TestSuite {
         assert(r);
     }
 
+    function ternaryCaptureCond() public {
+        uint x = 5;
+        uint r = x == 5 ? x + 1 : 0;
+        assert(r == 6);
+    }
+
+    function ternaryToIf() public {
+        bool b = true;
+        uint r = b ? 1 : 2;
+        assert(r == 1);
+    }
+
+    function ifUnfold() public {
+        uint x = 5;
+        uint r = 0;
+        if (x == 4) r = 1;
+        assert(r == 0);
+    }
+
+    function ifElseUnfold() public {
+        uint x = 5;
+        uint r = 0;
+        if (x == 5) r = 1; else r = 2;
+        assert(r == 1);
+    }
+
+    function ifSplit() public {
+        bool b = true;
+        uint r = 0;
+        if (b) r = 1;
+        assert(r == 1);
+    }
+
+    function ifElseSplit() public {
+        bool b = false;
+        uint r = 0;
+        if (b) {
+            r = 1;
+        } else {
+            r = 2;
+        }
+        assert(r == 2);
+    }
+
+    function ifTrue() public {
+        uint r = 0;
+        if (true) r = 1;
+        assert(r == 1);
+    }
+
+    function ifFalse() public {
+        uint r = 0;
+        if (false) r = 1;
+        assert(r == 0);
+    }
+
+    function ifElseTrue() public {
+        uint r = 0;
+        if (true) r = 1; else r = 2;
+        assert(r == 1);
+    }
+
+    function ifElseFalse() public {
+        uint r = 0;
+        if (false) r = 1; else r = 2;
+        assert(r == 2);
+    }
+
+    function ifElseNegated() public {
+        bool b = false;
+        uint r = 0;
+        if (!b) r = 1; else r = 2;
+        assert(r == 1);
+    }
+
     function memoryDeclFresh() public {
         Person memory carol;
     }
@@ -240,6 +451,134 @@ contract TestSuite {
         carol.account.balance = 10;
         uint r = carol.account.balance;
         assert(r == 10);
+    }
+
+    function memoryFieldAddAssign() public {
+        Person memory carol;
+        carol.age = 30;
+        carol.age += 4;
+        uint r = carol.age;
+        assert(r == 34);
+    }
+
+    function memoryFieldSubAssign() public {
+        Person memory carol;
+        carol.age = 30;
+        carol.age -= 4;
+        uint r = carol.age;
+        assert(r == 26);
+    }
+
+    function memoryFieldMulAssign() public {
+        Person memory carol;
+        carol.age = 7;
+        carol.age *= 4;
+        uint r = carol.age;
+        assert(r == 28);
+    }
+
+    function memoryFieldDivAssign() public {
+        Person memory carol;
+        carol.age = 30;
+        carol.age /= 5;
+        uint r = carol.age;
+        assert(r == 6);
+    }
+
+    function memoryFieldModAssign() public {
+        Person memory carol;
+        carol.age = 30;
+        carol.age %= 7;
+        uint r = carol.age;
+        assert(r == 2);
+    }
+
+    function memoryFieldAddAssignUnfold() public {
+        Person memory carol;
+        carol.account.balance = 20;
+        carol.account.balance += 4;
+        uint r = carol.account.balance;
+        assert(r == 24);
+    }
+
+    function memoryFieldAddAssignNse() public {
+        Person memory carol;
+        carol.age = 30;
+        carol.age += 2 * 3;
+        uint r = carol.age;
+        assert(r == 36);
+    }
+
+    function memoryFieldPreincrement() public {
+        Person memory carol;
+        carol.age = 30;
+        ++carol.age;
+        uint r = carol.age;
+        assert(r == 31);
+    }
+
+    function memoryFieldPostincrement() public {
+        Person memory carol;
+        carol.age = 30;
+        carol.age++;
+        uint r = carol.age;
+        assert(r == 31);
+    }
+
+    function memoryFieldPredecrement() public {
+        Person memory carol;
+        carol.age = 30;
+        --carol.age;
+        uint r = carol.age;
+        assert(r == 29);
+    }
+
+    function memoryFieldPostdecrement() public {
+        Person memory carol;
+        carol.age = 30;
+        carol.age--;
+        uint r = carol.age;
+        assert(r == 29);
+    }
+
+    function memoryFieldPreincrementAssignment() public {
+        Person memory carol;
+        carol.age = 30;
+        uint r = ++carol.age;
+        assert(r == 31);
+        assert(carol.age == 31);
+    }
+
+    function memoryFieldPostincrementAssignment() public {
+        Person memory carol;
+        carol.age = 30;
+        uint r = carol.age++;
+        assert(r == 30);
+        assert(carol.age == 31);
+    }
+
+    function memoryFieldPredecrementAssignment() public {
+        Person memory carol;
+        carol.age = 30;
+        uint r = --carol.age;
+        assert(r == 29);
+        assert(carol.age == 29);
+    }
+
+    function memoryFieldPostdecrementAssignment() public {
+        Person memory carol;
+        carol.age = 30;
+        uint r = carol.age--;
+        assert(r == 30);
+        assert(carol.age == 29);
+    }
+
+    function memoryFieldPreincrementUnfold() public {
+        Person memory carol;
+        carol.account.balance = 20;
+        ++carol.account.balance;
+        uint r = carol.account.balance;
+        assert(r == 21);
     }
 
     function memoryFieldAlias() public {
@@ -258,6 +597,98 @@ contract TestSuite {
         carol.account.balance = 60;
         uint r = david.account.balance;
         assert(r == 60);
+    }
+
+    function memoryIndexArrayAddAssign() public {
+        uint[] memory xs = new uint[](4);
+        xs[1] = 40;
+        xs[1] += 2;
+        uint r = xs[1];
+        assert(r == 42);
+    }
+
+    function memoryIndexArraySubAssign() public {
+        uint[] memory xs = new uint[](4);
+        xs[1] = 40;
+        xs[1] -= 2;
+        uint r = xs[1];
+        assert(r == 38);
+    }
+
+    function memoryIndexArrayMulAssign() public {
+        uint[] memory xs = new uint[](4);
+        xs[1] = 7;
+        xs[1] *= 6;
+        uint r = xs[1];
+        assert(r == 42);
+    }
+
+    function memoryIndexArrayDivAssign() public {
+        uint[] memory xs = new uint[](4);
+        xs[1] = 40;
+        xs[1] /= 8;
+        uint r = xs[1];
+        assert(r == 5);
+    }
+
+    function memoryIndexArrayModAssign() public {
+        uint[] memory xs = new uint[](4);
+        xs[1] = 40;
+        xs[1] %= 7;
+        uint r = xs[1];
+        assert(r == 5);
+    }
+
+    function memoryIndexArrayAddAssignUnfold() public {
+        Basket memory basket;
+        uint[] memory xs = new uint[](4);
+        basket.items = xs;
+        basket.items[1] = 40;
+        basket.items[1] += 2;
+        uint r = basket.items[1];
+        assert(r == 42);
+    }
+
+    function memoryIndexArrayPreincrementUnfold() public {
+        Basket memory basket;
+        uint[] memory xs = new uint[](4);
+        basket.items = xs;
+        basket.items[1] = 40;
+        ++basket.items[1];
+        uint r = basket.items[1];
+        assert(r == 41);
+    }
+
+    function memoryIndexArrayPreincrement() public {
+        uint[] memory xs = new uint[](4);
+        xs[1] = 40;
+        ++xs[1];
+        uint r = xs[1];
+        assert(r == 41);
+    }
+
+    function memoryIndexArrayPostdecrement() public {
+        uint[] memory xs = new uint[](4);
+        xs[1] = 40;
+        xs[1]--;
+        uint r = xs[1];
+        assert(r == 39);
+    }
+
+    function memoryIndexArrayPostincrementAssignment() public {
+        uint[] memory xs = new uint[](4);
+        xs[1] = 40;
+        uint r = xs[1]++;
+        assert(r == 40);
+        assert(xs[1] == 41);
+    }
+
+    function memoryIndexArrayPredecrementAssignment() public {
+        uint[] memory xs = new uint[](4);
+        xs[1] = 40;
+        uint r = --xs[1];
+        assert(r == 39);
+        assert(xs[1] == 39);
     }
 
     /// @custom:key box
@@ -299,6 +730,32 @@ contract TestSuite {
         alice = carol;
         uint r = alice.age;
         assert(r == 44);
+    }
+
+    function memoryToStorageIndexMappingCopyRootExample() public {
+        Person memory carol;
+        carol.age = 6;
+        people[1] = carol;
+        uint r = people[1].age;
+        assert(r == 6);
+    }
+
+    /// @custom:key box
+    function memoryToStorageIndexArrayCopyRootExample() public {
+        require(0 < persons.length);
+        Person memory carol;
+        carol.age = 6;
+        persons[0] = carol;
+        uint r = persons[0].age;
+        assert(r == 6);
+    }
+
+    /// @custom:key box
+    function memoryToStorageIndexArrayCopyRootOutOfBoundsReverts() public {
+        require(persons.length == 0);
+        Person memory carol;
+        persons[0] = carol;
+        assert(false);
     }
 
     function moduloSimple() public {
@@ -419,6 +876,22 @@ contract TestSuite {
         alice.age = 30;
         delete alice.age;
         uint r = alice.age;
+        assert(r == 0);
+    }
+
+    function storageFieldDeleteThenCopy() public {
+        bob.account.balance = 10;
+        delete bob.account;
+        alice.account = bob.account;
+        uint r = alice.account.balance;
+        assert(r == 0);
+    }
+
+    function storageFieldDeleteThenCopyDeep() public {
+        bob.account.token.value = 7;
+        delete bob.account;
+        alice.account = bob.account;
+        uint r = alice.account.token.value;
         assert(r == 0);
     }
 
@@ -777,11 +1250,21 @@ contract TestSuite {
         assert(values[1] == 0);
     }
 
+    function storagePopUnknownLength() public {
+        values.push();
+        values.pop();
+    }
+
     /// @custom:key box
     function storagePushEmpty() public {
         require(values.length == 2);
         values.push();
         assert(values.length == 3);
+    }
+
+    function storagePushLengthPositive() public {
+        values.push();
+        assert(values.length > 0);
     }
 
     /// @custom:key box
@@ -799,6 +1282,12 @@ contract TestSuite {
         values.push(x + y);
         assert(values[2] == 42);
         assert(values.length == 3);
+    }
+
+    function storagePushReadBack() public {
+        values.push(42);
+        uint r = values[values.length - 1];
+        assert(r == 42);
     }
 
     /// @custom:key box
@@ -833,6 +1322,14 @@ contract TestSuite {
     function storageRootDeleteStruct() public {
         alice.age = 30;
         delete alice;
+        uint r = alice.age;
+        assert(r == 0);
+    }
+
+    function storageRootDeleteThenCopy() public {
+        bob.age = 30;
+        delete bob;
+        alice = bob;
         uint r = alice.age;
         assert(r == 0);
     }
@@ -1003,6 +1500,14 @@ contract TestSuite {
         assert(carol.age == 0);
     }
 
+    function testMemoryEvaluationOrder() public {
+        uint[] memory xs = new uint[](3);
+        uint i = 0;
+        xs[++i] = ++i;
+        assert(i == 2);
+        assert(xs[2] == 1);
+    }
+
     function testMemoryFieldShallowCopy() public {
         Person memory carol;
         Person memory david;
@@ -1011,6 +1516,24 @@ contract TestSuite {
         carol.account.balance = 60;
         assert(david.account.balance == 60);
         assert(carol.account.balance == 60);
+    }
+
+    function testMemoryIndexWriteImpureIndexPrimitiveRhs() public {
+        uint[] memory xs = new uint[](2);
+        uint i = 0;
+        xs[i++] = i;
+        assert(i == 1);
+        assert(xs[0] == 0);
+    }
+
+    function testMemoryIndexWriteImpureIndexRefRhs() public {
+        Token[] memory toks = new Token[](2);
+        Token memory tmp;
+        tmp.value = 5;
+        uint j = 0;
+        toks[j++] = tmp;
+        assert(j == 1);
+        assert(toks[0].value == 5);
     }
 
     function testMemoryRootAlias() public {
@@ -1062,6 +1585,19 @@ contract TestSuite {
         alice = carol;
         carol.age = 43;
         assert(alice.age == 42);
+    }
+
+    /// @custom:key box
+    function testMemoryToStorageIndexCopyImpureIndex() public {
+        require(persons.length == 0);
+        persons.push();
+        persons.push();
+        Person memory carol;
+        carol.age = 7;
+        uint i = 0;
+        persons[i++] = carol;
+        assert(i == 1);
+        assert(persons[0].age == 7);
     }
 
     function testMemoryTokenArrayAuxiliaryCases() public {
@@ -1123,6 +1659,117 @@ contract TestSuite {
         assert(carolValues[0] == 0);
     }
 
+    /// @custom:key box
+    function testNestedIndexWriteImpureIndexPrimitiveRhs() public {
+        require(matrix.length == 0);
+        matrix.push();
+        matrix.push();
+        matrix[1].push(100);
+        uint i = 1;
+        matrix[i++][0] = i;
+        assert(i == 2);
+        assert(matrix[1][0] == 1);
+    }
+
+    /// @custom:key box
+    function testNestedIndexReadImpureIndex() public {
+        require(matrix.length == 0);
+        matrix.push();
+        matrix.push();
+        matrix[1].push(100);
+        uint i = 1;
+        uint v = matrix[i++][0];
+        assert(i == 2);
+        assert(v == 100);
+    }
+
+    /// @custom:key box
+    function testNestedIndexWriteImpureReceiverAndIndex() public {
+        require(matrix.length == 0);
+        matrix.push();
+        matrix.push();
+        matrix[0].push(0);
+        matrix[0].push(0);
+        matrix[1].push(0);
+        matrix[1].push(0);
+        uint i = 0;
+        matrix[i++][i++] = 77;
+        assert(i == 2);
+        assert(matrix[0][1] == 77);
+        assert(matrix[1][0] == 0);
+    }
+
+    /// @custom:key box
+    function testNestedIndexReadImpureReceiverAndIndex() public {
+        require(matrix.length == 0);
+        matrix.push();
+        matrix.push();
+        matrix[0].push(0);
+        matrix[0].push(11);
+        matrix[1].push(22);
+        uint i = 0;
+        uint v = matrix[i++][i++];
+        assert(i == 2);
+        assert(v == 11);
+    }
+
+    /// @custom:key box
+    function testStorageDeleteImpureReceiver() public {
+        require(matrix.length == 0);
+        matrix.push();
+        matrix.push();
+        matrix[0].push(9);
+        uint i = 0;
+        delete matrix[i++][0];
+        assert(i == 1);
+        assert(matrix[0][0] == 0);
+    }
+
+    /// @custom:key box
+    function testStoragePushImpureReceiver() public {
+        require(matrix.length == 0);
+        matrix.push();
+        matrix.push();
+        uint i = 0;
+        matrix[i++].push(i);
+        assert(i == 1);
+        assert(matrix[0][0] == 1);
+    }
+
+    /// @custom:key box
+    function testCompoundAssignImpureReceiver() public {
+        require(persons.length == 0);
+        persons.push();
+        persons.push();
+        persons[0].age = 5;
+        uint i = 0;
+        persons[i++].age += i;
+        assert(i == 1);
+        assert(persons[0].age == 5);
+    }
+
+    function testMemoryFieldWriteImpureReceiver() public {
+        Token[] memory toks = new Token[](2);
+        uint i = 0;
+        toks[i++].value = i;
+        assert(i == 1);
+        assert(toks[0].value == 0);
+    }
+
+    /// @custom:key box
+    function testIndexWriteReceiverReadsMutatedVar() public {
+        require(matrix.length == 0);
+        matrix.push();
+        matrix.push();
+        matrix[0].push(0);
+        matrix[1].push(0);
+        uint k = 0;
+        matrix[k][k++] = 77;
+        assert(k == 1);
+        assert(matrix[0][0] == 77);
+        assert(matrix[1][0] == 0);
+    }
+
     function testNestedStorageWrites() public {
         alice.account.balance = 10;
         alice.account.token.value = 5;
@@ -1178,6 +1825,28 @@ contract TestSuite {
         uint v = alice.account.token.value;
         assert(b == 0);
         assert(v == 0);
+    }
+
+    /// @custom:key box
+    function testStorageIndexWriteImpureIndexPrimitiveRhs() public {
+        require(a.length == 0);
+        uint i = 0;
+        a.push(100);
+        a.push(100);
+        a[i++] = i;
+        assert(i == 1);
+        assert(a[0] == 0);
+    }
+
+    /// @custom:key box
+    function testStorageIndexWriteImpureIndexRefRhs() public {
+        require(persons.length == 0);
+        persons.push();
+        persons.push();
+        bob.age = 0;
+        persons[bob.age++] = bob;
+        assert(bob.age == 1);
+        assert(persons[0].age == 1);
     }
 
     /// @custom:key box
@@ -1416,5 +2085,320 @@ contract TestSuite {
         age = 42;
         uint v = age;
         assert(v == 42);
+    }
+
+    // ── arithmetic on pinned ranges ──
+
+    /// @custom:key box
+    function localArithmeticInRange(uint x) public {
+        require(x >= 1 && x <= 100);
+        uint r;
+        r = x + 1;
+        r -= 1;
+        ++r;
+        assert(r == x + 1);
+    }
+
+    /// @custom:key box
+    function signedUnaryMinusInRange(int8 x) public {
+        require(x == 5);
+        int8 r;
+        int8 expected;
+        r = -x;
+        expected = -5;
+        assert(r == expected);
+    }
+
+    // ── Reference-source evaluation order ──
+
+    /// @custom:key box
+    function storageIndexWriteRefSourceImpureIndex() public {
+        require(persons.length == 0);
+        persons.push();
+        Person memory p;
+        persons[p.age++] = p;
+        assert(persons[0].age == 1);
+    }
+
+    /// @custom:key box
+    function storageFieldWriteRefSourceImpureReceiver() public {
+        require(persons.length == 0);
+        persons.push();
+        Account memory acc;
+        persons[acc.balance++].account = acc;
+        assert(persons[0].account.balance == 1);
+    }
+
+    /// @custom:key box
+    function storageFieldWriteStorageRefImpureReceiver() public {
+        require(persons.length == 0);
+        persons.push();
+        persons.push();
+        alice.account.balance = 9;
+        Account storage src = alice.account;
+        uint i = 0;
+        persons[i++].account = src;
+        assert(i == 1);
+        assert(persons[0].account.balance == 9);
+    }
+
+    /// @custom:key box
+    function storageFieldWriteRootRefImpureReceiver() public {
+        require(persons.length == 0);
+        persons.push();
+        persons.push();
+        tok.value = 4;
+        uint i = 0;
+        persons[i++].account.token = tok;
+        assert(i == 1);
+        assert(persons[0].account.token.value == 4);
+    }
+
+    function memoryFieldWriteMemRefImpureReceiver() public {
+        Person[] memory ps = new Person[](2);
+        Account memory src;
+        src.balance = 6;
+        uint i = 0;
+        ps[i++].account = src;
+        assert(i == 1);
+        assert(ps[0].account.balance == 6);
+    }
+
+    /// @custom:key box
+    function storageIndexWriteRootRefImpureReceiver() public {
+        require(buckets.length == 0);
+        buckets.push();
+        buckets.push();
+        require(buckets[1].tokens.length == 0);
+        buckets[1].tokens.push();
+        tok.value = 3;
+        uint i = 1;
+        buckets[i++].tokens[0] = tok;
+        assert(i == 2);
+        assert(buckets[1].tokens[0].value == 3);
+    }
+
+    /// @custom:key box
+    function storageIndexWriteStorageRefImpureReceiver() public {
+        require(buckets.length == 0);
+        buckets.push();
+        buckets.push();
+        require(buckets[1].tokens.length == 0);
+        buckets[1].tokens.push();
+        tok.value = 8;
+        Token storage src = tok;
+        uint i = 1;
+        buckets[i++].tokens[0] = src;
+        assert(i == 2);
+        assert(buckets[1].tokens[0].value == 8);
+    }
+
+    /// @custom:key box
+    function memoryToStorageIndexImpureReceiver() public {
+        require(buckets.length == 0);
+        buckets.push();
+        buckets.push();
+        require(buckets[1].tokens.length == 0);
+        buckets[1].tokens.push();
+        Token memory src;
+        src.value = 5;
+        uint i = 1;
+        buckets[i++].tokens[0] = src;
+        assert(i == 2);
+        assert(buckets[1].tokens[0].value == 5);
+    }
+
+    function memoryIndexWriteMemRefImpureReceiver() public {
+        TokenBucket[] memory tbs = new TokenBucket[](2);
+        Token[] memory slots = new Token[](2);
+        tbs[1].tokens = slots;
+        Token memory src;
+        src.value = 2;
+        uint i = 1;
+        tbs[i++].tokens[0] = src;
+        assert(i == 2);
+        assert(tbs[1].tokens[0].value == 2);
+    }
+
+    // ── Binary operand evaluation order: solc evaluates the right operand first ──
+
+    function additionLeftImpureRightReadFirst() public {
+        uint i = 1;
+        uint x = i++ + i;
+        assert(x == 2);
+        assert(i == 2);
+    }
+
+    function additionRightImpure() public {
+        uint i = 1;
+        uint x = i + i++;
+        assert(x == 3);
+        assert(i == 2);
+    }
+
+    function additionBothOperandsImpure() public {
+        uint i = 1;
+        uint x = i++ + i++;
+        assert(x == 3);
+        assert(i == 3);
+    }
+
+    function subtractionLeftImpureRightReadFirst() public {
+        uint i = 5;
+        uint x = i++ - i;
+        assert(x == 0);
+        assert(i == 6);
+    }
+
+    function lessThanLeftImpureRightReadFirst() public {
+        uint i = 1;
+        bool b = i++ < i;
+        assert(!b);
+        assert(i == 2);
+    }
+
+    // ── Storage copy: mapping members stay the target's own ──
+
+    function testCopyRootKeepsValueMembers() public {
+        bob.age = 7;
+        bob.account.balance = 3;
+        alice = bob;
+        bob.age = 8;
+        assert(alice.age == 7);
+        assert(alice.account.balance == 3);
+    }
+
+    function testCopyFieldNested() public {
+        Account storage acc = bob.account;
+        acc.token.value = 5;
+        alice.account = acc;
+        acc.token.value = 6;
+        assert(alice.account.token.value == 5);
+    }
+
+    /// @custom:key box
+    function testCopyOfCopy() public {
+        require(persons.length == 0);
+        bob.age = 4;
+        alice = bob;
+        persons.push();
+        persons[0] = alice;
+        assert(persons[0].age == 4);
+    }
+
+    /// @custom:key box
+    function testCopyIntoMappingEntry(uint k) public {
+        require(k == 3);
+        alice.age = 6;
+        people[k] = alice;
+        alice.age = 7;
+        assert(people[k].age == 6);
+    }
+
+    /// @custom:key box
+    function testCopyArrayMemberElements() public {
+        require(basketA.items.length == 0);
+        require(basketB.items.length == 0);
+        basketA.items.push(9);
+        basketB = basketA;
+        basketA.items[0] = 1;
+        assert(basketB.items.length == 1);
+        assert(basketB.items[0] == 9);
+    }
+
+    function testCopyPrimitiveRoot() public {
+        age = 3;
+        balance = age;
+        age = 4;
+        assert(balance == 3);
+    }
+
+    function testCopyStoreRootFromField() public {
+        alice.account.token.value = 2;
+        tok = alice.account.token;
+        alice.account.token.value = 1;
+        assert(tok.value == 2);
+    }
+
+    function testCopyStoreRootFromIndex() public {
+        people[1].age = 2;
+        alice = people[1];
+        people[1].age = 3;
+        assert(alice.age == 2);
+    }
+
+    /// @custom:key box
+    function testPushCopyThenDeleteTarget() public {
+        require(tokens.length == 0);
+        tok.value = 4;
+        Token storage src = tok;
+        tokens.push() = src;
+        delete tokens[0];
+        assert(tokens[0].value == 0);
+        assert(tok.value == 4);
+    }
+
+    // ── Index writes whose receiver and index are both impure (docs/storage.md section 5) ──
+
+    /// @custom:key box
+    function indexWriteBothImpureStorageRef() public {
+        require(buckets.length == 0);
+        buckets.push();
+        buckets.push();
+        require(buckets[1].tokens.length == 0);
+        buckets[1].tokens.push();
+        buckets[1].tokens.push();
+        tok.value = 8;
+        Token storage src = tok;
+        uint i = 1;
+        uint j = 0;
+        buckets[i++].tokens[j++] = src;
+        assert(i == 2);
+        assert(j == 1);
+        assert(buckets[1].tokens[0].value == 8);
+    }
+
+    /// @custom:key box
+    function indexWriteBothImpureMemToStorage() public {
+        require(buckets.length == 0);
+        buckets.push();
+        buckets.push();
+        require(buckets[1].tokens.length == 0);
+        buckets[1].tokens.push();
+        buckets[1].tokens.push();
+        Token memory src;
+        src.value = 5;
+        uint i = 1;
+        uint j = 0;
+        buckets[i++].tokens[j++] = src;
+        assert(i == 2);
+        assert(j == 1);
+        assert(buckets[1].tokens[0].value == 5);
+    }
+
+    function indexWriteBothImpureMemoryValue() public {
+        Basket[] memory bs = new Basket[](2);
+        uint[] memory slots = new uint[](2);
+        bs[1].items = slots;
+        uint i = 1;
+        uint j = 0;
+        bs[i++].items[j++] = 42;
+        assert(i == 2);
+        assert(j == 1);
+        assert(bs[1].items[0] == 42);
+    }
+
+    function indexWriteBothImpureMemRef() public {
+        TokenBucket[] memory tbs = new TokenBucket[](2);
+        Token[] memory slots = new Token[](2);
+        tbs[1].tokens = slots;
+        Token memory src;
+        src.value = 2;
+        uint i = 1;
+        uint j = 0;
+        tbs[i++].tokens[j++] = src;
+        assert(i == 2);
+        assert(j == 1);
+        assert(tbs[1].tokens[0].value == 2);
     }
 }

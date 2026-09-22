@@ -9,8 +9,8 @@ import org.key_project.util.collection.ImmutableSet;
 
 
 public class MappingSort extends SortImpl {
-    private static Sort keySort;
-    private static Sort valueSort;
+    private final Sort keySort;
+    private final Sort valueSort;
 
     public MappingSort(Sort keySort, Sort valueSort, ImmutableSet<Sort> ext) {
         super(new Name("mapping(" + keySort + " => " + valueSort + ")"), false, ext);

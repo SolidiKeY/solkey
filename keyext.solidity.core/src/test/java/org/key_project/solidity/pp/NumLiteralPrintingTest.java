@@ -92,6 +92,32 @@ public class NumLiteralPrintingTest {
     }
 
     @Test
+    void schematicProgramTacletPrintsInKeySyntax() throws Exception {
+        KeYEnvironment env = KeYEnvironment.load(resource(FIELD_EXAMPLE));
+        Taclet taclet =
+            env.getInitConfig().lookupActiveTaclet(new Name("storageFieldWriteCaptureSrc"));
+        assertNotNull(taclet, "taclet storageFieldWriteCaptureSrc should be loaded");
+
+        var lp = new LogicPrinter(new NotationInfo(), env.getServices(), PosTableLayouter.pure());
+        // A \replacewith declaring a fresh variable (`s#aliasType storage s#sp = s#nsp;`) used to
+        // throw, which made the GUI fall back to the raw taclet toString.
+        lp.printTaclet(taclet);
+        String out = lp.result();
+
+        // The context block is printed as a plain block: the c#/#c markers are gone.
+        assertFalse(out.contains("c#"), () -> "context markers should not be printed: " + out);
+        // Program schema variables are declared with their sort, as written in the .key file.
+        assertTrue(out.contains("\\schemaVar \\program Path[storage,complex,reference] nsp;"),
+            () -> "expected the program SV sort in the declaration: " + out);
+        // A formula SV needs no sort, and no declaration has a doubled space.
+        assertTrue(out.contains("\\schemaVar \\formula post;"),
+            () -> "expected a sortless formula SV declaration: " + out);
+        // The varcond renders as written, without the s# program prefix.
+        assertTrue(out.contains("\\newTypeOf(sp, nsp)"),
+            () -> "expected \\newTypeOf(sp, nsp) in: " + out);
+    }
+
+    @Test
     void unambiguousFieldPrintsShortFormViaToggle() throws Exception {
         KeYEnvironment env = KeYEnvironment.load(resource(FIELD_EXAMPLE));
         Services services = env.getServices();

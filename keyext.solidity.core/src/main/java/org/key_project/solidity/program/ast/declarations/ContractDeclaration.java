@@ -12,7 +12,6 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.util.collection.ImmutableArray;
 
-import org.jspecify.annotations.NonNull;
 
 public class ContractDeclaration implements Declaration, Type {
 
@@ -44,11 +43,11 @@ public class ContractDeclaration implements Declaration, Type {
     }
 
     @Override
-    public @NonNull String toString() {
+    public String toString() {
         return Stream.of(
             "contract " + name + " {",
             structs.stream()
-                    .map(it -> "struct " + it.name + " {\n"
+                    .map(it -> "struct " + it.name() + " {\n"
                         + it.getFields().stream()
                                 .map(jt -> jt.toString() + "\n")
                                 .collect(Collectors.joining())
@@ -67,7 +66,7 @@ public class ContractDeclaration implements Declaration, Type {
     }
 
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         if (n < 0)
             throw new IndexOutOfBoundsException(
                 "Index should be 0 <= " + n + " < " + getChildCount());
@@ -85,7 +84,8 @@ public class ContractDeclaration implements Declaration, Type {
         n -= functions.size();;
         if (n < enums.size())
             return enums.get(n);
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+        throw new IndexOutOfBoundsException(
+            "Index should be 0 <= " + n + " < " + getChildCount());
     }
 
     @Override

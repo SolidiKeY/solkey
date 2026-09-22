@@ -23,11 +23,11 @@ Most program rules follow this shape:
 ```key
 ruleName {
     \schemaVar \formula post;
-    \schemaVar \program Path[storage,simple,global] gp;
+    \schemaVar \program Path[storage,simple,global] gsp;
     \schemaVar \program SimpleExpression se;
 
-    \find(\modality{#mod}{c# s#gp = s#se; #c}\endmodality(post))
-    \replacewith({storage := save(storage, gp, se)}
+    \find(\modality{#mod}{c# s#gsp = s#se; #c}\endmodality(post))
+    \replacewith({storage := save(storage, gsp, se)}
         \modality{#mod}{c# #c}\endmodality(post))
     \heuristics(simplify_prog)
 };
@@ -50,19 +50,26 @@ Prefer precise program sorts so rules stay disjoint:
 - `Variable` for stack/value targets; a variable carries no value-mode flag —
   keep rules disjoint via the field/path side instead: `Path[...,primitive]` /
   `Path[...,reference]` type-kind flags, `Path[...,primitiveElement]` /
-  `Path[...,referenceElement]` element-kind flags on indexed receivers,
-  `Field[primitive]` / `Field[reference]` on accessed members, and
-  `SimpleExpression[primitive]` / `NonSimpleExpression[primitive]` on
-  expressions (mappings count as reference throughout).
+  `Path[...,referenceElement]` element-kind flags on indexed receivers, and
+  `SimpleExpression[primitive]` / `NonSimpleExpression[primitive]` /
+  `Expression[primitive]` on expressions (mappings count as reference
+  throughout). There is no index-purity flag: a path may carry a side-effecting
+  index, and write rules stay sound by capturing the right-hand side, then the
+  receiver, then the index. Accessed members carry
+  no flag: a `Field` rule discriminates on the member's declared type through
+  the bound of the generic sort its `\hasFieldSort` / `\hasMemoryFieldSort`
+  varcond binds (`alphaPrim \extends Prim` admits only value-typed members,
+  `alphaId \extends Identity` only reference-typed ones).
 - `Variable[storage]` for local storage aliases.
 - `Variable[memory]` for local memory references.
 - `Path[storage,simple,global]` for contract storage roots.
 - `Path[storage,simple]` for simple storage roots or aliases.
 - `Path[storage,complex]` for member/index paths that need unfolding.
-- `StoragePath`, `SimpleStoragePath`, `MemoryPath`, and related path sorts when
-  the exact path kind is the point of the rule.
+- `Path[simple]` for a simple target of either data location.
 - `SimpleExpression`, `NonSimpleExpression`, `Expression`, `Field`, and `Type`
-  for statement pieces.
+  for statement pieces; `Expression[primitive]` for a right-hand side a capture
+  rule may hoist into a value temporary in one step (primitive-typed and not a
+  complex path).
 
 ### Naming conventions
 
@@ -72,25 +79,46 @@ of the same shape uses the same name for the same role:
 | Role | Name |
 |---|---|
 | Postcondition formula | `post` |
-| Simple / nonsimple / arbitrary expression | `se` (`se1`, `se2`) / `nse` / `e` (`e1`, `e2`) |
-| Simple index expression | `i` |
+| Simple / nonsimple / arbitrary expression | `se` (`se1`, `se2`) / `nse` / `e` |
+| Simple index expression | `ie` |
 | Stack variable read target | `v` |
 | Assignment target (arbitrary / nonsimple) | `lhs` / `nlhs` |
-| Global storage root | `gp` |
+| Global storage root (`Path[storage,simple,global]`) | `gsp` |
 | Simple / nonsimple storage path | `sp` (`sp1`, `sp2`) / `nsp` |
-| Local storage alias variable | `lp` |
-| Simple / nonsimple memory path | `mp` / `nmp` |
-| Field (second field) | `a` (`b`) |
+| Storage path of any simplicity (`Path[storage]`) | `path` |
+| Captured right-hand side and its type | `rv`, `rvType` |
+| Reference right-hand side of a capture rule | `src` |
+| Local storage variable (`Variable[storage]`) | `lsv` |
+| Memory variable / nonsimple memory path | `mv` (`mv1`, `mv2`) / `nmp` |
+| Field (source field of a two-field copy) | `fld` (`srcFld`) |
+| Local value variable (`Variable`) | `lv` |
+| Then / else branch statement | `thenStm` / `elseStm` |
+| Then / else arm of a ternary | `thenExpr` / `elseExpr` |
 | Fresh captured value temp and its type | `pv`, `pvType` |
+| Double capture: right-operand snapshot, then left operand | `pv1`/`pv1Type`, `pv2`/`pv2Type` |
 | Type of a fresh path alias | `aliasType` |
 | Declared type in value declarations | `varType` |
-| Address in transfer rules (`net(a)`) | `a` |
+| Simple / nonsimple address in transfer rules (`net(sadr)`) | `sadr` / `nadr` |
+
+A trailing `p` means the name denotes a path and a trailing `v` that it denotes
+a variable, so `gsp` is a storage location a write addresses while `lsv`, `lv`,
+`mv` and `v` are program variables an update assigns to. A trailing `e` means
+the name denotes an expression, as in `ie` and `se`. The type of a fresh
+temporary
+is named after the temporary (`pvType`, `sadrType`, `seType`) except for a path
+alias, which uses the role name `aliasType`.
+
+One apparent exception is deliberate: the fresh alias of an `_unfold_` taclet
+is declared `Variable[storage]` (or `Variable[memory]`) because `\newTypeOf`
+needs a program variable to introduce, yet it is named `sp` (`mv`) for the
+simple path it plays the part of in the rest of the rule. Reserve `lsv` for a
+storage variable the taclet did not create.
 
 Matched program schema variables can be used directly in the term positions of
 `\replacewith`/`\add`: the engine lowers the matched AST piece to its logic
 form automatically (storage paths become `List` terms, fields become `Field`
 constants, simple expressions become value terms). Write `save(storage,
-gp, se)` directly — no bridging `\term` variable is needed. (Only in
+gsp, se)` directly — no bridging `\term` variable is needed. (Only in
 `\find`/`\assumes` term positions are program schema variables not allowed;
 there the `\sameAsTerm(programPart, termPart)` varcond still bridges them.)
 
@@ -103,11 +131,18 @@ type as another expression/path.
 Example unfold rule:
 
 ```key
-\find(\modality{#mod}{c# s#nsp.s#a = s#se; #c}\endmodality(post))
+\find(\modality{#mod}{c# s#nsp.s#fld = s#se; #c}\endmodality(post))
 \varcond(\newTypeOf(sp, nsp), \newTypeOf(aliasType, nsp))
 \replacewith(\modality{#mod}{c# s#aliasType storage s#sp = s#nsp;
-                              s#sp.s#a = s#se; #c}\endmodality(post))
+                              s#sp.s#fld = s#se; #c}\endmodality(post))
 ```
+
+`\notAllSimple(path, expr)` holds unless *both* are instantiated with simple
+program elements. A capture rule that matches a receiver of any simplicity needs
+it, since a taclet sort cannot express "the receiver is complex *or* the index is
+non-simple" and the rule would otherwise re-match its own output forever. Only
+the `…CaptureAll` rules of `\rules(indexWriteCapture:allAtOnce)` use it
+(`docs/storage.md` section 5).
 
 ## Storage Rule Pattern
 
@@ -147,11 +182,26 @@ An example that needs an assumption states it with `require` and is tagged `/// 
 box`, which makes `require` an assumption instead of an obligation. Full conventions:
 `keyext.solidity.examples/README.md`.
 
+## `\addprogvars` — common mistake
+
+Do **not** put `\addprogvars(pv)` on a capture/unfold taclet whose `\replacewith`
+re-emits a declaration for the fresh variable (`s#pvType s#pv = s#nse; ...`).
+That declaration is consumed later by `memoryLocalDeclInitDrop`, which registers
+the variable itself, so the early `\addprogvars` is redundant. `\addprogvars`
+belongs only on the rules that consume the declaration statement itself:
+`memoryLocalDeclInitDrop`, `storageLocalDeclSkip`, `valueDeclSkip`,
+`memoryReferenceDeclFreshAlloc`, and the `localDecl*crement` family.
+
 Verify individual examples with the Solidity CLI:
 
 ```bash
 ./run-key.sh keyext.solidity.examples/TestSuite.sol <function>
+./run-key.sh keyext.solidity.examples/TestSuite.sol -f <function> --open-goals
 ```
+
+To read an existing rule without opening the whole file, use
+`scripts/taclet.sh NAME` (`--index` for the section banners, `--list` for every
+rule name).
 
 For the taclet example set, use the focused harnesses:
 
@@ -161,4 +211,6 @@ For the taclet example set, use the focused harnesses:
 ```
 
 Avoid using the full legacy `RulesTest` suite as the first acceptance gate for
-new taclet examples; it can fail for unrelated older examples.
+new taclet examples; it can fail for unrelated older examples. It now lives in
+the CI-only examples group — run it via
+`./gradlew :keyext.solidity.core:testSolidityExamples --tests "*RulesTest"`.

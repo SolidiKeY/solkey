@@ -323,7 +323,7 @@ public class EqualityConstraint implements Constraint {
         }
 
 
-        nat = handleRust(t0, t1, nat);
+        nat = handleSolidity(t0, t1, nat);
         if (nat == FAILED) {
             return TOP;
         }
@@ -375,11 +375,12 @@ public class EqualityConstraint implements Constraint {
     }
 
 
-    /// used to encode that <tt>handleRust</tt> results in an unsatisfiable constraint (faster than
+    /// used to encode that <tt>handleSolidity</tt> results in an unsatisfiable constraint (faster
+    /// than
     /// using exceptions)
     private static final NameAbstractionTable FAILED = new NameAbstractionTable();
 
-    private static NameAbstractionTable handleRust(Term t0, Term t1, NameAbstractionTable nat) {
+    private static NameAbstractionTable handleSolidity(Term t0, Term t1, NameAbstractionTable nat) {
         if (t0.op() instanceof SModality m1 && t1.op() instanceof SModality m2) {
             nat = checkNat(nat);
             if (RENAMING_PROGRAM_ELEMENT_PROPERTY.equalsModThisProperty(m1.programBlock().program(),

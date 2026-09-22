@@ -13,6 +13,8 @@ import org.key_project.prover.rules.VariableCondition;
 import org.key_project.prover.rules.instantiation.MatchResultInfo;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.sort.GenericSort;
+import org.key_project.solidity.program.ast.StaticTypes;
+import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.rule.matching.inst.GenericSortCondition;
@@ -59,11 +61,13 @@ public final class SolidityTypeToSortCondition implements VariableCondition {
         if (svSubst instanceof Term t) {
             type = t.sort();
         } else if (svSubst instanceof Type st) {
-            type = services.getSolidityInfo().getKeYSolidityType(st).getSort();
+            type = sortOf(services, st);
         } else if (svSubst instanceof Expression expr) {
-            type = services.getSolidityInfo().getKeYSolidityType(expr.getType())
-                    .getSort();
+            type = sortOf(services, expr.getType());
         } else {
+            return null;
+        }
+        if (type == null) {
             return null;
         }
         try {
@@ -72,6 +76,16 @@ public final class SolidityTypeToSortCondition implements VariableCondition {
         } catch (SortException e) {
             return null;
         }
+    }
+
+    @Nullable
+    private static Sort sortOf(Services services, @Nullable Type type) {
+        Type unwrapped = StaticTypes.unwrap(type);
+        if (unwrapped == null) {
+            return null;
+        }
+        KeYSolidityType keyType = services.getSolidityInfo().getKeYSolidityType(unwrapped);
+        return keyType == null ? null : keyType.getSort();
     }
 
     @Override

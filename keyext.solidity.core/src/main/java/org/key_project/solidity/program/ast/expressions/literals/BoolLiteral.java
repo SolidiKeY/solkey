@@ -11,6 +11,8 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.solidity.theory.BoolLDT;
 import org.key_project.util.ExtList;
 
+import org.jspecify.annotations.Nullable;
+
 public class BoolLiteral extends Literal {
 
     @Override
@@ -47,5 +49,19 @@ public class BoolLiteral extends Literal {
     @Override
     public int computeHashCode() {
         return 37 * super.computeHashCode() + Boolean.hashCode(value);
+    }
+
+    @Override
+    public boolean equals(@Nullable Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof BoolLiteral that))
+            return false;
+        return value == that.value;
+    }
+
+    @Override
+    public int hashCode() {
+        return Boolean.hashCode(value);
     }
 }

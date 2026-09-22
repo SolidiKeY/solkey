@@ -40,7 +40,7 @@ class ProgramVariableSVSortTest {
     void memoryFilterMatchesOnlyMemoryVariables() {
         ProgramSVSort sort = ProgramSVSort.VARIABLE.createInstance("memory");
 
-        assertTrue(sort.canStandFor(variable("mp", DataLocation.Memory), services));
+        assertTrue(sort.canStandFor(variable("mv", DataLocation.Memory), services));
         assertFalse(sort.canStandFor(variable("sp", DataLocation.Storage), services));
         assertFalse(sort.canStandFor(variable("x", DataLocation.Default), services));
     }

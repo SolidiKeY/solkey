@@ -14,7 +14,6 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.collection.ImmutableArray;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 /// Placeholder statement standing for the (not yet inlined) body of a Solidity
@@ -34,24 +33,24 @@ public class FunctionBodyStatement implements Statement {
     /// the optional program variable receiving the function's result
     private final @Nullable ProgramVariable resultVar;
     /// the function whose body this statement stands for
-    private final @NonNull FunctionDeclaration function;
+    private final FunctionDeclaration function;
     /// the name of the contract declaring the function (for display), or `null` if unknown
     private final @Nullable Name contractName;
     /// the actual arguments passed at the call site
-    private final @NonNull ImmutableArray<Expression> arguments;
+    private final ImmutableArray<Expression> arguments;
 
     public FunctionBodyStatement(@Nullable ProgramVariable resultVar,
-            @NonNull FunctionDeclaration function, List<Expression> arguments) {
+            FunctionDeclaration function, List<Expression> arguments) {
         this(resultVar, function, new ImmutableArray<>(arguments), null);
     }
 
     public FunctionBodyStatement(@Nullable ProgramVariable resultVar,
-            @NonNull FunctionDeclaration function, @NonNull ImmutableArray<Expression> arguments) {
+            FunctionDeclaration function, ImmutableArray<Expression> arguments) {
         this(resultVar, function, arguments, null);
     }
 
     public FunctionBodyStatement(@Nullable ProgramVariable resultVar,
-            @NonNull FunctionDeclaration function, @NonNull ImmutableArray<Expression> arguments,
+            FunctionDeclaration function, ImmutableArray<Expression> arguments,
             @Nullable Name contractName) {
         this.resultVar = resultVar;
         this.function = function;
@@ -63,16 +62,16 @@ public class FunctionBodyStatement implements Statement {
         return resultVar;
     }
 
-    public @NonNull FunctionDeclaration getFunction() {
+    public FunctionDeclaration getFunction() {
         return function;
     }
 
-    public @NonNull ImmutableArray<Expression> getArguments() {
+    public ImmutableArray<Expression> getArguments() {
         return arguments;
     }
 
     /// @return the body block of the function this statement stands for
-    public @NonNull Block getBody() {
+    public Block getBody() {
         return function.getBody();
     }
 
@@ -82,7 +81,7 @@ public class FunctionBodyStatement implements Statement {
     /// variable). The target [FunctionDeclaration] is part of the surrounding context, not a
     /// traversable child.
     @Override
-    public @NonNull SyntaxElement getChild(int n) {
+    public SyntaxElement getChild(int n) {
         if (resultVar != null) {
             if (n == 0) {
                 return resultVar;
@@ -92,7 +91,7 @@ public class FunctionBodyStatement implements Statement {
         if (0 <= n && n < arguments.size()) {
             return arguments.get(n);
         }
-        throw new IndexOutOfBoundsException("Index should be 0 <= " + n + " < " + getChildCount());
+        throw outOfBounds(n);
     }
 
     @Override

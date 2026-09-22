@@ -160,6 +160,7 @@ public class InitConfig {
 
     public void addTaclets(Collection<Taclet> tacs) {
         taclets = taclets.append(tacs);
+        activatedTacletCache = null;
     }
 
     public void setTaclets(ImmutableList<Taclet> tacs) {
