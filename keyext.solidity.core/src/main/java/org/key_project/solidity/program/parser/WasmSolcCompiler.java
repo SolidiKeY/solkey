@@ -33,6 +33,13 @@ public final class WasmSolcCompiler implements SolcCompiler {
 
     private static final String SOLJSON_RESOURCE = "/soljson.js";
 
+    /// Emscripten reaches for `performance.now()` to time itself, and the SMTChecker is the part
+    /// that does — without this, model checking dies on `ReferenceError: performance is not
+    /// defined` while plain compilation never notices. GraalJS is neither a browser nor Node, so
+    /// nothing defines it for us.
+    private static final String PERFORMANCE_POLYFILL =
+        "globalThis.performance = globalThis.performance || { now: () => Date.now() };";
+
     private static final String BIND_ENTRY_POINTS =
         """
                 ({
@@ -98,6 +105,7 @@ public final class WasmSolcCompiler implements SolcCompiler {
                 .allowIO(IOAccess.NONE)
                 .build();
         try {
+            built.eval("js", PERFORMANCE_POLYFILL);
             built.eval(soljsonSource());
             Value entryPoints = built.eval("js", BIND_ENTRY_POINTS);
             compile = entryPoints.getMember("compile");

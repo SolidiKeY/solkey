@@ -28,7 +28,7 @@ import tools.jackson.databind.ObjectMapper;
 /// (`require(x >= 1 && x <= 100);`). Walking the body's leading statements over exactly those
 /// shapes recovers an argument vector the proof talks about: the pinned value, or the tightest
 /// bound of the pinned range as a witness.
-final class PinnedArguments {
+public final class PinnedArguments {
 
     private PinnedArguments() {}
 
@@ -48,7 +48,7 @@ final class PinnedArguments {
 
     /// A value for each of `function`'s parameters in declaration order, or empty if any
     /// parameter is left unpinned by the leading declarations and requires.
-    static Optional<List<BigInteger>> of(Path solFile, String contract,
+    public static Optional<List<BigInteger>> of(Path solFile, String contract,
             SolidityOutline.Function function) throws IOException {
         Map<String, Bounds> pins = new HashMap<>();
         Map<String, BigInteger> locals = new HashMap<>();

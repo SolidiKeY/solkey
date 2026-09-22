@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import org.key_project.logic.Choice;
 import org.key_project.logic.Namespace;
 import org.key_project.solidity.control.KeYEnvironment;
+import org.key_project.solidity.program.parser.SolcWrapper;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.init.SolidityProblemSpec;
 import org.key_project.solidity.proof.init.SolidityProblemSynthesizer;
@@ -24,12 +25,15 @@ import org.key_project.solidity.proof.io.LoadErrors;
 import org.key_project.solidity.proof.io.OutputStreamProofSaver;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
 import org.key_project.solidity.proof.io.ProofSaver;
+import org.key_project.solidity.runtime.SolidityRuntimeCheck;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 public class CLI {
     @Option(names = { "-V", "--version" }, versionHelp = true, description = "display version info")
@@ -94,6 +98,12 @@ public class CLI {
         description = "for a .sol FILE: suppress per-function progress and statistics")
     boolean quiet;
 
+    @Option(names = "--solc",
+        description = "for a .sol FILE: compile it with solc and run it on an in-process EVM "
+            + "instead of proving, reporting compiler diagnostics and any failing assert. "
+            + "Honours --contract and --function.")
+    boolean solc;
+
     public static void main(String[] args) {
         System.exit(execute(args));
     }
@@ -131,6 +141,17 @@ public class CLI {
         if (malformed != null) {
             System.err.println("Error: " + malformed);
             return false;
+        }
+        if (cli.solc) {
+            if (!f.getFileName().toString().endsWith(".sol")) {
+                System.err.println("--solc applies to .sol files only");
+                return false;
+            }
+            if (!cli.choices.isEmpty()) {
+                System.err.println("--option selects taclets, which --solc does not use");
+                return false;
+            }
+            return runSolc(cli, f);
         }
         if (!f.getFileName().toString().endsWith(".sol")) {
             if (cli.function != null || cli.contract != null || !cli.choices.isEmpty()) {
@@ -173,6 +194,90 @@ public class CLI {
             System.out.println("FAILED (" + failures.size() + "): " + String.join(", ", failures));
         }
         return closed == functions.size();
+    }
+
+    /// Compiles `f`, prints what solc says about it, and then runs it.
+    ///
+    /// Compiling alone answers "is this Solidity?", which is rarely the question: a proof that
+    /// will not close usually has a contract that compiles perfectly well. So the file is also
+    /// deployed on an in-process EVM and its functions are called, which answers the question
+    /// actually being asked — does the `assert` hold when the code runs?
+    private static boolean runSolc(CLI cli, Path f) {
+        final JsonNode output;
+        try {
+            output = new ObjectMapper().readTree(SolcWrapper.diagnose(f));
+        } catch (Exception e) {
+            System.err.println("Error while compiling " + cli.file + ":");
+            System.err.println("  " + LoadErrors.describe(e));
+            return false;
+        }
+        int errors = 0;
+        int warnings = 0;
+        for (JsonNode diagnostic : output.path("errors").values()) {
+            String severity = diagnostic.path("severity").asString("");
+            String message = diagnostic.path("formattedMessage")
+                    .asString(diagnostic.path("message").asString(""));
+            if ("error".equals(severity)) {
+                errors++;
+                System.err.println(message);
+            } else {
+                warnings++;
+                if (!cli.quiet) {
+                    System.out.println(message);
+                }
+            }
+        }
+        System.out.println("solc " + SolcWrapper.version() + ": " + errors
+            + (errors == 1 ? " error, " : " errors, ") + warnings
+            + (warnings == 1 ? " warning" : " warnings"));
+        if (errors > 0) {
+            // Nothing to run: solc produced no bytecode.
+            return false;
+        }
+        return runOnEvm(cli, f);
+    }
+
+    /// Runs the selected functions on an EVM and prints one line each, `N/M ok` last.
+    private static boolean runOnEvm(CLI cli, Path f) {
+        final List<SolidityRuntimeCheck.Verdict> verdicts;
+        try {
+            verdicts = SolidityRuntimeCheck.run(f, cli.contract, cli.function);
+        } catch (Exception e) {
+            System.err.println("Error while running " + cli.file + ":");
+            System.err.println("  " + LoadErrors.describe(e));
+            return false;
+        }
+        if (verdicts.isEmpty()) {
+            System.out.println("no function to run");
+            return true;
+        }
+        int skipped = 0;
+        List<String> failures = new ArrayList<>();
+        for (SolidityRuntimeCheck.Verdict verdict : verdicts) {
+            boolean good = verdict.outcome() == SolidityRuntimeCheck.Outcome.OK;
+            final String label;
+            if (good) {
+                label = "OK   ";
+            } else if (verdict.outcome() == SolidityRuntimeCheck.Outcome.SKIPPED) {
+                skipped++;
+                label = "SKIP ";
+            } else {
+                failures.add(verdict.function() + " (" + verdict.describe() + ")");
+                label = "FAIL ";
+            }
+            if (!cli.quiet || !good) {
+                System.out.println(label + verdict.function()
+                        + (good ? "" : " — " + verdict.describe()));
+            }
+        }
+        int ran = verdicts.size() - skipped;
+        System.out.println((ran - failures.size()) + "/" + ran + " ran without a failing assert"
+            + (skipped > 0 ? " (" + skipped + " not run)" : ""));
+        if (!failures.isEmpty()) {
+            System.out.println(
+                "FAILED (" + failures.size() + "): " + String.join(", ", failures));
+        }
+        return failures.isEmpty();
     }
 
     /// The result of one proof attempt: whether it closed, how many goals were left open, and how

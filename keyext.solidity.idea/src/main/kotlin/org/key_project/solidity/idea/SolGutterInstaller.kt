@@ -2,7 +2,9 @@ package org.key_project.solidity.idea
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -19,7 +21,7 @@ import com.intellij.util.Alarm
 import javax.swing.Icon
 
 /**
- * Puts a ▶ in the gutter beside every public function of an open `.sol` file.
+ * Puts a ▶ in the gutter beside every contract and every public function of an open `.sol` file.
  *
  * The icons live in the editor's own markup model rather than coming from a `LineMarkerProvider`,
  * because that extension point is registered per language and the IDE only knows Solidity when a
@@ -72,14 +74,21 @@ class SolGutterInstaller(
             return
         }
         val added = mutableListOf<RangeHighlighter>()
-        for (function in SolFunctionScanner.scan(text)) {
-            if (function.offset >= editor.document.textLength) {
+        val outline = SolFunctionScanner.scanAll(text)
+        val targets = outline.contracts.map { SolKeyTarget.Contract(it) } +
+            outline.functions.map { SolKeyTarget.Function(it) }
+        for (target in targets) {
+            val offset = when (target) {
+                is SolKeyTarget.Contract -> target.contract.offset
+                is SolKeyTarget.Function -> target.function.offset
+            }
+            if (offset >= editor.document.textLength) {
                 continue
             }
-            val line = editor.document.getLineNumber(function.offset)
+            val line = editor.document.getLineNumber(offset)
             val highlighter =
                 editor.markupModel.addLineHighlighter(null, line, HighlighterLayer.ADDITIONAL_SYNTAX)
-            highlighter.gutterIconRenderer = ProveGutterIconRenderer(project, file, function)
+            highlighter.gutterIconRenderer = ProveGutterIconRenderer(project, file, target)
             added += highlighter
         }
         editor.putUserData(HIGHLIGHTERS, added)
@@ -114,15 +123,17 @@ class SolGutterInstaller(
 private class ProveGutterIconRenderer(
     private val project: Project,
     private val file: VirtualFile,
-    private val function: SolFunction,
+    private val target: SolKeyTarget,
 ) : com.intellij.openapi.editor.markup.GutterIconRenderer() {
 
-    override fun getIcon(): Icon = AllIcons.Actions.Execute
-
-    override fun getTooltipText(): String {
-        val qualified = function.contract?.let { "$it.${function.name}" } ?: function.name
-        return "Prove $qualified in KeYther"
+    override fun getIcon(): Icon = when (target) {
+        // A whole contract is many proofs, and the icon says so before the click does.
+        is SolKeyTarget.Contract -> AllIcons.Actions.RunAll
+        is SolKeyTarget.Function -> AllIcons.Actions.Execute
     }
+
+    override fun getTooltipText(): String =
+        "Prove ${target.label} in KeYther (right-click for the headless prover and solc)"
 
     override fun getAlignment(): Alignment = Alignment.LEFT
 
@@ -132,10 +143,17 @@ private class ProveGutterIconRenderer(
      */
     override fun isNavigateAction(): Boolean = true
 
-    override fun getClickAction(): AnAction = ProveFunctionAction(project, file, function)
+    /** Left click keeps doing what it always did. */
+    override fun getClickAction(): AnAction =
+        SolKeyRunAction(SolKeyTool.KEY_GUI, project, file, target)
+
+    /** Right click offers all three tools on the same target. */
+    override fun getPopupMenuActions(): ActionGroup = DefaultActionGroup(
+        SolKeyTool.entries.map { SolKeyRunAction(it, project, file, target) },
+    )
 
     override fun equals(other: Any?): Boolean =
-        other is ProveGutterIconRenderer && other.file == file && other.function == function
+        other is ProveGutterIconRenderer && other.file == file && other.target == target
 
-    override fun hashCode(): Int = 31 * file.hashCode() + function.hashCode()
+    override fun hashCode(): Int = 31 * file.hashCode() + target.hashCode()
 }

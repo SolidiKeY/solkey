@@ -17,24 +17,24 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /// The sliver of contract ABI encoding the runtime cross-check needs: 4-byte selectors and
 /// calls whose arguments are all 32-byte integer words (provable example functions only take
 /// `int`/`uint` parameters, see `SolidityOutline.Function#isProvable`).
-final class Abi {
+public final class Abi {
 
     private Abi() {}
 
     /// Canonical signature of an example function, e.g. `pushWithArgument(uint256)`. The
     /// parameter types come from solc's `typeString`, which is already canonical.
-    static String signatureOf(SolidityOutline.Function function) {
+    public static String signatureOf(SolidityOutline.Function function) {
         return function.name() + function.parameters().stream()
                 .map(SolidityOutline.Parameter::type)
                 .collect(Collectors.joining(",", "(", ")"));
     }
 
-    static Bytes selector(String signature) {
+    public static Bytes selector(String signature) {
         return Bytes.wrap(new Keccak.Digest256().digest(signature.getBytes(UTF_8))).slice(0, 4);
     }
 
     /// Selector plus one sign-extended 32-byte big-endian word per argument.
-    static Bytes encodeCall(String signature, List<BigInteger> args) {
+    public static Bytes encodeCall(String signature, List<BigInteger> args) {
         Bytes[] parts = new Bytes[args.size() + 1];
         parts[0] = selector(signature);
         for (int i = 0; i < args.size(); i++) {

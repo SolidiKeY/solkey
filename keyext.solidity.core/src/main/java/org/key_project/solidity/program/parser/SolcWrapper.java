@@ -119,16 +119,30 @@ public class SolcWrapper {
                 .toString();
     }
 
+    public static String diagnose(Path contractPath) throws IOException {
+        return compileRaw(unitNameOf(contractPath), readSource(contractPath),
+            MAPPER.createObjectNode()).toString();
+    }
+
+    public static String version() {
+        return COMPILER.version();
+    }
+
     private static JsonNode compile(String unitName, String source, ObjectNode outputSelection)
+            throws IOException {
+        JsonNode output = compileRaw(unitName, source, outputSelection);
+        failOnErrors(output);
+        return output;
+    }
+
+    private static JsonNode compileRaw(String unitName, String source, ObjectNode outputSelection)
             throws IOException {
         ObjectNode input = MAPPER.createObjectNode();
         input.put("language", "Solidity");
         input.putObject("sources").putObject(unitName).put("content", source);
         input.putObject("settings").putObject("outputSelection").set("*", outputSelection);
 
-        JsonNode output = MAPPER.readTree(COMPILER.compile(input.toString()));
-        failOnErrors(output);
-        return output;
+        return MAPPER.readTree(COMPILER.compile(input.toString()));
     }
 
     private static void failOnErrors(JsonNode output) {

@@ -32,6 +32,8 @@ These keep a task to few tool calls. Cost is dominated by round-trips, not by ou
 ./run-key.sh FILE.sol -f fnName --open-goals   # ... and show why it did not close
 ./run-key.sh FILE.key -m 20000 --no-prove      # a .key problem; any CLI option works
 ./run-key.sh FILE.sol -O indexWriteCapture:allAtOnce   # prove under a non-default taclet option
+./run-key.sh FILE.sol --solc                   # compile, then run on an EVM: reports a failing assert
+./run-key.sh FILE.sol --solc -f fnName         # ... for one function
 ./run-key.sh --help                            # every CLI option
 
 scripts/taclet.sh requireSimple      # print one taclet with its file:line
@@ -74,7 +76,7 @@ outside if explicitly instructed.
 | `key.ui` | GUI + CLI entry point |
 | `keyext.solidity.core` | **Solidity verification** — main focus |
 | `keyext.solidity.gui` | **KeYther**, the standalone Swing GUI for the Solidity prover |
-| `keyext.solidity.idea` | IntelliJ IDEA plugin — ▶ gutter icon on public functions. Standalone Gradle build, deliberately **not** in `settings.gradle`. See `docs/idea-setup.md` |
+| `keyext.solidity.idea` | IntelliJ IDEA plugin — ▶ gutter icon on public functions and contracts; left click opens KeYther, right click also offers the headless prover and solc+EVM. Standalone Gradle build, deliberately **not** in `settings.gradle`. See `docs/idea-setup.md` |
 | `keyext.solidity.examples` | **Main taclet examples** (`TestSuite.sol`) |
 
 Dependencies: `keyext.*` → `key.core` → `key.ncore` → `key.util`.
@@ -94,6 +96,9 @@ Solidity → ANTLR → SolidityToKeyConverter → AST → TypeResolver → Abstr
 - **`strategy/`** — `Strategy`, `ApplyStrategy`
 - **`common/`** — `SolidityInfo`, the registry for Solidity types (int8–int256, uint8–uint256,
   bytes1–bytes32, bool, address). Register new types here.
+- **`runtime/`** — the in-process Besu EVM. `SolidityRuntimeCheck` compiles a contract, deploys it
+  and calls its functions, reporting `Panic(0x01)` as a failed `assert`; drives `--solc` and
+  `SolidityRuntimeExecutionTest`
 - **`program/parser/SolJSONParser`** — parses solc's compact JSON AST; `SolcWrapper` and
   `WasmSolcCompiler` produce it by running solc's WebAssembly build on the JVM, with no
   external compiler. See `docs/solc-ast.md`

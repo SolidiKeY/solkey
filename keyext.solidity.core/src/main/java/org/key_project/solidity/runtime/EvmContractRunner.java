@@ -28,13 +28,13 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 /// runtime bytecode directly instead of executing the creation code; the test fixture
 /// guarantees this is equivalent by rejecting contracts with a constructor or an initialized
 /// state variable.
-final class EvmContractRunner {
+public final class EvmContractRunner {
 
     /// The final disposition of a call: `revertData` is non-null exactly for [Status#REVERT]
     /// (and may be empty, a bare `revert`), `haltReason` exactly for
     /// [Status#EXCEPTIONAL_HALT].
-    record CallResult(Status status, Bytes revertData, String haltReason) {
-        enum Status {
+    public record CallResult(Status status, Bytes revertData, String haltReason) {
+        public enum Status {
             SUCCESS, REVERT, EXCEPTIONAL_HALT
         }
     }
@@ -48,11 +48,11 @@ final class EvmContractRunner {
     private final EVM evm = MainnetEVMs.cancun(EvmConfiguration.DEFAULT);
     private final Bytes runtimeCode;
 
-    EvmContractRunner(String runtimeBinHex) {
+    public EvmContractRunner(String runtimeBinHex) {
         this.runtimeCode = Bytes.fromHexString(runtimeBinHex);
     }
 
-    CallResult call(String signature, List<BigInteger> args) {
+    public CallResult call(String signature, List<BigInteger> args) {
         SimpleWorld world = new SimpleWorld();
         world.createAccount(SENDER, 0, Wei.of(BigInteger.TEN.pow(18)));
         world.createAccount(CONTRACT, 1, Wei.ZERO).setCode(runtimeCode);
