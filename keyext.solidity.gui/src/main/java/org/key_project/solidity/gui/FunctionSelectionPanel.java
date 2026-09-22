@@ -6,6 +6,8 @@ package org.key_project.solidity.gui;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Font;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.swing.BorderFactory;
@@ -23,7 +25,8 @@ import javax.swing.tree.TreeSelectionModel;
 
 import org.key_project.solidity.program.parser.SolidityOutline;
 import org.key_project.solidity.proof.init.SolidityProblemSpec;
-import org.key_project.solidity.proof.init.SolidityProblemSynthesizer;
+import org.key_project.solidity.speclang.natspec.KeyNatspec;
+import org.key_project.solidity.speclang.natspec.SpecException;
 
 import org.jspecify.annotations.Nullable;
 
@@ -54,7 +57,8 @@ final class FunctionSelectionPanel extends JPanel {
         tree.setRootVisible(false);
         tree.setShowsRootHandles(true);
         tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-        tree.setCellRenderer(new EntryRenderer());
+        tree.setCellRenderer(new EntryRenderer(outline.contracts().stream()
+                .collect(Collectors.toMap(SolidityOutline.Contract::name, c -> c, (a, b) -> a))));
         tree.addTreeSelectionListener(e -> onSelectionChanged());
         for (int row = 0; row < tree.getRowCount(); row++) {
             tree.expandRow(row);
@@ -92,6 +96,13 @@ final class FunctionSelectionPanel extends JPanel {
             return Optional.empty();
         }
         return Optional.of(SolidityProblemSpec.of(entry.contract(), entry.function().name()));
+    }
+
+    /// Whether the selected function is proved against a specification (a contract invariant
+    /// or its own requires/ensures clauses), which is when a transfer semantics matters.
+    boolean selectionIsSpecified() {
+        Entry entry = selectedEntry();
+        return entry != null && entry.function().isProvable() && isSpecified(entry);
     }
 
     /// Selects `function` of `contract` when the file still declares it; leaves the selection
@@ -165,7 +176,7 @@ final class FunctionSelectionPanel extends JPanel {
             DefaultMutableTreeNode contractNode = new DefaultMutableTreeNode(contract.name());
             for (SolidityOutline.Function function : contract.functions()) {
                 contractNode.add(new DefaultMutableTreeNode(
-                    new Entry(contract.name(), function), false));
+                    new Entry(contract, function), false));
             }
             root.add(contractNode);
         }
@@ -208,7 +219,7 @@ final class FunctionSelectionPanel extends JPanel {
             SolidityOutline.Function function = entry.function();
             String text = function.source().textIn(source);
             header.setText(entry.contract() + "." + function.name() + "  ·  line "
-                + function.source().lineIn(source) + "  ·  " + modalityOf(function)
+                + function.source().lineIn(source) + "  ·  " + modalityOf(entry)
                 + function.unsupportedReason().map(r -> "  ·  not provable: " + r).orElse(""));
             header.setToolTipText(header.getText());
             sourceText.setText(text.isEmpty() ? "(source not available)" : text);
@@ -219,16 +230,52 @@ final class FunctionSelectionPanel extends JPanel {
         }
     }
 
-    /// Which modality the synthesized obligation will use — the natspec directive that decides it
-    /// is part of what the user is choosing.
-    private static String modalityOf(SolidityOutline.Function function) {
-        return function.documentation().contains(SolidityProblemSynthesizer.BOX_DIRECTIVE)
-                ? "box modality"
-                : "diamond modality";
+    /// Which modality the synthesized obligation will use and what it is proved against — the
+    /// natspec clauses that decide it are part of what the user is choosing.
+    private static String modalityOf(Entry entry) {
+        KeyNatspec contractSpec;
+        KeyNatspec functionSpec;
+        try {
+            contractSpec = KeyNatspec.of(entry.owner().documentation());
+            functionSpec = entry.function().natspec();
+        } catch (SpecException e) {
+            return "invalid specification: " + e.getMessage();
+        }
+        if (!contractSpec.isSpecified() && !functionSpec.isSpecified()) {
+            return functionSpec.box() ? "box modality" : "diamond modality";
+        }
+        return "box modality, specified: " + contractSpec.invariants().size() + " invariant, "
+            + functionSpec.requires().size() + " requires, " + functionSpec.ensures().size()
+            + " ensures";
+    }
+
+    private static boolean isSpecified(Entry entry) {
+        try {
+            return KeyNatspec.of(entry.owner().documentation()).isSpecified()
+                    || entry.function().natspec().isSpecified();
+        } catch (SpecException e) {
+            return false;
+        }
+    }
+
+    /// The contract invariant as written, for the contract node's tooltip.
+    private static @Nullable String invariantTooltip(SolidityOutline.Contract contract) {
+        try {
+            List<String> invariants = KeyNatspec.of(contract.documentation()).invariants();
+            return invariants.isEmpty() ? null
+                    : invariants.stream().map(i -> "invariant " + i)
+                            .collect(Collectors.joining("<br>", "<html>", "</html>"));
+        } catch (SpecException e) {
+            return e.getMessage();
+        }
     }
 
     /// One selectable function of one contract.
-    private record Entry(String contract, SolidityOutline.Function function) {
+    private record Entry(SolidityOutline.Contract owner, SolidityOutline.Function function) {
+        String contract() {
+            return owner.name();
+        }
+
         @Override
         public String toString() {
             return label(function);
@@ -237,6 +284,12 @@ final class FunctionSelectionPanel extends JPanel {
 
     /// Greys out the functions no obligation can be generated for and explains why on hover.
     private static final class EntryRenderer extends DefaultTreeCellRenderer {
+
+        private final Map<String, SolidityOutline.Contract> contracts;
+
+        EntryRenderer(Map<String, SolidityOutline.Contract> contracts) {
+            this.contracts = contracts;
+        }
 
         @Override
         public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected,
@@ -249,6 +302,10 @@ final class FunctionSelectionPanel extends JPanel {
                     && !entry.function().isProvable()) {
                 setForeground(Theme.mutedText());
                 setToolTipText(tooltip(entry.function()));
+            } else if (value instanceof DefaultMutableTreeNode node
+                    && node.getUserObject() instanceof String name
+                    && contracts.containsKey(name)) {
+                setToolTipText(invariantTooltip(contracts.get(name)));
             }
             return this;
         }

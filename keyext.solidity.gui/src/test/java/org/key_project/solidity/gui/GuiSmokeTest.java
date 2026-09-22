@@ -93,6 +93,28 @@ public class GuiSmokeTest {
         assertTrue(proof.closed(), "testSimpleAssert should close under auto mode");
     }
 
+    /// A function with `@custom:key` clauses is proved against them: the generated problem
+    /// carries the `insertCInv` taclet, and the ledger obligation closes under auto mode.
+    @Test
+    void loadsASpecifiedSolidityFunction() throws Exception {
+        Path file = example("contracts/Escrow.sol");
+        assertTrue(Files.exists(file), "example must exist: " + file.toAbsolutePath());
+
+        KeYEnvironment<?> env = KeYEnvironment.load(file, "Escrow", "placeInEscrow");
+        Proof proof = env.getLoadedProof();
+        assertNotNull(proof);
+        assertEquals("Escrow.placeInEscrow", proof.name().toString());
+        assertTrue(env.getInitConfig().activatedTaclets().stream()
+                .anyMatch(t -> t.name().toString().equals("insertCInv")),
+            "the invariant taclet should be in the rule set");
+        String rendered = OutputStreamProofSaver.printSequent(proof.root().sequent(),
+            proof.getServices());
+        assertTrue(rendered.contains("CInv(storage, net)"), rendered);
+
+        env.getProofControl().startAndWaitForAutoMode(proof);
+        assertTrue(proof.closed(), "placeInEscrow should close under auto mode");
+    }
+
     /// Naming a function no obligation can be generated for is refused with the reason. This is
     /// what a gutter click on an unsupported function has to produce: `MainWindow` shows this
     /// message instead of falling back to the picker.

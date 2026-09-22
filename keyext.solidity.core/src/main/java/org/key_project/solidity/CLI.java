@@ -98,6 +98,11 @@ public class CLI {
         description = "for a .sol FILE: suppress per-function progress and statistics")
     boolean quiet;
 
+    @Option(names = "--print-problem",
+        description = "for a .sol FILE with --function: print the generated .key problem "
+            + "instead of proving it")
+    boolean printProblem;
+
     @Option(names = "--solc",
         description = "for a .sol FILE: compile it with solc and run it on an in-process EVM "
             + "instead of proving, reporting compiler diagnostics and any failing assert. "
@@ -160,6 +165,21 @@ public class CLI {
                 return false;
             }
             return prove(cli, null).closed();
+        }
+        if (cli.printProblem) {
+            if (cli.function == null) {
+                System.err.println("--print-problem needs --function");
+                return false;
+            }
+            try {
+                SolidityProblemSpec spec = SolidityProblemSynthesizer.resolve(f,
+                    new SolidityProblemSpec(cli.contract, cli.function, cli.choices));
+                System.out.print(SolidityProblemSynthesizer.problemText(f, spec));
+                return true;
+            } catch (Exception e) {
+                System.err.println("Error: " + LoadErrors.describe(e));
+                return false;
+            }
         }
         if (cli.function != null) {
             return prove(cli, new SolidityProblemSpec(cli.contract, cli.function, cli.choices))

@@ -55,19 +55,17 @@ public class TacletPrefixBuilder {
         prefixMap = prefixMap.put(sv, new TacletPrefix(numberOfBoundVars, false));
     }
 
-    /// removes all variables x that are declared as x not free in sv from the
-    /// currently bound vars set.
+    /// A schema variable declared `\noFreeVarIn` is only ever instantiated with a closed term
+    /// (the matcher rejects everything else), so no bound variable above its occurrence can be
+    /// captured and its prefix is empty.
     private int removeNoFreeVarIn(SchemaVariable sv) {
-        int result = numberOfCurrentlyBoundVars;
         Iterator<@NonNull SchemaVariable> it = tacletBuilder.noFreeVarIns();
         while (it.hasNext()) {
-            SchemaVariable v = it.next();
-            if (v == sv) {
-                result -= 1;
-                break;
+            if (it.next() == sv) {
+                return 0;
             }
         }
-        return Math.max(0, result);
+        return numberOfCurrentlyBoundVars;
     }
 
     private void visit(Term t) {

@@ -6,12 +6,15 @@ package org.key_project.solidity.program.parser;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 
 import org.key_project.solidity.program.parser.SolidityOutline.Span;
 import org.key_project.solidity.testutil.SolidityExampleTests;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -73,14 +76,50 @@ public class SolidityOutlineTest {
     }
 
     @Test
-    void aFunctionReturningAValueIsNotProvable() throws IOException {
-        var function = SolidityOutline.of(SolidityExampleTests.example("functionBody/C.sol"))
+    void aNamedReturnIsProvableAnUnnamedOneIsNot(@TempDir Path dir) throws IOException {
+        var named = SolidityOutline.of(SolidityExampleTests.example("functionBody/C.sol"))
                 .contract("C").orElseThrow().function("expFctBdy").orElseThrow();
+        assertTrue(named.isProvable(), named.unsupportedReason().orElse(""));
+        assertEquals("r", named.returns().get(0).name());
 
-        assertFalse(function.isProvable());
-        Optional<String> reason = function.unsupportedReason();
+        Path sol = dir.resolve("R.sol");
+        Files.writeString(sol, """
+                // SPDX-License-Identifier: GPL-2.0-only
+                pragma solidity ^0.8.0;
+                contract R {
+                    function unnamed() public pure returns (uint) { return 1; }
+                    function two() public pure returns (uint a, uint b) { a = 1; b = 2; }
+                    /// @custom:key skip
+                    function skipped() public {}
+                }""");
+        var contract = SolidityOutline.of(sol).contract("R").orElseThrow();
+
+        Optional<String> reason = contract.function("unnamed").orElseThrow().unsupportedReason();
         assertTrue(reason.isPresent());
         assertTrue(reason.get().contains("returns a value"), reason.get());
+        assertTrue(contract.function("two").orElseThrow().unsupportedReason().orElseThrow()
+                .contains("more than one"));
+        assertTrue(contract.function("skipped").orElseThrow().unsupportedReason().orElseThrow()
+                .contains("skip"));
+        assertEquals(List.of(), contract.provableFunctions());
+    }
+
+    @Test
+    void theOutlineRecordsWhatSpecificationsNeed() throws IOException {
+        var contract = SolidityOutline.of(SolidityExampleTests.example("contracts/Escrow.sol"))
+                .contract("Escrow").orElseThrow();
+
+        assertTrue(contract.documentation().contains("@custom:key invariant sender != receiver"),
+            contract.documentation());
+        assertEquals(List.of("AwaitingDeposit", "DepositPlaced", "Withdrawn"),
+            contract.enums().get("State"));
+        assertEquals("enum Escrow.State", contract.stateVariables().stream()
+                .filter(v -> v.name().equals("state")).findFirst().orElseThrow().type());
+        var deposit = contract.function("placeInEscrow").orElseThrow();
+        assertTrue(deposit.payable());
+        assertFalse(contract.function("releaseEscrow").orElseThrow().payable());
+        assertEquals(List.of("net(sender) == msg.value && state == State.DepositPlaced"),
+            deposit.natspec().ensures());
     }
 
     @Test

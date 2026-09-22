@@ -34,6 +34,7 @@ These keep a task to few tool calls. Cost is dominated by round-trips, not by ou
 ./run-key.sh FILE.sol -O indexWriteCapture:allAtOnce   # prove under a non-default taclet option
 ./run-key.sh FILE.sol --solc                   # compile, then run on an EVM: reports a failing assert
 ./run-key.sh FILE.sol --solc -f fnName         # ... for one function
+./run-key.sh FILE.sol -f fnName --print-problem # print the generated .key problem instead
 ./run-key.sh --help                            # every CLI option
 
 scripts/taclet.sh requireSimple      # print one taclet with its file:line
@@ -62,6 +63,7 @@ outside if explicitly instructed.
 | Purpose | Location |
 |---|---|
 | **Taclet examples (`.sol`)** | `keyext.solidity.examples/TestSuite.sol` — see its `README.md` |
+| **Specified contracts (`.sol` + `@custom:key` clauses)** | `keyext.solidity.examples/contracts/` — the spec language is in that `README.md` |
 | **Problem files (`.key`)** | `keyext.solidity.core/src/test/resources/org/key_project/solidity/examples/` |
 | **Proof rules (`.key`)** | `keyext.solidity.core/src/main/resources/org/key_project/solidity/proof/rules/` |
 

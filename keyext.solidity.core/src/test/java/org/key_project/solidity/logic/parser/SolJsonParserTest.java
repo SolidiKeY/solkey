@@ -1501,17 +1501,37 @@ public class SolJsonParserTest {
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract, services);
-        String contractS = contractDec.toString();
-        assertTrue(contractS.contains("State.Begin"));
-        EnumDeclaration stateEnum = contractDec.getEnumDeclarations().get(0);
         DeclarationStatement declStm = (DeclarationStatement) contractDec.getFunctions().getFirst()
                 .getBody().getStatements().get(0);
         StatementVariableDeclaration decl =
             (StatementVariableDeclaration) declStm.getDeclarations().get(0);
         ProgramVariable s = decl.getProgramVariable();
-        Type sType = s.getType();
-        assertInstanceOf(EnumDeclaration.class, sType);
-        assertSame(stateEnum, sType);
+        assertSame(UINT256, s.getType());
+        assertEquals("0", String.valueOf(declStm.getInitialValue()));
+    }
+
+    @Test
+    void enumMembersAreOrdinalsAndEnumFieldsAreInts() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    State state;
+                    function f() public {
+                        state = State.End;
+                    }
+                    enum State {
+                        Begin,
+                        End
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract, services);
+        StateVariableDeclaration state = contractDec.getFieldDeclarations().get(0);
+        assertSame(UINT256, state.getType());
+        assertEquals(1, contractDec.getEnumDeclarations().get(0).findMember(new Name("End"))
+                .getOrdinal());
+        assertEquals("state = 1;",
+            contractDec.getFunctions().getFirst().getBody().getStatements().get(0).toString()
+                    .trim());
     }
 
     @Test

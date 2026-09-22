@@ -123,21 +123,23 @@ Mapped to this repository, roughly in order of usefulness:
    fresh formals initialized with the actuals, so only the capture step is
    missing.
 2. **Modifiers** (`inMode(m)`, `notBy(c)`, placeholder `_;`, paper §5):
-   desugar at parse time in `SolidityToKeyConverter` by splicing the
-   modifier body around the function body (substituting `_;`), the same way
-   push-lvalue is desugared in `ParserUtils.parseAssignmentMaybe`. No new
-   taclets: the spliced `require`s are handled by existing rules. Needed for
-   OneAuction.
-3. **Enums** (`AuctionMode`): register as int-backed types in
-   `SolidityInfo`, lower members to int literals at parse time. Needed for
-   OneAuction.
-4. **Specification language in `.sol` comments** (`/*@ invariant …;
-   requires …; after_success …; @*/`, `\old`, `net(...)` as spec syntax):
-   parse from the solc AST `documentation` nodes in `SolJSONParser` (see
-   `solc-ast.md`), build `speclang/` objects, register in
-   `SpecificationRepository`. `net(a)` in specs lowers to
-   `selectSt<[int]>(net, at(sadr))`; `\old(e)` lowers against the `old`
-   variable. This feeds both the callback varcond and the PO generator.
+   desugar at parse time in `SolJSONParser` by splicing the modifier body
+   around the function body (substituting `_;`). No new taclets: the
+   spliced `require`s are handled by existing rules. The ported contracts
+   inline them by hand (`keyext.solidity.examples/contracts/`).
+3. **Enums**: **done** — `SolJSONParser` gives enum-typed declarations the
+   `uint256` type and lowers `State.Open` to the member's ordinal, so the
+   calculus never sees an enum; a specification writes `State.Open` too.
+4. **Specification language in `.sol` comments**: **done** as natspec
+   `@custom:key invariant | requires | ensures` clauses
+   (`speclang/natspec/`, documented in
+   `keyext.solidity.examples/README.md`). `SolidityProblemSynthesizer`
+   compiles them into the generated `.key` text: the `insertCInv` taclet and
+   the eq.-4 problem, exactly the shape of the hand-written `net/*.key`.
+   `net(a)` lowers to `selectSt<[int]>(net, at(a))`, `\old(e)` against the
+   `old`/`oldNet` variables. Not done: feeding the clauses into a
+   `SpecificationRepository` so a callback varcond could look them up; the
+   with-callback rules still expand `CInv` through the generated taclet.
 5. **`send` and `call{value: v}(data)`**: `b = a.send(v)` is `transfer`
    that binds `false` instead of reverting — two branches (success: net
    update + `b := TRUE`; failure: `b := FALSE`, no net change), each
@@ -158,9 +160,11 @@ Mapped to this repository, roughly in order of usefulness:
    paper's "Solidity Light" collapses them, while this repo implements both
    (`storage.md`, `memory.md`). Nothing to do.
 9. **Automatic PO generation + GUI selection** ("mature verification
-   system" outlook, paper §4.1): phase 2 of the PO generator, plus surfacing contract
-   specifications in `key.ui` the way Java contracts are shown. Farthest
-   out; everything before it works with hand-written `\problem`s.
+   system" outlook, paper §4.1): **done for specified functions** — the
+   `.sol` path generates the PO from the natspec clauses, and KeYther's
+   function browser shows what a function is proved against and offers the
+   transfer semantics. Still open: a constructor PO (`storage = mt`,
+   `net = mt`), and frame conditions from `assignable`.
 
 The paper's own limitations to keep in mind when porting examples: it
 verifies partial correctness only (box), assumes `transfer`'s gas stipend

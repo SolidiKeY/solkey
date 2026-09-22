@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.rule.matching.inst;
 
+import org.key_project.logic.Term;
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.logic.sort.Sort;
 import org.key_project.prover.rules.instantiation.InstantiationEntry;
@@ -30,12 +31,11 @@ public abstract class GenericSortCondition {
     public static ImmutableList<GenericSortCondition> createCondition(SchemaVariable sv,
             InstantiationEntry<?> p_entry) {
 
-        if (!(p_entry instanceof TermInstantiation ti)) {
+        if (!(p_entry.getInstantiation() instanceof Term term)) {
             return null;
         }
 
-        return createCondition(sv.sort(), ti.getInstantiation().sort(),
-            !subSortsAllowed(sv));
+        return createCondition(sv.sort(), term.sort(), !subSortsAllowed(sv));
     }
 
     /// @return <code>true</code> iff the variable <code>p_sv</code> is allowed to be instantiated

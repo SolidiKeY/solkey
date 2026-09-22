@@ -470,7 +470,7 @@ public final class MainWindow extends JFrame {
             read -> chooseFunction(path, read, requested)
                     .ifPresent(spec -> loadEnvironment(file,
                         file.getName() + "  ·  " + spec.contract() + "." + spec.function(),
-                        () -> KeYEnvironment.load(path, spec.contract(), spec.function()))),
+                        () -> KeYEnvironment.load(path, spec))),
             "Could not read " + file);
     }
 

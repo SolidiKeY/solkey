@@ -715,3 +715,29 @@ Note that a `.sol` body is parsed by `SolJSONParser` (the solc-JSON path), not b
 `SolidityToKeyConverter` (the ANTLR path used for programs written inline in a modality). Both
 paths now handle `msg.sender`, `msg.value`, `.transfer` and `.send`, which is why the `net-*`
 examples load their programs from the `.sol` beside them via `\programSource`.
+
+## Synthesized obligations from `@custom:key` specifications
+
+A `.sol` function whose contract carries `@custom:key invariant` clauses, or which carries
+`@custom:key requires`/`ensures` clauses itself, is proved against them: `SolidityProblemSynthesizer`
+compiles the clauses (`speclang/natspec/`: `KeyNatspec` splits the natspec text, `SpecParser`
+parses an expression with the ANTLR grammar `SolSpec.g4`, `SpecCompiler` — a visitor over
+that parse tree — emits the `.key` term text) into the same generated `.key`
+problem the `net/*.key` files spell out by hand — an `insertCInv` rewrite taclet defining
+`CInv(s, n)` as the conjoined invariants, and the ISoLA 2020 eq.-4 problem: `msg.value` bound,
+requires, `CInv(storage, net)` in the antecedent; the ledger booking
+`net := storeSt(net, at(msgSender), …)` as update; the call in the **box** modality; `CInv`
+and the ensures as postcondition. `\old(e)` declares `Struct old, oldNet` and snapshots them in
+the update; a named return declares `int result` and calls `result = f()@C;`. A function
+without any clause keeps the plain `(true)` obligation byte for byte, so `TestSuite.sol` and
+the `solc/` ports are unaffected. `./run-key.sh F.sol -f fn --print-problem` prints the text.
+
+Quantified invariants declare their bound variables as `\schemaVar \variables` of the taclet
+with `\varcond(\noFreeVarIn(s), \noFreeVarIn(n))`; two calculus repairs were needed for them
+to run at all: `TacletPrefixBuilder` now gives a `\noFreeVarIn` schema variable an empty prefix
+(its instantiation is closed, so it may sit under any binder), and `TacletApp` instantiates a
+`\variables` schema variable that occurs only in `\replacewith` with a fresh `BoundVariable`
+(it used to throw). `GenericSortCondition` also accepts a plain `InstantiationEntry` holding a
+term, which is what `createSkolemConstant` records — before, every `exLeft`/`allRight` skolem
+failed the generic-sort check, so no quantified problem could be proved. The surface grammar
+and the emission table are in `keyext.solidity.examples/README.md`.

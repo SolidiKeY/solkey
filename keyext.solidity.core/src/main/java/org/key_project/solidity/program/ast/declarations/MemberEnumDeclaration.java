@@ -14,9 +14,15 @@ public class MemberEnumDeclaration implements Declaration {
     }
 
     private final Name name;
+    private final int ordinal;
 
-    public MemberEnumDeclaration(Name name) {
+    public MemberEnumDeclaration(Name name, int ordinal) {
         this.name = name;
+        this.ordinal = ordinal;
+    }
+
+    public int getOrdinal() {
+        return ordinal;
     }
 
     @Override

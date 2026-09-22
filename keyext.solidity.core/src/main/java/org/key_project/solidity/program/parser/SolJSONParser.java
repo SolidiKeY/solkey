@@ -170,13 +170,19 @@ public class SolJSONParser {
         // declared type).
         List<JsonNode> functionNodes = new ArrayList<>();
         for (JsonNode node : contractNode.get("nodes").values()) {
+            if ("EnumDefinition".equals(node.get("nodeType").asString())) {
+                enums.add(parseEnum(node));
+            }
+        }
+        for (JsonNode node : contractNode.get("nodes").values()) {
             final String nodeType = node.get("nodeType").asString();
             switch (nodeType) {
                 case "VariableDeclaration" -> fields.add(parseVariableField(contractName, node));
                 case "FunctionDefinition" -> functionNodes.add(node);
                 case "StructDefinition" -> structs.add(parseStruct(node, contractName, contractId));
                 case "ModifierDefinition" -> modifiers.add(parseModifier(node));
-                case "EnumDefinition" -> enums.add(parseEnum(node));
+                case "EnumDefinition" -> {
+                }
                 default -> throw new SolidityParseException("Unknown node type " + nodeType, node);
             }
         }
@@ -258,17 +264,19 @@ public class SolJSONParser {
 
     private EnumDeclaration parseEnum(JsonNode node) {
         String name = node.get("name").asString();
-        List<MemberEnumDeclaration> members =
-            node.get("members").valueStream().map(this::parseMemberEnum).toList();
+        List<MemberEnumDeclaration> members = new ArrayList<>();
+        for (JsonNode member : node.get("members").values()) {
+            members.add(parseMemberEnum(member, members.size()));
+        }
         EnumDeclaration enumDeclaration = new EnumDeclaration(new Name(name), members);
         id2Name.put(node.get("id").asInt(), enumDeclaration);
         return enumDeclaration;
     }
 
-    private MemberEnumDeclaration parseMemberEnum(JsonNode node) {
+    private MemberEnumDeclaration parseMemberEnum(JsonNode node, int ordinal) {
         String name = node.get("name").asString();
         int id = node.get("id").asInt();
-        MemberEnumDeclaration member = new MemberEnumDeclaration(new Name(name));
+        MemberEnumDeclaration member = new MemberEnumDeclaration(new Name(name), ordinal);
         id2Name.put(id, member);
         return member;
     }
@@ -503,7 +511,7 @@ public class SolJSONParser {
         ProgramVariable programVariable;
         if (node.get("typeName").has("referencedDeclaration")) {
             int typeId = node.get("typeName").get("referencedDeclaration").asInt();
-            Type typeRef = (Type) id2Name.get(typeId);
+            Type typeRef = enumAsInt((Type) id2Name.get(typeId));
 
             // Reference to a contract that is still being parsed (self or
             // forward reference): use its shared pending KeYSolidityType.
@@ -542,7 +550,7 @@ public class SolJSONParser {
             case "Mapping" ->
                 getMappingType(parseType(node.get("keyType")), parseType(node.get("valueType")));
             case "UserDefinedTypeName" ->
-                (Type) id2Name.get(node.get("referencedDeclaration").asInt());
+                enumAsInt((Type) id2Name.get(node.get("referencedDeclaration").asInt()));
             case "Identifier" -> SolidityInfo
                     .getPrimitiveType(node.get("typeDescriptions").get("typeString").asString());
             default -> throw new SolidityParseException("Type " + typeName + " not covered", node);
@@ -581,7 +589,7 @@ public class SolJSONParser {
         if (typeName.has("referencedDeclaration")) {
             idRef = typeName.get("referencedDeclaration").asInt();
             if (id2Name.containsKey(idRef)) {
-                expType = (Type) id2Name.get(idRef);
+                expType = enumAsInt((Type) id2Name.get(idRef));
             }
         } else {
             expType = parseTypeName(fieldNode);
@@ -668,7 +676,7 @@ public class SolJSONParser {
         int id = expNode.get("referencedDeclaration").asInt();
         SyntaxElement decl = id2Name.get(id);
         return Optional.ofNullable(decl).map(v -> switch (v) {
-            case Type tp -> tp;
+            case Type tp -> enumAsInt(tp);
             case FunctionDeclaration fd -> fd.getType();
             case StateVariableDeclaration svd -> svd.getType();
             case StatementVariableDeclaration svd -> svd.getProgramVariable().getType();
@@ -717,6 +725,11 @@ public class SolJSONParser {
 
     private Type parseTypeName(JsonNode initializer) {
         return parseType(initializer.get("typeName"));
+    }
+
+    /// An enum is an unsigned integer in the calculus: its values are the member ordinals.
+    private static @Nullable Type enumAsInt(@Nullable Type type) {
+        return type instanceof EnumDeclaration ? UINT256 : type;
     }
 
     private Expression parseFunctionCall(JsonNode initializer) {
@@ -846,6 +859,14 @@ public class SolJSONParser {
                     + " (declared in netHeader.key)");
             }
             return pv;
+        }
+        if ("Identifier".equals(baseNode.get("nodeType").asString())
+                && baseNode.has("referencedDeclaration")
+                && id2Name.get(baseNode.get("referencedDeclaration")
+                        .asInt()) instanceof EnumDeclaration enumDeclaration) {
+            MemberEnumDeclaration member =
+                enumDeclaration.findMember(new Name(initializer.get("memberName").asString()));
+            return new Uint256Literal(BigInteger.valueOf(member.getOrdinal()));
         }
         Expression leftExp = parseExpression(baseNode);
         if (!initializer.has("referencedDeclaration")

@@ -6,10 +6,12 @@ package org.key_project.solidity.gui;
 import java.awt.Font;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 import org.key_project.solidity.program.parser.SolidityOutline;
 import org.key_project.solidity.program.parser.SolidityOutline.Span;
+import org.key_project.solidity.proof.init.SolidityProblemSpec;
 
 import org.junit.jupiter.api.Test;
 
@@ -181,5 +183,31 @@ public class FunctionSelectionPanelTest {
         FunctionSelectionPanel plain = panel();
         assertTrue(plain.headerText().contains("diamond modality"), plain.headerText());
         assertFalse(plain.headerText().contains("not provable"), plain.headerText());
+        assertFalse(plain.selectionIsSpecified());
+    }
+
+    /// A specified function is proved in the box modality against the contract invariant, and
+    /// the header says so; the transfer semantics then becomes a meaningful choice.
+    @Test
+    void theHeaderNamesTheSpecification() {
+        var deposit = new SolidityOutline.Function("deposit", List.of(), List.of(), "payable",
+            "@custom:key requires n == 0\n@custom:key ensures n == 1",
+            spanOf("function ok() public { assert(true); }"));
+        var contract = new SolidityOutline.Contract("C",
+            "@custom:key invariant n >= 0\n@custom:key invariant n < 10",
+            List.of(new SolidityOutline.Variable("n", "uint256")), Map.of(), Map.of(),
+            List.of(deposit));
+        FunctionSelectionPanel panel = new FunctionSelectionPanel(
+            new SolidityOutline(List.of(contract)), BYTES,
+            new Font(Font.MONOSPACED, Font.PLAIN, 12));
+
+        assertTrue(panel.headerText().contains(
+            "box modality, specified: 2 invariant, 1 requires, 1 ensures"), panel.headerText());
+        assertTrue(panel.selectionIsSpecified());
+        assertEquals(new SolidityProblemSpec("C", "deposit",
+            List.of("transferSemantics:withCallback")),
+            FunctionSelectionDialog.withTransferSemantics(panel.selection().orElseThrow(), 1));
+        assertEquals(panel.selection().orElseThrow(),
+            FunctionSelectionDialog.withTransferSemantics(panel.selection().orElseThrow(), 0));
     }
 }

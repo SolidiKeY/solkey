@@ -7,8 +7,13 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+
+import org.key_project.solidity.speclang.natspec.KeyNatspec;
+import org.key_project.solidity.speclang.natspec.SpecException;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -83,7 +88,21 @@ public record SolidityOutline(List<Contract> contracts) {
         }
     }
 
-    public record Contract(String name, List<Function> functions) {
+    /// A state variable or struct member: its name and solc's `typeString`.
+    public record Variable(String name, String type) {
+    }
+
+    /// `documentation` is the contract's natspec comment, which carries the contract invariant;
+    /// `enums` maps an enum name to its members in declaration order, `structs` a struct name to
+    /// its members.
+    public record Contract(String name, String documentation, List<Variable> stateVariables,
+            Map<String, List<String>> enums, Map<String, List<Variable>> structs,
+            List<Function> functions) {
+
+        public Contract(String name, List<Function> functions) {
+            this(name, "", List.of(), Map.of(), Map.of(), functions);
+        }
+
 
         public Optional<Function> function(String name) {
             return functions.stream().filter(f -> f.name().equals(name)).findFirst();
@@ -99,17 +118,55 @@ public record SolidityOutline(List<Contract> contracts) {
     ///
     /// `source` spans the declaration as written, natspec included, so it can be shown to a user
     /// choosing what to prove.
-    public record Function(String name, List<Parameter> parameters, int resultCount,
-            String documentation, Span source) {
+    public record Function(String name, List<Parameter> parameters, List<Parameter> returns,
+            String stateMutability, String documentation, Span source) {
 
-        /// Why no obligation can be generated for this function, or empty when one can: it has to
-        /// return nothing (its specification lives in the body as `assert`) and every parameter
-        /// needs a `.key` sort, so the obligation can bind it to an unconstrained program
-        /// variable.
+        public Function(String name, List<Parameter> parameters, int resultCount,
+                String documentation, Span source) {
+            this(name, parameters, unnamed(resultCount), "nonpayable", documentation, source);
+        }
+
+        private static List<Parameter> unnamed(int count) {
+            List<Parameter> returns = new ArrayList<>();
+            for (int i = 0; i < count; i++) {
+                returns.add(new Parameter("", ""));
+            }
+            return List.copyOf(returns);
+        }
+
+        public int resultCount() {
+            return returns.size();
+        }
+
+        public boolean payable() {
+            return "payable".equals(stateMutability);
+        }
+
+        /// The natspec clauses of this function, or the reason they cannot be read.
+        public KeyNatspec natspec() {
+            return KeyNatspec.of(documentation);
+        }
+
+        /// Why no obligation can be generated for this function, or empty when one can: it is
+        /// not skipped, it returns nothing or exactly one named value with a `.key` sort (the
+        /// `\result` of an `ensures` clause), and every parameter needs a `.key` sort, so the
+        /// obligation can bind it to an unconstrained program variable.
         public Optional<String> unsupportedReason() {
-            if (resultCount != 0) {
-                return Optional.of(
-                    "returns a value; the specification has to live in the body as assert");
+            try {
+                if (natspec().skip()) {
+                    return Optional.of("skipped by " + KeyNatspec.TAG + " skip");
+                }
+            } catch (SpecException e) {
+                return Optional.of(e.getMessage());
+            }
+            if (returns.size() > 1) {
+                return Optional.of("returns more than one value");
+            }
+            if (returns.size() == 1
+                    && (returns.get(0).name().isEmpty() || returns.get(0).keySort() == null)) {
+                return Optional.of("returns a value without a name or a .key sort; name it to"
+                    + " refer to it as \\result, or move the specification into the body as"
+                    + " assert");
             }
             for (Parameter parameter : parameters) {
                 if (parameter.keySort() == null) {
@@ -132,7 +189,10 @@ public record SolidityOutline(List<Contract> contracts) {
         /// The `\programVariables` sort this parameter is declared with in the generated
         /// obligation, or `null` if the type has none.
         public String keySort() {
-            return type.matches("u?int\\d*") ? "int" : null;
+            if (type.matches("u?int\\d*") || type.startsWith("enum ")) {
+                return "int";
+            }
+            return type.equals("bool") ? "bool" : null;
         }
     }
 
@@ -141,7 +201,7 @@ public record SolidityOutline(List<Contract> contracts) {
         List<Contract> contracts = new ArrayList<>();
         for (JsonNode node : root.get("nodes").values()) {
             if ("ContractDefinition".equals(text(node, "nodeType"))) {
-                contracts.add(new Contract(text(node, "name"), functionsOf(node)));
+                contracts.add(contractOf(node));
             }
         }
         return new SolidityOutline(contracts);
@@ -149,6 +209,35 @@ public record SolidityOutline(List<Contract> contracts) {
 
     public Optional<Contract> contract(String name) {
         return contracts.stream().filter(c -> c.name().equals(name)).findFirst();
+    }
+
+    private static Contract contractOf(JsonNode contract) {
+        List<Variable> stateVariables = new ArrayList<>();
+        Map<String, List<String>> enums = new LinkedHashMap<>();
+        Map<String, List<Variable>> structs = new LinkedHashMap<>();
+        for (JsonNode node : contract.get("nodes").values()) {
+            switch (text(node, "nodeType")) {
+                case "VariableDeclaration" -> stateVariables.add(variableOf(node));
+                case "EnumDefinition" -> enums.put(text(node, "name"),
+                    node.get("members").valueStream().map(m -> text(m, "name")).toList());
+                case "StructDefinition" -> structs.put(text(node, "name"),
+                    node.get("members").valueStream().map(SolidityOutline::variableOf).toList());
+                default -> {
+                }
+            }
+        }
+        return new Contract(text(contract, "name"), documentationOf(contract),
+            List.copyOf(stateVariables), enums, structs, functionsOf(contract));
+    }
+
+    private static String documentationOf(JsonNode node) {
+        return node.has("documentation") && node.get("documentation").isObject()
+                ? text(node.get("documentation"), "text")
+                : "";
+    }
+
+    private static Variable variableOf(JsonNode node) {
+        return new Variable(text(node, "name"), text(node.get("typeDescriptions"), "typeString"));
     }
 
     private static List<Function> functionsOf(JsonNode contract) {
@@ -161,7 +250,8 @@ public record SolidityOutline(List<Contract> contracts) {
             }
             JsonNode documentation = node.has("documentation") ? node.get("documentation") : null;
             functions.add(new Function(text(node, "name"),
-                parametersOf(node), count(node, "returnParameters"),
+                parametersOf(node, "parameters"), parametersOf(node, "returnParameters"),
+                text(node, "stateMutability"),
                 documentation != null ? text(documentation, "text") : "",
                 Span.union(Span.parse(text(documentation, "src")),
                     Span.parse(text(node, "src")))));
@@ -169,9 +259,9 @@ public record SolidityOutline(List<Contract> contracts) {
         return functions;
     }
 
-    private static List<Parameter> parametersOf(JsonNode function) {
+    private static List<Parameter> parametersOf(JsonNode function, String field) {
         List<Parameter> parameters = new ArrayList<>();
-        for (JsonNode node : function.get("parameters").get("parameters").values()) {
+        for (JsonNode node : function.get(field).get("parameters").values()) {
             parameters.add(new Parameter(text(node, "name"),
                 text(node.get("typeDescriptions"), "typeString")));
         }
@@ -182,7 +272,4 @@ public record SolidityOutline(List<Contract> contracts) {
         return node != null && node.has(field) ? node.get(field).asString() : "";
     }
 
-    private static int count(JsonNode node, String field) {
-        return node.has(field) ? node.get(field).get("parameters").size() : 0;
-    }
 }
