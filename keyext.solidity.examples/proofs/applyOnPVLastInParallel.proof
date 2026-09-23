@@ -26,14 +26,17 @@
     }
 } 
 
-
+\programVariables {
+    int i;
+    int j;
+}
 \problem {
-cons3(1, 2, 3) = cons(1, cons(2, cons(3, nil)))
+{j:=2 || i:=1}i = 1
 }
 
 \proof {
 (branch "dummy ID"
-(rule "cons3Def" (formula "1") (term "0"))
+(rule "applyOnPVLastInParallel" (formula "1") (term "0"))
 (rule "eqClose" (formula "1"))
 (rule "closeTrue" (formula "1"))
 )

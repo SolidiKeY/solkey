@@ -34,10 +34,7 @@ cons1(1) = cons(1, nil)
 \proof {
 (branch "dummy ID"
 (rule "cons1Def" (formula "1") (term "0"))
-(rule "equalUnique" (formula "1"))
-(rule "eqClose" (formula "1") (term "0"))
-(rule "concrete_and_1" (formula "1"))
-(rule "equalUnique" (formula "1"))
+(rule "eqClose" (formula "1"))
 (rule "closeTrue" (formula "1"))
 )
 }

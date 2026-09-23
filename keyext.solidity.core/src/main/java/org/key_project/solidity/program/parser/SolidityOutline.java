@@ -189,7 +189,8 @@ public record SolidityOutline(List<Contract> contracts) {
         /// The `\programVariables` sort this parameter is declared with in the generated
         /// obligation, or `null` if the type has none.
         public String keySort() {
-            if (type.matches("u?int\\d*") || type.startsWith("enum ")) {
+            if (type.matches("u?int\\d*") || type.matches("address( payable)?")
+                    || type.startsWith("enum ")) {
                 return "int";
             }
             return type.equals("bool") ? "bool" : null;
@@ -245,7 +246,7 @@ public record SolidityOutline(List<Contract> contracts) {
         for (JsonNode node : contract.get("nodes").values()) {
             if (!"FunctionDefinition".equals(text(node, "nodeType"))
                     || !"function".equals(text(node, "kind"))
-                    || !"public".equals(text(node, "visibility"))) {
+                    || !List.of("public", "external").contains(text(node, "visibility"))) {
                 continue;
             }
             JsonNode documentation = node.has("documentation") ? node.get("documentation") : null;

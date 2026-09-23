@@ -3,7 +3,8 @@
 `TestSuite.sol` holds the taclet examples; `net/` holds the scenario contracts with their
 invariant-based `.key` proof obligations (see "The `net/` directory"); `contracts/` holds the
 solidiKeY example contracts, specified in natspec `@custom:key` clauses (see "The `contracts/`
-directory").
+directory"); `real-world/` holds published contracts specified the same way (see "The
+`real-world/` directory").
 
 There are no `.key` problem files beside `TestSuite.sol`: the loader reads the contract and
 synthesizes one obligation per function, so the whole specification lives in the Solidity body
@@ -310,6 +311,47 @@ Every body follows the calculus conventions listed under "The `net/` directory":
 are inlined requires, `now` is a `timeNow` state variable, a storage read inside a comparison
 or a compound expression is bound to a local first. `ContractExamplesTest` enumerates the
 directory (the CI-only `solidityExamples` group), so a new contract joins by being written.
+
+## The `real-world/` directory
+
+`real-world/` holds small contracts taken from well-known public sources: the Solidity
+documentation, Solidity by Example, OpenZeppelin and the deployed WETH9. Each one is specified
+in `@custom:key` clauses like `contracts/`, and every function is proved. Each file's header
+names its source and lists every change to the original. Those changes are only what the
+supported fragment forces: events, custom errors and string metadata are dropped, modifiers
+and internal helpers are inlined, `block.timestamp` becomes `timeNow`, storage reads are bound
+to locals as described under "Calculus conventions", and `return true;` becomes an assignment
+to a named return. `ContractExamplesTest` enumerates this directory too.
+
+Checked arithmetic is not modelled (integers are unbounded), so a `uint` parameter gets a
+`requires x >= 0`, and a function whose body would underflow gets a `requires` for the case in
+which the EVM does not revert. Access control is stated as an `ensures` rather than a
+`requires`: `ensures \old(_owner) == msg.sender` holds on every run that does not revert, so it
+proves that the code's own checks keep everyone else out.
+
+- **`SimpleAuction.sol`** — the Solidity docs' open auction. The invariant is
+  `\forall address a; pendingReturns[a] >= 0`. `bid` credits the outbid leader with their bid;
+  `withdraw` zeroes the caller's refund and pays exactly that amount (`net` drops by it);
+  `auctionEnd` pays the highest bid to the beneficiary. `send` has no rule yet, so `withdraw`
+  uses `transfer` and returns nothing.
+- **`Purchase.sol`** — the Solidity docs' Safe Remote Purchase, a state machine with a
+  ledger invariant for each state: the seller has 2 × value deposited while Created, Locked and
+  Release, and the buyer has 0, 2 × value and value in those states; once Inactive, their nets
+  cancel out. `refundSeller` ends with the seller at `-value` (deposit back plus the price) and
+  the buyer at `value`. `confirmPurchase` assumes a fresh buyer.
+- **`ERC20.sol`** — Solidity by Example's token. `transfer`/`transferFrom` move the amount
+  between the two balances (self-transfer leaves the balance unchanged), keep `totalSupply` and
+  spend the allowance; `transfer` also proves that no other balance changes (`\forall address a;
+  …`). `approve`, `mint` and `burn` are specified too.
+- **`WETH9.sol`** — Wrapped Ether ported to 0.8. `deposit` and `withdraw` prove that the token
+  balance and the payment ledger move together (tokens minted or burned = ether received or
+  paid out); `transferFrom` also covers the unlimited-allowance case.
+- **`EtherWallet.sol`** — Solidity by Example's wallet. `withdraw` proves that only the owner
+  can withdraw and that the owner receives exactly `_amount`.
+- **`Ownable.sol`** — OpenZeppelin's `Ownable`, simplified: `transferOwnership` and
+  `renounceOwnership` succeed only for the current owner and set the new one.
+
+Every clause was checked for vacuity: changing it to something false leaves the proof open.
 
 ## The `solc/` directory
 

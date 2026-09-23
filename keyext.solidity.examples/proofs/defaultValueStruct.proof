@@ -43,7 +43,7 @@ defaultValue<[Struct]> = mtSt
 \proof {
 (branch "dummy ID"
 (rule "defaultValueStruct" (formula "1") (term "0"))
-(rule "equalUnique" (formula "1"))
+(rule "eqClose" (formula "1"))
 (rule "closeTrue" (formula "1"))
 )
 }

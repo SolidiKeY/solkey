@@ -44,7 +44,7 @@ selectSt<[int]>(save(mtSt, cons(f, nil), 5), f) = 5
 (branch "dummy ID"
 (rule "saveOnEmptyStorage" (formula "1") (term "0,0"))
 (rule "selectOnStore" (formula "1") (term "0"))
-(rule "equalUnique" (formula "1") (term "0,0"))
+(rule "eqClose" (formula "1") (term "0,0"))
 (rule "ifthenelse_true" (formula "1") (term "0"))
 (rule "saveOnEmptyPrim" (formula "1") (term "0"))
 (rule "castDel" (formula "1") (term "0"))

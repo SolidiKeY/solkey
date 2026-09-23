@@ -43,7 +43,7 @@ selectSt<[int]>(storeSt(s, f, 5), f) = 5
 \proof {
 (branch "dummy ID"
 (rule "selectOnStore" (formula "1") (term "0"))
-(rule "equalUnique" (formula "1") (term "0,0"))
+(rule "eqClose" (formula "1") (term "0,0"))
 (rule "ifthenelse_true" (formula "1") (term "0"))
 (rule "castDel" (formula "1") (term "0"))
 (rule "eqClose" (formula "1"))

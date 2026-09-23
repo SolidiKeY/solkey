@@ -23,9 +23,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /// Proves the contracts of `keyext.solidity.examples/contracts/`, the solidiKeY example
-/// contracts with their specification carried in `@custom:key` natspec tags.
+/// contracts with their specification carried in `@custom:key` natspec tags, and of
+/// `keyext.solidity.examples/real-world/`, published contracts specified the same way.
 ///
-/// Every `.sol` in the directory is enumerated and every function an obligation can be
+/// Every `.sol` in the directories is enumerated and every function an obligation can be
 /// generated for is proved, so a new contract joins the suite by being written — the contract
 /// name is taken from the file name. The functions in [#KNOWN_OPEN] state an invariant
 /// automode cannot establish yet (MultiAuction's quantified one); they are checked to load and
@@ -33,15 +34,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Tag("solidityExamples")
 public class ContractExamplesTest {
 
-    private static final String DIRECTORY = "contracts";
+    private static final List<String> DIRECTORIES = List.of("contracts", "real-world");
 
     private static final Set<String> KNOWN_OPEN =
         Set.of("MultiAuction.placeOrIncreaseBid", "MultiAuction.withdraw", "MultiAuction.myTest");
 
-    @ParameterizedTest(name = "{0}.{1}")
+    @ParameterizedTest(name = "{0}/{1}.{2}")
     @MethodSource("examples")
-    void contractExampleCloses(String contract, String function) throws Exception {
-        Path sol = contractSource(contract);
+    void contractExampleCloses(String directory, String contract, String function)
+            throws Exception {
+        Path sol = contractSource(directory, contract);
         Proof proof = SolidityExampleTests.prove(
             SolidityExampleTests.load(sol, contract, function), 20000, 60000);
         if (KNOWN_OPEN.contains(contract + "." + function)) {
@@ -55,17 +57,20 @@ public class ContractExamplesTest {
 
     static Stream<Arguments> examples() throws IOException {
         Stream.Builder<Arguments> args = Stream.builder();
-        for (String contract : contracts()) {
-            SolidityProblemSynthesizer.provableFunctions(contractSource(contract), contract)
-                    .stream()
-                    .sorted()
-                    .forEach(function -> args.add(Arguments.of(contract, function)));
+        for (String directory : DIRECTORIES) {
+            for (String contract : contracts(directory)) {
+                SolidityProblemSynthesizer
+                        .provableFunctions(contractSource(directory, contract), contract)
+                        .stream()
+                        .sorted()
+                        .forEach(function -> args.add(Arguments.of(directory, contract, function)));
+            }
         }
         return args.build();
     }
 
-    private static List<String> contracts() throws IOException {
-        try (Stream<Path> files = Files.list(SolidityExampleTests.examplesDir(DIRECTORY))) {
+    private static List<String> contracts(String directory) throws IOException {
+        try (Stream<Path> files = Files.list(SolidityExampleTests.examplesDir(directory))) {
             return files.map(p -> p.getFileName().toString())
                     .filter(name -> name.endsWith(".sol"))
                     .map(name -> name.substring(0, name.length() - ".sol".length()))
@@ -74,7 +79,7 @@ public class ContractExamplesTest {
         }
     }
 
-    private static Path contractSource(String contract) {
-        return SolidityExampleTests.example(DIRECTORY + "/" + contract + ".sol");
+    private static Path contractSource(String directory, String contract) {
+        return SolidityExampleTests.example(directory + "/" + contract + ".sol");
     }
 }

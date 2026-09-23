@@ -34,7 +34,7 @@ firsts(cons(1, nil)) = nil
 \proof {
 (branch "dummy ID"
 (rule "firstsConsNil" (formula "1") (term "0"))
-(rule "equalUnique" (formula "1"))
+(rule "eqClose" (formula "1"))
 (rule "closeTrue" (formula "1"))
 )
 }

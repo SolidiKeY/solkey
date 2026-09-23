@@ -63,7 +63,7 @@ outside if explicitly instructed.
 | Purpose | Location |
 |---|---|
 | **Taclet examples (`.sol`)** | `keyext.solidity.examples/TestSuite.sol` — see its `README.md` |
-| **Specified contracts (`.sol` + `@custom:key` clauses)** | `keyext.solidity.examples/contracts/` — the spec language is in that `README.md` |
+| **Specified contracts (`.sol` + `@custom:key` clauses)** | `keyext.solidity.examples/contracts/`, published ones in `real-world/` — the spec language is in that `README.md` |
 | **Problem files (`.key`)** | `keyext.solidity.core/src/test/resources/org/key_project/solidity/examples/` |
 | **Proof rules (`.key`)** | `keyext.solidity.core/src/main/resources/org/key_project/solidity/proof/rules/` |
 

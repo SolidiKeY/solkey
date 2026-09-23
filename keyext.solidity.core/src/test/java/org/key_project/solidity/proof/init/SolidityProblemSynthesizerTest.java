@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -27,16 +28,38 @@ public class SolidityProblemSynthesizerTest {
         return new SolidityProblemSpec(contract, function);
     }
 
+    private static Path stringParameter(Path dir) throws IOException {
+        Path file = dir.resolve("S.sol");
+        Files.writeString(file, """
+                // SPDX-License-Identifier: GPL-2.0-only
+                pragma solidity ^0.8.0;
+                contract S {
+                    function label(string memory text) public {}
+                }""");
+        return file;
+    }
+
     @Test
-    void aParameterWithoutAKeySortIsRefusedWithItsReason() {
-        Path file = SolidityExampleTests.example("net/PiggyBankNet.sol");
+    void aParameterWithoutAKeySortIsRefusedWithItsReason(@TempDir Path dir) throws IOException {
+        Path file = stringParameter(dir);
 
         var e = assertThrows(IllegalArgumentException.class,
-            () -> SolidityProblemSynthesizer.resolve(file, spec("PiggyBankNet", "payTo")));
+            () -> SolidityProblemSynthesizer.resolve(file, spec("S", "label")));
 
-        assertTrue(e.getMessage().contains("PiggyBankNet.payTo"), e.getMessage());
+        assertTrue(e.getMessage().contains("S.label"), e.getMessage());
         assertTrue(e.getMessage().contains("cannot be proved"), e.getMessage());
-        assertTrue(e.getMessage().contains("address payable"), e.getMessage());
+        assertTrue(e.getMessage().contains("string"), e.getMessage());
+    }
+
+    @Test
+    void anAddressParameterIsDeclaredAsAnInt() throws IOException {
+        Path file = SolidityExampleTests.example("net/PiggyBankNet.sol");
+
+        String text =
+            SolidityProblemSynthesizer.problemText(file, spec("PiggyBankNet", "payToPlus"));
+
+        assertTrue(text.contains("    int a;\n    int x;\n"), text);
+        assertTrue(text.contains("payToPlus(a, x)@PiggyBankNet;"), text);
     }
 
     @Test
@@ -139,7 +162,8 @@ public class SolidityProblemSynthesizerTest {
         assertTrue(text.contains("    Struct old;\n    Struct oldNet;\n"), text);
         assertTrue(text.contains("{old := storage || oldNet := net\n     || net := storeSt("),
             text);
-        assertTrue(text.contains("\\schemaVar \\variables int hb;\n"), text);
+        assertFalse(text.contains("\\schemaVar \\variables"), text);
+        assertTrue(text.contains("(\\exists int hb; (\\forall int a; "), text);
         assertTrue(text.contains("\\varcond(\\noFreeVarIn(s), \\noFreeVarIn(n))"), text);
         assertTrue(text.contains("find<[int]>(old, cons2(MultiAuction$balances, at(msgSender)))"),
             text);
@@ -195,7 +219,7 @@ public class SolidityProblemSynthesizerTest {
     /// The overload the GUI uses, so it does not fork solc a second time for a file it has already
     /// read, has to agree with the one that reads the file itself.
     @Test
-    void theOutlineOverloadAgreesWithThePathOne() throws IOException {
+    void theOutlineOverloadAgreesWithThePathOne(@TempDir Path dir) throws IOException {
         Path file = SolidityExampleTests.testSuite();
         SolidityOutline outline = SolidityOutline.of(file);
         SolidityProblemSpec requested =
@@ -204,10 +228,10 @@ public class SolidityProblemSynthesizerTest {
         assertEquals(SolidityProblemSynthesizer.resolve(file, requested),
             SolidityProblemSynthesizer.resolve(file, outline, requested));
 
-        Path piggy = SolidityExampleTests.example("net/PiggyBankNet.sol");
-        SolidityOutline piggyOutline = SolidityOutline.of(piggy);
+        Path unsupported = stringParameter(dir);
+        SolidityOutline unsupportedOutline = SolidityOutline.of(unsupported);
         var e = assertThrows(IllegalArgumentException.class, () -> SolidityProblemSynthesizer
-                .resolve(piggy, piggyOutline, spec("PiggyBankNet", "payTo")));
+                .resolve(unsupported, unsupportedOutline, spec("S", "label")));
         assertTrue(e.getMessage().contains("cannot be proved"), e.getMessage());
     }
 }

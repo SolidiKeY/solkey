@@ -50,7 +50,7 @@
 (rule "equalUnique" (formula "1") (term "0,0,0"))
 (rule "ifthenelse_false" (formula "1") (term "0,0"))
 (rule "selectOnStore" (formula "1") (term "0"))
-(rule "equalUnique" (formula "1") (term "0,0"))
+(rule "eqClose" (formula "1") (term "0,0"))
 (rule "ifthenelse_true" (formula "1") (term "0"))
 (rule "castDel" (formula "1") (term "0"))
 (rule "eqClose" (formula "1"))

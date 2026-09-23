@@ -406,7 +406,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitIdentifier(IdentifierContext ctx) {
-        String variableName = ctx.Identifier().getText();
+        String variableName = ctx.getText();
         ProgramVariable res = localVars.lookup(variableName);
         if (res != null) {
             return res;
@@ -513,7 +513,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         }
         KeYSolidityType kst = asLocalVariableType((KeYSolidityType) type, dataLocation);
         ProgramVariable programVariable =
-            new ProgramVariable(new Name(ctx.identifier().Identifier().getText()),
+            new ProgramVariable(new Name(ctx.identifier().getText()),
                 kst, dataLocation);
         localVars.add(programVariable);
         StatementVariableDeclaration stmDecl =

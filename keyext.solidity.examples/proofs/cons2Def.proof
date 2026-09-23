@@ -34,12 +34,6 @@ cons2(1, 2) = cons(1, cons(2, nil))
 \proof {
 (branch "dummy ID"
 (rule "cons2Def" (formula "1") (term "0"))
-(rule "equalUnique" (formula "1"))
-(rule "equalUnique" (formula "1") (term "1"))
-(rule "eqClose" (formula "1") (term "0"))
-(rule "concrete_and_1" (formula "1"))
-(rule "equalUnique" (formula "1") (term "1"))
-(rule "concrete_and_3" (formula "1"))
 (rule "eqClose" (formula "1"))
 (rule "closeTrue" (formula "1"))
 )

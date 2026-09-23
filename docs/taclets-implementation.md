@@ -697,12 +697,22 @@ the update; a named return declares `int result` and calls `result = f()@C;`. A 
 without any clause keeps the plain `(true)` obligation byte for byte, so `TestSuite.sol` and
 the `solc/` ports are unaffected. `./run-key.sh F.sol -f fn --print-problem` prints the text.
 
-Quantified invariants declare their bound variables as `\schemaVar \variables` of the taclet
-with `\varcond(\noFreeVarIn(s), \noFreeVarIn(n))`; two calculus repairs were needed for them
-to run at all: `TacletPrefixBuilder` now gives a `\noFreeVarIn` schema variable an empty prefix
-(its instantiation is closed, so it may sit under any binder), and `TacletApp` instantiates a
-`\variables` schema variable that occurs only in `\replacewith` with a fresh `BoundVariable`
-(it used to throw). `GenericSortCondition` also accepts a plain `InstantiationEntry` holding a
+A parameter of type `uint`/`int`, `address`/`address payable` or an enum is declared `int`, a
+`bool` one `bool`; `public` and `external` functions both get an obligation.
+
+A quantified invariant keeps its bound variables as plain logic variables in the taclet's
+`\replacewith` (`\forall int a; …`), guarded by `\varcond(\noFreeVarIn(s), \noFreeVarIn(n))`.
+They used to be declared as `\schemaVar \variables`, but then the binder and its occurrences
+were instantiated apart, `all_unused` dropped the quantifier, and every quantified invariant
+was unprovable. Two calculus repairs from that attempt remain: `TacletPrefixBuilder` now gives
+a `\noFreeVarIn` schema variable an empty prefix (its instantiation is closed, so it may sit
+under any binder), and `TacletApp` instantiates a `\variables` schema variable that occurs only
+in `\replacewith` with a fresh `BoundVariable` (it used to throw). `GenericSortCondition` also accepts a plain `InstantiationEntry` holding a
 term, which is what `createSkolemConstant` records — before, every `exLeft`/`allRight` skolem
 failed the generic-sort check, so no quantified problem could be proved. The surface grammar
 and the emission table are in `keyext.solidity.examples/README.md`.
+
+`trueNotFalse` / `falseNotTrue` (`formulaNormalizationRules.key`) rewrite `TRUE = FALSE` and
+`FALSE = TRUE` to `false`. The bool literals had no distinctness axiom, so an infeasible branch
+of `if (p != 0)` could end with `TRUE = FALSE` in the antecedent and stay open
+(`real-world/SimpleAuction.sol`'s `bid`).

@@ -123,14 +123,23 @@ public class SolidityOutlineTest {
     }
 
     @Test
-    void aParameterWithoutAKeySortIsNotProvable() throws IOException {
-        var contract = SolidityOutline.of(SolidityExampleTests.example("net/PiggyBankNet.sol"))
-                .contract("PiggyBankNet").orElseThrow();
+    void aParameterWithoutAKeySortIsNotProvable(@TempDir Path dir) throws IOException {
+        Path sol = dir.resolve("P.sol");
+        Files.writeString(sol, """
+                // SPDX-License-Identifier: GPL-2.0-only
+                pragma solidity ^0.8.0;
+                contract P {
+                    function label(string memory text) public {}
+                    function pay(address payable to, uint amount) external {}
+                    function owner(address who) internal {}
+                }""");
+        var contract = SolidityOutline.of(sol).contract("P").orElseThrow();
 
-        String reason = contract.function("payTo").orElseThrow().unsupportedReason().orElseThrow();
-        assertTrue(reason.contains("parameter a"), reason);
-        assertTrue(reason.contains("address payable"), reason);
-        assertTrue(contract.function("payOwner").orElseThrow().isProvable());
+        String reason = contract.function("label").orElseThrow().unsupportedReason().orElseThrow();
+        assertTrue(reason.contains("parameter text"), reason);
+        assertTrue(reason.contains("string"), reason);
+        assertEquals(List.of("pay"), contract.provableFunctions().stream()
+                .map(SolidityOutline.Function::name).toList());
     }
 
     @Test

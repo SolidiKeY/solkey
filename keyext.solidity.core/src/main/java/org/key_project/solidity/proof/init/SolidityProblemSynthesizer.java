@@ -6,7 +6,6 @@ package org.key_project.solidity.proof.init;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -152,7 +151,8 @@ public final class SolidityProblemSynthesizer {
                     text -> compiler.formula(text, SpecCompiler.Context.invariant(),
                         contract.name() + " invariant"),
                     "            ");
-        String boundVariables = boundVariables(contractSpec.invariants(), contract.name());
+        boolean quantified = contractSpec.invariants().stream()
+                .anyMatch(SolidityProblemSynthesizer::quantifies);
         String precondition = "    // " + (function.payable() ? "msg.value >= 0" : "msg.value == 0")
             + " :\n    " + (function.payable() ? "geq(msgValue, 0)" : "msgValue = 0")
             + functionSpec.requires().stream()
@@ -174,7 +174,7 @@ public final class SolidityProblemSynthesizer {
                 %s%s\\rules {
                     insertCInv {
                         \\schemaVar \\term Struct s, n;
-                %s        \\find(CInv(s, n))
+                        \\find(CInv(s, n))
                 %s        \\replacewith(
                 %s)
                         \\heuristics(simplify)
@@ -189,32 +189,15 @@ public final class SolidityProblemSynthesizer {
                         (%s)
                 }
                 """.formatted(solFile.toAbsolutePath(), options, programVariables(declared),
-            boundVariables, boundVariables.isEmpty() ? ""
+            !quantified ? ""
                     : "        \\varcond(\\noFreeVarIn(s), \\noFreeVarIn(n))\n",
             invariant, precondition, update, call, postcondition);
     }
 
-    private static String boundVariables(List<String> invariants, String contract) {
-        Map<String, String> sorts = new LinkedHashMap<>();
-        for (String invariant : invariants) {
-            SpecParser.forEachQuantifier(SpecParser.parse(invariant), quantifier -> {
-                String variable = quantifier.var.getText();
-                String sort = quantifier.sort().getText().equals("bool") ? "bool" : "int";
-                String previous = sorts.put(variable, sort);
-                if (previous != null && !previous.equals(sort)) {
-                    throw new SpecException(contract + " invariant: the bound variable "
-                        + variable + " is used with the sorts " + previous + " and " + sort
-                        + "; rename one of them");
-                }
-            });
-        }
-        if (sorts.isEmpty()) {
-            return "";
-        }
-        StringBuilder text = new StringBuilder();
-        sorts.forEach((variable, sort) -> text.append("        \\schemaVar \\variables ")
-                .append(sort).append(" ").append(variable).append(";\n"));
-        return text.toString();
+    private static boolean quantifies(String invariant) {
+        boolean[] found = { false };
+        SpecParser.forEachQuantifier(SpecParser.parse(invariant), quantifier -> found[0] = true);
+        return found[0];
     }
 
     private static String conjunction(List<String> clauses, Function<String, String> compile,
