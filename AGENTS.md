@@ -151,7 +151,7 @@ Read the relevant doc before working on taclets. Each is a compact, agent-facing
 | `memory.md` | Memory rules — identity heap, aliasing, delete, cross-domain copies |
 | `net.md` | The payment/ledger model (`net`, `msg.sender`/`msg.value`, `transfer`, invariants) |
 | `require-assert.md` | `require` / `assert` rules (box vs. diamond false-branch behavior) |
-| `rule-generalizations.md` | The `// generalized by:` annotations and `RuleGeneralizationTest` |
+| `rule-generalizations.md` | The `// generalization:` comments and `RuleGeneralizationTest` |
 | `solc-ast.md` | The solc AST and the in-JVM compiler that produces it |
 | `ci.md` | CI gates in detail, the nullness idiom, CI-only test groups |
 | `forked-key-core.md` | Editing code forked from `key.core` — which files must not be restyled |

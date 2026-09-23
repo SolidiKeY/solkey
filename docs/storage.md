@@ -700,7 +700,7 @@ Each array rule branches on bounds. Out-of-bounds goes to
 Compound storage updates such as `s.x += e`, `s.a++`, etc., are
 handled by dedicated terminal rules that read, compute and write in
 one update (`storage{Root,Field}{Add,Sub,Mul,Div,Mod}Assign`, the
-`storageIncDec` family); complex receivers unfold first through their
+`storage…{Pre,Post}{in,de}crement` rules); complex receivers unfold first through their
 `_unfold_leftFst` twins, exactly as for plain assignments. The indexed
 terminals come in a mapping and an array form, split by the receiver's
 sort like the plain index rules: `storageIndexMapping…` rewrites to the

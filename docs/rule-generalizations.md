@@ -1,81 +1,53 @@
 # Rule Generalizations
 
-Many taclets in `solidityProgramRules.key` are instances of one generic pattern
-`op(a, b) = c` that differs only by operator — e.g. `storageRootAddAssign`,
-`storageRootSubAssign`, and `storageRootMulAssign` are the same rule with
-`+=`/`+` swapped for `-=`/`-` and `*=`/`*`. Each such taclet carries a
-machine-checked annotation naming its family, and
-`RuleGeneralizationTest` verifies — deterministically, in the
-`testRuleGeneralization` Gradle task — that the claim is true.
+Many taclets in `solidityProgramRules.key` are instances of one pattern that differs only by
+operator. For example, `storageRootAddAssign`, `storageRootSubAssign` and
+`storageRootMulAssign` are the same rule with `+=`/`+` swapped for `-=`/`-` and `*=`/`*`. Such a
+group is stated once, as a `// generalization:` comment above its first taclet, and
+`RuleGeneralizationTest` checks that the claim is true.
 
-## The annotation
-
-One comment line in the block directly above the taclet name:
+## The comment
 
 ```
-// generalized by: storageCompoundAssign(op=div, loc=root, variant=guarded)
+    // generalization:
+    //     storageRoot⟨name⟩Assign {
+    //         \schemaVar \formula post;
+    //         \schemaVar \program Path[storage,simple,global] gsp;
+    //         \schemaVar \program SimpleExpression se;
+    //         \find(\modality{#mod}{c# s#gsp ⟨0⟩ s#se; #c}\endmodality(post))
+    //         \replacewith({storage := save(storage, gsp, find<[int]>(storage, gsp) ⟨1⟩ se)}
+    //             \modality{#mod}{c# #c}\endmodality(post))
+    //         \heuristics(simplify_expression)
+    //     };
+    //     taclet                ⟨0⟩  ⟨1⟩
+    //     storageRootAddAssign  +=   +
+    //     storageRootSubAssign  -=   -
+    //     storageRootMulAssign  *=   *
+    storageRootAddAssign {
 ```
 
-Grammar: `// generalized by: <familyId>(<key>=<value>, ...)` with keys in the
-fixed order `op, loc, fixity, variant`; a key is omitted when the family does
-not use it. The annotation text is *rendered from the spec in
-`RuleGeneralizationTest`* — the test requires the comment to be byte-identical
-to the rendered form, so a drifted or hand-edited annotation fails the build.
+The comment holds a **template** taclet and a **table** below it:
+
+- The template name contains `⟨name⟩` once; each listed taclet name must match it (`Add` in
+  `storageRootAddAssign`).
+- The template body uses the placeholders `⟨0⟩ … ⟨n-1⟩`, which are exactly the table header's
+  columns after `taclet`.
+- Each row names a taclet and gives the value of every placeholder. Columns are separated by two
+  or more spaces, so a value may contain single spaces.
 
 ## How verification works
 
-The test does not need a theorem prover or any external tool. For every family
-member the spec declares an ordered list of **hole strings** — the only parts
-of the taclet that are allowed to differ across the family:
+For every row, the test fills the template with the row's values, collapses whitespace in the
+result and in the named taclet's body, and requires the two to be identical. Any difference
+beyond the placeholders fails with a pointer to the first divergence: a changed guard, a
+reordered update or a different heuristic. The test also checks that each comment is well
+formed and that no taclet is listed in two comments. A self-test injects a divergence into a
+fabricated taclet, so a checker that passes everything vacuously also fails.
 
-- a *name hole* replaced in the taclet name (`Add` in `storageRootAddAssign`),
-- *body holes* replaced in the taclet body (`+=`, then `+`).
-
-Each member is reduced to a **skeleton**: comments are stripped, whitespace
-runs collapse to single spaces, and each hole string is replaced (all
-occurrences, in spec order) by a numbered placeholder `⟨0⟩⟨1⟩…`. All members of
-a group must produce a **byte-identical skeleton**; any difference beyond the
-declared holes — a changed guard, a reordered update, a different heuristic —
-fails the test with a pointer to the first divergence.
-
-Structural variants each form their own group, so the deviation itself is
-still verified as uniform across operators:
-
-| Variant | What differs |
-|---|---|
-| `plain` | the unguarded effect rule |
-| `guarded` | `/=`, `%=` and `/`, `%` wrap the effect in `\if(se != 0) … \else(revert)`; div and mod must be identical to each other |
-| `unfold` | receiver capture (`_unfold_leftFst`); uniform across all five ops, no guard |
-| `loc=indexMapping` vs `loc=indexArray` | the indexed terminals are split by the receiver's sort: the array groups wrap the effect in the `inBounds` / `outOfBounds` (`revert();`) goal pair, the mapping groups do not |
-| `stmt` / `assign` / `decl` | inc/dec as a statement vs `result = …` vs declaration form |
-| `fixity=pre` vs `fixity=post` | pre writes storage before binding the result, post binds first — separate groups |
-| `rhsCapture` | a non-simple right-hand side is hoisted; the target is untouched |
-| `value` | the right-hand side is a *primitive* value, captured into a snapshot (`T rv = e;`) before the index is hoisted: Solidity evaluates the right-hand side first, and the hoisted index may mutate what it reads |
-| `ref` | the same for a *reference* right-hand side, captured into an alias (`T storage rv = src;` / `T memory rv = src;`) — the declaration is what differs, not the order |
-| `valueField` | in `receiverCapture`, the field write `nsp.a = e` whose receiver is aliased, with a primitive right-hand side |
-| `refField` | the reference-source half of it |
-
-Hole ordering rule: holes apply in spec order, so a string must come before
-its substrings (`+=` before `+`, `++s#gsp` before `+`); the test rejects a spec
-where an earlier hole is a substring of a later one.
-
-## Families
-
-| Family | Members | Covers |
-|---|---|---|
-| `storageCompoundAssign` | 30 | `storage{Root,Field}{Add,Sub,Mul,Div,Mod}Assign`, `storageIndex{Mapping,Array}{Add,Sub,Mul,Div,Mod}Assign` (+ `storageIndex…_unfold_leftFst`) |
-| `binaryOp` | 18 | `{addition,…,modulo}_unfold_left/right` + `…Assignment` |
-| `storageIncDec` | 40 | `storage{Root,Field}{Pre,Post}{in,de}crement`, `storageIndex{Mapping,Array}{Pre,Post}{in,de}crement` (+ `Assignment`, `_unfold_leftFst`) |
-| `localIncDec` | 12 | `localDecl…` / `localAssign…` / `local…` inc/dec |
-| `localCompoundAssign` | 5 | `local{Add,Sub,Mul,Div,Mod}Assign` |
-| `memoryCompoundAssign` | 20 | `memory{Field,IndexArray}{Add,Sub,Mul,Div,Mod}Assign` |
-| `memoryIncDec` | 24 | `memory{Field,IndexArray}{Pre,Post}{in,de}crement` (+ `Assignment`) |
-| `compoundAssignRhsCapture` | 5 | `{add,…,mod}AssignValueRhsCapture` |
-| `indexCapture` | 3 | the rules that hoist a non-simple right-hand side out of a root, field or indexed write with a simple target |
-| `indexCaptureAll` | 5 | the `…CaptureAll` rules, which capture right-hand side, receiver and index in one application for a receiver of any simplicity, split by primitive vs reference source |
-| `receiverCapture` | 5 | the field-write rules for a *complex* receiver (`nsp.a = e`), which capture the right-hand side and alias the receiver, split by primitive vs reference source |
-
-172 annotated taclets in total.
+When some operators of a construct differ structurally, they get their own comment instead of
+stretching a shared one. Examples: `/=` and `%=` wrap the effect in `\if(se != 0) … \else(revert)`;
+array-indexed terminals add the `inBounds` / `outOfBounds` goal pair that mapping-indexed terminals
+lack; pre- and post-increment bind the result in different orders.
 
 ## Running the check
 
@@ -83,21 +55,13 @@ where an earlier hole is a substring of a later one.
 ./gradlew :keyext.solidity.core:testRuleGeneralization
 ```
 
-It is its own test group, run by the `Solidity / rule-generalization` CI job —
-the common `:keyext.solidity.core:test` task excludes it by tag. The
-suite includes a self-test that injects a divergence into a fabricated member
-and asserts it is detected, so a vacuously green checker also fails.
+Each comment is a test container named `line N: <template name>`. It holds a `well formed` test
+and one test per row, named after the taclet. The group runs in the `Solidity /
+rule-generalization` CI job; the common `:keyext.solidity.core:test` task excludes it by tag.
 
-## Adding a member to a family
+## Adding a taclet
 
-1. Write the new taclet so it matches its group's skeleton exactly — copy an
-   existing member and swap the operator tokens.
-2. Add the member to the matching group in `RuleGeneralizationTest`'s `SPEC`
-   (name, `op`, optional `fixity`, name hole, body holes — most specific hole
-   first).
-3. Run the test. The failure message for a missing annotation prints the exact
-   comment line to paste above the taclet.
-
-If the new rule genuinely deviates (a new guard, different update order), do
-not stretch an existing group: add a new variant group so the deviation is
-named in the annotation and checked for uniformity across its own members.
+- **To an existing comment:** write the taclet by copying a listed one and swapping the operator
+  tokens, then add its row to the table.
+- **A new pattern:** put a `// generalization:` comment above its first taclet. For the template,
+  copy that taclet's body and replace the operator-specific parts with placeholders.

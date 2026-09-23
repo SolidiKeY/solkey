@@ -11,404 +11,103 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.DynamicContainer;
+import org.junit.jupiter.api.DynamicNode;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-/// Verifies the `// generalized by: family(op=..., ...)` annotations in
-/// `solidityProgramRules.key`: every annotated taclet must be an instance of its family's
-/// shared skeleton, obtained by replacing the member's operator-specific hole strings with
-/// numbered placeholders. All members of a group must produce a byte-identical skeleton, so a
-/// claimed generalization that does not hold (any difference beyond the declared holes) fails
-/// this test. See `docs/rule-generalizations.md`.
+/// Verifies the `// generalization:` comments in `solidityProgramRules.key`. Each comment gives a
+/// template taclet with numbered placeholders `⟨0⟩⟨1⟩…` and `⟨name⟩`, followed by a table whose
+/// rows name a taclet and the values of the placeholders; filling the template with a row must
+/// reproduce that taclet exactly, up to whitespace. See `docs/rule-generalizations.md`.
 @Tag("ruleGeneralization")
 public class RuleGeneralizationTest {
 
     private static final String RULES_RESOURCE =
         "org/key_project/solidity/proof/rules/solidityProgramRules.key";
-    private static final String MARKER = "// generalized by: ";
+    private static final String MARKER = "// generalization:";
+    private static final String NAME = "⟨name⟩";
+    private static final Pattern PLACEHOLDER = Pattern.compile("⟨(\\d+)⟩");
+    private static final Pattern TACLET_START = Pattern.compile("^ {4}(\\w+) \\{$");
 
-    private record Member(String name, String op, String fixity, String nameHole,
-            List<String> bodyHoles) {
+    private record Generalization(int line, String name, String body, List<String> header,
+            List<List<String>> rows) {
     }
 
-    private record Group(String family, String variant, String loc, List<Member> members) {
-    }
-
-    private record Taclet(String name, String body, List<String> comments) {
-    }
-
-    private static Member m(String name, String op, String nameHole, String... bodyHoles) {
-        return new Member(name, op, null, nameHole, List.of(bodyHoles));
-    }
-
-    private static Member mf(String name, String op, String fixity, String nameHole,
-            String... bodyHoles) {
-        return new Member(name, op, fixity, nameHole, List.of(bodyHoles));
-    }
-
-    private static Group g(String family, String variant, String loc, Member... members) {
-        return new Group(family, variant, loc, List.of(members));
-    }
-
-    private static final List<Group> SPEC = List.of(
-        g("storageCompoundAssign", "plain", "root",
-            m("storageRootAddAssign", "add", "Add", "+=", "+"),
-            m("storageRootSubAssign", "sub", "Sub", "-=", "-"),
-            m("storageRootMulAssign", "mul", "Mul", "*=", "*")),
-        g("storageCompoundAssign", "plain", "field",
-            m("storageFieldAddAssign", "add", "Add", "+=", "+"),
-            m("storageFieldSubAssign", "sub", "Sub", "-=", "-"),
-            m("storageFieldMulAssign", "mul", "Mul", "*=", "*")),
-        g("storageCompoundAssign", "plain", "indexMapping",
-            m("storageIndexMappingAddAssign", "add", "Add", "+=", "+"),
-            m("storageIndexMappingSubAssign", "sub", "Sub", "-=", "-"),
-            m("storageIndexMappingMulAssign", "mul", "Mul", "*=", "*")),
-        g("storageCompoundAssign", "plain", "indexArray",
-            m("storageIndexArrayAddAssign", "add", "Add", "+=", "+ se"),
-            m("storageIndexArraySubAssign", "sub", "Sub", "-=", "- se"),
-            m("storageIndexArrayMulAssign", "mul", "Mul", "*=", "* se")),
-        g("storageCompoundAssign", "guarded", "root",
-            m("storageRootDivAssign", "div", "Div", "/=", "/"),
-            m("storageRootModAssign", "mod", "Mod", "%=", "%")),
-        g("storageCompoundAssign", "guarded", "field",
-            m("storageFieldDivAssign", "div", "Div", "/=", "/"),
-            m("storageFieldModAssign", "mod", "Mod", "%=", "%")),
-        g("storageCompoundAssign", "guarded", "indexMapping",
-            m("storageIndexMappingDivAssign", "div", "Div", "/=", "/"),
-            m("storageIndexMappingModAssign", "mod", "Mod", "%=", "%")),
-        g("storageCompoundAssign", "guarded", "indexArray",
-            m("storageIndexArrayDivAssign", "div", "Div", "/=", "/ se"),
-            m("storageIndexArrayModAssign", "mod", "Mod", "%=", "% se")),
-        g("storageCompoundAssign", "unfold", "field",
-            m("storageFieldAddAssign_unfold_leftFst", "add", "Add", "+="),
-            m("storageFieldSubAssign_unfold_leftFst", "sub", "Sub", "-="),
-            m("storageFieldMulAssign_unfold_leftFst", "mul", "Mul", "*="),
-            m("storageFieldDivAssign_unfold_leftFst", "div", "Div", "/="),
-            m("storageFieldModAssign_unfold_leftFst", "mod", "Mod", "%=")),
-        g("storageCompoundAssign", "unfold", "index",
-            m("storageIndexAddAssign_unfold_leftFst", "add", "Add", "+="),
-            m("storageIndexSubAssign_unfold_leftFst", "sub", "Sub", "-="),
-            m("storageIndexMulAssign_unfold_leftFst", "mul", "Mul", "*="),
-            m("storageIndexDivAssign_unfold_leftFst", "div", "Div", "/="),
-            m("storageIndexModAssign_unfold_leftFst", "mod", "Mod", "%=")),
-        g("memoryCompoundAssign", "plain", "field",
-            m("memoryFieldAddAssign", "add", "Add", "+=", "+"),
-            m("memoryFieldSubAssign", "sub", "Sub", "-=", "-"),
-            m("memoryFieldMulAssign", "mul", "Mul", "*=", "*")),
-        g("memoryCompoundAssign", "guarded", "field",
-            m("memoryFieldDivAssign", "div", "Div", "/=", "/"),
-            m("memoryFieldModAssign", "mod", "Mod", "%=", "%")),
-        g("memoryCompoundAssign", "plain", "indexArray",
-            m("memoryIndexArrayAddAssign", "add", "Add", "+=", "+ se"),
-            m("memoryIndexArraySubAssign", "sub", "Sub", "-=", "- se"),
-            m("memoryIndexArrayMulAssign", "mul", "Mul", "*=", "* se")),
-        g("memoryCompoundAssign", "guarded", "indexArray",
-            m("memoryIndexArrayDivAssign", "div", "Div", "/=", "/ se"),
-            m("memoryIndexArrayModAssign", "mod", "Mod", "%=", "% se")),
-        g("memoryCompoundAssign", "unfold", "field",
-            m("memoryFieldAddAssign_unfold_leftFst", "add", "Add", "+="),
-            m("memoryFieldSubAssign_unfold_leftFst", "sub", "Sub", "-="),
-            m("memoryFieldMulAssign_unfold_leftFst", "mul", "Mul", "*="),
-            m("memoryFieldDivAssign_unfold_leftFst", "div", "Div", "/="),
-            m("memoryFieldModAssign_unfold_leftFst", "mod", "Mod", "%=")),
-        g("memoryCompoundAssign", "unfold", "index",
-            m("memoryIndexAddAssign_unfold_leftFst", "add", "Add", "+="),
-            m("memoryIndexSubAssign_unfold_leftFst", "sub", "Sub", "-="),
-            m("memoryIndexMulAssign_unfold_leftFst", "mul", "Mul", "*="),
-            m("memoryIndexDivAssign_unfold_leftFst", "div", "Div", "/="),
-            m("memoryIndexModAssign_unfold_leftFst", "mod", "Mod", "%=")),
-        g("memoryIncDec", "stmt", "field",
-            mf("memoryFieldPreincrement", "inc", "pre", "Preincrement",
-                "++s#mv.s#fld", "+ 1"),
-            mf("memoryFieldPostincrement", "inc", "post", "Postincrement",
-                "s#mv.s#fld++", "+ 1"),
-            mf("memoryFieldPredecrement", "dec", "pre", "Predecrement",
-                "--s#mv.s#fld", "- 1"),
-            mf("memoryFieldPostdecrement", "dec", "post", "Postdecrement",
-                "s#mv.s#fld--", "- 1")),
-        g("memoryIncDec", "stmt", "indexArray",
-            mf("memoryIndexArrayPreincrement", "inc", "pre", "Preincrement",
-                "++s#mv[s#ie]", "+ 1"),
-            mf("memoryIndexArrayPostincrement", "inc", "post", "Postincrement",
-                "s#mv[s#ie]++", "+ 1"),
-            mf("memoryIndexArrayPredecrement", "dec", "pre", "Predecrement",
-                "--s#mv[s#ie]", "- 1"),
-            mf("memoryIndexArrayPostdecrement", "dec", "post", "Postdecrement",
-                "s#mv[s#ie]--", "- 1")),
-        g("memoryIncDec", "assign", "field",
-            mf("memoryFieldPreincrementAssignment", "inc", "pre", "Preincrement",
-                "++s#mv.s#fld", "+ 1"),
-            mf("memoryFieldPredecrementAssignment", "dec", "pre", "Predecrement",
-                "--s#mv.s#fld", "- 1")),
-        g("memoryIncDec", "assign", "field",
-            mf("memoryFieldPostincrementAssignment", "inc", "post", "Postincrement",
-                "s#mv.s#fld++", "+ 1"),
-            mf("memoryFieldPostdecrementAssignment", "dec", "post", "Postdecrement",
-                "s#mv.s#fld--", "- 1")),
-        g("memoryIncDec", "assign", "indexArray",
-            mf("memoryIndexArrayPreincrementAssignment", "inc", "pre", "Preincrement",
-                "++s#mv[s#ie]", "+ 1"),
-            mf("memoryIndexArrayPredecrementAssignment", "dec", "pre", "Predecrement",
-                "--s#mv[s#ie]", "- 1")),
-        g("memoryIncDec", "assign", "indexArray",
-            mf("memoryIndexArrayPostincrementAssignment", "inc", "post", "Postincrement",
-                "s#mv[s#ie]++", "+ 1"),
-            mf("memoryIndexArrayPostdecrementAssignment", "dec", "post", "Postdecrement",
-                "s#mv[s#ie]--", "- 1")),
-        g("memoryIncDec", "unfold", "field",
-            mf("memoryFieldPreincrement_unfold_leftFst", "inc", "pre", "Preincrement",
-                "++s#nmp.s#fld", "++s#mv.s#fld"),
-            mf("memoryFieldPostincrement_unfold_leftFst", "inc", "post", "Postincrement",
-                "s#nmp.s#fld++", "s#mv.s#fld++"),
-            mf("memoryFieldPredecrement_unfold_leftFst", "dec", "pre", "Predecrement",
-                "--s#nmp.s#fld", "--s#mv.s#fld"),
-            mf("memoryFieldPostdecrement_unfold_leftFst", "dec", "post", "Postdecrement",
-                "s#nmp.s#fld--", "s#mv.s#fld--")),
-        g("memoryIncDec", "unfold", "index",
-            mf("memoryIndexPreincrement_unfold_leftFst", "inc", "pre", "Preincrement",
-                "++s#nmp[s#ie]", "++s#mv[s#ie]"),
-            mf("memoryIndexPostincrement_unfold_leftFst", "inc", "post", "Postincrement",
-                "s#nmp[s#ie]++", "s#mv[s#ie]++"),
-            mf("memoryIndexPredecrement_unfold_leftFst", "dec", "pre", "Predecrement",
-                "--s#nmp[s#ie]", "--s#mv[s#ie]"),
-            mf("memoryIndexPostdecrement_unfold_leftFst", "dec", "post", "Postdecrement",
-                "s#nmp[s#ie]--", "s#mv[s#ie]--")),
-        g("binaryOp", "unfoldLeft", null,
-            m("addition_unfold_left", "add", "addition", "+"),
-            m("subtraction_unfold_left", "sub", "subtraction", "-"),
-            m("multiplication_unfold_left", "mul", "multiplication", "*"),
-            m("power_unfold_left", "pow", "power", "**"),
-            m("division_unfold_left", "div", "division", "/"),
-            m("modulo_unfold_left", "mod", "modulo", "%")),
-        g("binaryOp", "unfoldRight", null,
-            m("addition_unfold_right", "add", "addition", "+"),
-            m("subtraction_unfold_right", "sub", "subtraction", "-"),
-            m("multiplication_unfold_right", "mul", "multiplication", "*"),
-            m("power_unfold_right", "pow", "power", "**"),
-            m("division_unfold_right", "div", "division", "/"),
-            m("modulo_unfold_right", "mod", "modulo", "%")),
-        g("binaryOp", "assignment", null,
-            m("additionAssignment", "add", "addition", "s#se1 + s#se2", "se1 + se2"),
-            m("subtractionAssignment", "sub", "subtraction", "s#se1 - s#se2", "se1 - se2"),
-            m("multiplicationAssignment", "mul", "multiplication", "s#se1 * s#se2",
-                "se1 * se2"),
-            m("powerAssignment", "pow", "power", "s#se1 ** s#se2", "pow(se1, se2)")),
-        g("binaryOp", "guardedAssignment", null,
-            m("divisionAssignment", "div", "division", "s#se1 / s#se2", "se1 / se2"),
-            m("moduloAssignment", "mod", "modulo", "s#se1 % s#se2", "se1 % se2")),
-        g("storageIncDec", "stmt", "root",
-            mf("storageRootPreincrement", "inc", "pre", "Preincrement", "++s#gsp", "+"),
-            mf("storageRootPostincrement", "inc", "post", "Postincrement", "s#gsp++", "+"),
-            mf("storageRootPredecrement", "dec", "pre", "Predecrement", "--s#gsp", "-"),
-            mf("storageRootPostdecrement", "dec", "post", "Postdecrement", "s#gsp--", "-")),
-        g("storageIncDec", "stmt", "field",
-            mf("storageFieldPreincrement", "inc", "pre", "Preincrement", "++s#sp.s#fld", "+"),
-            mf("storageFieldPostincrement", "inc", "post", "Postincrement", "s#sp.s#fld++",
-                "+"),
-            mf("storageFieldPredecrement", "dec", "pre", "Predecrement", "--s#sp.s#fld", "-"),
-            mf("storageFieldPostdecrement", "dec", "post", "Postdecrement", "s#sp.s#fld--",
-                "-")),
-        g("storageIncDec", "stmt", "indexMapping",
-            mf("storageIndexMappingPreincrement", "inc", "pre", "Preincrement",
-                "++s#sp[s#ie]", "+"),
-            mf("storageIndexMappingPostincrement", "inc", "post", "Postincrement",
-                "s#sp[s#ie]++", "+"),
-            mf("storageIndexMappingPredecrement", "dec", "pre", "Predecrement",
-                "--s#sp[s#ie]", "-"),
-            mf("storageIndexMappingPostdecrement", "dec", "post", "Postdecrement",
-                "s#sp[s#ie]--", "-")),
-        g("storageIncDec", "stmt", "indexArray",
-            mf("storageIndexArrayPreincrement", "inc", "pre", "Preincrement",
-                "++s#sp[s#ie]", "+ 1"),
-            mf("storageIndexArrayPostincrement", "inc", "post", "Postincrement",
-                "s#sp[s#ie]++", "+ 1"),
-            mf("storageIndexArrayPredecrement", "dec", "pre", "Predecrement",
-                "--s#sp[s#ie]", "- 1"),
-            mf("storageIndexArrayPostdecrement", "dec", "post", "Postdecrement",
-                "s#sp[s#ie]--", "- 1")),
-        g("storageIncDec", "assign", "root",
-            mf("storageRootPreincrementAssignment", "inc", "pre", "Preincrement", "++s#gsp",
-                "+"),
-            mf("storageRootPredecrementAssignment", "dec", "pre", "Predecrement", "--s#gsp",
-                "-")),
-        g("storageIncDec", "assign", "root",
-            mf("storageRootPostincrementAssignment", "inc", "post", "Postincrement",
-                "s#gsp++", "+"),
-            mf("storageRootPostdecrementAssignment", "dec", "post", "Postdecrement",
-                "s#gsp--", "-")),
-        g("storageIncDec", "assign", "field",
-            mf("storageFieldPreincrementAssignment", "inc", "pre", "Preincrement",
-                "++s#sp.s#fld", "+"),
-            mf("storageFieldPredecrementAssignment", "dec", "pre", "Predecrement",
-                "--s#sp.s#fld", "-")),
-        g("storageIncDec", "assign", "field",
-            mf("storageFieldPostincrementAssignment", "inc", "post", "Postincrement",
-                "s#sp.s#fld++", "+"),
-            mf("storageFieldPostdecrementAssignment", "dec", "post", "Postdecrement",
-                "s#sp.s#fld--", "-")),
-        g("storageIncDec", "assign", "indexMapping",
-            mf("storageIndexMappingPreincrementAssignment", "inc", "pre", "Preincrement",
-                "++s#sp[s#ie]", "+"),
-            mf("storageIndexMappingPredecrementAssignment", "dec", "pre", "Predecrement",
-                "--s#sp[s#ie]", "-")),
-        g("storageIncDec", "assign", "indexMapping",
-            mf("storageIndexMappingPostincrementAssignment", "inc", "post", "Postincrement",
-                "s#sp[s#ie]++", "+"),
-            mf("storageIndexMappingPostdecrementAssignment", "dec", "post", "Postdecrement",
-                "s#sp[s#ie]--", "-")),
-        g("storageIncDec", "assign", "indexArray",
-            mf("storageIndexArrayPreincrementAssignment", "inc", "pre", "Preincrement",
-                "++s#sp[s#ie]", "+ 1"),
-            mf("storageIndexArrayPredecrementAssignment", "dec", "pre", "Predecrement",
-                "--s#sp[s#ie]", "- 1")),
-        g("storageIncDec", "assign", "indexArray",
-            mf("storageIndexArrayPostincrementAssignment", "inc", "post", "Postincrement",
-                "s#sp[s#ie]++", "+ 1"),
-            mf("storageIndexArrayPostdecrementAssignment", "dec", "post", "Postdecrement",
-                "s#sp[s#ie]--", "- 1")),
-        g("storageIncDec", "unfold", "field",
-            mf("storageFieldPreincrement_unfold_leftFst", "inc", "pre", "Preincrement",
-                "++s#nsp.s#fld", "++s#sp.s#fld"),
-            mf("storageFieldPostincrement_unfold_leftFst", "inc", "post", "Postincrement",
-                "s#nsp.s#fld++", "s#sp.s#fld++"),
-            mf("storageFieldPredecrement_unfold_leftFst", "dec", "pre", "Predecrement",
-                "--s#nsp.s#fld", "--s#sp.s#fld"),
-            mf("storageFieldPostdecrement_unfold_leftFst", "dec", "post", "Postdecrement",
-                "s#nsp.s#fld--", "s#sp.s#fld--")),
-        g("storageIncDec", "unfold", "index",
-            mf("storageIndexPreincrement_unfold_leftFst", "inc", "pre", "Preincrement",
-                "++s#nsp[s#ie]", "++s#sp[s#ie]"),
-            mf("storageIndexPostincrement_unfold_leftFst", "inc", "post", "Postincrement",
-                "s#nsp[s#ie]++", "s#sp[s#ie]++"),
-            mf("storageIndexPredecrement_unfold_leftFst", "dec", "pre", "Predecrement",
-                "--s#nsp[s#ie]", "--s#sp[s#ie]"),
-            mf("storageIndexPostdecrement_unfold_leftFst", "dec", "post", "Postdecrement",
-                "s#nsp[s#ie]--", "s#sp[s#ie]--")),
-        g("localIncDec", "decl", null,
-            mf("localDeclPreincrement", "inc", "pre", "Preincrement", "++s#lv", "+"),
-            mf("localDeclPredecrement", "dec", "pre", "Predecrement", "--s#lv", "-")),
-        g("localIncDec", "decl", null,
-            mf("localDeclPostincrement", "inc", "post", "Postincrement", "s#lv++", "+"),
-            mf("localDeclPostdecrement", "dec", "post", "Postdecrement", "s#lv--", "-")),
-        g("localIncDec", "assign", null,
-            mf("localAssignPreincrement", "inc", "pre", "Preincrement", "++s#lv", "+"),
-            mf("localAssignPredecrement", "dec", "pre", "Predecrement", "--s#lv", "-")),
-        g("localIncDec", "assign", null,
-            mf("localAssignPostincrement", "inc", "post", "Postincrement", "s#lv++", "+"),
-            mf("localAssignPostdecrement", "dec", "post", "Postdecrement", "s#lv--", "-")),
-        g("localIncDec", "stmt", null,
-            mf("localPreincrement", "inc", "pre", "Preincrement", "++s#lv", "+"),
-            mf("localPostincrement", "inc", "post", "Postincrement", "s#lv++", "+"),
-            mf("localPredecrement", "dec", "pre", "Predecrement", "--s#lv", "-"),
-            mf("localPostdecrement", "dec", "post", "Postdecrement", "s#lv--", "-")),
-        g("localCompoundAssign", "plain", null,
-            m("localAddAssign", "add", "Add", "+=", "+"),
-            m("localSubAssign", "sub", "Sub", "-=", "-"),
-            m("localMulAssign", "mul", "Mul", "*=", "*")),
-        g("localCompoundAssign", "guarded", null,
-            m("localDivAssign", "div", "Div", "/=", "/"),
-            m("localModAssign", "mod", "Mod", "%=", "%")),
-        g("compoundAssignRhsCapture", null, null,
-            m("addAssignValueRhsCapture", "add", "add", "+="),
-            m("subAssignValueRhsCapture", "sub", "sub", "-="),
-            m("mulAssignValueRhsCapture", "mul", "mul", "*="),
-            m("divAssignValueRhsCapture", "div", "div", "/="),
-            m("modAssignValueRhsCapture", "mod", "mod", "%=")),
-        g("indexCapture", "rhsCapture", null,
-            m("storageRootWriteValueRhsCapture", "storageRootWrite", "storageRootWrite",
-                "Path[storage,simple,global] gsp", "s#gsp"),
-            m("fieldWriteValueRhsCapture", "fieldWrite", "fieldWrite",
-                "Path[simple] sp; \\schemaVar \\program Field fld", "s#sp.s#fld"),
-            m("indexWriteValueRhsCapture", "indexWrite", "indexWrite",
-                "Path[simple] sp; \\schemaVar \\program SimpleExpression ie", "s#sp[s#ie]")),
-        g("indexCaptureAll", "value", null,
-            m("storageIndexWriteCaptureAll", "storage", "storageIndexWrite",
-                "s#aliasType storage s#sp = s#p;", "newTypeOf(sp, p)", "notAllSimple(p, ie)",
-                "Path[storage] p", "Variable[storage] sp", "s#sp[s#pv]"),
-            m("memoryIndexWriteCaptureAll", "memory", "memoryIndexWrite",
-                "s#aliasType memory s#mv = s#p;", "newTypeOf(mv, p)", "notAllSimple(p, ie)",
-                "Path[memory] p", "Variable[memory] mv", "s#mv[s#pv]")),
-        g("indexCaptureAll", "ref", null,
-            m("storageIndexWriteStorageRefCaptureAll", "storageRef",
-                "storageIndexWriteStorageRef",
-                "s#aliasType storage s#sp = s#p;", "newTypeOf(sp, p)", "notAllSimple(p, ie)",
-                "Path[storage] p", "Path[storage,reference] src",
-                "Variable[storage] rv", "Variable[storage] sp", "s#rvType storage",
-                "s#sp[s#pv]"),
-            m("memoryToStorageIndexCaptureAll", "memToStorage", "memoryToStorageIndex",
-                "s#aliasType storage s#sp = s#p;", "newTypeOf(sp, p)", "notAllSimple(p, ie)",
-                "Path[storage] p", "Path[memory,reference] src",
-                "Variable[memory] rv", "Variable[storage] sp", "s#rvType memory",
-                "s#sp[s#pv]"),
-            m("memoryIndexWriteMemRefCaptureAll", "memRef", "memoryIndexWriteMemRef",
-                "s#aliasType memory s#mv = s#p;", "newTypeOf(mv, p)", "notAllSimple(p, ie)",
-                "Path[memory] p", "Path[memory,reference] src",
-                "Variable[memory] rv", "Variable[memory] mv", "s#rvType memory",
-                "s#mv[s#pv]")),
-        g("receiverCapture", "valueField", null,
-            m("storageFieldWrite_unfold_leftFst", "storage", "storageFieldWrite",
-                "Path[storage,complex] nsp", "Variable[storage] sp", "newTypeOf(sp, nsp)",
-                "s#nsp.s#fld", "s#sp.s#fld", "s#aliasType storage", "s#nsp", "s#sp"),
-            m("memoryFieldWrite_unfold_leftFst", "memory", "memoryFieldWrite",
-                "Path[memory,complex] nmp", "Variable[memory] mv", "newTypeOf(mv, nmp)",
-                "s#nmp.s#fld", "s#mv.s#fld", "s#aliasType memory", "s#nmp", "s#mv")),
-        g("receiverCapture", "refField", null,
-            m("storageFieldWriteStorageRef_unfold_leftFst", "storage",
-                "storageFieldWriteStorageRef", "Path[storage,complex] nsp",
-                "Path[storage,reference] src", "Variable[storage] rv", "Variable[storage] sp",
-                "newTypeOf(sp, nsp)", "s#rvType storage", "s#nsp.s#fld", "s#sp.s#fld",
-                "s#aliasType storage", "s#nsp", "s#sp"),
-            m("memoryToStorageField_unfold_leftFst", "memToStorage", "memoryToStorageField",
-                "Path[storage,complex] nsp", "Path[memory,reference] src",
-                "Variable[memory] rv", "Variable[storage] sp",
-                "newTypeOf(sp, nsp)", "s#rvType memory", "s#nsp.s#fld", "s#sp.s#fld",
-                "s#aliasType storage", "s#nsp", "s#sp"),
-            m("memoryFieldWriteMemRef_unfold_leftFst", "memory", "memoryFieldWriteMemRef",
-                "Path[memory,complex] nmp", "Path[memory,reference] src",
-                "Variable[memory] rv", "Variable[memory] mv",
-                "newTypeOf(mv, nmp)", "s#rvType memory", "s#nmp.s#fld", "s#mv.s#fld",
-                "s#aliasType memory", "s#nmp", "s#mv")));
-
-    private static String annotation(Group group, Member member) {
-        StringBuilder sb = new StringBuilder(MARKER);
-        sb.append(group.family()).append("(op=").append(member.op());
-        if (group.loc() != null) {
-            sb.append(", loc=").append(group.loc());
+    private static List<String> resourceLines() {
+        try (InputStream in =
+            RuleGeneralizationTest.class.getClassLoader().getResourceAsStream(RULES_RESOURCE)) {
+            assertNotNull(in, "rules resource must be on the classpath: " + RULES_RESOURCE);
+            return new String(in.readAllBytes(), StandardCharsets.UTF_8).lines().toList();
+        } catch (IOException e) {
+            throw new IllegalStateException("cannot read " + RULES_RESOURCE, e);
         }
-        if (member.fixity() != null) {
-            sb.append(", fixity=").append(member.fixity());
-        }
-        if (group.variant() != null) {
-            sb.append(", variant=").append(group.variant());
-        }
-        return sb.append(")").toString();
     }
 
-    private static String groupLabel(Group group) {
-        StringBuilder sb = new StringBuilder(group.family());
-        if (group.variant() != null) {
-            sb.append("/").append(group.variant());
+    private static Map<String, String> parseTaclets(List<String> lines) {
+        Map<String, String> taclets = new LinkedHashMap<>();
+        for (int i = 0; i < lines.size(); i++) {
+            Matcher matcher = TACLET_START.matcher(lines.get(i));
+            if (!matcher.matches()) {
+                continue;
+            }
+            StringBuilder body = new StringBuilder();
+            int end = i + 1;
+            while (end < lines.size() && !lines.get(end).equals("    };")) {
+                body.append(lines.get(end)).append('\n');
+                end++;
+            }
+            assertTrue(end < lines.size(), "unterminated taclet " + matcher.group(1));
+            assertNull(taclets.put(matcher.group(1), body.toString()),
+                "duplicate taclet name " + matcher.group(1));
+            i = end;
         }
-        if (group.loc() != null) {
-            sb.append("/").append(group.loc());
+        return taclets;
+    }
+
+    private static List<Generalization> parseGeneralizations(List<String> lines) {
+        List<Generalization> result = new ArrayList<>();
+        for (int i = 0; i < lines.size(); i++) {
+            if (!lines.get(i).trim().equals(MARKER)) {
+                continue;
+            }
+            List<String> content = new ArrayList<>();
+            for (int j = i + 1; j < lines.size() && lines.get(j).trim().startsWith("//"); j++) {
+                content.add(lines.get(j).trim().substring(2).stripLeading());
+            }
+            int line = i + 1;
+            assertFalse(content.isEmpty(), "line " + line + ": empty generalization");
+            String header = content.get(0);
+            assertTrue(header.endsWith(" {"),
+                "line " + line + ": a generalization starts with `name {`, found " + header);
+            int close = content.indexOf("};");
+            assertTrue(close > 0, "line " + line + ": template without a closing `};`");
+            assertTrue(close + 2 < content.size(),
+                "line " + line + ": a generalization needs a table header and at least one row");
+            List<List<String>> table = content.subList(close + 1, content.size()).stream()
+                    .map(row -> List.of(row.split("\\s{2,}"))).toList();
+            result.add(new Generalization(line, header.substring(0, header.length() - 2),
+                String.join("\n", content.subList(1, close)), table.get(0),
+                table.subList(1, table.size())));
         }
-        String fixity = group.members().get(0).fixity();
-        if (fixity != null) {
-            sb.append("/").append(fixity);
-        }
-        return sb.toString();
+        return result;
     }
 
     private static String normalize(String text) {
@@ -419,24 +118,9 @@ public class RuleGeneralizationTest {
         return "⟨" + i + "⟩";
     }
 
-    private static String skeleton(String name, String nameHole, List<String> bodyHoles,
-            String body) {
-        assertTrue(name.contains(nameHole),
-            name + ": name hole '" + nameHole + "' does not occur in the taclet name");
-        String result = name.replace(nameHole, "⟨name⟩") + " { ";
-        String normalized = normalize(body);
-        for (int i = 0; i < bodyHoles.size(); i++) {
-            String hole = normalize(bodyHoles.get(i));
-            for (int j = i + 1; j < bodyHoles.size(); j++) {
-                assertTrue(!normalize(bodyHoles.get(j)).contains(hole),
-                    name + ": hole '" + hole + "' is a substring of later hole '"
-                        + bodyHoles.get(j) + "'; reorder the holes (most specific first)");
-            }
-            assertTrue(normalized.contains(hole),
-                name + ": hole '" + hole + "' does not occur in the taclet body");
-            normalized = normalized.replace(hole, placeholder(i));
-        }
-        return result + normalized;
+    private static String instantiate(String template, List<String> values) {
+        return PLACEHOLDER.matcher(template).replaceAll(
+            m -> Matcher.quoteReplacement(values.get(Integer.parseInt(m.group(1)))));
     }
 
     private static String firstDivergence(String expected, String actual) {
@@ -446,116 +130,102 @@ public class RuleGeneralizationTest {
             i++;
         }
         int from = Math.max(0, i - 60);
-        return "skeletons diverge at offset " + i + ":\n  expected ..."
-            + expected.substring(from, Math.min(expected.length(), i + 60)) + "...\n  actual   ..."
+        return "diverges at offset " + i + ":\n  template ..."
+            + expected.substring(from, Math.min(expected.length(), i + 60)) + "...\n  taclet   ..."
             + actual.substring(from, Math.min(actual.length(), i + 60)) + "...";
     }
 
-    private static final Pattern TACLET_START = Pattern.compile("^ {4}(\\w+) \\{$");
-
-    private static Map<String, Taclet> parseTaclets() {
-        List<String> lines;
-        try (InputStream in =
-            RuleGeneralizationTest.class.getClassLoader().getResourceAsStream(RULES_RESOURCE)) {
-            assertTrue(in != null, "rules resource must be on the classpath: " + RULES_RESOURCE);
-            lines = new String(in.readAllBytes(), StandardCharsets.UTF_8).lines().toList();
-        } catch (IOException e) {
-            throw new IllegalStateException("cannot read " + RULES_RESOURCE, e);
+    private static void checkWellFormed(Generalization g) {
+        String where = "line " + g.line() + ": ";
+        assertEquals(1, g.name().split(NAME, -1).length - 1,
+            where + "the template name must contain " + NAME + " exactly once");
+        int holes = g.header().size() - 1;
+        List<String> expectedHeader = new ArrayList<>(List.of("taclet"));
+        IntStream.range(0, holes).mapToObj(RuleGeneralizationTest::placeholder)
+                .forEach(expectedHeader::add);
+        assertEquals(expectedHeader, g.header(), where + "table header");
+        Set<Integer> used = PLACEHOLDER.matcher(g.body()).results()
+                .map(m -> Integer.parseInt(m.group(1)))
+                .collect(Collectors.toCollection(TreeSet::new));
+        assertEquals(IntStream.range(0, holes).boxed().toList(), List.copyOf(used),
+            where + "the template must use exactly the placeholders of the table header");
+        for (List<String> row : g.rows()) {
+            assertEquals(g.header().size(), row.size(), where + "row " + row);
         }
-        Map<String, Taclet> taclets = new LinkedHashMap<>();
-        for (int i = 0; i < lines.size(); i++) {
-            Matcher matcher = TACLET_START.matcher(lines.get(i));
-            if (!matcher.matches()) {
-                continue;
-            }
-            List<String> comments = new ArrayList<>();
-            for (int j = i - 1; j >= 0 && lines.get(j).trim().startsWith("//"); j--) {
-                comments.add(0, lines.get(j).trim());
-            }
-            StringBuilder body = new StringBuilder();
-            int end = i + 1;
-            while (end < lines.size() && !lines.get(end).equals("    };")) {
-                body.append(lines.get(end)).append('\n');
-                end++;
-            }
-            assertTrue(end < lines.size(), "unterminated taclet " + matcher.group(1));
-            String name = matcher.group(1);
-            assertNull(taclets.put(name, new Taclet(name, body.toString(), comments)),
-                "duplicate taclet name " + name);
-            i = end;
-        }
-        return taclets;
     }
 
-    private static List<String> markerLines() {
-        try (InputStream in =
-            RuleGeneralizationTest.class.getClassLoader().getResourceAsStream(RULES_RESOURCE)) {
-            return new String(in.readAllBytes(), StandardCharsets.UTF_8).lines()
-                    .map(String::trim).filter(l -> l.startsWith(MARKER)).toList();
-        } catch (IOException e) {
-            throw new IllegalStateException("cannot read " + RULES_RESOURCE, e);
+    private static String divergence(Generalization g, List<String> row,
+            Map<String, String> taclets) {
+        String name = row.get(0);
+        String body = taclets.get(name);
+        if (body == null) {
+            return "no taclet named " + name + " in " + RULES_RESOURCE;
         }
+        String[] affixes = g.name().split(NAME, -1);
+        if (!name.startsWith(affixes[0]) || !name.endsWith(affixes[1])
+                || name.length() <= affixes[0].length() + affixes[1].length()) {
+            return name + " does not match the template name " + g.name();
+        }
+        String expected = normalize(instantiate(g.body(), row.subList(1, row.size())));
+        String actual = normalize(body);
+        return expected.equals(actual) ? null
+                : name + " is not an instance of the template; "
+                    + firstDivergence(expected, actual);
     }
 
     @TestFactory
-    Stream<DynamicTest> annotatedTacletsMatchTheirGroupSkeleton() {
-        Map<String, Taclet> taclets = parseTaclets();
-        List<DynamicTest> tests = new ArrayList<>();
-        for (Group group : SPEC) {
-            tests.add(DynamicTest.dynamicTest(groupLabel(group), () -> {
-                String reference = null;
-                String referenceName = null;
-                for (Member member : group.members()) {
-                    Taclet taclet = taclets.get(member.name());
-                    assertTrue(taclet != null, "no taclet named " + member.name()
-                        + " in " + RULES_RESOURCE);
-                    String expected = annotation(group, member);
-                    assertTrue(taclet.comments().contains(expected),
-                        member.name() + ": missing or wrong annotation; expected the comment"
-                            + " line\n    " + expected + "\ndirectly above the taclet, found "
-                            + taclet.comments());
-                    String skeleton =
-                        skeleton(member.name(), member.nameHole(), member.bodyHoles(),
-                            taclet.body());
-                    if (reference == null) {
-                        reference = skeleton;
-                        referenceName = member.name();
-                    } else if (!reference.equals(skeleton)) {
-                        fail(member.name() + " is not an instance of the same skeleton as "
-                            + referenceName + "; " + firstDivergence(reference, skeleton));
+    Stream<DynamicNode> everyListedTacletIsAnInstanceOfItsTemplate() {
+        List<String> lines = resourceLines();
+        Map<String, String> taclets = parseTaclets(lines);
+        return parseGeneralizations(lines).stream().map(g -> {
+            List<DynamicTest> tests = new ArrayList<>();
+            tests.add(DynamicTest.dynamicTest("well formed", () -> checkWellFormed(g)));
+            for (List<String> row : g.rows()) {
+                tests.add(DynamicTest.dynamicTest(row.get(0), () -> {
+                    String problem = divergence(g, row, taclets);
+                    if (problem != null) {
+                        fail("line " + g.line() + ": " + problem);
                     }
-                }
-            }));
-        }
-        return tests.stream();
+                }));
+            }
+            return DynamicContainer.dynamicContainer("line " + g.line() + ": " + g.name(), tests);
+        });
     }
 
     @Test
-    void everyMarkerInTheFileBelongsToTheSpec() {
-        Map<String, String> expectedByName = new HashMap<>();
-        for (Group group : SPEC) {
-            for (Member member : group.members()) {
-                assertNull(expectedByName.put(member.name(), annotation(group, member)),
-                    "duplicate spec entry for " + member.name());
+    void noTacletIsListedTwice() {
+        List<Generalization> generalizations = parseGeneralizations(resourceLines());
+        assertFalse(generalizations.isEmpty(), "no " + MARKER + " comment in " + RULES_RESOURCE);
+        Map<String, Integer> listedAt = new HashMap<>();
+        for (Generalization g : generalizations) {
+            for (List<String> row : g.rows()) {
+                Integer previous = listedAt.put(row.get(0), g.line());
+                assertNull(previous, row.get(0) + " is listed at lines " + previous + " and "
+                    + g.line());
             }
         }
-        List<String> markers = new ArrayList<>(markerLines());
-        for (String expected : expectedByName.values()) {
-            assertTrue(markers.remove(expected),
-                "annotation declared in the spec is missing from the file: " + expected);
-        }
-        assertEquals(List.of(), markers,
-            "annotations in the file without a corresponding spec entry in "
-                + RuleGeneralizationTest.class.getSimpleName());
-        assertEquals(167, expectedByName.size(), "spec member count");
     }
 
     @Test
     void checkerDetectsAnInjectedDivergence() {
-        String add = skeleton("fooAddRule", "Add", List.of("+"), "x = a + b;");
-        String sub = skeleton("fooSubRule", "Sub", List.of("-"), "x = a - b;");
-        assertEquals(add, sub);
-        String swapped = skeleton("fooMulRule", "Mul", List.of("*"), "x = b * a;");
-        assertNotEquals(add, swapped);
+        List<String> lines = List.of(
+            "    " + MARKER,
+            "    //     foo" + NAME + "Rule {",
+            "    //         x = a ⟨0⟩ b;",
+            "    //     };",
+            "    //     taclet      ⟨0⟩",
+            "    //     fooAddRule  +",
+            "    //     fooMulRule  *",
+            "    fooAddRule {",
+            "        x = a + b;",
+            "    };",
+            "    fooMulRule {",
+            "        x = b * a;",
+            "    };");
+        Generalization g = parseGeneralizations(lines).get(0);
+        checkWellFormed(g);
+        Map<String, String> taclets = parseTaclets(lines);
+        assertNull(divergence(g, g.rows().get(0), taclets));
+        assertNotNull(divergence(g, g.rows().get(1), taclets));
     }
 }

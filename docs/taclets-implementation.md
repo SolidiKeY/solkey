@@ -87,8 +87,8 @@ rules before a terminal rule fires.
 ## Implemented
 
 Operator families that differ only by operator token (`op(a,b) = c` instances —
-compound assignment, inc/dec, tier-1 arithmetic) carry `// generalized by:`
-annotations in `solidityProgramRules.key`, verified mechanically by
+compound assignment, inc/dec, tier-1 arithmetic) are listed under `// generalization:`
+comments in `solidityProgramRules.key`, verified mechanically by
 `RuleGeneralizationTest` — see `docs/rule-generalizations.md`.
 
 ### Storage read / write / copy
@@ -138,8 +138,7 @@ mapping member.
 pair of `storageIndexWriteArraySave`). `/=` and `%=` guard with
 `\if(se != 0)\then(…)\else(revert)`; integers are unbounded mathematical
 integers, so there is no overflow guard. Bitwise `&= |= ^= <<= >>=` parse but
-are deferred (no bitwise LDT). Annotated as the `storageCompoundAssign` /
-`localCompoundAssign` / `compoundAssignRhsCapture` families.
+are deferred (no bitwise LDT). Listed under `// generalization:` comments.
 
 ### Memory arithmetic
 Each memory arithmetic rule is its storage counterpart with
@@ -157,8 +156,8 @@ The indexed terminals state their bounds the way `memoryIndexWriteArray` does �
 `\sameUpdateLevel` plus `\add(0 <= i & i < read<[int]>(memory, mv, size) ==>)`
 on the `inBounds` goal and the negation on `outOfBounds` — where the storage
 twins use an implication inside `\replacewith`. That difference is real, so the
-memory indexed groups are their own `RuleGeneralizationTest` groups rather than
-members of the storage ones.
+memory indexed rules have their own `// generalization:` comments rather than
+rows in the storage ones.
 
 No new capture rules were needed: `addAssignValueRhsCapture` and its siblings
 take a plain `Expression` target and so already cover a memory left-hand side.
@@ -176,8 +175,8 @@ captures (§Capture partition below), which also cover nested RHS like
 `neg`) over unbounded mathematical integers — overflow is not modeled
 (`keyext.solidity.examples/unprovable/Unprovable.sol` documents the divergence
 from the EVM's checked arithmetic); `/` and `%` revert on a zero denominator.
-- Arithmetic: `-`, `*`, `**` (`pow`), `/`, `%` — annotated as the `binaryOp`
-  family (`docs/rule-generalizations.md`).
+- Arithmetic: `-`, `*`, `**` (`pow`), `/`, `%` — listed under `// generalization:`
+  comments (`docs/rule-generalizations.md`).
 - Relational: `!=`, `<`, `>`, `<=`, `>=` (predicate map `lt/leq/gt/geq`).
 - Logical / unary: `&&`, `||`, `!`, unary `-x`. A non-simple left operand is
   captured eagerly (Solidity always evaluates it); a non-simple *right* operand
@@ -534,10 +533,8 @@ kind:
   path twice is `ternaryToIfStorage`, whose two occurrences are in mutually
   exclusive `if`/`else` branches, so the path is resolved exactly once per trace.
 
-  The whole family is skeleton-checked as `RuleGeneralizationTest`'s
-  `indexCapture` family (variant `rhsCapture`), `indexCaptureAll` family
-  (variants `value` / `ref`) and `receiverCapture` family (variants
-  `valueField` / `refField`), so the storage and memory halves cannot drift apart again.
+  Their `// generalization:` comments are checked by `RuleGeneralizationTest`, so
+  the storage and memory halves cannot drift apart again.
 Also `storageIndexReadMappingStoreRoot` closes the paper's §11 table
 (`gsp = sp[i]` for mappings, no bounds branch).
 
