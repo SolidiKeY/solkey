@@ -1953,6 +1953,17 @@ contract TestSuite {
         assert(tokens[0].value == 99);
     }
 
+    function testStoragePushReturnRefIsZeroed() public {
+        Token storage t = tokens.push();
+        assert(t.value == 0);
+    }
+
+    function testStorageNestedPushReturnRefIsZeroed() public {
+        Account storage acc = persons.push().account;
+        assert(acc.balance == 0);
+        assert(acc.token.value == 0);
+    }
+
     function testStorageRootDeepCopy() public {
         bob.age = 21;
         bob.account.balance = 11;

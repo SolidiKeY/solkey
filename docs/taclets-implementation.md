@@ -282,9 +282,10 @@ from **post-update** storage (bound emitted inside `\replacewith`, not via `\add
 `delAt(storage, sp · at(ℓ-1))` (not eager `defaultValue`), reusing the `delNode`
 machinery of §Delete — so a mapping nested in the popped element survives `pop()` and a
 later `push()`, exactly like `storageRootDelete` / `storageFieldDelete`.
-`storagePushLengthSave` clears the appended slot the same way, which is what makes
-`arr.push(); assert(arr[0] == 0);` provable for a primitive element while a struct
-element keeps its mapping members. See the `testDeepPopDoesNotResetMappingMember` end-to-end
+`storagePushLengthSave` and `storageLocalRootPushBind` clear the appended slot the same way,
+which is what makes `arr.push(); assert(arr[0] == 0);` and
+`T storage r = arr.push(); assert(r.x == 0);` provable on unknown storage while a struct
+element keeps its mapping members (`testStoragePushReturnRefIsZeroed`). See the `testDeepPopDoesNotResetMappingMember` end-to-end
 example. `delAt(st, p)` names `st` once where the equivalent `save`-of-deleted-value form
 named it twice; reads commute through it with `selectOnDelAtCons`, and the reset still
 resolves by sort on read through `delValue<[alpha]>`.

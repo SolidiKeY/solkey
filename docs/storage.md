@@ -679,10 +679,12 @@ Each array rule branches on bounds. Out-of-bounds goes to
                             sp · length, n + 1 ) }
 
 - `storageLocalRootPushBind` (zero-arg push whose returned slot is
-  captured into a local reference)
+  captured into a local reference; the slot is cleared exactly as in
+  `storagePushLengthSave`, so the reference reads defaults)
 
       lsv = sp.push();
-      ⇝  { storage := save(storage, sp · length, n + 1)
+      ⇝  { storage := save( delAt(storage, sp · at(n)),
+                            sp · length, n + 1 )
            || lsv := sp · at(n) }
 
 - `storagePopSave` (clears the popped slot with `delAt`, which is
