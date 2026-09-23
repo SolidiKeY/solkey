@@ -2,9 +2,9 @@
 
 Many taclets in `solidityProgramRules.key` are instances of one pattern that differs only by
 operator. For example, `storageRootAddAssign`, `storageRootSubAssign` and
-`storageRootMulAssign` are the same rule with `+=`/`+` swapped for `-=`/`-` and `*=`/`*`. Such a
-group is stated once, as a `// generalization:` comment above its first taclet, and
-`RuleGeneralizationTest` checks that the claim is true.
+`storageRootMulAssign` differ only in `+`/`-`/`*`. Such a group is stated once, as a
+`// generalization:` comment above its first taclet, and `RuleGeneralizationTest` keeps the
+comment exact.
 
 ## The comment
 
@@ -14,54 +14,61 @@ group is stated once, as a `// generalization:` comment above its first taclet, 
     //         \schemaVar \formula post;
     //         \schemaVar \program Path[storage,simple,global] gsp;
     //         \schemaVar \program SimpleExpression se;
-    //         \find(\modality{#mod}{c# s#gsp ⟨0⟩ s#se; #c}\endmodality(post))
-    //         \replacewith({storage := save(storage, gsp, find<[int]>(storage, gsp) ⟨1⟩ se)}
+    //         \find(\modality{#mod}{c# s#gsp ⟨0⟩= s#se; #c}\endmodality(post))
+    //         \replacewith({storage := save(storage, gsp, find<[int]>(storage, gsp) ⟨0⟩ se)}
     //             \modality{#mod}{c# #c}\endmodality(post))
     //         \heuristics(simplify_expression)
     //     };
-    //     taclet                ⟨0⟩  ⟨1⟩
-    //     storageRootAddAssign  +=   +
-    //     storageRootSubAssign  -=   -
-    //     storageRootMulAssign  *=   *
+    //     taclet                ⟨0⟩
+    //     storageRootAddAssign  +
+    //     storageRootSubAssign  -
+    //     storageRootMulAssign  *
     storageRootAddAssign {
 ```
 
-The comment holds a **template** taclet and a **table** below it:
+The comment has a **template**, then a table: a header row naming the columns (`taclet ⟨0⟩ ⟨1⟩
+…`) and **one row per taclet** giving its name and the value of each placeholder. `⟨name⟩` stands for the part of the name that varies.
 
-- The template name contains `⟨name⟩` once; each listed taclet name must match it (`Add` in
-  `storageRootAddAssign`).
-- The template body uses the placeholders `⟨0⟩ … ⟨n-1⟩`, which are exactly the table header's
-  columns after `taclet`.
-- Each row names a taclet and gives the value of every placeholder. Columns are separated by two
-  or more spaces, so a value may contain single spaces.
+## How it is computed
 
-## How verification works
+The test builds the comment from the listed taclets alone:
 
-For every row, the test fills the template with the row's values, collapses whitespace in the
-result and in the named taclet's body, and requires the two to be identical. Any difference
-beyond the placeholders fails with a pointer to the first divergence: a changed guard, a
-reordered update or a different heuristic. The test also checks that each comment is well
-formed and that no taclet is listed in two comments. A self-test injects a divergence into a
-fabricated taclet, so a checker that passes everything vacuously also fails.
+1. Split each body into tokens: identifiers, single characters, and whitespace collapsed to one
+   space.
+2. Align the bodies on their common tokens, using the longest common block first, then
+   recursively on each side.
+3. Each stretch where the bodies disagree becomes a placeholder. A stretch that would be empty
+   in some row, or would start or end with a space, is merged with the nearest other stretch.
+   This is how `++s#gsp` / `s#gsp++` becomes one column.
+4. Stretches that take the same value in every row share a placeholder, so a
+   `Path[storage,…]` / `Path[memory,…]` difference is a single `storage` / `memory` column
+   wherever it occurs.
 
-When some operators of a construct differ structurally, they get their own comment instead of
-stretching a shared one. Examples: `/=` and `%=` wrap the effect in `\if(se != 0) … \else(revert)`;
-array-indexed terminals add the `inBounds` / `outOfBounds` goal pair that mapping-indexed terminals
-lack; pre- and post-increment bind the result in different orders.
+Filling the template with each row must give back that taclet's body, up to whitespace. The
+test also fails when the comment in the file is not exactly the computed one, or when a taclet
+is listed twice. A taclet that drifts away from its group therefore shows up as a changed
+comment: a new column, or new values in one.
 
-## Running the check
+When some operators of a construct differ structurally, they get their own comment. Examples:
+`/=` and `%=` revert on a zero divisor, array-indexed writes have bounds goals that mapping-indexed
+writes lack, and pre- and post-increment bind the result in different orders.
+
+## Running and updating
 
 ```bash
 ./gradlew :keyext.solidity.core:testRuleGeneralization
+./gradlew :keyext.solidity.core:testRuleGeneralization \
+    -Dorg.key_project.solidity.taclets.RuleGeneralizationTest.update=true
 ```
 
-Each comment is a test container named `line N: <template name>`. It holds a `well formed` test
-and one test per row, named after the taclet. The group runs in the `Solidity /
-rule-generalization` CI job; the common `:keyext.solidity.core:test` task excludes it by tag.
+The first command checks every comment. The group runs in the `Solidity / rule-generalization`
+CI job; the common `:keyext.solidity.core:test` task excludes it by tag. The second rewrites
+every comment in the source file from its list of taclets and reports itself as skipped.
 
-## Adding a taclet
+To start a group, or to add a taclet to one, list the names under the marker and run the update:
 
-- **To an existing comment:** write the taclet by copying a listed one and swapping the operator
-  tokens, then add its row to the table.
-- **A new pattern:** put a `// generalization:` comment above its first taclet. For the template,
-  copy that taclet's body and replace the operator-specific parts with placeholders.
+```
+    // generalization:
+    //     fooAddRule
+    //     fooSubRule
+```

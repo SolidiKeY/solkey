@@ -6,21 +6,19 @@ package org.key_project.solidity.taclets;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.DynamicContainer;
-import org.junit.jupiter.api.DynamicNode;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -31,24 +29,32 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
-/// Verifies the `// generalization:` comments in `solidityProgramRules.key`. Each comment gives a
-/// template taclet with numbered placeholders `⟨0⟩⟨1⟩…` and `⟨name⟩`, followed by a table whose
-/// rows name a taclet and the values of the placeholders; filling the template with a row must
-/// reproduce that taclet exactly, up to whitespace. See `docs/rule-generalizations.md`.
+/// Verifies the `// generalization:` comments in `solidityProgramRules.key`. A comment lists
+/// taclets that differ only in a few tokens and shows their shared template, with `⟨name⟩` in the
+/// name and numbered placeholders `⟨0⟩⟨1⟩…` in the body, followed by one row per taclet giving
+/// the placeholder values. The test computes that comment from the listed taclets — aligning
+/// their bodies token by token so that only the differing tokens become columns — and requires
+/// the file to carry exactly it. See `docs/rule-generalizations.md`.
 @Tag("ruleGeneralization")
 public class RuleGeneralizationTest {
 
     private static final String RULES_RESOURCE =
         "org/key_project/solidity/proof/rules/solidityProgramRules.key";
+    private static final Path RULES_SOURCE = Path.of("src/main/resources", RULES_RESOURCE);
+    private static final String UPDATE_PROPERTY =
+        "org.key_project.solidity.taclets.RuleGeneralizationTest.update";
     private static final String MARKER = "// generalization:";
+    private static final String CLOSE = "//     };";
     private static final String NAME = "⟨name⟩";
     private static final Pattern PLACEHOLDER = Pattern.compile("⟨(\\d+)⟩");
     private static final Pattern TACLET_START = Pattern.compile("^ {4}(\\w+) \\{$");
+    private static final Pattern TOKEN = Pattern.compile("[A-Za-z0-9_]+|\\s+|.");
 
-    private record Generalization(int line, String name, String body, List<String> header,
-            List<List<String>> rows) {
+    private record Comment(int start, int end, List<String> lines, List<String> names) {
+    }
+
+    private record Body(String indent, List<String> raw, List<String> tokens) {
     }
 
     private static List<String> resourceLines() {
@@ -82,40 +88,233 @@ public class RuleGeneralizationTest {
         return taclets;
     }
 
-    private static List<Generalization> parseGeneralizations(List<String> lines) {
-        List<Generalization> result = new ArrayList<>();
+    private static List<Comment> parseComments(List<String> lines) {
+        List<Comment> comments = new ArrayList<>();
         for (int i = 0; i < lines.size(); i++) {
             if (!lines.get(i).trim().equals(MARKER)) {
                 continue;
             }
-            List<String> content = new ArrayList<>();
-            for (int j = i + 1; j < lines.size() && lines.get(j).trim().startsWith("//"); j++) {
-                content.add(lines.get(j).trim().substring(2).stripLeading());
+            int end = i + 1;
+            while (end < lines.size() && lines.get(end).trim().startsWith("//")
+                    && !lines.get(end).trim().equals(MARKER)) {
+                end++;
             }
-            int line = i + 1;
-            assertFalse(content.isEmpty(), "line " + line + ": empty generalization");
-            String header = content.get(0);
-            assertTrue(header.endsWith(" {"),
-                "line " + line + ": a generalization starts with `name {`, found " + header);
-            int close = content.indexOf("};");
-            assertTrue(close > 0, "line " + line + ": template without a closing `};`");
-            assertTrue(close + 2 < content.size(),
-                "line " + line + ": a generalization needs a table header and at least one row");
-            List<List<String>> table = content.subList(close + 1, content.size()).stream()
-                    .map(row -> List.of(row.split("\\s{2,}"))).toList();
-            result.add(new Generalization(line, header.substring(0, header.length() - 2),
-                String.join("\n", content.subList(1, close)), table.get(0),
-                table.subList(1, table.size())));
+            List<String> comment = lines.subList(i, end).stream().map(String::trim).toList();
+            int close = comment.indexOf(CLOSE);
+            List<String> names = comment.subList(close < 0 ? 1 : close + 2, comment.size())
+                    .stream().map(row -> row.substring(2).trim().split("\\s{2,}")[0]).toList();
+            assertFalse(names.isEmpty(), "line " + (i + 1) + ": a generalization lists no taclet");
+            comments.add(new Comment(i, end, comment, names));
+        }
+        return comments;
+    }
+
+    private static Body tokenize(String body) {
+        String text = body.replaceAll("[ \t]*//[^\n]*", "").replaceAll("(?m)^[ \t]*\n", "");
+        String stripped = text.strip();
+        List<String> raw = new ArrayList<>();
+        Matcher matcher = TOKEN.matcher(stripped);
+        while (matcher.find()) {
+            raw.add(matcher.group());
+        }
+        return new Body(text.substring(0, text.length() - text.stripLeading().length()), raw,
+            raw.stream().map(t -> t.isBlank() ? " " : t).toList());
+    }
+
+    private static String normalize(String text) {
+        return String.join("", tokenize(text).tokens());
+    }
+
+    private static void matchBlocks(List<String> a, int alo, int ahi, List<String> b, int blo,
+            int bhi, int[] match) {
+        int besti = alo;
+        int bestj = blo;
+        int best = 0;
+        int[] previous = new int[bhi - blo + 1];
+        for (int i = alo; i < ahi; i++) {
+            int[] current = new int[bhi - blo + 1];
+            for (int j = blo; j < bhi; j++) {
+                if (a.get(i).equals(b.get(j))) {
+                    int k = previous[j - blo] + 1;
+                    current[j - blo + 1] = k;
+                    if (k > best) {
+                        besti = i - k + 1;
+                        bestj = j - k + 1;
+                        best = k;
+                    }
+                }
+            }
+            previous = current;
+        }
+        if (best == 0) {
+            return;
+        }
+        for (int k = 0; k < best; k++) {
+            match[besti + k] = bestj + k;
+        }
+        matchBlocks(a, alo, besti, b, blo, bestj, match);
+        matchBlocks(a, besti + best, ahi, b, bestj + best, bhi, match);
+    }
+
+    private static int[] match(List<String> a, List<String> b) {
+        int[] match = new int[a.size()];
+        Arrays.fill(match, -1);
+        matchBlocks(a, 0, a.size(), b, 0, b.size(), match);
+        return match;
+    }
+
+    private static List<String> matched(List<String> a, int[] match) {
+        List<String> result = new ArrayList<>();
+        for (int i = 0; i < a.size(); i++) {
+            if (match[i] >= 0) {
+                result.add(a.get(i));
+            }
         }
         return result;
     }
 
-    private static String normalize(String text) {
-        return text.replaceAll("//[^\n]*", " ").replaceAll("\\s+", " ").trim();
+    private static int[][] align(List<Body> bodies) {
+        List<String> common = bodies.get(0).tokens();
+        boolean stable = false;
+        while (!stable) {
+            stable = true;
+            for (Body body : bodies) {
+                List<String> kept = matched(common, match(common, body.tokens()));
+                if (kept.size() < common.size()) {
+                    common = kept;
+                    stable = false;
+                }
+            }
+        }
+        List<String> shared = common;
+        return bodies.stream().map(body -> match(shared, body.tokens())).toArray(int[][]::new);
     }
 
-    private static String placeholder(int i) {
-        return "⟨" + i + "⟩";
+    private static List<String> values(List<Body> bodies, int[][] positions, int from, int to) {
+        List<String> values = new ArrayList<>();
+        for (int x = 0; x < bodies.size(); x++) {
+            List<String> tokens = bodies.get(x).tokens();
+            int start = from < 0 ? 0 : positions[x][from] + 1;
+            int end = to == positions[x].length ? tokens.size() : positions[x][to];
+            values.add(String.join("", tokens.subList(start, end)));
+        }
+        return values;
+    }
+
+    private static boolean isHole(List<String> values) {
+        return values.stream().distinct().count() > 1;
+    }
+
+    private static boolean isBad(List<String> values) {
+        return isHole(values) && values.stream()
+                .anyMatch(v -> v.isEmpty() || v.startsWith(" ") || v.endsWith(" "));
+    }
+
+    private static List<int[]> regions(boolean[] kept) {
+        List<int[]> regions = new ArrayList<>();
+        int from = -1;
+        for (int k = 0; k <= kept.length; k++) {
+            if (k == kept.length || kept[k]) {
+                regions.add(new int[] { from, k });
+                from = k;
+            }
+        }
+        return regions;
+    }
+
+    private static List<int[]> holes(List<Body> bodies, int[][] positions) {
+        boolean[] kept = new boolean[positions[0].length];
+        Arrays.fill(kept, true);
+        while (true) {
+            List<int[]> regions = regions(kept);
+            List<List<String>> values = regions.stream()
+                    .map(r -> values(bodies, positions, r[0], r[1])).toList();
+            int bad = -1;
+            for (int r = 0; r < regions.size() && bad < 0; r++) {
+                if (isBad(values.get(r))) {
+                    bad = r;
+                }
+            }
+            if (bad < 0) {
+                List<int[]> holes = new ArrayList<>();
+                for (int r = 0; r < regions.size(); r++) {
+                    if (isHole(values.get(r))) {
+                        holes.add(regions.get(r));
+                    }
+                }
+                return holes;
+            }
+            int left = bad - 1;
+            while (left >= 0 && !isHole(values.get(left))) {
+                left--;
+            }
+            int right = bad + 1;
+            while (right < regions.size() && !isHole(values.get(right))) {
+                right++;
+            }
+            boolean hasLeft = left >= 0;
+            boolean hasRight = right < regions.size();
+            if (hasRight && (!hasLeft || right - bad <= bad - left)) {
+                for (int r = bad; r < right; r++) {
+                    kept[regions.get(r)[1]] = false;
+                }
+            } else if (hasLeft) {
+                for (int r = left; r < bad; r++) {
+                    kept[regions.get(r)[1]] = false;
+                }
+            } else {
+                int[] region = regions.get(bad);
+                boolean widenRight = region[1] < kept.length && (region[0] < 0
+                        || values.get(bad).stream().anyMatch(v -> v.isEmpty() || v.endsWith(" ")));
+                kept[widenRight ? region[1] : region[0]] = false;
+            }
+        }
+    }
+
+    private static boolean isBoundary(String name, int at) {
+        return at == 0 || at == name.length() || Character.isUpperCase(name.charAt(at))
+                || name.charAt(at) == '_' || name.charAt(at - 1) == '_';
+    }
+
+    private static boolean allBoundaries(List<String> names, int length, boolean fromEnd) {
+        return names.stream().allMatch(n -> isBoundary(n, fromEnd ? n.length() - length : length));
+    }
+
+    private static int snap(List<String> names, int length, boolean fromEnd) {
+        int snapped = length;
+        while (snapped > 0 && !allBoundaries(names, snapped, fromEnd)) {
+            snapped--;
+        }
+        return snapped;
+    }
+
+    private static boolean sameChar(List<String> names, int offset, boolean fromEnd) {
+        String first = names.get(0);
+        return names.stream().allMatch(n -> offset < n.length() && offset < first.length()
+                && n.charAt(fromEnd ? n.length() - 1 - offset : offset) == first
+                        .charAt(fromEnd ? first.length() - 1 - offset : offset));
+    }
+
+    private static boolean leavesAName(List<String> names, int prefix, int suffix) {
+        return names.stream().allMatch(n -> prefix + suffix < n.length());
+    }
+
+    private static String nameTemplate(List<String> names) {
+        int prefix = 0;
+        while (sameChar(names, prefix, false)) {
+            prefix++;
+        }
+        int suffix = 0;
+        while (sameChar(names, suffix, true)) {
+            suffix++;
+        }
+        prefix = snap(names, prefix, false);
+        suffix = snap(names, suffix, true);
+        while (suffix > 0 && !leavesAName(names, prefix, suffix)) {
+            suffix = snap(names, suffix - 1, true);
+        }
+        String first = names.get(0);
+        return first.substring(0, prefix) + NAME + first.substring(first.length() - suffix);
     }
 
     private static String instantiate(String template, List<String> values) {
@@ -123,109 +322,124 @@ public class RuleGeneralizationTest {
             m -> Matcher.quoteReplacement(values.get(Integer.parseInt(m.group(1)))));
     }
 
-    private static String firstDivergence(String expected, String actual) {
-        int limit = Math.min(expected.length(), actual.length());
-        int i = 0;
-        while (i < limit && expected.charAt(i) == actual.charAt(i)) {
-            i++;
+    private static List<String> generalize(List<String> names, Map<String, String> taclets) {
+        List<Body> bodies = names.stream().map(name -> {
+            String body = taclets.get(name);
+            assertNotNull(body, "no taclet named " + name + " in " + RULES_RESOURCE);
+            return tokenize(body);
+        }).toList();
+        int[][] positions = align(bodies);
+        List<int[]> holes = holes(bodies, positions);
+        Map<List<String>, Integer> placeholders = new LinkedHashMap<>();
+        String[] template = bodies.get(0).raw().toArray(String[]::new);
+        for (int[] hole : holes) {
+            List<String> values = values(bodies, positions, hole[0], hole[1]);
+            int index = placeholders.computeIfAbsent(values, v -> placeholders.size());
+            int start = hole[0] < 0 ? 0 : positions[0][hole[0]] + 1;
+            int end = hole[1] == positions[0].length ? template.length : positions[0][hole[1]];
+            template[start] = "⟨" + index + "⟩";
+            Arrays.fill(template, start + 1, end, "");
         }
-        int from = Math.max(0, i - 60);
-        return "diverges at offset " + i + ":\n  template ..."
-            + expected.substring(from, Math.min(expected.length(), i + 60)) + "...\n  taclet   ..."
-            + actual.substring(from, Math.min(actual.length(), i + 60)) + "...";
-    }
-
-    private static void checkWellFormed(Generalization g) {
-        String where = "line " + g.line() + ": ";
-        assertEquals(1, g.name().split(NAME, -1).length - 1,
-            where + "the template name must contain " + NAME + " exactly once");
-        int holes = g.header().size() - 1;
-        List<String> expectedHeader = new ArrayList<>(List.of("taclet"));
-        IntStream.range(0, holes).mapToObj(RuleGeneralizationTest::placeholder)
-                .forEach(expectedHeader::add);
-        assertEquals(expectedHeader, g.header(), where + "table header");
-        Set<Integer> used = PLACEHOLDER.matcher(g.body()).results()
-                .map(m -> Integer.parseInt(m.group(1)))
-                .collect(Collectors.toCollection(TreeSet::new));
-        assertEquals(IntStream.range(0, holes).boxed().toList(), List.copyOf(used),
-            where + "the template must use exactly the placeholders of the table header");
-        for (List<String> row : g.rows()) {
-            assertEquals(g.header().size(), row.size(), where + "row " + row);
+        String text = bodies.get(0).indent() + String.join("", template);
+        List<List<String>> rows = new ArrayList<>();
+        List<String> header = new ArrayList<>(List.of("taclet"));
+        for (int i = 0; i < placeholders.size(); i++) {
+            header.add("⟨" + i + "⟩");
         }
-    }
-
-    private static String divergence(Generalization g, List<String> row,
-            Map<String, String> taclets) {
-        String name = row.get(0);
-        String body = taclets.get(name);
-        if (body == null) {
-            return "no taclet named " + name + " in " + RULES_RESOURCE;
+        rows.add(header);
+        for (int x = 0; x < names.size(); x++) {
+            int row = x;
+            List<String> values = placeholders.keySet().stream().map(v -> v.get(row)).toList();
+            assertEquals(String.join("", bodies.get(x).tokens()),
+                normalize(instantiate(text, values)), names.get(x) + ": template round trip");
+            List<String> cells = new ArrayList<>(List.of(names.get(x)));
+            cells.addAll(values);
+            rows.add(cells);
         }
-        String[] affixes = g.name().split(NAME, -1);
-        if (!name.startsWith(affixes[0]) || !name.endsWith(affixes[1])
-                || name.length() <= affixes[0].length() + affixes[1].length()) {
-            return name + " does not match the template name " + g.name();
+        int[] widths = new int[rows.get(0).size()];
+        for (List<String> row : rows) {
+            for (int c = 0; c < row.size(); c++) {
+                widths[c] = Math.max(widths[c], row.get(c).length());
+            }
         }
-        String expected = normalize(instantiate(g.body(), row.subList(1, row.size())));
-        String actual = normalize(body);
-        return expected.equals(actual) ? null
-                : name + " is not an instance of the template; "
-                    + firstDivergence(expected, actual);
+        List<String> comment = new ArrayList<>();
+        comment.add(MARKER);
+        comment.add("//     " + nameTemplate(names) + " {");
+        text.lines().forEach(line -> comment.add(("// " + line).stripTrailing()));
+        comment.add(CLOSE);
+        for (List<String> row : rows) {
+            StringBuilder line = new StringBuilder("//   ");
+            for (int c = 0; c < row.size(); c++) {
+                line.append("  ").append(String.format("%-" + widths[c] + "s", row.get(c)));
+            }
+            comment.add(line.toString().stripTrailing());
+        }
+        return comment;
     }
 
     @TestFactory
-    Stream<DynamicNode> everyListedTacletIsAnInstanceOfItsTemplate() {
+    Stream<DynamicTest> everyCommentIsTheMinimalGeneralizationOfItsTaclets() {
+        Assumptions.assumeFalse(Boolean.getBoolean(UPDATE_PROPERTY),
+            "the generalization comments are being rewritten");
         List<String> lines = resourceLines();
         Map<String, String> taclets = parseTaclets(lines);
-        return parseGeneralizations(lines).stream().map(g -> {
-            List<DynamicTest> tests = new ArrayList<>();
-            tests.add(DynamicTest.dynamicTest("well formed", () -> checkWellFormed(g)));
-            for (List<String> row : g.rows()) {
-                tests.add(DynamicTest.dynamicTest(row.get(0), () -> {
-                    String problem = divergence(g, row, taclets);
-                    if (problem != null) {
-                        fail("line " + g.line() + ": " + problem);
-                    }
-                }));
-            }
-            return DynamicContainer.dynamicContainer("line " + g.line() + ": " + g.name(), tests);
-        });
+        return parseComments(lines).stream().map(comment -> DynamicTest.dynamicTest(
+            "line " + (comment.start() + 1) + ": " + String.join(", ", comment.names()), () -> {
+                List<String> expected = generalize(comment.names(), taclets);
+                assertEquals(String.join("\n", expected), String.join("\n", comment.lines()),
+                    "line " + (comment.start() + 1) + ": the comment is not the minimal"
+                        + " generalization of its taclets; regenerate with ./gradlew"
+                        + " :keyext.solidity.core:testRuleGeneralization -D" + UPDATE_PROPERTY
+                        + "=true");
+            }));
     }
 
     @Test
     void noTacletIsListedTwice() {
-        List<Generalization> generalizations = parseGeneralizations(resourceLines());
-        assertFalse(generalizations.isEmpty(), "no " + MARKER + " comment in " + RULES_RESOURCE);
+        List<Comment> comments = parseComments(resourceLines());
+        assertFalse(comments.isEmpty(), "no " + MARKER + " comment in " + RULES_RESOURCE);
         Map<String, Integer> listedAt = new HashMap<>();
-        for (Generalization g : generalizations) {
-            for (List<String> row : g.rows()) {
-                Integer previous = listedAt.put(row.get(0), g.line());
-                assertNull(previous, row.get(0) + " is listed at lines " + previous + " and "
-                    + g.line());
+        for (Comment comment : comments) {
+            for (String name : comment.names()) {
+                Integer previous = listedAt.put(name, comment.start() + 1);
+                assertNull(previous,
+                    name + " is listed at lines " + previous + " and " + (comment.start() + 1));
             }
         }
     }
 
     @Test
-    void checkerDetectsAnInjectedDivergence() {
-        List<String> lines = List.of(
-            "    " + MARKER,
-            "    //     foo" + NAME + "Rule {",
-            "    //         x = a ⟨0⟩ b;",
-            "    //     };",
-            "    //     taclet      ⟨0⟩",
-            "    //     fooAddRule  +",
-            "    //     fooMulRule  *",
-            "    fooAddRule {",
-            "        x = a + b;",
-            "    };",
-            "    fooMulRule {",
-            "        x = b * a;",
-            "    };");
-        Generalization g = parseGeneralizations(lines).get(0);
-        checkWellFormed(g);
+    void onlyTheDifferingTokensBecomeColumns() {
+        Map<String, String> taclets = Map.of(
+            "fooAddRule", "        x = a + b;\n",
+            "fooSubRule", "        x = a - b;\n",
+            "fooSwapRule", "        x = b * a;\n");
+        assertEquals(List.of(MARKER, "//     foo" + NAME + "Rule {", "//         x = a ⟨0⟩ b;",
+            CLOSE, "//     taclet      ⟨0⟩", "//     fooAddRule  +", "//     fooSubRule  -"),
+            generalize(List.of("fooAddRule", "fooSubRule"), taclets));
+        List<String> swapped = generalize(List.of("fooAddRule", "fooSwapRule"), taclets);
+        assertTrue(swapped.get(swapped.size() - 1).trim().split("\\s{2,}").length > 2,
+            "a reordered body needs more than one column: " + swapped);
+    }
+
+    @Test
+    void rewriteGeneralizationComments() throws IOException {
+        Assumptions.assumeTrue(Boolean.getBoolean(UPDATE_PROPERTY),
+            "set -D" + UPDATE_PROPERTY + "=true to rewrite the generalization comments");
+        List<String> lines = new ArrayList<>(Files.readAllLines(RULES_SOURCE));
         Map<String, String> taclets = parseTaclets(lines);
-        assertNull(divergence(g, g.rows().get(0), taclets));
-        assertNotNull(divergence(g, g.rows().get(1), taclets));
+        List<Comment> comments = parseComments(lines);
+        for (int c = comments.size() - 1; c >= 0; c--) {
+            Comment comment = comments.get(c);
+            String marker = lines.get(comment.start());
+            String indent = marker.substring(0, marker.indexOf("//"));
+            List<String> replacement = generalize(comment.names(), taclets).stream()
+                    .map(line -> indent + line).toList();
+            lines.subList(comment.start(), comment.end()).clear();
+            lines.addAll(comment.start(), replacement);
+        }
+        Files.writeString(RULES_SOURCE, String.join("\n", lines) + "\n");
+        Assumptions.abort("rewrote the generalization comments in "
+            + RULES_SOURCE.toAbsolutePath() + "; rerun without -D" + UPDATE_PROPERTY);
     }
 }

@@ -162,6 +162,10 @@ tasks.register('testRuleGeneralization', Test) {
     testLogging {
         showStandardStreams = true
     }
+    def updateProperty = "org.key_project.solidity.taclets.RuleGeneralizationTest.update"
+    if (System.getProperty(updateProperty) != null) {
+        systemProperty updateProperty, System.getProperty(updateProperty)
+    }
 }
 
 checkerFramework {
