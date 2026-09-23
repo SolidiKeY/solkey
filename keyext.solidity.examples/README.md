@@ -330,6 +330,25 @@ kept red on purpose. `SolcSemanticsExamplesTest` enumerates the directory, so a 
 joins `./gradlew :keyext.solidity.core:testSolidityExamples` (the CI-only examples group)
 by being written.
 
+## The `proofs/` directory
+
+`TacletCoverageTest` (the CI-only examples group) requires every taclet of the Solidity rule
+files to be applied by some proof: a `TestSuite.sol` function in automode, or a saved proof here
+for the taclets no such function reaches. Each `NAME.key` is a problem whose proof applies the
+taclet `NAME`. It is either a logic lemma, for a taclet whose function symbols the program rules
+never produce (`headDefinition`, `precOfInt`, `applySkip3`, …), or a `TestSuite.sol` obligation
+the synthesizer cannot state: one where automode prefers a competing rule
+(`localDeclPostdecrement`), or a diamond `transfer` that needs a `selfBalance` precondition.
+`NAME.proof` beside it is the saved proof the test replays. After adding a `.key` or changing
+the rules, regenerate the proofs with
+
+```bash
+./gradlew :keyext.solidity.core:testSolidityExamples --tests "*TacletCoverageTest" \
+    -Dorg.key_project.solidity.taclets.TacletCoverageTest.update=true
+```
+
+A new taclet that a `TestSuite.sol` function can exercise gets a function there instead.
+
 ## The `unprovable/` directory
 
 `unprovable/` holds valid solc ≥ 0.8 examples whose EVM behavior the calculus does not model,

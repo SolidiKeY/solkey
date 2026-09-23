@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 /// asserted below say what each option costs in proof nodes and in applications of the rules the
 /// option switches between, and the per-function figures must equal the checked-in baseline.
 ///
-/// Manual only — tagged out of `test` and not a CI job, because it runs 556 proofs. Run it with
+/// Manual only — tagged out of `test` and not a CI job, because it runs 748 proofs. Run it with
 /// `./gradlew :keyext.solidity.core:testProofSize`, and regenerate the baseline and the numbers
 /// asserted here by adding
 /// `-Dorg.key_project.solidity.taclets.IndexWriteCaptureProofSizeTest.update=true`.
@@ -125,17 +125,17 @@ public class IndexWriteCaptureProofSizeTest {
         assumeFalse(UPDATING, "regeneration run");
         Map<String, List<Measurement>> file = measurements;
 
-        assertEquals(278, file.size(),
+        assertEquals(374, file.size(),
             "provable functions of TestSuite.sol, each proved under both options");
 
-        assertEquals(82336, totalNodes(file, RECEIVER_THEN_INDEX),
+        assertEquals(99648, totalNodes(file, RECEIVER_THEN_INDEX),
             "receiverThenIndex: total nodes over the whole file");
-        assertEquals(82536, totalNodes(file, ALL_AT_ONCE),
+        assertEquals(100124, totalNodes(file, ALL_AT_ONCE),
             "allAtOnce: total nodes over the whole file");
 
-        assertEquals(296.17, meanNodes(file, RECEIVER_THEN_INDEX), MEAN_TOLERANCE,
+        assertEquals(266.44, meanNodes(file, RECEIVER_THEN_INDEX), MEAN_TOLERANCE,
             "receiverThenIndex: mean nodes per function over the whole file");
-        assertEquals(296.89, meanNodes(file, ALL_AT_ONCE), MEAN_TOLERANCE,
+        assertEquals(267.71, meanNodes(file, ALL_AT_ONCE), MEAN_TOLERANCE,
             "allAtOnce: mean nodes per function over the whole file");
     }
 
@@ -146,17 +146,17 @@ public class IndexWriteCaptureProofSizeTest {
         assumeFalse(UPDATING, "regeneration run");
         Map<String, List<Measurement>> using = usingFunctions();
 
-        assertEquals(38, using.size(),
+        assertEquals(59, using.size(),
             "functions of TestSuite.sol that apply an indexWriteCapture rule");
 
-        assertEquals(36280, totalNodes(using, RECEIVER_THEN_INDEX),
+        assertEquals(42207, totalNodes(using, RECEIVER_THEN_INDEX),
             "receiverThenIndex: total nodes over the functions applying the rules");
-        assertEquals(36480, totalNodes(using, ALL_AT_ONCE),
+        assertEquals(42683, totalNodes(using, ALL_AT_ONCE),
             "allAtOnce: total nodes over the functions applying the rules");
 
-        assertEquals(954.74, meanNodes(using, RECEIVER_THEN_INDEX), MEAN_TOLERANCE,
+        assertEquals(715.37, meanNodes(using, RECEIVER_THEN_INDEX), MEAN_TOLERANCE,
             "receiverThenIndex: mean nodes per function applying the rules");
-        assertEquals(960.00, meanNodes(using, ALL_AT_ONCE), MEAN_TOLERANCE,
+        assertEquals(723.44, meanNodes(using, ALL_AT_ONCE), MEAN_TOLERANCE,
             "allAtOnce: mean nodes per function applying the rules");
     }
 
@@ -168,14 +168,14 @@ public class IndexWriteCaptureProofSizeTest {
         Map<String, List<Measurement>> file = measurements;
         Map<String, List<Measurement>> using = usingFunctions();
 
-        assertEquals(46, totalRuleApps(file, RECEIVER_THEN_INDEX),
+        assertEquals(67, totalRuleApps(file, RECEIVER_THEN_INDEX),
             "receiverThenIndex: rule applications over the whole file");
-        assertEquals(39, totalRuleApps(file, ALL_AT_ONCE),
+        assertEquals(60, totalRuleApps(file, ALL_AT_ONCE),
             "allAtOnce: rule applications over the whole file");
 
-        assertEquals(1.21, meanRuleApps(using, RECEIVER_THEN_INDEX), MEAN_TOLERANCE,
+        assertEquals(1.14, meanRuleApps(using, RECEIVER_THEN_INDEX), MEAN_TOLERANCE,
             "receiverThenIndex: mean rule applications per function applying the rules");
-        assertEquals(1.03, meanRuleApps(using, ALL_AT_ONCE), MEAN_TOLERANCE,
+        assertEquals(1.02, meanRuleApps(using, ALL_AT_ONCE), MEAN_TOLERANCE,
             "allAtOnce: mean rule applications per function applying the rules");
     }
 

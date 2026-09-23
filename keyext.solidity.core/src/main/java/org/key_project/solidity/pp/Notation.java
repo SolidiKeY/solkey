@@ -173,8 +173,9 @@ public abstract class Notation {
         public void print(Term t, LogicPrinter sp) {
             assert t.op() == UpdateApplication.UPDATE_APPLICATION;
             final Operator targetOp = UpdateApplication.getTarget(t).op();
-            final int assTarget =
-                (t.sort() == SolidityDLTheory.FORMULA ? (targetOp.arity() == 1 ? 60 : 85) : 110);
+            final int assTarget = t.sort() == SolidityDLTheory.UPDATE ? Integer.MAX_VALUE
+                    : t.sort() == SolidityDLTheory.FORMULA ? (targetOp.arity() == 1 ? 60 : 85)
+                            : 110;
 
             sp.printUpdateApplicationTerm("{", "}", t, assTarget);
         }

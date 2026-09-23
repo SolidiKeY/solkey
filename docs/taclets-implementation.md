@@ -17,8 +17,10 @@ unconstrained variable per parameter, passed as the call's arguments — such a 
 box-tagged and assumes its argument values with `require`)
 
 so the specification lives in the body as `assert`, and every test program is real Solidity
-that `solc` parses and type-checks. Authoring conventions and the `/// @custom:key` directives
-are in `keyext.solidity.examples/README.md`. See "Function-body inlining" below for the shape
+that `solc` parses and type-checks. `TacletCoverageTest` checks that every taclet of the Solidity
+rule files is applied by one of these functions or by a saved proof in
+`keyext.solidity.examples/proofs/`. Authoring conventions, the `/// @custom:key` directives and
+the `proofs/` directory are described in `keyext.solidity.examples/README.md`. See "Function-body inlining" below for the shape
 constraints this imposes.
 
 - Authoring syntax → `key-taclets.md`
@@ -498,17 +500,17 @@ kind:
     (`parser/varcond/NotAllSimpleCondition.java`).
 
   Both close every example; they differ only in proof size, measured over all
-  278 functions of `TestSuite.sol` by
+  374 functions of `TestSuite.sol` by
   `./gradlew :keyext.solidity.core:testProofSize`
   (`IndexWriteCaptureProofSizeTest`, which pins these numbers — see `docs/ci.md`):
 
   | shape | applications | `receiverThenIndex` | `allAtOnce` |
   |---|---|---|---|
-  | `nsp[se] = rhs` (16 functions) | 1 each | — | +9 … +21 nodes each |
+  | `nsp[se] = rhs` (35 functions) | 1 each | — | +9 … +21 nodes each |
   | `nsp[nse] = rhs` (7 functions) | 2 vs 1 | +13 … +16 nodes each | — |
   | `sp[nse] = rhs` | 1 each | identical | identical |
-  | **whole file, rule applications** | | 46 | **39** |
-  | **whole file, total nodes** | | **82 336** | 82 536 |
+  | **whole file, rule applications** | | 67 | **60** |
+  | **whole file, total nodes** | | **99 648** | 100 124 |
 
   The 38 functions that apply a capture rule at all need 1.21 applications each
   under `receiverThenIndex` and 1.03 under `allAtOnce` — that merged application

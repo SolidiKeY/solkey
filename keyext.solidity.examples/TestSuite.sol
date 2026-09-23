@@ -2468,4 +2468,669 @@ contract TestSuite {
         uint r = people[2].age;
         assert(r == 3);
     }
+
+    // ── Taclet coverage: one function per taclet no other example applies ──
+
+    function localAddAssign() public {
+        uint x = 40;
+        x += 2;
+        assert(x == 42);
+    }
+
+    function localMulAssign() public {
+        uint x = 7;
+        x *= 6;
+        assert(x == 42);
+    }
+
+    function localDivAssign() public {
+        uint x = 40;
+        x /= 8;
+        assert(x == 5);
+    }
+
+    function localModAssign() public {
+        uint x = 40;
+        x %= 7;
+        assert(x == 5);
+    }
+
+    function localPostincrement() public {
+        uint x = 40;
+        x++;
+        assert(x == 41);
+    }
+
+    function localPostdecrement() public {
+        uint x = 40;
+        x--;
+        assert(x == 39);
+    }
+
+    function localPredecrement() public {
+        uint x = 40;
+        --x;
+        assert(x == 39);
+    }
+
+    function localDeclPostdecrement() public {
+        uint x = 40;
+        uint r = x--;
+        assert(r == 40);
+        assert(x == 39);
+    }
+
+    function localDeclPredecrement() public {
+        uint x = 40;
+        uint r = --x;
+        assert(r == 39);
+        assert(x == 39);
+    }
+
+    function subAssignValueRhsCapture() public {
+        uint x = 40;
+        uint y = 1;
+        x -= y + 1;
+        assert(x == 38);
+    }
+
+    function mulAssignValueRhsCapture() public {
+        uint x = 7;
+        uint y = 5;
+        x *= y + 1;
+        assert(x == 42);
+    }
+
+    function divAssignValueRhsCapture() public {
+        uint x = 40;
+        uint y = 7;
+        x /= y + 1;
+        assert(x == 5);
+    }
+
+    function modAssignValueRhsCapture() public {
+        uint x = 40;
+        uint y = 6;
+        x %= y + 1;
+        assert(x == 5);
+    }
+
+    function indexWriteValueRhsCapture() public {
+        uint[] memory xs = new uint[](2);
+        uint y = 4;
+        xs[1] = y + 1;
+        uint r = xs[1];
+        assert(r == 5);
+    }
+
+    function memoryIndexWriteMemRefRhsCapture() public {
+        Token[] memory ts = new Token[](2);
+        Person memory carol;
+        carol.account.token.value = 7;
+        ts[0] = carol.account.token;
+        uint r = ts[0].value;
+        assert(r == 7);
+    }
+
+    function memoryIndexDeleteNonSimpleIndexCapture() public {
+        uint[] memory xs = new uint[](3);
+        uint i = 0;
+        xs[1] = 5;
+        delete xs[i + 1];
+        uint r = xs[1];
+        assert(r == 0);
+    }
+
+    function boolInequalityCaptureLhs() public {
+        bool b = true;
+        bool r = !b != b;
+        assert(r);
+    }
+
+    function boolInequalityCaptureRhs() public {
+        bool b = true;
+        bool r = b != !b;
+        assert(r);
+    }
+
+    function greaterThanCaptureRhs() public {
+        uint[] memory xs = new uint[](1);
+        xs[0] = 2;
+        uint x = 3;
+        bool r = x > xs[0];
+        assert(r);
+    }
+
+    function greaterEqualCaptureLhs() public {
+        uint[] memory xs = new uint[](1);
+        xs[0] = 4;
+        uint x = 3;
+        bool r = xs[0] >= x;
+        assert(r);
+    }
+
+    function greaterEqualCaptureRhs() public {
+        uint[] memory xs = new uint[](1);
+        xs[0] = 2;
+        uint x = 3;
+        bool r = x >= xs[0];
+        assert(r);
+    }
+
+    function lessEqualCaptureLhs() public {
+        uint[] memory xs = new uint[](1);
+        xs[0] = 2;
+        uint x = 3;
+        bool r = xs[0] <= x;
+        assert(r);
+    }
+
+    function lessEqualCaptureRhs() public {
+        uint[] memory xs = new uint[](1);
+        xs[0] = 4;
+        uint x = 3;
+        bool r = x <= xs[0];
+        assert(r);
+    }
+
+    function logicalNotCapture() public {
+        bool[] memory bs = new bool[](1);
+        bool r = !bs[0];
+        assert(r);
+    }
+
+    function unaryMinusCapture() public {
+        int[] memory ys = new int[](1);
+        ys[0] = 4;
+        int r = -ys[0];
+        assert(r == -4);
+    }
+
+    function multiplicationUnfoldLeft() public {
+        uint[] memory xs = new uint[](1);
+        xs[0] = 7;
+        uint y = 6;
+        uint r = xs[0] * y;
+        assert(r == 42);
+    }
+
+    function multiplicationUnfoldRight() public {
+        uint[] memory xs = new uint[](1);
+        xs[0] = 6;
+        uint x = 7;
+        uint r = x * xs[0];
+        assert(r == 42);
+    }
+
+    function divisionUnfoldLeft() public {
+        uint[] memory xs = new uint[](1);
+        xs[0] = 40;
+        uint y = 8;
+        uint r = xs[0] / y;
+        assert(r == 5);
+    }
+
+    function divisionUnfoldRight() public {
+        uint[] memory xs = new uint[](1);
+        xs[0] = 8;
+        uint x = 40;
+        uint r = x / xs[0];
+        assert(r == 5);
+    }
+
+    function moduloUnfoldLeft() public {
+        uint[] memory xs = new uint[](1);
+        xs[0] = 40;
+        uint y = 7;
+        uint r = xs[0] % y;
+        assert(r == 5);
+    }
+
+    function moduloUnfoldRight() public {
+        uint[] memory xs = new uint[](1);
+        xs[0] = 7;
+        uint x = 40;
+        uint r = x % xs[0];
+        assert(r == 5);
+    }
+
+    function powerUnfoldLeft() public {
+        uint[] memory xs = new uint[](1);
+        xs[0] = 2;
+        uint y = 3;
+        uint r = xs[0] ** y;
+        assert(r == 8);
+    }
+
+    function powerUnfoldRight() public {
+        uint[] memory xs = new uint[](1);
+        xs[0] = 3;
+        uint x = 2;
+        uint r = x ** xs[0];
+        assert(r == 8);
+    }
+
+    function subtractionUnfoldRight() public {
+        uint[] memory xs = new uint[](1);
+        xs[0] = 2;
+        uint x = 40;
+        uint r = x - xs[0];
+        assert(r == 38);
+    }
+
+    function memoryFieldSubAssignUnfold() public {
+        Person memory carol;
+        carol.account.balance = 20;
+        carol.account.balance -= 4;
+        uint r = carol.account.balance;
+        assert(r == 16);
+    }
+
+    function memoryFieldMulAssignUnfold() public {
+        Person memory carol;
+        carol.account.balance = 7;
+        carol.account.balance *= 6;
+        uint r = carol.account.balance;
+        assert(r == 42);
+    }
+
+    function memoryFieldDivAssignUnfold() public {
+        Person memory carol;
+        carol.account.balance = 40;
+        carol.account.balance /= 8;
+        uint r = carol.account.balance;
+        assert(r == 5);
+    }
+
+    function memoryFieldModAssignUnfold() public {
+        Person memory carol;
+        carol.account.balance = 40;
+        carol.account.balance %= 7;
+        uint r = carol.account.balance;
+        assert(r == 5);
+    }
+
+    function memoryFieldPostincrementUnfold() public {
+        Person memory carol;
+        carol.account.balance = 20;
+        carol.account.balance++;
+        uint r = carol.account.balance;
+        assert(r == 21);
+    }
+
+    function memoryFieldPredecrementUnfold() public {
+        Person memory carol;
+        carol.account.balance = 20;
+        --carol.account.balance;
+        uint r = carol.account.balance;
+        assert(r == 19);
+    }
+
+    function memoryFieldPostdecrementUnfold() public {
+        Person memory carol;
+        carol.account.balance = 20;
+        carol.account.balance--;
+        uint r = carol.account.balance;
+        assert(r == 19);
+    }
+
+    function memoryFieldDeleteUnfold() public {
+        Person memory carol;
+        carol.account.balance = 20;
+        delete carol.account.balance;
+        uint r = carol.account.balance;
+        assert(r == 0);
+    }
+
+    function memoryFieldReadUnfoldResult() public {
+        Person memory carol;
+        Person memory david;
+        david.age = 40;
+        carol.account.balance = david.age;
+        uint r = carol.account.balance;
+        assert(r == 40);
+    }
+
+    function memoryIndexReadUnfoldResult() public {
+        Person memory carol;
+        uint[] memory xs = new uint[](2);
+        xs[1] = 40;
+        carol.account.balance = xs[1];
+        uint r = carol.account.balance;
+        assert(r == 40);
+    }
+
+    function memoryIndexArraySubAssignUnfold() public {
+        Basket memory basket;
+        uint[] memory xs = new uint[](4);
+        basket.items = xs;
+        basket.items[1] = 40;
+        basket.items[1] -= 2;
+        uint r = basket.items[1];
+        assert(r == 38);
+    }
+
+    function memoryIndexArrayMulAssignUnfold() public {
+        Basket memory basket;
+        uint[] memory xs = new uint[](4);
+        basket.items = xs;
+        basket.items[1] = 7;
+        basket.items[1] *= 6;
+        uint r = basket.items[1];
+        assert(r == 42);
+    }
+
+    function memoryIndexArrayDivAssignUnfold() public {
+        Basket memory basket;
+        uint[] memory xs = new uint[](4);
+        basket.items = xs;
+        basket.items[1] = 40;
+        basket.items[1] /= 8;
+        uint r = basket.items[1];
+        assert(r == 5);
+    }
+
+    function memoryIndexArrayModAssignUnfold() public {
+        Basket memory basket;
+        uint[] memory xs = new uint[](4);
+        basket.items = xs;
+        basket.items[1] = 40;
+        basket.items[1] %= 7;
+        uint r = basket.items[1];
+        assert(r == 5);
+    }
+
+    function memoryIndexArrayPostincrementUnfold() public {
+        Basket memory basket;
+        uint[] memory xs = new uint[](4);
+        basket.items = xs;
+        basket.items[1] = 40;
+        basket.items[1]++;
+        uint r = basket.items[1];
+        assert(r == 41);
+    }
+
+    function memoryIndexArrayPredecrementUnfold() public {
+        Basket memory basket;
+        uint[] memory xs = new uint[](4);
+        basket.items = xs;
+        basket.items[1] = 40;
+        --basket.items[1];
+        uint r = basket.items[1];
+        assert(r == 39);
+    }
+
+    function memoryIndexArrayPostdecrementUnfold() public {
+        Basket memory basket;
+        uint[] memory xs = new uint[](4);
+        basket.items = xs;
+        basket.items[1] = 40;
+        basket.items[1]--;
+        uint r = basket.items[1];
+        assert(r == 39);
+    }
+
+    function memoryIndexArrayDeleteUnfold() public {
+        Basket memory basket;
+        uint[] memory xs = new uint[](4);
+        basket.items = xs;
+        basket.items[1] = 40;
+        delete basket.items[1];
+        uint r = basket.items[1];
+        assert(r == 0);
+    }
+
+    function memoryIndexArrayPostincrement() public {
+        uint[] memory xs = new uint[](4);
+        xs[1] = 40;
+        xs[1]++;
+        uint r = xs[1];
+        assert(r == 41);
+    }
+
+    function memoryIndexArrayPredecrement() public {
+        uint[] memory xs = new uint[](4);
+        xs[1] = 40;
+        --xs[1];
+        uint r = xs[1];
+        assert(r == 39);
+    }
+
+    function memoryIndexArrayPreincrementAssignment() public {
+        uint[] memory xs = new uint[](4);
+        xs[1] = 40;
+        uint r = ++xs[1];
+        assert(r == 41);
+        assert(xs[1] == 41);
+    }
+
+    function memoryIndexArrayPostdecrementAssignment() public {
+        uint[] memory xs = new uint[](4);
+        xs[1] = 40;
+        uint r = xs[1]--;
+        assert(r == 40);
+        assert(xs[1] == 39);
+    }
+
+    function storageFieldDeleteUnfold() public {
+        alice.account.balance = 20;
+        delete alice.account.balance;
+        uint r = alice.account.balance;
+        assert(r == 0);
+    }
+
+    function storageFieldPredecrementUnfold() public {
+        alice.account.balance = 20;
+        --alice.account.balance;
+        uint r = alice.account.balance;
+        assert(r == 19);
+    }
+
+    function storageFieldPostdecrementUnfold() public {
+        alice.account.balance = 20;
+        alice.account.balance--;
+        uint r = alice.account.balance;
+        assert(r == 19);
+    }
+
+    function storageIndexAddAssignUnfold() public {
+        ledger.balances[1] = 40;
+        ledger.balances[1] += 2;
+        uint r = ledger.balances[1];
+        assert(r == 42);
+    }
+
+    function storageIndexSubAssignUnfold() public {
+        ledger.balances[1] = 40;
+        ledger.balances[1] -= 2;
+        uint r = ledger.balances[1];
+        assert(r == 38);
+    }
+
+    function storageIndexMulAssignUnfold() public {
+        ledger.balances[1] = 7;
+        ledger.balances[1] *= 6;
+        uint r = ledger.balances[1];
+        assert(r == 42);
+    }
+
+    function storageIndexDivAssignUnfold() public {
+        ledger.balances[1] = 40;
+        ledger.balances[1] /= 8;
+        uint r = ledger.balances[1];
+        assert(r == 5);
+    }
+
+    function storageIndexModAssignUnfold() public {
+        ledger.balances[1] = 40;
+        ledger.balances[1] %= 7;
+        uint r = ledger.balances[1];
+        assert(r == 5);
+    }
+
+    function storageIndexPreincrementUnfold() public {
+        ledger.balances[1] = 40;
+        ++ledger.balances[1];
+        uint r = ledger.balances[1];
+        assert(r == 41);
+    }
+
+    function storageIndexPostincrementUnfold() public {
+        ledger.balances[1] = 40;
+        ledger.balances[1]++;
+        uint r = ledger.balances[1];
+        assert(r == 41);
+    }
+
+    function storageIndexPredecrementUnfold() public {
+        ledger.balances[1] = 40;
+        --ledger.balances[1];
+        uint r = ledger.balances[1];
+        assert(r == 39);
+    }
+
+    function storageIndexPostdecrementUnfold() public {
+        ledger.balances[1] = 40;
+        ledger.balances[1]--;
+        uint r = ledger.balances[1];
+        assert(r == 39);
+    }
+
+    function storageIndexMappingSubAssign() public {
+        balances[1] = 40;
+        balances[1] -= 2;
+        uint r = balances[1];
+        assert(r == 38);
+    }
+
+    function storageIndexMappingMulAssign() public {
+        balances[1] = 7;
+        balances[1] *= 6;
+        uint r = balances[1];
+        assert(r == 42);
+    }
+
+    function storageIndexMappingDivAssign() public {
+        balances[1] = 40;
+        balances[1] /= 8;
+        uint r = balances[1];
+        assert(r == 5);
+    }
+
+    function storageIndexMappingModAssign() public {
+        balances[1] = 40;
+        balances[1] %= 7;
+        uint r = balances[1];
+        assert(r == 5);
+    }
+
+    function storageIndexMappingPreincrement() public {
+        balances[1] = 40;
+        ++balances[1];
+        uint r = balances[1];
+        assert(r == 41);
+    }
+
+    function storageIndexMappingPostincrement() public {
+        balances[1] = 40;
+        balances[1]++;
+        uint r = balances[1];
+        assert(r == 41);
+    }
+
+    function storageIndexMappingPredecrement() public {
+        balances[1] = 40;
+        --balances[1];
+        uint r = balances[1];
+        assert(r == 39);
+    }
+
+    function storageIndexMappingPostdecrement() public {
+        balances[1] = 40;
+        balances[1]--;
+        uint r = balances[1];
+        assert(r == 39);
+    }
+
+    function storageIndexMappingPreincrementAssignment() public {
+        balances[1] = 40;
+        uint r = ++balances[1];
+        assert(r == 41);
+        assert(balances[1] == 41);
+    }
+
+    function storageIndexMappingPostincrementAssignment() public {
+        balances[1] = 40;
+        uint r = balances[1]++;
+        assert(r == 40);
+        assert(balances[1] == 41);
+    }
+
+    function storageIndexMappingPredecrementAssignment() public {
+        balances[1] = 40;
+        uint r = --balances[1];
+        assert(r == 39);
+        assert(balances[1] == 39);
+    }
+
+    function storageIndexMappingPostdecrementAssignment() public {
+        balances[1] = 40;
+        uint r = balances[1]--;
+        assert(r == 40);
+        assert(balances[1] == 39);
+    }
+
+    /// @custom:key box
+    function storageIndexReadArrayStoreRoot() public {
+        require(1 < values.length);
+        values[1] = 40;
+        age = values[1];
+        uint r = age;
+        assert(r == 40);
+    }
+
+    /// @custom:key box
+    function storagePopUnfold() public {
+        require(0 < basketA.items.length);
+        basketA.items.pop();
+    }
+
+    function storageRootPostdecrement() public {
+        age = 10;
+        age--;
+        uint r = age;
+        assert(r == 9);
+    }
+
+    function storageRootPredecrementAssign() public {
+        age = 10;
+        uint r = --age;
+        assert(r == 9);
+        assert(age == 9);
+    }
+
+    function ternaryToIfStorage() public {
+        bool b = true;
+        age = b ? 1 : 2;
+        uint r = age;
+        assert(r == 1);
+    }
+
+    /// @custom:key box
+    function transferToOwner() public {
+        address payable a = payable(owner);
+        a.transfer(5);
+    }
+
+    /// @custom:key box
+    function transferUnfoldReceiver() public {
+        payable(owner).transfer(5);
+    }
+
+    /// @custom:key box
+    function transferUnfoldArgument() public {
+        address payable a = payable(owner);
+        uint x = 3;
+        a.transfer(x + 2);
+    }
 }

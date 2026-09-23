@@ -6,7 +6,10 @@ package org.key_project.solidity.testutil;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -206,6 +209,17 @@ public final class SolidityExampleTests {
         assertInstanceOf(SModality.class, formula.op(), "succedent formula must be a modality");
         SolidityBlock sb = ((SModality) formula.op()).programBlock();
         return (Block) sb.program();
+    }
+
+    public static Set<String> appliedRuleNames(Proof proof) {
+        Set<String> names = new HashSet<>();
+        for (Iterator<Node> it = proof.root().subtreeIterator(); it.hasNext();) {
+            var app = it.next().getAppliedRuleApp();
+            if (app != null) {
+                names.add(app.rule().name().toString());
+            }
+        }
+        return names;
     }
 
     /// Canonical preorder rendering of a proof tree: each node's applied rule name (or `*` for an

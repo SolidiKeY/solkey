@@ -147,9 +147,14 @@ tasks.named('testFast', Test) {
 tasks.register('testSolidityExamples', Test) {
     group = "verification"
     description = "CI test group: the proof example suites over keyext.solidity.examples " +
-        "(net/, solc/, the one-example showcases) and the .key problems run by RulesTest."
+        "(net/, solc/, the one-example showcases), the .key problems run by RulesTest and " +
+        "the taclet coverage of TestSuite.sol and proofs/."
     useJUnitPlatform {
         includeTags "solidityExamples"
+    }
+    def updateProperty = "org.key_project.solidity.taclets.TacletCoverageTest.update"
+    if (System.getProperty(updateProperty) != null) {
+        systemProperty updateProperty, System.getProperty(updateProperty)
     }
 }
 

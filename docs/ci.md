@@ -17,7 +17,7 @@ the local gate stays fast, and the GUI module has its own job.
 
 | CI job | Local command | Content |
 |---|---|---|
-| `Solidity / examples` | `./gradlew :keyext.solidity.core:testSolidityExamples` | `RulesTest` (`.key` problems), `NetExamplesTest`, `SolcSemanticsExamplesTest`, the one-example showcases, the `solc/*.sol` half of `SolidityRuntimeExecutionTest` |
+| `Solidity / examples` | `./gradlew :keyext.solidity.core:testSolidityExamples` | `RulesTest` (`.key` problems), `NetExamplesTest`, `SolcSemanticsExamplesTest`, `TacletCoverageTest`, the one-example showcases, the `solc/*.sol` half of `SolidityRuntimeExecutionTest` |
 | `Solidity / rule-generalization` | `./gradlew :keyext.solidity.core:testRuleGeneralization` | `RuleGeneralizationTest` |
 | `Solidity / gui` | `./gradlew :keyext.solidity.gui:test` | the `keyext.solidity.gui` tests (headless) |
 
@@ -30,7 +30,7 @@ task** — on `test` the tag exclusion leaves zero matches and Gradle fails with
 `./gradlew :keyext.solidity.core:testProofSize` (tag `proofSize`,
 `IndexWriteCaptureProofSizeTest`) is excluded from `test` **and** has no CI job.
 It proves every function of `TestSuite.sol` under both `indexWriteCapture`
-options — 556 proofs — and asserts the node count, the number of applications of
+options — 748 proofs — and asserts the node count, the number of applications of
 the option's own rules, and the closing status of each against the checked-in
 baseline
 `keyext.solidity.core/src/test/resources/org/key_project/solidity/proofsize/indexWriteCapture.csv`.

@@ -1,0 +1,53 @@
+\profile "Solidity Profile";
+
+\settings // Proof-Settings-Config-File
+{
+    "Choice": {
+        "indexWriteCapture": "indexWriteCapture:receiverThenIndex",
+        "integerSimplificationRules": "integerSimplificationRules:full",
+        "programRules": "programRules:Solidity",
+        "transferSemantics": "transferSemantics:noCallback"
+    },
+    "Strategy": {
+        "ActiveStrategy": "Modular SolidityDL Strategy",
+        "MaximumNumberOfAutomaticApplications": 10000,
+        "Timeout": -1,
+        "options": {
+            "AUTO_INDUCTION_OPTIONS_KEY": "AUTO_INDUCTION_OFF",
+            "FUNCTION_OPTIONS_KEY": "FUNCTION_CONTRACT",
+            "LOOP_OPTIONS_KEY": "LOOP_INVARIANT",
+            "NON_LIN_ARITH_OPTIONS_KEY": "NON_LIN_ARITH_NONE",
+            "QUANTIFIERS_OPTIONS_KEY": "QUANTIFIERS_NON_SPLITTING_WITH_PROGS",
+            "SPLITTING_OPTIONS_KEY": "SPLITTING_DELAYED",
+            "STOPMODE_OPTIONS_KEY": "STOPMODE_DEFAULT",
+            "USER_TACLETS_OPTIONS_KEY1": "USER_TACLETS_OFF",
+            "USER_TACLETS_OPTIONS_KEY2": "USER_TACLETS_OFF",
+            "USER_TACLETS_OPTIONS_KEY3": "USER_TACLETS_OFF"
+        }
+    }
+} 
+
+\functions {
+    IdentityPrim p;
+    Identity id;
+    Memory m;
+    Struct s;
+    Struct t;
+    \unique Field f;
+    \unique Field g;
+    \unique MapField mf;
+}
+\problem {
+selectSt<[int]>(storeSt(s, f, 5), f) = 5
+}
+
+\proof {
+(branch "dummy ID"
+(rule "selectOnStore" (formula "1") (term "0"))
+(rule "equalUnique" (formula "1") (term "0,0"))
+(rule "ifthenelse_true" (formula "1") (term "0"))
+(rule "castDel" (formula "1") (term "0"))
+(rule "eqClose" (formula "1"))
+(rule "closeTrue" (formula "1"))
+)
+}

@@ -1,0 +1,113 @@
+\profile "Solidity Profile";
+
+\settings // Proof-Settings-Config-File
+{
+    "Choice": {
+        "indexWriteCapture": "indexWriteCapture:receiverThenIndex",
+        "integerSimplificationRules": "integerSimplificationRules:full",
+        "programRules": "programRules:Solidity",
+        "transferSemantics": "transferSemantics:noCallback"
+    },
+    "Strategy": {
+        "ActiveStrategy": "Modular SolidityDL Strategy",
+        "MaximumNumberOfAutomaticApplications": 10000,
+        "Timeout": -1,
+        "options": {
+            "AUTO_INDUCTION_OPTIONS_KEY": "AUTO_INDUCTION_OFF",
+            "FUNCTION_OPTIONS_KEY": "FUNCTION_CONTRACT",
+            "LOOP_OPTIONS_KEY": "LOOP_INVARIANT",
+            "NON_LIN_ARITH_OPTIONS_KEY": "NON_LIN_ARITH_NONE",
+            "QUANTIFIERS_OPTIONS_KEY": "QUANTIFIERS_NON_SPLITTING_WITH_PROGS",
+            "SPLITTING_OPTIONS_KEY": "SPLITTING_DELAYED",
+            "STOPMODE_OPTIONS_KEY": "STOPMODE_DEFAULT",
+            "USER_TACLETS_OPTIONS_KEY1": "USER_TACLETS_OFF",
+            "USER_TACLETS_OPTIONS_KEY2": "USER_TACLETS_OFF",
+            "USER_TACLETS_OPTIONS_KEY3": "USER_TACLETS_OFF"
+        }
+    }
+} 
+
+\programSource "../TestSuite.sol";
+\problem {
+\<{
+  localDeclPostdecrement()@TestSuite;
+}\> true
+}
+
+\proof {
+(branch "dummy ID"
+(rule "functionBodyExpand" (formula "1"))
+(rule "localValueDeclInitDrop" (formula "1") (newnames "x"))
+(rule "localValueAssign" (formula "1"))
+(rule "localDeclPostdecrement" (formula "1") (term "1") (newnames "r"))
+(rule "polySimp_elimSub" (formula "1") (term "0,0,1,1"))
+(rule "mul_literals" (formula "1") (term "1,0,0,1,1"))
+(rule "sequentialToParallel2" (formula "1") (term "1"))
+(rule "simplifyUpdate3" (formula "1") (term "1,0,1"))
+(rule "sequentialToParallel2" (formula "1"))
+(rule "simplifyUpdate2" (formula "1"))
+(rule "applyOnParallel" (formula "1") (term "0"))
+(rule "applyOnElementary" (formula "1") (term "1,0"))
+(rule "applyOnElementary" (formula "1") (term "0,0"))
+(rule "applyOnPV" (formula "1") (term "0,0,0"))
+(rule "polySimp_addComm0" (formula "1") (term "1,0,1,0"))
+(rule "applyOnRigidTerm" (formula "1") (term "0,1,0"))
+(rule "applyOnPV" (formula "1") (term "1,0,1,0"))
+(rule "simplifyUpdate1" (formula "1") (term "0,0,1,0"))
+(rule "add_literals" (formula "1") (term "0,1,0"))
+(rule "assertConditionCapture" (formula "1") (term "1") (inst "pv=b"))
+(rule "localValueDeclInitDrop" (formula "1") (term "1") (newnames "b"))
+(rule "boolEqualityAssignment" (formula "1") (term "1"))
+(rule "sequentialToParallel2" (formula "1"))
+(rule "simplifyUpdate2" (formula "1"))
+(rule "simplifyUpdate3" (formula "1") (term "1,0"))
+(rule "applyOnElementary" (formula "1") (term "1,0"))
+(rule "applyOnRigidTerm" (formula "1") (term "0,1,0"))
+(rule "applyOnDifferentPV" (formula "1") (term "2,0,1,0"))
+(rule "applyOnDifferentPV" (formula "1") (term "1,0,1,0"))
+(rule "applyOnRigidFormula" (formula "1") (term "0,0,1,0"))
+(rule "simplifyUpdate1" (formula "1") (term "1,0,0,1,0"))
+(rule "applyOnPV" (formula "1") (term "0,0,0,1,0"))
+(rule "eqClose" (formula "1") (term "0,0,1,0"))
+(rule "ifthenelse_true" (formula "1") (term "0,1,0"))
+(rule "assertSimple" (formula "1") (term "1"))
+(branch
+   (rule "simplifyUpdate2" (formula "2"))
+   (rule "assertConditionCapture" (formula "2") (term "1") (inst "pv=b_1"))
+   (rule "localValueDeclInitDrop" (formula "2") (term "1") (newnames "b_1"))
+   (rule "boolEqualityAssignment" (formula "2") (term "1"))
+   (rule "sequentialToParallel2" (formula "2"))
+   (rule "simplifyUpdate2" (formula "2"))
+   (rule "applyOnElementary" (formula "2") (term "0"))
+   (rule "applyOnRigidTerm" (formula "2") (term "0,0"))
+   (rule "applyOnDifferentPV" (formula "2") (term "2,0,0"))
+   (rule "applyOnDifferentPV" (formula "2") (term "1,0,0"))
+   (rule "applyOnRigidFormula" (formula "2") (term "0,0,0"))
+   (rule "simplifyUpdate1" (formula "2") (term "1,0,0,0"))
+   (rule "applyOnPV" (formula "2") (term "0,0,0,0"))
+   (rule "eqClose" (formula "2") (term "0,0,0"))
+   (rule "ifthenelse_true" (formula "2") (term "0,0"))
+   (rule "assertSimple" (formula "2") (term "1"))
+   (branch
+      (rule "simplifyUpdate2" (formula "3"))
+      (rule "emptyModality" (formula "3"))
+      (rule "closeTrue" (formula "3"))
+   )
+   (branch
+      (rule "applyOnRigidFormula" (formula "2"))
+      (rule "applyOnDifferentPV" (formula "2") (term "1"))
+      (rule "applyOnPV" (formula "2") (term "0"))
+      (rule "eqClose" (formula "2"))
+      (rule "closeTrue" (formula "2"))
+   )
+)
+(branch
+   (rule "simplifyUpdate2" (formula "1"))
+   (rule "applyOnRigidFormula" (formula "1"))
+   (rule "applyOnDifferentPV" (formula "1") (term "1"))
+   (rule "applyOnPV" (formula "1") (term "0"))
+   (rule "eqClose" (formula "1"))
+   (rule "closeTrue" (formula "1"))
+)
+)
+}
