@@ -37,6 +37,7 @@ contract TestSuite {
     uint age;
     address owner;
     uint balance;
+    int signedTotal;
     bool flag;
     bool flag2;
 
@@ -2698,6 +2699,44 @@ contract TestSuite {
         uint y = 6;
         uint r = x % (y + 1);
         assert(r == 5);
+    }
+
+    function signedDivisionTruncates() public {
+        int a = -7;
+        int b = -2;
+        int q1 = a / 2;
+        int q2 = 7 / b;
+        int q3 = a / b;
+        int minusThree = -3;
+        assert(q1 == minusThree);
+        assert(q2 == minusThree);
+        assert(q3 == 3);
+    }
+
+    function signedModuloTakesDividendSign() public {
+        int a = -7;
+        int b = -2;
+        int r1 = a % 2;
+        int r2 = 7 % b;
+        int r3 = a % b;
+        int minusOne = -1;
+        assert(r1 == minusOne);
+        assert(r2 == 1);
+        assert(r3 == minusOne);
+    }
+
+    function storageSignedDivModAssign() public {
+        int start = -7;
+        signedTotal = start;
+        signedTotal /= 2;
+        int q = signedTotal;
+        int minusThree = -3;
+        assert(q == minusThree);
+        signedTotal = start;
+        signedTotal %= 2;
+        int r = signedTotal;
+        int minusOne = -1;
+        assert(r == minusOne);
     }
 
     function powerUnfoldLeft() public {
