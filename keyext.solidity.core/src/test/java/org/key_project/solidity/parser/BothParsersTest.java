@@ -13,6 +13,7 @@ import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.abstractions.*;
 import org.key_project.solidity.program.ast.declarations.*;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.expressions.operators.BinaryExpression;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.program.parser.SolcParser;
 import org.key_project.solidity.testutil.ExpectedToFail;
@@ -66,6 +67,14 @@ public class BothParsersTest {
             ((StatementVariableDeclaration) stm.getDeclarations().get(0)).getProgramVariable();
         Sort sort = programVariable.sort();
         assertEquals("Struct", sort.toString());
+    }
+
+    @Test
+    void parenthesizedExpressionKeepsItsGrouping() {
+        BinaryExpression exp = assertInstanceOf(BinaryExpression.class,
+            parseExpression("1 - (2 - 3)"));
+        assertInstanceOf(BinaryExpression.class, exp.getRight());
+        assertFalse(exp.getLeft() instanceof BinaryExpression);
     }
 
     @Test

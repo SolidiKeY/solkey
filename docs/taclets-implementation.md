@@ -500,7 +500,7 @@ kind:
     (`parser/varcond/NotAllSimpleCondition.java`).
 
   Both close every example; they differ only in proof size, measured over all
-  374 functions of `TestSuite.sol` by
+  377 functions of `TestSuite.sol` by
   `./gradlew :keyext.solidity.core:testProofSize`
   (`IndexWriteCaptureProofSizeTest`, which pins these numbers — see `docs/ci.md`):
 
@@ -510,7 +510,7 @@ kind:
   | `nsp[nse] = rhs` (7 functions) | 2 vs 1 | +13 … +16 nodes each | — |
   | `sp[nse] = rhs` | 1 each | identical | identical |
   | **whole file, rule applications** | | 67 | **60** |
-  | **whole file, total nodes** | | **99 648** | 100 124 |
+  | **whole file, total nodes** | | **97 538** | 98 014 |
 
   The 38 functions that apply a capture rule at all need 1.21 applications each
   under `receiverThenIndex` and 1.03 under `allAtOnce` — that merged application

@@ -153,6 +153,10 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitTupleExpression(TupleExpressionContext ctx) {
+        if (ctx.getChildCount() == 3 && "(".equals(ctx.getChild(0).getText())
+                && ctx.expression().size() == 1) {
+            return visitExpression(ctx.expression(0));
+        }
         reportError("Tuple expressions are not implemented yet.", ctx.start);
         return null; // unreachable: reportError always throws
         // TODO: implement (see disabled body below)

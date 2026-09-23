@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 /// asserted below say what each option costs in proof nodes and in applications of the rules the
 /// option switches between, and the per-function figures must equal the checked-in baseline.
 ///
-/// Manual only — tagged out of `test` and not a CI job, because it runs 748 proofs. Run it with
+/// Manual only — tagged out of `test` and not a CI job, because it runs 754 proofs. Run it with
 /// `./gradlew :keyext.solidity.core:testProofSize`, and regenerate the baseline and the numbers
 /// asserted here by adding
 /// `-Dorg.key_project.solidity.taclets.IndexWriteCaptureProofSizeTest.update=true`.
@@ -125,17 +125,17 @@ public class IndexWriteCaptureProofSizeTest {
         assumeFalse(UPDATING, "regeneration run");
         Map<String, List<Measurement>> file = measurements;
 
-        assertEquals(374, file.size(),
+        assertEquals(377, file.size(),
             "provable functions of TestSuite.sol, each proved under both options");
 
-        assertEquals(99648, totalNodes(file, RECEIVER_THEN_INDEX),
+        assertEquals(97538, totalNodes(file, RECEIVER_THEN_INDEX),
             "receiverThenIndex: total nodes over the whole file");
-        assertEquals(100124, totalNodes(file, ALL_AT_ONCE),
+        assertEquals(98014, totalNodes(file, ALL_AT_ONCE),
             "allAtOnce: total nodes over the whole file");
 
-        assertEquals(266.44, meanNodes(file, RECEIVER_THEN_INDEX), MEAN_TOLERANCE,
+        assertEquals(258.72, meanNodes(file, RECEIVER_THEN_INDEX), MEAN_TOLERANCE,
             "receiverThenIndex: mean nodes per function over the whole file");
-        assertEquals(267.71, meanNodes(file, ALL_AT_ONCE), MEAN_TOLERANCE,
+        assertEquals(259.98, meanNodes(file, ALL_AT_ONCE), MEAN_TOLERANCE,
             "allAtOnce: mean nodes per function over the whole file");
     }
 

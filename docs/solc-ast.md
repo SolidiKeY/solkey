@@ -45,7 +45,7 @@ The parser dispatches on `nodeType` at four places. Anything not listed below ra
 | Contract members (`parseContract`) | `VariableDeclaration`, `FunctionDefinition`, `StructDefinition`, `ModifierDefinition`, `EnumDefinition` |
 | Statements (`parseStatement`) | `ExpressionStatement`, `Return`, `IfStatement`, `WhileStatement`, `DoWhileStatement`, `ForStatement`, `TryStatement`, `Continue`, `Break`, `PlaceholderStatement`, plus blocks (any node with `statements`) and declarations (any node with `declarations`) |
 | Type names (`parseTypeName`) | `ElementaryTypeName`, `ArrayTypeName`, `Mapping`, `UserDefinedTypeName`, `Identifier` |
-| Expressions (`parseExpression`) | `Literal`, `Identifier`, `BinaryOperation`, `UnaryOperation`, `Assignment`, `MemberAccess`, `IndexAccess`, `IndexRangeAccess`, `Conditional`, `TupleExpression`, `FunctionCall`, `ElementaryTypeNameExpression`, `NewExpression`, `ExpressionStatement` |
+| Expressions (`parseExpression`) | `Literal`, `Identifier`, `BinaryOperation`, `UnaryOperation`, `Assignment`, `MemberAccess`, `IndexAccess`, `IndexRangeAccess`, `Conditional`, `TupleExpression` (only a parenthesized expression, unwrapped; a real tuple or inline array is rejected), `FunctionCall`, `ElementaryTypeNameExpression`, `NewExpression`, `ExpressionStatement` |
 
 Note that a block and a variable-declaration statement are recognised by the presence of the
 `statements` / `declarations` field, not by their `nodeType`, so they do not appear as `case`

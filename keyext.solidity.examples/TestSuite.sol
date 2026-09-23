@@ -2594,128 +2594,132 @@ contract TestSuite {
     }
 
     function greaterThanCaptureRhs() public {
-        uint[] memory xs = new uint[](1);
-        xs[0] = 2;
         uint x = 3;
-        bool r = x > xs[0];
+        bool r = x > x - 1;
         assert(r);
     }
 
     function greaterEqualCaptureLhs() public {
-        uint[] memory xs = new uint[](1);
-        xs[0] = 4;
         uint x = 3;
-        bool r = xs[0] >= x;
+        bool r = x + 1 >= x;
         assert(r);
     }
 
     function greaterEqualCaptureRhs() public {
-        uint[] memory xs = new uint[](1);
-        xs[0] = 2;
         uint x = 3;
-        bool r = x >= xs[0];
+        bool r = x >= x - 1;
         assert(r);
     }
 
     function lessEqualCaptureLhs() public {
-        uint[] memory xs = new uint[](1);
-        xs[0] = 2;
         uint x = 3;
-        bool r = xs[0] <= x;
+        bool r = x - 1 <= x;
         assert(r);
     }
 
     function lessEqualCaptureRhs() public {
-        uint[] memory xs = new uint[](1);
-        xs[0] = 4;
         uint x = 3;
-        bool r = x <= xs[0];
+        bool r = x <= x + 1;
         assert(r);
     }
 
     function logicalNotCapture() public {
-        bool[] memory bs = new bool[](1);
-        bool r = !bs[0];
+        uint x = 3;
+        bool r = !(x == 4);
         assert(r);
     }
 
     function unaryMinusCapture() public {
-        int[] memory ys = new int[](1);
-        ys[0] = 4;
-        int r = -ys[0];
+        int x = 3;
+        int r = -(x + 1);
         assert(r == -4);
     }
 
     function multiplicationUnfoldLeft() public {
-        uint[] memory xs = new uint[](1);
-        xs[0] = 7;
-        uint y = 6;
-        uint r = xs[0] * y;
+        uint x = 5;
+        uint y = 7;
+        uint r = (x + 1) * y;
         assert(r == 42);
     }
 
     function multiplicationUnfoldRight() public {
-        uint[] memory xs = new uint[](1);
-        xs[0] = 6;
         uint x = 7;
-        uint r = x * xs[0];
+        uint y = 5;
+        uint r = x * (y + 1);
         assert(r == 42);
     }
 
     function divisionUnfoldLeft() public {
-        uint[] memory xs = new uint[](1);
-        xs[0] = 40;
+        uint x = 39;
         uint y = 8;
-        uint r = xs[0] / y;
+        uint r = (x + 1) / y;
         assert(r == 5);
     }
 
     function divisionUnfoldRight() public {
-        uint[] memory xs = new uint[](1);
-        xs[0] = 8;
         uint x = 40;
-        uint r = x / xs[0];
+        uint y = 7;
+        uint r = x / (y + 1);
         assert(r == 5);
     }
 
     function moduloUnfoldLeft() public {
-        uint[] memory xs = new uint[](1);
-        xs[0] = 40;
+        uint x = 39;
         uint y = 7;
-        uint r = xs[0] % y;
+        uint r = (x + 1) % y;
         assert(r == 5);
     }
 
     function moduloUnfoldRight() public {
-        uint[] memory xs = new uint[](1);
-        xs[0] = 7;
         uint x = 40;
-        uint r = x % xs[0];
+        uint y = 6;
+        uint r = x % (y + 1);
         assert(r == 5);
     }
 
     function powerUnfoldLeft() public {
-        uint[] memory xs = new uint[](1);
-        xs[0] = 2;
+        uint x = 1;
         uint y = 3;
-        uint r = xs[0] ** y;
+        uint r = (x + 1) ** y;
         assert(r == 8);
     }
 
     function powerUnfoldRight() public {
-        uint[] memory xs = new uint[](1);
-        xs[0] = 3;
         uint x = 2;
-        uint r = x ** xs[0];
+        uint y = 2;
+        uint r = x ** (y + 1);
         assert(r == 8);
     }
 
     function subtractionUnfoldRight() public {
-        uint[] memory xs = new uint[](1);
-        xs[0] = 2;
         uint x = 40;
-        uint r = x - xs[0];
+        uint y = 1;
+        uint r = x - (y + 1);
         assert(r == 38);
+    }
+
+    function parenthesizedRightOperand() public {
+        uint x = 10;
+        uint y = 5;
+        uint z = 3;
+        uint r = x - (y - z);
+        assert(r == 8);
+    }
+
+    function parenthesizedLeftOperand() public {
+        uint x = 2;
+        uint y = 3;
+        uint z = 4;
+        uint r = (x + y) * z;
+        assert(r == 20);
+    }
+
+    function parenthesizedCondition() public {
+        bool a = true;
+        bool b = false;
+        bool c = true;
+        bool r = a && (b || c);
+        assert(r);
     }
 
     function memoryFieldSubAssignUnfold() public {

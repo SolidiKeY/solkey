@@ -795,6 +795,13 @@ public class SolJSONParser {
     }
 
     private Expression parseTuple(JsonNode initializer) {
+        JsonNode components = initializer.get("components");
+        JsonNode inlineArray = initializer.get("isInlineArray");
+        boolean parenthesized = (inlineArray == null || !inlineArray.asBoolean())
+                && components != null && components.size() == 1 && !components.get(0).isNull();
+        if (parenthesized) {
+            return parseExpression(components.get(0));
+        }
         throw new SolidityParseException("Not yet supported expression type", initializer);
         // List<Expression> components =
         // initializer.get("components").valueStream().map(this::parseExpression).toList();

@@ -221,10 +221,7 @@ without pointing at the culprit:
   (`uint rt = timeNow + delayUntilRelease; releaseTime = rt;`);
 - a bare `require(someBool)` on a storage bool is assumable but not observable: a local
   bound from that bool won't discharge an assert. Use `require(someBool == true)` when the
-  proof later needs the value;
-- a parenthesized subexpression inside a larger condition
-  (`require(a && (b || c))`) is a solc `TupleExpression`, which `SolJSONParser` rejects at
-  load time — split it into its own `require(b || c)`.
+  proof later needs the value.
 
 ## The `contracts/` directory
 

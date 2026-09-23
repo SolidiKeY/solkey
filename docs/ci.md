@@ -30,7 +30,7 @@ task** — on `test` the tag exclusion leaves zero matches and Gradle fails with
 `./gradlew :keyext.solidity.core:testProofSize` (tag `proofSize`,
 `IndexWriteCaptureProofSizeTest`) is excluded from `test` **and** has no CI job.
 It proves every function of `TestSuite.sol` under both `indexWriteCapture`
-options — 748 proofs — and asserts the node count, the number of applications of
+options — 754 proofs — and asserts the node count, the number of applications of
 the option's own rules, and the closing status of each against the checked-in
 baseline
 `keyext.solidity.core/src/test/resources/org/key_project/solidity/proofsize/indexWriteCapture.csv`.
