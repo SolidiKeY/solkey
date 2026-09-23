@@ -69,7 +69,7 @@ public class TacletCoverageTest {
         Pattern.compile("^    ([A-Za-z_][A-Za-z0-9_]*) \\{$", Pattern.MULTILINE);
 
     private static final List<String> ALTERNATIVE_CHOICES =
-        List.of("indexWriteCapture:allAtOnce", "transferSemantics:withCallback");
+        List.of("transferSemantics:withCallback");
 
     private static final Pattern BLOCK_COMMENT = Pattern.compile("/\\*.*?\\*/", Pattern.DOTALL);
 

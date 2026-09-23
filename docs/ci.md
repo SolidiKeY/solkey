@@ -25,29 +25,6 @@ A `--tests` filter naming a class of a CI-only group must go on **that group's
 task** — on `test` the tag exclusion leaves zero matches and Gradle fails with
 "No tests found".
 
-## The manual proof-size group
-
-`./gradlew :keyext.solidity.core:testProofSize` (tag `proofSize`,
-`IndexWriteCaptureProofSizeTest`) is excluded from `test` **and** has no CI job.
-It proves every function of `TestSuite.sol` under both `indexWriteCapture`
-options — 754 proofs — and asserts the node count, the number of applications of
-the option's own rules, and the closing status of each against the checked-in
-baseline
-`keyext.solidity.core/src/test/resources/org/key_project/solidity/proofsize/indexWriteCapture.csv`.
-A failure prints the whole diff table plus the per-option totals. The baseline is
-optional: the totals and means are asserted from the test source, so deleting the
-file only *skips* the per-function check. Regenerate it — after deleting it, or
-when a taclet change moves proof sizes on purpose — with
-
-```bash
-./gradlew :keyext.solidity.core:testProofSize \
-    -Dorg.key_project.solidity.taclets.IndexWriteCaptureProofSizeTest.update=true
-```
-
-which rewrites the file and reports itself as a *skipped* test, never a green
-one, and update the "Capture partition" table in `docs/taclets-implementation.md`
-from the totals it prints.
-
 ## `ciGates`
 
 Defined in the root `build.gradle`. It runs all three gates in one invocation

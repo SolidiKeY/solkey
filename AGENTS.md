@@ -31,7 +31,7 @@ These keep a task to few tool calls. Cost is dominated by round-trips, not by ou
 ./run-key.sh FILE.sol fnName                   # prove one function
 ./run-key.sh FILE.sol -f fnName --open-goals   # ... and show why it did not close
 ./run-key.sh FILE.key -m 20000 --no-prove      # a .key problem; any CLI option works
-./run-key.sh FILE.sol -O indexWriteCapture:allAtOnce   # prove under a non-default taclet option
+./run-key.sh FILE.sol -O transferSemantics:withCallback   # prove under a non-default taclet option
 ./run-key.sh FILE.sol --solc                   # compile, then run on an EVM: reports a failing assert
 ./run-key.sh FILE.sol --solc -f fnName         # ... for one function
 ./run-key.sh FILE.sol -f fnName --print-problem # print the generated .key problem instead
@@ -135,7 +135,7 @@ comments untouched unless the change makes them wrong.
 `./gradlew :keyext.solidity.core:test` is the fast local set: unit tests plus the `TestSuite.sol`
 suites (`TacletStarterExamplesTest`, `PaperTestExamplesTest`), ~30 s. It prints failures only;
 `-PverboseTests` restores the per-test progress lines. The `solidityExamples` and
-`ruleGeneralization` groups are CI-only, and `testProofSize` is manual-only — see `docs/ci.md`.
+`ruleGeneralization` groups are CI-only — see `docs/ci.md`.
 Run `test` after refactoring, and prefer modifying existing test classes over creating new ones.
 
 ## Documentation

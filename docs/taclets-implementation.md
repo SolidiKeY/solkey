@@ -328,7 +328,7 @@ fresh-allocation semantics. `memoryAssignForms` covers the assignment
 forms directly. Memory references are
 `Identity`-sorted, not copied `Struct` values; no `push`/`pop`/mapping.
 Complex memory receivers are captured first by `memoryIndexRead_unfold_rightFst`
-/ `memoryIndexWrite_unfold_leftFst` / `memoryIndexDelete_unfold_leftFst`. These
+/ `memoryIndexWriteCaptureAll` / `memoryIndexDelete_unfold_leftFst`. These
 take a plain `Path[memory,complex]` (no `array` flag): a receiver capture uses no
 array structure, and in memory an indexable path is an array anyway — mappings
 cannot be memory-located and `bytes`/`string` are not memory reference types. The
@@ -472,60 +472,27 @@ kind:
   `unfold_leftFst` / `rightSndIndex`). A write `op(recv, i) = rhs` is decomposed
   by three rules partitioned on which constituent is not yet simple, each
   capturing in the EVM's order — **right-hand side, then receiver, then index**:
-  - **Rule 1, receiver complex** (`Path[…,complex]`): captures the RHS and
-    aliases the receiver, leaving the index in place. `nsp[i] = e;` ⟹
-    `rvType rv = e; aliasType storage sp = nsp; sp[i] = rv;`. Ten members, the
-    `…_unfold_leftFst` rules, one per location × field/index × primitive/
-    reference RHS.
-  - **Rule 2, receiver simple and index non-simple** (`Path[…,simple]`):
-    `sp1[nse] = e;` ⟹ `rvType rv = e; aliasType storage sp = sp1;
-    pvType pv = nse; sp[pv] = rv;`. Five members, the `…NonSimpleIndexCapture`
-    rules. The receiver is snapshotted even though it is simple: a local storage
-    pointer can be reassigned by the index expression, and the write must land
-    where the receiver pointed before the index ran.
+  - **Rule 1, field write with a complex receiver** (`Path[…,complex]`):
+    captures the RHS and aliases the receiver. `nsp.a = e;` ⟹
+    `rvType rv = e; aliasType storage sp = nsp; sp.a = rv;`. Five members, the
+    `…Field…_unfold_leftFst` rules, one per location × primitive/reference RHS.
+  - **Rule 2, index write with a non-simple receiver or index**: five
+    `…CaptureAll` rules, one per RHS kind, which capture RHS, receiver and index
+    in a single application. `p[ie] = e;` ⟹ `rvType rv = e;
+    aliasType storage sp = p; pvType pv = ie; sp[pv] = rv;`. The receiver is
+    snapshotted even when it is simple: a local storage pointer can be
+    reassigned by the index expression, and the write must land where the
+    receiver pointed before the index ran. Their receiver SV is a `Path` of any
+    simplicity, so a disjunctive side condition keeps them off the fully simple
+    `sp[se] = e` (which they would re-match forever): the varcond
+    `\notAllSimple(p, ie)` (`parser/varcond/NotAllSimpleCondition.java`). On
+    `nsp[se] = rhs` the index temporary is redundant, a few extra nodes.
   - **Rule 3, receiver and index simple, RHS non-simple**: the RHS capture
     rules of the two bullets above, plus the root-target
     `storageRootWriteValueRhsCapture`.
 
-  **The index halves of Rules 1 and 2 are a taclet option**, `indexWriteCapture`
-  (`optionsDeclarations.key`), selectable per obligation — `\withOptions
-  indexWriteCapture:…;` in a `.key` file, `run-key.sh -O indexWriteCapture:…`
-  for a `.sol` one, like `transferSemantics`:
-  - `receiverThenIndex` (**default**) is the two-rule split just described.
-  - `allAtOnce` merges them into five `…CaptureAll` rules, one per RHS kind,
-    which capture RHS, receiver and index in a single application. Their
-    receiver SV is a `Path` of any simplicity, so a disjunctive side condition
-    is needed to keep them off the fully simple `sp[se] = e` (which they would
-    re-match forever): the new varcond `\notAllSimple(p, ie)`
-    (`parser/varcond/NotAllSimpleCondition.java`).
-
-  Both close every example; they differ only in proof size, measured over all
-  377 functions of `TestSuite.sol` by
-  `./gradlew :keyext.solidity.core:testProofSize`
-  (`IndexWriteCaptureProofSizeTest`, which pins these numbers — see `docs/ci.md`):
-
-  | shape | applications | `receiverThenIndex` | `allAtOnce` |
-  |---|---|---|---|
-  | `nsp[se] = rhs` (35 functions) | 1 each | — | +9 … +21 nodes each |
-  | `nsp[nse] = rhs` (7 functions) | 2 vs 1 | +13 … +16 nodes each | — |
-  | `sp[nse] = rhs` | 1 each | identical | identical |
-  | **whole file, rule applications** | | 67 | **60** |
-  | **whole file, total nodes** | | **97 538** | 98 014 |
-
-  The 38 functions that apply a capture rule at all need 1.21 applications each
-  under `receiverThenIndex` and 1.03 under `allAtOnce` — that merged application
-  is exactly what `allAtOnce` buys, and the extra nodes are what it costs.
-
-  `receiverThenIndex` is the default because the simple-index shape dominates
-  real code: `allAtOnce` saves an application only when receiver *and* index are
-  both impure, and pays a redundant index temporary everywhere else.
-  `allAtOnce` is half the taclets, which is why it is kept as an option rather
-  than deleted. Field writes are outside the option — a field name is always
-  simple, so the two variants coincide there.
   Examples: `indexWriteBothImpure{StorageRef,MemToStorage,MemoryValue,MemRef}`
-  cover the both-impure shape for every RHS kind, and
-  `TacletStarterExamplesTest.indexWriteExampleClosesUnderEitherCapture` proves
-  the whole index-write set under both choices.
+  cover the both-impure shape for every RHS kind.
 
   What differs between the members of a rule is only the *declaration* the
   capture emits, which follows the right-hand side's kind: `T rv = e;` for
@@ -568,10 +535,9 @@ kind:
   exclusive `if`/`else` branches, so the path is resolved exactly once per trace.
 
   The whole family is skeleton-checked as `RuleGeneralizationTest`'s
-  `indexCapture` family (variants `rhsCapture` / `value` / `ref`),
-  `indexCaptureAll` family (variants `value` / `ref`, the `allAtOnce` rules) and
-  `receiverCapture` family (variants `valueField` / `valueIndex` / `refField` /
-  `refIndex`), so the storage and memory halves cannot drift apart again.
+  `indexCapture` family (variant `rhsCapture`), `indexCaptureAll` family
+  (variants `value` / `ref`) and `receiverCapture` family (variants
+  `valueField` / `refField`), so the storage and memory halves cannot drift apart again.
 Also `storageIndexReadMappingStoreRoot` closes the paper's §11 table
 (`gsp = sp[i]` for mappings, no bounds branch).
 

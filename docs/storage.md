@@ -288,42 +288,25 @@ Each capture emits a *declaration*, which `storageLocalDeclInitDrop` /
 `localValueDeclInitDrop` then strip, so the rules re-enter and a target nested
 any number of levels deep decomposes by recursion rather than by enumeration.
 
-Rules 1 and 2 form a **taclet option**, `indexWriteCapture`, because the same
-decomposition can be split across applications in two ways. Rule 3 is shared,
-and the field forms need no split at all (a field name is always simple), so
-only the index-write rules are duplicated.
+**Rule 1 — field write, receiver nonsimple.** Capture the right-hand side and
+alias the receiver; a field name is always simple, so nothing else needs
+capturing.
 
-**Rule 1 — receiver nonsimple** (`indexWriteCapture:receiverThenIndex`, the
-default). Capture the right-hand side and alias the receiver, leaving the index
-where it is; once the receiver is an alias, Rule 2 takes whatever the index
-turned out to be.
-
-    nsp => ⟨ π  T_{e} rv = e; T_{nsp} sp = nsp; sp[ie] = rv; ω ⟩ φ
+    nsp => ⟨ π  T_{e} rv = e; T_{nsp} sp = nsp; sp.fld = rv; ω ⟩ φ
     --------------------------------------------------------------
-                  => ⟨ π  nsp[ie] = e; ω ⟩ φ
+                  => ⟨ π  nsp.fld = e; ω ⟩ φ
 
-**Rule 2 — receiver simple, index nonsimple** (same option). The receiver is
-already a root or an alias, but it is still snapshotted: the index may reassign
+**Rule 2 — index write, receiver or index nonsimple.** One rule per
+right-hand-side kind captures all three constituents at once, guarded by
+`\notAllSimple(p, ie)` so it does not fire on a fully simple `sp[se] = e` and
+re-match its own output. `p` is a `Path` of any simplicity. The receiver is
+snapshotted even when it is already a root or an alias: the index may reassign
 the local storage pointer the receiver reads, and the write must land where the
 receiver pointed *before* the index ran.
-
-    nse => ⟨ π  T_{e} rv = e; T_{sp1} sp = sp1; T pv = nse; sp[pv] = rv; ω ⟩ φ
-    ---------------------------------------------------------------------------
-                       => ⟨ π  sp1[nse] = e; ω ⟩ φ
-
-**Rules 1+2 merged** (`indexWriteCapture:allAtOnce`). One rule per right-hand-side
-kind captures all three constituents at once, guarded by `\notAllSimple(p, ie)`
-so it does not fire on a fully simple `sp[se] = e` and re-match its own output.
-`p` is a `Path` of any simplicity, so this single rule covers both cases above.
 
     notAllSimple(p, ie) => ⟨ π  T_{e} rv = e; T_{p} sp = p; T_{ie} pv = ie; sp[pv] = rv; ω ⟩ φ
     ------------------------------------------------------------------------------------------
                             => ⟨ π  p[ie] = e; ω ⟩ φ
-
-Both options evaluate in the same order and close the same proofs; they differ
-only in proof size, and which is smaller depends on the shape — see
-`docs/taclets-implementation.md`, "Capture partition", for the measurement and
-`./gradlew :keyext.solidity.core:testProofSize` to reproduce it.
 
 **Rule 3 — receiver and index simple, right-hand side nonsimple.**
 
@@ -331,12 +314,10 @@ only in proof size, and which is smaller depends on the shape — see
     ------------------------------------------------
             => ⟨ π  sp[se] = nse; ω ⟩ φ
 
-The partition is by sort alone and is therefore disjoint: Rule 1 needs
-`Path[…,complex]`, Rule 2 `Path[…,simple]` with a `NonSimpleExpression` index,
-Rule 3 `Path[…,simple]` with a `SimpleExpression` index and a right-hand side
-the terminals reject. The field forms (`recv.fld = rhs`) are the same three
-rules
-without the index capture.
+The partition is disjoint: Rule 1 needs a `Path[…,complex]` field receiver,
+Rule 2 an index write that `\notAllSimple` accepts, Rule 3 `Path[…,simple]`
+with a `SimpleExpression` index (or a field) and a right-hand side the
+terminals reject.
 
 ### The right-hand-side kind
 
@@ -355,11 +336,9 @@ path such as `p.age` is excluded, because its own receiver must be resolved by
 the read unfolds first — which also evaluate it ahead of the target, so the
 right-hand-side-first order is preserved either way.
 
-That table is the whole `kindof` dispatch; it is why Rule 1 has ten instances
-(storage receiver × {field, index} × three kinds, memory receiver × {field,
-index} × two kinds — a memory location cannot hold a storage reference), Rule 2
-five, and Rule 3 six. Only the index halves of Rules 1 and 2 are under the
-`indexWriteCapture` option; the five field instances of Rule 1 are unconditional.
+That table is the whole `kindof` dispatch; it is why Rules 1 and 2 have five
+instances each (storage receiver × three kinds, memory receiver × two kinds —
+a memory location cannot hold a storage reference), and Rule 3 six.
 
 ### Instances of Rule 1
 
@@ -369,12 +348,6 @@ five, and Rule 3 six. Only the index halves of Rules 1 and 2 are under the
     ------------------------------------------------------------
                 => ⟨ π  nsp.fld = e; ω ⟩ φ
 
-**`storageIndexWrite_unfold_leftFst`** — `nsp[ie] = e`, primitive `e`
-
-    nsp => ⟨ π  T_{e} rv = e; storage sp = nsp; sp[ie] = rv; ω ⟩ φ
-    --------------------------------------------------------------
-                  => ⟨ π  nsp[ie] = e; ω ⟩ φ
-
 **`storageFieldWriteStorageRef_unfold_leftFst`** — `nsp.fld = src`,
 storage `src`,
 and likewise `memoryToStorageField_unfold_leftFst` (memory `src`)
@@ -383,9 +356,7 @@ and likewise `memoryToStorageField_unfold_leftFst` (memory `src`)
     ------------------------------------------------------------------------
                     => ⟨ π  nsp.fld = src; ω ⟩ φ
 
-`storageIndexWrite…_unfold_leftFst` is the `nsp[ie]` twin of each (leaving `ie`
-in place rather than capturing it), and
-`memoryFieldWriteMemRef_unfold_leftFst` / `memoryIndexWriteMemRef_unfold_leftFst`
+`memoryFieldWrite_unfold_leftFst` / `memoryFieldWriteMemRef_unfold_leftFst` are
 the memory-receiver ones.
 
 The value snapshot is what keeps evaluation order: aliasing the receiver runs
@@ -397,11 +368,13 @@ redundant alias collapses in one rebind step.
 
 ### Instances of Rule 2
 
-**`storageIndexWriteNonSimpleIndexCapture`** — `sp1[nse] = e`, primitive `e`
+**`storageIndexWriteCaptureAll`** — `p[ie] = e`, primitive `e`, and
+`memoryIndexWriteCaptureAll` its memory twin
 
-    nse => ⟨ π  T_{e} rv = e; T_{sp1} storage sp = sp1; T pv = nse; sp[pv] = rv; ω ⟩ φ
-    -----------------------------------------------------------------------------------
-                          => ⟨ π  sp1[nse] = e; ω ⟩ φ
+    notAllSimple(p, ie) => ⟨ π  T_{e} rv = e; T_{p} storage sp = p; T_{ie} pv = ie;
+                               sp[pv] = rv; ω ⟩ φ
+    ------------------------------------------------------------------------------
+                            => ⟨ π  p[ie] = e; ω ⟩ φ
 
 The snapshot is what makes `xs[i++] = i;` write the *old* `i`. Dropping it
 closes
@@ -409,17 +382,16 @@ a proof of `xs[0] == 1` where the EVM writes `0`; the witnesses are
 `testStorageIndexWriteImpureIndexPrimitiveRhs` and its memory and depth-2 twins
 in `TestSuite.sol`.
 
-**`storageIndexWriteStorageRefNonSimpleIndexCapture`** — `sp1[nse] = src`, and
-likewise `memoryToStorageIndexNonSimpleIndexCapture` and
-`memoryIndexWriteMemRefNonSimpleIndexCapture`
+**`storageIndexWriteStorageRefCaptureAll`** — `p[ie] = src`, and likewise
+`memoryToStorageIndexCaptureAll` and `memoryIndexWriteMemRefCaptureAll`
 
-    nse => ⟨ π  T_{src} storage rv = src; T_{sp1} storage sp = sp1; T pv = nse;
-                sp[pv] = rv; ω ⟩ φ
-    ----------------------------------------------------------------------------
-                     => ⟨ π  sp1[nse] = src; ω ⟩ φ
+    notAllSimple(p, ie) => ⟨ π  T_{src} storage rv = src; T_{p} storage sp = p;
+                               T_{ie} pv = ie; sp[pv] = rv; ω ⟩ φ
+    ------------------------------------------------------------------------------
+                            => ⟨ π  p[ie] = src; ω ⟩ φ
 
-Under `indexWriteCapture:allAtOnce` these five rules and the five Rule-1 ones
-above are replaced by five `…CaptureAll` rules, one per right-hand-side kind.
+When only the receiver is nonsimple, the index temporary `pv` is redundant: the
+price of covering both shapes with one rule.
 
 ### Instances of Rule 3
 

@@ -3,7 +3,6 @@
 \settings // Proof-Settings-Config-File
 {
     "Choice": {
-        "indexWriteCapture": "indexWriteCapture:receiverThenIndex",
         "integerSimplificationRules": "integerSimplificationRules:full",
         "programRules": "programRules:Solidity",
         "transferSemantics": "transferSemantics:noCallback"

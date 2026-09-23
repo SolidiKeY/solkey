@@ -106,8 +106,7 @@ Three shapes have no `assert` form and are not covered by any example:
   not carry. Covered by the `.key` problems of `net/` (see "The `net/` directory" below) and,
   since the `@custom:key` clauses exist, by the specified contracts of `contracts/`, whose
   obligation is generated in exactly that shape. (Taclet *options* a plain obligation can
-  take too: `run-key.sh -O category:choice`, which is how the `indexWriteCapture` examples
-  are proved under both calculi.)
+  take too: `run-key.sh -O category:choice`, e.g. `-O transferSemantics:withCallback`.)
 - **Whole-subtree equality** — `find<[int]>(storage, cons2(matrix, at(0))) = find<[int]>(storage,
   cons1(values))` compares two storage subtrees; Solidity cannot state it, and reading
   `matrix[0].length` back does not discharge. `storageIndexCopysourceAfterPush` therefore only

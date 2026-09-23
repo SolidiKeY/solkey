@@ -141,7 +141,7 @@ Example unfold rule:
 program elements. A capture rule that matches a receiver of any simplicity needs
 it, since a taclet sort cannot express "the receiver is complex *or* the index is
 non-simple" and the rule would otherwise re-match its own output forever. Only
-the `…CaptureAll` rules of `\rules(indexWriteCapture:allAtOnce)` use it
+the `…CaptureAll` rules use it
 (`docs/storage.md` section 5).
 
 ## Storage Rule Pattern
