@@ -69,7 +69,9 @@ instantiation rather than a ranked race (the `simplify_enlarging` ranking is
 performance-only). Struct-sorted element reads
 `selectSt<[Struct]>(delNode(st), at(i))` — plain-`Field` index, so neither the
 `MapField` nor the `RefField` rule matches — get their own
-`selectStDelNodeIndexStruct`.
+`selectStDelNodeIndexStruct`, which re-wraps the element exactly like the `RefField`
+rule (`delNode(selectSt(st, at(i)))`), so `delete arr` keeps the mapping members of
+struct elements.
 
 `MapField` is the sub-sort that earns its place: it is the only case that reads
 *through* the delete marker (`selectSt(st, mf)`) instead of re-wrapping it
@@ -336,11 +338,10 @@ cannot be memory-located and `bytes`/`string` are not memory reference types. Th
 `memoryStructArrayIndex` covers the complex-receiver path.
 
 ### Delete
-`storageRootDelete` and `storageFieldDelete` save the sort-free `delAt(storage, path)`
-marker, resolved on read (see "Sort-free clearing and copying" below).
-(`storageIndexDelete` saves `defVal` instead: deleting a single collection
-entry/element resets it outright, mapping members included — the
-`storage-index-delete-mapping-struct` starter asserts the whole entry `= mtSt`.)
+`storageRootDelete`, `storageFieldDelete` and `storageIndexDelete` save the sort-free
+`delAt(storage, path)` marker, resolved on read (see "Sort-free clearing and copying" below).
+A deleted collection entry/element therefore keeps its mapping members, like any other
+deleted struct (`testDeleteArrayDoesNotResetElementMappingMember`).
 `delValue` picks the reset value by sort: a primitive sort (`alphaPrim \extends Prim`)
 collapses to `defaultValue<[alphaPrim]>` (`int→0`, `bool→FALSE`), while
 a struct becomes a lazy `delNode` marker (structRules.key). A read at `StValue`

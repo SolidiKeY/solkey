@@ -1472,6 +1472,18 @@ contract TestSuite {
         assert(ledgerUses[0].ledger.balances[1] == 10);
     }
 
+    /// @custom:key box
+    function testDeleteArrayDoesNotResetElementMappingMember() public {
+        require(ledgerUses.length == 0);
+        ledgerUses.push();
+        ledgerUses[0].ledger.nonce = 3;
+        ledgerUses[0].ledger.balances[1] = 10;
+        delete ledgerUses;
+        ledgerUses.push();
+        assert(ledgerUses[0].ledger.nonce == 0);
+        assert(ledgerUses[0].ledger.balances[1] == 10);
+    }
+
     function testMemoryAliasing() public {
         Person memory carol;
         Account memory carolAcc = carol.account;
