@@ -170,8 +170,11 @@ public class SolJSONParser {
         // declared type).
         List<JsonNode> functionNodes = new ArrayList<>();
         for (JsonNode node : contractNode.get("nodes").values()) {
-            if ("EnumDefinition".equals(node.get("nodeType").asString())) {
-                enums.add(parseEnum(node));
+            switch (node.get("nodeType").asString()) {
+                case "EnumDefinition" -> enums.add(parseEnum(node));
+                case "StructDefinition" -> structs.add(declareStruct(node, contractId));
+                default -> {
+                }
             }
         }
         for (JsonNode node : contractNode.get("nodes").values()) {
@@ -179,7 +182,7 @@ public class SolJSONParser {
             switch (nodeType) {
                 case "VariableDeclaration" -> fields.add(parseVariableField(contractName, node));
                 case "FunctionDefinition" -> functionNodes.add(node);
-                case "StructDefinition" -> structs.add(parseStruct(node, contractName, contractId));
+                case "StructDefinition" -> defineStruct(node, contractName);
                 case "ModifierDefinition" -> modifiers.add(parseModifier(node));
                 case "EnumDefinition" -> {
                 }
@@ -294,20 +297,22 @@ public class SolJSONParser {
         return modifier;
     }
 
-    private StructDeclaration parseStruct(JsonNode structNode, String contractName,
-            int contractId) {
-        String name = structNode.get("name").asString();
-        // unique field constants are namespaced by the full enclosing name: contract$struct
-        String fieldPrefix = contractName + FIELD_SEPARATOR + name;
-        List<FieldDeclaration> fields =
-            structNode.get("members").valueStream().map(m -> parseField(m, fieldPrefix)).toList();
-
-        StructDeclaration stDecl = new StructDeclaration(new Name(name), fields, contractId);
-        fields.forEach(f -> f.setContainingStruct(stDecl));
+    private StructDeclaration declareStruct(JsonNode structNode, int contractId) {
+        StructDeclaration stDecl = new StructDeclaration(
+            new Name(structNode.get("name").asString()), List.of(), contractId);
         getOrCreateKeYSolidityType(stDecl);
         id2Name.put(structNode.get("id").asInt(), stDecl);
-
         return stDecl;
+    }
+
+    private void defineStruct(JsonNode structNode, String contractName) {
+        StructDeclaration stDecl = (StructDeclaration) id2Name.get(structNode.get("id").asInt());
+        // unique field constants are namespaced by the full enclosing name: contract$struct
+        String fieldPrefix = contractName + FIELD_SEPARATOR + stDecl.name();
+        List<FieldDeclaration> fields =
+            structNode.get("members").valueStream().map(m -> parseField(m, fieldPrefix)).toList();
+        fields.forEach(f -> f.setContainingStruct(stDecl));
+        stDecl.setFields(fields);
     }
 
     private FieldDeclaration parseField(JsonNode fieldNode, String fieldPrefix) {
@@ -967,8 +972,10 @@ public class SolJSONParser {
         final String kind = literal.get("kind").asString();
         return switch (kind) {
             case "number" -> {
-                String initializerExp = literal.get("value").asString();
-                yield new Uint256Literal(new BigInteger(initializerExp));
+                JsonNode unit = literal.get("subdenomination");
+                yield new Uint256Literal(ParserUtils.parseNumberLiteral(
+                    literal.get("value").asString(),
+                    unit == null || unit.isNull() ? null : unit.asString()));
             }
             case "bool" -> {
                 String initializerExp = literal.get("value").asString();

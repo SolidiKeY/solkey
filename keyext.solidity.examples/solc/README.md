@@ -63,16 +63,11 @@ Applied uniformly; every function names the upstream file it came from.
 
 ## Deviations forced by the loader or calculus
 
-Beyond the uniform rules above, three rewrites were needed to get a file to load or a proof to
+Beyond the uniform rules above, two rewrites were needed to get a file to load or a proof to
 close. They are noted in place at the affected function.
 
-- **Self-recursive struct types.** Upstream `struct_reference.sol` and `structs.sol` declare
-  `struct s2 { …; mapping(k => s2) recursive; }`. `SolJSONParser` throws an NPE building a
-  struct type that refers to itself (`getOrCreateMappingKeYSolidityType`), and that kills the
-  whole file at load. The hierarchy is unrolled into `Depth0`/`Depth1`/`Depth2`, the two levels
-  the tests actually walk.
 - **Mapping members must be aliased before being indexed.** `nested.recursive[4].z` leaves an
-  open goal; binding `mapping(uint => Depth1) storage map = nested.recursive;` first and using
+  open goal; binding `mapping(uint => s2) storage map = nested.recursive;` first and using
   `map[4].z` closes. At depth two each member mapping needs its own alias. Upstream
   `struct_reference.sol` happens to be written that way already.
 - **A `push` argument that reads storage must be bound first**, per the general convention in

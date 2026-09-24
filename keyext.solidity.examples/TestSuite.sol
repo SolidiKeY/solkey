@@ -33,6 +33,7 @@ contract TestSuite {
     struct TokenBucket { Token[] tokens; }
     struct Toggle { bool on; uint n; }
     struct Triple { uint[3] items; uint tag; }
+    struct Tree { uint v; mapping(uint => Tree) kids; }
 
     uint total;
     uint age;
@@ -75,6 +76,8 @@ contract TestSuite {
     mapping(uint => mapping(uint => uint)) grid;
     mapping(uint => Ledger) ledgerMap;
     mapping(uint => uint)[] mapArray;
+    mapping(bool => uint) boolKeyed;
+    Tree tree;
 
     // ── Arithmetic ──
 
@@ -2628,6 +2631,42 @@ contract TestSuite {
         people[1].age = 4;
         uint r = people[2].age;
         assert(r == 3);
+    }
+
+    function boolKeyMapping() public {
+        boolKeyed[true] = 1;
+        boolKeyed[false] = 2;
+        uint r = boolKeyed[true];
+        uint s = boolKeyed[false];
+        assert(r == 1);
+        assert(s == 2);
+    }
+
+    function recursiveStructMapping() public {
+        mapping(uint => Tree) storage kids = tree.kids;
+        Tree storage child = kids[0];
+        tree.v = 1;
+        child.v = 2;
+        mapping(uint => Tree) storage grandKids = child.kids;
+        grandKids[3].v = 4;
+        assert(tree.v == 1);
+        assert(kids[0].v == 2);
+        assert(grandKids[3].v == 4);
+    }
+
+    // ── Number literals ──
+
+    function numberLiteralForms() public {
+        uint h = 0xff;
+        uint u = 1_000;
+        uint e = 2e3;
+        uint g = 1 gwei;
+        uint d = 2 days;
+        assert(h == 255);
+        assert(u == 1000);
+        assert(e == 2000);
+        assert(g == 1000000000);
+        assert(d == 172800);
     }
 
     // ── Taclet coverage: one function per taclet no other example applies ──

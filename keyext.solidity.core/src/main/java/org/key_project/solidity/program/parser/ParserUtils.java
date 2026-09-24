@@ -3,7 +3,10 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.parser;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.key_project.solidity.logic.op.ProgramVariable;
@@ -16,6 +19,8 @@ import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
 import org.key_project.solidity.program.ast.expressions.MemberExp;
 import org.key_project.solidity.program.ast.expressions.operators.*;
 
+import org.jspecify.annotations.Nullable;
+
 public class ParserUtils {
 
     public static final String MAPPING_COPY_ERROR =
@@ -25,6 +30,39 @@ public class ParserUtils {
     public static final String MEMORY_MAPPING_ERROR =
         "Memory values of a type containing a mapping cannot exist; solc rejects such "
             + "declarations and they are not supported";
+
+    private static final Map<String, BigInteger> NUMBER_UNITS = Map.ofEntries(
+        Map.entry("wei", BigInteger.ONE),
+        Map.entry("gwei", BigInteger.TEN.pow(9)),
+        Map.entry("szabo", BigInteger.TEN.pow(12)),
+        Map.entry("finney", BigInteger.TEN.pow(15)),
+        Map.entry("ether", BigInteger.TEN.pow(18)),
+        Map.entry("seconds", BigInteger.ONE),
+        Map.entry("minutes", BigInteger.valueOf(60)),
+        Map.entry("hours", BigInteger.valueOf(3_600)),
+        Map.entry("days", BigInteger.valueOf(86_400)),
+        Map.entry("weeks", BigInteger.valueOf(604_800)));
+
+    public static BigInteger parseNumberLiteral(String text, @Nullable String unit) {
+        String digits = text.replace("_", "");
+        BigDecimal value = digits.startsWith("0x") || digits.startsWith("0X")
+                ? new BigDecimal(new BigInteger(digits.substring(2), 16))
+                : new BigDecimal(digits);
+        if (unit != null && !unit.isEmpty()) {
+            BigInteger factor = NUMBER_UNITS.get(unit);
+            if (factor == null) {
+                throw new SolidityParseException("Unsupported number unit " + unit);
+            }
+            value = value.multiply(new BigDecimal(factor));
+        }
+        try {
+            return value.toBigIntegerExact();
+        } catch (ArithmeticException e) {
+            throw new SolidityParseException(
+                "Number literal " + text + (unit == null ? "" : " " + unit)
+                    + " is not an integer");
+        }
+    }
 
     static public Optional<Expression> parseBinaryOperationMaybe(Expression left, Expression right,
             String operator) {

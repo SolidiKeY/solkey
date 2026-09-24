@@ -64,6 +64,11 @@ reach such an element emit it: `storageIndexReadArrayBindLocalRootMappingElement
 Path flag `mappingElement`. Solidity cannot read, write or copy a mapping, and mappings never
 live in memory, so no other rule builds a path to one.
 
+`at` takes a `Prim`, so a mapping key may be `int`, `address` (an `int`) or `bool`; the
+array rules that bound an index by `size` still take `\term int`. A struct may reach itself
+through a mapping (`struct T { mapping(uint => T) kids; }`): `SolJSONParser` registers every
+struct of a contract before it parses any member.
+
 Only the two kinds `delete` must positively recognise get a sub-sort; value
 members stay plain `Field` alongside `size` and `at(i)` (an index's element
 sort comes from the container rather than from the index).

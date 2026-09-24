@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser;
 
-import java.math.BigInteger;
 import java.util.List;
 
 import org.key_project.logic.Name;
@@ -46,6 +45,7 @@ import org.key_project.util.collection.ImmutableArray;
 import org.key_project.util.collection.ImmutableList;
 
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.jspecify.annotations.Nullable;
 
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.VOID;
@@ -98,11 +98,10 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitNumberLiteral(NumberLiteralContext ctx) {
-        if (ctx.DecimalNumber() != null) {
-            BigInteger number = new BigInteger(ctx.DecimalNumber().getText());
-            return new Uint256Literal(number);
-        }
-        return visitChildren(ctx);
+        TerminalNode number = ctx.DecimalNumber() != null ? ctx.DecimalNumber() : ctx.HexNumber();
+        TerminalNode unit = ctx.NumberUnit();
+        return new Uint256Literal(ParserUtils.parseNumberLiteral(number.getText(),
+            unit == null ? null : unit.getText()));
     }
 
     @Override

@@ -17,7 +17,7 @@ import org.jspecify.annotations.Nullable;
 
 public class StructDeclaration implements Declaration, Type, Resolver {
     private final Name name;
-    private final ImmutableArray<@NonNull FieldDeclaration> fields;
+    private ImmutableArray<@NonNull FieldDeclaration> fields;
     private final int contractId;
     @Nullable
     ContractDeclaration contract;
@@ -31,6 +31,10 @@ public class StructDeclaration implements Declaration, Type, Resolver {
 
     public ImmutableArray<FieldDeclaration> getFields() {
         return fields;
+    }
+
+    public void setFields(List<FieldDeclaration> fields) {
+        this.fields = new ImmutableArray<>(fields);
     }
 
     public @Nullable ContractDeclaration getContract() {
