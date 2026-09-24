@@ -270,8 +270,9 @@ example per shape that the older sections do not already cover —
 nested row bound as a storage pointer, a ternary choosing between two mappings,
 `balances[balances[1]]`, a memory field as the key, and a mapping entry copied to another
 through memory. The shapes Solidity refuses outright are recorded in
-`keyext.solidity.examples/illegal/IllegalMappings.sol`, and the two gaps the sweep did find are
-in `taclet-ideas.md` ("Raised by the mapping-index probe").
+`keyext.solidity.examples/illegal/IllegalMappings.sol`, and of the two gaps the sweep did find, the
+non-integer key crash is in `bugs.md` and the other is in `taclet-ideas.md` ("Raised by the
+mapping-index probe").
 
 ### Push / pop
 Push-lvalue `sp.push() = se` is desugared to `sp.push(se)` at **parse time**

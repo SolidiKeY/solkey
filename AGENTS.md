@@ -147,6 +147,7 @@ Read the relevant doc before working on taclets. Each is a compact, agent-facing
 | `key-taclets.md` | **Start here** to author a taclet — rule shape, schema variables, varconds |
 | `taclets-implementation.md` | Checking what is already implemented and why it is shaped that way |
 | `taclet-ideas.md` | Picking the next unimplemented construct (the backlog) |
+| `bugs.md` | Known bugs: crashes, stuck proofs, unprovable true facts |
 | `storage.md` | Storage rules — calculus spec, three-step strategy, statement→rule table |
 | `memory.md` | Memory rules — identity heap, aliasing, delete, cross-domain copies |
 | `net.md` | The payment/ledger model (`net`, `msg.sender`/`msg.value`, `transfer`, invariants) |
@@ -163,6 +164,8 @@ Program rules live in `…/proof/rules/solidityProgramRules.key`, loaded via
 `.key` obligations in `keyext.solidity.examples/net/`; conventions for both are in
 `keyext.solidity.examples/README.md`. After changing a feature, update
 `docs/taclets-implementation.md` (implemented) or `docs/taclet-ideas.md` (backlog).
+**When a change fixes a bug listed in `docs/bugs.md`, delete that entry in the same change;**
+record newly found bugs there.
 
 **When planning a new taclet:** begin with a plain-English statement of the precondition (what
 must hold before the rule fires), the transformation (what sequent change it performs) and the

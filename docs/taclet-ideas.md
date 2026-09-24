@@ -91,9 +91,6 @@ Edge cases of already-supported constructs (see `docs/taclets-implementation.md`
 - **Whole-struct write from a struct *value*** (`alice = pVal;`, vs. the
   supported root-to-root `alice = bob;`): needs Step-1 unfolding for struct
   constructors / memory-struct sources.
-- **Dynamic-array `delete arr;` length reset**: not modeled by the current
-  memory/storage delete rules. (Struct-`delete` preserving mapping members is now
-  implemented via the lazy `delNode` marker — see `docs/storage.md` §6.)
 - **Reject uint unary minus in the parsers** (solc compile error); today the
   shape is executed as plain `neg` on the unbounded logic int instead of being
   rejected up front.
@@ -107,9 +104,6 @@ Found by porting the Solidity compiler's own semantic tests into
 `keyext.solidity.examples/solc/` (`taclets-implementation.md`, "solc semantic-test ports").
 Each has a failing example in the suite naming it, so closing the gap is observable.
 
-- **`SolJSONParser`: self-recursive struct types.** `struct s2 { mapping(k => s2) recursive; }`
-  throws an NPE in `getOrCreateMappingKeYSolidityType` and takes the whole file down at load.
-  Worked around in the ports by unrolling the hierarchy.
 - **Mapping members must be aliased before being indexed.** `nested.recursive[4].z` is open
   where `map[4].z` with `map = nested.recursive` closes; the member-mapping index rules need
   the same complex-receiver capture the other index families have.
@@ -117,14 +111,9 @@ Each has a failing example in the suite naming it, so closing the gap is observa
 ## Raised by the mapping-index probe
 
 Found by pushing mapping indexing into its odd corners (nested mappings, arrays of mappings,
-storage pointers, memory-valued keys). Everything else in that sweep closes; these two are what
-is left, and neither is worked around anywhere in the suites.
+storage pointers, memory-valued keys). Everything else in that sweep closes, except the
+non-integer key crash in `docs/bugs.md` and the gap below.
 
-- **Non-integer mapping keys.** `mapping(bool => uint)` loads, then the first index write dies
-  with a `TermCreationException`: `at(Field)` expects an `int` argument and gets `TRUE:bool`.
-  `address` keys are reachable only from a `.key` problem, since the obligation generator
-  refuses an `address` parameter (`net/AuctionWithdrawNet.sol` indexes one that way). Either the
-  key sort has to widen or the loader has to reject the declaration with its reason.
 - **An assignment used as an expression.** `balances[balances[1] = 2] = 7;` captures the index
   correctly and then gets stuck on `u = (balances[1] = 2);` — no rule consumes an assignment in
   value position. Related to `return e;` (Tier 3): both are expression forms the calculus only

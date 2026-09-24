@@ -144,7 +144,7 @@ for `delAt` through `delField<[alpha]>` on the select:
   solc's array copy (`selectOnSaveEmptyIndexStruct`): below the written
   value's `size` it is again a leaf one level down, below the old `size` it is
   reset (`delNode`), and past both it keeps the old element — dangling data a
-  later `push()` exposes. and a cast of the leaf to a primitive sort is
+  later `push()` exposes. A cast of the leaf to a primitive sort is
   the cast of the written value (`saveOnEmptyPrim`, the shape
   `selectOnSaveCons` leaves at the end of a path). Every storage-to-storage
   copy therefore writes plain `save(storage, p1, find<[StValue]>(storage,
