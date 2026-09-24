@@ -36,7 +36,7 @@ public class FunctionSelectionPanelTest {
                 function returnsSomething() public returns (uint r) { r = 1; }
             }
             contract B {
-                function pay(address payable a) public { a.transfer(5); }
+                function pay(string memory memo) public { }
                 function withdraw() public { assert(false); }
             }
             """;
@@ -55,8 +55,8 @@ public class FunctionSelectionPanelTest {
         var returnsSomething = new SolidityOutline.Function("returnsSomething", List.of(), 1, "",
             spanOf("function returnsSomething() public returns (uint r) { r = 1; }"));
         var pay = new SolidityOutline.Function("pay",
-            List.of(new SolidityOutline.Parameter("a", "address payable")), 0, "",
-            spanOf("function pay(address payable a) public { a.transfer(5); }"));
+            List.of(new SolidityOutline.Parameter("memo", "string")), 0, "",
+            spanOf("function pay(string memory memo) public { }"));
         var withdraw = new SolidityOutline.Function("withdraw", List.of(), 0, "",
             spanOf("function withdraw() public { assert(false); }"));
         return new SolidityOutline(List.of(
@@ -93,7 +93,7 @@ public class FunctionSelectionPanelTest {
     @Test
     void labelsCarryTheParameterList() {
         var pay = outline().contract("B").orElseThrow().function("pay").orElseThrow();
-        assertEquals("pay(address payable a)", FunctionSelectionPanel.label(pay));
+        assertEquals("pay(string memo)", FunctionSelectionPanel.label(pay));
 
         var ok = outline().contract("A").orElseThrow().function("ok").orElseThrow();
         assertEquals("ok()", FunctionSelectionPanel.label(ok));
@@ -111,7 +111,7 @@ public class FunctionSelectionPanelTest {
         String payTooltip = FunctionSelectionPanel
                 .tooltip(outline().contract("B").orElseThrow().function("pay").orElseThrow());
         assertNotNull(payTooltip);
-        assertTrue(payTooltip.contains("address payable"), payTooltip);
+        assertTrue(payTooltip.contains("unsupported type string"), payTooltip);
     }
 
     /// The first provable function is preselected, so the dialog opens ready to start.
@@ -142,7 +142,7 @@ public class FunctionSelectionPanelTest {
         panel.select("B", "pay");
 
         assertTrue(panel.selection().isEmpty());
-        assertEquals("function pay(address payable a) public { a.transfer(5); }",
+        assertEquals("function pay(string memory memo) public { }",
             panel.sourceText());
         assertTrue(panel.headerText().contains("B.pay"), panel.headerText());
     }

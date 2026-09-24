@@ -120,14 +120,14 @@ public class GuiSmokeTest {
     /// message instead of falling back to the picker.
     @Test
     void refusesAFunctionThatCannotBeProved() {
-        Path file = example("net/PiggyBankNet.sol");
+        Path file = example("real-world/Ownable.sol");
         assertTrue(Files.exists(file), "example must exist: " + file.toAbsolutePath());
 
         Exception e = assertThrows(Exception.class,
-            () -> KeYEnvironment.load(file, "PiggyBankNet", "payTo"));
+            () -> KeYEnvironment.load(file, "Ownable", "owner"));
 
         assertTrue(describe(e).contains("cannot be proved"), describe(e));
-        assertTrue(describe(e).contains("address payable"), describe(e));
+        assertTrue(describe(e).contains("skip"), describe(e));
     }
 
     /// The reason may be wrapped by the loader, so match against the whole cause chain.
