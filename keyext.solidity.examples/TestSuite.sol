@@ -1693,6 +1693,7 @@ contract TestSuite {
         require(matrix.length == 0);
         matrix.push();
         matrix.push();
+        require(matrix[1].length == 0);
         matrix[1].push(100);
         uint i = 1;
         uint v = matrix[i++][0];
@@ -1705,6 +1706,8 @@ contract TestSuite {
         require(matrix.length == 0);
         matrix.push();
         matrix.push();
+        require(matrix[0].length == 0);
+        require(matrix[1].length == 0);
         matrix[0].push(0);
         matrix[0].push(0);
         matrix[1].push(0);
@@ -1721,6 +1724,7 @@ contract TestSuite {
         require(matrix.length == 0);
         matrix.push();
         matrix.push();
+        require(matrix[0].length == 0);
         matrix[0].push(0);
         matrix[0].push(11);
         matrix[1].push(22);
@@ -1747,6 +1751,7 @@ contract TestSuite {
         require(matrix.length == 0);
         matrix.push();
         matrix.push();
+        require(matrix[0].length == 0);
         uint i = 0;
         matrix[i++].push(i);
         assert(i == 1);
@@ -1778,6 +1783,8 @@ contract TestSuite {
         require(matrix.length == 0);
         matrix.push();
         matrix.push();
+        require(matrix[0].length == 0);
+        require(matrix[1].length == 0);
         matrix[0].push(0);
         matrix[1].push(0);
         uint k = 0;
@@ -1954,15 +1961,25 @@ contract TestSuite {
         assert(tokens[0].value == 99);
     }
 
-    function testStoragePushReturnRefIsZeroed() public {
-        Token storage t = tokens.push();
-        assert(t.value == 0);
+    function testDanglingReferenceSurvivesPush() public {
+        delete tokens;
+        tokens.push();
+        Token storage r = tokens[0];
+        tokens.pop();
+        r.value = 5;
+        tokens.push();
+        assert(tokens[0].value == 5);
     }
 
-    function testStorageNestedPushReturnRefIsZeroed() public {
-        Account storage acc = persons.push().account;
-        assert(acc.balance == 0);
-        assert(acc.token.value == 0);
+    function testDanglingInnerArrayReappearsAfterPush() public {
+        delete matrix;
+        matrix.push();
+        uint[] storage ptr = matrix[0];
+        matrix.pop();
+        ptr.push(66);
+        matrix.push();
+        assert(matrix[0].length == 1);
+        assert(matrix[0][0] == 66);
     }
 
     function testStorageRootDeepCopy() public {

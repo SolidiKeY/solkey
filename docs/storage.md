@@ -670,21 +670,29 @@ Each array rule branches on bounds. Out-of-bounds goes to
                                    find<[StValue]>(storage, sp2)),
                             sp1 · length, n + 1 ) }
 
-- `storagePushLengthSave` (zero-arg push: append the default-valued
-  slot, return nothing — the appended slot is cleared with `delAt`, so a
-  struct element's mapping members survive being pushed over)
+- `storagePushLengthSave` (zero-arg push onto a value-type array: append the
+  default-valued slot, return nothing — the appended slot is cleared with `delAt`)
 
       sp.push();
       ⇝  { storage := save( delAt(storage, sp · at(n)),
                             sp · length, n + 1 ) }
 
+- `storagePushLengthSaveReferenceElement` (zero-arg push onto an array of structs or
+  arrays: only the length grows, the slot keeps what storage holds). solc does not write
+  zeroes on `push()`, it relies on unused storage being zero, and a write through a dangling
+  reference to a popped element breaks that (Solidity docs, "Dangling References to Storage
+  Array Elements"). Value-type elements cannot be referenced, so only this case can see it.
+  `pop()` and `delete` still clear, so after them the slot reads defaults.
+
+      sp.push();
+      ⇝  { storage := save(storage, sp · length, n + 1) }
+
 - `storageLocalRootPushBind` (zero-arg push whose returned slot is
-  captured into a local reference; the slot is cleared exactly as in
-  `storagePushLengthSave`, so the reference reads defaults)
+  captured into a local reference; the element is a reference type, so the slot is not
+  cleared, as in `storagePushLengthSaveReferenceElement`)
 
       lsv = sp.push();
-      ⇝  { storage := save( delAt(storage, sp · at(n)),
-                            sp · length, n + 1 )
+      ⇝  { storage := save(storage, sp · length, n + 1)
            || lsv := sp · at(n) }
 
 - `storagePopSave` (clears the popped slot with `delAt`, which is
@@ -909,6 +917,7 @@ extracts to `cons(alice, nil)`. All storage operations use `find`/`save`.
 | `sp.push(se);`             | `storagePushValueSave`                 | `save`                   |
 | `sp1.push(sp2);`           | `storagePushValueCopySource`           | `save`/`find<[StValue]>` |
 | `sp.push();`               | `storagePushLengthSave`                | `save`                   |
+| `sp.push();` (ref. elem.)  | `storagePushLengthSaveReferenceElement` | `save`                  |
 | `lsv = sp.push();`         | `storageLocalRootPushBind`             | `save`                   |
 | `path.push() = se;`        | `storagePushLhsToPushValue` (desugar)  | —                        |
 | `sp.pop();`                | `storagePopSave`                       | `save`                   |

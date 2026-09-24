@@ -282,10 +282,12 @@ from **post-update** storage (bound emitted inside `\replacewith`, not via `\add
 `delAt(storage, sp · at(ℓ-1))` (not eager `defaultValue`), reusing the `delNode`
 machinery of §Delete — so a mapping nested in the popped element survives `pop()` and a
 later `push()`, exactly like `storageRootDelete` / `storageFieldDelete`.
-`storagePushLengthSave` and `storageLocalRootPushBind` clear the appended slot the same way,
-which is what makes `arr.push(); assert(arr[0] == 0);` and
-`T storage r = arr.push(); assert(r.x == 0);` provable on unknown storage while a struct
-element keeps its mapping members (`testStoragePushReturnRefIsZeroed`). See the `testDeepPopDoesNotResetMappingMember` end-to-end
+`storagePushLengthSave` clears the appended slot the same way for a value-type element, which
+is what makes `arr.push(); assert(arr[0] == 0);` provable on unknown storage. A push onto an
+array of structs or arrays (`storagePushLengthSaveReferenceElement`, `storageLocalRootPushBind`)
+does not clear: solc writes no zeroes on `push()`, and a write through a dangling reference to a
+popped element survives it (`testDanglingReferenceSurvivesPush`,
+`testDanglingInnerArrayReappearsAfterPush`). See the `testDeepPopDoesNotResetMappingMember` end-to-end
 example. `delAt(st, p)` names `st` once where the equivalent `save`-of-deleted-value form
 named it twice; reads commute through it with `selectOnDelAtCons`, and the reset still
 resolves by sort on read through `delValue<[alpha]>`.
@@ -638,8 +640,9 @@ closes where `nested.recursive[4].z` does not).
 - `storageIndexWrite{Array,Mapping}CopySource` carry the copied value sort-free, as
   `find<[StValue]>`, instead of hard-coding `int` / `Struct` — the sort arrives with the
   read (see "Sort-free clearing and copying").
-- `storagePushLengthSave` clears the appended slot as well as bumping `size`, mirroring
-  `storagePopSave`. It writes the lazy delete marker rather than an eager `defaultValue`, so the
+- `storagePushLengthSave` clears the appended slot of a value-type array as well as bumping
+  `size`, mirroring `storagePopSave` (arrays of structs or arrays use
+  `storagePushLengthSaveReferenceElement`, which does not clear). It writes the lazy delete marker rather than an eager `defaultValue`, so the
   reset resolves by sort: a primitive element becomes 0 (which is what makes
   `arr.push(); assert(arr[0] == 0);` provable), while a struct element becomes a
   `delNode` whose mapping members still read through — so
