@@ -139,9 +139,12 @@ for `delAt` through `delField<[alpha]>` on the select:
   `save(st, nil, v) ⇝ v`); the five rules that read through it decide by the
   member's sort. A `MapField` member comes from the old value
   (`selectOnSaveEmptyMap`), a `RefField` member is again a leaf one level
-  down (`selectOnSaveEmptyRef`), an `at(i)` element and every primitive
-  member come from the written value (`selectOnSaveEmptyIndexStruct`,
-  `selectOnSaveEmptyDefault`), and a cast of the leaf to a primitive sort is
+  down (`selectOnSaveEmptyRef`), every primitive member comes from the
+  written value (`selectOnSaveEmptyDefault`), and an `at(i)` element follows
+  solc's array copy (`selectOnSaveEmptyIndexStruct`): below the written
+  value's `size` it is again a leaf one level down, below the old `size` it is
+  reset (`delNode`), and past both it keeps the old element — dangling data a
+  later `push()` exposes. and a cast of the leaf to a primitive sort is
   the cast of the written value (`saveOnEmptyPrim`, the shape
   `selectOnSaveCons` leaves at the end of a path). Every storage-to-storage
   copy therefore writes plain `save(storage, p1, find<[StValue]>(storage,

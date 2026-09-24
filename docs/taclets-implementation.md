@@ -406,7 +406,7 @@ Four sort-free shapes carry the deferred value:
 | `delAt(Struct, List)` | the storage with a location reset — a struct keeps its mapping members | `delAtEmpty` / `selectOnDelAtCons` |
 | `find<[StValue]>(Struct, List)` | the value at a path, for copies (`find` at the top storage sort) | `findStValueCast` |
 | `delField<[StValue]>(Struct, Field)` | a reset field a sort-free copy carried out of a cleared location | `delFieldStValueCast` |
-| `save(Struct, nil, StValue)` | the leaf of a write, never collapsed — a struct written over a location keeps the location's mapping members | `selectOnSaveEmpty{Map,Ref,IndexStruct,Default}` / `saveOnEmptyPrim` |
+| `save(Struct, nil, StValue)` | the leaf of a write, never collapsed — a struct written over a location keeps the location's mapping members; an array element is copied below the source's length, reset below the old length and kept past both | `selectOnSaveEmpty{Map,Ref,IndexStruct,Default}` / `saveOnEmptyPrim` |
 | `defVal` | a location reset outright, mapping members included | `defValResolve` |
 
 `defVal` is declared `Prim`, so it is both an `StValue` and a `MemValue` and serves storage

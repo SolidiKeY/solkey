@@ -1977,6 +1977,32 @@ contract TestSuite {
         assert(tokens[0].value == 5);
     }
 
+    function testArrayCopyClearsOldElements() public {
+        delete tokens;
+        tokens.push();
+        Token storage r = tokens[0];
+        tokens.pop();
+        r.value = 5;
+        delete bucket.tokens;
+        bucket.tokens.push();
+        bucket.tokens[0].value = 7;
+        bucket.tokens = tokens;
+        bucket.tokens.push();
+        assert(bucket.tokens[0].value == 0);
+    }
+
+    function testArrayCopyKeepsDestinationTail() public {
+        delete bucket.tokens;
+        delete tokens;
+        tokens.push();
+        Token storage r = tokens[0];
+        tokens.pop();
+        r.value = 5;
+        tokens = bucket.tokens;
+        tokens.push();
+        assert(tokens[0].value == 5);
+    }
+
     /// @custom:key box
     function testStorageIndexDeleteOutOfBoundsReverts() public {
         delete values;
