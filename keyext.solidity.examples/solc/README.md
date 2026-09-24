@@ -102,8 +102,8 @@ proof cost ~89× one operation for only ~9× the rule applications — the extra
 rewriting ever-larger terms, not taking more steps.
 
 `delAt(st, p)` (`structRules.key`) denotes the same storage while mentioning `st` once, so the
-term now grows linearly. The reset value is still chosen by sort, on read, through the existing
-`delValue<[alpha]>` dispatch — struct elements keep their `delNode`, so mapping members survive a
+term now grows linearly. The reset value is still chosen on read, through the
+`delField<[alpha]>` dispatch — struct elements keep their `delNode`, so mapping members survive a
 `pop` (`TestSuite.testDeepPopDoesNotResetMappingMember`).
 
 | Function | ops | Peak term before | after | Time before | after |

@@ -645,8 +645,10 @@ public class SolJSONParser {
 
     /// Chooses the `Field` sub-sort for a member, so a rule can say which kind of member it
     /// applies to instead of matching every field: `MapField` for mappings (their entries are
-    /// preserved by `delete`) and `RefField` for struct/array references (`delete` recurses
-    /// into them). Value members stay base `Field` — the delete-default rule is Field-generic,
+    /// preserved by `delete`), `FixedField` for fixed-size arrays (`delete` resets their
+    /// elements but keeps their length) and `RefField` for the other struct/array references
+    /// (`delete` recurses into them). Value members stay base `Field` — the delete-default rule is
+    /// Field-generic,
     /// so they need no sub-sort of their own. Also falls back to the base `Field` (or null)
     /// when a sub-sort is unavailable, e.g. the struct theory is not loaded.
     private Sort fieldSortFor(Type fieldType) {
@@ -661,6 +663,9 @@ public class SolJSONParser {
                     : fieldType;
         if (unwrapped instanceof MappingType) {
             return orBase(structLDT.getMapFieldSort(), base);
+        }
+        if (unwrapped instanceof ArrayType) {
+            return orBase(structLDT.getFixedFieldSort(), base);
         }
         if (MemoryReferenceTypes.isReferenceType(unwrapped)) {
             return orBase(structLDT.getRefFieldSort(), base);

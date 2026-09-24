@@ -22,6 +22,8 @@ public class StructLDT extends LDT {
     public static final Name MAP_FIELD_SORT_NAME = new Name("MapField");
     /// Sub-sort of `Field` for struct/array reference members (recursed by `delete`).
     public static final Name REF_FIELD_SORT_NAME = new Name("RefField");
+    /// Sub-sort of `Field` for fixed-size array members (their length survives `delete`).
+    public static final Name FIXED_FIELD_SORT_NAME = new Name("FixedField");
     /// The contract-storage program variable, declared in the struct theory `.key` files.
     public static final Name STORAGE_NAME = new Name("storage");
     public static final String FIELD_SEPARATOR = "$";
@@ -30,6 +32,7 @@ public class StructLDT extends LDT {
     private final Sort fieldSort;
     private final Sort mapFieldSort;
     private final Sort refFieldSort;
+    private final Sort fixedFieldSort;
     private final ProgramVariable storage;
 
     public StructLDT(Services services) {
@@ -40,6 +43,7 @@ public class StructLDT extends LDT {
         fieldSort = services.getNamespaces().sorts().lookup(FIELD_SORT_NAME);
         mapFieldSort = services.getNamespaces().sorts().lookup(MAP_FIELD_SORT_NAME);
         refFieldSort = services.getNamespaces().sorts().lookup(REF_FIELD_SORT_NAME);
+        fixedFieldSort = services.getNamespaces().sorts().lookup(FIXED_FIELD_SORT_NAME);
     }
 
     // -------------------------------------------------------------------------
@@ -73,6 +77,11 @@ public class StructLDT extends LDT {
     /// Sub-sort of `Field` for struct/array reference members, or `null` if not loaded.
     public Sort getRefFieldSort() {
         return refFieldSort;
+    }
+
+    /// Sub-sort of `Field` for fixed-size array members, or `null` if not loaded.
+    public Sort getFixedFieldSort() {
+        return fixedFieldSort;
     }
 
 

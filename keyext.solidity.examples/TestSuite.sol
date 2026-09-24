@@ -32,6 +32,7 @@ contract TestSuite {
     struct LedgerUse { Ledger ledger; }
     struct TokenBucket { Token[] tokens; }
     struct Toggle { bool on; uint n; }
+    struct Triple { uint[3] items; uint tag; }
 
     uint total;
     uint age;
@@ -44,6 +45,11 @@ contract TestSuite {
     uint[] values;
     uint[] a;
     uint[][] matrix;
+    uint[3] fixedValues;
+    Token[2] fixedTokens;
+    mapping(uint => uint)[2] fixedMaps;
+    Triple triple;
+    Triple triple2;
     bool[] boolFlags;
 
     mapping(uint => uint) balances;
@@ -1969,6 +1975,94 @@ contract TestSuite {
         r.value = 5;
         tokens.push();
         assert(tokens[0].value == 5);
+    }
+
+    /// @custom:key box
+    function testStorageIndexDeleteOutOfBoundsReverts() public {
+        delete values;
+        delete values[0];
+        assert(false);
+    }
+
+    /// @custom:key box
+    function testFixedArrayDeleteKeepsLength() public {
+        require(2 < fixedValues.length);
+        fixedValues[1] = 7;
+        delete fixedValues;
+        assert(2 < fixedValues.length);
+        assert(fixedValues[1] == 0);
+    }
+
+    /// @custom:key box
+    function testFixedStructArrayDeleteResetsElements() public {
+        require(1 < fixedTokens.length);
+        fixedTokens[1].value = 7;
+        delete fixedTokens;
+        assert(1 < fixedTokens.length);
+        assert(fixedTokens[1].value == 0);
+    }
+
+    /// @custom:key box
+    function testStructWithFixedArrayDeleteKeepsLength() public {
+        require(2 < triple.items.length);
+        triple.items[1] = 7;
+        triple.tag = 3;
+        delete triple;
+        assert(2 < triple.items.length);
+        assert(triple.items[1] == 0);
+        assert(triple.tag == 0);
+    }
+
+    /// @custom:key box
+    function testStructWithFixedArrayCopy() public {
+        require(2 < triple.items.length);
+        triple.items[1] = 7;
+        triple2 = triple;
+        assert(triple2.items[1] == 7);
+    }
+
+    /// @custom:key box
+    function testFixedMappingArrayDeleteKeepsEntries() public {
+        require(1 < fixedMaps.length);
+        fixedMaps[1][2] = 5;
+        delete fixedMaps;
+        assert(fixedMaps[1][2] == 5);
+    }
+
+    function testDeleteArrayLeavesDataPastLength() public {
+        delete tokens;
+        tokens.push();
+        Token storage r = tokens[0];
+        tokens.pop();
+        r.value = 5;
+        delete tokens;
+        tokens.push();
+        assert(tokens[0].value == 5);
+    }
+
+    function testPopKeepsMappingElementEntries() public {
+        delete mapArray;
+        mapArray.push();
+        mapArray[0][1] = 5;
+        mapArray.pop();
+        mapArray.push();
+        assert(mapArray[0][1] == 5);
+    }
+
+    function testDeleteKeepsMappingElementEntries() public {
+        delete mapArray;
+        mapArray.push();
+        mapArray[0][1] = 5;
+        delete mapArray;
+        mapArray.push();
+        assert(mapArray[0][1] == 5);
+    }
+
+    function testPushBindMappingElement() public {
+        delete mapArray;
+        mapping(uint => uint) storage m = mapArray.push();
+        m[1] = 4;
+        assert(mapArray[0][1] == 4);
     }
 
     function testDanglingInnerArrayReappearsAfterPush() public {

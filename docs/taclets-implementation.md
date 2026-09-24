@@ -53,9 +53,16 @@ stamped at parse time by `SolJSONParser#fieldSortFor`:
 
 ```
 Field           value members, `size`, `at(i)`   delete resets them to their default
-├── MapField    mapping members                  delete preserves their entries
-└── RefField     struct/array references          delete recurses into them
+├── MapField    mapping members, `atMap(i)`      delete preserves their entries
+├── RefField    struct/dynamic-array references  delete recurses into them
+└── FixedField  fixed-size array members         delete resets their elements, keeps `size`
 ```
+
+`atMap(i)` is the index of an array element whose type is a mapping. Only the rules that
+reach such an element emit it: `storageIndexReadArrayBindLocalRootMappingElement`,
+`storageLocalRootPushBindMappingElement` and `storagePopSaveMappingElement`, which take the
+Path flag `mappingElement`. Solidity cannot read, write or copy a mapping, and mappings never
+live in memory, so no other rule builds a path to one.
 
 Only the two kinds `delete` must positively recognise get a sub-sort; value
 members stay plain `Field` alongside `size` and `at(i)` (an index's element
@@ -71,7 +78,9 @@ performance-only). Struct-sorted element reads
 `MapField` nor the `RefField` rule matches — get their own
 `selectStDelNodeIndexStruct`, which re-wraps the element exactly like the `RefField`
 rule (`delNode(selectSt(st, at(i)))`), so `delete arr` keeps the mapping members of
-struct elements.
+struct elements. It re-wraps only the elements below the array's old length
+(`i < selectSt(st, size)`): `delete arr` clears no further, so data a dangling reference left
+past the length survives it (`testDeleteArrayLeavesDataPastLength`).
 
 `MapField` is the sub-sort that earns its place: it is the only case that reads
 *through* the delete marker (`selectSt(st, mf)`) instead of re-wrapping it
@@ -290,7 +299,7 @@ popped element survives it (`testDanglingReferenceSurvivesPush`,
 `testDanglingInnerArrayReappearsAfterPush`). See the `testDeepPopDoesNotResetMappingMember` end-to-end
 example. `delAt(st, p)` names `st` once where the equivalent `save`-of-deleted-value form
 named it twice; reads commute through it with `selectOnDelAtCons`, and the reset still
-resolves by sort on read through `delValue<[alpha]>`.
+resolves on read through `delField<[alpha]>`.
 
 ### Array length non-negativity (`sizeNotNegative`)
 `sizeNotNegative` (`structRules.key`) is the SolKey twin of Java KeY's
@@ -341,14 +350,23 @@ cannot be memory-located and `bytes`/`string` are not memory reference types. Th
 `memoryStructArrayIndex` covers the complex-receiver path.
 
 ### Delete
-`storageRootDelete`, `storageFieldDelete` and `storageIndexDelete` save the sort-free
-`delAt(storage, path)` marker, resolved on read (see "Sort-free clearing and copying" below).
-A deleted collection entry/element therefore keeps its mapping members, like any other
-deleted struct (`testDeleteArrayDoesNotResetElementMappingMember`).
-`delValue` picks the reset value by sort: a primitive sort (`alphaPrim \extends Prim`)
-collapses to `defaultValue<[alphaPrim]>` (`int→0`, `bool→FALSE`), while
-a struct becomes a lazy `delNode` marker (structRules.key). A read at `StValue`
-itself is neither, and is routed to one of the two by `delValueStValueCast` (below). This gives Solidity's
+`storageRootDelete`, `storageFieldDelete`, `storageIndexDelete` (mappings) and
+`storageIndexArrayDelete` (arrays, with an `outOfBounds` goal that executes `revert();`) save
+the sort-free `delAt(storage, path)` marker, resolved on read (see "Sort-free clearing and
+copying" below). A deleted collection entry/element therefore keeps its mapping members, like
+any other deleted struct (`testDeleteArrayDoesNotResetElementMappingMember`).
+The last field of the path decides what is reset: `delField<[alpha]>(st, f)` is field `f` of
+`st` after the delete. A primitive sort (`alphaPrim \extends Prim`) collapses to
+`defaultValue<[alphaPrim]>` (`int→0`, `bool→FALSE`). A `RefField` or an `at(i)` element becomes
+a lazy `delNode` marker, a `FixedField` a `delNodeFixed` marker whose `size` reads through
+(`testFixedArrayDeleteKeepsLength`), and a `MapField` stays as it is (structRules.key). A read
+at `StValue` itself is routed by `delFieldStValueCast` (below). `pop()` on an array of mappings
+only shortens it (`storagePopSaveMappingElement`, `testPopKeepsMappingElementEntries`).
+
+An array whose elements are fixed-size arrays (`uint[3][]`) is out of reach: its elements are
+read through `at(i)`, which carries no field kind. So `delete` and `pop()` refuse to reset one:
+the Path flag `noFixedArrayElement` and the variable condition `\noFixedArrayElement(fld)`
+(`StorageDeleteTypes`) leave such a proof open instead of proving it wrong. This gives Solidity's
 `delete` semantics on structs: value/reference members reset, but **mapping members
 are preserved**. On read, `selectSt` on a `delNode` reads a mapping member
 (`MapField`) through to the original struct, recurses into a reference member
@@ -364,8 +382,8 @@ and is reset by the Field-generic default rule.
 plain `Field`) but is Prim-bounded on the read sort (`alphaPrim`), which keeps
 it disjoint from the `<[Struct]>` rules by sort rather than by ranking; the
 struct-sorted `at(i)` element read has its own `selectStDelNodeIndexStruct`.
-(`delValue` uses the same discipline — `delValueStruct` matches the concrete
-`Struct` sort, and `delValueDefault` is `alphaPrim`-bounded so a struct payload
+(`delField` uses the same discipline — its `Struct` rules match the concrete
+`Struct` sort, and `delFieldDefault` is `alphaPrim`-bounded so a struct payload
 is a failed instantiation. The former `StValue` bounds made the default rules
 overlap the `Struct` rules, with only the `simplify`/`simplify_enlarging`
 ranking — strategy guidance, not a soundness gate — keeping the
@@ -387,7 +405,7 @@ Four sort-free shapes carry the deferred value:
 |---|---|---|
 | `delAt(Struct, List)` | the storage with a location reset — a struct keeps its mapping members | `delAtEmpty` / `selectOnDelAtCons` |
 | `find<[StValue]>(Struct, List)` | the value at a path, for copies (`find` at the top storage sort) | `findStValueCast` |
-| `delValue<[StValue]>(StValue)` | a reset value a sort-free copy carried out of a cleared location | `delValueStValueCast` |
+| `delField<[StValue]>(Struct, Field)` | a reset field a sort-free copy carried out of a cleared location | `delFieldStValueCast` |
 | `save(Struct, nil, StValue)` | the leaf of a write, never collapsed — a struct written over a location keeps the location's mapping members | `selectOnSaveEmpty{Map,Ref,IndexStruct,Default}` / `saveOnEmptyPrim` |
 | `defVal` | a location reset outright, mapping members included | `defValResolve` |
 
@@ -396,20 +414,21 @@ and memory alike — the same arrangement `defaultValue<[alpha]>` already has (d
 `memoryRules.key`, resolved by `defaultValueInt`/`defaultValueBool` there and
 `defaultValueStruct` in `structRules.key`). A separate memory twin is not needed.
 
-`selectOnDelAtCons` defers to `delValue<[alpha]>` for the reset value, so it inherits the
-`delValueStruct`/`delValueDefault` split: the concrete `Struct` case recurses via `delNode`,
-the default case is `alphaPrim`-bounded, and the two are disjoint by sort — their
+`selectOnDelAtCons` defers to `delField<[alpha]>(st, f)` for the reset value, so it inherits
+the `delField` split: the concrete `Struct` cases choose by the kind of `f` (`RefField` and
+`at(i)` recurse via `delNode`, `FixedField` via `delNodeFixed`, `MapField` stays), the default
+case is `alphaPrim`-bounded, and the two are disjoint by sort — their
 `simplify`/`simplify_enlarging` ranking is performance-only. `defVal` is deliberately distinct
-from `delAt` — it is what `storageIndexDelete` writes, which resets a collection element
-outright rather than preserving its mapping members.
+from `delAt`: it resets a location outright, mapping members included, and no delete rule
+writes it.
 
 Disjoint, but not exhaustive: `selectOnDelAtCons` instantiates its generic at the *reader's*
 sort, and a sort-free copy reads at `StValue`, which is neither `Struct` nor `\extends Prim`.
-`delete sp; gsp = sp;` therefore stopped at `delValue<[StValue]>(…)` until
-`delValueStValueCast` — the twin of `findStValueCast` for that shape — pushed the read's cast
-inward: `cast<[alphaSt]>(delValue<[StValue]>(v))` ⇝ `delValue<[alphaSt]>(cast<[alphaSt]>(v))`.
-The `alphaSt` it binds is the sort the read supplies, so one of the two `delValue` rules then
-matches. Widening `delValueDefault` to `StValue` would close the same gap by reintroducing the
+`delete sp; gsp = sp;` therefore stops at `delField<[StValue]>(…)` until
+`delFieldStValueCast` — the twin of `findStValueCast` for that shape — pushes the read's cast
+inward: `cast<[alphaSt]>(delField<[StValue]>(st, f))` ⇝ `delField<[alphaSt]>(st, f)`.
+The `alphaSt` it binds is the sort the read supplies, so one of the `delField` rules then
+matches. Widening `delFieldDefault` to `StValue` would close the same gap by reintroducing the
 overlap the paragraph above records; pushing the cast keeps the split. The three
 `*DeleteThenCopy` examples all fail without it.
 

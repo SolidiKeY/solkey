@@ -105,14 +105,15 @@ clears. The sort is resolved when the value is read back — for
 `find<[StValue]>` and `defVal` through the cast that `selectOnStore` (and
 `readOnWrite` in memory) already inserts (`findStValueCast` collapses
 `cast<[alphaSt]>(find<[StValue]>(st, path))` to `find<[alphaSt]>(st, path)`),
-for `delAt` through `delValue<[alpha]>` on the select:
+for `delAt` through `delField<[alpha]>` on the select:
 
 - `delAt(storage, path)` — the storage with the location at `path` reset. A
-  struct there becomes the lazy `delNode` marker, so its mapping members
-  survive; anything else collapses to its default. The choice is made on read,
-  by sort, through `delValue<[alpha]>` in `selectOnDelAtCons` (the
-  counterpart of `selectOnSaveCons`) — so the rules that write it stay
-  sort-free. Used by `delete` on a root or field, and by `push`/`pop` to clear
+  struct or dynamic array there becomes the lazy `delNode` marker, so its mapping
+  members survive; a fixed-size array becomes `delNodeFixed`, which also keeps its
+  `size`; a mapping stays as it is; anything else collapses to its default. The
+  choice is made on read, from the sort and the kind of the path's last field,
+  through `delField<[alpha]>(st, f)` in `selectOnDelAtCons` (the counterpart of
+  `selectOnSaveCons`) — so the rules that write it stay sort-free. Used by `delete` on a root or field, and by `push`/`pop` to clear
   the slot they add or remove.
 
   It names `storage` **once**. The equivalent `save(storage, path, <deleted
@@ -123,17 +124,14 @@ for `delAt` through `delValue<[alpha]>` on the select:
   The two deferrals meet when a sort-free copy reads a *cleared* location —
   `delete sp; gsp = sp;` and its field, root and `push` variants.
   `selectOnDelAtCons` instantiates its generic at the reader's sort, so a
-  `find<[StValue]>` copy leaves `delValue<[StValue]>(…)`, which neither
-  `delValueStruct` (concrete `Struct`) nor `delValueDefault` (`alphaPrim
-  \extends Prim`) matches. `delValueStValueCast` is the twin of
-  `findStValueCast` for that shape: it pushes the read's cast inward,
-  `cast<[alphaSt]>(delValue<[StValue]>(v))` ⇝
-  `delValue<[alphaSt]>(cast<[alphaSt]>(v))`, so the reset resolves at the sort
-  the read supplies. Same coherence assumption as `findStValueCast` — observing
-  a sort-parametric family at a smaller sort is that family's smaller-sort
-  instance — and it leaves the `delValueStruct`/`delValueDefault` split
-  disjoint, where widening `delValueDefault` back to `StValue` would make the
-  two overlap again. Pinned by `storage{Field,Root}DeleteThenCopy` and
+  `find<[StValue]>` copy leaves `delField<[StValue]>(…)`, which neither
+  the `Struct` rules nor `delFieldDefault` (`alphaPrim \extends Prim`) matches.
+  `delFieldStValueCast` is the twin of `findStValueCast` for that shape: it
+  pushes the read's cast inward, `cast<[alphaSt]>(delField<[StValue]>(st, f))` ⇝
+  `delField<[alphaSt]>(st, f)`, so the reset resolves at the sort the read
+  supplies. Same coherence assumption as `findStValueCast` — observing a
+  sort-parametric family at a smaller sort is that family's smaller-sort
+  instance — and it leaves the `Struct` rules and `delFieldDefault` disjoint. Pinned by `storage{Field,Root}DeleteThenCopy` and
   `storageFieldDeleteThenCopyDeep`.
 - `save(st, nil, v)` — **the leaf of a write, left as a term.** A struct
   written over a location keeps the location's mapping members: Solidity
@@ -901,7 +899,8 @@ extracts to `cons(alice, nil)`. All storage operations use `find`/`save`.
 | `gsp = sp.b`               | `storageFieldReadStoreRoot`            | `save`/`find<[StValue]>` |
 | `delete gsp;`              | `storageRootDelete`                    | `delAt`                  |
 | `delete sp.fld;`           | `storageFieldDelete`                   | `delAt`                  |
-| `delete sp[ie];`           | `storageIndexDelete`                   | `delAt`                  |
+| `delete sp[ie];` (mapping) | `storageIndexDelete`                   | `delAt`                  |
+| `delete sp[ie];` (array)   | `storageIndexArrayDelete`              | `delAt`, bounds          |
 | `sp[ie] = se`  (mapping)   | `storageIndexWriteMappingSave`         | `save`                   |
 | `sp1[ie] = sp2`  (mapping) | `storageIndexWriteMappingCopySource`   | `save`/`find<[StValue]>` |
 | `sp[ie] = mv`  (mapping)   | `memoryToStorageIndexMappingCopyRoot`  | `save`/`copyMem`         |
@@ -921,6 +920,7 @@ extracts to `cons(alice, nil)`. All storage operations use `find`/`save`.
 | `lsv = sp.push();`         | `storageLocalRootPushBind`             | `save`                   |
 | `path.push() = se;`        | `storagePushLhsToPushValue` (desugar)  | —                        |
 | `sp.pop();`                | `storagePopSave`                       | `save`                   |
+| `sp.pop();` (mappings)     | `storagePopSaveMappingElement`         | `save` (length only)     |
 | `revert();` (in `⟨·⟩`)     | `revertDiamond`                        | —                        |
 | `revert();` (in `[·]`)     | `revertBox`                            | —                        |
 

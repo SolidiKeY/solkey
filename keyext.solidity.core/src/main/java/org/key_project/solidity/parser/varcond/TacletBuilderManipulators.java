@@ -46,6 +46,10 @@ public class TacletBuilderManipulators {
     public static final AbstractConditionBuilder DIFFERENT =
         new ConstructorBasedBuilder("different", DifferentInstantiationCondition.class, SV, SV);
 
+    public static final AbstractConditionBuilder NO_FIXED_ARRAY_ELEMENT =
+        new ConstructorBasedBuilder("noFixedArrayElement", NoFixedArrayElementCondition.class,
+            SV);
+
     public static final AbstractConditionBuilder NOT_ALL_SIMPLE =
         new ConstructorBasedBuilder("notAllSimple", NotAllSimpleCondition.class, SV, SV);
 
@@ -319,7 +323,7 @@ public class TacletBuilderManipulators {
             IS_SUBTYPE, SAME, HAS_SORT, HAS_FIELD_SORT, HAS_MEMORY_FIELD_SORT, HAS_ELEMENT_SORT,
             HAS_MEMORY_ELEMENT_SORT,
             NEW_LOCAL_VARS, HAS_INVARIANT, GET_INVARIANT, GET_VARIANT, SAME_AS_TERM,
-            NOT_ALL_SIMPLE);
+            NOT_ALL_SIMPLE, NO_FIXED_ARRAY_ELEMENT);
     }
 
     /// Announce a [TacletBuilderCommand] for the use during the interpretation of asts. This
