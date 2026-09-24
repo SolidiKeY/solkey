@@ -299,6 +299,29 @@ contract TestSuite {
         assert(r == 33);
     }
 
+    function memoryNewIntoStructField() public {
+        Basket memory basket;
+        basket.items = new uint[](2);
+        assert(basket.items.length == 2);
+    }
+
+    function memoryNewIntoNestedField() public {
+        Basket[] memory bs = new Basket[](1);
+        bs[0].items = new uint[](3);
+        assert(bs[0].items.length == 3);
+    }
+
+    function memoryNewIntoIndex() public {
+        uint[][] memory xs = new uint[][](1);
+        xs[0] = new uint[](3);
+        assert(xs[0].length == 3);
+    }
+
+    function storageNewIntoField() public {
+        basketA.items = new uint[](2);
+        assert(basketA.items.length == 2);
+    }
+
     // ── mainFeatures ──
 
     /// @custom:key box

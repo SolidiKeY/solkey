@@ -330,7 +330,8 @@ every positive-cost rule.
 Source-level memory family covers heap field/index read & write, root aliasing,
 fresh allocation (`memoryReferenceDeclFreshAlloc`, with a `new(memory, r)` skolem
 branch), fixed-length array allocation (`memoryArrayFreshAlloc`, assignment form
-`mv = new T(len);`), primitive-default vs. reference-slot
+`mv = new T(len);`; `newArrayCapture` first binds a `new` written to a field or index path,
+memory or storage, to a fresh memory local), primitive-default vs. reference-slot
 delete (`memoryRootDeleteFreshRebind` and field/index delete), and lazy
 storage↔memory copies via `copySt` / `copyMem` (`memoryStorageCopy` for
 `m = <simple storage path>;`, `memoryStorageCopyUnfold` captures a complex
