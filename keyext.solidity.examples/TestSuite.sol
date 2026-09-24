@@ -2665,6 +2665,19 @@ contract TestSuite {
         assert(s == 2);
     }
 
+    function boolIsTrueOrFalse(bool b) public {
+        bool x = b == true;
+        bool y = b == false;
+        assert(x || y);
+    }
+
+    function boolKeyMappingSymbolicKey(bool b) public {
+        boolKeyed[true] = 1;
+        boolKeyed[false] = 2;
+        uint r = boolKeyed[b];
+        assert(r == 1 || r == 2);
+    }
+
     function recursiveStructMapping() public {
         mapping(uint => Tree) storage kids = tree.kids;
         Tree storage child = kids[0];

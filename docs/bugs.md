@@ -6,7 +6,15 @@ that fixes it**, and add a regression example to `keyext.solidity.examples/TestS
 
 ## Proves something false
 
-None known. Unbounded integers are a design choice: see Tier 5 in `docs/taclet-ideas.md`.
+Unbounded integers are a design choice: see Tier 5 in `docs/taclet-ideas.md`.
+
+- **A fresh memory fixed-size array has length 0.** A fresh memory object's `size` resolves
+  through `readOnAddM` and `defaultDef` to 0 at every nesting level, which is right only for
+  dynamic arrays. `uint[3] memory x; assert(x.length == 0);` closes, and so does
+  `x[1] = 5; assert(false);` in box mode, because the bounds check always reverts. The same holds
+  for a fixed member of a memory struct (`S memory s; s.items.length == 0`), for
+  `uint[2][3] memory y; y[0].length == 0`, and for elements of `new uint[2][](n)`. The EVM
+  (`--solc`) fails all of them.
 
 ## Crashes at load or during the proof
 
@@ -24,11 +32,8 @@ None known.
 
 ## True facts that cannot be proved
 
-- **A fixed-size array's `size` is not tied to its declared length.** For `uint[3] f`,
-  `f.length == 3` is unprovable. This is sound: `size` stays arbitrary, and `delete f` keeps it
-  (`delNodeFixed`). It needs a length axiom per declaration, or a PO antecedent.
-- **A symbolic `bool` is not known to be `TRUE` or `FALSE`.** No rule states
-  `b = TRUE | b = FALSE`, so `bool x = b == true; bool y = b == false; assert(x || y);` ends at
-  `==> b = TRUE, b = FALSE`. Reading an unwritten `bool` mapping key hits the same wall:
-  after `m[true] = 1; m[false] = 2;`, `assert(m[b] == 1 || m[b] == 2)` stays open. A
-  `\find(==> b = TRUE) \replacewith(b = FALSE ==>)` rule would close both.
+- **A storage fixed-size array's `size` is not tied to its declared length.** For `uint[3] f`,
+  `f.length == 3` is unprovable, and so is `f[2] = 1;` in diamond mode (its out-of-bounds branch
+  stays feasible). This is sound: `size` stays arbitrary, and `delete f` keeps it
+  (`delNodeFixed`). It needs a length axiom per declaration, or a PO antecedent. Memory fixed-size
+  arrays have the opposite problem: see "Proves something false".

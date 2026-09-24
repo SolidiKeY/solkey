@@ -747,3 +747,8 @@ and the emission table are in `keyext.solidity.examples/README.md`.
 `FALSE = TRUE` to `false`. The bool literals had no distinctness axiom, so an infeasible branch
 of `if (p != 0)` could end with `TRUE = FALSE` in the antecedent and stay open
 (`real-world/SimpleAuction.sol`'s `bid`).
+
+`boolNotTrue` / `boolNotFalse` (same file) move a succedent `b = TRUE` to the antecedent as
+`b = FALSE`, and vice versa, since `bool` has exactly the two values. `applyEq` then rewrites `b`,
+so a symbolic `bool` splits into its two cases (`boolIsTrueOrFalse`) and a `bool` mapping key
+resolves against both written entries (`boolKeyMappingSymbolicKey`).
