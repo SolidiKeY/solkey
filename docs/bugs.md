@@ -8,13 +8,18 @@ that fixes it**, and add a regression example to `keyext.solidity.examples/TestS
 
 Unbounded integers are a design choice: see Tier 5 in `docs/taclet-ideas.md`.
 
-- **A fresh memory fixed-size array has length 0.** A fresh memory object's `size` resolves
-  through `readOnAddM` and `defaultDef` to 0 at every nesting level, which is right only for
-  dynamic arrays. `uint[3] memory x; assert(x.length == 0);` closes, and so does
-  `x[1] = 5; assert(false);` in box mode, because the bounds check always reverts. The same holds
-  for a fixed member of a memory struct (`S memory s; s.items.length == 0`), for
-  `uint[2][3] memory y; y[0].length == 0`, and for elements of `new uint[2][](n)`. The EVM
-  (`--solc`) fails all of them.
+- **A root-anchored fresh memory fixed-size array has length 0.** A fresh memory object's
+  `size` resolves through `readOnAddM` and `defaultDef` to 0, which is right only for dynamic
+  arrays. A fixed member of a memory struct is exempt: its path ends in a `FixedField` constant
+  that carries the declared length (`defaultFixedSize`, docs/storage.md section 8c). A local
+  array has no such field, so `uint[3] memory x; assert(x.length == 0);` closes, and so does
+  `x[1] = 5; assert(false);` in box mode, because the bounds check always reverts. The same
+  holds for `uint[2][3] memory y; y[0].length == 0` and for elements of `new uint[2][](n)`. The
+  EVM (`--solc`) fails all of them. The fix is to stamp the length at allocation: split
+  `memoryReferenceDeclFreshAlloc` by a varcond on `aliasType` that writes `size` the way
+  `memoryArrayFreshAlloc` does, and record the element length per identity for symbolic
+  element counts. Copying such an array into storage carries the 0 along, but `fixedSize`
+  speaks only about the initial storage, so no contradiction arises from it.
 
 ## Crashes at load or during the proof
 
@@ -32,8 +37,7 @@ None known.
 
 ## True facts that cannot be proved
 
-- **A storage fixed-size array's `size` is not tied to its declared length.** For `uint[3] f`,
-  `f.length == 3` is unprovable, and so is `f[2] = 1;` in diamond mode (its out-of-bounds branch
-  stays feasible). This is sound: `size` stays arbitrary, and `delete f` keeps it
-  (`delNodeFixed`). It needs a length axiom per declaration, or a PO antecedent. Memory fixed-size
-  arrays have the opposite problem: see "Proves something false".
+- **The length of a fixed-size array element of a dynamic array is unknown.** For
+  `uint[3][] g`, `g[i].length == 3` is unprovable: the element is reached through `at(i)`, which
+  carries no field kind, so `fixedSize` (docs/storage.md section 8c) cannot see the declared
+  length. Root fields and struct members are covered.

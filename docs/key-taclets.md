@@ -144,6 +144,12 @@ non-simple" and the rule would otherwise re-match its own output forever. Only
 the `…CaptureAll` rules use it
 (`docs/storage.md` section 5).
 
+`\fixedLength(sv)` holds when `sv` is a fixed-size array field constant
+(`FixedArrayField`) or a path list ending in one; `#fixedLength(sv)` is then
+that field's declared length as a literal. `\initialStorage(st)` holds when
+`st` is `storage` or a `selectSt` chain from it, i.e. an unwritten node of the
+initial state. Both support `\not` (`docs/storage.md` section 8c).
+
 ## Storage Rule Pattern
 
 Follow the storage calculus order:

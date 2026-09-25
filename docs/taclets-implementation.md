@@ -370,6 +370,12 @@ a lazy `delNode` marker, a `FixedField` a `delNodeFixed` marker whose `size` rea
 at `StValue` itself is routed by `delFieldStValueCast` (below). `pop()` on an array of mappings
 only shortens it (`storagePopSaveMappingElement`, `testPopKeepsMappingElementEntries`).
 
+A `FixedField` constant also carries its declared length (`FixedArrayField`): `fixedSize` adds
+`f.length = 3` for a fixed field of the initial storage, the `selectOnEmptyStorageFixed…` rules
+give the empty struct that length, and `defaultFixedSize` gives it to a fresh memory struct's
+fixed member (`testFixedArrayLength`, `testStructFixedMemberLength`,
+`testMemoryStructFixedMemberLength`; `docs/storage.md` section 8c).
+
 An array whose elements are fixed-size arrays (`uint[3][]`) is out of reach: its elements are
 read through `at(i)`, which carries no field kind. So `delete` and `pop()` refuse to reset one:
 the Path flag `noFixedArrayElement` and the variable condition `\noFixedArrayElement(fld)`

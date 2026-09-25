@@ -16,6 +16,7 @@ import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.op.FixedArrayField;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.op.SFunction;
 import org.key_project.solidity.logic.sort.ArraySort;
@@ -643,9 +644,22 @@ public class SolJSONParser {
         if (fieldSort != null
                 && services.getNamespaces().functions().lookup(fullFieldName) == null) {
             services.getNamespaces().functions()
-                    .addSafely(new SFunction(fullFieldName, fieldSort, true, true));
+                    .addSafely(fieldConstant(fullFieldName, fieldSort, fieldType));
         }
         return fullFieldName;
+    }
+
+    private SFunction fieldConstant(Name name, Sort sort, Type fieldType) {
+        return sort == services.getTheoryInfo().getStructLDT().getFixedFieldSort()
+                && unwrap(fieldType) instanceof ArrayType array
+                        ? new FixedArrayField(name, sort, array.length())
+                        : new SFunction(name, sort, true, true);
+    }
+
+    private static Type unwrap(Type fieldType) {
+        return fieldType instanceof KeYSolidityType kst && kst.getSolidityType() != null
+                ? kst.getSolidityType()
+                : fieldType;
     }
 
     /// Chooses the `Field` sub-sort for a member, so a rule can say which kind of member it
@@ -662,10 +676,7 @@ public class SolJSONParser {
         if (fieldType == null) {
             return base;
         }
-        Type unwrapped =
-            fieldType instanceof KeYSolidityType kst && kst.getSolidityType() != null
-                    ? kst.getSolidityType()
-                    : fieldType;
+        Type unwrapped = unwrap(fieldType);
         if (unwrapped instanceof MappingType) {
             return orBase(structLDT.getMapFieldSort(), base);
         }

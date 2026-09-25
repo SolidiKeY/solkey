@@ -2045,6 +2045,31 @@ contract TestSuite {
         assert(fixedValues[1] == 0);
     }
 
+    function testFixedArrayLength() public {
+        assert(fixedValues.length == 3);
+    }
+
+    function testFixedArrayIndexInBounds() public {
+        fixedValues[2] = 1;
+        assert(fixedValues[2] == 1);
+    }
+
+    function testFixedStructArrayLength() public {
+        assert(fixedTokens.length == 2);
+    }
+
+    function testStructFixedMemberLength() public {
+        assert(triple.items.length == 3);
+    }
+
+    function testMemoryStructFixedMemberLength() public {
+        Triple memory t;
+        assert(t.items.length == 3);
+        t.items[1] = 5;
+        assert(t.items[1] == 5);
+        assert(t.items[0] == 0);
+    }
+
     /// @custom:key box
     function testFixedStructArrayDeleteResetsElements() public {
         require(1 < fixedTokens.length);

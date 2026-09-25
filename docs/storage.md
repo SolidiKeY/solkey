@@ -783,6 +783,45 @@ cell (that needs per-contract layout knowledge the calculus does not
 have — a field constant like `C$total : Field` carries no declared
 type), and no upper bound (`< 2^256`) is stated.
 
+## 8c. Fixed-size arrays have their declared length (`fixedSize`)
+
+A fixed-size array member is the one place where a field constant does
+carry layout knowledge: `SolJSONParser#registerFieldConstant` registers
+`uint[3] f` as a `FixedArrayField` (`logic/op`), a `FixedField` constant
+that remembers `ArrayType.length()`. Two taclet primitives read it:
+the varcond `\fixedLength(sv)` holds when `sv` is such a constant, or a
+path list whose last field is one, and the term transformer
+`#fixedLength(sv)` is then its length as an integer literal.
+
+    fixedSize {
+        \find(selectSt<[int]>(selectSt<[Struct]>(st, ff), size))
+        \inSequentState
+        \varcond(\fixedLength(ff), \initialStorage(st))
+        \add(selectSt<[int]>(selectSt<[Struct]>(st, ff), size) = #fixedLength(ff) ==>)
+        \heuristics(inReachableStateImplication)
+    };
+
+Unlike `sizeNotNegative` this is not a reachable-state invariant but an
+axiom about the initial storage: `\initialStorage(st)` admits only
+`storage` and `selectSt` chains from it, and `\inSequentState` keeps the
+match out of updates, where `storage` would denote a later state. So the
+rule never asserts anything about a value some rule wrote, and cannot
+contradict the calculus's own reductions — in particular a fixed array
+copied from memory, whose root-anchored length is still 0 (see
+`docs/bugs.md`), just keeps that 0. Root fields and struct members are
+both covered, since `findDefinitionCons` reduces `f.length` and
+`s.items.length` alike to the `selectSt<[int]>(selectSt<[Struct]>(…, ff), size)`
+shape; elements of `uint[3][]` are not (`at(i)` carries no field kind).
+
+The empty struct agrees with the axiom: `selectOnEmptyStorage` no longer
+descends into a fixed field, and `selectOnEmptyStorageFixedSize`,
+`…FixedElement` and `…FixedMap` read the declared length, a default
+element or an empty mapping from the stuck `selectSt<[Struct]>(mtSt, ff)`.
+In memory the same knowledge is definitional: `defaultDef` skips paths
+ending in a fixed field, `defaultFixedSize` yields the declared length
+and `defaultFixedElement` the default element, so `S memory s;
+s.items.length == 3` closes (`testMemoryStructFixedMemberLength`).
+
 ## 9. Discipline and Termination
 
 **Pairwise disjointness.** Schema-variable kinds, the step
