@@ -52,10 +52,12 @@ Field selectors are partitioned by what the member holds (`structHeader.key`),
 stamped at parse time by `SolJSONParser#fieldSortFor`:
 
 ```
-Field           value members, `size`, `at(i)`   delete resets them to their default
-├── MapField    mapping members, `atMap(i)`      delete preserves their entries
-├── RefField    struct/dynamic-array references  delete recurses into them
-└── FixedField  fixed-size array members         delete resets their elements, keeps `size`
+Field                 `size`, `at(i)`                    delete resets them to their default
+├── MapField          `atMap(i)`                         delete preserves their entries
+└── MemberField       value members                      delete resets them to their default
+    ├── MapMemberField  mapping members (also a MapField)
+    ├── RefField        struct/dynamic-array references  delete recurses into them
+    └── FixedField      fixed-size array members         delete resets their elements, keeps `size`
 ```
 
 `atMap(i)` is the index of an array element whose type is a mapping. Only the rules that
@@ -370,14 +372,18 @@ a lazy `delNode` marker, a `FixedField` a `delNodeFixed` marker whose `size` rea
 at `StValue` itself is routed by `delFieldStValueCast` (below). `pop()` on an array of mappings
 only shortens it (`storagePopSaveMappingElement`, `testPopKeepsMappingElementEntries`).
 
-A `FixedField` constant also carries its declared length (`FixedArrayField`): `fixedSize` adds
-`f.length = 3` for a fixed field of the initial storage, the `selectOnEmptyStorageFixed…` rules
-give the empty struct that length, and `defaultFixedSize` gives it to a fresh memory struct's
-fixed member (`testFixedArrayLength`, `testStructFixedMemberLength`,
-`testMemoryStructFixedMemberLength`; `docs/storage.md` section 8c).
+Every field constant is a `TypedField` carrying its declared Solidity type, exposed to the
+calculus as the `Shape` term `fieldShape(m)`. `find` wraps the node it reads through a member
+in `typed(fieldShape(m), …)`, and the `selectOnTyped…` rules carry the shape down with each struct-valued read and rewrite
+`size` of a `fixedArr(n, s)` node to `n`, so `f.length`, `s.items.length` and `rows[i].length`
+for `uint[3][] rows` all reduce to literals with no axiom. Memory objects carry a `Shape` in
+their identity (`shaped(idp, fixedArr(3, leaf))`), and `defaultSize` reads a fresh node's
+length off it (`testFixedArrayLength`, `testFixedElementOfDynamicArrayLength`,
+`testMemoryFixedArrayLength`, `testNewArrayOfFixedElementLength`; `docs/storage.md`
+section 8c).
 
-An array whose elements are fixed-size arrays (`uint[3][]`) is out of reach: its elements are
-read through `at(i)`, which carries no field kind. So `delete` and `pop()` refuse to reset one:
+An array whose elements are fixed-size arrays (`uint[3][]`) is out of reach of `delete` and
+`pop()`: its elements are read through `at(i)`, which carries no field kind. So `delete` and `pop()` refuse to reset one:
 the Path flag `noFixedArrayElement` and the variable condition `\noFixedArrayElement(fld)`
 (`StorageDeleteTypes`) leave such a proof open instead of proving it wrong. This gives Solidity's
 `delete` semantics on structs: value/reference members reset, but **mapping members

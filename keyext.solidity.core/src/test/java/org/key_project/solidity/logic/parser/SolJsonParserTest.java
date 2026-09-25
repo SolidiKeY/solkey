@@ -80,11 +80,11 @@ public class SolJsonParserTest {
         // ... as a Field-sorted constant, so the selectSt/storeSt theory covers it uniformly
         // with struct members (phase 2 unification). Mapping and reference members carry a
         // Field sub-sort so rules dispatch on it instead of recovering the value kind from
-        // the AST; a value member stays base Field (SolJSONParser#fieldSortFor).
+        // the AST; a value member is a MemberField (SolJSONParser#fieldSortFor).
         var fieldConstant =
             services.getNamespaces().functions().lookup(balanceDecl.getFieldConstantName());
         assertNotNull(fieldConstant, "field constant should be registered");
-        assertEquals("Field", fieldConstant.sort().name().toString());
+        assertEquals("MemberField", fieldConstant.sort().name().toString());
         // no initializer -> the declaration has no syntactic children
         assertEquals(0, balanceDecl.getChildCount());
         assertThrows(IndexOutOfBoundsException.class, () -> balanceDecl.getChild(0));
@@ -569,7 +569,7 @@ public class SolJsonParserTest {
         var ageField = services.getNamespaces().functions()
                 .lookup(new Name("SimpleContract$Person$age"));
         assertNotNull(ageField, "struct member field constant should be registered");
-        assertEquals("Field", ageField.sort().name().toString());
+        assertEquals("MemberField", ageField.sort().name().toString());
     }
 
     @Test

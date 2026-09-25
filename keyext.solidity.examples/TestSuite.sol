@@ -47,6 +47,7 @@ contract TestSuite {
     uint[] a;
     uint[][] matrix;
     uint[3] fixedValues;
+    uint[3][] rows;
     Token[2] fixedTokens;
     mapping(uint => uint)[2] fixedMaps;
     Triple triple;
@@ -2068,6 +2069,32 @@ contract TestSuite {
         t.items[1] = 5;
         assert(t.items[1] == 5);
         assert(t.items[0] == 0);
+    }
+
+    /// @custom:key box
+    function testFixedElementOfDynamicArrayLength() public {
+        require(0 < rows.length);
+        assert(rows[0].length == 3);
+    }
+
+    function testMemoryFixedArrayLength() public {
+        uint[3] memory x;
+        assert(x.length == 3);
+        x[1] = 5;
+        assert(x[1] == 5);
+        assert(x[0] == 0);
+    }
+
+    function testMemoryNestedFixedArrayLength() public {
+        uint[2][3] memory y;
+        assert(y.length == 3);
+        assert(y[0].length == 2);
+    }
+
+    function testNewArrayOfFixedElementLength() public {
+        uint[2][] memory z = new uint[2][](4);
+        assert(z.length == 4);
+        assert(z[1].length == 2);
     }
 
     /// @custom:key box

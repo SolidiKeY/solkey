@@ -263,9 +263,9 @@ Effect:
 
 ## 11. Memory Arrays
 
-Memory arrays have fixed length after allocation. A fixed-size array member of a
-fresh memory struct has its declared length (`defaultFixedSize`, `docs/storage.md`
-section 8c); a fixed-size local array does not yet (`docs/bugs.md`).
+Memory arrays have fixed length after allocation. A fresh fixed-size array, local or
+member, has its declared length: every object's identity carries its `Shape`
+(`docs/storage.md` section 8c).
 
     uint[] memory xs = new uint[](4);
 

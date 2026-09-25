@@ -23,8 +23,6 @@ DIFFERENT     : '\\different';
 NO_FREE_VAR_IN : '\\noFreeVarIn';
 NOT_ALL_SIMPLE : '\\notAllSimple';
 NO_FIXED_ARRAY_ELEMENT : '\\noFixedArrayElement';
-FIXED_LENGTH : '\\fixedLength';
-INITIAL_STORAGE : '\\initialStorage';
 
 ALIAS: '\\alias';
 

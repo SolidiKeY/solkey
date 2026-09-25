@@ -16,9 +16,9 @@ import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
-import org.key_project.solidity.logic.op.FixedArrayField;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.op.SFunction;
+import org.key_project.solidity.logic.op.TypedField;
 import org.key_project.solidity.logic.sort.ArraySort;
 import org.key_project.solidity.logic.sort.DynamicArraySort;
 import org.key_project.solidity.logic.sort.MappingSort;
@@ -649,36 +649,20 @@ public class SolJSONParser {
         return fullFieldName;
     }
 
-    private SFunction fieldConstant(Name name, Sort sort, Type fieldType) {
-        return sort == services.getTheoryInfo().getStructLDT().getFixedFieldSort()
-                && unwrap(fieldType) instanceof ArrayType array
-                        ? new FixedArrayField(name, sort, array.length())
-                        : new SFunction(name, sort, true, true);
+    private static SFunction fieldConstant(Name name, Sort sort, @Nullable Type fieldType) {
+        return fieldType == null ? new SFunction(name, sort, true, true)
+                : new TypedField(name, sort, fieldType);
     }
 
-    private static Type unwrap(Type fieldType) {
-        return fieldType instanceof KeYSolidityType kst && kst.getSolidityType() != null
-                ? kst.getSolidityType()
-                : fieldType;
-    }
-
-    /// Chooses the `Field` sub-sort for a member, so a rule can say which kind of member it
-    /// applies to instead of matching every field: `MapField` for mappings (their entries are
-    /// preserved by `delete`), `FixedField` for fixed-size arrays (`delete` resets their
-    /// elements but keeps their length) and `RefField` for the other struct/array references
-    /// (`delete` recurses into them). Value members stay base `Field` — the delete-default rule is
-    /// Field-generic,
-    /// so they need no sub-sort of their own. Also falls back to the base `Field` (or null)
-    /// when a sub-sort is unavailable, e.g. the struct theory is not loaded.
     private Sort fieldSortFor(Type fieldType) {
         var structLDT = services.getTheoryInfo().getStructLDT();
         Sort base = structLDT.getFieldSort();
         if (fieldType == null) {
-            return base;
+            return orBase(structLDT.getMemberFieldSort(), base);
         }
-        Type unwrapped = unwrap(fieldType);
+        Type unwrapped = TypedField.unwrap(fieldType);
         if (unwrapped instanceof MappingType) {
-            return orBase(structLDT.getMapFieldSort(), base);
+            return orBase(structLDT.getMapMemberFieldSort(), base);
         }
         if (unwrapped instanceof ArrayType) {
             return orBase(structLDT.getFixedFieldSort(), base);
@@ -686,7 +670,7 @@ public class SolJSONParser {
         if (MemoryReferenceTypes.isReferenceType(unwrapped)) {
             return orBase(structLDT.getRefFieldSort(), base);
         }
-        return base;
+        return orBase(structLDT.getMemberFieldSort(), base);
     }
 
     private static Sort orBase(Sort sort, Sort base) {

@@ -36,8 +36,6 @@ varexpId
  | NO_FREE_VAR_IN
  | NOT_ALL_SIMPLE
  | NO_FIXED_ARRAY_ELEMENT
- | FIXED_LENGTH
- | INITIAL_STORAGE
  ;
 
  one_sort_decl

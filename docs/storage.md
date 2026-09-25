@@ -783,189 +783,91 @@ cell (that needs per-contract layout knowledge the calculus does not
 have — a field constant like `C$total : Field` carries no declared
 type), and no upper bound (`< 2^256`) is stated.
 
-## 8c. Fixed-size arrays have their declared length (`fixedSize`)
+## 8c. Fixed-size arrays have their declared length (`typed`)
 
-A fixed-size array member is the one place where a field constant does
-carry layout knowledge: `SolJSONParser#registerFieldConstant` registers
-`uint[3] f` as a `FixedArrayField` (`logic/op`), a `FixedField` constant
-that remembers `ArrayType.length()`. Two taclet primitives read it:
-the varcond `\fixedLength(sv)` holds when `sv` is such a constant, or a
-path list whose last field is one, and the term transformer
-`#fixedLength(sv)` is then its length as an integer literal.
+The declared length of a fixed-size array is read off a type annotation that reads carry
+with them; no axiom and no side condition is involved. The vocabulary
+(`memoryHeader.key`, `structHeader.key`):
 
-    fixedSize {
-        \find(selectSt<[int]>(selectSt<[Struct]>(st, ff), size))
-        \inSequentState
-        \varcond(\fixedLength(ff), \initialStorage(st))
-        \add(selectSt<[int]>(selectSt<[Struct]>(st, ff), size) = #fixedLength(ff) ==>)
-        \heuristics(inReachableStateImplication)
-    };
+    Shape:  leaf | fixedArr(int, Shape) | dynArr(Shape) | mapOf(Shape)
+    Struct typed(Shape, Struct)       -- a storage value seen at its declared type
+    Shape fieldShape(MemberField)     -- the shape of a declared member, = #shapeOf(m)
 
-Unlike `sizeNotNegative` this is not a reachable-state invariant but an
-axiom about the initial storage: `\initialStorage(st)` admits only
-`storage` and `selectSt` chains from it, and `\inSequentState` keeps the
-match out of updates, where `storage` would denote a later state. So the
-rule never asserts anything about a value some rule wrote, and cannot
-contradict the calculus's own reductions — in particular a fixed array
-copied from memory, whose root-anchored length is still 0 (see
-`docs/bugs.md`), just keeps that 0. Root fields and struct members are
-both covered, since `findDefinitionCons` reduces `f.length` and
-`s.items.length` alike to the `selectSt<[int]>(selectSt<[Struct]>(…, ff), size)`
-shape; elements of `uint[3][]` are not (`at(i)` carries no field kind).
+Every field constant is a `TypedField` (`logic/op`) that remembers the member's resolved
+Solidity type, and `fieldShapeDef` turns it into a shape term through the transformer
+`#shapeOf`, the only Java involved. Declared members have the sort `MemberField` (mapping
+members `MapMemberField`, which is both a `MapField` and a `MemberField`), while `at(i)`,
+`atMap(i)` and `size` stay plain `Field`s, so rules tell a member from an index by
+matching.
 
-The empty struct agrees with the axiom: `selectOnEmptyStorage` no longer
-descends into a fixed field, and `selectOnEmptyStorageFixedSize`,
-`…FixedElement` and `…FixedMap` read the declared length, a default
-element or an empty mapping from the stuck `selectSt<[Struct]>(mtSt, ff)`.
-In memory the same knowledge is definitional: `defaultDef` skips paths
-ending in a fixed field, `defaultFixedSize` yields the declared length
-and `defaultFixedElement` the default element, so `S memory s;
-s.items.length == 3` closes (`testMemoryStructFixedMemberLength`).
+**The member field types the read.** `storage` stays the symbolic `Struct` of the proof
+obligation; nothing is assumed about it. Every read is a `find<[alpha]>(st, path)` whose
+path starts at a declared member, and `findDefinitionMemberCons` (or `…MemberStruct` for a
+whole-struct read) is where the annotation appears:
 
-## 9. Discipline and Termination
+    find<[alpha]>(st, cons(m, cons(a, flds)))  ⇝ find<[alpha]>(typed(fieldShape(m), selectSt<[Struct]>(st, m)), cons(a, flds))
+    find<[Struct]>(st, cons(m, nil))           ⇝ typed(fieldShape(m), selectSt<[Struct]>(st, m))
 
-**Pairwise disjointness.** Schema-variable kinds, the step
-organization, and the `array(sp)` / `mapping(sp)` predicates together
-ensure that exactly one rule applies to any storage statement.
+The other head fields (`at(pk)`, `atMap(iv)`, `size`) unroll as before, so this is a split
+of the old `findDefinitionCons` by the sort of the head, not a new mechanism. A fixed-size
+array has no length cell in the EVM; its length is a property of the declaration, and that
+is exactly what the rule says: reading `size` through a path whose declared type at that
+point is `fixedArr(n, s)` is `n`, while for `dynArr` the read is passed on to the stored
+value. Writes are untouched: `save` and `delAt` stay lazy, and the same rule types a path
+that starts from `mtSt` or from a value inside a lazy `save`.
 
-**Termination.** The calculus terminates by the lexicographic measure
+**Only `selectSt` moves the annotation further.** Once a node is typed, these rules apply:
 
-    ( #initializedStorageDeclarations,
-      #complexExpressions,
-      compositionDepth,
-      #statements ).
+    selectSt<[Struct]>(typed(sh, st), a)               ⇝ typed(shapeAt(sh, cons(a, nil)), selectSt<[Struct]>(st, a))
+    selectSt<[int]>(typed(fixedArr(iv, sh), st), size)  ⇝ iv
+    selectSt<[int]>(typed(dynArr(sh), st), size)        ⇝ selectSt<[int]>(st, size)
+    selectSt<[alphaPrim]>(typed(sh, st), at(pk))        ⇝ selectSt<[alphaPrim]>(st, at(pk))
+    selectSt<[alphaPrim]>(typed(sh, st), m)             ⇝ selectSt<[alphaPrim]>(st, m)
 
-- The `*DeclInitDrop` rules strictly decrease component 1.
-- The unfolding, capture, and split rules strictly decrease a later
-  component.
-- Step-3 terminal rules decrease the number of statements.
-- A `revert();` introduced on an out-of-bounds branch is immediately
-  consumed by `revertDiamond` or `revertBox`, again decreasing the
-  number of statements.
+A struct-valued read carries the shape one level down with `shapeAt` (`memoryRules.key`):
+`at(i)` or `atMap(i)` steps into `fixedArr`, `dynArr` or `mapOf`, and a member `m`
+re-anchors on `fieldShape(m)`. A primitive read strips the annotation, except the one case
+it decides. So `rows[i].length` for `uint[3][] rows` reduces by three struct-read hops to
+`selectSt<[int]>(typed(fixedArr(3, leaf), …), size)` and then to `3`; for a dynamic array
+or a struct member the annotation strips off and leaves exactly the term the calculus
+produced before, so every other rule sees its familiar normal forms. A member declared
+without a type, as in a hand-written `.key` problem, has shape `leaf`, "no information":
+`size` strips through `typed(leaf, st)` and `shapeAt(leaf, cons(at(pk), xs))` stays `leaf`,
+so a missing declaration can lose a length but never invent one.
 
-**Roots are bare.** `gsp` is a bare contract root (a `FieldReference`)
-and `lsv` a bare local storage pointer; a final field or index segment
-is always spelled out (`sp.fld`, `sp[ie]`), which is what keeps
-`storageRootWriteStore` and `storageFieldWriteSave` disjoint.
+Nothing else is needed. The empty storage reads `typed(fixedArr(3, leaf), mtSt)` as length
+`3` by the second rule, and `selectOnEmptyStorage` is its original one-liner. `delete`
+keeps a fixed length because `selectStDelNodeFixedSize` passes `size` through to the typed
+node. A whole struct read from typed storage is a `typed(…)` value; stored back by a lazy
+`save` or copied to memory by `copySt`, it is read through by the same rules. A memory
+value copied in by `copyMem` is untyped, but the read reaching it has already carried the
+shape down from the member it started at.
 
-## 10. Worked Examples (terse traces)
+### Memory objects carry their shape
 
-### `alice.age = ageVal;`  (single-field write)
+In memory the shape sits in the identity: `shaped(idp, s)` is an `IdentityPrim`, and every
+allocation rule builds `idC(shaped(freshIdp, s), nil)` with `s = #shapeOf(mv)` from the
+variable's declared type, so the shape survives every write, copy and delete:
 
-    ⟨[ alice.age = ageVal; ]⟩ φ
-    ⇝ { storage := save(storage, alice · age, ageVal) } φ
+| Declaration | Identity |
+|---|---|
+| `uint[3] memory x` | `idC(shaped(idp, fixedArr(3, leaf)), nil)` |
+| `uint[2][3] memory y` | `idC(shaped(idp, fixedArr(3, fixedArr(2, leaf))), nil)` |
+| `new uint[2][](n)` | `idC(shaped(idp, dynArr(fixedArr(2, leaf))), nil)` |
+| `Triple memory t` | `idC(shaped(idp, leaf), nil)` |
 
-(`storageFieldWriteSave`.)
+A fresh node's length is `defaultSize`:
+`default<[int]>(idC(shaped(idp, sh), flds), size) ⇝ sizeOf(shapeAt(sh, flds))`, with
+`sizeOf` reading `n` from `fixedArr(n, s)` and `0` otherwise; `defaultDefElement` and
+`defaultDefMember` give the other fields their defaults and, being matched on `at(pk)` and
+`m`, never touch `size`. `idShape(idC(shaped(idp, s), flds)) = shapeAt(s, flds)` is the
+shape of any node: `delete x` keeps `idShape(x)`, a freshened member is allocated with
+`#shapeOf(fld)`, a freshened element with `shapeAt(idShape(z), cons(at(i), nil))`. This
+closes `x.length == 3`, `y[0].length == 2` and `z[i].length == 2` for the table above
+(`testMemoryFixedArrayLength`, `testMemoryNestedFixedArrayLength`,
+`testNewArrayOfFixedElementLength`, all EVM-checked). An identity whose prim is not
+`shaped`, as in a hand-written `.key` problem, has an unknown `size`.
 
-### `alice.account = acc;`  with `Account storage acc = bob.account;`
-
-    ⟨[ Account storage acc = bob.account;
-       alice.account = acc; ]⟩ φ
-    ⇝ { acc := bob · account
-        || storage := save(storage, alice · account,
-                           find(storage, bob · account)) } φ
-
-The write copies the value at the alias's target path, not the alias
-path itself.
-
-### `alice.account.balance = 10;`  (depth-2 field write)
-
-    ⟨[ alice.account.balance = 10; ]⟩ φ
-    ⇝ ⟨[ Account storage acc = alice.account; acc.balance = 10; ]⟩ φ
-    ⇝ { acc := alice · account } ⟨[ acc.balance = 10; ]⟩ φ
-    ⇝ { acc := alice · account }
-      { storage := save(storage, acc · balance, 10) } φ
-    ⇝ { acc := alice · account
-        || storage := save(storage, alice · account · balance, 10) } φ
-
-### `v = alice.account.balance;`  (depth-2 field read)
-
-    ⟨[ v = alice.account.balance; ]⟩ φ
-    ⇝ ⟨[ Account storage acc = alice.account; v = acc.balance; ]⟩ φ
-    ⇝ { acc := alice · account } ⟨[ v = acc.balance; ]⟩ φ
-    ⇝ { acc := alice · account
-        || v := find(storage, alice · account · balance) } φ
-
-### `alice.account.token.value = 5;`  (depth-3 field write)
-
-Two captures are needed before the terminal write:
-
-    ⇝ { aliceAcc := alice · account
-        || aliceTok := alice · account · token
-        || storage := save(storage,
-                           alice · account · token · value, 5) } φ
-
-### `uint v = total;`  (root read of a primitive state variable)
-
-    ⟨[ uint v = total; ]⟩ φ
-    ⇝ { v := find(storage, total) } φ
-
-where `total` extracts to `cons(total, nil)`. Whole-struct paths cannot
-be read into a location-free local; they must be copied through memory
-or aliased through storage.
-
-### `alice = pVal;`  (whole-struct write to a root)
-
-    ⟨[ alice = pVal; ]⟩ φ
-    ⇝ { storage := save(storage, alice, pVal) } φ
-
-where `alice` extracts to `cons(alice, nil)`.
-
-### `alice = bob;`  (whole-struct root-to-root copy)
-
-    ⟨[ alice = bob; ]⟩ φ
-    ⇝ { storage := save(storage, alice, find(storage, bob)) } φ
-
-where both `alice` and `bob` extract to single-element lists. The path
-`bob` is *not* stored as the value; its struct value is read and stored,
-and a mapping member of `alice` keeps its own entries (§3, the leaf of `save`).
-
-## 11. Quick Reference: Statement → Rule
-
-Use this when looking up which Step-3 rule fires.
-
-**Unified path representation:** Both global roots (`gsp`) and local
-storage aliases (`lsv`) are `List`-typed paths. A global root `alice`
-extracts to `cons(alice, nil)`. All storage operations use `find`/`save`.
-
-| Source statement           | Rule                                   | Update operation         |
-|----------------------------|----------------------------------------|--------------------------|
-| `sp.fld = se`              | `storageFieldWriteSave`                | `save`                   |
-| `sp1.fld = sp2`            | `storageFieldWriteCopySource`          | `save`/`find<[StValue]>` |
-| `gsp = se`                 | `storageRootWriteStore`                | `save`                   |
-| `gsp = sp`                 | `storageRootWriteCopySource`           | `save`/`find<[StValue]>` |
-| `lsv = sp`                 | `storageLocalRootRebind`               | direct assign            |
-| `v = sp.fld`               | `storageFieldReadFind`                 | `find`                   |
-| `v = sp`                   | `storageRootReadSelect`                | `find`                   |
-| `lsv = sp.b`               | `storageFieldReadBindLocalRoot`        | direct assign            |
-| `gsp = sp.b`               | `storageFieldReadStoreRoot`            | `save`/`find<[StValue]>` |
-| `delete gsp;`              | `storageRootDelete`                    | `delAt`                  |
-| `delete sp.fld;`           | `storageFieldDelete`                   | `delAt`                  |
-| `delete sp[ie];` (mapping) | `storageIndexDelete`                   | `delAt`                  |
-| `delete sp[ie];` (array)   | `storageIndexArrayDelete`              | `delAt`, bounds          |
-| `sp[ie] = se`  (mapping)   | `storageIndexWriteMappingSave`         | `save`                   |
-| `sp1[ie] = sp2`  (mapping) | `storageIndexWriteMappingCopySource`   | `save`/`find<[StValue]>` |
-| `sp[ie] = mv`  (mapping)   | `memoryToStorageIndexMappingCopyRoot`  | `save`/`copyMem`         |
-| `v = sp[ie]`  (mapping)    | `storageIndexReadMappingFind`          | `find`                   |
-| `lsv = sp[ie]`  (mapping)  | `storageIndexReadMappingBindLocalRoot` | direct assign            |
-| `gsp = sp[ie]`  (mapping)  | `storageIndexReadMappingStoreRoot`     | `save`/`find<[StValue]>` |
-| `sp[ie] = se`  (array)     | `storageIndexWriteArraySave`           | `save`                   |
-| `sp1[ie] = sp2`  (array)   | `storageIndexWriteArrayCopySource`     | `save`/`find<[StValue]>` |
-| `sp[ie] = mv`  (array)     | `memoryToStorageIndexArrayCopyRoot`    | `save`/`copyMem`         |
-| `v = sp[ie]`  (array)      | `storageIndexReadArrayFind`            | `find`                   |
-| `lsv = sp[ie]`  (array)    | `storageIndexReadArrayBindLocalRoot`   | direct assign            |
-| `gsp = sp[ie]`  (array)    | `storageIndexReadArrayStoreRoot`       | `save`/`find<[StValue]>` |
-| `sp.push(se);`             | `storagePushValueSave`                 | `save`                   |
-| `sp1.push(sp2);`           | `storagePushValueCopySource`           | `save`/`find<[StValue]>` |
-| `sp.push();`               | `storagePushLengthSave`                | `save`                   |
-| `sp.push();` (ref. elem.)  | `storagePushLengthSaveReferenceElement` | `save`                  |
-| `lsv = sp.push();`         | `storageLocalRootPushBind`             | `save`                   |
-| `path.push() = se;`        | `storagePushLhsToPushValue` (desugar)  | —                        |
-| `sp.pop();`                | `storagePopSave`                       | `save`                   |
-| `sp.pop();` (mappings)     | `storagePopSaveMappingElement`         | `save` (length only)     |
-| `revert();` (in `⟨·⟩`)     | `revertDiamond`                        | —                        |
-| `revert();` (in `[·]`)     | `revertBox`                            | —                        |
-
-The memory twins of the compound-update rows (`mv.fld += se`, `++mv.fld`,
-`mv[ie] += se`, …) are in `memory.md` §11b; they use `read`/`write` in place of
-`find`/`save` and have no root or mapping form.
+An unconstrained memory, such as a `uint[3] memory p` parameter, is still unshaped: its
+identity is a bare program variable rather than an `idC(shaped(…), …)`, so no rule can
+read its shape. Giving parameters a shaped identity is the natural next step.

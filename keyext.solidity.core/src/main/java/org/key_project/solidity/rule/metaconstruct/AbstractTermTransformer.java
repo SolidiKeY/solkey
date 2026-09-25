@@ -52,7 +52,7 @@ public abstract class AbstractTermTransformer extends AbstractSortedOperator
     public static final AbstractTermTransformer DIVIDE_LCR_MONOMIALS = new DivideLCRMonomials();
 
     public static final AbstractTermTransformer LOGIC_SHIFT = new ShiftTransformer();
-    public static final AbstractTermTransformer FIXED_LENGTH = new FixedLengthTransformer();
+    public static final AbstractTermTransformer SHAPE_OF = new ShapeTransformer();
 
     @SuppressWarnings("argument.type.incompatible")
     protected AbstractTermTransformer(Name name, int arity, Sort sort) {
