@@ -137,11 +137,10 @@ Example unfold rule:
                               s#sp.s#fld = s#se; #c}\endmodality(post))
 ```
 
-`\notAllSimple(path, expr)` holds unless *both* are instantiated with simple
-program elements. A capture rule that matches a receiver of any simplicity needs
-it, since a taclet sort cannot express "the receiver is complex *or* the index is
-non-simple" and the rule would otherwise re-match its own output forever. Only
-the `…CaptureAll` rules use it
+A disjunctive guard such as "the receiver is complex *or* the index is
+non-simple" is not a varcond: split the rule in two, one per disjunct, each
+stated with sorts only (`Path[…,complex]` + `Expression`, and `Path[…,simple]` +
+`NonSimpleExpression`). The `…CaptureAll` rules are the example
 (`docs/storage.md` section 5).
 
 Declared members have the sort `MemberField` (`m` in the rule files), while

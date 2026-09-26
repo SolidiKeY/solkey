@@ -21,7 +21,6 @@ GET_VARIANT   : '\\getVariant';
 IS_LABELED    : '\\isLabeled';
 DIFFERENT     : '\\different';
 NO_FREE_VAR_IN : '\\noFreeVarIn';
-NOT_ALL_SIMPLE : '\\notAllSimple';
 NO_FIXED_ARRAY_ELEMENT : '\\noFixedArrayElement';
 
 ALIAS: '\\alias';

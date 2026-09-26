@@ -287,14 +287,14 @@ Index evaluation follows the usual RHS-before-LHS discipline:
 The value-producing RHS is captured before the indexed LHS update fires.
 
 The discipline also binds when the RHS is *already* simple, because capturing
-the index can change what the RHS reads. `memoryIndexWriteCaptureAll`
+the index can change what the RHS reads. `memoryIndexWriteCaptureAll…`
 therefore snapshots the RHS ahead of the receiver and the index:
 
     xs[nse] = se;   ⟹   T_{se} rv = se; T_{xs} memory mv = xs; T pv = nse; mv[pv] = rv;
 
 so `xs[i++] = i;` writes the *old* `i`, as the EVM does
 (`testMemoryIndexWriteImpureIndexPrimitiveRhs`). A reference RHS is captured the
-same way by `memoryIndexWriteMemRefCaptureAll`, into a
+same way by `memoryIndexWriteMemRefCaptureAll…`, into a
 `T memory rv = src;` alias rather than a value snapshot — the declaration is
 what differs between the two, not the order. Both are listed with their storage
 twins under a `// generalization:` comment.

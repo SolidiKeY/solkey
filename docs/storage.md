@@ -297,17 +297,19 @@ capturing.
     --------------------------------------------------------------
                   => ⟨ π  nsp.fld = e; ω ⟩ φ
 
-**Rule 2 — index write, receiver or index nonsimple.** One rule per
-right-hand-side kind captures all three constituents at once, guarded by
-`\notAllSimple(p, ie)` so it does not fire on a fully simple `sp[se] = e` and
-re-match its own output. `p` is a `Path` of any simplicity. The receiver is
+**Rule 2 — index write, receiver or index nonsimple.** Two rules per
+right-hand-side kind capture all three constituents at once: `…ComplexRecv`
+with `p : Path[…,complex]` and any index, and `…NonSimpleIndex` with
+`p : Path[…,simple]` and `ie : NonSimpleExpression`. Together they cover
+exactly "receiver complex or index nonsimple", so neither fires on a fully
+simple `sp[se] = e` and re-matches its own output. The receiver is
 snapshotted even when it is already a root or an alias: the index may reassign
 the local storage pointer the receiver reads, and the write must land where the
 receiver pointed *before* the index ran.
 
-    notAllSimple(p, ie) => ⟨ π  T_{e} rv = e; T_{p} sp = p; T_{ie} pv = ie; sp[pv] = rv; ω ⟩ φ
-    ------------------------------------------------------------------------------------------
-                            => ⟨ π  p[ie] = e; ω ⟩ φ
+    ⟨ π  T_{e} rv = e; T_{p} sp = p; T_{ie} pv = ie; sp[pv] = rv; ω ⟩ φ
+    -------------------------------------------------------------------
+                    => ⟨ π  p[ie] = e; ω ⟩ φ
 
 **Rule 3 — receiver and index simple, right-hand side nonsimple.**
 
@@ -316,7 +318,7 @@ receiver pointed *before* the index ran.
             => ⟨ π  sp[se] = nse; ω ⟩ φ
 
 The partition is disjoint: Rule 1 needs a `Path[…,complex]` field receiver,
-Rule 2 an index write that `\notAllSimple` accepts, Rule 3 `Path[…,simple]`
+Rule 2 an index write with a complex receiver or a nonsimple index, Rule 3 `Path[…,simple]`
 with a `SimpleExpression` index (or a field) and a right-hand side the
 terminals reject.
 
@@ -369,13 +371,12 @@ redundant alias collapses in one rebind step.
 
 ### Instances of Rule 2
 
-**`storageIndexWriteCaptureAll`** — `p[ie] = e`, primitive `e`, and
-`memoryIndexWriteCaptureAll` its memory twin
+**`storageIndexWriteCaptureAll{ComplexRecv,NonSimpleIndex}`** — `p[ie] = e`,
+primitive `e`, and `memoryIndexWriteCaptureAll…` its memory twins
 
-    notAllSimple(p, ie) => ⟨ π  T_{e} rv = e; T_{p} storage sp = p; T_{ie} pv = ie;
-                               sp[pv] = rv; ω ⟩ φ
-    ------------------------------------------------------------------------------
-                            => ⟨ π  p[ie] = e; ω ⟩ φ
+    ⟨ π  T_{e} rv = e; T_{p} storage sp = p; T_{ie} pv = ie; sp[pv] = rv; ω ⟩ φ
+    ---------------------------------------------------------------------------
+                    => ⟨ π  p[ie] = e; ω ⟩ φ
 
 The snapshot is what makes `xs[i++] = i;` write the *old* `i`. Dropping it
 closes
@@ -383,16 +384,16 @@ a proof of `xs[0] == 1` where the EVM writes `0`; the witnesses are
 `testStorageIndexWriteImpureIndexPrimitiveRhs` and its memory and depth-2 twins
 in `TestSuite.sol`.
 
-**`storageIndexWriteStorageRefCaptureAll`** — `p[ie] = src`, and likewise
-`memoryToStorageIndexCaptureAll` and `memoryIndexWriteMemRefCaptureAll`
+**`storageIndexWriteStorageRefCaptureAll…`** — `p[ie] = src`, and likewise
+`memoryToStorageIndexCaptureAll…` and `memoryIndexWriteMemRefCaptureAll…`
 
-    notAllSimple(p, ie) => ⟨ π  T_{src} storage rv = src; T_{p} storage sp = p;
-                               T_{ie} pv = ie; sp[pv] = rv; ω ⟩ φ
-    ------------------------------------------------------------------------------
-                            => ⟨ π  p[ie] = src; ω ⟩ φ
+    ⟨ π  T_{src} storage rv = src; T_{p} storage sp = p; T_{ie} pv = ie;
+         sp[pv] = rv; ω ⟩ φ
+    --------------------------------------------------------------------
+                    => ⟨ π  p[ie] = src; ω ⟩ φ
 
-When only the receiver is nonsimple, the index temporary `pv` is redundant: the
-price of covering both shapes with one rule.
+When only the receiver is nonsimple, the index temporary `pv` of `…ComplexRecv`
+is redundant: a few extra nodes.
 
 ### Instances of Rule 3
 

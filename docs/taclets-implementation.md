@@ -350,7 +350,7 @@ fresh-allocation semantics. `memoryAssignForms` covers the assignment
 forms directly. Memory references are
 `Identity`-sorted, not copied `Struct` values; no `push`/`pop`/mapping.
 Complex memory receivers are captured first by `memoryIndexRead_unfold_rightFst`
-/ `memoryIndexWriteCaptureAll` / `memoryIndexDelete_unfold_leftFst`. These
+/ `memoryIndexWriteCaptureAllComplexRecv` / `memoryIndexDelete_unfold_leftFst`. These
 take a plain `Path[memory,complex]` (no `array` flag): a receiver capture uses no
 array structure, and in memory an indexable path is an array anyway — mappings
 cannot be memory-located and `bytes`/`string` are not memory reference types. The
@@ -517,16 +517,17 @@ kind:
     captures the RHS and aliases the receiver. `nsp.a = e;` ⟹
     `rvType rv = e; aliasType storage sp = nsp; sp.a = rv;`. Five members, the
     `…Field…_unfold_leftFst` rules, one per location × primitive/reference RHS.
-  - **Rule 2, index write with a non-simple receiver or index**: five
-    `…CaptureAll` rules, one per RHS kind, which capture RHS, receiver and index
+  - **Rule 2, index write with a non-simple receiver or index**: ten
+    `…CaptureAll{ComplexRecv,NonSimpleIndex}` rules, two per RHS kind, which capture RHS, receiver and index
     in a single application. `p[ie] = e;` ⟹ `rvType rv = e;
     aliasType storage sp = p; pvType pv = ie; sp[pv] = rv;`. The receiver is
     snapshotted even when it is simple: a local storage pointer can be
     reassigned by the index expression, and the write must land where the
-    receiver pointed before the index ran. Their receiver SV is a `Path` of any
-    simplicity, so a disjunctive side condition keeps them off the fully simple
-    `sp[se] = e` (which they would re-match forever): the varcond
-    `\notAllSimple(p, ie)` (`parser/varcond/NotAllSimpleCondition.java`). On
+    receiver pointed before the index ran. `…ComplexRecv` takes a
+    `Path[…,complex]` receiver and any index, `…NonSimpleIndex` a
+    `Path[…,simple]` receiver and a `NonSimpleExpression` index; the split
+    keeps them off the fully simple `sp[se] = e` (which they would re-match
+    forever) with sorts alone, no varcond. On
     `nsp[se] = rhs` the index temporary is redundant, a few extra nodes.
   - **Rule 3, receiver and index simple, RHS non-simple**: the RHS capture
     rules of the two bullets above, plus the root-target
