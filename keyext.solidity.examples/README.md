@@ -4,7 +4,8 @@
 invariant-based `.key` proof obligations (see "The `net/` directory"); `contracts/` holds the
 solidiKeY example contracts, specified in natspec `@custom:key` clauses (see "The `contracts/`
 directory"); `real-world/` holds published contracts specified the same way (see "The
-`real-world/` directory").
+`real-world/` directory"); `benchmark/` holds published contracts kept as published, to measure
+what SolKey verifies without a rewrite (see "The `benchmark/` directory").
 
 There are no `.key` problem files beside `TestSuite.sol`: the loader reads the contract and
 synthesizes one obligation per function, so the whole specification lives in the Solidity body
@@ -352,6 +353,14 @@ proves that the code's own checks keep everyone else out.
   `renounceOwnership` succeed only for the current owner and set the new one.
 
 Every clause was checked for vacuity: changing it to something false leaves the proof open.
+
+## The `benchmark/` directory
+
+Where `real-world/` rewrites a contract until it closes, `benchmark/` keeps the published source
+and allows only light, listed hacks; every file carries a specification. A contract that needs
+more is not added, only listed with its blocker. `scripts/benchmark.sh` prints `N/M` per
+contract. The results, and the blockers ranked by how many contracts they stop, are in
+`benchmark/README.md`. No test group runs this directory.
 
 ## The `solc/` directory
 

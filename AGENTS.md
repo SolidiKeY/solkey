@@ -40,6 +40,7 @@ These keep a task to few tool calls. Cost is dominated by round-trips, not by ou
 scripts/taclet.sh requireSimple      # print one taclet with its file:line
 scripts/taclet.sh --index            # the rule-section banners
 scripts/taclet.sh --list             # every rule name with its file:line
+scripts/benchmark.sh                 # published contracts as published: N/M closed each
 
 ./gradlew :keyext.solidity.gui:solidityGui     # KeYther, the Swing GUI
 ./gradlew :key.ui:shadowJar                    # fat JAR

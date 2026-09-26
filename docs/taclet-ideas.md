@@ -176,3 +176,20 @@ shape. Two neighbouring statement forms are not yet as general:
   reference into a storage location outside the receiver-capture path. A
   storage-to-memory element copy is a deep copy (`copySt`) and needs its own
   terminal, not just a capture.
+
+## Raised by the benchmark
+
+Found by loading published contracts as published (`keyext.solidity.examples/benchmark/`, whose
+README ranks every blocker by the number of contracts it stops). Parser gaps, not taclets, and
+the cheapest wins there:
+
+- **Event and error definitions** (`EventDefinition`, `ErrorDefinition`) are rejected at load, so
+  a contract that merely declares one does not load. Skip both, make `emit` a no-op (Tier 4),
+  and read `revert Err(..)` / `require(c, Err(..))` as `revert()` / `require(c)`.
+- **`require(c, "msg")`** fails with "Not yet supported literal"; the message can be ignored.
+- **`address(this).balance`** throws a `NullPointerException` in
+  `SolJSONParser.parseIdentifier` (`this` has no type) instead of reading `selfBalance`.
+- **`bytes32` / `bytes`** have no `KeYSolidityType`, so a contract declaring one does not load.
+- **Imports** are not resolved: only the opened file is handed to solc.
+- **`block.timestamp`** has no counterpart in the spec language, so a spec that mentions time
+  needs the `timeNow` convention.
