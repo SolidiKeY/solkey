@@ -4,20 +4,15 @@
 package org.key_project.solidity.taclets;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import org.key_project.solidity.control.KeYEnvironment;
 import org.key_project.solidity.proof.Proof;
-import org.key_project.solidity.proof.io.OutputStreamProofSaver;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
 import org.key_project.solidity.proof.io.ProofSaver;
 
@@ -27,10 +22,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.key_project.solidity.testutil.SolidityExampleTests.assertSameProofTree;
+import static org.key_project.solidity.testutil.SolidityExampleTests.describeOpenGoals;
+import static org.key_project.solidity.testutil.SolidityExampleTests.keyFiles;
 import static org.key_project.solidity.testutil.SolidityExampleTests.loadAndProve;
-import static org.key_project.solidity.testutil.SolidityExampleTests.treeSignature;
+import static org.key_project.solidity.testutil.SolidityExampleTests.replay;
+import static org.key_project.solidity.testutil.SolidityExampleTests.resource;
 
 @Tag("solidityExamples")
 public class RulesTest {
@@ -58,13 +56,7 @@ public class RulesTest {
         // }
         // }
 
-        Supplier<String> openGoals = () -> exampleName
-            + " should be verified, but the following goals are open "
-            + proof.getOpenGoals().stream()
-                    .map(g -> OutputStreamProofSaver.printSequent(g.sequent(),
-                        g.getOverlayServices()))
-                    .toList()
-            + "\n" + proof.getStatistics();
+        Supplier<String> openGoals = () -> describeOpenGoals(exampleName, proof);
 
         if (KNOWN_UNSUPPORTED.contains(exampleName)) {
             // Run it, but report a still-open proof as aborted (warning) rather than failed.
@@ -91,39 +83,18 @@ public class RulesTest {
         try {
             ProofSaver.saveToFile(out, original);
 
-            Proof reloaded = KeYEnvironment.load(out.toPath()).getLoadedProof();
-            assertEquals(original.closed(), reloaded.closed(),
-                () -> exampleName + ": reloaded proof closed-ness differs");
-            assertEquals(original.countNodes(), reloaded.countNodes(),
-                () -> exampleName + ": reloaded proof has a different number of nodes");
-            assertEquals(treeSignature(original.root()), treeSignature(reloaded.root()),
-                () -> exampleName + ": reloaded proof tree differs from the original");
+            assertSameProofTree(exampleName, original, replay(out.toPath()));
         } finally {
             out.delete();
         }
     }
 
     static Stream<Arguments> exampleFiles() throws Exception {
-        URL resource = RulesTest.class.getClassLoader().getResource(EXAMPLES_RESOURCE);
-
-        if (resource == null) {
-            throw new FileNotFoundException(
-                "Could not find resource with examples: " + EXAMPLES_RESOURCE);
-        }
-
-        try (var examples = Files.list(Path.of(resource.toURI()))) {
-            List<Path> exampleFiles = examples
-                    .filter(Files::isRegularFile)
-                    .filter(path -> path.getFileName().toString().endsWith(".key")
-                            && hasProofObligation(path))
-                    .sorted(Comparator.comparing(path -> path.getFileName().toString()))
-                    .toList();
-
-            return selectRequestedExample(exampleFiles).stream()
-                    .map(path -> Arguments.of(path.getFileName().toString(), path));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        List<Path> exampleFiles = keyFiles(resource(EXAMPLES_RESOURCE)).stream()
+                .filter(RulesTest::hasProofObligation)
+                .toList();
+        return selectRequestedExample(exampleFiles).stream()
+                .map(path -> Arguments.of(path.getFileName().toString(), path));
     }
 
     private static List<Path> selectRequestedExample(List<Path> exampleFiles) {

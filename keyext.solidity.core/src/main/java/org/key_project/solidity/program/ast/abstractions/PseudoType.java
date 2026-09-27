@@ -5,6 +5,7 @@ package org.key_project.solidity.program.ast.abstractions;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
 
 
 /// Pseudo types are types that do not exist in Solidity but in our logic
@@ -28,7 +29,7 @@ public class PseudoType implements Type {
 
     @Override
     public SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException("Types do not have children");
+        throw SolidityProgramElement.outOfBounds(n, getChildCount());
     }
 
     @Override

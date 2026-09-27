@@ -12,6 +12,8 @@ import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.Nullable;
 
+import static org.key_project.solidity.program.ast.SolidityProgramElement.takeChild;
+
 public class ConditionStatement implements Statement {
     private final Expression condition;
     private final Statement thenBody;
@@ -30,8 +32,8 @@ public class ConditionStatement implements Statement {
     }
 
     public ConditionStatement(ExtList children) {
-        this.condition = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
-        this.thenBody = Objects.requireNonNull(children.removeFirstOccurrence(Statement.class));
+        this.condition = takeChild(children, Expression.class);
+        this.thenBody = takeChild(children, Statement.class);
         this.elseBody = children.removeFirstOccurrence(Statement.class);
     }
 

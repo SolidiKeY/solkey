@@ -3,8 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.taclets;
 
-import java.net.URL;
-import java.nio.file.Path;
 
 import org.key_project.prover.sequent.SequentFormula;
 import org.key_project.solidity.control.KeYEnvironment;
@@ -15,7 +13,6 @@ import org.key_project.solidity.program.ast.statement.ExpressionStatement;
 import org.key_project.solidity.program.ast.statement.FunctionBodyStatement;
 import org.key_project.solidity.program.ast.statement.Statement;
 import org.key_project.solidity.proof.Goal;
-import org.key_project.solidity.proof.Proof;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -23,9 +20,10 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.key_project.solidity.testutil.SolidityExampleTests.applyNamedTacletAtTop;
+import static org.key_project.solidity.testutil.SolidityExampleTests.applyTacletAtTop;
 import static org.key_project.solidity.testutil.SolidityExampleTests.load;
 import static org.key_project.solidity.testutil.SolidityExampleTests.modalityProgram;
+import static org.key_project.solidity.testutil.SolidityExampleTests.resource;
 
 /// End-to-end test for the *result-value* connection of function-body expansion: a `.key`
 /// problem loads a stateful contract via `\programSource`, places `r = getBalance()@Bank;`
@@ -37,14 +35,9 @@ public class FunctionBodyResultExpandTest {
 
     @Test
     void expandsBodyAndConnectsResultVariable() throws Exception {
-        URL res = getClass().getClassLoader()
-                .getResource("org/key_project/solidity/functionbody/bankExpand.key");
-        assertNotNull(res, "test resource bankExpand.key must exist");
-        Path file = Path.of(res.toURI());
-
-        KeYEnvironment env = load(file);
-        Proof proof = env.getLoadedProof();
-        Goal goal = proof.openGoals().head();
+        KeYEnvironment env =
+            load(resource("org/key_project/solidity/functionbody/bankExpand.key"));
+        Goal goal = env.getLoadedProof().openGoals().head();
 
         // before: the modality program is the (not yet inlined) function-body statement
         SequentFormula sf = goal.sequent().succedent().get(0);
@@ -55,11 +48,8 @@ public class FunctionBodyResultExpandTest {
         assertNotNull(fbs.getResultVar(), "the call should carry a result variable");
 
         // find and apply the functionBodyExpand taclet at the modality formula
-        applyNamedTacletAtTop(env, proof, goal, "functionBodyExpand");
-
         // after: the placeholder is gone and the last statement is the result assignment
-        Goal newGoal = proof.openGoals().head();
-        Block after = modalityProgram(newGoal.sequent().succedent().get(0).formula());
+        Block after = modalityProgram(applyTacletAtTop(env, "functionBodyExpand"));
 
         for (Statement st : after.getStatements()) {
             assertEquals(false, st instanceof FunctionBodyStatement,

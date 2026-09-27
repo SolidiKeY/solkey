@@ -226,6 +226,16 @@ public class SolidityInfo {
         return c == null ? List.of() : c.getFunctions();
     }
 
+    public @Nullable FunctionDeclaration getFunctionDeclaration(Name contractName,
+            Name functionName) {
+        for (FunctionDeclaration fd : getFunctions(contractName)) {
+            if (fd.name().equals(functionName)) {
+                return fd;
+            }
+        }
+        return null;
+    }
+
     /// Finds a function by contract, name, and parameter types (the signature).
     /// Parameter types are compared by type name.
     public @Nullable FunctionDeclaration getFunctionDeclaration(Name contractName,

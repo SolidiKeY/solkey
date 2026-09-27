@@ -158,15 +158,11 @@ public class SolcWrapper {
         }
     }
 
-    public static String readSolBuff(byte[] contract) throws IOException {
-        return readSolString(new String(contract, UTF_8));
-    }
-
-    public static String readSolString(String contract) throws IOException {
+    public static String readSol(String contract) throws IOException {
         return astOf(STDIN_UNIT, contract);
     }
 
-    public static String readSol(String s) throws IOException {
-        return readSolString(s);
+    public static JsonNode readJson(String json) {
+        return MAPPER.readTree(json);
     }
 }

@@ -15,8 +15,10 @@ import java.util.Optional;
 import org.key_project.solidity.speclang.natspec.KeyNatspec;
 import org.key_project.solidity.speclang.natspec.SpecException;
 
+import org.jspecify.annotations.Nullable;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
+
+import static org.key_project.solidity.program.parser.SolcAst.text;
 
 /// The contracts and functions a `.sol` file declares, read straight from solc's AST JSON.
 ///
@@ -198,7 +200,7 @@ public record SolidityOutline(List<Contract> contracts) {
     }
 
     public static SolidityOutline of(Path solFile) throws IOException {
-        JsonNode root = new ObjectMapper().readTree(SolcWrapper.getJsonSolidity(solFile));
+        JsonNode root = SolcAst.of(solFile);
         List<Contract> contracts = new ArrayList<>();
         for (JsonNode node : root.get("nodes").values()) {
             if ("ContractDefinition".equals(text(node, "nodeType"))) {
@@ -210,6 +212,24 @@ public record SolidityOutline(List<Contract> contracts) {
 
     public Optional<Contract> contract(String name) {
         return contracts.stream().filter(c -> c.name().equals(name)).findFirst();
+    }
+
+    public List<String> contractNames() {
+        return contracts.stream().map(Contract::name).toList();
+    }
+
+    /// The named contract, or the only one when `requested` is null; fails with the candidates
+    /// listed otherwise.
+    public Contract requireContract(@Nullable String requested, Path solFile) {
+        if (requested != null) {
+            return contract(requested).orElseThrow(() -> new IllegalArgumentException(solFile
+                + " declares no contract " + requested + "; candidates: " + contractNames()));
+        }
+        if (contracts.size() != 1) {
+            throw new IllegalArgumentException("no contract selected for " + solFile
+                + "; use --contract with one of: " + contractNames());
+        }
+        return contracts.get(0);
     }
 
     private static Contract contractOf(JsonNode contract) {
@@ -268,9 +288,4 @@ public record SolidityOutline(List<Contract> contracts) {
         }
         return parameters;
     }
-
-    private static String text(JsonNode node, String field) {
-        return node != null && node.has(field) ? node.get(field).asString() : "";
-    }
-
 }

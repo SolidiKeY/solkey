@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Set;
 
+import org.key_project.solidity.program.ast.StaticTypes;
 import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
 import org.key_project.solidity.program.ast.declarations.StructDeclaration;
 
@@ -17,7 +18,7 @@ public final class StorageReferenceTypes {
 
     /// In storage, mappings are reference-typed locations as well, unlike in memory.
     public static boolean isReferenceType(Type type) {
-        Type unwrapped = type instanceof KeYSolidityType kst ? kst.getSolidityType() : type;
+        Type unwrapped = StaticTypes.unwrap(type);
         if (unwrapped == null) {
             return false;
         }
@@ -35,7 +36,7 @@ public final class StorageReferenceTypes {
         if (type == null) {
             return false;
         }
-        Type unwrapped = type instanceof KeYSolidityType kst ? kst.getSolidityType() : type;
+        Type unwrapped = StaticTypes.unwrap(type);
         if (unwrapped == null || !visited.add(unwrapped)) {
             return false;
         }
@@ -51,12 +52,7 @@ public final class StorageReferenceTypes {
             }
             return false;
         }
-        if (unwrapped instanceof ArrayType array) {
-            return containsMapping(array.getElementType(), visited);
-        }
-        if (unwrapped instanceof DynamicArrayType dynArray) {
-            return containsMapping(dynArray.getElementType(), visited);
-        }
-        return false;
+        Type element = StaticTypes.elementTypeOf(unwrapped);
+        return element != null && containsMapping(element, visited);
     }
 }

@@ -71,8 +71,7 @@ public class StateVariableDeclaration implements Declaration {
     @Override
     public SolidityProgramElement getChild(int i) {
         if (i != 0 || initializer == null) {
-            throw new IndexOutOfBoundsException(
-                "Index should be 0 <= " + i + " < " + getChildCount());
+            throw SolidityProgramElement.outOfBounds(i, getChildCount());
         }
         return initializer;
     }

@@ -6,7 +6,7 @@ package org.key_project.solidity.program.ast.expressions.operators;
 import java.util.Objects;
 
 import org.key_project.logic.SyntaxElement;
-import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.HashCachingElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
@@ -14,15 +14,14 @@ import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.Nullable;
 
+import static org.key_project.solidity.program.ast.SolidityProgramElement.takeChild;
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.BOOL;
 
-public final class BinaryExpression
-        implements SolidityProgramElement, Expression, OperatorExpression {
+public final class BinaryExpression extends HashCachingElement implements OperatorExpression {
 
     protected final Operator operator;
     protected final Expression left;
     protected final Expression right;
-    private int hashcode = -1;
 
     public BinaryExpression(Operator operator, Expression left, Expression right) {
         this.operator = operator;
@@ -31,9 +30,9 @@ public final class BinaryExpression
     }
 
     public BinaryExpression(ExtList children) {
-        this.operator = Objects.requireNonNull(children.removeFirstOccurrence(Operator.class));
-        this.left = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
-        this.right = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.operator = takeChild(children, Operator.class);
+        this.left = takeChild(children, Expression.class);
+        this.right = takeChild(children, Expression.class);
     }
 
     @Override
@@ -90,15 +89,6 @@ public final class BinaryExpression
             return false;
         return operator.equals(that.operator) && left.equals(that.left)
                 && right.equals(that.right);
-    }
-
-    @Override
-    public int hashCode() {
-        if (hashcode == -1) {
-            int hash = computeHashCode();
-            hashcode = hash == -1 ? 0 : hash;
-        }
-        return hashcode;
     }
 
 }

@@ -9,6 +9,7 @@ import java.util.Objects;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
 
 import org.jspecify.annotations.Nullable;
 
@@ -195,8 +196,7 @@ public class PrimitiveType implements Type, SyntaxElement {
 
     @Override
     public SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException(
-            "Index should be 0 <= " + n + " < " + getChildCount());
+        throw SolidityProgramElement.outOfBounds(n, getChildCount());
     }
 
     @Override

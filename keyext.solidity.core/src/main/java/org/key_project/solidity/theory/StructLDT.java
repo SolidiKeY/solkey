@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.theory;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Function;
@@ -31,6 +34,11 @@ public class StructLDT extends LDT {
     /// The contract-storage program variable, declared in the struct theory `.key` files.
     public static final Name STORAGE_NAME = new Name("storage");
     public static final String FIELD_SEPARATOR = "$";
+
+    public static String fieldConstantName(Object... segments) {
+        return Arrays.stream(segments).map(Object::toString)
+                .collect(Collectors.joining(FIELD_SEPARATOR));
+    }
 
     private final Function mt;
     private final Sort fieldSort;

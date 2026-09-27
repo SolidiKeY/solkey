@@ -3,21 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.statement;
 
-import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.LeafProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 
 
-public class ContinueStatement implements Statement {
-    @Override
-    public SyntaxElement getChild(int n) {
-        throw outOfBounds(n);
-    }
-
-    @Override
-    public int getChildCount() {
-        return 0;
-    }
-
+public class ContinueStatement implements Statement, LeafProgramElement {
     @Override
     public String toString() {
         return "continue;";

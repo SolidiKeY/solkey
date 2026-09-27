@@ -5,6 +5,7 @@ package org.key_project.solidity.parser.varcond;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.key_project.logic.op.sv.SchemaVariable;
@@ -187,104 +188,56 @@ public class TacletBuilderManipulators {
     public static final AbstractConditionBuilder HAS_SORT =
         new SolidityTypeToSortConditionBuilder("hasSort");
 
-    public static final AbstractConditionBuilder HAS_FIELD_SORT =
-        new AbstractConditionBuilder("hasFieldSort", SV, SORT) {
-            @Override
-            public VariableCondition build(Object[] arguments, List<String> parameters,
-                    boolean negated) {
-                if (negated) {
-                    throw new IllegalArgumentException(
-                        "\\hasFieldSort does not support negation");
-                }
-                if (!(arguments[0] instanceof ProgramSV fieldSV)) {
-                    throw new IllegalArgumentException(
-                        "\\hasFieldSort expects a field program schema variable as its first "
-                            + "argument, "
-                            + "but got: " + arguments[0]);
-                }
-                if (!(fieldSV.sort() instanceof FieldSVSort)) {
-                    throw new IllegalArgumentException(
-                        "\\hasFieldSort expects a field program schema variable as its first "
-                            + "argument, but got: " + fieldSV);
-                }
-                if (arguments[1] instanceof GenericSort gs) {
-                    return new FieldExpressionTypeToSortCondition(fieldSV, gs);
-                }
-                throw new IllegalArgumentException(
-                    "Generic or parametric sort is expected. Got: " + arguments[1]);
+    private static final class SortBindingConditionBuilder extends AbstractConditionBuilder {
+        private final String keyword;
+        private final boolean requireFieldSort;
+        private final BiFunction<ProgramSV, GenericSort, VariableCondition> factory;
+
+        SortBindingConditionBuilder(String triggerName, boolean requireFieldSort,
+                BiFunction<ProgramSV, GenericSort, VariableCondition> factory) {
+            super(triggerName, SV, SORT);
+            this.keyword = "\\" + triggerName;
+            this.requireFieldSort = requireFieldSort;
+            this.factory = factory;
+        }
+
+        @Override
+        public VariableCondition build(Object[] arguments, List<String> parameters,
+                boolean negated) {
+            if (negated) {
+                throw new IllegalArgumentException(keyword + " does not support negation");
             }
-        };
+            String expected = keyword + " expects a " + (requireFieldSort ? "field " : "")
+                + "program schema variable as its first argument, but got: ";
+            if (!(arguments[0] instanceof ProgramSV sv)) {
+                throw new IllegalArgumentException(expected + arguments[0]);
+            }
+            if (requireFieldSort && !(sv.sort() instanceof FieldSVSort)) {
+                throw new IllegalArgumentException(expected + sv);
+            }
+            if (arguments[1] instanceof GenericSort gs) {
+                return factory.apply(sv, gs);
+            }
+            throw new IllegalArgumentException(
+                "Generic or parametric sort is expected. Got: " + arguments[1]);
+        }
+    }
+
+    public static final AbstractConditionBuilder HAS_FIELD_SORT =
+        new SortBindingConditionBuilder("hasFieldSort", true,
+            (sv, gs) -> new FieldExpressionTypeToSortCondition(sv, gs, false));
 
     public static final AbstractConditionBuilder HAS_MEMORY_FIELD_SORT =
-        new AbstractConditionBuilder("hasMemoryFieldSort", SV, SORT) {
-            @Override
-            public VariableCondition build(Object[] arguments, List<String> parameters,
-                    boolean negated) {
-                if (negated) {
-                    throw new IllegalArgumentException(
-                        "\\hasMemoryFieldSort does not support negation");
-                }
-                if (!(arguments[0] instanceof ProgramSV fieldSV)) {
-                    throw new IllegalArgumentException(
-                        "\\hasMemoryFieldSort expects a field program schema variable as its "
-                            + "first argument, but got: " + arguments[0]);
-                }
-                if (!(fieldSV.sort() instanceof FieldSVSort)) {
-                    throw new IllegalArgumentException(
-                        "\\hasMemoryFieldSort expects a field program schema variable as its "
-                            + "first argument, but got: " + fieldSV);
-                }
-                if (arguments[1] instanceof GenericSort gs) {
-                    return new FieldExpressionTypeToSortCondition(fieldSV, gs, true);
-                }
-                throw new IllegalArgumentException(
-                    "Generic or parametric sort is expected. Got: " + arguments[1]);
-            }
-        };
+        new SortBindingConditionBuilder("hasMemoryFieldSort", true,
+            (sv, gs) -> new FieldExpressionTypeToSortCondition(sv, gs, true));
 
     public static final AbstractConditionBuilder HAS_ELEMENT_SORT =
-        new AbstractConditionBuilder("hasElementSort", SV, SORT) {
-            @Override
-            public VariableCondition build(Object[] arguments, List<String> parameters,
-                    boolean negated) {
-                if (negated) {
-                    throw new IllegalArgumentException(
-                        "\\hasElementSort does not support negation");
-                }
-                if (!(arguments[0] instanceof ProgramSV receiverSV)) {
-                    throw new IllegalArgumentException(
-                        "\\hasElementSort expects a program schema variable as its first argument, "
-                            + "but got: " + arguments[0]);
-                }
-                if (arguments[1] instanceof GenericSort gs) {
-                    return new IndexedExpressionTypeToSortCondition(receiverSV, gs);
-                }
-                throw new IllegalArgumentException(
-                    "Generic or parametric sort is expected. Got: " + arguments[1]);
-            }
-        };
+        new SortBindingConditionBuilder("hasElementSort", false,
+            (sv, gs) -> new IndexedExpressionTypeToSortCondition(sv, gs, false));
 
     public static final AbstractConditionBuilder HAS_MEMORY_ELEMENT_SORT =
-        new AbstractConditionBuilder("hasMemoryElementSort", SV, SORT) {
-            @Override
-            public VariableCondition build(Object[] arguments, List<String> parameters,
-                    boolean negated) {
-                if (negated) {
-                    throw new IllegalArgumentException(
-                        "\\hasMemoryElementSort does not support negation");
-                }
-                if (!(arguments[0] instanceof ProgramSV receiverSV)) {
-                    throw new IllegalArgumentException(
-                        "\\hasMemoryElementSort expects a program schema variable as its first "
-                            + "argument, but got: " + arguments[0]);
-                }
-                if (arguments[1] instanceof GenericSort gs) {
-                    return new IndexedExpressionTypeToSortCondition(receiverSV, gs, true);
-                }
-                throw new IllegalArgumentException(
-                    "Generic or parametric sort is expected. Got: " + arguments[1]);
-            }
-        };
+        new SortBindingConditionBuilder("hasMemoryElementSort", false,
+            (sv, gs) -> new IndexedExpressionTypeToSortCondition(sv, gs, true));
 
     public static final TacletBuilderCommand NEW_LOCAL_VARS =
         new ConstructorBasedBuilder("newLocalVars", NewLocalVarsCondition.class, SV, SV, SV, SV);

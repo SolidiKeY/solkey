@@ -10,9 +10,12 @@ import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.program.ast.Resolver;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.Nullable;
+
+import static org.key_project.solidity.program.ast.SolidityProgramElement.takeChild;
 
 /// Pairs a Solidity AST [Type] with its logic-side [Sort].
 ///
@@ -56,8 +59,8 @@ public class KeYSolidityType implements Type, Resolver {
     }
 
     public KeYSolidityType(ExtList children) {
-        this.solidityType = Objects.requireNonNull(children.removeFirstOccurrence(Type.class));
-        this.sort = Objects.requireNonNull(children.removeFirstOccurrence(Sort.class));
+        this.solidityType = takeChild(children, Type.class);
+        this.sort = takeChild(children, Sort.class);
         this.typeId = 0;
     }
 
@@ -117,8 +120,7 @@ public class KeYSolidityType implements Type, Resolver {
 
     @Override
     public SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException(
-            "Index should be 0 <= " + n + " < " + getChildCount());
+        throw SolidityProgramElement.outOfBounds(n, getChildCount());
     }
 
     @Override

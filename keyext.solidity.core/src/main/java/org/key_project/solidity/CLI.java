@@ -19,6 +19,7 @@ import org.key_project.logic.Namespace;
 import org.key_project.solidity.control.KeYEnvironment;
 import org.key_project.solidity.program.parser.SolcWrapper;
 import org.key_project.solidity.proof.Goal;
+import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.init.SolidityProblemSpec;
 import org.key_project.solidity.proof.init.SolidityProblemSynthesizer;
 import org.key_project.solidity.proof.io.LoadErrors;
@@ -33,7 +34,6 @@ import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
 
 public class CLI {
     @Option(names = { "-V", "--version" }, versionHelp = true, description = "display version info")
@@ -172,8 +172,8 @@ public class CLI {
                 return false;
             }
             try {
-                SolidityProblemSpec spec = SolidityProblemSynthesizer.resolve(f,
-                    new SolidityProblemSpec(cli.contract, cli.function, cli.choices));
+                SolidityProblemSpec spec =
+                    SolidityProblemSynthesizer.resolve(f, cli.spec(cli.function));
                 System.out.print(SolidityProblemSynthesizer.problemText(f, spec));
                 return true;
             } catch (Exception e) {
@@ -182,8 +182,7 @@ public class CLI {
             }
         }
         if (cli.function != null) {
-            return prove(cli, new SolidityProblemSpec(cli.contract, cli.function, cli.choices))
-                    .closed();
+            return prove(cli, cli.spec(cli.function)).closed();
         }
         final List<String> functions;
         try {
@@ -191,15 +190,13 @@ public class CLI {
         } catch (Exception e) {
             // solc reports a rejected source as an unchecked exception, so this cannot narrow to
             // IOException without letting a compile error escape as a stack trace.
-            System.err.println("Error while reading " + cli.file + ":");
-            System.err.println("  " + LoadErrors.describe(e));
+            cli.reportError("reading", e);
             return false;
         }
         int closed = 0;
         List<String> failures = new ArrayList<>();
         for (String function : functions) {
-            Outcome outcome =
-                prove(cli, new SolidityProblemSpec(cli.contract, function, cli.choices));
+            Outcome outcome = prove(cli, cli.spec(function));
             System.out.flush();
             System.err.flush();
             System.out.println((outcome.closed() ? "PASS " : "FAIL ") + function);
@@ -210,9 +207,7 @@ public class CLI {
             }
         }
         System.out.println(closed + "/" + functions.size() + " closed");
-        if (!failures.isEmpty()) {
-            System.out.println("FAILED (" + failures.size() + "): " + String.join(", ", failures));
-        }
+        printFailures(failures);
         return closed == functions.size();
     }
 
@@ -225,10 +220,9 @@ public class CLI {
     private static boolean runSolc(CLI cli, Path f) {
         final JsonNode output;
         try {
-            output = new ObjectMapper().readTree(SolcWrapper.diagnose(f));
+            output = SolcWrapper.readJson(SolcWrapper.diagnose(f));
         } catch (Exception e) {
-            System.err.println("Error while compiling " + cli.file + ":");
-            System.err.println("  " + LoadErrors.describe(e));
+            cli.reportError("compiling", e);
             return false;
         }
         int errors = 0;
@@ -263,8 +257,7 @@ public class CLI {
         try {
             verdicts = SolidityRuntimeCheck.run(f, cli.contract, cli.function);
         } catch (Exception e) {
-            System.err.println("Error while running " + cli.file + ":");
-            System.err.println("  " + LoadErrors.describe(e));
+            cli.reportError("running", e);
             return false;
         }
         if (verdicts.isEmpty()) {
@@ -293,11 +286,23 @@ public class CLI {
         int ran = verdicts.size() - skipped;
         System.out.println((ran - failures.size()) + "/" + ran + " ran without a failing assert"
             + (skipped > 0 ? " (" + skipped + " not run)" : ""));
-        if (!failures.isEmpty()) {
-            System.out.println(
-                "FAILED (" + failures.size() + "): " + String.join(", ", failures));
-        }
+        printFailures(failures);
         return failures.isEmpty();
+    }
+
+    private static void printFailures(List<String> failures) {
+        if (!failures.isEmpty()) {
+            System.out.println("FAILED (" + failures.size() + "): " + String.join(", ", failures));
+        }
+    }
+
+    private SolidityProblemSpec spec(String function) {
+        return new SolidityProblemSpec(contract, function, choices);
+    }
+
+    private void reportError(String activity, Exception e) {
+        System.err.println("Error while " + activity + " " + file + ":");
+        System.err.println("  " + LoadErrors.describe(e));
     }
 
     /// The result of one proof attempt: whether it closed, how many goals were left open, and how
@@ -344,66 +349,15 @@ public class CLI {
                     return Outcome.error();
                 }
                 if (cli.replay) {
-                    if (cli.verbose)
-                        System.out.println("Replaying proof...");
-                    var replayResult = env.getReplayResult();
-                    if (replayResult.hasErrors()) {
-                        System.err.println("Error(s) while loading!");
-                        if (cli.verbose) {
-                            List<Throwable> errors = replayResult.getErrorList();
-                            for (int i = 0; i < errors.size(); i++) {
-                                Throwable error = errors.get(i);
-                                System.err.println("Error " + (i + 1) + ": " + error);
-                            }
-                        }
-                        return Outcome.error();
-                    }
-                    System.out.println("Loading and proof replay successful");
-                    return Outcome.closed(0);
+                    return replay(cli, env);
                 }
-                System.out.println("Loading successful");
-                return Outcome.closed(0);
-            } else {
-                if (cli.prove) {
-                    if (!cli.quiet) {
-                        System.out.println("Proving...");
-                    }
-                    var stratSettings = loadedProof.getSettings().getStrategySettings();
-                    stratSettings.setTimeout(cli.timeout);
-                    stratSettings.setMaxSteps(cli.max);
-                    long started = System.currentTimeMillis();
-                    env.getProofControl().startAndWaitForAutoMode(loadedProof);
-                    long elapsed = System.currentTimeMillis() - started;
-                    if (cli.printStats && !cli.quiet) {
-                        System.out.println(loadedProof.getStatistics());
-                    }
-                    if (cli.outputFile != null) {
-                        try {
-                            ProofSaver.saveToFile(cli.outputFile.getAbsoluteFile(), loadedProof);
-                        } catch (IOException e) {
-                            System.err.println("Error saving proof to file: " + e.getMessage());
-                            return Outcome.error();
-                        }
-                    }
-                    if (!loadedProof.closed()) {
-                        int open = loadedProof.openGoals().size();
-                        if (!cli.quiet) {
-                            System.err.println("Proof not closed. " + open + " goals remaining");
-                        }
-                        printOpenGoals(cli, loadedProof.openGoals());
-                        return Outcome.open(open, elapsed);
-                    } else {
-                        System.out.println("Loading and proof successful");
-                        return Outcome.closed(elapsed);
-                    }
-                } else {
-                    System.out.println("Loading successful");
-                    return Outcome.closed(0);
-                }
+            } else if (cli.prove) {
+                return runAutoMode(cli, env, loadedProof);
             }
+            System.out.println("Loading successful");
+            return Outcome.closed(0);
         } catch (ProblemLoaderException e) {
-            System.err.println("Error while loading " + cli.file + ":");
-            System.err.println("  " + LoadErrors.describe(e));
+            cli.reportError("loading", e);
             if (cli.verbose) {
                 e.printStackTrace();
             } else {
@@ -411,6 +365,58 @@ public class CLI {
             }
             return Outcome.error();
         }
+    }
+
+    private static Outcome replay(CLI cli, KeYEnvironment env) {
+        if (cli.verbose)
+            System.out.println("Replaying proof...");
+        var replayResult = env.getReplayResult();
+        if (replayResult.hasErrors()) {
+            System.err.println("Error(s) while loading!");
+            if (cli.verbose) {
+                List<Throwable> errors = replayResult.getErrorList();
+                for (int i = 0; i < errors.size(); i++) {
+                    Throwable error = errors.get(i);
+                    System.err.println("Error " + (i + 1) + ": " + error);
+                }
+            }
+            return Outcome.error();
+        }
+        System.out.println("Loading and proof replay successful");
+        return Outcome.closed(0);
+    }
+
+    private static Outcome runAutoMode(CLI cli, KeYEnvironment env, Proof proof) {
+        if (!cli.quiet) {
+            System.out.println("Proving...");
+        }
+        var stratSettings = proof.getSettings().getStrategySettings();
+        stratSettings.setTimeout(cli.timeout);
+        stratSettings.setMaxSteps(cli.max);
+        long started = System.currentTimeMillis();
+        env.getProofControl().startAndWaitForAutoMode(proof);
+        long elapsed = System.currentTimeMillis() - started;
+        if (cli.printStats && !cli.quiet) {
+            System.out.println(proof.getStatistics());
+        }
+        if (cli.outputFile != null) {
+            try {
+                ProofSaver.saveToFile(cli.outputFile.getAbsoluteFile(), proof);
+            } catch (IOException e) {
+                System.err.println("Error saving proof to file: " + e.getMessage());
+                return Outcome.error();
+            }
+        }
+        if (proof.closed()) {
+            System.out.println("Loading and proof successful");
+            return Outcome.closed(elapsed);
+        }
+        int open = proof.openGoals().size();
+        if (!cli.quiet) {
+            System.err.println("Proof not closed. " + open + " goals remaining");
+        }
+        printOpenGoals(cli, proof.openGoals());
+        return Outcome.open(open, elapsed);
     }
 
     private static @Nullable String unknownChoice(List<String> choices,
@@ -424,20 +430,27 @@ public class CLI {
                     .add(c.name().toString());
         }
         for (String choice : choices) {
-            String category = choice.substring(0, choice.indexOf(':'));
+            String category = categoryOf(choice);
             Set<String> known = byCategory.get(category);
             if (known == null) {
                 return "no such taclet option category: " + category + "; known categories: "
                     + String.join(", ", byCategory.keySet());
             }
             if (!known.contains(choice)) {
-                return "no such choice for " + category + ": "
-                    + choice.substring(choice.indexOf(':') + 1) + "; known choices: "
-                    + known.stream().map(k -> k.substring(k.indexOf(':') + 1))
-                            .collect(Collectors.joining(", "));
+                return "no such choice for " + category + ": " + valueOf(choice)
+                    + "; known choices: "
+                    + known.stream().map(CLI::valueOf).collect(Collectors.joining(", "));
             }
         }
         return null;
+    }
+
+    private static String categoryOf(String choice) {
+        return choice.substring(0, choice.indexOf(':'));
+    }
+
+    private static String valueOf(String choice) {
+        return choice.substring(choice.indexOf(':') + 1);
     }
 
     private static @Nullable String malformedChoice(List<String> choices) {

@@ -3,30 +3,17 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser.varcond;
 
-import org.key_project.logic.LogicServices;
 import org.key_project.logic.SyntaxElement;
-import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.logic.sort.Sort;
-import org.key_project.prover.rules.VariableCondition;
-import org.key_project.prover.rules.instantiation.MatchResultInfo;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.sort.GenericSort;
-import org.key_project.solidity.program.ast.StaticTypes;
-import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
-import org.key_project.solidity.program.ast.abstractions.MemoryReferenceTypes;
-import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
-import org.key_project.solidity.rule.matching.inst.GenericSortCondition;
-import org.key_project.solidity.rule.matching.inst.SVInstantiations;
-import org.key_project.solidity.rule.matching.inst.SortException;
 import org.key_project.solidity.rule.sv.ProgramSV;
 
 import org.jspecify.annotations.Nullable;
 
 /// Binds a generic sort to the Solidity type of a matched member field.
-public final class FieldExpressionTypeToSortCondition implements VariableCondition {
-    private final ProgramSV fieldSV;
-    private final GenericSort sort;
+public final class FieldExpressionTypeToSortCondition extends TypeToSortCondition {
     private final boolean memoryPayload;
 
     public FieldExpressionTypeToSortCondition(ProgramSV fieldSV, GenericSort sort) {
@@ -35,46 +22,20 @@ public final class FieldExpressionTypeToSortCondition implements VariableConditi
 
     public FieldExpressionTypeToSortCondition(ProgramSV fieldSV, GenericSort sort,
             boolean memoryPayload) {
-        this.fieldSV = fieldSV;
-        this.sort = sort;
+        super(fieldSV, sort);
         this.memoryPayload = memoryPayload;
     }
 
     @Override
-    @Nullable
-    public MatchResultInfo check(SchemaVariable var, SyntaxElement svSubst,
-            MatchResultInfo matchCond, LogicServices lServices) {
-        if (var != fieldSV) {
-            return matchCond;
-        }
-
-        SVInstantiations inst = (SVInstantiations) matchCond.getInstantiations();
+    protected @Nullable Sort sortOf(SyntaxElement svSubst, Services services) {
         if (!(svSubst instanceof FieldDeclaration fd)) {
             return null;
         }
-
-        Services services = (Services) lServices;
-        Type fieldType = StaticTypes.unwrap(fd.getTypeReference().resolvedType());
-        KeYSolidityType keyType = fieldType == null ? null
-                : services.getSolidityInfo().getKeYSolidityType(fieldType);
-        if (keyType == null) {
-            return null;
-        }
-
-        Sort type = memoryPayload && MemoryReferenceTypes.isReferenceType(fieldType)
-                ? services.getTheoryInfo().getMemoryLDT().getIdentitySort()
-                : keyType.getSort();
-        try {
-            return matchCond.setInstantiations(
-                inst.add(GenericSortCondition.createIdentityCondition(sort, type), lServices));
-        } catch (SortException e) {
-            return null;
-        }
+        return payloadSort(services, fd.getTypeReference().resolvedType(), memoryPayload);
     }
 
     @Override
-    public String toString() {
-        String condition = memoryPayload ? "\\hasMemoryFieldSort" : "\\hasFieldSort";
-        return condition + "(" + fieldSV.name() + ", " + sort.name() + ")";
+    protected String keyword() {
+        return memoryPayload ? "\\hasMemoryFieldSort" : "\\hasFieldSort";
     }
 }

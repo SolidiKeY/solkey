@@ -11,13 +11,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.key_project.solidity.program.parser.SolcAst;
 import org.key_project.solidity.program.parser.SolcWrapper;
 import org.key_project.solidity.program.parser.SolidityOutline;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.jspecify.annotations.Nullable;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
+
+import static org.key_project.solidity.program.parser.SolcAst.text;
 
 /// Runs a contract's functions on an in-process EVM and reports what each one did.
 ///
@@ -32,7 +34,7 @@ public final class SolidityRuntimeCheck {
 
     private static final Bytes PANIC_SELECTOR = Bytes.fromHexString("0x4e487b71");
 
-    private static final Map<Integer, String> PANIC_NAMES = Map.of(
+    static final Map<Integer, String> PANIC_NAMES = Map.of(
         0x01, "assert failed",
         0x11, "arithmetic overflow",
         0x12, "division by zero",
@@ -72,11 +74,11 @@ public final class SolidityRuntimeCheck {
 
     /// Runs `function` of `contract`, or every provable function of it when `function` is null.
     ///
-    /// @throws IOException if solc cannot compile `solFile`, or it declares no such contract
+    /// @throws IOException if solc cannot compile `solFile`
     public static List<Verdict> run(Path solFile, @Nullable String contract,
             @Nullable String function) throws IOException {
-        SolidityOutline outline = SolidityOutline.of(solFile);
-        SolidityOutline.Contract target = contractOf(outline, contract, solFile);
+        SolidityOutline.Contract target =
+            SolidityOutline.of(solFile).requireContract(contract, solFile);
 
         String deploymentLogic = deploymentLogicOf(solFile, target.name());
         if (deploymentLogic != null) {
@@ -95,22 +97,6 @@ public final class SolidityRuntimeCheck {
             verdicts.add(verdictFor(runner, solFile, target.name(), fn));
         }
         return verdicts;
-    }
-
-    private static SolidityOutline.Contract contractOf(SolidityOutline outline,
-            @Nullable String contract, Path solFile) throws IOException {
-        if (contract != null) {
-            return outline.contract(contract).orElseThrow(() -> new IOException(
-                solFile + " declares no contract " + contract + "; candidates: "
-                    + outline.contracts().stream().map(SolidityOutline.Contract::name).toList()));
-        }
-        if (outline.contracts().size() != 1) {
-            throw new IOException(solFile + " declares "
-                + (outline.contracts().isEmpty() ? "no contract" : "several contracts")
-                + "; name one with --contract. Candidates: "
-                + outline.contracts().stream().map(SolidityOutline.Contract::name).toList());
-        }
-        return outline.contracts().get(0);
     }
 
     private static List<SolidityOutline.Function> functionsOf(SolidityOutline.Contract contract,
@@ -156,16 +142,15 @@ public final class SolidityRuntimeCheck {
     }
 
     /// The `Panic` code carried by `revertData`, or `-1` when it is not a `Panic` payload.
-    private static int panicCode(Bytes revertData) {
+    static int panicCode(Bytes revertData) {
         if (revertData.size() != 36 || !revertData.slice(0, 4).equals(PANIC_SELECTOR)) {
             return -1;
         }
         return revertData.slice(4).toUnsignedBigInteger().intValueExact();
     }
 
-    private static String runtimeBytecode(Path solFile, String contract) throws IOException {
-        JsonNode contracts =
-            new ObjectMapper().readTree(SolcWrapper.getBinJson(solFile)).get("contracts");
+    static String runtimeBytecode(Path solFile, String contract) throws IOException {
+        JsonNode contracts = SolcWrapper.readJson(SolcWrapper.getBinJson(solFile)).get("contracts");
         for (Map.Entry<String, JsonNode> unit : contracts.properties()) {
             JsonNode compiled = unit.getValue().get(contract);
             if (compiled != null) {
@@ -181,30 +166,24 @@ public final class SolidityRuntimeCheck {
     /// which is only equivalent while the contract has no constructor and no initialized state
     /// variable — otherwise the run would start from an all-zero storage the real contract never
     /// has, and every verdict from it would be about a state that cannot occur.
-    private static @Nullable String deploymentLogicOf(Path solFile, String contract)
+    static @Nullable String deploymentLogicOf(Path solFile, String contract)
             throws IOException {
-        JsonNode root = new ObjectMapper().readTree(SolcWrapper.getJsonSolidity(solFile));
-        for (JsonNode node : root.get("nodes").values()) {
-            if (!contract.equals(text(node, "name"))) {
-                continue;
+        JsonNode node = SolcAst.contractNode(solFile, contract).orElse(null);
+        if (node == null) {
+            return null;
+        }
+        for (JsonNode member : node.get("nodes").values()) {
+            if ("FunctionDefinition".equals(text(member, "nodeType"))
+                    && "constructor".equals(text(member, "kind"))) {
+                return "has a constructor, so a run from all-zero storage would not be the "
+                    + "contract you deploy";
             }
-            for (JsonNode member : node.get("nodes").values()) {
-                if ("FunctionDefinition".equals(text(member, "nodeType"))
-                        && "constructor".equals(text(member, "kind"))) {
-                    return "has a constructor, so a run from all-zero storage would not be the "
-                        + "contract you deploy";
-                }
-                if ("VariableDeclaration".equals(text(member, "nodeType"))
-                        && member.has("value") && !member.get("value").isNull()) {
-                    return "initializes " + text(member, "name") + " at declaration, so a run "
-                        + "from all-zero storage would not be the contract you deploy";
-                }
+            if ("VariableDeclaration".equals(text(member, "nodeType"))
+                    && member.has("value") && !member.get("value").isNull()) {
+                return "initializes " + text(member, "name") + " at declaration, so a run "
+                    + "from all-zero storage would not be the contract you deploy";
             }
         }
         return null;
-    }
-
-    private static String text(JsonNode node, String field) {
-        return node != null && node.has(field) ? node.get(field).asString() : "";
     }
 }

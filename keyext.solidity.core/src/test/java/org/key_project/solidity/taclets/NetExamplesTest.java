@@ -4,8 +4,6 @@
 package org.key_project.solidity.taclets;
 
 import java.io.IOException;
-import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
@@ -18,7 +16,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /// Runs the `net` ledger examples — the `.key` problems of `keyext.solidity.examples/net/`
@@ -40,20 +37,12 @@ public class NetExamplesTest {
     void netExampleCloses(String name) throws Exception {
         Path key = SolidityExampleTests.example("net/" + name);
         Proof proof = SolidityExampleTests.loadAndProve(key, 50000, 30000);
-        assertTrue(proof.closed(),
-            () -> name + " should close; open goals: " + proof.openGoals().size()
-                + "; first open goal: " + proof.openGoals().head().sequent());
+        assertTrue(proof.closed(), () -> SolidityExampleTests.describeOpenGoals(name, proof));
     }
 
     static Stream<Arguments> examples() throws IOException {
-        try (Stream<Path> files = Files.list(SolidityExampleTests.examplesDir("net"))) {
-            return files.filter(p -> p.getFileName().toString().endsWith(".key"))
-                    .map(p -> p.getFileName().toString())
-                    .sorted()
-                    .map(Arguments::of)
-                    .toList()
-                    .stream();
-        }
+        return SolidityExampleTests.keyFiles(SolidityExampleTests.examplesDir("net")).stream()
+                .map(p -> Arguments.of(p.getFileName().toString()));
     }
 
     @ParameterizedTest(name = "{0}")
@@ -66,14 +55,8 @@ public class NetExamplesTest {
     }
 
     static Stream<Arguments> openExamples() throws Exception {
-        URL resource = NetExamplesTest.class.getClassLoader().getResource(OPEN_EXAMPLES_RESOURCE);
-        assertNotNull(resource, "missing resource dir: " + OPEN_EXAMPLES_RESOURCE);
-        try (Stream<Path> files = Files.list(Path.of(resource.toURI()))) {
-            return files.filter(p -> p.getFileName().toString().endsWith(".key"))
-                    .sorted()
-                    .map(p -> Arguments.of(p.getFileName().toString(), p))
-                    .toList()
-                    .stream();
-        }
+        return SolidityExampleTests
+                .keyFiles(SolidityExampleTests.resource(OPEN_EXAMPLES_RESOURCE)).stream()
+                .map(p -> Arguments.of(p.getFileName().toString(), p));
     }
 }

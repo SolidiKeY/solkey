@@ -3,34 +3,24 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions;
 
-import java.util.Objects;
-
-import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.LeafProgramElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
+import static org.key_project.solidity.program.ast.SolidityProgramElement.takeChild;
+
 
 // This class is used for expressions like bool(true) where bool is an elementary expression
-public class ElementaryExpression extends SolidityExpression {
+public class ElementaryExpression extends SolidityExpression implements LeafProgramElement {
 
     public ElementaryExpression(Type type) {
         super(type);
     }
 
     public ElementaryExpression(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
+        super(takeChild(children, Type.class));
 
-    }
-
-    @Override
-    public SyntaxElement getChild(int n) {
-        throw outOfBounds(n);
-    }
-
-    @Override
-    public int getChildCount() {
-        return 0;
     }
 
     @Override

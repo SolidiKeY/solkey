@@ -34,13 +34,7 @@ public final class StorageDeleteTypes {
 
     public static boolean hasMappingElement(@Nullable Type pathType) {
         Type type = StaticTypes.unwrap(pathType);
-        Type element = switch (type) {
-            case MappingType mapping -> mapping.valueType();
-            case DynamicArrayType array -> array.getElementType();
-            case ArrayType array -> array.getElementType();
-            case null, default -> null;
-        };
-        return StaticTypes.unwrap(element) instanceof MappingType;
+        return StaticTypes.unwrap(StaticTypes.elementTypeOf(type)) instanceof MappingType;
     }
 
     private static boolean hasFixedArrayElement(@Nullable Type type, Set<Type> visited) {

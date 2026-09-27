@@ -4,7 +4,6 @@
 package org.key_project.solidity.taclets;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
@@ -44,8 +43,7 @@ public class ContractExamplesTest {
     void contractExampleCloses(String directory, String contract, String function)
             throws Exception {
         Path sol = contractSource(directory, contract);
-        Proof proof = SolidityExampleTests.prove(
-            SolidityExampleTests.load(sol, contract, function), 20000, 60000);
+        Proof proof = SolidityExampleTests.proveFunction(sol, contract, function, 20000, 60000);
         if (KNOWN_OPEN.contains(contract + "." + function)) {
             assertFalse(proof.closed(), contract + "." + function
                 + " closed; remove it from KNOWN_OPEN");
@@ -58,7 +56,7 @@ public class ContractExamplesTest {
     static Stream<Arguments> examples() throws IOException {
         Stream.Builder<Arguments> args = Stream.builder();
         for (String directory : DIRECTORIES) {
-            for (String contract : contracts(directory)) {
+            for (String contract : SolidityExampleTests.solContracts(directory)) {
                 SolidityProblemSynthesizer
                         .provableFunctions(contractSource(directory, contract), contract)
                         .stream()
@@ -67,16 +65,6 @@ public class ContractExamplesTest {
             }
         }
         return args.build();
-    }
-
-    private static List<String> contracts(String directory) throws IOException {
-        try (Stream<Path> files = Files.list(SolidityExampleTests.examplesDir(directory))) {
-            return files.map(p -> p.getFileName().toString())
-                    .filter(name -> name.endsWith(".sol"))
-                    .map(name -> name.substring(0, name.length() - ".sol".length()))
-                    .sorted()
-                    .toList();
-        }
     }
 
     private static Path contractSource(String directory, String contract) {

@@ -56,7 +56,7 @@ public class ExpressionSVSort extends ProgramSVSort {
 
     private static boolean isComplexPath(SolidityProgramElement pe) {
         return pe instanceof MemberExp || pe instanceof IndexExpression
-                || (pe instanceof FunctionCallExpression call && PathSVSort.isNoArgPush(call));
+                || (pe instanceof FunctionCallExpression call && call.isNoArgPush());
     }
 
     @Override

@@ -7,20 +7,17 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.key_project.solidity.control.KeYEnvironment;
 import org.key_project.solidity.proof.Proof;
-import org.key_project.solidity.proof.io.AbstractProblemLoader.ReplayResult;
 import org.key_project.solidity.proof.io.ProofSaver;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.key_project.solidity.testutil.SolidityExampleTests.assertSameProofTree;
 import static org.key_project.solidity.testutil.SolidityExampleTests.example;
 import static org.key_project.solidity.testutil.SolidityExampleTests.loadAndProve;
-import static org.key_project.solidity.testutil.SolidityExampleTests.treeSignature;
+import static org.key_project.solidity.testutil.SolidityExampleTests.replay;
 
 /// Round-trip: prove a closing example, save the proof, then reload it and check the saved proof
 /// replays back to a closed proof (exercises {@code KeYUserProblemFile.readProof} /
@@ -47,23 +44,12 @@ public class ProofSaveLoadTest {
         assertTrue(out.length() > 0, "a non-empty proof file should be written");
 
         // 3) reload and replay
-        KeYEnvironment env2 = KeYEnvironment.load(out.toPath());
-        Proof reloaded = env2.getLoadedProof();
-        assertNotNull(reloaded, "reloaded proof must not be null");
-
-        ReplayResult replay = env2.getReplayResult();
-        if (replay != null) {
-            assertFalse(replay.hasErrors(),
-                "proof replay should report no errors, got: " + replay.getErrorList());
-        }
+        Proof reloaded = replay(out.toPath());
         assertTrue(reloaded.closed(), "the reloaded proof should be closed after replay");
 
         // 4) structural equivalence: same node count and identical tree of applied rule names
         assertTrue(proof.countNodes() > 1,
             "the proof should be non-trivial so the structural check is meaningful");
-        assertEquals(proof.countNodes(), reloaded.countNodes(),
-            "reloaded proof should have the same number of nodes");
-        assertEquals(treeSignature(proof.root()), treeSignature(reloaded.root()),
-            "reloaded proof tree (shape + applied rules) should match the original");
+        assertSameProofTree("fieldAccess", proof, reloaded);
     }
 }

@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions;
 
-import java.util.Objects;
-
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.util.ExtList;
+
+import static org.key_project.solidity.program.ast.SolidityProgramElement.takeChild;
 
 public abstract class SolidityExpression implements SolidityProgramElement, Expression {
     protected final Type type;
@@ -17,7 +17,7 @@ public abstract class SolidityExpression implements SolidityProgramElement, Expr
     }
 
     public SolidityExpression(ExtList children) {
-        this.type = Objects.requireNonNull(children.removeFirstOccurrence(Type.class));
+        this.type = takeChild(children, Type.class);
     }
 
     @Override

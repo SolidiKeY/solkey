@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Objects;
 
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.LeafProgramElement;
 import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
@@ -15,7 +16,8 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 
-public class ContractReference extends SolidityExpression implements Resolver, VariableReference {
+public class ContractReference extends SolidityExpression
+        implements Resolver, VariableReference, LeafProgramElement {
 
     public final int id;
 
@@ -34,16 +36,6 @@ public class ContractReference extends SolidityExpression implements Resolver, V
         super(type);
         this.id = id;
         this.contractDeclaration = contractDeclaration;
-    }
-
-    @Override
-    public SyntaxElement getChild(int n) {
-        throw outOfBounds(n);
-    }
-
-    @Override
-    public int getChildCount() {
-        return 0;
     }
 
     @Override

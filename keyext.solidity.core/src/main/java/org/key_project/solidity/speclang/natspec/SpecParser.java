@@ -42,11 +42,19 @@ public final class SpecParser {
 
     /// Whether `\old(...)` occurs anywhere in the expression.
     public static boolean usesOld(ParseTree tree) {
-        if (tree instanceof SolSpecParser.OldContext) {
+        return contains(tree, SolSpecParser.OldContext.class);
+    }
+
+    public static boolean quantifies(ParseTree tree) {
+        return contains(tree, SolSpecParser.QuantifierContext.class);
+    }
+
+    private static boolean contains(ParseTree tree, Class<? extends ParseTree> nodeType) {
+        if (nodeType.isInstance(tree)) {
             return true;
         }
         for (int i = 0; i < tree.getChildCount(); i++) {
-            if (usesOld(tree.getChild(i))) {
+            if (contains(tree.getChild(i), nodeType)) {
                 return true;
             }
         }

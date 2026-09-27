@@ -5,6 +5,7 @@ package org.key_project.solidity.program.ast.declarations;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
 
 
 public class MemberEnumDeclaration implements Declaration {
@@ -27,8 +28,7 @@ public class MemberEnumDeclaration implements Declaration {
 
     @Override
     public SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException(
-            "Index should be 0 <= " + n + " < " + getChildCount());
+        throw SolidityProgramElement.outOfBounds(n, getChildCount());
     }
 
     @Override

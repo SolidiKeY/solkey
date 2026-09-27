@@ -6,7 +6,9 @@ package org.key_project.solidity.program.ast;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.solidity.rule.matching.inst.MatchConditions;
+import org.key_project.util.ExtList;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public interface SolidityProgramElement extends SyntaxElement {
@@ -23,7 +25,7 @@ public interface SolidityProgramElement extends SyntaxElement {
         if (src == null)
             return null;
 
-        if (src.getClass() != this.getClass()) {
+        if (src.getClass() != this.getClass() || !matchesHead(src)) {
             return null;
         }
 
@@ -37,6 +39,10 @@ public interface SolidityProgramElement extends SyntaxElement {
 
         sourceData.next();
         return mc;
+    }
+
+    default boolean matchesHead(SolidityProgramElement src) {
+        return true;
     }
 
     /// matches successively all children of this current node. Thereby the <tt>offset</tt>-th child
@@ -95,7 +101,18 @@ public interface SolidityProgramElement extends SyntaxElement {
     /// Exception for a child index outside `[0, getChildCount())`, thrown by [#getChild(int)]
     /// implementations.
     default IndexOutOfBoundsException outOfBounds(int index) {
-        return new IndexOutOfBoundsException(
-            "Index should be 0 <= " + index + " < " + getChildCount());
+        return outOfBounds(index, getChildCount());
+    }
+
+    static IndexOutOfBoundsException outOfBounds(int index, int count) {
+        return new IndexOutOfBoundsException("Index should be 0 <= " + index + " < " + count);
+    }
+
+    static <T extends @NonNull Object> T takeChild(ExtList children, Class<T> childClass) {
+        T child = children.removeFirstOccurrence(childClass);
+        if (child == null) {
+            throw new NullPointerException(childClass.getSimpleName() + " child is missing");
+        }
+        return child;
     }
 }

@@ -10,7 +10,9 @@ import java.util.Map;
 
 import org.key_project.solidity.parser.SolSpecBaseVisitor;
 import org.key_project.solidity.parser.SolSpecParser;
+import org.key_project.solidity.program.parser.ParserUtils;
 import org.key_project.solidity.program.parser.SolidityOutline;
+import org.key_project.solidity.theory.StructLDT;
 
 import org.jspecify.annotations.Nullable;
 
@@ -128,7 +130,7 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
 
     @Override
     public Value visitNet(SolSpecParser.NetContext node) {
-        return new Value("selectSt<[int]>(" + ctx.net() + ", at(" + term(node.expr()) + "))",
+        return new Value(call("selectSt<[int]>", ctx.net(), call("at", term(node.expr()))),
             SpecType.INT, false);
     }
 
@@ -162,12 +164,11 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
                 && !ctx.locals().containsKey(base.getText())
                 && stateVariable(base.getText()) == null) {
             if (base.getText().equals("msg")) {
-                return switch (member) {
-                    case "sender" -> new Value("msgSender", SpecType.INT, false);
-                    case "value" -> new Value("msgValue", SpecType.INT, false);
-                    default -> throw new SpecException("unknown member msg." + member
-                        + "; only msg.sender and msg.value are modeled");
-                };
+                String variable = ParserUtils.msgMemberVariable(member);
+                if (variable == null) {
+                    throw new SpecException(ParserUtils.unsupportedMsgMember(member));
+                }
+                return new Value(variable, SpecType.INT, false);
             }
             List<String> members = contract.enums().get(base.getText());
             if (members != null) {
@@ -190,7 +191,7 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
         if (node.expr() instanceof SolSpecParser.IntLitContext literal) {
             return new Value("-" + literal.getText(), SpecType.INT, false);
         }
-        return new Value("neg(" + term(node.expr()) + ")", SpecType.INT, false);
+        return new Value(call("neg", term(node.expr())), SpecType.INT, false);
     }
 
     @Override
@@ -198,22 +199,22 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
         String left = term(node.expr(0));
         String right = term(node.expr(1));
         return switch (node.op.getText()) {
-            case "/" -> new Value("div(" + left + ", " + right + ")", SpecType.INT, false);
-            case "%" -> new Value("mod(" + left + ", " + right + ")", SpecType.INT, false);
-            default -> new Value("(" + left + " * " + right + ")", SpecType.INT, false);
+            case "/" -> new Value(call("div", left, right), SpecType.INT, false);
+            case "%" -> new Value(call("mod", left, right), SpecType.INT, false);
+            default -> new Value(infix("*", left, right), SpecType.INT, false);
         };
     }
 
     @Override
     public Value visitAdd(SolSpecParser.AddContext node) {
-        return new Value("(" + term(node.expr(0)) + " " + node.op.getText() + " "
-            + term(node.expr(1)) + ")", SpecType.INT, false);
+        return new Value(infix(node.op.getText(), term(node.expr(0)), term(node.expr(1))),
+            SpecType.INT, false);
     }
 
     @Override
     public Value visitRel(SolSpecParser.RelContext node) {
-        return new Value("(" + term(node.expr(0)) + " " + node.op.getText() + " "
-            + term(node.expr(1)) + ")", SpecType.BOOL, true);
+        return new Value(infix(node.op.getText(), term(node.expr(0)), term(node.expr(1))),
+            SpecType.BOOL, true);
     }
 
     @Override
@@ -223,8 +224,8 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
         boolean bools = left.type() instanceof SpecType.Bool
                 || right.type() instanceof SpecType.Bool;
         String equality = bools
-                ? "(" + asFormula(left) + " <-> " + asFormula(right) + ")"
-                : "(" + asTerm(left) + " = " + asTerm(right) + ")";
+                ? infix("<->", asFormula(left), asFormula(right))
+                : infix("=", asTerm(left), asTerm(right));
         return new Value(node.op.getText().equals("==") ? equality : "!" + equality,
             SpecType.BOOL, true);
     }
@@ -261,8 +262,15 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
 
     private Value connective(SolSpecParser.ExprContext left, String op,
             SolSpecParser.ExprContext right) {
-        return new Value("(" + formula(left) + " " + op + " " + formula(right) + ")",
-            SpecType.BOOL, true);
+        return new Value(infix(op, formula(left), formula(right)), SpecType.BOOL, true);
+    }
+
+    private static String infix(String op, String left, String right) {
+        return "(" + left + " " + op + " " + right + ")";
+    }
+
+    private static String call(String function, String... arguments) {
+        return function + "(" + String.join(", ", arguments) + ")";
     }
 
     private Value in(Context inner, SolSpecParser.ExprContext node) {
@@ -284,7 +292,7 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
                     throw new SpecException("unknown identifier " + ident.getText());
                 }
                 List<String> segments = new ArrayList<>();
-                segments.add(contract.name() + "$" + ident.getText());
+                segments.add(StructLDT.fieldConstantName(contract.name(), ident.getText()));
                 yield new Path(segments, SpecType.of(variable.type()));
             }
             case SolSpecParser.IndexContext index -> {
@@ -315,7 +323,7 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
                     }
                     yield new Path(
                         extend(base.segments(),
-                            contract.name() + "$" + struct.name() + "$" + name),
+                            StructLDT.fieldConstantName(contract.name(), struct.name(), name)),
                         SpecType.of(field.type()));
                 }
                 throw new SpecException(

@@ -3,8 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.taclets;
 
-import java.net.URL;
-import java.nio.file.Path;
 
 import org.key_project.prover.sequent.SequentFormula;
 import org.key_project.solidity.control.KeYEnvironment;
@@ -12,18 +10,17 @@ import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.program.ast.statement.DeclarationStatement;
 import org.key_project.solidity.program.ast.statement.FunctionBodyStatement;
 import org.key_project.solidity.proof.Goal;
-import org.key_project.solidity.proof.Proof;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.key_project.solidity.testutil.SolidityExampleTests.applyNamedTacletAtTop;
+import static org.key_project.solidity.testutil.SolidityExampleTests.applyTacletAtTop;
 import static org.key_project.solidity.testutil.SolidityExampleTests.load;
 import static org.key_project.solidity.testutil.SolidityExampleTests.modalityProgram;
+import static org.key_project.solidity.testutil.SolidityExampleTests.resource;
 
 /// End-to-end test: a `.key` problem loads a Solidity contract via `\programSource`, places a
 /// `withdraw(a)@Contract;` call (a [FunctionBodyStatement]) inside a modality, and the
@@ -33,14 +30,9 @@ public class FunctionBodyExpandTest {
 
     @Test
     void expandsFunctionBodyInsideModality() throws Exception {
-        URL res = getClass().getClassLoader()
-                .getResource("org/key_project/solidity/functionbody/withdrawExpand.key");
-        assertNotNull(res, "test resource withdrawExpand.key must exist");
-        Path file = Path.of(res.toURI());
-
-        KeYEnvironment env = load(file);
-        Proof proof = env.getLoadedProof();
-        Goal goal = proof.openGoals().head();
+        KeYEnvironment env =
+            load(resource("org/key_project/solidity/functionbody/withdrawExpand.key"));
+        Goal goal = env.getLoadedProof().openGoals().head();
 
         // before: the modality program is the (not yet inlined) function-body statement
         SequentFormula sf = goal.sequent().succedent().get(0);
@@ -49,13 +41,9 @@ public class FunctionBodyExpandTest {
             "modality should start with a function-body statement");
 
         // find and apply the functionBodyExpand taclet at the modality formula
-        applyNamedTacletAtTop(env, proof, goal, "functionBodyExpand");
-
         // after: the function-body statement is replaced by the parameter declaration(s)
         // followed by the inlined body block
-        Goal newGoal = proof.openGoals().head();
-        Block after =
-            modalityProgram(newGoal.sequent().succedent().get(0).formula());
+        Block after = modalityProgram(applyTacletAtTop(env, "functionBodyExpand"));
 
         assertTrue(after.getStatements().size() >= 2,
             "expanded program should contain parameter declarations and the body");

@@ -4,8 +4,11 @@
 package org.key_project.solidity.testutil;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -26,6 +29,7 @@ import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.init.SolidityProblemSpec;
 import org.key_project.solidity.proof.init.SolidityProblemSynthesizer;
+import org.key_project.solidity.proof.io.AbstractProblemLoader.ReplayResult;
 import org.key_project.solidity.proof.io.OutputStreamProofSaver;
 import org.key_project.solidity.proof.io.ProblemLoaderException;
 import org.key_project.solidity.rule.TacletApp;
@@ -33,6 +37,8 @@ import org.key_project.util.collection.ImmutableList;
 
 import org.junit.jupiter.params.provider.Arguments;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -74,6 +80,38 @@ public final class SolidityExampleTests {
         return Files.exists(p) ? p : Path.of("../keyext.solidity.examples").resolve(subdir);
     }
 
+    /// A test resource as a path, asserting it exists.
+    public static Path resource(String name) {
+        URL url = SolidityExampleTests.class.getClassLoader().getResource(name);
+        assertNotNull(url, "test resource must exist: " + name);
+        try {
+            return Path.of(url.toURI());
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /// The contracts of every `.sol` file directly in an example directory, by file name.
+    public static List<String> solContracts(String subdir) throws IOException {
+        try (Stream<Path> files = Files.list(examplesDir(subdir))) {
+            return files.map(p -> p.getFileName().toString())
+                    .filter(name -> name.endsWith(".sol"))
+                    .map(name -> name.substring(0, name.length() - ".sol".length()))
+                    .sorted()
+                    .toList();
+        }
+    }
+
+    /// The `.key` files directly in a directory, sorted by file name.
+    public static List<Path> keyFiles(Path dir) throws IOException {
+        try (Stream<Path> files = Files.list(dir)) {
+            return files.filter(Files::isRegularFile)
+                    .filter(p -> p.getFileName().toString().endsWith(".key"))
+                    .sorted(Comparator.comparing(p -> p.getFileName().toString()))
+                    .toList();
+        }
+    }
+
     /// The single contract the taclet examples live in. It has no `.key` problems beside it: the
     /// loader synthesizes one obligation per function.
     public static Path testSuite() {
@@ -96,6 +134,24 @@ public final class SolidityExampleTests {
         assertTrue(!functions.isEmpty(),
             "no matching functions in " + testSuite().toAbsolutePath());
         return functions.stream().map(Arguments::of);
+    }
+
+    /// `(contract, function)` arguments for every provable function of one contract, sorted.
+    public static Stream<Arguments> contractFunctions(Path solFile, String contract)
+            throws IOException {
+        return SolidityProblemSynthesizer.provableFunctions(solFile, contract).stream().sorted()
+                .map(function -> Arguments.of(contract, function));
+    }
+
+    /// `(contract, function)` arguments for every provable function of every contract in an
+    /// example directory.
+    public static Stream<Arguments> contractFunctions(String subdir) throws IOException {
+        Stream.Builder<Arguments> args = Stream.builder();
+        for (String contract : solContracts(subdir)) {
+            contractFunctions(example(subdir + "/" + contract + ".sol"), contract)
+                    .forEach(args::add);
+        }
+        return args.build();
     }
 
     // --- loading and proving -------------------------------------------------------------------
@@ -154,6 +210,12 @@ public final class SolidityExampleTests {
         return prove(env, maxSteps, timeout);
     }
 
+    /// Load the obligation for one function of a Solidity source and run automode on it.
+    public static Proof proveFunction(Path solFile, String contract, String function,
+            int maxSteps, long timeout) throws ProblemLoaderException {
+        return prove(load(solFile, contract, function), maxSteps, timeout);
+    }
+
     /// Run automode on the environment's loaded proof, optionally overriding the strategy's step
     /// budget and timeout ([#KEEP] leaves a setting untouched), and return the proof.
     public static Proof prove(KeYEnvironment env, int maxSteps, long timeout) {
@@ -180,7 +242,38 @@ public final class SolidityExampleTests {
         return prove(load(file), maxSteps, timeout);
     }
 
+    /// Load a saved proof and assert that it replays without errors.
+    public static Proof replay(Path file) throws ProblemLoaderException {
+        KeYEnvironment env = KeYEnvironment.load(file);
+        Proof proof = env.getLoadedProof();
+        assertNotNull(proof, file + " must load a proof");
+        ReplayResult replay = env.getReplayResult();
+        if (replay != null) {
+            assertFalse(replay.hasErrors(),
+                file + " must replay without errors, got: " + replay.getErrorList());
+        }
+        return proof;
+    }
+
+    /// Assert that two proofs have the same closed-ness, node count and tree of applied rules.
+    public static void assertSameProofTree(String name, Proof original, Proof reloaded) {
+        assertEquals(original.closed(), reloaded.closed(),
+            () -> name + ": reloaded proof closed-ness differs");
+        assertEquals(original.countNodes(), reloaded.countNodes(),
+            () -> name + ": reloaded proof has a different number of nodes");
+        assertEquals(treeSignature(original.root()), treeSignature(reloaded.root()),
+            () -> name + ": reloaded proof tree differs from the original");
+    }
+
     // --- proof inspection ----------------------------------------------------------------------
+
+    /// Apply the named taclet at the top-level succedent formula of the first open goal and
+    /// return the top-level succedent formula of the goal that results.
+    public static Term applyTacletAtTop(KeYEnvironment env, String tacletName) {
+        Proof proof = env.getLoadedProof();
+        applyNamedTacletAtTop(env, proof, proof.openGoals().head(), tacletName);
+        return proof.openGoals().head().sequent().succedent().get(0).formula();
+    }
 
     /// Find the taclet named `tacletName` applicable at the top-level succedent formula of `goal`,
     /// position it there, assert it is applicable and complete, apply it, and return the positioned

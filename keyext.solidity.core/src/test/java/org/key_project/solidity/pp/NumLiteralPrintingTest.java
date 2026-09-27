@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.pp;
 
-import java.nio.file.Path;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
@@ -19,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.key_project.solidity.testutil.SolidityExampleTests.resource;
 
 /// Checks that integer literals encoded as `Z(d(..(#)))` are printed in decimal (like the
 /// KeY-Java logic printer) and that the position table relates the whole number to the `Z` term,
@@ -32,10 +32,6 @@ public class NumLiteralPrintingTest {
     private static final String FIELD_EXAMPLE =
         "org/key_project/solidity/examples/fieldAccessTest.key";
 
-    private static Path resource(String name) throws Exception {
-        return Path.of(NumLiteralPrintingTest.class.getClassLoader().getResource(name).toURI());
-    }
-
     private static String render(Node node, PosTableLayouter layouter, KeYEnvironment env) {
         var lp = new LogicPrinter(new NotationInfo(), env.getServices(), layouter);
         lp.printSequent(node.sequent());
@@ -44,9 +40,7 @@ public class NumLiteralPrintingTest {
 
     @Test
     void numeralPrintsInDecimal() throws Exception {
-        Path file = Path.of(
-            NumLiteralPrintingTest.class.getClassLoader().getResource(EXAMPLE).toURI());
-        KeYEnvironment env = KeYEnvironment.load(file);
+        KeYEnvironment env = KeYEnvironment.load(resource(EXAMPLE));
         Node root = env.getLoadedProof().root();
 
         var layouter = PosTableLayouter.positionTable(80);

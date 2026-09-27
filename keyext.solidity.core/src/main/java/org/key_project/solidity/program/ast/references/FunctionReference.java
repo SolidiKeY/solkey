@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Objects;
 
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.LeafProgramElement;
 import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.SourceData;
 import org.key_project.solidity.program.ast.abstractions.Type;
@@ -17,7 +18,8 @@ import org.key_project.solidity.rule.matching.inst.MatchConditions;
 
 import org.jspecify.annotations.Nullable;
 
-public class FunctionReference extends SolidityExpression implements Resolver, VariableReference {
+public class FunctionReference extends SolidityExpression
+        implements Resolver, VariableReference, LeafProgramElement {
 
     public final int id;
     private @Nullable FunctionDeclaration referencedDeclaration;
@@ -52,16 +54,6 @@ public class FunctionReference extends SolidityExpression implements Resolver, V
         else
             throw new IllegalStateException(
                 "function " + referencedDeclaration.name() + " has already been resolved");
-    }
-
-    @Override
-    public SyntaxElement getChild(int n) {
-        throw outOfBounds(n);
-    }
-
-    @Override
-    public int getChildCount() {
-        return 0;
     }
 
     @Override

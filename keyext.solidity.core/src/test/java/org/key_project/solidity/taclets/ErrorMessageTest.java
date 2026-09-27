@@ -3,14 +3,12 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.taclets;
 
-import java.net.URL;
-import java.nio.file.Path;
 
 import org.key_project.solidity.control.KeYEnvironment;
+import org.key_project.solidity.testutil.SolidityExampleTests;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -28,10 +26,8 @@ public class ErrorMessageTest {
     }
 
     private static String loadExpectingFailure(String resource) {
-        URL res = ErrorMessageTest.class.getClassLoader().getResource(resource);
-        assertNotNull(res, "test resource must exist: " + resource);
         try {
-            KeYEnvironment.load(Path.of(res.toURI()));
+            KeYEnvironment.load(SolidityExampleTests.resource(resource));
             fail("loading " + resource + " should have failed");
             return ""; // unreachable
         } catch (Exception e) {

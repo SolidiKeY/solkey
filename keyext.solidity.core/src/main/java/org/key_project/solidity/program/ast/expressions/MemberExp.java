@@ -4,7 +4,6 @@
 package org.key_project.solidity.program.ast.expressions;
 
 import java.util.HashMap;
-import java.util.Objects;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.Resolver;
@@ -15,6 +14,8 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.Nullable;
+
+import static org.key_project.solidity.program.ast.SolidityProgramElement.takeChild;
 
 public class MemberExp extends SolidityExpression implements Resolver {
     private final Expression leftExp;
@@ -36,8 +37,8 @@ public class MemberExp extends SolidityExpression implements Resolver {
 
     public MemberExp(ExtList children) {
         super(typeFrom(children));
-        this.leftExp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
-        this.rightExp = Objects.requireNonNull(children.removeFirstOccurrence(SyntaxElement.class));
+        this.leftExp = takeChild(children, Expression.class);
+        this.rightExp = takeChild(children, SyntaxElement.class);
         this.id = -1;
     }
 

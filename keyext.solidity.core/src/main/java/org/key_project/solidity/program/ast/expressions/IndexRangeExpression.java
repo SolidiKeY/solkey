@@ -3,14 +3,14 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions;
 
-import java.util.Objects;
-
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.Nullable;
+
+import static org.key_project.solidity.program.ast.SolidityProgramElement.takeChild;
 
 // v[0:2]
 public class IndexRangeExpression extends SolidityExpression {
@@ -29,7 +29,7 @@ public class IndexRangeExpression extends SolidityExpression {
 
     public IndexRangeExpression(ExtList children, Type type) {
         super(type);
-        this.baseExp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.baseExp = takeChild(children, Expression.class);
         this.startExp = children.removeFirstOccurrence(Expression.class);
         this.endExp = children.removeFirstOccurrence(Expression.class);
     }

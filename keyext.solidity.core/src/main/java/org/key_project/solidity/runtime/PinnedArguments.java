@@ -12,11 +12,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.key_project.solidity.program.parser.SolcWrapper;
+import org.key_project.solidity.program.parser.SolcAst;
 import org.key_project.solidity.program.parser.SolidityOutline;
 
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
+
+import static org.key_project.solidity.program.parser.SolcAst.text;
 
 /// Recovers concrete argument values for a parameterized example function from its leading
 /// `require` pins, so the function can be executed as well as proved.
@@ -70,11 +71,8 @@ public final class PinnedArguments {
 
     private static JsonNode bodyOf(Path solFile, String contract, String function)
             throws IOException {
-        JsonNode root = new ObjectMapper().readTree(SolcWrapper.getJsonSolidity(solFile));
-        for (JsonNode contractNode : root.get("nodes").values()) {
-            if (!contract.equals(text(contractNode, "name"))) {
-                continue;
-            }
+        JsonNode contractNode = SolcAst.contractNode(solFile, contract).orElse(null);
+        if (contractNode != null) {
             for (JsonNode member : contractNode.get("nodes").values()) {
                 if ("FunctionDefinition".equals(text(member, "nodeType"))
                         && function.equals(text(member, "name"))) {
@@ -186,9 +184,5 @@ public final class PinnedArguments {
         String value = text(expression, "value");
         return value.startsWith("0x") ? new BigInteger(value.substring(2), 16)
                 : new BigInteger(value);
-    }
-
-    private static String text(JsonNode node, String field) {
-        return node != null && node.has(field) ? node.get(field).asString() : "";
     }
 }

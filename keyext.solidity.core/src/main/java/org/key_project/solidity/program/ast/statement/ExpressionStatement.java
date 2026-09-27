@@ -6,22 +6,24 @@ package org.key_project.solidity.program.ast.statement;
 import java.util.Objects;
 
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.HashCachingElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.Nullable;
 
-public class ExpressionStatement implements Statement {
+import static org.key_project.solidity.program.ast.SolidityProgramElement.takeChild;
+
+public class ExpressionStatement extends HashCachingElement implements Statement {
     final Expression expression;
-    private int hashcode = -1;
 
     public ExpressionStatement(Expression expression) {
         this.expression = Objects.requireNonNull(expression);
     }
 
     public ExpressionStatement(ExtList children) {
-        this.expression = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.expression = takeChild(children, Expression.class);
     }
 
     @Override
@@ -56,14 +58,5 @@ public class ExpressionStatement implements Statement {
         if (!(o instanceof ExpressionStatement that))
             return false;
         return expression.equals(that.expression);
-    }
-
-    @Override
-    public int hashCode() {
-        if (hashcode == -1) {
-            int hash = computeHashCode();
-            hashcode = hash == -1 ? 0 : hash;
-        }
-        return hashcode;
     }
 }

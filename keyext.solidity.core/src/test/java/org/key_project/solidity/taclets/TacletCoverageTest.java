@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 import org.key_project.logic.PosInTerm;
 import org.key_project.logic.Term;
@@ -26,7 +25,6 @@ import org.key_project.prover.sequent.SequentFormula;
 import org.key_project.solidity.control.KeYEnvironment;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Proof;
-import org.key_project.solidity.proof.io.AbstractProblemLoader.ReplayResult;
 import org.key_project.solidity.proof.io.ProofSaver;
 import org.key_project.solidity.rule.TacletApp;
 import org.key_project.solidity.testutil.SolidityExampleTests;
@@ -181,12 +179,7 @@ public class TacletCoverageTest {
 
     static List<Path> savedProofProblems() throws IOException {
         Path dir = SolidityExampleTests.examplesDir(PROOFS_DIR);
-        if (!Files.isDirectory(dir)) {
-            return List.of();
-        }
-        try (Stream<Path> files = Files.list(dir)) {
-            return files.filter(f -> f.toString().endsWith(".key")).sorted().toList();
-        }
+        return Files.isDirectory(dir) ? SolidityExampleTests.keyFiles(dir) : List.of();
     }
 
     private static String tacletOf(Path problem) {
@@ -263,14 +256,7 @@ public class TacletCoverageTest {
     }
 
     static Proof replay(Path file) throws Exception {
-        KeYEnvironment env = KeYEnvironment.load(file);
-        Proof proof = env.getLoadedProof();
-        assertNotNull(proof, file + " must load a proof");
-        ReplayResult replay = env.getReplayResult();
-        if (replay != null) {
-            assertFalse(replay.hasErrors(),
-                file + " must replay without errors, got: " + replay.getErrorList());
-        }
+        Proof proof = SolidityExampleTests.replay(file);
         assertTrue(proof.closed(), file + " must replay to a closed proof");
         return proof;
     }

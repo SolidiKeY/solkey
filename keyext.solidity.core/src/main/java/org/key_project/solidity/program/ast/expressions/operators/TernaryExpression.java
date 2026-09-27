@@ -3,14 +3,14 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions.operators;
 
-import java.util.Objects;
-
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.SolidityExpression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
+
+import static org.key_project.solidity.program.ast.SolidityProgramElement.takeChild;
 
 
 public class TernaryExpression extends SolidityExpression {
@@ -60,11 +60,11 @@ public class TernaryExpression extends SolidityExpression {
 
     public TernaryExpression(ExtList children, Type type) {
         super(type);
-        this.condition = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.condition = takeChild(children, Expression.class);
         this.falseExpression =
-            Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+            takeChild(children, Expression.class);
         this.trueExpression =
-            Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+            takeChild(children, Expression.class);
     }
 
     public Expression getCondition() {

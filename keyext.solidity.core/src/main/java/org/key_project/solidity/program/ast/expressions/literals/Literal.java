@@ -4,7 +4,7 @@
 package org.key_project.solidity.program.ast.expressions.literals;
 
 import org.key_project.logic.Name;
-import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.LeafProgramElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.SourceData;
 import org.key_project.solidity.program.ast.abstractions.Type;
@@ -13,22 +13,12 @@ import org.key_project.solidity.rule.matching.inst.MatchConditions;
 
 import org.jspecify.annotations.Nullable;
 
-public abstract class Literal extends SolidityExpression {
+public abstract class Literal extends SolidityExpression implements LeafProgramElement {
 
     public abstract Name getLDTName();
 
     protected Literal(Type type) {
         super(type);
-    }
-
-    @Override
-    public SyntaxElement getChild(int n) {
-        throw outOfBounds(n);
-    }
-
-    @Override
-    public int getChildCount() {
-        return 0;
     }
 
     @Override

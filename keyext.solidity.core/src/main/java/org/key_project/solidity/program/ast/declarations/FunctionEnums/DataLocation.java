@@ -4,12 +4,12 @@
 package org.key_project.solidity.program.ast.declarations.FunctionEnums;
 
 
-import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.LeafProgramElement;
 import org.key_project.solidity.program.ast.declarations.Modifier;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 
 
-public enum DataLocation implements Modifier {
+public enum DataLocation implements Modifier, LeafProgramElement {
     Memory("memory"), Storage("storage"), Calldata("calldata"), Default("default");
 
     private final String label;
@@ -37,16 +37,6 @@ public enum DataLocation implements Modifier {
 
     public String noDefaultSpaceRightString() {
         return this.equals(Default) ? "" : this + " ";
-    }
-
-    @Override
-    public SyntaxElement getChild(int n) {
-        throw outOfBounds(n);
-    }
-
-    @Override
-    public int getChildCount() {
-        return 0;
     }
 
     @Override

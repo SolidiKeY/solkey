@@ -13,11 +13,9 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.parser.SolidityParser.*;
 import org.key_project.solidity.program.ast.SolidityInfo;
-import org.key_project.solidity.program.ast.abstractions.ArrayType;
-import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
+import org.key_project.solidity.program.ast.StaticTypes;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.MemoryReferenceTypes;
-import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.abstractions.StorageReferenceTypes;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
@@ -48,7 +46,6 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.jspecify.annotations.Nullable;
 
-import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.VOID;
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Default;
 
 public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
@@ -106,11 +103,14 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitSchemaVariable(SchemaVariableContext ctx) {
+        return requireSchemaVariable(ctx, ctx.start);
+    }
+
+    private SchemaVariable requireSchemaVariable(SchemaVariableContext ctx, Token pos) {
         String variableName = ctx.getText().substring(2);
-        // remove s# prefix from name
         SchemaVariable sv = schemaVariables.lookup(variableName);
         if (sv == null) {
-            reportError("Schema Variable " + variableName + " not declared.", ctx.start);
+            reportError("Schema Variable " + variableName + " not declared.", pos);
         }
         return sv;
     }
@@ -118,12 +118,8 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     @Override
     public SyntaxElement visitExpandFunctionBodyTransformer(
             ExpandFunctionBodyTransformerContext ctx) {
-        // strip the "s#" prefix from the schema variable name
-        String variableName = ctx.schemaVariable().getText().substring(2);
-        SchemaVariable sv = schemaVariables.lookup(variableName);
-        if (sv == null) {
-            reportError("Schema Variable " + variableName + " not declared.", ctx.start);
-        }
+        SchemaVariable sv = requireSchemaVariable(ctx.schemaVariable(), ctx.start);
+        String variableName = sv.name().toString();
         if (!(sv instanceof ProgramSV)) {
             reportError("Schema variable '" + variableName
                 + "' used in s#expand_function_body must be a program schema variable, e.g. "
@@ -214,13 +210,8 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         FunctionCallArguments args =
             (FunctionCallArguments) visitFunctionCallArguments(ctx.functionCallArguments());
 
-        FunctionDeclaration function = null;
-        for (FunctionDeclaration fd : services.getSolidityInfo().getFunctions(contractName)) {
-            if (fd.name().equals(functionName)) {
-                function = fd;
-                break;
-            }
-        }
+        FunctionDeclaration function =
+            services.getSolidityInfo().getFunctionDeclaration(contractName, functionName);
         if (function == null) {
             reportError("Unknown function " + functionName + " in contract " + contractName,
                 ctx.start);
@@ -243,9 +234,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
             (FunctionCallArguments) visitFunctionCallArguments(ctx.functionCallArguments());
         FunctionDeclaration functionDeclaration = simpleFunctionCallTarget(ctx.expression());
         if (functionDeclaration != null) {
-            FunctionReference functionRef =
-                new FunctionReference(functionDeclaration, functionDeclaration.getType());
-            return new FunctionCallExpression(functionRef.getType(), functionRef, args.getArgs());
+            return callTo(functionDeclaration, args.getArgs());
         }
         Expression functionExp = visitExpression(ctx.expression());
         if (functionExp instanceof NewExpression newExp) {
@@ -253,8 +242,10 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         }
         if (functionExp instanceof MemberExp memberExp
                 && memberExp.getRightExp() instanceof FunctionDeclaration memberFunction) {
+            Type builtinType =
+                ParserUtils.builtinCallType(memberExp, memberFunction, args.getArgs().size() > 0);
             return new FunctionCallExpression(
-                inferBuiltinMemberCallType(memberExp, memberFunction, args),
+                builtinType != null ? builtinType : memberFunction.getType(),
                 memberExp, args.getArgs());
         }
         Name name = new Name(functionExp.toString());
@@ -262,27 +253,13 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         if (functionDeclaration == null) {
             reportError("Unknown function " + name, ctx.start);
         }
-        FunctionReference functionRef =
-            new FunctionReference(functionDeclaration, functionDeclaration.getType());
-        return new FunctionCallExpression(functionRef.getType(), functionRef, args.getArgs());
+        return callTo(functionDeclaration, args.getArgs());
     }
 
-    private Type inferBuiltinMemberCallType(MemberExp memberExp,
-            FunctionDeclaration functionDeclaration, FunctionCallArguments args) {
-        String functionName = functionDeclaration.name().toString();
-        if ("pop".equals(functionName)
-                || ("push".equals(functionName) && !args.getArgs().isEmpty())) {
-            return VOID;
-        }
-        if ("push".equals(functionName)) {
-            Type receiverType = memberExp.getLeftExp().getType();
-            Type arrayType = receiverType instanceof KeYSolidityType kst ? kst.getSolidityType()
-                    : receiverType;
-            if (arrayType instanceof DynamicArrayType dynamicArrayType) {
-                return dynamicArrayType.getElementType();
-            }
-        }
-        return functionDeclaration.getType();
+    private static FunctionCallExpression callTo(FunctionDeclaration function,
+            ImmutableArray<Expression> args) {
+        FunctionReference functionRef = new FunctionReference(function, function.getType());
+        return new FunctionCallExpression(functionRef.getType(), functionRef, args);
     }
 
     private @Nullable FunctionDeclaration simpleFunctionCallTarget(ExpressionContext ctx) {
@@ -318,14 +295,9 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         if (ctx.identifier() != null && "msg".equals(ctx.expression().getText())
                 && localVars.lookup("msg") == null) {
             String member = ctx.identifier().getText();
-            String pvName = switch (member) {
-                case "sender" -> "msgSender";
-                case "value" -> "msgValue";
-                default -> null;
-            };
+            String pvName = ParserUtils.msgMemberVariable(member);
             if (pvName == null) {
-                reportError("Unsupported msg member '" + member
-                    + "' (only msg.sender and msg.value are modeled)", ctx.start);
+                reportError(ParserUtils.unsupportedMsgMember(member), ctx.start);
             }
             ProgramVariable pv = localVars.lookup(pvName);
             if (pv == null) {
@@ -337,25 +309,13 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         Expression leftExp = visitExpression(ctx.expression());
         Type leftType = leftExp.getType();
         if (ctx.schemaVariable() != null) {
-            String svName = ctx.schemaVariable().getText().substring(2);
-            SchemaVariable sv = schemaVariables.lookup(svName);
-            if (sv == null) {
-                reportError("Schema Variable " + svName + " not declared.", ctx.start);
-            }
-            return new MemberExp(leftExp, sv, leftType);
+            return new MemberExp(leftExp,
+                requireSchemaVariable(ctx.schemaVariable(), ctx.start), leftType);
         }
         String fieldName = ctx.identifier().getText();
-        FunctionDeclaration builtinFunction =
-            SolidityInfo.getBuiltinFunctionDeclaration(new Name(fieldName));
-        if (builtinFunction != null && ("push".equals(fieldName) || "pop".equals(fieldName)
-                || "transfer".equals(fieldName) || "send".equals(fieldName))) {
-            return new MemberExp(leftExp, builtinFunction, builtinFunction.getType());
-        }
-        if ("length".equals(fieldName)
-                && (leftType instanceof DynamicArrayType || leftType instanceof ArrayType)) {
-            FieldDeclaration sizeField =
-                new FieldDeclaration(new Name("size"), new TypeReference(new Name("uint256")));
-            return new MemberExp(leftExp, sizeField, PrimitiveType.UINT256);
+        MemberExp builtin = ParserUtils.builtinMemberAccess(leftExp, fieldName);
+        if (builtin != null) {
+            return builtin;
         }
         FieldDeclaration resolved = resolveStructField(leftType, fieldName);
         FieldDeclaration field = resolved != null ? resolved
@@ -369,7 +329,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     private @org.jspecify.annotations.Nullable FieldDeclaration resolveStructField(Type leftType,
             String fieldName) {
-        Type unwrapped = leftType instanceof KeYSolidityType kst ? kst.getSolidityType() : leftType;
+        Type unwrapped = StaticTypes.unwrap(leftType);
         if (!(unwrapped instanceof StructDeclaration struct)) {
             return null;
         }
@@ -429,13 +389,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitSchemaType(SchemaTypeContext ctx) {
-        // strip the "s#" prefix and look up the (Type-sorted) schema variable
-        String variableName = ctx.schemaVariable().getText().substring(2);
-        SchemaVariable sv = schemaVariables.lookup(variableName);
-        if (sv == null) {
-            reportError("Schema Variable " + variableName + " not declared.", ctx.start);
-        }
-        return sv;
+        return requireSchemaVariable(ctx.schemaVariable(), ctx.start);
     }
 
     public SyntaxElement visitTypeDefined(TypeNameContext ctx) {
@@ -494,11 +448,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
         // Taclet pattern: the variable position is a program schema variable (e.g. `T s#v = e;`).
         // Matching binds the schema variable to the concrete declared variable.
         if (ctx.schemaVariable() != null) {
-            String svName = ctx.schemaVariable().getText().substring(2);
-            SchemaVariable sv = schemaVariables.lookup(svName);
-            if (sv == null) {
-                reportError("Schema Variable " + svName + " not declared.", ctx.start);
-            }
+            SchemaVariable sv = requireSchemaVariable(ctx.schemaVariable(), ctx.start);
             StatementVariableDeclaration schematic =
                 new StatementVariableDeclaration(type, (ProgramSV) sv,
                     (DataLocation) visitStorageLocation(ctx.storageLocation()));
