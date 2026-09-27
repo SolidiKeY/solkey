@@ -30,8 +30,8 @@
     IdentityPrim p;
     Identity id;
     Memory m;
-    \unique Field f;
-    \unique Field g;
+    \unique MemberField f;
+    \unique MemberField g;
 }
 \problem {
 new(mtMem, p)

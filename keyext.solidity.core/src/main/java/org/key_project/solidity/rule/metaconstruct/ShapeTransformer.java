@@ -12,6 +12,7 @@ import org.key_project.solidity.logic.op.TypedField;
 import org.key_project.solidity.program.ast.StaticTypes;
 import org.key_project.solidity.program.ast.abstractions.ArrayType;
 import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
+import org.key_project.solidity.program.ast.abstractions.MappingType;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 
@@ -40,6 +41,8 @@ public class ShapeTransformer extends AbstractTermTransformer {
                     shapeOf(StaticTypes.unwrap(array.getElementType()), services));
             case DynamicArrayType array -> tb.func(services.requireFunction("dynArr"),
                 shapeOf(StaticTypes.unwrap(array.getElementType()), services));
+            case MappingType mapping -> tb.func(services.requireFunction("mapOf"),
+                shapeOf(StaticTypes.unwrap(mapping.valueType()), services));
             default -> tb.func(services.requireFunction("leaf"));
         };
     }

@@ -28,7 +28,7 @@
 
 \functions {
     Struct s;
-    \unique MapField mf;
+    \unique MapMemberField mf;
 }
 \problem {
 delField<[Struct]>(s, mf) = selectSt<[Struct]>(s, mf)

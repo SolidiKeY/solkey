@@ -1,0 +1,22 @@
+{
+  "id": "./",
+  "name": "SolKey — Solidity verifier",
+  "short_name": "SolKey",
+  "description": "Formal verification of Solidity contracts with the KeY prover, running on your device.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f5f5f9",
+  "theme_color": "#4b55e6",
+  "categories": ["developer", "education", "utilities"],
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "file_handlers": [
+    { "action": "./", "accept": { "text/plain": [".sol", ".key", ".proof"] } }
+  ]
+}

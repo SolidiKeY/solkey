@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { chromium } from 'playwright-core';
 
 const site = path.resolve(process.argv[2]);
@@ -30,7 +30,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
-const origin = `http://localhost:${server.address().port}/`;
+const origin = site.endsWith('.html') ? pathToFileURL(site).href : `http://localhost:${server.address().port}/`;
 
 function headlessShell() {
   if (process.env.SOLKEY_CHROMIUM) return process.env.SOLKEY_CHROMIUM;
@@ -271,19 +271,33 @@ async function desktop() {
   check('the prover restarts after stop and keeps the results', (await page.$$('.badge.pass,.badge.fail')).length >= 1);
   await shot(page, 'desktop-4-stopped');
 
-  await page.evaluate(() => navigator.serviceWorker.ready);
-  await page.waitForFunction(async () => {
-    const names = await caches.keys();
-    for (const name of names) {
-      if ((await (await caches.open(name)).match('solkey.js.wasm'))) return true;
-    }
-    return false;
-  }, null, { timeout: 180000, polling: 500 });
-  await context.setOffline(true);
-  await page.reload();
-  await listed(page, 413);
-  check('offline: the page and the prover load from the cache', /provable/.test(await status(page)));
-  await context.setOffline(false);
+  if (!origin.startsWith('file:')) {
+    const manifest = await page.evaluate(async () => {
+      const url = new URL(document.querySelector('link[rel=manifest]').href);
+      const data = await (await fetch(url)).json();
+      const icons = await Promise.all(data.icons.map(async (icon) => {
+        const response = await fetch(new URL(icon.src, url));
+        return `${icon.sizes}:${icon.purpose}:${response.ok}`;
+      }));
+      return { name: data.short_name, display: data.display, start: data.start_url, icons };
+    });
+    check(`installable: ${JSON.stringify(manifest)}`, manifest.display === 'standalone' && manifest.start === './'
+      && manifest.icons.includes('512x512:maskable:true') && manifest.icons.includes('192x192:any:true')
+      && manifest.icons.every((i) => i.endsWith(':true')));
+    await page.evaluate(() => navigator.serviceWorker.ready);
+    await page.waitForFunction(async () => {
+      const names = await caches.keys();
+      for (const name of names) {
+        if ((await (await caches.open(name)).match('solkey.js.wasm'))) return true;
+      }
+      return false;
+    }, null, { timeout: 180000, polling: 500 });
+    await context.setOffline(true);
+    await page.reload();
+    await listed(page, 413);
+    check('offline: the page and the prover load from the cache', /provable/.test(await status(page)));
+    await context.setOffline(false);
+  }
 
   const width = await page.evaluate(() => [document.documentElement.scrollWidth, innerWidth]);
   check(`desktop: no horizontal page scroll ${width}`, width[0] <= width[1]);
@@ -296,10 +310,16 @@ async function phone() {
   const page = await context.newPage();
   await page.goto(origin);
   await listed(page, 4);
-  await verified(page);
+  check('phone: the code view shows the editor and hides the results', await page.isVisible('#editor') && !(await page.isVisible('#functions')));
+  await page.click('#tabVerify');
+  await page.waitForFunction(() => !document.getElementById('summary').hidden, null, { timeout: 600000 });
+  check('phone: the tab bar verifies and switches to the results', await page.isVisible('#functions') && !(await page.isVisible('#editor')));
+  check(`phone: results tab shows ${await page.textContent('#tabCount')}`, (await page.textContent('#tabCount')) === '3/4');
   check(`phone: starter verdicts ${await results(page)}`, await results(page) === 'setThenIncrement=PASS,localArithmetic=PASS,branches=PASS,wrongClaim=FAIL');
   await page.click('tr.detail summary');
   await shot(page, 'phone-1-verified');
+  await page.click('tr[data-fn="wrongClaim"] button.link');
+  check('phone: tapping a function opens it in the code view', await page.isVisible('#editor'));
   const width = await page.evaluate(() => [document.documentElement.scrollWidth, innerWidth]);
   check(`phone: no horizontal page scroll ${width}`, width[0] <= width[1]);
   await context.close();

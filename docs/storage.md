@@ -835,6 +835,9 @@ produced before, so every other rule sees its familiar normal forms. A member de
 without a type, as in a hand-written `.key` problem, has shape `leaf`, "no information":
 `size` strips through `typed(leaf, st)` and `shapeAt(leaf, cons(at(pk), xs))` stays `leaf`,
 so a missing declaration can lose a length but never invent one.
+A `mapping(K => V)` has shape `mapOf(s)` with `s` the shape of `V`, so an `at(k)` step
+into it keeps the value's length: `m[k].length == 3` for `mapping(uint => uint[3]) m`
+closes (`testMappingOfFixedArrayLength`).
 
 Nothing else is needed. The empty storage reads `typed(fixedArr(3, leaf), mtSt)` as length
 `3` by the second rule, and `selectOnEmptyStorage` is its original one-liner. `delete`

@@ -1,9 +1,10 @@
 self.performance = self.performance || { now: () => Date.now() };
 
 const fetchFromHost = self.fetch.bind(self);
-const proverWasm = new URL('solkey.js.wasm', self.location.href);
+const assets = self.solkeyAssets || {};
+const proverWasm = assets.wasm || new URL('solkey.js.wasm', self.location.href);
 const proverWasmResponse = fetchFromHost(proverWasm);
-self.fetch = (resource, options) => (String(resource).endsWith('worker.js.wasm')
+self.fetch = (resource, options) => (String(resource).endsWith('.wasm')
   ? proverWasmResponse.then((response) => response.clone())
   : fetchFromHost(resource, options));
 
@@ -15,7 +16,7 @@ self.addEventListener('unhandledrejection', (event) => {
   if (!ready) postMessage({ type: 'failed', error: describe(event.reason) });
 });
 
-importScripts('soljson.js');
+importScripts(assets.soljson || 'soljson.js');
 const solcCompile = Module.cwrap('solidity_compile', 'string', ['string', 'number', 'number']);
 const solcVersion = Module.cwrap('solidity_version', 'string', []);
 self.solkeySolc = {
@@ -47,7 +48,7 @@ self.onmessage = (event) => {
 };
 
 try {
-  importScripts('solkey.js');
+  importScripts(assets.solkey || 'solkey.js');
 } catch (e) {
   postMessage({ type: 'failed', error: describe(e) });
 }

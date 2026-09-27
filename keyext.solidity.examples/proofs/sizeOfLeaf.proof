@@ -27,24 +27,17 @@
 } 
 
 \functions {
-    IdentityPrim p;
-    Identity id;
-    Memory m;
     Struct s;
-    Struct t;
-    \unique MemberField f;
-    \unique MemberField g;
-    \unique MapMemberField mf;
+    Shape sh;
+    int i;
 }
 \problem {
-  find<[int]>(copyMem(s, m, id), cons(f, nil))
-= read<[int]>(m, id, f)
+sizeOf(leaf) = 0
 }
 
 \proof {
 (branch "dummy ID"
-(rule "findOnCopy" (formula "1") (term "0"))
-(rule "readREmpty" (formula "1") (term "0"))
+(rule "sizeOfLeaf" (formula "1") (term "0"))
 (rule "eqClose" (formula "1"))
 (rule "closeTrue" (formula "1"))
 )

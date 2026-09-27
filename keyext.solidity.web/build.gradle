@@ -170,6 +170,18 @@ tasks.register('site', Sync) {
     }
 }
 
+tasks.register('singleFile', Exec) {
+    group = 'build'
+    description = 'Packs the web page into one self-contained HTML file that opens from disk'
+    dependsOn 'site', npmInstall
+    def out = layout.buildDirectory.file('solkey.html')
+    inputs.dir siteDir
+    inputs.file 'src/build/single-file.mjs'
+    outputs.file out
+    commandLine 'node', file('src/build/single-file.mjs').absolutePath, siteDir.get().asFile.absolutePath,
+        out.get().asFile.absolutePath
+}
+
 tasks.register('smokeTest', Exec) {
     group = 'verification'
     description = 'Loads the built site in Node and proves a few TestSuite.sol functions'

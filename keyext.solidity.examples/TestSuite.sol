@@ -48,6 +48,7 @@ contract TestSuite {
     uint[][] matrix;
     uint[3] fixedValues;
     uint[3][] rows;
+    mapping(uint => uint[3]) fixedByKey;
     Token[2] fixedTokens;
     mapping(uint => uint)[2] fixedMaps;
     Triple triple;
@@ -2095,6 +2096,15 @@ contract TestSuite {
         uint[2][] memory z = new uint[2][](4);
         assert(z.length == 4);
         assert(z[1].length == 2);
+    }
+
+    function testMappingOfFixedArrayLength(uint k) public {
+        assert(fixedByKey[k].length == 3);
+    }
+
+    function testMemoryDynamicArrayDefaultLength() public {
+        uint[] memory d;
+        assert(d.length == 0);
     }
 
     /// @custom:key box

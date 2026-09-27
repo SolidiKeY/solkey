@@ -13,6 +13,11 @@ const CORE = [
   'solkey.js.wasm',
   'starter.sol',
   'examples.json',
+  'pwa.js',
+  'manifest.webmanifest',
+  'icons/icon.svg',
+  'icons/icon-192.png',
+  'icons/apple-touch-icon.png',
 ];
 
 self.addEventListener('install', (event) => {

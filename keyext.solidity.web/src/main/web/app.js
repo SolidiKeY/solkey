@@ -1,5 +1,6 @@
 import { createEditor } from './editor.js';
 import { closeInspector, inspectorOpen, openInspector } from './inspector.js';
+import { setupApp, shareLink } from './pwa.js';
 
 const $ = (id) => document.getElementById(id);
 const STORAGE_KEY = 'solkey.contract';
@@ -626,12 +627,14 @@ async function share() {
   const url = new URL(location.href);
   url.hash = `c=${await compress(JSON.stringify(snapshot()))}`;
   history.replaceState(null, '', url);
-  try {
-    await navigator.clipboard.writeText(url.href);
-    toast('Link copied to the clipboard.');
-  } catch {
-    toast('Link is in the address bar.');
-  }
+  await shareLink(url.href, async () => {
+    try {
+      await navigator.clipboard.writeText(url.href);
+      toast('Link copied to the clipboard.');
+    } catch {
+      toast('Link is in the address bar.');
+    }
+  });
 }
 
 function scheduleSave() {
@@ -775,6 +778,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
   navigator.serviceWorker.register('sw.js').catch((e) => console.warn('no offline cache', e));
 }
 
+setupApp({ toast });
 startMainProver();
 await loadExamples();
 await initialContract();
