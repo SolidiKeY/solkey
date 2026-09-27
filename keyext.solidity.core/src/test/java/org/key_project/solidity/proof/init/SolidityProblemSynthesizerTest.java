@@ -7,7 +7,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.key_project.solidity.control.ProofSession;
+import org.key_project.solidity.control.SolidityVerifier;
 import org.key_project.solidity.program.parser.SolidityOutline;
+import org.key_project.solidity.program.parser.SoliditySources;
 import org.key_project.solidity.testutil.SolidityExampleTests;
 
 import org.junit.jupiter.api.Test;
@@ -233,5 +236,125 @@ public class SolidityProblemSynthesizerTest {
         var e = assertThrows(IllegalArgumentException.class, () -> SolidityProblemSynthesizer
                 .resolve(unsupported, unsupportedOutline, spec("S", "label")));
         assertTrue(e.getMessage().contains("cannot be proved"), e.getMessage());
+    }
+
+    @Test
+    void aSourceRegisteredInMemoryIsProvedWithoutAFile() throws IOException {
+        Path file = Path.of("/nonexistent-solkey-dir/InMemory.sol");
+        SoliditySources.register(file, """
+                // SPDX-License-Identifier: GPL-2.0-only
+                pragma solidity ^0.8.0;
+                contract InMemory {
+                    function holds() public pure {
+                        uint8 x = 1;
+                        assert(x == 1);
+                    }
+                    function fails() public pure {
+                        uint8 x = 1;
+                        assert(x == 2);
+                    }
+                }""");
+
+        assertEquals(java.util.List.of("holds", "fails"), SolidityVerifier.functions(file, null));
+        var holds = SolidityVerifier.verify(file, spec(null, "holds"), 10000, -1, 3);
+        var fails = SolidityVerifier.verify(file, spec(null, "fails"), 10000, -1, 3);
+
+        assertTrue(holds.closed(), String.valueOf(holds));
+        assertFalse(fails.closed(), String.valueOf(fails));
+        assertEquals(null, fails.error());
+        assertFalse(fails.openGoals().isEmpty());
+        assertEquals(null, holds.proof());
+
+        var saved = SolidityVerifier.verify(file, spec(null, "holds"), 10000, -1, 3, true);
+        assertTrue(saved.proof() != null && saved.proof().contains("\\proof"),
+            String.valueOf(saved.proof()));
+    }
+
+    private static Path inMemory(String name) {
+        Path file = Path.of("/nonexistent-solkey-dir/" + name + ".sol");
+        SoliditySources.register(file, """
+                // SPDX-License-Identifier: GPL-2.0-only
+                pragma solidity ^0.8.0;
+                contract %s {
+                    function holds() public pure {
+                        uint8 x = 1;
+                        assert(x == 1);
+                    }
+                    function fails() public pure {
+                        uint8 x = 1;
+                        assert(x == 2);
+                    }
+                }""".formatted(name));
+        return file;
+    }
+
+    @Test
+    void aMistypedTacletOptionIsRejectedWithTheKnownChoices() {
+        Path file = inMemory("Typo");
+        var outcome = SolidityVerifier.verify(file,
+            new SolidityProblemSpec(null, "holds",
+                java.util.List.of("transferSemantics:withCalback")),
+            ProofSession.Limits.defaults(), 3, false);
+
+        assertFalse(outcome.closed());
+        assertTrue(String.valueOf(outcome.error()).contains("known choices"), outcome.error());
+    }
+
+    @Test
+    void strategySettingsAreValidatedAndApplied() {
+        Path file = inMemory("Strategy");
+        var model = SolidityVerifier.verify(file, spec(null, "holds"),
+            new ProofSession.Limits(10000, -1, java.util.Map.of(
+                org.key_project.solidity.strategy.StrategyProperties.NON_LIN_ARITH_OPTIONS_KEY,
+                org.key_project.solidity.strategy.StrategyProperties.NON_LIN_ARITH_COMPLETION)),
+            3, false);
+        var bad = SolidityVerifier.verify(file, spec(null, "holds"),
+            new ProofSession.Limits(10000, -1,
+                java.util.Map.of("SPLITTING_OPTIONS_KEY", "SOMETIMES")),
+            3, false);
+
+        assertTrue(model.closed(), String.valueOf(model));
+        assertTrue(model.summary().nodes() > 1, String.valueOf(model.summary()));
+        assertTrue(String.valueOf(bad.error()).contains("no strategy setting"), bad.error());
+    }
+
+    @Test
+    void theGeneratedProblemIsShown() throws IOException {
+        assertTrue(SolidityVerifier.problem(inMemory("Problem"), spec(null, "holds"))
+                .contains("\\problem"));
+    }
+
+    @Test
+    void aSessionIsWalkedPrunedSteppedAndReplayed(@TempDir Path dir) throws Exception {
+        Path file = inMemory("Session");
+        ProofSession session =
+            ProofSession.start(file, spec(null, "fails"), ProofSession.Limits.defaults());
+        var tree = session.tree();
+        var open = tree.stream().filter(e -> e.state().equals("open")).findFirst().orElseThrow();
+        assertEquals(-1, tree.getFirst().parent());
+        assertTrue(session.node(open.serial(), true).openGoal());
+
+        var root = tree.getFirst().serial();
+        var pruned = session.prune(root);
+        assertEquals(1, pruned.nodes());
+        String sequent = session.node(root, true).sequent();
+        var rules = session.rulesAt(root, sequent.indexOf("fails"));
+        var complete = rules.rules().stream()
+                .filter(r -> !r.sequentWide() && r.missing().isEmpty()).findFirst()
+                .orElseThrow(() -> new AssertionError(sequent + "\n" + rules));
+        assertTrue(session.apply(root, complete.index(), java.util.Map.of()).nodes() > 1);
+        var stepped = session.tree().stream().filter(e -> e.state().equals("open")).findFirst()
+                .orElseThrow();
+        assertFalse(session.runAuto(stepped.serial()).closed());
+
+        ProofSession holds =
+            ProofSession.start(file, spec(null, "holds"), ProofSession.Limits.defaults());
+        Path sol = dir.resolve("Session.sol");
+        Files.writeString(sol, SoliditySources.read(file));
+        Path proof = dir.resolve("Session.holds.proof");
+        Files.writeString(proof, holds.save().replace("\"" + file + "\"", "\"Session.sol\""));
+        ProofSession replayed = ProofSession.load(proof, ProofSession.Limits.defaults(), false);
+        assertTrue(replayed.summary().closed());
+        assertTrue(replayed.replayErrors().isEmpty(), String.valueOf(replayed.replayErrors()));
     }
 }

@@ -1,0 +1,188 @@
+description = "SolKey in the browser: the prover compiled to WebAssembly by GraalVM Web Image"
+
+// Web Image ships with Oracle GraalVM (25.1 or later, or an early-access build): its
+// `native-image --tool:svm-wasm` compiles this module to WebAssembly, and its
+// org.graalvm.webimage.api module is what the entry point is compiled against. settings.gradle
+// only includes this module when such a GraalVM is found.
+def graalHome = file(System.getenv('GRAALVM_HOME') ?: findProperty('graalvmHome'))
+def webImageApiJmod = new File(graalHome, 'jmods/org.graalvm.webimage.api.jmod')
+def webImageApi = layout.buildDirectory.dir('webimage-api')
+
+repositories {
+    mavenCentral()
+}
+
+def extractWebImageApi = tasks.register('extractWebImageApi', Exec) {
+    inputs.file webImageApiJmod
+    outputs.dir webImageApi
+    doFirst { delete webImageApi }
+    commandLine "$graalHome/bin/jmod", 'extract', '--dir',
+        webImageApi.get().asFile.absolutePath, webImageApiJmod.absolutePath
+}
+
+dependencies {
+    implementation project(':keyext.solidity.core')
+    compileOnly files(webImageApi.map { it.dir('classes') }).builtBy(extractWebImageApi)
+    implementation platform("tools.jackson:jackson-bom:3.1.2")
+    implementation "tools.jackson.core:jackson-databind"
+    implementation 'org.jspecify:jspecify:1.0.0'
+    runtimeOnly 'org.slf4j:slf4j-nop:2.0.17'
+}
+
+// The prover needs none of these in a browser: the EVM behind --solc, GraalJS/GraalWasm (solc is
+// the page's soljson.js instead), the command line and the logging backend.
+configurations.runtimeClasspath {
+    ['org.hyperledger.besu', 'io.tmio', 'org.bouncycastle', 'org.graalvm.polyglot',
+     'org.graalvm.sdk', 'org.graalvm.truffle', 'org.graalvm.js', 'org.graalvm.wasm',
+     'org.graalvm.regex', 'org.graalvm.shadowed', 'org.graalvm.compiler', 'info.picocli',
+     'ch.qos.logback', 'com.google.code.gson'].each { exclude group: it }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += ['-parameters']
+}
+
+def webImageDir = layout.buildDirectory.dir('web-image')
+
+// core's jar names the GraalJS runtime in its manifest Class-Path, which native-image would follow;
+// its class and resource directories carry no manifest.
+evaluationDependsOn(':keyext.solidity.core')
+def core = project(':keyext.solidity.core')
+def imageClasspath = files(tasks.named('jar'), core.sourceSets.main.output,
+    configurations.runtimeClasspath.filter { it != core.tasks.named('jar').get().archiveFile.get().asFile })
+
+def graalvmVersion = {
+    def release = new File(graalHome, 'release')
+    def line = release.isFile() ? release.readLines().find { it.startsWith('GRAALVM_VERSION=') } : null
+    line ? line.substring('GRAALVM_VERSION='.length()).replace('"', '') : 'unknown'
+}
+
+// The native-image launcher is itself a native executable whose temporary directory is fixed to
+// /tmp. Running its driver on GraalVM's JVM instead lets java.io.tmpdir, for the driver and for the
+// builder JVM it starts, point at the build directory, so the build also works where /tmp is not
+// writable.
+def webImage = tasks.register('webImage', Exec) {
+    group = 'build'
+    description = 'Compiles the prover to solkey.js + solkey.js.wasm with GraalVM Web Image'
+    dependsOn tasks.named('jar'), core.tasks.named('classes')
+    inputs.files(imageClasspath)
+    outputs.dir webImageDir
+    workingDir webImageDir
+    executable "$graalHome/bin/java"
+    def tmp = layout.buildDirectory.dir('tmp/web-image').get().asFile
+    def binaryenHome = System.getenv('BINARYEN_HOME') ?: findProperty('binaryenHome')
+    if (binaryenHome) {
+        environment 'PATH', "$binaryenHome/bin${File.pathSeparator}${System.getenv('PATH')}"
+    }
+    argumentProviders.add({
+        ["-Djava.io.tmpdir=$tmp",
+         "-Dorg.graalvm.version=${graalvmVersion()}",
+         '--add-exports=java.base/jdk.internal.module=org.graalvm.nativeimage.shared',
+         '--add-exports=java.base/jdk.internal.jimage=org.graalvm.nativeimage.driver',
+         '--add-exports=jdk.jfr/jdk.jfr.internal=org.graalvm.nativeimage.driver',
+         '--module-path', files("$graalHome/lib/graalvm/svm-driver.jar", "$graalHome/lib/svm/builder",
+             "$graalHome/lib/svm/svm-shared.jar").asPath,
+         '-m', 'org.graalvm.nativeimage.driver/com.oracle.svm.driver.NativeImage',
+         '--tool:svm-wasm',
+         "-J-Djava.io.tmpdir=$tmp",
+         '-cp', imageClasspath.asPath,
+         '-o', 'solkey',
+         'org.key_project.solidity.web.WebProver']
+    } as CommandLineArgumentProvider)
+    doFirst {
+        if (!new File(graalHome, 'lib/svm/tools/svm-wasm').isDirectory()) {
+            throw new GradleException("$graalHome has no Web Image backend (lib/svm/tools/svm-wasm). "
+                + "Set GRAALVM_HOME to Oracle GraalVM 25.1+ or an Oracle GraalVM early-access build; "
+                + "binaryen's wasm-as (version 119) must be on PATH or in BINARYEN_HOME/bin. "
+                + "See docs/web.md.")
+        }
+        delete webImageDir
+        webImageDir.get().asFile.mkdirs()
+        tmp.mkdirs()
+    }
+    doLast {
+        delete fileTree(webImageDir) { include '*.wat' }
+    }
+}
+
+def examplesDir = rootProject.file('keyext.solidity.examples')
+def siteDir = layout.buildDirectory.dir('site')
+
+def examplesIndex = tasks.register('examplesIndex') {
+    def index = layout.buildDirectory.file('examples/examples.json')
+    def sources = fileTree(examplesDir) { include 'TestSuite.sol', 'contracts/**/*.sol' }
+    inputs.files sources
+    outputs.file index
+    doLast {
+        def names = sources.files.collect { examplesDir.toPath().relativize(it.toPath()).toString() }
+                .sort()
+        index.get().asFile.parentFile.mkdirs()
+        index.get().asFile.text = groovy.json.JsonOutput.prettyPrint(
+            groovy.json.JsonOutput.toJson(names.collect { "examples/$it" }))
+    }
+}
+
+def npmCache = layout.buildDirectory.dir('npm-cache')
+
+def npmInstall = tasks.register('npmInstall', Exec) {
+    description = 'Installs the editor and browser-test packages from package-lock.json'
+    inputs.files 'package.json', 'package-lock.json'
+    outputs.dir 'node_modules'
+    environment 'npm_config_cache', npmCache.get().asFile.absolutePath
+    commandLine 'npm', 'ci', '--no-audit', '--no-fund'
+}
+
+def bundleDir = layout.buildDirectory.dir('bundle')
+
+def bundleEditor = tasks.register('bundleEditor', Exec) {
+    description = 'Bundles the CodeMirror editor and the EVM runtime check into ES modules with esbuild'
+    dependsOn npmInstall
+    inputs.dir 'src/main/editor'
+    inputs.dir 'src/main/runtime'
+    inputs.file 'package-lock.json'
+    outputs.dir bundleDir
+    commandLine 'node_modules/.bin/esbuild', 'src/main/editor/editor.js',
+        'src/main/runtime/runtime.js', '--bundle', '--format=esm', '--minify',
+        '--entry-names=[name]', "--outdir=${bundleDir.get().asFile.absolutePath}"
+}
+
+tasks.register('site', Sync) {
+    group = 'build'
+    description = 'Assembles the static web page: the Web Image, the editor, soljson.js and the examples'
+    dependsOn webImage, bundleEditor, examplesIndex, ':keyext.solidity.core:downloadSoljson'
+    into siteDir
+    from('src/main/web') {
+        exclude '.*'
+        filesMatching('sw.js') {
+            filter { line ->
+                line.replace('@BUILD_ID@', webImageDir.get().file('solkey.js.wasm').asFile.with {
+                    it.isFile() ? "${it.length()}-${it.lastModified()}" : 'dev'
+                })
+            }
+        }
+    }
+    from(webImageDir) { include 'solkey.js', 'solkey.js.wasm' }
+    from(bundleDir)
+    from(project(':keyext.solidity.core').layout.buildDirectory.file('resources/main/soljson.js'))
+    from(layout.buildDirectory.dir('examples'))
+    into('examples') {
+        from(examplesDir) { include 'TestSuite.sol', 'contracts/**/*.sol' }
+    }
+}
+
+tasks.register('smokeTest', Exec) {
+    group = 'verification'
+    description = 'Loads the built site in Node and proves a few TestSuite.sol functions'
+    dependsOn 'site'
+    commandLine 'node', file('src/test/smoke.mjs').absolutePath, siteDir.get().asFile.absolutePath
+}
+
+tasks.register('browserTest', Exec) {
+    group = 'verification'
+    description = 'Drives the built page in headless Chromium: listing, proving, errors, sharing, offline'
+    dependsOn 'site', npmInstall
+    if (findProperty('solkeyShots')) {
+        environment 'SOLKEY_SHOTS', file(findProperty('solkeyShots')).absolutePath
+    }
+    commandLine 'node', file('src/test/browser.mjs').absolutePath, siteDir.get().asFile.absolutePath
+}

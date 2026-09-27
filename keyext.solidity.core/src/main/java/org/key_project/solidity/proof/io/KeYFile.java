@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -21,12 +20,14 @@ import org.key_project.solidity.common.Profile;
 import org.key_project.solidity.parser.*;
 import org.key_project.solidity.parser.builder.ProblemFinder;
 import org.key_project.solidity.parser.builder.TacletPBuilder;
+import org.key_project.solidity.program.parser.SoliditySources;
 import org.key_project.solidity.proof.init.Includes;
 import org.key_project.solidity.proof.init.InitConfig;
 import org.key_project.solidity.proof.init.ProofInputException;
 import org.key_project.solidity.proof.io.consistency.FileRepo;
 import org.key_project.solidity.settings.Configuration;
 import org.key_project.solidity.settings.ProofSettings;
+import org.key_project.solidity.util.PathUrls;
 import org.key_project.solidity.util.parsing.BuildingIssue;
 import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableSet;
@@ -173,7 +174,7 @@ public class KeYFile implements EnvInput {
             try {
                 KeYAst.File ctx = getParseContext();
                 includes =
-                    ctx.getIncludes(file.file().toAbsolutePath().getParent().toUri().toURL());
+                    ctx.getIncludes(PathUrls.toURL(file.file().toAbsolutePath().getParent()));
             } catch (Exception e) {
                 throw new ProofInputException(e);
             }
@@ -200,7 +201,7 @@ public class KeYFile implements EnvInput {
                 Path parent = file.file().getParent();
                 absFile = parent.resolve(solidityPath);
             }
-            if (!Files.exists(absFile)) {
+            if (!SoliditySources.exists(absFile)) {
                 throw new ProofInputException(
                     String.format("Declared Solidity source %s not found.", solidityPath));
             }

@@ -24,6 +24,7 @@ import org.key_project.solidity.parser.builder.FunctionPredicateBuilder;
 import org.key_project.solidity.parser.builder.ProblemFinder;
 import org.key_project.solidity.parser.builder.TacletPBuilder;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
+import org.key_project.solidity.util.PathUrls;
 import org.key_project.solidity.util.parsing.BuildingException;
 import org.key_project.solidity.util.parsing.BuildingIssue;
 
@@ -124,7 +125,7 @@ public class KeYIO {
      */
     public Loader load(Path file) {
         try {
-            return new Loader(file.toUri().toURL());
+            return new Loader(PathUrls.toURL(file));
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }

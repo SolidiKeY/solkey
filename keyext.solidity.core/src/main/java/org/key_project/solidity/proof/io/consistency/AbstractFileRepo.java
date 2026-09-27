@@ -19,6 +19,7 @@ import java.util.Set;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.event.ProofDisposedEvent;
 import org.key_project.solidity.proof.io.RuleSource;
+import org.key_project.solidity.util.PathUrls;
 
 public abstract class AbstractFileRepo implements FileRepo {
 
@@ -92,7 +93,7 @@ public abstract class AbstractFileRepo implements FileRepo {
     /// @return true iff it is an internal file
     /// @throws MalformedURLException if the path can not be converted to an URL
     protected static boolean isInternalFile(Path path) throws MalformedURLException {
-        URL url = path.toUri().toURL();
+        URL url = PathUrls.toURL(path);
         return isInternalResource(url);
     }
 
@@ -122,7 +123,7 @@ public abstract class AbstractFileRepo implements FileRepo {
     @Override
     public InputStream getInputStream(Path path) throws IOException {
         // wrap path into URL for uniform treatment
-        return getInputStream(path.toUri().toURL());
+        return getInputStream(PathUrls.toURL(path));
     }
 
     @Override

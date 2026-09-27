@@ -12,6 +12,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.zip.GZIPInputStream;
 
+import org.key_project.solidity.util.PathUrls;
+
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 
@@ -27,7 +29,7 @@ public class GZipFileRuleSource extends FileRuleSource {
     @Override
     public InputStream getNewStream() {
         try {
-            return new GZIPInputStream(ruleFile.toUri().toURL().openStream());
+            return new GZIPInputStream(PathUrls.toURL(ruleFile).openStream());
         } catch (IOException e) {
             throw new RuntimeException("Error while reading rules.", e);
         }

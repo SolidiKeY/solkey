@@ -44,6 +44,8 @@ scripts/benchmark.sh                 # published contracts as published: N/M clo
 
 ./gradlew :keyext.solidity.gui:solidityGui     # KeYther, the Swing GUI
 ./gradlew :key.ui:shadowJar                    # fat JAR
+./gradlew :keyext.solidity.web:site            # the browser build (needs GRAALVM_HOME, docs/web.md)
+./gradlew :keyext.solidity.web:browserTest     # ... and its headless-Chromium test
 ```
 
 `run-key.sh` rebuilds `keyext.solidity.core-exe.jar` only when the sources are newer;
@@ -80,6 +82,7 @@ outside if explicitly instructed.
 | `keyext.solidity.core` | **Solidity verification** — main focus |
 | `keyext.solidity.gui` | **KeYther**, the standalone Swing GUI for the Solidity prover |
 | `keyext.solidity.idea` | IntelliJ IDEA plugin — ▶ gutter icon on public functions and contracts; left click opens KeYther, right click also offers the headless prover and solc+EVM. Standalone Gradle build, deliberately **not** in `settings.gradle`. See `docs/idea-setup.md` |
+| `keyext.solidity.web` | The prover compiled to WebAssembly by GraalVM Web Image, as a static page on GitHub Pages. Included only when `GRAALVM_HOME` has Web Image. See `docs/web.md` |
 | `keyext.solidity.examples` | **Main taclet examples** (`TestSuite.sol`) |
 
 Dependencies: `keyext.*` → `key.core` → `key.ncore` → `key.util`.
@@ -157,6 +160,7 @@ Read the relevant doc before working on taclets. Each is a compact, agent-facing
 | `solc-ast.md` | The solc AST and the in-JVM compiler that produces it |
 | `ci.md` | CI gates in detail, the nullness idiom, CI-only test groups |
 | `forked-key-core.md` | Editing code forked from `key.core` — which files must not be restyled |
+| `web.md` | The browser build — Web Image, the JS solc bridge, the Pages deploy |
 | `idea-setup.md` | IntelliJ setup — gutter-icon plugin, External Tools, `.run/` configurations |
 
 Program rules live in `…/proof/rules/solidityProgramRules.key`, loaded via

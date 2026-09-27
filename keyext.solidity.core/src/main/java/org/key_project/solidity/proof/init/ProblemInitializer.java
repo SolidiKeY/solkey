@@ -5,7 +5,6 @@ package org.key_project.solidity.proof.init;
 
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -24,6 +23,7 @@ import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.op.SModality;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.parser.SolcParser;
+import org.key_project.solidity.program.parser.SoliditySources;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.SolidityModel;
@@ -158,7 +158,7 @@ public final class ProblemInitializer {
         if (solidityPath != null) {
             try {
                 var beforeConversion = System.nanoTime();
-                if (Files.isRegularFile(solidityPath)) {
+                if (SoliditySources.isFile(solidityPath)) {
                     SolcParser solcParser = new SolcParser(initConfig.getServices());
                     solcParser.getSolidityFromStrJsonParser(solidityPath);
                     LOGGER.info("Solidity conversion took {}",

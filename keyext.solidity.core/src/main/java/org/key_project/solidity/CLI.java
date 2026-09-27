@@ -8,15 +8,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
 
-import org.key_project.logic.Choice;
-import org.key_project.logic.Namespace;
 import org.key_project.solidity.control.KeYEnvironment;
+import org.key_project.solidity.control.TacletChoices;
 import org.key_project.solidity.program.parser.SolcWrapper;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Proof;
@@ -28,8 +22,6 @@ import org.key_project.solidity.proof.io.ProblemLoaderException;
 import org.key_project.solidity.proof.io.ProofSaver;
 import org.key_project.solidity.runtime.SolidityRuntimeCheck;
 
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -142,7 +134,7 @@ public class CLI {
             System.err.println("No such file: " + cli.file.getAbsolutePath());
             return false;
         }
-        String malformed = malformedChoice(cli.choices);
+        String malformed = TacletChoices.malformed(cli.choices);
         if (malformed != null) {
             System.err.println("Error: " + malformed);
             return false;
@@ -335,7 +327,8 @@ public class CLI {
             Path f = cli.file.toPath();
             var env = spec == null ? KeYEnvironment.load(f) : KeYEnvironment.load(f, spec);
             if (spec != null) {
-                String rejected = unknownChoice(spec.choices(), env.getInitConfig().choiceNS());
+                String rejected =
+                    TacletChoices.unknown(spec.choices(), env.getInitConfig().choiceNS());
                 if (rejected != null) {
                     System.err.println("Error: " + rejected);
                     return Outcome.error();
@@ -417,50 +410,6 @@ public class CLI {
         }
         printOpenGoals(cli, proof.openGoals());
         return Outcome.open(open, elapsed);
-    }
-
-    private static @Nullable String unknownChoice(List<String> choices,
-            Namespace<@NonNull Choice> declared) {
-        if (choices.isEmpty()) {
-            return null;
-        }
-        Map<String, Set<String>> byCategory = new TreeMap<>();
-        for (Choice c : declared.allElements()) {
-            byCategory.computeIfAbsent(c.category(), k -> new TreeSet<>())
-                    .add(c.name().toString());
-        }
-        for (String choice : choices) {
-            String category = categoryOf(choice);
-            Set<String> known = byCategory.get(category);
-            if (known == null) {
-                return "no such taclet option category: " + category + "; known categories: "
-                    + String.join(", ", byCategory.keySet());
-            }
-            if (!known.contains(choice)) {
-                return "no such choice for " + category + ": " + valueOf(choice)
-                    + "; known choices: "
-                    + known.stream().map(CLI::valueOf).collect(Collectors.joining(", "));
-            }
-        }
-        return null;
-    }
-
-    private static String categoryOf(String choice) {
-        return choice.substring(0, choice.indexOf(':'));
-    }
-
-    private static String valueOf(String choice) {
-        return choice.substring(choice.indexOf(':') + 1);
-    }
-
-    private static @Nullable String malformedChoice(List<String> choices) {
-        for (String choice : choices) {
-            int colon = choice.indexOf(':');
-            if (colon < 1 || colon != choice.lastIndexOf(':') || colon == choice.length() - 1) {
-                return "--option expects <category>:<choice>, but got: " + choice;
-            }
-        }
-        return null;
     }
 
     private static boolean hintPrinted = false;

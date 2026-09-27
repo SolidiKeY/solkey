@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SolKey Web</title>
+  <meta name="description" content="Formal verification of Solidity contracts with the KeY prover, running in your browser.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="modulepreload" href="editor.js">
+</head>
+<body>
+  <header>
+    <div>
+      <h1>SolKey <span>in the browser</span></h1>
+      <p>Proves the <code>assert</code>s and <code>@custom:key</code> specifications of Solidity
+        functions with the KeY prover, compiled to WebAssembly. Your contract never leaves this page.</p>
+    </div>
+    <a class="repo" href="https://github.com/SolidiKeY/solkey">GitHub</a>
+  </header>
+  <main>
+    <section class="editor" aria-label="Contract">
+      <div class="toolbar">
+        <label>Example
+          <select id="example"><option value="">Choose…</option></select>
+        </label>
+        <label class="file" title="Open a .sol contract, or a .key problem or .proof together with its .sol">Open…
+          <input id="file" type="file" accept=".sol,.key,.proof,text/plain" multiple>
+        </label>
+        <button id="save" type="button" title="Download the contract">Save .sol</button>
+        <button id="share" type="button" title="Copy a link that opens this contract">Share</button>
+        <label id="contractLabel" hidden>Contract
+          <select id="contract"></select>
+        </label>
+      </div>
+      <div id="editor" class="code"></div>
+    </section>
+    <section class="panel" aria-label="Verification">
+      <div class="toolbar">
+        <button id="verify" class="primary" disabled title="Verify the ticked functions (Ctrl+Enter)">Verify</button>
+        <button id="stop" disabled>Stop</button>
+        <button id="evm" disabled title="Compile with solc and run the ticked functions on an EVM, reporting a failing assert concretely">Run on EVM</button>
+        <details class="options" id="options">
+          <summary>Options</summary>
+          <div class="options-body">
+            <fieldset>
+              <legend>Limits</legend>
+              <label>Max rule applications <input id="maxSteps" type="number" value="10000" min="1"></label>
+              <label>Time limit per function (s, 0 = none) <input id="timeLimit" type="number" value="60" min="0"></label>
+              <label>Parallel provers <input id="workers" type="number" min="1" max="16"></label>
+              <label>Open goals shown <input id="maxGoals" type="number" value="3" min="0" max="20"></label>
+            </fieldset>
+            <fieldset>
+              <legend>Strategy</legend>
+              <label>Stop at <select data-strategy="STOPMODE_OPTIONS_KEY">
+                <option value="">default</option><option value="STOPMODE_DEFAULT">Default</option><option value="STOPMODE_NONCLOSE">Unclosable goal</option>
+              </select></label>
+              <label>Splitting <select data-strategy="SPLITTING_OPTIONS_KEY">
+                <option value="">default</option><option value="SPLITTING_NORMAL">Normal</option><option value="SPLITTING_DELAYED">Delayed</option><option value="SPLITTING_OFF">Off</option>
+              </select></label>
+              <label>Function calls <select data-strategy="FUNCTION_OPTIONS_KEY">
+                <option value="">default</option><option value="FUNCTION_EXPAND">Expand</option><option value="FUNCTION_CONTRACT">Use contracts</option><option value="FUNCTION_NONE">None</option>
+              </select></label>
+              <label>Arithmetic <select data-strategy="NON_LIN_ARITH_OPTIONS_KEY">
+                <option value="">default</option><option value="NON_LIN_ARITH_NONE">Basic</option><option value="NON_LIN_ARITH_DEF_OPS">DefOps</option><option value="NON_LIN_ARITH_COMPLETION">Model search</option>
+              </select></label>
+            </fieldset>
+            <fieldset>
+              <legend>Taclet options</legend>
+              <div id="choices"><p class="muted">Listed once a contract compiles.</p></div>
+            </fieldset>
+            <fieldset>
+              <legend>Display</legend>
+              <label>Editor font size <input id="fontSize" type="number" value="13" min="9" max="24"></label>
+              <label class="inline"><input id="pretty" type="checkbox" checked> Pretty syntax in sequents</label>
+            </fieldset>
+          </div>
+        </details>
+      </div>
+      <p id="status" class="status busy" role="status"><span class="spinner"></span><span id="statusText">Loading the prover…</span></p>
+      <pre id="error" class="error" hidden></pre>
+      <p id="invariants" class="invariants" hidden></p>
+      <p id="empty" class="empty">Choose an example or paste a contract. Its functions appear here.</p>
+      <div class="table-wrap">
+        <table id="functions" hidden>
+          <thead>
+            <tr>
+              <th class="check"><input id="all" type="checkbox" checked aria-label="Select all functions"></th>
+              <th>Function</th><th>Result</th><th class="evm-col" hidden>EVM</th><th class="time">Time</th><th class="actions"><span class="sr">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p id="summary" class="summary" hidden></p>
+    </section>
+  </main>
+
+  <div id="inspector" class="inspector" hidden role="dialog" aria-label="Proof inspector">
+    <div class="inspector-head">
+      <strong id="inspectorTitle">Proof</strong>
+      <span id="inspectorSummary" class="muted"></span>
+      <span class="spacer"></span>
+      <button id="inspectorAuto" type="button" title="Run the prover on every open goal">Run prover</button>
+      <button id="inspectorSave" type="button">Save proof</button>
+      <button id="inspectorClose" type="button" aria-label="Close the inspector">Close</button>
+    </div>
+    <div class="inspector-body">
+      <nav class="inspector-tree">
+        <div class="tabs">
+          <button type="button" class="tab active" data-tab="tree">Proof tree</button>
+          <button type="button" class="tab" data-tab="goals">Open goals</button>
+          <button type="button" class="tab" data-tab="problem">Problem</button>
+        </div>
+        <div id="treePane" class="pane"></div>
+        <div id="goalsPane" class="pane" hidden></div>
+        <pre id="problemPane" class="pane problem" hidden></pre>
+      </nav>
+      <div class="inspector-node">
+        <div class="node-head">
+          <span id="nodeTitle">Select a node</span>
+          <span class="spacer"></span>
+          <button id="nodeAuto" type="button" hidden title="Run the prover on this goal only">Run on goal</button>
+          <button id="nodePrune" type="button" hidden title="Remove everything below this node">Prune here</button>
+        </div>
+        <p class="hint muted" id="nodeHint">Click a term in the sequent of an open goal to see the rules that apply to it.</p>
+        <pre id="sequent" class="sequent" tabindex="0"></pre>
+        <details id="tacletBox" hidden><summary id="tacletSummary">Applied rule</summary><pre id="taclet" class="taclet"></pre></details>
+      </div>
+    </div>
+    <div id="ruleMenu" class="rule-menu" hidden role="menu"></div>
+  </div>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

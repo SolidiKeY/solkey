@@ -4,17 +4,15 @@
 package org.key_project.solidity.program.parser;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.jspecify.annotations.Nullable;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 /// The Solidity compiler, addressed through its Standard JSON interface.
 ///
@@ -38,7 +36,19 @@ public class SolcWrapper {
 
     private static final long UNSIGNED_32_BIT = 1L << 32;
 
-    private static final SolcCompiler COMPILER = WasmSolcCompiler.get();
+    private static @Nullable SolcCompiler compiler;
+
+    public static synchronized void useCompiler(SolcCompiler replacement) {
+        compiler = replacement;
+        AST_CACHE.clear();
+    }
+
+    private static synchronized SolcCompiler compiler() {
+        if (compiler == null) {
+            compiler = WasmSolcCompiler.get();
+        }
+        return compiler;
+    }
 
     /// The solc AST JSON of `contractPath`.
     public static String getJsonSolidity(Path contractPath) throws IOException {
@@ -50,7 +60,7 @@ public class SolcWrapper {
     }
 
     private static String readSource(Path contractPath) throws IOException {
-        return Files.readString(contractPath, UTF_8);
+        return SoliditySources.read(contractPath);
     }
 
     /// The `SourceUnit` node of `source`, as a JSON string.
@@ -125,7 +135,7 @@ public class SolcWrapper {
     }
 
     public static String version() {
-        return COMPILER.version();
+        return compiler().version();
     }
 
     private static JsonNode compile(String unitName, String source, ObjectNode outputSelection)
@@ -142,7 +152,7 @@ public class SolcWrapper {
         input.putObject("sources").putObject(unitName).put("content", source);
         input.putObject("settings").putObject("outputSelection").set("*", outputSelection);
 
-        return MAPPER.readTree(COMPILER.compile(input.toString()));
+        return MAPPER.readTree(compiler().compile(input.toString()));
     }
 
     private static void failOnErrors(JsonNode output) {

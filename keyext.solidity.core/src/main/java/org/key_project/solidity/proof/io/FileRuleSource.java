@@ -11,6 +11,8 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.util.Objects;
 
+import org.key_project.solidity.util.PathUrls;
+
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.jspecify.annotations.NonNull;
@@ -38,13 +40,13 @@ public class FileRuleSource extends RuleSource {
 
     @Override
     public URL url() throws IOException {
-        return file().toUri().toURL();
+        return PathUrls.toURL(file());
     }
 
     @Override
     public String getExternalForm() {
         try {
-            return ruleFile.toUri().toURL().toExternalForm();
+            return PathUrls.toURL(ruleFile).toExternalForm();
         } catch (final MalformedURLException exception) {
             // should not be thrown
             throw new RuntimeException(exception);
@@ -54,7 +56,7 @@ public class FileRuleSource extends RuleSource {
     @Override
     public InputStream getNewStream() {
         try {
-            return new BufferedInputStream(ruleFile.toUri().toURL().openStream());
+            return new BufferedInputStream(PathUrls.toURL(ruleFile).openStream());
         } catch (final IOException exception) {
             throw new RuntimeException("Error while opening a file stream to " + ruleFile,
                 exception);
