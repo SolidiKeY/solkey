@@ -55,7 +55,7 @@ jobs:
         working-directory: keyext.solidity.web
         run: npx playwright-core install --with-deps --only-shell chromium
       - name: Test the page in headless Chromium
-        run: ./gradlew :keyext.solidity.web:browserTest -PsolkeyShots=keyext.solidity.web/build/screenshots
+        run: ./gradlew :keyext.solidity.web:browserTest -PsolkeyShots=build/screenshots
       - name: Keep the screenshots
         if: always()
         uses: actions/upload-artifact@v4

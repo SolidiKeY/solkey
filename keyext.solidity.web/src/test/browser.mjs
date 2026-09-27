@@ -292,9 +292,10 @@ async function desktop() {
       }
       return false;
     }, null, { timeout: 180000, polling: 500 });
+    const count = await page.$$eval('#functions tbody tr[data-fn]', (rows) => rows.length);
     await context.setOffline(true);
     await page.reload();
-    await listed(page, 413);
+    await listed(page, count);
     check('offline: the page and the prover load from the cache', /provable/.test(await status(page)));
     await context.setOffline(false);
   }
