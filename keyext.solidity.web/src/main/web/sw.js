@@ -14,6 +14,8 @@ const CORE = [
   'starter.sol',
   'examples.json',
   'pwa.js',
+  'split.js',
+  'theme.js',
   'manifest.webmanifest',
   'icons/icon.svg',
   'icons/icon-192.png',

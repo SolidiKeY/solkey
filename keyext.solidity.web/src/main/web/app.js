@@ -1,6 +1,8 @@
 import { createEditor } from './editor.js';
 import { closeInspector, inspectorOpen, openInspector } from './inspector.js';
 import { setupApp, shareLink } from './pwa.js';
+import { makeSplit } from './split.js';
+import { setupTheme } from './theme.js';
 
 const $ = (id) => document.getElementById(id);
 const STORAGE_KEY = 'solkey.contract';
@@ -769,6 +771,11 @@ try {
     document.documentElement.style.setProperty('--editor-font', `${size}px`);
   }
 } catch {}
+setupTheme();
+makeSplit(document.querySelector('main'), { key: 'main', initial: 58, min: 280 });
+makeSplit(document.querySelector('.inspector-body'), {
+  key: 'inspector', initial: 33, initialVertical: 35, min: 160, verticalWhen: matchMedia('(max-width: 860px)'),
+});
 $('workers').value = defaultWorkers();
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !inspectorOpen() && $('options').open) $('options').open = false;

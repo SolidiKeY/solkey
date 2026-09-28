@@ -83,6 +83,19 @@ const verified = async (page) => {
   await page.waitForFunction(() => !document.getElementById('summary').hidden, null, { timeout: 600000 });
 };
 const editorText = (page) => page.$eval('.cm-content', (el) => el.innerText);
+const background = (page) => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+const widthOf = (page, selector) => page.$eval(selector, (el) => el.getBoundingClientRect().width);
+
+async function drag(page, splitter, dx) {
+  const grip = await page.$eval(splitter, (s) => {
+    const r = s.getBoundingClientRect();
+    return { x: r.x + r.width / 2, y: r.y + r.height / 4 };
+  });
+  await page.mouse.move(grip.x, grip.y);
+  await page.mouse.down();
+  await page.mouse.move(grip.x + dx, grip.y, { steps: 5 });
+  await page.mouse.up();
+}
 
 async function setOption(page, id, value) {
   await page.evaluate(() => { document.querySelector('.options').open = true; });
@@ -107,6 +120,23 @@ async function desktop() {
   await listed(page, 4);
   check(`starter listed: ${await functions(page)}`, (await functions(page)).join() === 'setThenIncrement,localArithmetic,branches,wrongClaim');
   await shot(page, 'desktop-1-starter');
+
+  await page.click('[data-theme-choice="dark"]');
+  check(`the dark theme overrides a light system (${await background(page)})`, await background(page) === 'rgb(17, 17, 24)');
+  await shot(page, 'desktop-1-dark');
+  await page.click('[data-theme-choice="system"]');
+  check(`the system theme follows the browser (${await background(page)})`, await background(page) === 'rgb(245, 245, 249)');
+
+  const editorBefore = await widthOf(page, 'section.editor');
+  await drag(page, 'main > .splitter', -200);
+  const editorWidth = await widthOf(page, 'section.editor');
+  check(`dragging the divider resizes the panes (${Math.round(editorBefore)} → ${Math.round(editorWidth)})`,
+    Math.abs(editorBefore - 200 - editorWidth) < 4);
+  await page.click('main > .splitter button >> nth=1');
+  check('the divider arrow collapses the results', await page.isHidden('section.panel'));
+  await page.click('main > .splitter button >> nth=0');
+  check('the other arrow restores them', await page.isVisible('section.panel')
+    && Math.abs(await widthOf(page, 'section.editor') - editorWidth) < 2);
 
   await verified(page);
   check(`starter verdicts: ${await results(page)}`, await results(page) === 'setThenIncrement=PASS,localArithmetic=PASS,branches=PASS,wrongClaim=FAIL');
@@ -135,6 +165,10 @@ async function desktop() {
   await page.waitForFunction(() => document.querySelectorAll('#treePane .tree-node').length > 1, null, { timeout: 60000 });
   check(`inspector: ${await page.textContent('#inspectorSummary')}`, /1 open goal/.test(await page.textContent('#inspectorSummary')));
   await shot(page, 'desktop-5-inspector');
+  const treeBefore = await widthOf(page, '.inspector-tree');
+  await drag(page, '.inspector-body > .splitter', 120);
+  check(`the inspector divider resizes the proof tree (${Math.round(treeBefore)} → ${Math.round(await widthOf(page, '.inspector-tree'))})`,
+    Math.abs(treeBefore + 120 - await widthOf(page, '.inspector-tree')) < 4);
   await page.click('#treePane .tree-node >> nth=0');
   await page.waitForFunction(() => /Node 0/.test(document.getElementById('nodeTitle').textContent));
   await page.click('#nodePrune');
@@ -256,6 +290,7 @@ async function desktop() {
   await page.goto(origin);
   await listed(page, 3);
   check('the contract is restored after a reload', (await editorText(page)).includes('contract Simple'));
+  check('the divider position is restored after a reload', Math.abs(await widthOf(page, 'section.editor') - editorWidth) < 2);
 
   await page.selectOption('#example', 'examples/TestSuite.sol');
   await page.waitForFunction(() => document.querySelectorAll('#functions tbody tr[data-fn]').length > 100, null, { timeout: 180000 });
@@ -312,6 +347,9 @@ async function phone() {
   await page.goto(origin);
   await listed(page, 4);
   check('phone: the code view shows the editor and hides the results', await page.isVisible('#editor') && !(await page.isVisible('#functions')));
+  check(`phone: a dark system gives the dark theme (${await background(page)})`, await background(page) === 'rgb(17, 17, 24)');
+  check('phone: the theme switch is in the app bar and the divider is hidden',
+    await page.isVisible('.theme-switch') && await page.isHidden('main > .splitter'));
   await page.click('#tabVerify');
   await page.waitForFunction(() => !document.getElementById('summary').hidden, null, { timeout: 600000 });
   check('phone: the tab bar verifies and switches to the results', await page.isVisible('#functions') && !(await page.isVisible('#editor')));
