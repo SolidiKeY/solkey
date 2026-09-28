@@ -18,7 +18,7 @@ contract Unprovable {
     mapping(uint => uint) balances;
 
     /// @custom:key box
-    function checkedLocalOverflowReverts() public {
+    function checkedLocalOverflowReverts() public pure {
         uint8 x;
         x = 250;
         x += 10;
@@ -54,7 +54,7 @@ contract Unprovable {
     }
 
     /// @custom:key box
-    function checkedPowerOverflowReverts() public {
+    function checkedPowerOverflowReverts() public pure {
         uint8 b;
         uint8 r;
         b = 16;
@@ -63,7 +63,7 @@ contract Unprovable {
     }
 
     /// @custom:key box
-    function checkedDivisionOverflowReverts() public {
+    function checkedDivisionOverflowReverts() public pure {
         int8 x;
         int8 mone;
         int8 r;
@@ -75,7 +75,7 @@ contract Unprovable {
     }
 
     /// @custom:key box
-    function checkedUnaryMinusMinReverts() public {
+    function checkedUnaryMinusMinReverts() public pure {
         int8 m;
         int8 r;
         m = -127;

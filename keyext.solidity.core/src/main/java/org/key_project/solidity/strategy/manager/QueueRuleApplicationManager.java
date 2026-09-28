@@ -297,12 +297,11 @@ public class QueueRuleApplicationManager implements RuleApplicationManager<Goal>
 
     @Override
     public RuleApplicationManager<Goal> copy() {
-        // noinspection unchecked
-        return (RuleApplicationManager<Goal>) clone();
+        return clone();
     }
 
     @Override
-    public Object clone() {
+    public QueueRuleApplicationManager clone() {
         QueueRuleApplicationManager res = new QueueRuleApplicationManager();
         res.queue = queue;
         res.previousMinimum = previousMinimum;

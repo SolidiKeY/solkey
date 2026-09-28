@@ -38,7 +38,8 @@ public class RenamingTermProperty implements Property<Term> {
     /// varsBoundHere and SolidityBlock as `term1` modulo bound renaming
     /// @param <V> is not needed for this equality check
     @Override
-    public <V> boolean equalsModThisProperty(Term term1, Term term2, V... v) {
+    @SafeVarargs
+    public final <V> boolean equalsModThisProperty(Term term1, Term term2, V... v) {
         if (term2 == term1) {
             return true;
         }

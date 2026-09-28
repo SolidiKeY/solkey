@@ -156,12 +156,12 @@ public final class SolidityExampleTests {
 
     // --- loading and proving -------------------------------------------------------------------
 
-    public static KeYEnvironment load(Path file) throws ProblemLoaderException {
+    public static KeYEnvironment<?> load(Path file) throws ProblemLoaderException {
         return KeYEnvironment.load(file);
     }
 
     /// Load the obligation for one function of a Solidity source, with no `.key` problem file.
-    public static KeYEnvironment load(Path solFile, String contract, String function)
+    public static KeYEnvironment<?> load(Path solFile, String contract, String function)
             throws ProblemLoaderException {
         return KeYEnvironment.load(solFile, contract, function);
     }
@@ -205,7 +205,7 @@ public final class SolidityExampleTests {
     /// (each `category:choice`) and run automode on it.
     public static Proof proveTestSuiteFunction(String function, int maxSteps, long timeout,
             List<String> choices) throws ProblemLoaderException {
-        KeYEnvironment env = KeYEnvironment.load(testSuite(),
+        KeYEnvironment<?> env = KeYEnvironment.load(testSuite(),
             new SolidityProblemSpec(TEST_SUITE_CONTRACT, function, choices));
         return prove(env, maxSteps, timeout);
     }
@@ -218,7 +218,7 @@ public final class SolidityExampleTests {
 
     /// Run automode on the environment's loaded proof, optionally overriding the strategy's step
     /// budget and timeout ([#KEEP] leaves a setting untouched), and return the proof.
-    public static Proof prove(KeYEnvironment env, int maxSteps, long timeout) {
+    public static Proof prove(KeYEnvironment<?> env, int maxSteps, long timeout) {
         Proof proof = env.getLoadedProof();
         var strategySettings = proof.getSettings().getStrategySettings();
         if (maxSteps != KEEP) {
@@ -244,7 +244,7 @@ public final class SolidityExampleTests {
 
     /// Load a saved proof and assert that it replays without errors.
     public static Proof replay(Path file) throws ProblemLoaderException {
-        KeYEnvironment env = KeYEnvironment.load(file);
+        KeYEnvironment<?> env = KeYEnvironment.load(file);
         Proof proof = env.getLoadedProof();
         assertNotNull(proof, file + " must load a proof");
         ReplayResult replay = env.getReplayResult();
@@ -269,7 +269,7 @@ public final class SolidityExampleTests {
 
     /// Apply the named taclet at the top-level succedent formula of the first open goal and
     /// return the top-level succedent formula of the goal that results.
-    public static Term applyTacletAtTop(KeYEnvironment env, String tacletName) {
+    public static Term applyTacletAtTop(KeYEnvironment<?> env, String tacletName) {
         Proof proof = env.getLoadedProof();
         applyNamedTacletAtTop(env, proof, proof.openGoals().head(), tacletName);
         return proof.openGoals().head().sequent().succedent().get(0).formula();
@@ -278,7 +278,7 @@ public final class SolidityExampleTests {
     /// Find the taclet named `tacletName` applicable at the top-level succedent formula of `goal`,
     /// position it there, assert it is applicable and complete, apply it, and return the positioned
     /// app (callers may still inspect its position or the resulting goal).
-    public static TacletApp applyNamedTacletAtTop(KeYEnvironment env, Proof proof, Goal goal,
+    public static TacletApp applyNamedTacletAtTop(KeYEnvironment<?> env, Proof proof, Goal goal,
             String tacletName) {
         SequentFormula sf = goal.sequent().succedent().get(0);
         PosInOccurrence pos = new PosInOccurrence(sf, PosInTerm.getTopLevel(), false);

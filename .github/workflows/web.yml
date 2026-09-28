@@ -36,7 +36,7 @@ jobs:
           distribution: corretto
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v6
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: '25'
       - name: Install Oracle GraalVM (with Web Image)
@@ -58,13 +58,13 @@ jobs:
         run: ./gradlew :keyext.solidity.web:browserTest -PsolkeyShots=build/screenshots
       - name: Keep the screenshots
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: web-screenshots
           path: keyext.solidity.web/build/screenshots
           if-no-files-found: ignore
       - if: github.event_name != 'pull_request'
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: keyext.solidity.web/build/site
 
@@ -77,4 +77,4 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - id: deploy
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

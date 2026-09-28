@@ -9,7 +9,7 @@ contract SolcExpressions {
     uint v;
 
     /// solc: expressions/inc_dec_operators.sol — `a++` yields the old value and increments.
-    function postIncrementYieldsOldValue() public {
+    function postIncrementYieldsOldValue() public pure {
         uint a = 6;
         uint p = a++;
         assert(p == 6);
@@ -17,7 +17,7 @@ contract SolcExpressions {
     }
 
     /// solc: expressions/inc_dec_operators.sol — `++a` yields the new value.
-    function preIncrementYieldsNewValue() public {
+    function preIncrementYieldsNewValue() public pure {
         uint a = 6;
         uint q = ++a;
         assert(q == 7);
@@ -27,7 +27,7 @@ contract SolcExpressions {
     /// solc: expressions/inc_dec_operators.sol — the upstream accumulation
     /// `r = a; r += a++ * 0x10; r += ++a * 0x100` on a local, with each step bound
     /// (0x10 = 16, 0x100 = 256; the expected 6 + 6*16 + 8*256 = 2150).
-    function incDecChainOnLocal() public {
+    function incDecChainOnLocal() public pure {
         uint a = 6;
         uint r = a;
         uint p = a++;
@@ -54,7 +54,7 @@ contract SolcExpressions {
 
     /// solc: expressions/inc_dec_operators.sol — the decrement twins, which upstream only
     /// covers through the operator table.
-    function postDecrementYieldsOldValue() public {
+    function postDecrementYieldsOldValue() public pure {
         uint a = 6;
         uint p = a--;
         assert(p == 6);
@@ -62,7 +62,7 @@ contract SolcExpressions {
     }
 
     /// solc: expressions/inc_dec_operators.sol — `--a` yields the new value.
-    function preDecrementYieldsNewValue() public {
+    function preDecrementYieldsNewValue() public pure {
         uint a = 6;
         uint q = --a;
         assert(q == 5);
@@ -72,7 +72,7 @@ contract SolcExpressions {
     /// solc: expressions/inc_dec_operators.sol — the upstream chain verbatim, with the
     /// compound assignment `r += a++ * 0x10` on a local instead of the bound-step rewrite
     /// used by [incDecChainOnLocal].
-    function compoundAssignOnLocal() public {
+    function compoundAssignOnLocal() public pure {
         uint a = 6;
         uint r = a;
         r += a * 16;
@@ -81,7 +81,7 @@ contract SolcExpressions {
 
     /// solc: expressions/inc_dec_operators.sol — a bare `a++;` statement, the increment form
     /// the upstream loops use.
-    function bareIncrementOnLocal() public {
+    function bareIncrementOnLocal() public pure {
         uint a = 6;
         a++;
         assert(a == 7);
@@ -95,13 +95,13 @@ contract SolcExpressions {
     }
 
     /// solc: expressions/conditional_expression_true_literal.sol — `true ? 5 : 10` is 5.
-    function ternaryTrueLiteral() public {
+    function ternaryTrueLiteral() public pure {
         uint r = true ? 5 : 10;
         assert(r == 5);
     }
 
     /// solc: expressions/conditional_expression_false_literal.sol — `false ? 5 : 10` is 10.
-    function ternaryFalseLiteral() public {
+    function ternaryFalseLiteral() public pure {
         uint r = false ? 5 : 10;
         assert(r == 10);
     }
@@ -109,7 +109,7 @@ contract SolcExpressions {
     /// solc: expressions/conditional_expression_multiple.sol — the nested
     /// `x > 100 ? x > 1000 ? 1000 : 100 : x > 50 ? 50 : 10`, upstream case `f(1001) -> 1000`.
     /// @custom:key box
-    function ternaryNestedOuterHigh(uint x) public {
+    function ternaryNestedOuterHigh(uint x) public pure {
         require(x == 1001);
         uint d = x > 100 ? x > 1000 ? 1000 : 100 : x > 50 ? 50 : 10;
         assert(d == 1000);
@@ -117,7 +117,7 @@ contract SolcExpressions {
 
     /// solc: expressions/conditional_expression_multiple.sol — upstream case `f(500) -> 100`.
     /// @custom:key box
-    function ternaryNestedOuterLow(uint x) public {
+    function ternaryNestedOuterLow(uint x) public pure {
         require(x == 500);
         uint d = x > 100 ? x > 1000 ? 1000 : 100 : x > 50 ? 50 : 10;
         assert(d == 100);
@@ -125,7 +125,7 @@ contract SolcExpressions {
 
     /// solc: expressions/conditional_expression_multiple.sol — upstream case `f(80) -> 50`.
     /// @custom:key box
-    function ternaryNestedInnerHigh(uint x) public {
+    function ternaryNestedInnerHigh(uint x) public pure {
         require(x == 80);
         uint d = x > 100 ? x > 1000 ? 1000 : 100 : x > 50 ? 50 : 10;
         assert(d == 50);
@@ -133,7 +133,7 @@ contract SolcExpressions {
 
     /// solc: expressions/conditional_expression_multiple.sol — upstream case `f(40) -> 10`.
     /// @custom:key box
-    function ternaryNestedInnerLow(uint x) public {
+    function ternaryNestedInnerLow(uint x) public pure {
         require(x == 40);
         uint d = x > 100 ? x > 1000 ? 1000 : 100 : x > 50 ? 50 : 10;
         assert(d == 10);
@@ -141,19 +141,19 @@ contract SolcExpressions {
 
     /// solc: exponentiation/small_exp.sol — `**` is right-associative, so `2 ** 3 ** 2` is
     /// `2 ** 9`, not `8 ** 2`.
-    function exponentiationIsRightAssociative() public {
+    function exponentiationIsRightAssociative() public pure {
         uint r = 2 ** 3 ** 2;
         assert(r == 512);
     }
 
     /// solc: exponentiation/literal_base.sol — `0 ** 0` is 1.
-    function exponentiationZeroBaseZeroExponent() public {
+    function exponentiationZeroBaseZeroExponent() public pure {
         uint r = 0 ** 0;
         assert(r == 1);
     }
 
     /// solc: exponentiation/literal_base.sol — anything to the power 0 is 1.
-    function exponentiationZeroExponent() public {
+    function exponentiationZeroExponent() public pure {
         uint r = 7 ** 0;
         assert(r == 1);
     }
@@ -161,7 +161,7 @@ contract SolcExpressions {
     /// solc: exponentiation/signed_base.sol — a negative base loses its sign at an even
     /// exponent.
     /// @custom:key box
-    function exponentiationSignedBaseEvenExponent(int b) public {
+    function exponentiationSignedBaseEvenExponent(int b) public pure {
         // a negative literal directly inside the require condition does not discharge
         int minusTwo = -2;
         require(b == minusTwo);
@@ -172,7 +172,7 @@ contract SolcExpressions {
     /// solc: exponentiation/signed_base.sol — a negative base keeps its sign at an odd
     /// exponent.
     /// @custom:key box
-    function exponentiationSignedBaseOddExponent(int b) public {
+    function exponentiationSignedBaseOddExponent(int b) public pure {
         int minusTwo = -2;
         require(b == minusTwo);
         int odd = b ** 3;

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.rule;
 
+import org.key_project.prover.proof.ProofGoal;
 import org.key_project.prover.rules.RuleAbortException;
 import org.key_project.prover.rules.RuleExecutor;
 import org.key_project.prover.sequent.PosInOccurrence;
@@ -32,8 +33,9 @@ public interface BuiltInRule extends Rule, RuleExecutor<Goal> {
     }
 
     @Override
-    default RuleExecutor getExecutor() {
-        return this;
+    @SuppressWarnings("unchecked")
+    default <G extends ProofGoal<G>> RuleExecutor<G> getExecutor() {
+        return (RuleExecutor<G>) this;
     }
 
     /// returns true iff a rule is applicable at the given position. This does not necessarily mean

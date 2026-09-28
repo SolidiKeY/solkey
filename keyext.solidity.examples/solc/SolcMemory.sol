@@ -21,7 +21,7 @@ contract SolcMemory {
 
     /// solc: structs/memory_structs_read_write.sol (`testInit`) — a fresh memory struct reads
     /// as all zeros.
-    function memoryStructDefaultsToZero() public {
+    function memoryStructDefaultsToZero() public pure {
         Inner memory d;
         assert(d.a == 0);
         assert(d.b == 0);
@@ -30,7 +30,7 @@ contract SolcMemory {
 
     /// solc: structs/memory_structs_read_write.sol (`testAssign`) — member writes on a memory
     /// struct read back.
-    function memoryStructWriteRead() public {
+    function memoryStructWriteRead() public pure {
         Inner memory s;
         s.a = 1;
         s.b = 2;
@@ -101,7 +101,7 @@ contract SolcMemory {
 
     /// solc: structs/memory_structs_nested.sol — a memory struct member is a reference, so two
     /// locals bound to it alias each other.
-    function memoryAliasIsNotACopy() public {
+    function memoryAliasIsNotACopy() public pure {
         Outer memory o;
         Inner memory ref = o.s;
         ref.a = 100;
@@ -110,7 +110,7 @@ contract SolcMemory {
 
     /// solc: structs/memory_structs_nested.sol — an array held by a memory struct is indexable
     /// once it has been allocated.
-    function memoryArrayInStruct() public {
+    function memoryArrayInStruct() public pure {
         Basket memory b;
         uint[] memory xs = new uint[](4);
         b.items = xs;
@@ -120,7 +120,7 @@ contract SolcMemory {
 
     /// solc: array/delete/memory_arrays_delete.sol — `delete x[i]` resets one memory element
     /// and leaves its neighbour alone.
-    function deleteMemoryArrayElement() public {
+    function deleteMemoryArrayElement() public pure {
         uint[] memory xs = new uint[](4);
         xs[1] = 17;
         xs[2] = 18;

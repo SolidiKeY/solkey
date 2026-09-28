@@ -38,7 +38,7 @@ public class TermFactory {
     /// Master method for term creation. Should be the only place where terms are created in the
     /// entire system.
     public Term createTerm(Operator op, @Nullable ImmutableArray<Term> subs,
-            @Nullable ImmutableArray<QuantifiableVariable> boundVars) {
+            @Nullable ImmutableArray<? extends QuantifiableVariable> boundVars) {
         if (subs == null || subs.isEmpty()) {
             subs = NO_SUBTERMS;
         }
@@ -51,7 +51,7 @@ public class TermFactory {
     }
 
     public Term createTerm(Operator op, @Nullable Term[] subs,
-            @Nullable ImmutableArray<QuantifiableVariable> boundVars) {
+            @Nullable ImmutableArray<? extends QuantifiableVariable> boundVars) {
         return createTerm(op, createSubtermArray(subs), boundVars);
     }
 
@@ -77,7 +77,7 @@ public class TermFactory {
     }
 
     private Term doCreateTerm(Operator op, ImmutableArray<Term> subs,
-            @Nullable ImmutableArray<QuantifiableVariable> boundVars) {
+            @Nullable ImmutableArray<? extends QuantifiableVariable> boundVars) {
 
         final TermImpl newTerm =
             new TermImpl(op, subs, boundVars);

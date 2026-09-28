@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.key_project.solidity.parser.ParsingFacade;
 import org.key_project.solidity.util.Position;
@@ -213,7 +214,6 @@ public class Configuration {
     /// @param clazz the class type of the elements
     /// @throws ClassCastException if the entry is not a [List] or contains elements of the
     /// wrong type
-    @SuppressWarnings("unchecked")
     public <T> @Nullable List<T> getList(String name, Class<T> clazz) {
         List<?> result = get(name, List.class);
         if (result == null) {
@@ -222,7 +222,7 @@ public class Configuration {
         if (!result.stream().allMatch(clazz::isInstance)) {
             throw new ClassCastException();
         }
-        return (List<T>) result;
+        return result.stream().map(clazz::cast).collect(Collectors.toList());
     }
 
     /// Returns a list of strings for the given name.
@@ -232,7 +232,6 @@ public class Configuration {
     ///
     /// @param name property name
     /// @throws ClassCastException if the list contains non-strings
-    @SuppressWarnings("unchecked")
     public @NonNull List<String> getStringList(String name) {
         List<?> result = get(name, List.class);
         if (result == null) {
@@ -241,7 +240,7 @@ public class Configuration {
         if (!result.stream().allMatch(String.class::isInstance)) {
             throw new ClassCastException();
         }
-        return (List<String>) result;
+        return result.stream().map(String.class::cast).collect(Collectors.toList());
     }
 
     /// Returns string array for the requested entry. `defaultValue` is returned if no such
@@ -263,13 +262,8 @@ public class Configuration {
     /// @param name a name identifying an entry
     /// @param defaultValue the default value to be returned
     /// @throws ClassCastException if the given entry is not a string
-    /// @throws IllegalArgumentException if defaultValue does not belong to an enum
-    @SuppressWarnings("unchecked")
     public <T extends Enum<T>> @NonNull T getEnum(String name, @NonNull T defaultValue) {
-        Class<T> clazz = (Class<T>) defaultValue.getClass();
-        if (!clazz.isEnum()) {
-            throw new IllegalArgumentException(clazz + " is not an enum type.");
-        }
+        Class<T> clazz = defaultValue.getDeclaringClass();
         var idx = getString(name);
         if (idx == null) {
             return defaultValue;

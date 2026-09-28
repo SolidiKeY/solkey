@@ -66,10 +66,7 @@ public class ProgramReplaceVisitor extends CreatingASTVisitor {
         final Object inst = svinsts.getInstantiation(sv);
         if (inst instanceof SolidityProgramElement pe) {
             addChild(pe);
-        } else if (inst instanceof ImmutableArray/* <ProgramElement> */) {
-            @SuppressWarnings("unchecked")
-            final var instArray = (ImmutableArray<SolidityProgramElement>) inst;
-            // the assertion ensures the intended instanceof check from above
+        } else if (inst instanceof ImmutableArray<?> instArray) {
             addChildren(instArray);
         } else if (inst instanceof Term t && t.op() instanceof ProgramVariable pv) {
             addChild(pv);
@@ -110,10 +107,10 @@ public class ProgramReplaceVisitor extends CreatingASTVisitor {
         changed();
     }
 
-    private void addChildren(ImmutableArray<SolidityProgramElement> arr) {
+    private void addChildren(ImmutableArray<?> arr) {
         stack.pop();
         for (int i = 0, sz = arr.size(); i < sz; i++) {
-            addToTopOfStack(arr.get(i));
+            addToTopOfStack((SolidityProgramElement) arr.get(i));
         }
     }
 

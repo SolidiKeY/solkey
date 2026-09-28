@@ -25,7 +25,7 @@ public class FieldAccessExampleTest {
 
     @Test
     void resolvesFieldSymbol() throws Exception {
-        KeYEnvironment env = load(example("fieldAccess/fieldAccess.key"));
+        KeYEnvironment<?> env = load(example("fieldAccess/fieldAccess.key"));
         Proof proof = env.getLoadedProof();
 
         // after: the field write became a save update on contract storage and the post

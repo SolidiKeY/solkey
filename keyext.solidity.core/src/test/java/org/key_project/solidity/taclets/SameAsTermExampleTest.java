@@ -26,7 +26,7 @@ public class SameAsTermExampleTest {
 
     @Test
     void sameAsTermBindsAndCloses() throws Exception {
-        KeYEnvironment env = load(example("fieldAccess/sameAsTerm.key"));
+        KeYEnvironment<?> env = load(example("fieldAccess/sameAsTerm.key"));
         Proof proof = env.getLoadedProof();
 
         Term after = applyTacletAtTop(env, "fieldWriteThenReadViaTerm");

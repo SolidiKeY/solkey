@@ -165,7 +165,8 @@ public class NamespaceSet {
      * returns all namespaces in an array
      */
     private Namespace<?>[] asArray() {
-        return new Namespace[] { variables(), programVariables(), sorts(), ruleSets(), functions(),
+        return new Namespace<?>[] { variables(), programVariables(), sorts(), ruleSets(),
+            functions(),
             choices() };
     }
 
@@ -174,7 +175,7 @@ public class NamespaceSet {
      * namespaces without variables, choices and ruleSets)
      */
     private Namespace<?>[] logicAsArray() {
-        return new Namespace[] { programVariables(), sorts(), sortAliases(), functions() };
+        return new Namespace<?>[] { programVariables(), sorts(), sortAliases(), functions() };
     }
 
     /**

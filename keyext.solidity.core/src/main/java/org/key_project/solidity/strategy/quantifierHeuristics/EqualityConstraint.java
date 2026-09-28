@@ -86,9 +86,9 @@ public class EqualityConstraint implements Constraint {
 
     @Override
     protected synchronized Object clone() {
-        EqualityConstraint res = new EqualityConstraint((HashMap<Metavariable, Term>) map.clone());
+        EqualityConstraint res = new EqualityConstraint(new LinkedHashMap<>(map));
         res.instantiationCache = instantiationCache == null ? null
-                : (HashMap<Metavariable, Term>) instantiationCache.clone();
+                : new LinkedHashMap<>(instantiationCache);
         return res;
     }
 
@@ -536,7 +536,7 @@ public class EqualityConstraint implements Constraint {
         if (modifyThis) {
             return this;
         }
-        return new EqualityConstraint((HashMap<Metavariable, Term>) map.clone());
+        return new EqualityConstraint(new LinkedHashMap<>(map));
     }
 
     /// checks equality of constraints by subsuming relation (only equal if no new sorts need to be

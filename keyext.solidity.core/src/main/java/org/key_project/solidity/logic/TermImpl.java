@@ -38,7 +38,7 @@ public class TermImpl implements Term {
     // content
     private final Operator op;
     private final ImmutableArray<Term> subs;
-    private final ImmutableArray<QuantifiableVariable> boundVars;
+    private final ImmutableArray<? extends QuantifiableVariable> boundVars;
 
     private @MonotonicNonNull Sort sort;
     private int depth = -1;
@@ -64,7 +64,7 @@ public class TermImpl implements Term {
     /// operator)
     /// @param boundVars the bounded variables (if applicable), e.g., for quantifiers
     public TermImpl(Operator op, ImmutableArray<Term> subs,
-            @Nullable ImmutableArray<QuantifiableVariable> boundVars) {
+            @Nullable ImmutableArray<? extends QuantifiableVariable> boundVars) {
         assert op != null;
         assert subs != null;
         this.op = op;
@@ -85,10 +85,9 @@ public class TermImpl implements Term {
             localFreeVars = localFreeVars.add(lv);
         } else {
             for (int i = 0, ar = arity(); i < ar; i++) {
-                var subFreeVars = (ImmutableSet<LogicVariable>) sub(i).freeVars();
                 var sz = varsBoundHere(i).size();
-                for (var fv : subFreeVars) {
-                    if (fv.getIndex() > sz) {
+                for (var qv : sub(i).freeVars()) {
+                    if (qv instanceof LogicVariable fv && fv.getIndex() > sz) {
                         localFreeVars =
                             localFreeVars.add(LogicVariable.create(fv.getIndex() - sz, fv.sort()));
                     }
@@ -128,13 +127,13 @@ public class TermImpl implements Term {
 
 
     @Override
-    public @NonNull ImmutableArray<QuantifiableVariable> boundVars() {
+    public @NonNull ImmutableArray<? extends QuantifiableVariable> boundVars() {
         return boundVars;
     }
 
 
     @Override
-    public @NonNull ImmutableArray<QuantifiableVariable> varsBoundHere(int n) {
+    public @NonNull ImmutableArray<? extends QuantifiableVariable> varsBoundHere(int n) {
         return op.bindVarsAt(n) ? boundVars : EMPTY_VAR_LIST;
     }
 
@@ -205,6 +204,7 @@ public class TermImpl implements Term {
     }
 
     @Override
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public void execPostOrder(@NonNull Visitor visitor) {
         visitor.subtreeEntered(this);
         if (visitor.visitSubtree(this)) {
@@ -218,6 +218,7 @@ public class TermImpl implements Term {
 
 
     @Override
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public void execPreOrder(@NonNull Visitor visitor) {
         visitor.subtreeEntered(this);
         visitor.visit(this);

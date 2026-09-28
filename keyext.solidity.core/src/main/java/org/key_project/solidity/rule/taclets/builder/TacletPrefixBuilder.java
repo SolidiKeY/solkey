@@ -20,7 +20,6 @@ import org.key_project.solidity.rule.sv.ModalOperatorSV;
 import org.key_project.solidity.rule.sv.TermSV;
 import org.key_project.solidity.rule.sv.UpdateSV;
 import org.key_project.solidity.rule.taclets.SolFindTaclet;
-import org.key_project.solidity.rule.taclets.SolRewriteTaclet;
 import org.key_project.solidity.rule.taclets.TacletPrefix;
 import org.key_project.solidity.rule.taclets.TacletSchemaVariableCollector;
 import org.key_project.util.collection.DefaultImmutableMap;
@@ -174,8 +173,7 @@ public class TacletPrefixBuilder {
 
 
     private boolean atMostOneRepl() {
-        RewriteTacletBuilder<? extends SolRewriteTaclet> rwtacletBuilder =
-            (RewriteTacletBuilder<? extends SolRewriteTaclet>) tacletBuilder;
+        RewriteTacletBuilder rwtacletBuilder = (RewriteTacletBuilder) tacletBuilder;
         int count = 0;
         for (var tmpl : rwtacletBuilder.goalTemplates()) {
             if (tmpl instanceof RewriteTacletGoalTemplate rtgt) {
@@ -191,8 +189,7 @@ public class TacletPrefixBuilder {
     }
 
     private boolean occurrsOnlyInFindOrRepl(SchemaVariable sv) {
-        RewriteTacletBuilder<? extends SolRewriteTaclet> rwtacletBuilder =
-            (RewriteTacletBuilder<? extends SolRewriteTaclet>) tacletBuilder;
+        RewriteTacletBuilder rwtacletBuilder = (RewriteTacletBuilder) tacletBuilder;
         TacletSchemaVariableCollector svc = new TacletSchemaVariableCollector();
         svc.visitAssumes(rwtacletBuilder.ifSequent());
         for (var tacletGoalTemplate : rwtacletBuilder.goalTemplates()) {

@@ -37,3 +37,4 @@ CONST : 'const';
 CHOOSECONTRACT : '\\chooseContract';
 CONTRACTS : '\\contracts';
 INVARIANTS : '\\invariants';
+MODIFIES : '\\modifies';

@@ -549,7 +549,7 @@ public class ExpressionBuilder extends DefaultBuilder {
         }
 
         QuantifiableVariable result =
-            doLookup(new Name(ctx.id.getText()), variables());
+            doLookup(new Name(ctx.id.getText()), QuantifiableVariable.class, variables());
 
         if (result == null) {
             semanticError(ctx, "There is no schema variable or variable named " + id);

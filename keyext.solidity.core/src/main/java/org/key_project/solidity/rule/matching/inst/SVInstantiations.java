@@ -266,6 +266,7 @@ public class SVInstantiations
     ///
     /// @return the Object the SchemaVariable will be instantiated with, null if no instantiation is
     /// stored
+    @SuppressWarnings("unchecked")
     public <T> T getInstantiation(SchemaVariable sv) {
         final InstantiationEntry<?> entry = getInstantiationEntry(sv);
         return entry == null ? null : (T) entry.getInstantiation();
@@ -424,10 +425,11 @@ public class SVInstantiations
         return e == null ? null : e.key(); // handle this better!
     }
 
-    public @Nullable Object lookupValue(@NonNull Name name) {
+    @SuppressWarnings("unchecked")
+    public <T> @Nullable T lookupValue(@NonNull Name name) {
         final ImmutableMapEntry<@NonNull SchemaVariable, InstantiationEntry<?>> e =
             lookupEntryForSV(name);
-        return e == null ? null : e.value().getInstantiation();
+        return e == null ? null : (T) e.value().getInstantiation();
     }
 
     /// returns true if the given object and this one have the same mappings

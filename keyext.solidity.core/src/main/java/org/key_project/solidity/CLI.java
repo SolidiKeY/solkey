@@ -360,7 +360,7 @@ public class CLI {
         }
     }
 
-    private static Outcome replay(CLI cli, KeYEnvironment env) {
+    private static Outcome replay(CLI cli, KeYEnvironment<?> env) {
         if (cli.verbose)
             System.out.println("Replaying proof...");
         var replayResult = env.getReplayResult();
@@ -379,7 +379,7 @@ public class CLI {
         return Outcome.closed(0);
     }
 
-    private static Outcome runAutoMode(CLI cli, KeYEnvironment env, Proof proof) {
+    private static Outcome runAutoMode(CLI cli, KeYEnvironment<?> env, Proof proof) {
         if (!cli.quiet) {
             System.out.println("Proving...");
         }

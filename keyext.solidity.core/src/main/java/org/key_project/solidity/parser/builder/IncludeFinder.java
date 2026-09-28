@@ -5,6 +5,7 @@ package org.key_project.solidity.parser.builder;
 
 import java.io.File;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 
 import org.key_project.solidity.parser.KeYSolidityDLParser;
@@ -38,7 +39,7 @@ public class IncludeFinder extends AbstractBuilder<Void> {
         String value = StringUtil.trim(ctx.getText(), "\"'");
         try {
             addInclude(value, ctx.relfile != null);
-        } catch (MalformedURLException e) {
+        } catch (MalformedURLException | IllegalArgumentException e) {
             throw new BuildingException(ctx, e);
         }
         return null;
@@ -54,8 +55,10 @@ public class IncludeFinder extends AbstractBuilder<Void> {
             filename = filename.replace('/', File.separatorChar); // Not required for Windows, but
             // whatsoever
             filename = filename.replace('\\', File.separatorChar); // Special handling for Linux
-            URL path = new URL(base.getProtocol(), base.getHost(), base.getPort(),
-                basePath + "/" + filename);
+            String authority = base.getAuthority();
+            String root = authority == null || authority.isEmpty() ? "" : "//" + authority;
+            URL path = URI.create(base.getProtocol() + ":" + root + basePath + "/"
+                + filename.replace(File.separatorChar, '/')).toURL();
             source = RuleSourceFactory.initRuleFile(path);
         } else {
             source = RuleSourceFactory.fromDefaultLocation(filename);

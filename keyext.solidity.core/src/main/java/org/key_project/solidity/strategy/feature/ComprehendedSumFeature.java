@@ -47,6 +47,7 @@ public class ComprehendedSumFeature<Goal extends ProofGoal<@NonNull Goal>> imple
             PosInOccurrence pos, G goal, MutableState mState) {
         final Term outerVarContent = var.getContent(mState);
 
+        @SuppressWarnings("unchecked")
         final var it = generator.generate(app, pos, (Goal) goal, mState);
         RuleAppCost res = NumberRuleAppCost.getZeroCost();
         while (it.hasNext() && !(res instanceof TopRuleAppCost)) {

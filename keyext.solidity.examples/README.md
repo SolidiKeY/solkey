@@ -29,7 +29,9 @@ a range). Three kinds of case are skipped rather than failed:
 
 ## Writing an example
 
-Every function is `public` and returns nothing. A function may take arguments: the loader
+Every function is `public` and returns nothing. Mark it `pure` or `view` when it touches no
+storage or only reads it, so solc compiles the file without warnings; `./run-key.sh FILE.sol
+--solc` lists what is left. A function may take arguments: the loader
 declares one unconstrained program variable per parameter and passes them as the call's
 arguments, so the function must be box-tagged and pin the values its asserts rely on in one
 conjoined `require(x == 5 && y == 7)` — it plays the role of the old `.key` precondition

@@ -551,10 +551,9 @@ public class PrettyPrinter implements Visitor {
         } else {
             if (o instanceof SolidityProgramElement pe) {
                 pe.visit(this);
-            } else if (o instanceof ImmutableArray) {
-                // noinspection unchecked
-                for (SolidityProgramElement e : (ImmutableArray<SolidityProgramElement>) o) {
-                    e.visit(this);
+            } else if (o instanceof ImmutableArray<?> elements) {
+                for (Object e : elements) {
+                    ((SolidityProgramElement) e).visit(this);
                 }
             } else {
                 LOGGER.warn("No PrettyPrinting available for {}", o.getClass().getName());

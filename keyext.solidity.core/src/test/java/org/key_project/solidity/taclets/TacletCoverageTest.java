@@ -193,7 +193,7 @@ public class TacletCoverageTest {
 
     private static void saveProof(Path problem) throws Exception {
         String taclet = tacletOf(problem);
-        KeYEnvironment env = KeYEnvironment.load(problem);
+        KeYEnvironment<?> env = KeYEnvironment.load(problem);
         Proof proof = env.getLoadedProof();
         var strategySettings = proof.getSettings().getStrategySettings();
         strategySettings.setMaxSteps(1);
@@ -211,7 +211,7 @@ public class TacletCoverageTest {
         ProofSaver.saveToFile(proofOf(problem).toFile(), proof);
     }
 
-    private static boolean applyWhereApplicable(KeYEnvironment env, Proof proof,
+    private static boolean applyWhereApplicable(KeYEnvironment<?> env, Proof proof,
             String taclet) {
         for (Goal goal : proof.openGoals()) {
             for (boolean antecedent : new boolean[] { true, false }) {
@@ -230,7 +230,7 @@ public class TacletCoverageTest {
         return false;
     }
 
-    private static @Nullable TacletApp findApp(KeYEnvironment env, Proof proof, Goal goal,
+    private static @Nullable TacletApp findApp(KeYEnvironment<?> env, Proof proof, Goal goal,
             SequentFormula formula, boolean antecedent, PosInTerm at, Term term,
             String taclet) {
         PosInOccurrence pos = new PosInOccurrence(formula, at, antecedent);

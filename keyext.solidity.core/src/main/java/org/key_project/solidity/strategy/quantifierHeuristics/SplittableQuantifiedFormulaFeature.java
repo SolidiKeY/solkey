@@ -35,13 +35,13 @@ public class SplittableQuantifiedFormulaFeature extends BinaryFeature {
         }
 
         if (analyser.binOp == Junctor.AND) {
-            return TriggerUtils.intersect((ImmutableSet<LogicVariable>) analyser.left.freeVars(),
-                (ImmutableSet<LogicVariable>) analyser.right.freeVars(), analyser.existentialVars)
+            return TriggerUtils.intersect(analyser.left.freeVars(),
+                analyser.right.freeVars(), analyser.existentialVars)
                     .isEmpty();
         } else if (analyser.binOp == Junctor.OR) {
             return TriggerUtils
-                    .intersect((ImmutableSet<LogicVariable>) analyser.left.freeVars(),
-                        (ImmutableSet<LogicVariable>) analyser.right.freeVars())
+                    .intersect(analyser.left.freeVars(),
+                        analyser.right.freeVars())
                     .union(analyser.existentialVars).size() == analyser.existentialVars.size();
         }
 

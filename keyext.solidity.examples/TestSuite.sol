@@ -164,7 +164,7 @@ contract TestSuite {
     }
 
     /// @custom:key box
-    function storageIndexArrayReadOutOfBoundsReverts() public {
+    function storageIndexArrayReadOutOfBoundsReverts() public view {
         require(values.length == 0);
         uint r = values[1];
         assert(r != r);
@@ -233,13 +233,13 @@ contract TestSuite {
 
     // ── Require / assert: literal operand ──
 
-    function requireTrueLiteral() public {
+    function requireTrueLiteral() public pure {
         require(true);
         assert(true);
     }
 
     /// @custom:key box
-    function requireFalseLiteral() public {
+    function requireFalseLiteral() public pure {
         require(false);
         assert(false);
     }
@@ -288,32 +288,32 @@ contract TestSuite {
 
     // ── Memory ──
 
-    function memoryDeclDefault() public {
+    function memoryDeclDefault() public pure {
         Person memory carol;
         uint r = carol.age;
         assert(r == 0);
     }
 
-    function memoryArrayIndex() public {
+    function memoryArrayIndex() public pure {
         uint[] memory xs = new uint[](4);
         xs[1] = 33;
         uint r = xs[1];
         assert(r == 33);
     }
 
-    function memoryNewIntoStructField() public {
+    function memoryNewIntoStructField() public pure {
         Basket memory basket;
         basket.items = new uint[](2);
         assert(basket.items.length == 2);
     }
 
-    function memoryNewIntoNestedField() public {
+    function memoryNewIntoNestedField() public pure {
         Basket[] memory bs = new Basket[](1);
         bs[0].items = new uint[](3);
         assert(bs[0].items.length == 3);
     }
 
-    function memoryNewIntoIndex() public {
+    function memoryNewIntoIndex() public pure {
         uint[][] memory xs = new uint[][](1);
         xs[0] = new uint[](3);
         assert(xs[0].length == 3);
@@ -343,7 +343,7 @@ contract TestSuite {
         assert(r == 15);
     }
 
-    function additionSimple() public {
+    function additionSimple() public pure {
         uint r = 1 + 2;
         assert(r == 3);
     }
@@ -354,92 +354,92 @@ contract TestSuite {
         assert(r == 11);
     }
 
-    function divisionSimple() public {
+    function divisionSimple() public pure {
         uint r = 8 / 2;
         assert(r == 4);
     }
 
-    function greaterEqualSimple() public {
+    function greaterEqualSimple() public pure {
         bool r = 5 >= 6;
         assert(!r);
     }
 
-    function greaterThanSimple() public {
+    function greaterThanSimple() public pure {
         bool r = 5 > 3;
         assert(r);
     }
 
-    function lessEqualSimple() public {
+    function lessEqualSimple() public pure {
         bool r = 5 <= 5;
         assert(r);
     }
 
-    function lessThanSimple() public {
+    function lessThanSimple() public pure {
         bool r = 3 < 5;
         assert(r);
     }
 
-    function logicalAndSimple() public {
+    function logicalAndSimple() public pure {
         bool r = true && false;
         assert(!r);
     }
 
-    function logicalAndShortCircuitRhs() public {
+    function logicalAndShortCircuitRhs() public pure {
         uint x = 5;
         bool r = x == 5 && x + 1 == 6;
         assert(r);
     }
 
-    function logicalNotSimple() public {
+    function logicalNotSimple() public pure {
         bool r = !false;
         assert(r);
     }
 
-    function logicalOrSimple() public {
+    function logicalOrSimple() public pure {
         bool r = true || false;
         assert(r);
     }
 
-    function logicalOrShortCircuitRhs() public {
+    function logicalOrShortCircuitRhs() public pure {
         uint x = 5;
         bool r = x == 4 || x + 1 == 6;
         assert(r);
     }
 
-    function ternaryCaptureCond() public {
+    function ternaryCaptureCond() public pure {
         uint x = 5;
         uint r = x == 5 ? x + 1 : 0;
         assert(r == 6);
     }
 
-    function ternaryToIf() public {
+    function ternaryToIf() public pure {
         bool b = true;
         uint r = b ? 1 : 2;
         assert(r == 1);
     }
 
-    function ifUnfold() public {
+    function ifUnfold() public pure {
         uint x = 5;
         uint r = 0;
         if (x == 4) r = 1;
         assert(r == 0);
     }
 
-    function ifElseUnfold() public {
+    function ifElseUnfold() public pure {
         uint x = 5;
         uint r = 0;
         if (x == 5) r = 1; else r = 2;
         assert(r == 1);
     }
 
-    function ifSplit() public {
+    function ifSplit() public pure {
         bool b = true;
         uint r = 0;
         if (b) r = 1;
         assert(r == 1);
     }
 
-    function ifElseSplit() public {
+    function ifElseSplit() public pure {
         bool b = false;
         uint r = 0;
         if (b) {
@@ -450,49 +450,49 @@ contract TestSuite {
         assert(r == 2);
     }
 
-    function ifTrue() public {
+    function ifTrue() public pure {
         uint r = 0;
         if (true) r = 1;
         assert(r == 1);
     }
 
-    function ifFalse() public {
+    function ifFalse() public pure {
         uint r = 0;
         if (false) r = 1;
         assert(r == 0);
     }
 
-    function ifElseTrue() public {
+    function ifElseTrue() public pure {
         uint r = 0;
         if (true) r = 1; else r = 2;
         assert(r == 1);
     }
 
-    function ifElseFalse() public {
+    function ifElseFalse() public pure {
         uint r = 0;
         if (false) r = 1; else r = 2;
         assert(r == 2);
     }
 
-    function ifElseNegated() public {
+    function ifElseNegated() public pure {
         bool b = false;
         uint r = 0;
         if (!b) r = 1; else r = 2;
         assert(r == 1);
     }
 
-    function memoryDeclFresh() public {
+    function memoryDeclFresh() public pure {
         Person memory carol;
     }
 
-    function memoryDeepField() public {
+    function memoryDeepField() public pure {
         Person memory carol;
         carol.account.balance = 10;
         uint r = carol.account.balance;
         assert(r == 10);
     }
 
-    function memoryFieldAddAssign() public {
+    function memoryFieldAddAssign() public pure {
         Person memory carol;
         carol.age = 30;
         carol.age += 4;
@@ -500,7 +500,7 @@ contract TestSuite {
         assert(r == 34);
     }
 
-    function memoryFieldSubAssign() public {
+    function memoryFieldSubAssign() public pure {
         Person memory carol;
         carol.age = 30;
         carol.age -= 4;
@@ -508,7 +508,7 @@ contract TestSuite {
         assert(r == 26);
     }
 
-    function memoryFieldMulAssign() public {
+    function memoryFieldMulAssign() public pure {
         Person memory carol;
         carol.age = 7;
         carol.age *= 4;
@@ -516,7 +516,7 @@ contract TestSuite {
         assert(r == 28);
     }
 
-    function memoryFieldDivAssign() public {
+    function memoryFieldDivAssign() public pure {
         Person memory carol;
         carol.age = 30;
         carol.age /= 5;
@@ -524,7 +524,7 @@ contract TestSuite {
         assert(r == 6);
     }
 
-    function memoryFieldModAssign() public {
+    function memoryFieldModAssign() public pure {
         Person memory carol;
         carol.age = 30;
         carol.age %= 7;
@@ -532,7 +532,7 @@ contract TestSuite {
         assert(r == 2);
     }
 
-    function memoryFieldAddAssignUnfold() public {
+    function memoryFieldAddAssignUnfold() public pure {
         Person memory carol;
         carol.account.balance = 20;
         carol.account.balance += 4;
@@ -540,7 +540,7 @@ contract TestSuite {
         assert(r == 24);
     }
 
-    function memoryFieldAddAssignNse() public {
+    function memoryFieldAddAssignNse() public pure {
         Person memory carol;
         carol.age = 30;
         carol.age += 2 * 3;
@@ -548,7 +548,7 @@ contract TestSuite {
         assert(r == 36);
     }
 
-    function memoryFieldPreincrement() public {
+    function memoryFieldPreincrement() public pure {
         Person memory carol;
         carol.age = 30;
         ++carol.age;
@@ -556,7 +556,7 @@ contract TestSuite {
         assert(r == 31);
     }
 
-    function memoryFieldPostincrement() public {
+    function memoryFieldPostincrement() public pure {
         Person memory carol;
         carol.age = 30;
         carol.age++;
@@ -564,7 +564,7 @@ contract TestSuite {
         assert(r == 31);
     }
 
-    function memoryFieldPredecrement() public {
+    function memoryFieldPredecrement() public pure {
         Person memory carol;
         carol.age = 30;
         --carol.age;
@@ -572,7 +572,7 @@ contract TestSuite {
         assert(r == 29);
     }
 
-    function memoryFieldPostdecrement() public {
+    function memoryFieldPostdecrement() public pure {
         Person memory carol;
         carol.age = 30;
         carol.age--;
@@ -580,7 +580,7 @@ contract TestSuite {
         assert(r == 29);
     }
 
-    function memoryFieldPreincrementAssignment() public {
+    function memoryFieldPreincrementAssignment() public pure {
         Person memory carol;
         carol.age = 30;
         uint r = ++carol.age;
@@ -588,7 +588,7 @@ contract TestSuite {
         assert(carol.age == 31);
     }
 
-    function memoryFieldPostincrementAssignment() public {
+    function memoryFieldPostincrementAssignment() public pure {
         Person memory carol;
         carol.age = 30;
         uint r = carol.age++;
@@ -596,7 +596,7 @@ contract TestSuite {
         assert(carol.age == 31);
     }
 
-    function memoryFieldPredecrementAssignment() public {
+    function memoryFieldPredecrementAssignment() public pure {
         Person memory carol;
         carol.age = 30;
         uint r = --carol.age;
@@ -604,7 +604,7 @@ contract TestSuite {
         assert(carol.age == 29);
     }
 
-    function memoryFieldPostdecrementAssignment() public {
+    function memoryFieldPostdecrementAssignment() public pure {
         Person memory carol;
         carol.age = 30;
         uint r = carol.age--;
@@ -612,7 +612,7 @@ contract TestSuite {
         assert(carol.age == 29);
     }
 
-    function memoryFieldPreincrementUnfold() public {
+    function memoryFieldPreincrementUnfold() public pure {
         Person memory carol;
         carol.account.balance = 20;
         ++carol.account.balance;
@@ -620,7 +620,7 @@ contract TestSuite {
         assert(r == 21);
     }
 
-    function memoryFieldAlias() public {
+    function memoryFieldAlias() public pure {
         Person memory carol;
         Account memory acc = carol.account;
         acc.balance = 100;
@@ -628,7 +628,7 @@ contract TestSuite {
         assert(r == 100);
     }
 
-    function memoryFieldReferenceAssign() public {
+    function memoryFieldReferenceAssign() public pure {
         Person memory carol;
         Person memory david;
         Account memory pv = david.account;
@@ -638,7 +638,7 @@ contract TestSuite {
         assert(r == 60);
     }
 
-    function memoryIndexArrayAddAssign() public {
+    function memoryIndexArrayAddAssign() public pure {
         uint[] memory xs = new uint[](4);
         xs[1] = 40;
         xs[1] += 2;
@@ -646,7 +646,7 @@ contract TestSuite {
         assert(r == 42);
     }
 
-    function memoryIndexArraySubAssign() public {
+    function memoryIndexArraySubAssign() public pure {
         uint[] memory xs = new uint[](4);
         xs[1] = 40;
         xs[1] -= 2;
@@ -654,7 +654,7 @@ contract TestSuite {
         assert(r == 38);
     }
 
-    function memoryIndexArrayMulAssign() public {
+    function memoryIndexArrayMulAssign() public pure {
         uint[] memory xs = new uint[](4);
         xs[1] = 7;
         xs[1] *= 6;
@@ -662,7 +662,7 @@ contract TestSuite {
         assert(r == 42);
     }
 
-    function memoryIndexArrayDivAssign() public {
+    function memoryIndexArrayDivAssign() public pure {
         uint[] memory xs = new uint[](4);
         xs[1] = 40;
         xs[1] /= 8;
@@ -670,7 +670,7 @@ contract TestSuite {
         assert(r == 5);
     }
 
-    function memoryIndexArrayModAssign() public {
+    function memoryIndexArrayModAssign() public pure {
         uint[] memory xs = new uint[](4);
         xs[1] = 40;
         xs[1] %= 7;
@@ -678,7 +678,7 @@ contract TestSuite {
         assert(r == 5);
     }
 
-    function memoryIndexArrayAddAssignUnfold() public {
+    function memoryIndexArrayAddAssignUnfold() public pure {
         Basket memory basket;
         uint[] memory xs = new uint[](4);
         basket.items = xs;
@@ -688,7 +688,7 @@ contract TestSuite {
         assert(r == 42);
     }
 
-    function memoryIndexArrayPreincrementUnfold() public {
+    function memoryIndexArrayPreincrementUnfold() public pure {
         Basket memory basket;
         uint[] memory xs = new uint[](4);
         basket.items = xs;
@@ -698,7 +698,7 @@ contract TestSuite {
         assert(r == 41);
     }
 
-    function memoryIndexArrayPreincrement() public {
+    function memoryIndexArrayPreincrement() public pure {
         uint[] memory xs = new uint[](4);
         xs[1] = 40;
         ++xs[1];
@@ -706,7 +706,7 @@ contract TestSuite {
         assert(r == 41);
     }
 
-    function memoryIndexArrayPostdecrement() public {
+    function memoryIndexArrayPostdecrement() public pure {
         uint[] memory xs = new uint[](4);
         xs[1] = 40;
         xs[1]--;
@@ -714,7 +714,7 @@ contract TestSuite {
         assert(r == 39);
     }
 
-    function memoryIndexArrayPostincrementAssignment() public {
+    function memoryIndexArrayPostincrementAssignment() public pure {
         uint[] memory xs = new uint[](4);
         xs[1] = 40;
         uint r = xs[1]++;
@@ -722,7 +722,7 @@ contract TestSuite {
         assert(xs[1] == 41);
     }
 
-    function memoryIndexArrayPredecrementAssignment() public {
+    function memoryIndexArrayPredecrementAssignment() public pure {
         uint[] memory xs = new uint[](4);
         xs[1] = 40;
         uint r = --xs[1];
@@ -731,7 +731,7 @@ contract TestSuite {
     }
 
     /// @custom:key box
-    function memoryIndexWriteNse(uint i, uint lhs, uint rhs) public {
+    function memoryIndexWriteNse(uint i, uint lhs, uint rhs) public pure {
         require(i == 1 && lhs == 4 && rhs == 5);
         uint[] memory xs = new uint[](4);
         xs[i+1] = lhs + rhs;
@@ -739,7 +739,7 @@ contract TestSuite {
         assert(r == 9);
     }
 
-    function memoryRootAlias() public {
+    function memoryRootAlias() public pure {
         Person memory carol;
         Person memory david;
         david.age = 40;
@@ -749,12 +749,12 @@ contract TestSuite {
         assert(r == 41);
     }
 
-    function memoryRootDeleteFresh() public {
+    function memoryRootDeleteFresh() public pure {
         Person memory carol;
         delete carol;
     }
 
-    function memoryStructArrayIndex() public {
+    function memoryStructArrayIndex() public pure {
         Basket memory basket;
         uint[] memory xs = new uint[](4);
         basket.items = xs;
@@ -797,22 +797,22 @@ contract TestSuite {
         assert(false);
     }
 
-    function moduloSimple() public {
+    function moduloSimple() public pure {
         uint r = 7 % 3;
         assert(r == 1);
     }
 
-    function multiplicationSimple() public {
+    function multiplicationSimple() public pure {
         uint r = 3 * 4;
         assert(r == 12);
     }
 
-    function notEqualSimple() public {
+    function notEqualSimple() public pure {
         bool r = 3 != 4;
         assert(r);
     }
 
-    function powerSimple() public {
+    function powerSimple() public pure {
         uint r = 2 ** 3;
         assert(r == 8);
     }
@@ -1477,7 +1477,7 @@ contract TestSuite {
         assert(r == 27);
     }
 
-    function subtractionSimple() public {
+    function subtractionSimple() public pure {
         uint r = 7 - 2;
         assert(r == 5);
     }
@@ -1489,7 +1489,7 @@ contract TestSuite {
     }
 
     /// @custom:key box
-    function unaryMinusSimple(int x) public {
+    function unaryMinusSimple(int x) public pure {
         require(x == 5);
         int r = -x;
         // a negative literal directly inside the assert condition does not discharge
@@ -1519,14 +1519,14 @@ contract TestSuite {
         assert(ledgerUses[0].ledger.balances[1] == 10);
     }
 
-    function testMemoryAliasing() public {
+    function testMemoryAliasing() public pure {
         Person memory carol;
         Account memory carolAcc = carol.account;
         carolAcc.balance = 100;
         assert(carol.account.balance == 100);
     }
 
-    function testMemoryDeleteAlias() public {
+    function testMemoryDeleteAlias() public pure {
         Person memory carol;
         Account memory carolAcc = carol.account;
         carolAcc.balance = 100;
@@ -1535,7 +1535,7 @@ contract TestSuite {
         assert(b == 0);
     }
 
-    function testMemoryDeleteIdentityFieldFreshensSlot() public {
+    function testMemoryDeleteIdentityFieldFreshensSlot() public pure {
         Person memory carol;
         Account memory carolAcc = carol.account;
         carolAcc.balance = 100;
@@ -1544,14 +1544,14 @@ contract TestSuite {
         assert(carolAcc.balance == 100);
     }
 
-    function testMemoryDeletePrimitiveField() public {
+    function testMemoryDeletePrimitiveField() public pure {
         Person memory carol;
         carol.age = 20;
         delete carol.age;
         assert(carol.age == 0);
     }
 
-    function testMemoryEvaluationOrder() public {
+    function testMemoryEvaluationOrder() public pure {
         uint[] memory xs = new uint[](3);
         uint i = 0;
         xs[++i] = ++i;
@@ -1559,7 +1559,7 @@ contract TestSuite {
         assert(xs[2] == 1);
     }
 
-    function testMemoryFieldShallowCopy() public {
+    function testMemoryFieldShallowCopy() public pure {
         Person memory carol;
         Person memory david;
         david.account.balance = 50;
@@ -1569,7 +1569,7 @@ contract TestSuite {
         assert(carol.account.balance == 60);
     }
 
-    function testMemoryIndexWriteImpureIndexPrimitiveRhs() public {
+    function testMemoryIndexWriteImpureIndexPrimitiveRhs() public pure {
         uint[] memory xs = new uint[](2);
         uint i = 0;
         xs[i++] = i;
@@ -1577,7 +1577,7 @@ contract TestSuite {
         assert(xs[0] == 0);
     }
 
-    function testMemoryIndexWriteImpureIndexRefRhs() public {
+    function testMemoryIndexWriteImpureIndexRefRhs() public pure {
         Token[] memory toks = new Token[](2);
         Token memory tmp;
         tmp.value = 5;
@@ -1587,7 +1587,7 @@ contract TestSuite {
         assert(toks[0].value == 5);
     }
 
-    function testMemoryRootAlias() public {
+    function testMemoryRootAlias() public pure {
         Person memory carol;
         Person memory david;
         david.age = 40;
@@ -1597,7 +1597,7 @@ contract TestSuite {
         assert(carol.age == 41);
     }
 
-    function testMemoryRootDeleteRebindsOnlyLocal() public {
+    function testMemoryRootDeleteRebindsOnlyLocal() public pure {
         Person memory carol;
         Person memory carolAlias = carol;
         carol.age = 33;
@@ -1651,7 +1651,7 @@ contract TestSuite {
         assert(persons[0].age == 7);
     }
 
-    function testMemoryTokenArrayAuxiliaryCases() public {
+    function testMemoryTokenArrayAuxiliaryCases() public pure {
         Token[] memory carolTokens = new Token[](3);
         Token[] memory davidTokens = new Token[](3);
         uint i = 0;
@@ -1660,14 +1660,14 @@ contract TestSuite {
         tmp.value = 7;
         davidTokens[j] = tmp;
         carolTokens[++i] = davidTokens[j];
-        Token memory tok = carolTokens[i];
-        tok.value = 9;
+        Token memory carolTok = carolTokens[i];
+        carolTok.value = 9;
         delete carolTokens[i];
-        assert(tok.value == 9);
+        assert(carolTok.value == 9);
         assert(carolTokens[1].value == 0);
     }
 
-    function testMemoryUintArrayAuxiliaryCases() public {
+    function testMemoryUintArrayAuxiliaryCases() public pure {
         uint[] memory carolValues = new uint[](3);
         uint i = 0;
         carolValues[++i] = 77;
@@ -1677,7 +1677,7 @@ contract TestSuite {
         assert(carolValues[1] == 0);
     }
 
-    function testMemoryUintArrayPostdecrement() public {
+    function testMemoryUintArrayPostdecrement() public pure {
         uint[] memory carolValues = new uint[](3);
         uint i = 1;
         carolValues[i--] = 77;
@@ -1688,7 +1688,7 @@ contract TestSuite {
         assert(carolValues[1] == 0);
     }
 
-    function testMemoryUintArrayPostincrement() public {
+    function testMemoryUintArrayPostincrement() public pure {
         uint[] memory carolValues = new uint[](3);
         uint i = 0;
         carolValues[i++] = 77;
@@ -1699,7 +1699,7 @@ contract TestSuite {
         assert(carolValues[0] == 0);
     }
 
-    function testMemoryUintArrayPredecrement() public {
+    function testMemoryUintArrayPredecrement() public pure {
         uint[] memory carolValues = new uint[](3);
         uint i = 1;
         carolValues[--i] = 77;
@@ -1804,7 +1804,7 @@ contract TestSuite {
         assert(persons[0].age == 5);
     }
 
-    function testMemoryFieldWriteImpureReceiver() public {
+    function testMemoryFieldWriteImpureReceiver() public pure {
         Token[] memory toks = new Token[](2);
         uint i = 0;
         toks[i++].value = i;
@@ -2047,7 +2047,7 @@ contract TestSuite {
         assert(fixedValues[1] == 0);
     }
 
-    function testFixedArrayLength() public {
+    function testFixedArrayLength() public view {
         assert(fixedValues.length == 3);
     }
 
@@ -2056,15 +2056,15 @@ contract TestSuite {
         assert(fixedValues[2] == 1);
     }
 
-    function testFixedStructArrayLength() public {
+    function testFixedStructArrayLength() public view {
         assert(fixedTokens.length == 2);
     }
 
-    function testStructFixedMemberLength() public {
+    function testStructFixedMemberLength() public view {
         assert(triple.items.length == 3);
     }
 
-    function testMemoryStructFixedMemberLength() public {
+    function testMemoryStructFixedMemberLength() public pure {
         Triple memory t;
         assert(t.items.length == 3);
         t.items[1] = 5;
@@ -2073,12 +2073,12 @@ contract TestSuite {
     }
 
     /// @custom:key box
-    function testFixedElementOfDynamicArrayLength() public {
+    function testFixedElementOfDynamicArrayLength() public view {
         require(0 < rows.length);
         assert(rows[0].length == 3);
     }
 
-    function testMemoryFixedArrayLength() public {
+    function testMemoryFixedArrayLength() public pure {
         uint[3] memory x;
         assert(x.length == 3);
         x[1] = 5;
@@ -2086,23 +2086,23 @@ contract TestSuite {
         assert(x[0] == 0);
     }
 
-    function testMemoryNestedFixedArrayLength() public {
+    function testMemoryNestedFixedArrayLength() public pure {
         uint[2][3] memory y;
         assert(y.length == 3);
         assert(y[0].length == 2);
     }
 
-    function testNewArrayOfFixedElementLength() public {
+    function testNewArrayOfFixedElementLength() public pure {
         uint[2][] memory z = new uint[2][](4);
         assert(z.length == 4);
         assert(z[1].length == 2);
     }
 
-    function testMappingOfFixedArrayLength(uint k) public {
+    function testMappingOfFixedArrayLength(uint k) public view {
         assert(fixedByKey[k].length == 3);
     }
 
-    function testMemoryDynamicArrayDefaultLength() public {
+    function testMemoryDynamicArrayDefaultLength() public pure {
         uint[] memory d;
         assert(d.length == 0);
     }
@@ -2311,7 +2311,7 @@ contract TestSuite {
         assert(r2 == 33);
     }
 
-    function memoryDelete() public {
+    function memoryDelete() public pure {
         Person memory carol;
         Account memory acc = carol.account;
         carol.age = 20;
@@ -2343,7 +2343,7 @@ contract TestSuite {
     // ── arithmetic on pinned ranges ──
 
     /// @custom:key box
-    function localArithmeticInRange(uint x) public {
+    function localArithmeticInRange(uint x) public pure {
         require(x >= 1 && x <= 100);
         uint r;
         r = x + 1;
@@ -2353,7 +2353,7 @@ contract TestSuite {
     }
 
     /// @custom:key box
-    function signedUnaryMinusInRange(int8 x) public {
+    function signedUnaryMinusInRange(int8 x) public pure {
         require(x == 5);
         int8 r;
         int8 expected;
@@ -2407,7 +2407,7 @@ contract TestSuite {
         assert(persons[0].account.token.value == 4);
     }
 
-    function memoryFieldWriteMemRefImpureReceiver() public {
+    function memoryFieldWriteMemRefImpureReceiver() public pure {
         Person[] memory ps = new Person[](2);
         Account memory src;
         src.balance = 6;
@@ -2461,7 +2461,7 @@ contract TestSuite {
         assert(buckets[1].tokens[0].value == 5);
     }
 
-    function memoryIndexWriteMemRefImpureReceiver() public {
+    function memoryIndexWriteMemRefImpureReceiver() public pure {
         TokenBucket[] memory tbs = new TokenBucket[](2);
         Token[] memory slots = new Token[](2);
         tbs[1].tokens = slots;
@@ -2475,35 +2475,35 @@ contract TestSuite {
 
     // ── Binary operand evaluation order: solc evaluates the right operand first ──
 
-    function additionLeftImpureRightReadFirst() public {
+    function additionLeftImpureRightReadFirst() public pure {
         uint i = 1;
         uint x = i++ + i;
         assert(x == 2);
         assert(i == 2);
     }
 
-    function additionRightImpure() public {
+    function additionRightImpure() public pure {
         uint i = 1;
         uint x = i + i++;
         assert(x == 3);
         assert(i == 2);
     }
 
-    function additionBothOperandsImpure() public {
+    function additionBothOperandsImpure() public pure {
         uint i = 1;
         uint x = i++ + i++;
         assert(x == 3);
         assert(i == 3);
     }
 
-    function subtractionLeftImpureRightReadFirst() public {
+    function subtractionLeftImpureRightReadFirst() public pure {
         uint i = 5;
         uint x = i++ - i;
         assert(x == 0);
         assert(i == 6);
     }
 
-    function lessThanLeftImpureRightReadFirst() public {
+    function lessThanLeftImpureRightReadFirst() public pure {
         uint i = 1;
         bool b = i++ < i;
         assert(!b);
@@ -2629,7 +2629,7 @@ contract TestSuite {
         assert(buckets[1].tokens[0].value == 5);
     }
 
-    function indexWriteBothImpureMemoryValue() public {
+    function indexWriteBothImpureMemoryValue() public pure {
         Basket[] memory bs = new Basket[](2);
         uint[] memory slots = new uint[](2);
         bs[1].items = slots;
@@ -2641,7 +2641,7 @@ contract TestSuite {
         assert(bs[1].items[0] == 42);
     }
 
-    function indexWriteBothImpureMemRef() public {
+    function indexWriteBothImpureMemRef() public pure {
         TokenBucket[] memory tbs = new TokenBucket[](2);
         Token[] memory slots = new Token[](2);
         tbs[1].tokens = slots;
@@ -2727,7 +2727,7 @@ contract TestSuite {
         assert(s == 2);
     }
 
-    function boolIsTrueOrFalse(bool b) public {
+    function boolIsTrueOrFalse(bool b) public pure {
         bool x = b == true;
         bool y = b == false;
         assert(x || y);
@@ -2754,7 +2754,7 @@ contract TestSuite {
 
     // ── Number literals ──
 
-    function numberLiteralForms() public {
+    function numberLiteralForms() public pure {
         uint h = 0xff;
         uint u = 1_000;
         uint e = 2e3;
@@ -2769,91 +2769,91 @@ contract TestSuite {
 
     // ── Taclet coverage: one function per taclet no other example applies ──
 
-    function localAddAssign() public {
+    function localAddAssign() public pure {
         uint x = 40;
         x += 2;
         assert(x == 42);
     }
 
-    function localMulAssign() public {
+    function localMulAssign() public pure {
         uint x = 7;
         x *= 6;
         assert(x == 42);
     }
 
-    function localDivAssign() public {
+    function localDivAssign() public pure {
         uint x = 40;
         x /= 8;
         assert(x == 5);
     }
 
-    function localModAssign() public {
+    function localModAssign() public pure {
         uint x = 40;
         x %= 7;
         assert(x == 5);
     }
 
-    function localPostincrement() public {
+    function localPostincrement() public pure {
         uint x = 40;
         x++;
         assert(x == 41);
     }
 
-    function localPostdecrement() public {
+    function localPostdecrement() public pure {
         uint x = 40;
         x--;
         assert(x == 39);
     }
 
-    function localPredecrement() public {
+    function localPredecrement() public pure {
         uint x = 40;
         --x;
         assert(x == 39);
     }
 
-    function localDeclPostdecrement() public {
+    function localDeclPostdecrement() public pure {
         uint x = 40;
         uint r = x--;
         assert(r == 40);
         assert(x == 39);
     }
 
-    function localDeclPredecrement() public {
+    function localDeclPredecrement() public pure {
         uint x = 40;
         uint r = --x;
         assert(r == 39);
         assert(x == 39);
     }
 
-    function subAssignValueRhsCapture() public {
+    function subAssignValueRhsCapture() public pure {
         uint x = 40;
         uint y = 1;
         x -= y + 1;
         assert(x == 38);
     }
 
-    function mulAssignValueRhsCapture() public {
+    function mulAssignValueRhsCapture() public pure {
         uint x = 7;
         uint y = 5;
         x *= y + 1;
         assert(x == 42);
     }
 
-    function divAssignValueRhsCapture() public {
+    function divAssignValueRhsCapture() public pure {
         uint x = 40;
         uint y = 7;
         x /= y + 1;
         assert(x == 5);
     }
 
-    function modAssignValueRhsCapture() public {
+    function modAssignValueRhsCapture() public pure {
         uint x = 40;
         uint y = 6;
         x %= y + 1;
         assert(x == 5);
     }
 
-    function indexWriteValueRhsCapture() public {
+    function indexWriteValueRhsCapture() public pure {
         uint[] memory xs = new uint[](2);
         uint y = 4;
         xs[1] = y + 1;
@@ -2861,7 +2861,7 @@ contract TestSuite {
         assert(r == 5);
     }
 
-    function memoryIndexWriteMemRefRhsCapture() public {
+    function memoryIndexWriteMemRefRhsCapture() public pure {
         Token[] memory ts = new Token[](2);
         Person memory carol;
         carol.account.token.value = 7;
@@ -2870,7 +2870,7 @@ contract TestSuite {
         assert(r == 7);
     }
 
-    function memoryIndexDeleteNonSimpleIndexCapture() public {
+    function memoryIndexDeleteNonSimpleIndexCapture() public pure {
         uint[] memory xs = new uint[](3);
         uint i = 0;
         xs[1] = 5;
@@ -2879,120 +2879,120 @@ contract TestSuite {
         assert(r == 0);
     }
 
-    function boolInequalityCaptureLhs() public {
+    function boolInequalityCaptureLhs() public pure {
         bool b = true;
         bool r = !b != b;
         assert(r);
     }
 
-    function boolInequalityCaptureRhs() public {
+    function boolInequalityCaptureRhs() public pure {
         bool b = true;
         bool r = b != !b;
         assert(r);
     }
 
-    function greaterThanCaptureRhs() public {
+    function greaterThanCaptureRhs() public pure {
         uint x = 3;
         bool r = x > x - 1;
         assert(r);
     }
 
-    function greaterEqualCaptureLhs() public {
+    function greaterEqualCaptureLhs() public pure {
         uint x = 3;
         bool r = x + 1 >= x;
         assert(r);
     }
 
-    function greaterEqualCaptureRhs() public {
+    function greaterEqualCaptureRhs() public pure {
         uint x = 3;
         bool r = x >= x - 1;
         assert(r);
     }
 
-    function lessEqualCaptureLhs() public {
+    function lessEqualCaptureLhs() public pure {
         uint x = 3;
         bool r = x - 1 <= x;
         assert(r);
     }
 
-    function lessEqualCaptureRhs() public {
+    function lessEqualCaptureRhs() public pure {
         uint x = 3;
         bool r = x <= x + 1;
         assert(r);
     }
 
-    function logicalNotCapture() public {
+    function logicalNotCapture() public pure {
         uint x = 3;
         bool r = !(x == 4);
         assert(r);
     }
 
-    function unaryMinusCapture() public {
+    function unaryMinusCapture() public pure {
         int x = 3;
         int r = -(x + 1);
         assert(r == -4);
     }
 
-    function multiplicationUnfoldLeft() public {
+    function multiplicationUnfoldLeft() public pure {
         uint x = 5;
         uint y = 7;
         uint r = (x + 1) * y;
         assert(r == 42);
     }
 
-    function multiplicationUnfoldRight() public {
+    function multiplicationUnfoldRight() public pure {
         uint x = 7;
         uint y = 5;
         uint r = x * (y + 1);
         assert(r == 42);
     }
 
-    function divisionUnfoldLeft() public {
+    function divisionUnfoldLeft() public pure {
         uint x = 39;
         uint y = 8;
         uint r = (x + 1) / y;
         assert(r == 5);
     }
 
-    function divisionUnfoldRight() public {
+    function divisionUnfoldRight() public pure {
         uint x = 40;
         uint y = 7;
         uint r = x / (y + 1);
         assert(r == 5);
     }
 
-    function moduloUnfoldLeft() public {
+    function moduloUnfoldLeft() public pure {
         uint x = 39;
         uint y = 7;
         uint r = (x + 1) % y;
         assert(r == 5);
     }
 
-    function moduloUnfoldRight() public {
+    function moduloUnfoldRight() public pure {
         uint x = 40;
         uint y = 6;
         uint r = x % (y + 1);
         assert(r == 5);
     }
 
-    function signedDivisionTruncates() public {
-        int a = -7;
+    function signedDivisionTruncates() public pure {
+        int n = -7;
         int b = -2;
-        int q1 = a / 2;
+        int q1 = n / 2;
         int q2 = 7 / b;
-        int q3 = a / b;
+        int q3 = n / b;
         int minusThree = -3;
         assert(q1 == minusThree);
         assert(q2 == minusThree);
         assert(q3 == 3);
     }
 
-    function signedModuloTakesDividendSign() public {
-        int a = -7;
+    function signedModuloTakesDividendSign() public pure {
+        int n = -7;
         int b = -2;
-        int r1 = a % 2;
+        int r1 = n % 2;
         int r2 = 7 % b;
-        int r3 = a % b;
+        int r3 = n % b;
         int minusOne = -1;
         assert(r1 == minusOne);
         assert(r2 == 1);
@@ -3013,28 +3013,28 @@ contract TestSuite {
         assert(r == minusOne);
     }
 
-    function powerUnfoldLeft() public {
+    function powerUnfoldLeft() public pure {
         uint x = 1;
         uint y = 3;
         uint r = (x + 1) ** y;
         assert(r == 8);
     }
 
-    function powerUnfoldRight() public {
+    function powerUnfoldRight() public pure {
         uint x = 2;
         uint y = 2;
         uint r = x ** (y + 1);
         assert(r == 8);
     }
 
-    function subtractionUnfoldRight() public {
+    function subtractionUnfoldRight() public pure {
         uint x = 40;
         uint y = 1;
         uint r = x - (y + 1);
         assert(r == 38);
     }
 
-    function parenthesizedRightOperand() public {
+    function parenthesizedRightOperand() public pure {
         uint x = 10;
         uint y = 5;
         uint z = 3;
@@ -3042,7 +3042,7 @@ contract TestSuite {
         assert(r == 8);
     }
 
-    function parenthesizedLeftOperand() public {
+    function parenthesizedLeftOperand() public pure {
         uint x = 2;
         uint y = 3;
         uint z = 4;
@@ -3050,15 +3050,15 @@ contract TestSuite {
         assert(r == 20);
     }
 
-    function parenthesizedCondition() public {
-        bool a = true;
+    function parenthesizedCondition() public pure {
+        bool p = true;
         bool b = false;
         bool c = true;
-        bool r = a && (b || c);
+        bool r = p && (b || c);
         assert(r);
     }
 
-    function memoryFieldSubAssignUnfold() public {
+    function memoryFieldSubAssignUnfold() public pure {
         Person memory carol;
         carol.account.balance = 20;
         carol.account.balance -= 4;
@@ -3066,7 +3066,7 @@ contract TestSuite {
         assert(r == 16);
     }
 
-    function memoryFieldMulAssignUnfold() public {
+    function memoryFieldMulAssignUnfold() public pure {
         Person memory carol;
         carol.account.balance = 7;
         carol.account.balance *= 6;
@@ -3074,7 +3074,7 @@ contract TestSuite {
         assert(r == 42);
     }
 
-    function memoryFieldDivAssignUnfold() public {
+    function memoryFieldDivAssignUnfold() public pure {
         Person memory carol;
         carol.account.balance = 40;
         carol.account.balance /= 8;
@@ -3082,7 +3082,7 @@ contract TestSuite {
         assert(r == 5);
     }
 
-    function memoryFieldModAssignUnfold() public {
+    function memoryFieldModAssignUnfold() public pure {
         Person memory carol;
         carol.account.balance = 40;
         carol.account.balance %= 7;
@@ -3090,7 +3090,7 @@ contract TestSuite {
         assert(r == 5);
     }
 
-    function memoryFieldPostincrementUnfold() public {
+    function memoryFieldPostincrementUnfold() public pure {
         Person memory carol;
         carol.account.balance = 20;
         carol.account.balance++;
@@ -3098,7 +3098,7 @@ contract TestSuite {
         assert(r == 21);
     }
 
-    function memoryFieldPredecrementUnfold() public {
+    function memoryFieldPredecrementUnfold() public pure {
         Person memory carol;
         carol.account.balance = 20;
         --carol.account.balance;
@@ -3106,7 +3106,7 @@ contract TestSuite {
         assert(r == 19);
     }
 
-    function memoryFieldPostdecrementUnfold() public {
+    function memoryFieldPostdecrementUnfold() public pure {
         Person memory carol;
         carol.account.balance = 20;
         carol.account.balance--;
@@ -3114,7 +3114,7 @@ contract TestSuite {
         assert(r == 19);
     }
 
-    function memoryFieldDeleteUnfold() public {
+    function memoryFieldDeleteUnfold() public pure {
         Person memory carol;
         carol.account.balance = 20;
         delete carol.account.balance;
@@ -3122,7 +3122,7 @@ contract TestSuite {
         assert(r == 0);
     }
 
-    function memoryFieldReadUnfoldResult() public {
+    function memoryFieldReadUnfoldResult() public pure {
         Person memory carol;
         Person memory david;
         david.age = 40;
@@ -3131,7 +3131,7 @@ contract TestSuite {
         assert(r == 40);
     }
 
-    function memoryIndexReadUnfoldResult() public {
+    function memoryIndexReadUnfoldResult() public pure {
         Person memory carol;
         uint[] memory xs = new uint[](2);
         xs[1] = 40;
@@ -3140,7 +3140,7 @@ contract TestSuite {
         assert(r == 40);
     }
 
-    function memoryIndexArraySubAssignUnfold() public {
+    function memoryIndexArraySubAssignUnfold() public pure {
         Basket memory basket;
         uint[] memory xs = new uint[](4);
         basket.items = xs;
@@ -3150,7 +3150,7 @@ contract TestSuite {
         assert(r == 38);
     }
 
-    function memoryIndexArrayMulAssignUnfold() public {
+    function memoryIndexArrayMulAssignUnfold() public pure {
         Basket memory basket;
         uint[] memory xs = new uint[](4);
         basket.items = xs;
@@ -3160,7 +3160,7 @@ contract TestSuite {
         assert(r == 42);
     }
 
-    function memoryIndexArrayDivAssignUnfold() public {
+    function memoryIndexArrayDivAssignUnfold() public pure {
         Basket memory basket;
         uint[] memory xs = new uint[](4);
         basket.items = xs;
@@ -3170,7 +3170,7 @@ contract TestSuite {
         assert(r == 5);
     }
 
-    function memoryIndexArrayModAssignUnfold() public {
+    function memoryIndexArrayModAssignUnfold() public pure {
         Basket memory basket;
         uint[] memory xs = new uint[](4);
         basket.items = xs;
@@ -3180,7 +3180,7 @@ contract TestSuite {
         assert(r == 5);
     }
 
-    function memoryIndexArrayPostincrementUnfold() public {
+    function memoryIndexArrayPostincrementUnfold() public pure {
         Basket memory basket;
         uint[] memory xs = new uint[](4);
         basket.items = xs;
@@ -3190,7 +3190,7 @@ contract TestSuite {
         assert(r == 41);
     }
 
-    function memoryIndexArrayPredecrementUnfold() public {
+    function memoryIndexArrayPredecrementUnfold() public pure {
         Basket memory basket;
         uint[] memory xs = new uint[](4);
         basket.items = xs;
@@ -3200,7 +3200,7 @@ contract TestSuite {
         assert(r == 39);
     }
 
-    function memoryIndexArrayPostdecrementUnfold() public {
+    function memoryIndexArrayPostdecrementUnfold() public pure {
         Basket memory basket;
         uint[] memory xs = new uint[](4);
         basket.items = xs;
@@ -3210,7 +3210,7 @@ contract TestSuite {
         assert(r == 39);
     }
 
-    function memoryIndexArrayDeleteUnfold() public {
+    function memoryIndexArrayDeleteUnfold() public pure {
         Basket memory basket;
         uint[] memory xs = new uint[](4);
         basket.items = xs;
@@ -3220,7 +3220,7 @@ contract TestSuite {
         assert(r == 0);
     }
 
-    function memoryIndexArrayPostincrement() public {
+    function memoryIndexArrayPostincrement() public pure {
         uint[] memory xs = new uint[](4);
         xs[1] = 40;
         xs[1]++;
@@ -3228,7 +3228,7 @@ contract TestSuite {
         assert(r == 41);
     }
 
-    function memoryIndexArrayPredecrement() public {
+    function memoryIndexArrayPredecrement() public pure {
         uint[] memory xs = new uint[](4);
         xs[1] = 40;
         --xs[1];
@@ -3236,7 +3236,7 @@ contract TestSuite {
         assert(r == 39);
     }
 
-    function memoryIndexArrayPreincrementAssignment() public {
+    function memoryIndexArrayPreincrementAssignment() public pure {
         uint[] memory xs = new uint[](4);
         xs[1] = 40;
         uint r = ++xs[1];
@@ -3244,7 +3244,7 @@ contract TestSuite {
         assert(xs[1] == 41);
     }
 
-    function memoryIndexArrayPostdecrementAssignment() public {
+    function memoryIndexArrayPostdecrementAssignment() public pure {
         uint[] memory xs = new uint[](4);
         xs[1] = 40;
         uint r = xs[1]--;
@@ -3458,8 +3458,8 @@ contract TestSuite {
 
     /// @custom:key box
     function transferToOwner() public {
-        address payable a = payable(owner);
-        a.transfer(5);
+        address payable to = payable(owner);
+        to.transfer(5);
     }
 
     /// @custom:key box
@@ -3469,8 +3469,8 @@ contract TestSuite {
 
     /// @custom:key box
     function transferUnfoldArgument() public {
-        address payable a = payable(owner);
+        address payable to = payable(owner);
         uint x = 3;
-        a.transfer(x + 2);
+        to.transfer(x + 2);
     }
 }

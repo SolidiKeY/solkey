@@ -35,7 +35,7 @@ public class FunctionBodyResultExpandTest {
 
     @Test
     void expandsBodyAndConnectsResultVariable() throws Exception {
-        KeYEnvironment env =
+        KeYEnvironment<?> env =
             load(resource("org/key_project/solidity/functionbody/bankExpand.key"));
         Goal goal = env.getLoadedProof().openGoals().head();
 

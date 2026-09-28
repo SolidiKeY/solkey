@@ -54,6 +54,10 @@ ext.resolveSolidityFile = { requested ->
     return found ? found.absolutePath : name
 }
 
+def envOrPropertyValue = { String key ->
+    System.getenv().containsKey(key) ? System.getenv(key) : (rootProject.findProperty(key) ?: "")
+}
+
 subprojects {
     apply plugin: "java"
     apply plugin: "java-library"
@@ -564,13 +568,4 @@ def jacocoEnabled = System.properties.getProperty("jacocoEnabled") ?: "false"
 if (jacocoEnabled.toBoolean()) {
     project.logger.lifecycle("Jacoco enabled. Test performance will be slower.")
     apply from: rootProject.file("scripts/jacocokey.gradle")
-}
-
-
-def envOrPropertyValue(String key) {
-    if(key in System.getenv()) {
-        return System.getenv(key)
-    }else{
-        return project.properties.getOrDefault(key, "")
-    }
 }

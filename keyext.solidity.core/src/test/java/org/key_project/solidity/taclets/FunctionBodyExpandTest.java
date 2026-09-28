@@ -30,7 +30,7 @@ public class FunctionBodyExpandTest {
 
     @Test
     void expandsFunctionBodyInsideModality() throws Exception {
-        KeYEnvironment env =
+        KeYEnvironment<?> env =
             load(resource("org/key_project/solidity/functionbody/withdrawExpand.key"));
         Goal goal = env.getLoadedProof().openGoals().head();
 

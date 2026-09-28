@@ -765,7 +765,7 @@ public class LogicPrinter {
             }
             if (!t.boundVars().isEmpty()) {
                 layouter.print("{").beginC(0);
-                printVariables((ImmutableArray<QuantifiableVariable>) t.boundVars(),
+                printVariables(t.boundVars(),
                     quantifiableVariablePrintMode);
                 layouter.print("}").end();
             }
@@ -1009,7 +1009,7 @@ public class LogicPrinter {
         layouter.end();
     }
 
-    private void printVariables(ImmutableArray<QuantifiableVariable> vars,
+    private void printVariables(ImmutableArray<? extends QuantifiableVariable> vars,
             QuantifiableVariablePrintMode mode) {
         int size = vars.size();
         for (int j = 0; j != size; j++) {
@@ -1044,7 +1044,7 @@ public class LogicPrinter {
         layouter.keyWord(keyword);
         if (!t.varsBoundHere(0).isEmpty()) {
             layouter.print(" ");
-            printVariables((ImmutableArray<QuantifiableVariable>) t.varsBoundHere(0),
+            printVariables(t.varsBoundHere(0),
                 quantifiableVariablePrintMode);
         }
 
@@ -1113,7 +1113,8 @@ public class LogicPrinter {
     /// @param vars the quantified variables (+colon and sort)
     /// @param phi the quantified formula
     /// @param ass associativity for phi
-    public void printQuantifierTerm(String name, ImmutableArray<QuantifiableVariable> vars,
+    public void printQuantifierTerm(String name,
+            ImmutableArray<? extends QuantifiableVariable> vars,
             Term phi, int ass) {
         layouter.beginC();
         layouter.keyWord(name);
@@ -1182,7 +1183,7 @@ public class LogicPrinter {
                     final SModality m =
                         SModality.getModality(kind, mod.programBlock());
                     final Term term = services.getTermFactory().createTerm(m, ta,
-                        (ImmutableArray<QuantifiableVariable>) phi.boundVars());
+                        phi.boundVars());
                     notationInfo.getNotation(m).print(term, this);
                     return;
                 }

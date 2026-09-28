@@ -25,7 +25,7 @@ contract SolcControlFlow {
     ///
     /// The increment is written `i = i + 1;` rather than `i++;` — a bare increment of a
     /// *local* has no rule (see `SolcExpressions.bareIncrementOnLocal`).
-    function doWhileFalseRunsBodyOnce() public {
+    function doWhileFalseRunsBodyOnce() public pure {
         uint i = 0;
         uint r = 0;
         if (i > 0) {
@@ -106,7 +106,7 @@ contract SolcControlFlow {
     /// solc: expressions/conditional_expression_storage_memory_2.sol — the upstream
     /// `x = cond ? y : data1;`: the selection goes into a *memory* target, which closes.
     /// @custom:key box
-    function ternaryIntoMemoryTarget(uint cond) public {
+    function ternaryIntoMemoryTarget(uint cond) public pure {
         require(cond == 1);
         bool c = cond == 1;
         Pair memory mx;
@@ -138,7 +138,7 @@ contract SolcControlFlow {
     /// solc: expressions/conditional_expression_storage_memory_1.sol — the branch selection on
     /// its own, over plain values rather than references.
     /// @custom:key box
-    function ternarySelectsValueByFlag(uint cond) public {
+    function ternarySelectsValueByFlag(uint cond) public pure {
         require(cond == 0);
         bool c = cond == 1;
         uint r = c ? 11 : 22;
@@ -163,7 +163,7 @@ contract SolcControlFlow {
     /// solc: expressions/conditional_expression_multiple.sol — the same branch structure as a
     /// nested `if`/`else` rather than a nested `?:`.
     /// @custom:key box
-    function nestedIfElseSelectsBranch(uint x) public {
+    function nestedIfElseSelectsBranch(uint x) public pure {
         require(x == 500);
         uint d = 0;
         if (x > 100) {

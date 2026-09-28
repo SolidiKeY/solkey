@@ -38,7 +38,7 @@
 (branch "dummy ID"
 (rule "impRight" (formula "1"))
 (rule "functionBodyExpand" (formula "2"))
-(rule "localValueDeclInitDrop" (formula "2") (newnames "a"))
+(rule "localValueDeclInitDrop" (formula "2") (newnames "to"))
 (rule "storageRootReadSelect" (formula "2"))
 (rule "transferNoCallbackDiamond" (formula "2") (term "1"))
 (branch

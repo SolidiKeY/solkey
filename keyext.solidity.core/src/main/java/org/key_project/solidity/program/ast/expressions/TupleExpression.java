@@ -26,9 +26,9 @@ public class TupleExpression extends SolidityExpression {
 
     public TupleExpression(ExtList children) {
         super(takeChild(children, Type.class));
-        List<Expression> exprList =
-            takeChild(children, List.class);
-        this.expressions = new ImmutableArray<>(exprList);
+        List<?> exprList = takeChild(children, List.class);
+        this.expressions = new ImmutableArray<>(exprList.stream()
+                .map(e -> Expression.class.cast(Objects.requireNonNull(e))).toList());
     }
 
     @Override

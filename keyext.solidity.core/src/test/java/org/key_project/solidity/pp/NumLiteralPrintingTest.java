@@ -32,7 +32,7 @@ public class NumLiteralPrintingTest {
     private static final String FIELD_EXAMPLE =
         "org/key_project/solidity/examples/fieldAccessTest.key";
 
-    private static String render(Node node, PosTableLayouter layouter, KeYEnvironment env) {
+    private static String render(Node node, PosTableLayouter layouter, KeYEnvironment<?> env) {
         var lp = new LogicPrinter(new NotationInfo(), env.getServices(), layouter);
         lp.printSequent(node.sequent());
         return lp.result();
@@ -40,7 +40,7 @@ public class NumLiteralPrintingTest {
 
     @Test
     void numeralPrintsInDecimal() throws Exception {
-        KeYEnvironment env = KeYEnvironment.load(resource(EXAMPLE));
+        KeYEnvironment<?> env = KeYEnvironment.load(resource(EXAMPLE));
         Node root = env.getLoadedProof().root();
 
         var layouter = PosTableLayouter.positionTable(80);
@@ -63,7 +63,7 @@ public class NumLiteralPrintingTest {
 
     @Test
     void varcondPrintsInKeySyntax() throws Exception {
-        KeYEnvironment env = KeYEnvironment.load(resource(FIELD_EXAMPLE));
+        KeYEnvironment<?> env = KeYEnvironment.load(resource(FIELD_EXAMPLE));
         Taclet taclet = env.getInitConfig().lookupActiveTaclet(new Name("fieldWriteThenRead"));
         assertNotNull(taclet, "taclet fieldWriteThenRead should be loaded");
 
@@ -87,7 +87,7 @@ public class NumLiteralPrintingTest {
 
     @Test
     void schematicProgramTacletPrintsInKeySyntax() throws Exception {
-        KeYEnvironment env = KeYEnvironment.load(resource(FIELD_EXAMPLE));
+        KeYEnvironment<?> env = KeYEnvironment.load(resource(FIELD_EXAMPLE));
         Taclet taclet =
             env.getInitConfig().lookupActiveTaclet(new Name("storageFieldWriteCaptureSrc"));
         assertNotNull(taclet, "taclet storageFieldWriteCaptureSrc should be loaded");
@@ -113,7 +113,7 @@ public class NumLiteralPrintingTest {
 
     @Test
     void unambiguousFieldPrintsShortFormViaToggle() throws Exception {
-        KeYEnvironment env = KeYEnvironment.load(resource(FIELD_EXAMPLE));
+        KeYEnvironment<?> env = KeYEnvironment.load(resource(FIELD_EXAMPLE));
         Services services = env.getServices();
         Function field = services.getNamespaces().functions().lookup(new Name("FieldBox$value"));
         assertNotNull(field, "field constant FieldBox$value should be registered");

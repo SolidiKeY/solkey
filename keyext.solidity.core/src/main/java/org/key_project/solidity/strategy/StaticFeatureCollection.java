@@ -77,15 +77,9 @@ public class StaticFeatureCollection {
         return add(op(op), sub(sub0, sub1));
     }
 
+    @SafeVarargs
     protected static ProjectionToTerm<Goal> opTerm(Operator op,
-            ProjectionToTerm<Goal> subTerm0,
-            ProjectionToTerm<Goal> subTerm1) {
-        // noinspection unchecked
-        return opTerm(op, new ProjectionToTerm[] { subTerm0, subTerm1 });
-    }
-
-    protected static ProjectionToTerm<Goal> opTerm(Operator op,
-            ProjectionToTerm<Goal>[] subTerms) {
+            ProjectionToTerm<Goal>... subTerms) {
         return TermConstructionProjection.create(op, subTerms);
     }
 

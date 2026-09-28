@@ -7,7 +7,6 @@ import java.util.Map;
 
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Operator;
-import org.key_project.logic.op.QuantifiableVariable;
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.prover.rules.instantiation.AssumesFormulaInstantiation;
 import org.key_project.prover.rules.instantiation.InstantiationEntry;
@@ -26,7 +25,6 @@ import org.key_project.solidity.proof.TacletIndex;
 import org.key_project.solidity.rule.NoPosTacletApp;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.util.collection.DefaultImmutableSet;
-import org.key_project.util.collection.ImmutableArray;
 import org.key_project.util.collection.ImmutableList;
 import org.key_project.util.collection.ImmutableMapEntry;
 import org.key_project.util.collection.ImmutableSet;
@@ -141,10 +139,7 @@ public class ProgVarReplacer {
         if (!changed) {
             return t;
         }
-        @SuppressWarnings("unchecked")
-        ImmutableArray<QuantifiableVariable> boundVars =
-            (ImmutableArray<QuantifiableVariable>) t.boundVars();
-        return services.getTermFactory().createTerm(op, newSubs, boundVars);
+        return services.getTermFactory().createTerm(op, newSubs, t.boundVars());
     }
 
     /// Replaces program-variable occurrences inside a Solidity program AST (mirror of Java lines

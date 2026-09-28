@@ -6,6 +6,7 @@ package org.key_project.solidity.strategy;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.prover.proof.ProofGoal;
@@ -116,18 +117,18 @@ public abstract class TacletAppContainer extends RuleAppContainer {
             ImmutableList<RuleAppContainer> targetList, final Goal p_goal) {
         // just for being able to modify the result-list in an
         // anonymous class
-        @SuppressWarnings("unchecked")
-        final ImmutableList<RuleAppContainer>[] resA = new ImmutableList[] { targetList };
+        final AtomicReference<ImmutableList<RuleAppContainer>> resA =
+            new AtomicReference<>(targetList);
 
         final RuleAppCostCollector collector = (newApp, cost) -> {
             if (cost instanceof TopRuleAppCost) {
                 return;
             }
-            resA[0] = addContainer((NoPosTacletApp) newApp, resA[0], p_goal, cost);
+            resA.set(addContainer((NoPosTacletApp) newApp, resA.get(), p_goal, cost));
         };
         p_goal.getGoalStrategy().instantiateApp(app, getPosInOccurrence(p_goal), p_goal, collector);
 
-        return resA[0];
+        return resA.get();
     }
 
     /// Create a container object for the given taclet app, provided that the app is
