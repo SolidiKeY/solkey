@@ -30,8 +30,8 @@ import org.key_project.solidity.logic.TermFactory;
 import org.key_project.solidity.logic.op.*;
 import org.key_project.solidity.parser.KeYSolidityDLLexer;
 import org.key_project.solidity.parser.KeYSolidityDLParser;
-import org.key_project.solidity.program.SolidityReader;
-import org.key_project.solidity.program.SoliditySchemaReader;
+import org.key_project.solidity.parser.SolidityToKeyConverter;
+import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.proof.calculus.SoliditySequentKit;
 import org.key_project.solidity.rule.metaconstruct.AbstractTermTransformer;
 import org.key_project.solidity.rule.sv.ModalOperatorSV;
@@ -46,7 +46,6 @@ import org.key_project.util.collection.ImmutableSet;
 import org.key_project.util.java.StringUtil;
 
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.Token;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -64,55 +63,6 @@ public class ExpressionBuilder extends DefaultBuilder {
 
     public ExpressionBuilder(Services services, NamespaceSet nss) {
         super(services, nss);
-    }
-
-    /**
-     * Given a raw modality string, this function trims the modality information.
-     *
-     * @param raw non-null string
-     * @return non-null string
-     */
-    public static String trimSolidityBlock(String raw) {
-        if (raw.startsWith("\\<")) {
-            return StringUtil.trim(raw, "\\<>");
-        }
-        if (raw.startsWith("\\[")) {
-            return StringUtil.trim(raw, "\\[]");
-        }
-        int end = raw.length() - (raw.endsWith("\\endmodality") ? "\\endmodality".length() : 0);
-        int start = 0;
-        if (raw.startsWith("\\diamond")) {
-            start = "\\diamond".length();
-        } else if (raw.startsWith("\\box")) {
-            start = "\\box".length();
-        } else if (raw.startsWith("\\modality")) {
-            start = raw.indexOf('}') + 1;
-        }
-        return raw.substring(start, end);
-    }
-
-    /**
-     * Given a raw modality string, this method determines the operator name.
-     */
-    public static String operatorOfSolidityBlock(String raw) {
-        if (raw.startsWith("\\<")) {
-            return "diamond";
-        }
-        if (raw.startsWith("\\[")) {
-            return "box";
-        }
-        if (raw.startsWith("\\diamond")) {
-            return "diamond";
-        }
-        if (raw.startsWith("\\box")) {
-            return "box";
-        }
-        if (raw.startsWith("\\modality")) {
-            int start = raw.indexOf('{') + 1;
-            int end = raw.indexOf('}');
-            return raw.substring(start, end);
-        }
-        return "n/a";
     }
 
     protected void enableSchemaMode() {
@@ -137,58 +87,6 @@ public class ExpressionBuilder extends DefaultBuilder {
         boundVars.removeAll(vars);
     }
 
-
-    private static class PairOfStringAndSolidityBlock {
-        String opName;
-        SolidityBlock solidityBlock;
-    }
-
-    private PairOfStringAndSolidityBlock getSolidityBlock(Token t) {
-        PairOfStringAndSolidityBlock sjb = new PairOfStringAndSolidityBlock();
-        String s = t.getText().trim();
-        String cleanSolidity = trimSolidityBlock(s);
-        sjb.opName = operatorOfSolidityBlock(s);
-
-        try {
-            try {
-                if (soliditySchemaModeAllowed) {// TEST
-                    final SoliditySchemaReader schemaSolidityReader =
-                        new SoliditySchemaReader(services, nss);
-                    schemaSolidityReader.setSVNamespace(schemaVariables());
-                    try {
-                        sjb.solidityBlock =
-                            schemaSolidityReader.readBlockWithProgramVariables(programVariables(),
-                                cleanSolidity);
-                    } catch (Exception e) {
-                        if (cleanSolidity.contains("s#")) {
-                            throw e;
-                        }
-                        sjb.solidityBlock =
-                            schemaSolidityReader.readBlockWithEmptyContext(cleanSolidity);
-                    }
-                }
-            } catch (Exception e) {
-                if (cleanSolidity.startsWith("{..") || cleanSolidity.contains("s#")) {
-                    // do not fallback
-                    throw e;
-                }
-            }
-
-            if (sjb.solidityBlock == null) {
-                SolidityReader solidityReader = new SolidityReader(services, nss);
-                try {
-                    sjb.solidityBlock = solidityReader
-                            .readBlockWithProgramVariables(programVariables(), cleanSolidity);
-                } catch (Exception e1) {
-                    sjb.solidityBlock = solidityReader.readBlockWithEmptyContext(cleanSolidity);
-                }
-            }
-        } catch (Exception e) {
-            throw new BuildingException(t, "Could not parse Solidity code: '" + cleanSolidity + "'",
-                e);
-        }
-        return sjb;
-    }
 
     private ImmutableSet<SModality.SolidityModalityKind> lookupOperatorSV(String opName,
             ImmutableSet<SModality.SolidityModalityKind> modalityKinds) {
@@ -376,30 +274,54 @@ public class ExpressionBuilder extends DefaultBuilder {
     @Override
     public @Nullable Object visitModality_term(KeYSolidityDLParser.Modality_termContext ctx) {
         Term a1 = accept(ctx.sub);
-        if (ctx.MODALITY() == null) {
-            return a1;
-        }
-
-        PairOfStringAndSolidityBlock strSMB = getSolidityBlock(ctx.MODALITY().getSymbol());
+        KeYSolidityDLParser.ModalityContext modality = ctx.modality();
+        String opName = modalityName(modality);
+        SolidityBlock solidityBlock = solidityBlock(modality);
         Operator op;
-        if (strSMB.opName.charAt(0) == '#') {
-            /*
-             * if (!inSchemaMode()) { semanticError(ctx,
-             * "No schema elements allowed outside taclet declarations (" + strSMB.opName + ")"); }
-             */
+        if (opName.charAt(0) == '#') {
             var kind =
-                (SModality.SolidityModalityKind) schemaVariables().lookup(new Name(strSMB.opName));
-            op = SModality.getModality(kind, strSMB.solidityBlock);
+                (SModality.SolidityModalityKind) schemaVariables().lookup(new Name(opName));
+            op = SModality.getModality(kind, solidityBlock);
         } else {
-            var kind = SModality.SolidityModalityKind.getKind(strSMB.opName);
-            op = SModality.getModality(kind, strSMB.solidityBlock);
+            var kind = SModality.SolidityModalityKind.getKind(opName);
+            op = SModality.getModality(kind, solidityBlock);
         }
         if (op == null) {
-            semanticError(ctx, "Unknown modal operator: " + strSMB.opName);
+            semanticError(ctx, "Unknown modal operator: " + opName);
         }
 
         return capsulateTf(ctx,
             () -> getTermFactory().createTerm(op, new Term[] { a1 }, null));
+    }
+
+    private static String modalityName(KeYSolidityDLParser.ModalityContext ctx) {
+        return switch (ctx) {
+            case KeYSolidityDLParser.DiamondModalityContext ignored -> "diamond";
+            case KeYSolidityDLParser.BoxModalityContext ignored -> "box";
+            case KeYSolidityDLParser.NamedModalityContext named -> switch (named.op.getType()) {
+                case KeYSolidityDLLexer.MODAILITYGENERIC1 -> "box";
+                case KeYSolidityDLLexer.MODAILITYGENERIC2 -> "diamond";
+                default -> {
+                    String text = named.op.getText();
+                    yield text.substring(text.indexOf('{') + 1, text.lastIndexOf('}')).trim();
+                }
+            };
+            default -> throw new IllegalStateException("Unknown modality " + ctx.getText());
+        };
+    }
+
+    private SolidityBlock solidityBlock(KeYSolidityDLParser.ModalityContext ctx) {
+        KeYSolidityDLParser.BlockContext block = ctx.getRuleContext(
+            KeYSolidityDLParser.BlockContext.class, 0);
+        Namespace<SchemaVariable> svs =
+            soliditySchemaModeAllowed ? schemaVariables() : new Namespace<>();
+        try {
+            return new SolidityBlock((Block) new SolidityToKeyConverter(services,
+                programVariables(), svs).visitBlock(block));
+        } catch (RuntimeException e) {
+            throw new BuildingException(block, "Could not convert Solidity code: " + e.getMessage(),
+                e);
+        }
     }
 
     @Override

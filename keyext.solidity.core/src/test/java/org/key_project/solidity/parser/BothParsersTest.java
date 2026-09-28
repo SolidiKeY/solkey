@@ -9,7 +9,7 @@ import org.key_project.logic.Namespace;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
-import org.key_project.solidity.parser.SolidityParser.*;
+import org.key_project.solidity.parser.KeYSolidityDLParser.*;
 import org.key_project.solidity.program.ast.abstractions.*;
 import org.key_project.solidity.program.ast.declarations.*;
 import org.key_project.solidity.program.ast.expressions.Expression;
@@ -49,13 +49,13 @@ public class BothParsersTest {
     }
 
     static public Statement parseStatement(String s) {
-        SolidityParser parser = parse(s);
+        KeYSolidityDLParser parser = parse(s);
         StatementContext stmCtx = parser.statement();
         return (Statement) stk.visitStatement(stmCtx);
     }
 
     static public Expression parseExpression(String s) {
-        SolidityParser parser = parse(s);
+        KeYSolidityDLParser parser = parse(s);
         ExpressionContext expCtx = parser.expression();
         return stk.visitExpression(expCtx);
     }

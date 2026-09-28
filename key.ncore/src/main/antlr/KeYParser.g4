@@ -105,7 +105,7 @@ cfile
    //csection: LBRACKET IDENT RBRACKET;
    
 ckv
-   : doc = DOC_COMMENT? ckey ':' cvalue
+   : doc = DOC_COMMENT? ckey COLON cvalue
    ;
 
 ckey

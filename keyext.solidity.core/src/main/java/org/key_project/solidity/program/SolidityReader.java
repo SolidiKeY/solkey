@@ -11,16 +11,13 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.NamespaceSet;
 import org.key_project.solidity.logic.SolidityBlock;
 import org.key_project.solidity.logic.op.ProgramVariable;
-import org.key_project.solidity.parser.SolidityLexer;
-import org.key_project.solidity.parser.SolidityParser;
+import org.key_project.solidity.parser.ParsingFacade;
 import org.key_project.solidity.parser.SolidityToKeyConverter;
 import org.key_project.solidity.program.ast.Context;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.program.parser.SolcParser;
 
 import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CodePointCharStream;
-import org.antlr.v4.runtime.CommonTokenStream;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,12 +52,8 @@ public class SolidityReader {
         }
         SolidityToKeyConverter stk =
             new SolidityToKeyConverter(services, context.getVarNS(), schemaVariables);
-
-        CodePointCharStream input = CharStreams.fromString(block);
-        SolidityLexer lexer = new SolidityLexer(input);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        SolidityParser parser = new SolidityParser(tokens);
-        Block bc = (Block) stk.visitBlock(parser.block());
+        Block bc = (Block) stk.visitBlock(ParsingFacade.parseSolidityBlock(
+            CharStreams.fromString(block)));
         return new SolidityBlock(bc);
     }
 

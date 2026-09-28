@@ -57,7 +57,7 @@ maintained by the calculus, not by the program. On top of it:
 | `require` / `assert` / `revert` | Done, refined (`require-assert.md`) |
 | Storage model | Done, richer than the paper's (paths, aliases, `storage.md`) |
 | Unbounded ints ("Solidity Light") | Done (`intHeader.key`); bounded (checked) semantics is not modeled — see `docs/taclet-ideas.md` Tier 5 |
-| `result = f(args)@C;` call statement | Parses (`Solidity.g4` `FunctionBodyStatement`); inlined by `ExpandFunctionBody`. The `functionBodyExpand` taclet is in the standard rule set (`solidityProgramRules.key`), together with `blockEmpty`, which discards the inlined body block |
+| `result = f(args)@C;` call statement | Parses (`SolidityRules.g4` `FunctionBodyStatement`); inlined by `ExpandFunctionBody`. The `functionBodyExpand` taclet is in the standard rule set (`solidityProgramRules.key`), together with `blockEmpty`, which discards the inlined body block |
 | `address` type | Registered in `SolidityInfo`, mapped to the `int` sort |
 | `net` mapping | **Done**: `Struct net` in `netHeader.key`, read/write via `selectSt`/`storeSt` |
 | `msg.sender` / `msg.value` | **Done**: desugared to the `msgSender`/`msgValue` program variables in `SolidityToKeyConverter` |

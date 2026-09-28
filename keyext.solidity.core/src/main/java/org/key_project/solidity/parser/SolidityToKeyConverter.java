@@ -11,7 +11,7 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
-import org.key_project.solidity.parser.SolidityParser.*;
+import org.key_project.solidity.parser.KeYSolidityDLParser.*;
 import org.key_project.solidity.program.ast.SolidityInfo;
 import org.key_project.solidity.program.ast.StaticTypes;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
@@ -48,7 +48,7 @@ import org.jspecify.annotations.Nullable;
 
 import static org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation.Default;
 
-public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
+public class SolidityToKeyConverter extends KeYSolidityDLParserBaseVisitor<SyntaxElement> {
     private Namespace<ProgramVariable> localVars;
     final private Namespace<? extends SchemaVariable> schemaVariables;
     final private Services services;
@@ -569,7 +569,7 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
     }
 
     @Override
-    public SyntaxElement visitParameter(ParameterContext ctx) {
+    public SyntaxElement visitFunctionParameter(FunctionParameterContext ctx) {
         KeYSolidityType type = (KeYSolidityType) visitTypeName(ctx.typeName());
         DataLocation dataLocation = (DataLocation) visitStorageLocation(ctx.storageLocation());
         String variableName = ctx.identifier().getText();
@@ -583,7 +583,8 @@ public class SolidityToKeyConverter extends SolidityBaseVisitor<SyntaxElement> {
 
     @Override
     public SyntaxElement visitParameterList(ParameterListContext ctx) {
-        return new SyntaxElementList(ctx.parameter().stream().map(this::visitParameter).toList());
+        return new SyntaxElementList(
+            ctx.functionParameter().stream().map(this::visitFunctionParameter).toList());
     }
 
     @Override

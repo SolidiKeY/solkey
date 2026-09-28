@@ -1,6 +1,6 @@
 # Taclet Ideas (Backlog)
 
-Constructs that `Solidity.g4` parses but that have **no symbolic-execution
+Constructs that `SolidityRules.g4` parses but that have **no symbolic-execution
 taclet yet**, ordered simple → complex. This is a scratch backlog of *ideas*,
 not a spec. For each item: the grammar rule, the program shape, and a one-line
 note on the intended sequent transformation. Implement against the conventions

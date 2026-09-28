@@ -1,6 +1,6 @@
 lexer grammar KeYSolidityDLLexer;
 
-import KeYLexer;
+import KeYLexer, SolidityLexer;
 
 @header
 {
@@ -38,3 +38,15 @@ CHOOSECONTRACT : '\\chooseContract';
 CONTRACTS : '\\contracts';
 INVARIANTS : '\\invariants';
 MODIFIES : '\\modifies';
+
+MODALITYD : '\\<' -> pushMode(SOL);
+MODALITYB : '\\[' -> pushMode(SOL);
+MODAILITYGENERIC1 : '\\box' -> pushMode(SOL);
+MODAILITYGENERIC2 : '\\diamond' -> pushMode(SOL);
+MODAILITYGENERIC4 : '\\modality' [ \t\r\n]* '{' ~[}]* '}' -> pushMode(SOL);
+
+mode SOL;
+
+DIAMOND_END : '\\>' -> popMode;
+BOX_END : '\\]' -> popMode;
+ENDMODALITY : '\\endmodality' -> popMode;

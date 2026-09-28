@@ -110,7 +110,12 @@ Solidity → ANTLR → SolidityToKeyConverter → AST → TypeResolver → Abstr
   external compiler. See `docs/solc-ast.md`
 
 ANTLR grammars live in `keyext.solidity.core/src/main/antlr/`, generated sources in
-`build/generated-src/antlr/main/`.
+`build/generated-src/antlr/main/`. One lexer/parser pair reads both logic and Solidity: a
+modality opener pushes the lexer's `SOL` mode, whose tokens `KeYSolidityDLLexer` imports from
+`SolidityLexer.g4`, and `KeYSolidityDLParser` imports the Solidity rules from
+`SolidityRules.g4`, so a modality body is a subtree that `ExpressionBuilder` hands to
+`SolidityToKeyConverter`. `SolidityLexer.g4` needs its one default-mode fragment: ANTLR rejects
+a lexer grammar that starts with `mode`. Syntax errors fail the load (`ThrowingErrorListener`).
 
 ## CI gates — run before committing
 
