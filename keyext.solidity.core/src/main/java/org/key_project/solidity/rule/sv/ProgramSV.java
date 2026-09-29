@@ -135,7 +135,7 @@ public class ProgramSV extends OperatorSV
         }
 
         SVInstantiations insts = matchCond.getInstantiations();
-        final var pl = (ImmutableArray<SolidityProgramElement>) insts.getInstantiation(this);
+        final ImmutableArray<SolidityProgramElement> pl = insts.getInstantiation(this);
         if (pl != null) {
             if (pl.equals(list)) {
                 return matchCond;

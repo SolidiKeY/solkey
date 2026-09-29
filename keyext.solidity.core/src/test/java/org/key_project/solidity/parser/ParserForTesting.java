@@ -17,7 +17,7 @@ import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.ArraySort;
 import org.key_project.solidity.logic.sort.DynamicArraySort;
 import org.key_project.solidity.logic.sort.SortImpl;
-import org.key_project.solidity.parser.SolidityParser.*;
+import org.key_project.solidity.parser.KeYSolidityDLParser.*;
 import org.key_project.solidity.program.ast.abstractions.ArrayType;
 import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
@@ -106,17 +106,18 @@ public class ParserForTesting {
         return new SolidityToKeyConverter(services, localVars, schemaVariables);
     }
 
-    static public SolidityParser parse(String s) {
+    static public KeYSolidityDLParser parse(String s) {
         CodePointCharStream input = CharStreams.fromString(s);
 
-        SolidityLexer lexer = new SolidityLexer(input);
+        KeYSolidityDLLexer lexer = new KeYSolidityDLLexer(input);
+        lexer.pushMode(KeYSolidityDLLexer.SOL);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
 
-        return new SolidityParser(tokens);
+        return new KeYSolidityDLParser(tokens);
     }
 
     static public BlockContext parseBlockContext(String s) {
-        SolidityParser parser = parse(s);
+        KeYSolidityDLParser parser = parse(s);
         return parser.block();
     }
 
@@ -126,13 +127,13 @@ public class ParserForTesting {
     }
 
     static public Expression parseExpression(String s) {
-        SolidityParser parser = parse(s);
+        KeYSolidityDLParser parser = parse(s);
         ExpressionContext expCtx = parser.expression();
         return stk.visitExpression(expCtx);
     }
 
     static public Statement parseStatement(String s) {
-        SolidityParser parser = parse(s);
+        KeYSolidityDLParser parser = parse(s);
         StatementContext stmCtx = parser.statement();
         return (Statement) stk.visitStatement(stmCtx);
     }

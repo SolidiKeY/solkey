@@ -6,11 +6,7 @@ package org.key_project.solidity.rule;
 import java.util.List;
 
 import org.key_project.logic.Name;
-import org.key_project.logic.sort.Sort;
-import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
-import org.key_project.solidity.logic.sort.GenericSort;
-import org.key_project.solidity.parser.ParserForTesting;
 import org.key_project.solidity.parser.varcond.FieldExpressionTypeToSortCondition;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
@@ -26,35 +22,18 @@ import org.key_project.solidity.rule.sv.sort.ProgramSVSort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
-public class FieldExpressionTypeToSortConditionTest {
-    private Services services;
-    private Sort intSort;
-    private Sort boolSort;
-    private Sort structSort;
-    private Sort identitySort;
+public class FieldExpressionTypeToSortConditionTest extends TypeToSortConditionTestBase {
     private ProgramSV fieldSV;
-    private ProgramSV receiverSV;
-    private GenericSort alpha;
     private FieldExpressionTypeToSortCondition condition;
     private FieldExpressionTypeToSortCondition memoryCondition;
 
     @BeforeEach
     void setUp() {
-        services = ParserForTesting.load().getServices();
-        intSort = services.getTheoryInfo().getIntLDT().targetSort();
-        boolSort = services.getTheoryInfo().getBoolLDT().targetSort();
-        structSort = services.getTheoryInfo().getStructLDT().targetSort();
-        identitySort = services.getTheoryInfo().getMemoryLDT().getIdentitySort();
         fieldSV = SchemaVariableFactory.createProgramSV(new Name("a"), ProgramSVSort.FIELD,
             false);
-        receiverSV = SchemaVariableFactory.createProgramSV(new Name("sp"),
-            ProgramSVSort.SIMPLE_STORAGE_PATH, false);
-        alpha = new GenericSort(new Name("alpha"));
         condition = new FieldExpressionTypeToSortCondition(fieldSV, alpha);
         memoryCondition = new FieldExpressionTypeToSortCondition(fieldSV, alpha, true);
     }
@@ -133,11 +112,5 @@ public class FieldExpressionTypeToSortConditionTest {
     private MatchConditions checkMemory(FieldDeclaration field) {
         return (MatchConditions) memoryCondition.check(fieldSV, field,
             MatchConditions.EMPTY_MATCHCONDITIONS, services);
-    }
-
-    private void assertSort(MatchConditions result, Sort expected) {
-        assertNotNull(result);
-        assertEquals(expected, result.getInstantiations().getGenericSortInstantiations()
-                .getInstantiation(alpha));
     }
 }

@@ -33,6 +33,13 @@ public final class WasmSolcCompiler implements SolcCompiler {
 
     private static final String SOLJSON_RESOURCE = "/soljson.js";
 
+    /// Emscripten reaches for `performance.now()` to time itself, and the SMTChecker is the part
+    /// that does — without this, model checking dies on `ReferenceError: performance is not
+    /// defined` while plain compilation never notices. GraalJS is neither a browser nor Node, so
+    /// nothing defines it for us.
+    private static final String PERFORMANCE_POLYFILL =
+        "globalThis.performance = globalThis.performance || { now: () => Date.now() };";
+
     private static final String BIND_ENTRY_POINTS =
         """
                 ({
@@ -52,6 +59,8 @@ public final class WasmSolcCompiler implements SolcCompiler {
 
     private final ReentrantLock lock = new ReentrantLock();
 
+    private SolcOutputCache cache;
+
     private Context context;
     private Value compile;
     private Value version;
@@ -63,8 +72,14 @@ public final class WasmSolcCompiler implements SolcCompiler {
     public String compile(String standardJsonInput) throws IOException {
         lock.lock();
         try {
+            String cached = cache().output(standardJsonInput);
+            if (cached != null) {
+                return cached;
+            }
             initialize();
-            return compile.execute(standardJsonInput, 0, 0).asString();
+            String output = compile.execute(standardJsonInput, 0, 0).asString();
+            cache().storeOutput(standardJsonInput, output);
+            return output;
         } catch (PolyglotException e) {
             throw new IOException("solc failed on the standard JSON input", e);
         } finally {
@@ -76,13 +91,35 @@ public final class WasmSolcCompiler implements SolcCompiler {
     public String version() {
         lock.lock();
         try {
+            String cached = cache().version();
+            if (cached != null) {
+                return cached;
+            }
             initialize();
-            return version.execute().asString();
+            String result = version.execute().asString();
+            cache().storeVersion(result);
+            return result;
         } catch (IOException e) {
             throw new IllegalStateException(e);
         } finally {
             lock.unlock();
         }
+    }
+
+    private SolcOutputCache cache() {
+        if (cache == null) {
+            InputStream stream = WasmSolcCompiler.class.getResourceAsStream(SOLJSON_RESOURCE);
+            if (stream == null) {
+                cache = SolcOutputCache.disabled();
+            } else {
+                try (stream) {
+                    cache = SolcOutputCache.forCompiler(stream);
+                } catch (IOException e) {
+                    cache = SolcOutputCache.disabled();
+                }
+            }
+        }
+        return cache;
     }
 
     private void initialize() throws IOException {
@@ -93,11 +130,13 @@ public final class WasmSolcCompiler implements SolcCompiler {
                 .allowExperimentalOptions(true)
                 .option("js.webassembly", "true")
                 .option("engine.WarnInterpreterOnly", "false")
+                .option("engine.Mode", "latency")
                 .allowPolyglotAccess(PolyglotAccess.ALL)
                 .allowHostAccess(HostAccess.NONE)
                 .allowIO(IOAccess.NONE)
                 .build();
         try {
+            built.eval("js", PERFORMANCE_POLYFILL);
             built.eval(soljsonSource());
             Value entryPoints = built.eval("js", BIND_ENTRY_POINTS);
             compile = entryPoints.getMember("compile");

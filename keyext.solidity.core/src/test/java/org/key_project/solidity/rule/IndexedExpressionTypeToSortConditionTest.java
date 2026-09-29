@@ -6,13 +6,9 @@ package org.key_project.solidity.rule;
 import java.util.List;
 
 import org.key_project.logic.Name;
-import org.key_project.logic.sort.Sort;
-import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.DynamicArraySort;
-import org.key_project.solidity.logic.sort.GenericSort;
 import org.key_project.solidity.logic.sort.SortImpl;
-import org.key_project.solidity.parser.ParserForTesting;
 import org.key_project.solidity.parser.varcond.IndexedExpressionTypeToSortCondition;
 import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
@@ -21,39 +17,19 @@ import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.declarations.StructDeclaration;
 import org.key_project.solidity.rule.matching.inst.MatchConditions;
-import org.key_project.solidity.rule.sv.ProgramSV;
-import org.key_project.solidity.rule.sv.SchemaVariableFactory;
-import org.key_project.solidity.rule.sv.sort.ProgramSVSort;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.key_project.solidity.program.ast.abstractions.PrimitiveType.BOOL;
 
-public class IndexedExpressionTypeToSortConditionTest {
-    private Services services;
-    private Sort boolSort;
-    private Sort intSort;
-    private Sort identitySort;
-    private Sort structSort;
-    private ProgramSV receiverSV;
-    private GenericSort alpha;
+public class IndexedExpressionTypeToSortConditionTest extends TypeToSortConditionTestBase {
     private IndexedExpressionTypeToSortCondition condition;
     private IndexedExpressionTypeToSortCondition memoryCondition;
 
     @BeforeEach
     void setUp() {
-        services = ParserForTesting.load().getServices();
-        boolSort = services.getTheoryInfo().getBoolLDT().targetSort();
-        intSort = services.getTheoryInfo().getIntLDT().targetSort();
-        identitySort = services.getTheoryInfo().getMemoryLDT().getIdentitySort();
-        structSort = services.getTheoryInfo().getStructLDT().targetSort();
-        receiverSV = SchemaVariableFactory.createProgramSV(new Name("sp"),
-            ProgramSVSort.SIMPLE_STORAGE_PATH, false);
-        alpha = new GenericSort(new Name("alpha"));
         condition = new IndexedExpressionTypeToSortCondition(receiverSV, alpha);
         memoryCondition = new IndexedExpressionTypeToSortCondition(receiverSV, alpha, true);
     }
@@ -67,9 +43,7 @@ public class IndexedExpressionTypeToSortConditionTest {
 
         MatchConditions result = check(flags);
 
-        assertNotNull(result);
-        assertEquals(boolSort, result.getInstantiations().getGenericSortInstantiations()
-                .getInstantiation(alpha));
+        assertSort(result, boolSort);
     }
 
     @Test
@@ -81,9 +55,7 @@ public class IndexedExpressionTypeToSortConditionTest {
 
         MatchConditions result = check(flags);
 
-        assertNotNull(result);
-        assertEquals(boolSort, result.getInstantiations().getGenericSortInstantiations()
-                .getInstantiation(alpha));
+        assertSort(result, boolSort);
     }
 
     @Test
@@ -96,9 +68,7 @@ public class IndexedExpressionTypeToSortConditionTest {
 
         MatchConditions result = checkMemory(payloads);
 
-        assertNotNull(result);
-        assertEquals(identitySort, result.getInstantiations().getGenericSortInstantiations()
-                .getInstantiation(alpha));
+        assertSort(result, identitySort);
     }
 
     @Test
@@ -110,9 +80,7 @@ public class IndexedExpressionTypeToSortConditionTest {
 
         MatchConditions result = checkMemory(flags);
 
-        assertNotNull(result);
-        assertEquals(boolSort, result.getInstantiations().getGenericSortInstantiations()
-                .getInstantiation(alpha));
+        assertSort(result, boolSort);
     }
 
     @Test

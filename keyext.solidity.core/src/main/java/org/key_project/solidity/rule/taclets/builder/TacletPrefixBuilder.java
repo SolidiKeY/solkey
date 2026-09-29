@@ -20,7 +20,6 @@ import org.key_project.solidity.rule.sv.ModalOperatorSV;
 import org.key_project.solidity.rule.sv.TermSV;
 import org.key_project.solidity.rule.sv.UpdateSV;
 import org.key_project.solidity.rule.taclets.SolFindTaclet;
-import org.key_project.solidity.rule.taclets.SolRewriteTaclet;
 import org.key_project.solidity.rule.taclets.TacletPrefix;
 import org.key_project.solidity.rule.taclets.TacletSchemaVariableCollector;
 import org.key_project.util.collection.DefaultImmutableMap;
@@ -55,19 +54,17 @@ public class TacletPrefixBuilder {
         prefixMap = prefixMap.put(sv, new TacletPrefix(numberOfBoundVars, false));
     }
 
-    /// removes all variables x that are declared as x not free in sv from the
-    /// currently bound vars set.
+    /// A schema variable declared `\noFreeVarIn` is only ever instantiated with a closed term
+    /// (the matcher rejects everything else), so no bound variable above its occurrence can be
+    /// captured and its prefix is empty.
     private int removeNoFreeVarIn(SchemaVariable sv) {
-        int result = numberOfCurrentlyBoundVars;
         Iterator<@NonNull SchemaVariable> it = tacletBuilder.noFreeVarIns();
         while (it.hasNext()) {
-            SchemaVariable v = it.next();
-            if (v == sv) {
-                result -= 1;
-                break;
+            if (it.next() == sv) {
+                return 0;
             }
         }
-        return Math.max(0, result);
+        return numberOfCurrentlyBoundVars;
     }
 
     private void visit(Term t) {
@@ -176,8 +173,7 @@ public class TacletPrefixBuilder {
 
 
     private boolean atMostOneRepl() {
-        RewriteTacletBuilder<? extends SolRewriteTaclet> rwtacletBuilder =
-            (RewriteTacletBuilder<? extends SolRewriteTaclet>) tacletBuilder;
+        RewriteTacletBuilder rwtacletBuilder = (RewriteTacletBuilder) tacletBuilder;
         int count = 0;
         for (var tmpl : rwtacletBuilder.goalTemplates()) {
             if (tmpl instanceof RewriteTacletGoalTemplate rtgt) {
@@ -193,8 +189,7 @@ public class TacletPrefixBuilder {
     }
 
     private boolean occurrsOnlyInFindOrRepl(SchemaVariable sv) {
-        RewriteTacletBuilder<? extends SolRewriteTaclet> rwtacletBuilder =
-            (RewriteTacletBuilder<? extends SolRewriteTaclet>) tacletBuilder;
+        RewriteTacletBuilder rwtacletBuilder = (RewriteTacletBuilder) tacletBuilder;
         TacletSchemaVariableCollector svc = new TacletSchemaVariableCollector();
         svc.visitAssumes(rwtacletBuilder.ifSequent());
         for (var tacletGoalTemplate : rwtacletBuilder.goalTemplates()) {

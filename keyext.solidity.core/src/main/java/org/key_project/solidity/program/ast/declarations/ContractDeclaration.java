@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.util.collection.ImmutableArray;
 
@@ -68,8 +69,7 @@ public class ContractDeclaration implements Declaration, Type {
     @Override
     public SyntaxElement getChild(int n) {
         if (n < 0)
-            throw new IndexOutOfBoundsException(
-                "Index should be 0 <= " + n + " < " + getChildCount());
+            throw SolidityProgramElement.outOfBounds(n, getChildCount());
         if (n < fields.size())
             return fields.get(n);
         n -= fields.size();
@@ -84,8 +84,7 @@ public class ContractDeclaration implements Declaration, Type {
         n -= functions.size();;
         if (n < enums.size())
             return enums.get(n);
-        throw new IndexOutOfBoundsException(
-            "Index should be 0 <= " + n + " < " + getChildCount());
+        throw SolidityProgramElement.outOfBounds(n, getChildCount());
     }
 
     @Override

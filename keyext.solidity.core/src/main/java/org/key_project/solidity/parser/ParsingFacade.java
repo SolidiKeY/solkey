@@ -24,6 +24,7 @@ import org.key_project.solidity.parser.builder.ConfigurationBuilder;
 import org.key_project.solidity.proof.io.RuleSource;
 import org.key_project.solidity.settings.Configuration;
 
+import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
@@ -49,9 +50,15 @@ public final class ParsingFacade {
     }
 
     private static KeYSolidityDLParser createParser(CharStream stream) {
-        KeYSolidityDLParser p = new KeYSolidityDLParser(new CommonTokenStream(createLexer(stream)));
-        // p.removeErrorListeners();
-        // p.addErrorListener(p.getErrorReporter());
+        return createParser(createLexer(stream));
+    }
+
+    private static KeYSolidityDLParser createParser(KeYSolidityDLLexer lexer) {
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(ThrowingErrorListener.INSTANCE);
+        KeYSolidityDLParser p = new KeYSolidityDLParser(new CommonTokenStream(lexer));
+        p.removeErrorListeners();
+        p.addErrorListener(ThrowingErrorListener.INSTANCE);
         return p;
     }
 
@@ -106,39 +113,36 @@ public final class ParsingFacade {
 
     public static KeYAst.File parseFile(CharStream stream) {
         KeYSolidityDLParser p = createParser(stream);
-
         p.getInterpreter().setPredictionMode(PredictionMode.SLL);
-        // p.removeErrorListeners();
-        // p.setErrorHandler(new BailErrorStrategy());
+        p.removeErrorListeners();
+        p.setErrorHandler(new BailErrorStrategy());
         KeYSolidityDLParser.FileContext ctx;
         try {
             ctx = p.file();
         } catch (ParseCancellationException ex) {
             stream.seek(0);
             p = createParser(stream);
-            // p.setErrorHandler(new BailErrorStrategy());
+            p.getInterpreter().setPredictionMode(PredictionMode.LL);
             ctx = p.file();
-            // if (p.getErrorReporter().hasErrors()) {
-            // throw ex;
-            // }
         }
-
-        // p.getErrorReporter().throwException();
         return new KeYAst.File(ctx);
     }
 
     public static KeYAst.Term parseExpression(CharStream stream) {
         KeYSolidityDLParser p = createParser(stream);
         KeYSolidityDLParser.TermContext term = p.termEOF().term();
-        // p.getErrorReporter().throwException();
         return new KeYAst.Term(term);
     }
 
     public static KeYAst.Seq parseSequent(CharStream stream) {
         KeYSolidityDLParser p = createParser(stream);
-        var seq = new KeYAst.Seq(p.seqEOF().seq());
-        // p.getErrorReporter().throwException();
-        return seq;
+        return new KeYAst.Seq(p.seqEOF().seq());
+    }
+
+    public static KeYSolidityDLParser.BlockContext parseSolidityBlock(CharStream stream) {
+        KeYSolidityDLLexer lexer = createLexer(stream);
+        lexer.pushMode(KeYSolidityDLLexer.SOL);
+        return createParser(lexer).solidityBlockEOF().block();
     }
 
     /// Parses the configuration determined by the given `file`.
@@ -161,7 +165,6 @@ public final class ParsingFacade {
     public static KeYAst.ConfigurationFile parseConfigurationFile(CharStream stream) {
         KeYSolidityDLParser p = createParser(stream);
         var ctx = p.cfile();
-        // p.getErrorReporter().throwException();
         return new KeYAst.ConfigurationFile(ctx);
     }
 

@@ -5,10 +5,18 @@ package org.key_project.solidity.proof.init;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.key_project.solidity.program.parser.SolidityOutline;
+import org.key_project.solidity.speclang.natspec.KeyNatspec;
+import org.key_project.solidity.speclang.natspec.SpecCompiler;
+import org.key_project.solidity.speclang.natspec.SpecException;
+import org.key_project.solidity.speclang.natspec.SpecParser;
+import org.key_project.solidity.speclang.natspec.SpecType;
 
 /// Builds the proof obligation for a Solidity function, so a `.sol` file can be verified
 /// without a hand-written `.key` problem beside it.
@@ -40,8 +48,8 @@ public final class SolidityProblemSynthesizer {
     /// file declares does not fork solc a second time.
     public static SolidityProblemSpec resolve(Path solFile, SolidityOutline outline,
             SolidityProblemSpec requested) {
-        SolidityOutline.Contract contract = resolveContract(solFile, outline,
-            requested == null ? null : requested.contract());
+        SolidityOutline.Contract contract =
+            outline.requireContract(requested == null ? null : requested.contract(), solFile);
         String function = requested == null ? null : requested.function();
         if (function == null) {
             List<SolidityOutline.Function> provable = contract.provableFunctions();
@@ -69,35 +77,134 @@ public final class SolidityProblemSynthesizer {
     /// Every function of `contract` an obligation can be generated for, in declaration order.
     public static List<String> provableFunctions(Path solFile, String contract)
             throws IOException {
-        return names(resolveContract(solFile, SolidityOutline.of(solFile), contract)
+        return names(SolidityOutline.of(solFile).requireContract(contract, solFile)
                 .provableFunctions());
     }
 
     public static String problemText(Path solFile, SolidityProblemSpec spec) throws IOException {
-        SolidityOutline.Function function =
-            resolveContract(solFile, SolidityOutline.of(solFile), spec.contract())
-                    .function(spec.function())
-                    .orElseThrow(() -> new IllegalArgumentException(
-                        "no public function " + spec.function() + " in " + solFile));
-        boolean box = function.documentation().contains(BOX_DIRECTIVE);
+        return problemText(solFile, SolidityOutline.of(solFile), spec);
+    }
+
+    public static String problemText(Path solFile, SolidityOutline outline,
+            SolidityProblemSpec spec) {
+        SolidityOutline.Contract contract = outline.requireContract(spec.contract(), solFile);
+        SolidityOutline.Function function = contract.function(spec.function())
+                .orElseThrow(() -> new IllegalArgumentException(
+                    "no public function " + spec.function() + " in " + solFile));
+        String where = contract.name() + "." + function.name();
+        KeyNatspec contractSpec;
+        KeyNatspec functionSpec;
+        try {
+            contractSpec = KeyNatspec.of(contract.documentation());
+            functionSpec = function.natspec();
+        } catch (SpecException e) {
+            throw new SpecException(where + ": " + e.getMessage());
+        }
         List<SolidityOutline.Parameter> parameters = function.parameters();
         String arguments = parameters.stream().map(SolidityOutline.Parameter::name)
                 .collect(Collectors.joining(", "));
-        String call = spec.function() + "(" + arguments + ")@" + spec.contract() + ";";
-        String modality = box ? "\\[{ " + call + " }\\](true)" : "\\<{ " + call + " }\\>(true)";
-        String programVariables = parameters.isEmpty() ? ""
-                : parameters.stream().map(p -> "    " + p.keySort() + " " + p.name() + ";")
-                        .collect(Collectors.joining("\n", "\\programVariables {\n", "\n}\n\n"));
+        List<String> variables = new ArrayList<>();
+        for (SolidityOutline.Parameter parameter : parameters) {
+            variables.add(parameter.keySort() + " " + parameter.name());
+        }
+        String result = "";
+        if (!function.returns().isEmpty()) {
+            variables.add(function.returns().get(0).keySort() + " result");
+            result = "result = ";
+        }
+        String call = result + spec.function() + "(" + arguments + ")@" + spec.contract() + ";";
         String options = spec.choices().isEmpty() ? ""
                 : spec.choices().stream()
                         .collect(Collectors.joining(", ", "\\withOptions ", ";\n\n"));
-        return """
-                \\programSource "%s";
+        if (!contractSpec.isSpecified() && !functionSpec.isSpecified()) {
+            String modality = functionSpec.box() ? "\\[{ " + call + " }\\](true)"
+                    : "\\<{ " + call + " }\\>(true)";
+            return """
+                    %s\\problem {
+                        %s
+                    }
+                    """.formatted(header(solFile, options, variables), modality);
+        }
+        return specifiedProblemText(solFile, contract, function, contractSpec, functionSpec,
+            options, variables, call, where);
+    }
 
-                %s%s\\problem {
-                    %s
+    private static String header(Path solFile, String options, List<String> variables) {
+        String declarations = variables.isEmpty() ? ""
+                : variables.stream().map(v -> "    " + v + ";")
+                        .collect(Collectors.joining("\n", "\\programVariables {\n", "\n}\n\n"));
+        return "\\programSource \"" + solFile.toAbsolutePath() + "\";\n\n" + options + declarations;
+    }
+
+    private static String specifiedProblemText(Path solFile, SolidityOutline.Contract contract,
+            SolidityOutline.Function function, KeyNatspec contractSpec, KeyNatspec functionSpec,
+            String options, List<String> variables, String call, String where) {
+        SpecCompiler compiler = new SpecCompiler(contract, function);
+        Map<String, SpecType> parameters = SpecCompiler.parameterTypes(function);
+        boolean usesOld = functionSpec.ensures().stream()
+                .anyMatch(e -> SpecParser.usesOld(SpecParser.parse(e)));
+        List<String> declared = new ArrayList<>(variables);
+        if (usesOld) {
+            declared.add("Struct old");
+            declared.add("Struct oldNet");
+        }
+        String invariant = contractSpec.invariants().isEmpty() ? "            true"
+                : conjunction(contractSpec.invariants(),
+                    text -> compiler.formula(text, SpecCompiler.Context.invariant(),
+                        contract.name() + " invariant"),
+                    "            ", false);
+        boolean quantified = contractSpec.invariants().stream()
+                .anyMatch(text -> SpecParser.quantifies(SpecParser.parse(text)));
+        String precondition = "    // " + (function.payable() ? "msg.value >= 0" : "msg.value == 0")
+            + " :\n    " + (function.payable() ? "geq(msgValue, 0)" : "msgValue = 0")
+            + conjunction(functionSpec.requires(),
+                text -> compiler.formula(text, SpecCompiler.Context.requires(parameters),
+                    where + " requires"),
+                "    ", true);
+        String postcondition = "CInv(storage, net)" + conjunction(functionSpec.ensures(),
+            text -> compiler.formula(text, SpecCompiler.Context.ensures(parameters),
+                where + " ensures"),
+            "         ", true);
+        String update = (usesOld ? "old := storage || oldNet := net\n     || " : "")
+            + "net := storeSt(net, at(msgSender), selectSt<[int]>(net, at(msgSender)) + msgValue)"
+            + "\n     || selfBalance := selfBalance + msgValue";
+        return """
+                %s\\rules {
+                    insertCInv {
+                        \\schemaVar \\term Struct s, n;
+                        \\find(CInv(s, n))
+                %s        \\replacewith(
+                %s)
+                        \\heuristics(simplify)
+                    };
                 }
-                """.formatted(solFile.toAbsolutePath(), options, programVariables, modality);
+
+                \\problem {
+                %s
+                    & CInv(storage, net) ->
+                    {%s}
+                    \\[{ %s }\\]
+                        (%s)
+                }
+                """.formatted(header(solFile, options, declared),
+            !quantified ? ""
+                    : "        \\varcond(\\noFreeVarIn(s), \\noFreeVarIn(n))\n",
+            invariant, precondition, update, call, postcondition);
+    }
+
+    private static String conjunction(List<String> clauses, Function<String, String> compile,
+            String indent, boolean continued) {
+        StringBuilder text = new StringBuilder();
+        for (int i = 0; i < clauses.size(); i++) {
+            boolean conjunct = continued || i > 0;
+            if (conjunct) {
+                text.append("\n");
+            }
+            text.append(indent).append("// ").append(clauses.get(i)).append(" :\n")
+                    .append(indent).append(conjunct ? "& " : "")
+                    .append(compile.apply(clauses.get(i)));
+        }
+        return text.toString();
     }
 
     /// A path identifying this obligation. It is never created; it only fixes the directory
@@ -105,23 +212,6 @@ public final class SolidityProblemSynthesizer {
     public static Path anchor(Path solFile, SolidityProblemSpec spec) {
         return solFile.toAbsolutePath()
                 .resolveSibling(spec.contract() + "." + spec.function() + ".generated.key");
-    }
-
-    private static SolidityOutline.Contract resolveContract(Path solFile,
-            SolidityOutline outline, String requested) {
-        if (requested != null) {
-            return outline.contract(requested)
-                    .orElseThrow(() -> new IllegalArgumentException(solFile
-                        + " declares no contract " + requested + "; candidates: "
-                        + outline.contracts().stream().map(SolidityOutline.Contract::name)
-                                .toList()));
-        }
-        if (outline.contracts().size() != 1) {
-            throw new IllegalArgumentException("no contract selected for " + solFile
-                + "; use --contract with one of: "
-                + outline.contracts().stream().map(SolidityOutline.Contract::name).toList());
-        }
-        return outline.contracts().get(0);
     }
 
     private static List<String> names(List<SolidityOutline.Function> functions) {

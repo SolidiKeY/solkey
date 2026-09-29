@@ -35,11 +35,11 @@ import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.SolidityModel;
 import org.key_project.solidity.proof.mgt.SpecificationRepository;
 import org.key_project.solidity.theory.LDT;
+import org.key_project.solidity.theory.StructLDT;
 import org.key_project.solidity.theory.TheoryInfo;
 
 import org.jspecify.annotations.NonNull;
 
-import static org.key_project.solidity.theory.StructLDT.FIELD_SEPARATOR;
 
 public class Services implements LogicServices, ProofServices {
 
@@ -106,10 +106,9 @@ public class Services implements LogicServices, ProofServices {
         if (pe instanceof FieldReference fieldRef) {
             // a contract field access resolves to a single-element List path (cons(field, nil))
             // so that global roots are treated uniformly with local storage paths
-            Term field = tb.func(fieldTerm(fieldRef.getFieldConstantName(), services));
-            Function cons = services.getNamespaces().functions().lookup(new Name("cons"));
-            Function nil = services.getNamespaces().functions().lookup(new Name("nil"));
-            return tb.func(cons, field, tb.func(nil));
+            Term field = tb.func(services.requireFunction(fieldRef.getFieldConstantName()));
+            return tb.func(services.requireFunction("cons"), field,
+                tb.func(services.requireFunction("nil")));
         }
         if (pe instanceof MemberExp member) {
             Term basePath = convertToLogicElement(member.getLeftExp(), services);
@@ -117,12 +116,7 @@ public class Services implements LogicServices, ProofServices {
             return appendPathSegment(basePath, field, services);
         }
         if (pe instanceof FieldDeclaration field) {
-            StructDeclaration owner = field.getContainingStruct();
-            Name constantName = owner != null && owner.getContract() != null
-                    ? new Name(owner.getContract().name() + FIELD_SEPARATOR
-                            + owner.name() + FIELD_SEPARATOR + field.name())
-                    : field.name();
-            return services.getTermBuilder().func(fieldTerm(constantName, services));
+            return fieldConstant(field, services);
         }
         if (pe instanceof IndexExpression index) {
             Term basePath = convertToLogicElement(index.getLeftExp(), services);
@@ -144,23 +138,30 @@ public class Services implements LogicServices, ProofServices {
                 + "position it should stand for.");
     }
 
-    private static Function fieldTerm(Name constantName, Services services) {
-        Function constant = services.getNamespaces().functions().lookup(constantName);
-        if (constant == null) {
-            throw new IllegalStateException(
-                "no field constant registered under name " + constantName);
+    public Function requireFunction(String name) {
+        return requireFunction(new Name(name));
+    }
+
+    public Function requireFunction(Name name) {
+        Function function = getNamespaces().functions().lookup(name);
+        if (function == null) {
+            throw new IllegalStateException("Function " + name + " is not declared");
         }
-        return constant;
+        return function;
+    }
+
+    private static Term fieldConstant(FieldDeclaration field, Services services) {
+        StructDeclaration owner = field.getContainingStruct();
+        Name constantName = owner != null && owner.getContract() != null
+                ? new Name(StructLDT.fieldConstantName(owner.getContract().name(), owner.name(),
+                    field.name()))
+                : field.name();
+        return services.getTermBuilder().func(services.requireFunction(constantName));
     }
 
     private static Term memberFieldTerm(MemberExp member, Services services) {
         if (member.getRightExp() instanceof FieldDeclaration field) {
-            StructDeclaration owner = field.getContainingStruct();
-            Name constantName = owner != null && owner.getContract() != null
-                    ? new Name(owner.getContract().name() + FIELD_SEPARATOR
-                            + owner.name() + FIELD_SEPARATOR + field.name())
-                    : field.name();
-            return services.getTermBuilder().func(fieldTerm(constantName, services));
+            return fieldConstant(field, services);
         }
         throw new IllegalArgumentException(
             "Cannot convert member access '" + member + "' into a logic path: member '"
@@ -168,21 +169,14 @@ public class Services implements LogicServices, ProofServices {
     }
 
     private static Term indexFieldTerm(Term indexTerm, Services services) {
-        Function at = services.getNamespaces().functions().lookup(new Name("at"));
-        if (at == null) {
-            throw new IllegalStateException("index field constructor 'at' is not available");
-        }
-        return services.getTermBuilder().func(at, indexTerm);
+        return services.getTermBuilder().func(services.requireFunction("at"), indexTerm);
     }
 
     private static Term appendPathSegment(Term basePath, Term field, Services services) {
         var tb = services.getTermBuilder();
-        Function cons = services.getNamespaces().functions().lookup(new Name("cons"));
-        Function consr = services.getNamespaces().functions().lookup(new Name("consr"));
-        Function nil = services.getNamespaces().functions().lookup(new Name("nil"));
-        if (cons == null || consr == null || nil == null) {
-            throw new IllegalStateException("list constructors are not available");
-        }
+        Function cons = services.requireFunction("cons");
+        Function consr = services.requireFunction("consr");
+        Function nil = services.requireFunction("nil");
         if ("List".equals(basePath.sort().name().toString())) {
             return tb.func(consr, basePath, field);
         }

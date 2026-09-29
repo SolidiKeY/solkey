@@ -441,10 +441,9 @@ public class TacletIndex {
 
     public TacletIndex copy() {
         return new TacletIndex(
-            (HashMap<Object, ImmutableList<NoPosTacletApp>>) rwList.clone(),
-            (HashMap<Object, ImmutableList<NoPosTacletApp>>) antecList.clone(),
-            (HashMap<Object, ImmutableList<NoPosTacletApp>>) succList.clone(), noFindList,
-            (HashSet<NoPosTacletApp>) partialInstantiatedRuleApps.clone());
+            new LinkedHashMap<>(rwList), new LinkedHashMap<>(antecList),
+            new LinkedHashMap<>(succList), noFindList,
+            new LinkedHashSet<>(partialInstantiatedRuleApps));
     }
 
     /// returns a list with all partial instantiated no pos taclet apps

@@ -22,6 +22,7 @@ import java.util.zip.ZipFile;
 
 import org.key_project.solidity.common.Profile;
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.program.parser.SolidityOutline;
 import org.key_project.solidity.proof.*;
 import org.key_project.solidity.proof.init.*;
 import org.key_project.solidity.proof.init.IPersistablePO.LoadedPOContainer;
@@ -239,11 +240,12 @@ public abstract class AbstractProblemLoader {
 
         if (filename.endsWith(".sol")) {
             // a Solidity source carries no \problem, so synthesize one for the selected function
+            SolidityOutline outline = SolidityOutline.of(file);
             SolidityProblemSpec spec =
-                SolidityProblemSynthesizer.resolve(file, solidityProblem);
+                SolidityProblemSynthesizer.resolve(file, outline, solidityProblem);
             return new KeYUserProblemFile(spec.contract() + "." + spec.function(),
                 RuleSourceFactory.fromString(
-                    SolidityProblemSynthesizer.problemText(file, spec),
+                    SolidityProblemSynthesizer.problemText(file, outline, spec),
                     SolidityProblemSynthesizer.anchor(file, spec)),
                 profileOfNewProofs, fileRepo);
         } else if (filename.endsWith(".zproof")) { // zipped proof package

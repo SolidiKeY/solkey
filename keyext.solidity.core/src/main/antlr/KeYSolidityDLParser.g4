@@ -1,6 +1,6 @@
 parser grammar KeYSolidityDLParser;
 
-import KeYParser;
+import KeYParser, SolidityRules;
 
 options { tokenVocab = KeYSolidityDLLexer; }
 
@@ -34,7 +34,7 @@ varexpId
  | HAS_ELEMENT_SORT
  | HAS_MEMORY_ELEMENT_SORT
  | NO_FREE_VAR_IN
- | NOT_ALL_SIMPLE
+ | NO_FIXED_ARRAY_ELEMENT
  ;
 
  one_sort_decl
@@ -161,3 +161,15 @@ funcpred_name
 :
   DOUBLECOLON? simple_ident (DOUBLECOLON simple_ident)*
 ;
+
+unary_formula
+   : NOT sub = term60 # negation_term
+   | (FORALL | EXISTS) bound_variables sub = term60 # quantifierterm
+   | modality sub = term60 # modality_term
+   ;
+
+modality
+   : MODALITYD block DIAMOND_END # diamondModality
+   | MODALITYB block BOX_END # boxModality
+   | op = (MODAILITYGENERIC1 | MODAILITYGENERIC2 | MODAILITYGENERIC4) block ENDMODALITY # namedModality
+   ;

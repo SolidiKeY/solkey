@@ -17,8 +17,10 @@ unconstrained variable per parameter, passed as the call's arguments — such a 
 box-tagged and assumes its argument values with `require`)
 
 so the specification lives in the body as `assert`, and every test program is real Solidity
-that `solc` parses and type-checks. Authoring conventions and the `/// @custom:key` directives
-are in `keyext.solidity.examples/README.md`. See "Function-body inlining" below for the shape
+that `solc` parses and type-checks. `TacletCoverageTest` checks that every taclet of the Solidity
+rule files is applied by one of these functions or by a saved proof in
+`keyext.solidity.examples/proofs/`. Authoring conventions, the `/// @custom:key` directives and
+the `proofs/` directory are described in `keyext.solidity.examples/README.md`. See "Function-body inlining" below for the shape
 constraints this imposes.
 
 - Authoring syntax → `key-taclets.md`
@@ -50,10 +52,24 @@ Field selectors are partitioned by what the member holds (`structHeader.key`),
 stamped at parse time by `SolJSONParser#fieldSortFor`:
 
 ```
-Field           value members, `size`, `at(i)`   delete resets them to their default
-├── MapField    mapping members                  delete preserves their entries
-└── RefField     struct/array references          delete recurses into them
+Field                 `size`, `at(i)`                    delete resets them to their default
+├── MapField          `atMap(i)`                         delete preserves their entries
+└── MemberField       value members                      delete resets them to their default
+    ├── MapMemberField  mapping members (also a MapField)
+    ├── RefField        struct/dynamic-array references  delete recurses into them
+    └── FixedField      fixed-size array members         delete resets their elements, keeps `size`
 ```
+
+`atMap(i)` is the index of an array element whose type is a mapping. Only the rules that
+reach such an element emit it: `storageIndexReadArrayBindLocalRootMappingElement`,
+`storageLocalRootPushBindMappingElement` and `storagePopSaveMappingElement`, which take the
+Path flag `mappingElement`. Solidity cannot read, write or copy a mapping, and mappings never
+live in memory, so no other rule builds a path to one.
+
+`at` takes a `Prim`, so a mapping key may be `int`, `address` (an `int`) or `bool`; the
+array rules that bound an index by `size` still take `\term int`. A struct may reach itself
+through a mapping (`struct T { mapping(uint => T) kids; }`): `SolJSONParser` registers every
+struct of a contract before it parses any member.
 
 Only the two kinds `delete` must positively recognise get a sub-sort; value
 members stay plain `Field` alongside `size` and `at(i)` (an index's element
@@ -67,7 +83,11 @@ instantiation rather than a ranked race (the `simplify_enlarging` ranking is
 performance-only). Struct-sorted element reads
 `selectSt<[Struct]>(delNode(st), at(i))` — plain-`Field` index, so neither the
 `MapField` nor the `RefField` rule matches — get their own
-`selectStDelNodeIndexStruct`.
+`selectStDelNodeIndexStruct`, which re-wraps the element exactly like the `RefField`
+rule (`delNode(selectSt(st, at(i)))`), so `delete arr` keeps the mapping members of
+struct elements. It re-wraps only the elements below the array's old length
+(`i < selectSt(st, size)`): `delete arr` clears no further, so data a dangling reference left
+past the length survives it (`testDeleteArrayLeavesDataPastLength`).
 
 `MapField` is the sub-sort that earns its place: it is the only case that reads
 *through* the delete marker (`selectSt(st, mf)`) instead of re-wrapping it
@@ -85,8 +105,8 @@ rules before a terminal rule fires.
 ## Implemented
 
 Operator families that differ only by operator token (`op(a,b) = c` instances —
-compound assignment, inc/dec, tier-1 arithmetic) carry `// generalized by:`
-annotations in `solidityProgramRules.key`, verified mechanically by
+compound assignment, inc/dec, tier-1 arithmetic) are listed under `// generalization:`
+comments in `solidityProgramRules.key`, verified mechanically by
 `RuleGeneralizationTest` — see `docs/rule-generalizations.md`.
 
 ### Storage read / write / copy
@@ -136,8 +156,7 @@ mapping member.
 pair of `storageIndexWriteArraySave`). `/=` and `%=` guard with
 `\if(se != 0)\then(…)\else(revert)`; integers are unbounded mathematical
 integers, so there is no overflow guard. Bitwise `&= |= ^= <<= >>=` parse but
-are deferred (no bitwise LDT). Annotated as the `storageCompoundAssign` /
-`localCompoundAssign` / `compoundAssignRhsCapture` families.
+are deferred (no bitwise LDT). Listed under `// generalization:` comments.
 
 ### Memory arithmetic
 Each memory arithmetic rule is its storage counterpart with
@@ -155,8 +174,8 @@ The indexed terminals state their bounds the way `memoryIndexWriteArray` does �
 `\sameUpdateLevel` plus `\add(0 <= i & i < read<[int]>(memory, mv, size) ==>)`
 on the `inBounds` goal and the negation on `outOfBounds` — where the storage
 twins use an implication inside `\replacewith`. That difference is real, so the
-memory indexed groups are their own `RuleGeneralizationTest` groups rather than
-members of the storage ones.
+memory indexed rules have their own `// generalization:` comments rather than
+rows in the storage ones.
 
 No new capture rules were needed: `addAssignValueRhsCapture` and its siblings
 take a plain `Expression` target and so already cover a memory left-hand side.
@@ -174,8 +193,8 @@ captures (§Capture partition below), which also cover nested RHS like
 `neg`) over unbounded mathematical integers — overflow is not modeled
 (`keyext.solidity.examples/unprovable/Unprovable.sol` documents the divergence
 from the EVM's checked arithmetic); `/` and `%` revert on a zero denominator.
-- Arithmetic: `-`, `*`, `**` (`pow`), `/`, `%` — annotated as the `binaryOp`
-  family (`docs/rule-generalizations.md`).
+- Arithmetic: `-`, `*`, `**` (`pow`), `/`, `%` — listed under `// generalization:`
+  comments (`docs/rule-generalizations.md`).
 - Relational: `!=`, `<`, `>`, `<=`, `>=` (predicate map `lt/leq/gt/geq`).
 - Logical / unary: `&&`, `||`, `!`, unary `-x`. A non-simple left operand is
   captured eagerly (Solidity always evaluates it); a non-simple *right* operand
@@ -247,6 +266,21 @@ a member whose `\hasFieldSort(a, \sort(alphaPrim))` varcond binds — the
 `Path[...,primitiveElement]` indexed receiver),
 while rebinds keep their `Variable[storage]` target.
 
+### Mapping indices (nesting, aliases, memory keys)
+Nothing beyond the index families above was needed for the weirder mapping shapes. A sweep over
+nested mappings, arrays of mappings, mappings of structs that themselves carry a mapping,
+mappings of arrays, storage pointers into a mapping or into one nested row, keys read out of
+another mapping, and keys or values crossing the memory border found no rule missing: every one
+closes. `TestSuite.sol`, section "Mapping indices: nesting, aliases and memory keys", keeps one
+example per shape that the older sections do not already cover —
+`mapping(k => mapping(k => v))`, `mapping(uint => uint)[]`, `mapping(uint => Ledger)`, a
+nested row bound as a storage pointer, a ternary choosing between two mappings,
+`balances[balances[1]]`, a memory field as the key, and a mapping entry copied to another
+through memory. The shapes Solidity refuses outright are recorded in
+`keyext.solidity.examples/illegal/IllegalMappings.sol`, and of the two gaps the sweep did find, the
+non-integer key crash is in `bugs.md` and the other is in `taclet-ideas.md` ("Raised by the
+mapping-index probe").
+
 ### Push / pop
 Push-lvalue `sp.push() = se` is desugared to `sp.push(se)` at **parse time**
 (`ParserUtils.parseAssignmentMaybe`), so it never reaches the prover. A no-arg
@@ -265,12 +299,15 @@ from **post-update** storage (bound emitted inside `\replacewith`, not via `\add
 `delAt(storage, sp · at(ℓ-1))` (not eager `defaultValue`), reusing the `delNode`
 machinery of §Delete — so a mapping nested in the popped element survives `pop()` and a
 later `push()`, exactly like `storageRootDelete` / `storageFieldDelete`.
-`storagePushLengthSave` clears the appended slot the same way, which is what makes
-`arr.push(); assert(arr[0] == 0);` provable for a primitive element while a struct
-element keeps its mapping members. See the `testDeepPopDoesNotResetMappingMember` end-to-end
+`storagePushLengthSave` clears the appended slot the same way for a value-type element, which
+is what makes `arr.push(); assert(arr[0] == 0);` provable on unknown storage. A push onto an
+array of structs or arrays (`storagePushLengthSaveReferenceElement`, `storageLocalRootPushBind`)
+does not clear: solc writes no zeroes on `push()`, and a write through a dangling reference to a
+popped element survives it (`testDanglingReferenceSurvivesPush`,
+`testDanglingInnerArrayReappearsAfterPush`). See the `testDeepPopDoesNotResetMappingMember` end-to-end
 example. `delAt(st, p)` names `st` once where the equivalent `save`-of-deleted-value form
 named it twice; reads commute through it with `selectOnDelAtCons`, and the reset still
-resolves by sort on read through `delValue<[alpha]>`.
+resolves on read through `delField<[alpha]>`.
 
 ### Array length non-negativity (`sizeNotNegative`)
 `sizeNotNegative` (`structRules.key`) is the SolKey twin of Java KeY's
@@ -295,7 +332,8 @@ every positive-cost rule.
 Source-level memory family covers heap field/index read & write, root aliasing,
 fresh allocation (`memoryReferenceDeclFreshAlloc`, with a `new(memory, r)` skolem
 branch), fixed-length array allocation (`memoryArrayFreshAlloc`, assignment form
-`mv = new T(len);`), primitive-default vs. reference-slot
+`mv = new T(len);`; `newArrayCapture` first binds a `new` written to a field or index path,
+memory or storage, to a fresh memory local), primitive-default vs. reference-slot
 delete (`memoryRootDeleteFreshRebind` and field/index delete), and lazy
 storage↔memory copies via `copySt` / `copyMem` (`memoryStorageCopy` for
 `m = <simple storage path>;`, `memoryStorageCopyUnfold` captures a complex
@@ -312,7 +350,7 @@ fresh-allocation semantics. `memoryAssignForms` covers the assignment
 forms directly. Memory references are
 `Identity`-sorted, not copied `Struct` values; no `push`/`pop`/mapping.
 Complex memory receivers are captured first by `memoryIndexRead_unfold_rightFst`
-/ `memoryIndexWrite_unfold_leftFst` / `memoryIndexDelete_unfold_leftFst`. These
+/ `memoryIndexWriteCaptureAllComplexRecv` / `memoryIndexDelete_unfold_leftFst`. These
 take a plain `Path[memory,complex]` (no `array` flag): a receiver capture uses no
 array structure, and in memory an indexable path is an array anyway — mappings
 cannot be memory-located and `bytes`/`string` are not memory reference types. The
@@ -321,15 +359,33 @@ cannot be memory-located and `bytes`/`string` are not memory reference types. Th
 `memoryStructArrayIndex` covers the complex-receiver path.
 
 ### Delete
-`storageRootDelete` and `storageFieldDelete` save the sort-free `delAt(storage, path)`
-marker, resolved on read (see "Sort-free clearing and copying" below).
-(`storageIndexDelete` saves `defVal` instead: deleting a single collection
-entry/element resets it outright, mapping members included — the
-`storage-index-delete-mapping-struct` starter asserts the whole entry `= mtSt`.)
-`delValue` picks the reset value by sort: a primitive sort (`alphaPrim \extends Prim`)
-collapses to `defaultValue<[alphaPrim]>` (`int→0`, `bool→FALSE`), while
-a struct becomes a lazy `delNode` marker (structRules.key). A read at `StValue`
-itself is neither, and is routed to one of the two by `delValueStValueCast` (below). This gives Solidity's
+`storageRootDelete`, `storageFieldDelete`, `storageIndexDelete` (mappings) and
+`storageIndexArrayDelete` (arrays, with an `outOfBounds` goal that executes `revert();`) save
+the sort-free `delAt(storage, path)` marker, resolved on read (see "Sort-free clearing and
+copying" below). A deleted collection entry/element therefore keeps its mapping members, like
+any other deleted struct (`testDeleteArrayDoesNotResetElementMappingMember`).
+The last field of the path decides what is reset: `delField<[alpha]>(st, f)` is field `f` of
+`st` after the delete. A primitive sort (`alphaPrim \extends Prim`) collapses to
+`defaultValue<[alphaPrim]>` (`int→0`, `bool→FALSE`). A `RefField` or an `at(i)` element becomes
+a lazy `delNode` marker, a `FixedField` a `delNodeFixed` marker whose `size` reads through
+(`testFixedArrayDeleteKeepsLength`), and a `MapField` stays as it is (structRules.key). A read
+at `StValue` itself is routed by `delFieldStValueCast` (below). `pop()` on an array of mappings
+only shortens it (`storagePopSaveMappingElement`, `testPopKeepsMappingElementEntries`).
+
+Every field constant is a `TypedField` carrying its declared Solidity type, exposed to the
+calculus as the `Shape` term `fieldShape(m)`. `find` wraps the node it reads through a member
+in `typed(fieldShape(m), …)`, and the `selectOnTyped…` rules carry the shape down with each struct-valued read and rewrite
+`size` of a `fixedArr(n, s)` node to `n`, so `f.length`, `s.items.length` and `rows[i].length`
+for `uint[3][] rows` all reduce to literals with no axiom. Memory objects carry a `Shape` in
+their identity (`shaped(idp, fixedArr(3, leaf))`), and `defaultSize` reads a fresh node's
+length off it (`testFixedArrayLength`, `testFixedElementOfDynamicArrayLength`,
+`testMemoryFixedArrayLength`, `testNewArrayOfFixedElementLength`; `docs/storage.md`
+section 8c).
+
+An array whose elements are fixed-size arrays (`uint[3][]`) is out of reach of `delete` and
+`pop()`: its elements are read through `at(i)`, which carries no field kind. So `delete` and `pop()` refuse to reset one:
+the Path flag `noFixedArrayElement` and the variable condition `\noFixedArrayElement(fld)`
+(`StorageDeleteTypes`) leave such a proof open instead of proving it wrong. This gives Solidity's
 `delete` semantics on structs: value/reference members reset, but **mapping members
 are preserved**. On read, `selectSt` on a `delNode` reads a mapping member
 (`MapField`) through to the original struct, recurses into a reference member
@@ -345,8 +401,8 @@ and is reset by the Field-generic default rule.
 plain `Field`) but is Prim-bounded on the read sort (`alphaPrim`), which keeps
 it disjoint from the `<[Struct]>` rules by sort rather than by ranking; the
 struct-sorted `at(i)` element read has its own `selectStDelNodeIndexStruct`.
-(`delValue` uses the same discipline — `delValueStruct` matches the concrete
-`Struct` sort, and `delValueDefault` is `alphaPrim`-bounded so a struct payload
+(`delField` uses the same discipline — its `Struct` rules match the concrete
+`Struct` sort, and `delFieldDefault` is `alphaPrim`-bounded so a struct payload
 is a failed instantiation. The former `StValue` bounds made the default rules
 overlap the `Struct` rules, with only the `simplify`/`simplify_enlarging`
 ranking — strategy guidance, not a soundness gate — keeping the
@@ -368,8 +424,8 @@ Four sort-free shapes carry the deferred value:
 |---|---|---|
 | `delAt(Struct, List)` | the storage with a location reset — a struct keeps its mapping members | `delAtEmpty` / `selectOnDelAtCons` |
 | `find<[StValue]>(Struct, List)` | the value at a path, for copies (`find` at the top storage sort) | `findStValueCast` |
-| `delValue<[StValue]>(StValue)` | a reset value a sort-free copy carried out of a cleared location | `delValueStValueCast` |
-| `save(Struct, nil, StValue)` | the leaf of a write, never collapsed — a struct written over a location keeps the location's mapping members | `selectOnSaveEmpty{Map,Ref,IndexStruct,Default}` / `saveOnEmptyPrim` |
+| `delField<[StValue]>(Struct, Field)` | a reset field a sort-free copy carried out of a cleared location | `delFieldStValueCast` |
+| `save(Struct, nil, StValue)` | the leaf of a write, never collapsed — a struct written over a location keeps the location's mapping members; an array element is copied below the source's length, reset below the old length and kept past both | `selectOnSaveEmpty{Map,Ref,IndexStruct,Default}` / `saveOnEmptyPrim` |
 | `defVal` | a location reset outright, mapping members included | `defValResolve` |
 
 `defVal` is declared `Prim`, so it is both an `StValue` and a `MemValue` and serves storage
@@ -377,20 +433,21 @@ and memory alike — the same arrangement `defaultValue<[alpha]>` already has (d
 `memoryRules.key`, resolved by `defaultValueInt`/`defaultValueBool` there and
 `defaultValueStruct` in `structRules.key`). A separate memory twin is not needed.
 
-`selectOnDelAtCons` defers to `delValue<[alpha]>` for the reset value, so it inherits the
-`delValueStruct`/`delValueDefault` split: the concrete `Struct` case recurses via `delNode`,
-the default case is `alphaPrim`-bounded, and the two are disjoint by sort — their
+`selectOnDelAtCons` defers to `delField<[alpha]>(st, f)` for the reset value, so it inherits
+the `delField` split: the concrete `Struct` cases choose by the kind of `f` (`RefField` and
+`at(i)` recurse via `delNode`, `FixedField` via `delNodeFixed`, `MapField` stays), the default
+case is `alphaPrim`-bounded, and the two are disjoint by sort — their
 `simplify`/`simplify_enlarging` ranking is performance-only. `defVal` is deliberately distinct
-from `delAt` — it is what `storageIndexDelete` writes, which resets a collection element
-outright rather than preserving its mapping members.
+from `delAt`: it resets a location outright, mapping members included, and no delete rule
+writes it.
 
 Disjoint, but not exhaustive: `selectOnDelAtCons` instantiates its generic at the *reader's*
 sort, and a sort-free copy reads at `StValue`, which is neither `Struct` nor `\extends Prim`.
-`delete sp; gsp = sp;` therefore stopped at `delValue<[StValue]>(…)` until
-`delValueStValueCast` — the twin of `findStValueCast` for that shape — pushed the read's cast
-inward: `cast<[alphaSt]>(delValue<[StValue]>(v))` ⇝ `delValue<[alphaSt]>(cast<[alphaSt]>(v))`.
-The `alphaSt` it binds is the sort the read supplies, so one of the two `delValue` rules then
-matches. Widening `delValueDefault` to `StValue` would close the same gap by reintroducing the
+`delete sp; gsp = sp;` therefore stops at `delField<[StValue]>(…)` until
+`delFieldStValueCast` — the twin of `findStValueCast` for that shape — pushes the read's cast
+inward: `cast<[alphaSt]>(delField<[StValue]>(st, f))` ⇝ `delField<[alphaSt]>(st, f)`.
+The `alphaSt` it binds is the sort the read supplies, so one of the `delField` rules then
+matches. Widening `delFieldDefault` to `StValue` would close the same gap by reintroducing the
 overlap the paragraph above records; pushing the cast keeps the split. The three
 `*DeleteThenCopy` examples all fail without it.
 
@@ -456,60 +513,28 @@ kind:
   `unfold_leftFst` / `rightSndIndex`). A write `op(recv, i) = rhs` is decomposed
   by three rules partitioned on which constituent is not yet simple, each
   capturing in the EVM's order — **right-hand side, then receiver, then index**:
-  - **Rule 1, receiver complex** (`Path[…,complex]`): captures the RHS and
-    aliases the receiver, leaving the index in place. `nsp[i] = e;` ⟹
-    `rvType rv = e; aliasType storage sp = nsp; sp[i] = rv;`. Ten members, the
-    `…_unfold_leftFst` rules, one per location × field/index × primitive/
-    reference RHS.
-  - **Rule 2, receiver simple and index non-simple** (`Path[…,simple]`):
-    `sp1[nse] = e;` ⟹ `rvType rv = e; aliasType storage sp = sp1;
-    pvType pv = nse; sp[pv] = rv;`. Five members, the `…NonSimpleIndexCapture`
-    rules. The receiver is snapshotted even though it is simple: a local storage
-    pointer can be reassigned by the index expression, and the write must land
-    where the receiver pointed before the index ran.
+  - **Rule 1, field write with a complex receiver** (`Path[…,complex]`):
+    captures the RHS and aliases the receiver. `nsp.a = e;` ⟹
+    `rvType rv = e; aliasType storage sp = nsp; sp.a = rv;`. Five members, the
+    `…Field…_unfold_leftFst` rules, one per location × primitive/reference RHS.
+  - **Rule 2, index write with a non-simple receiver or index**: ten
+    `…CaptureAll{ComplexRecv,NonSimpleIndex}` rules, two per RHS kind, which capture RHS, receiver and index
+    in a single application. `p[ie] = e;` ⟹ `rvType rv = e;
+    aliasType storage sp = p; pvType pv = ie; sp[pv] = rv;`. The receiver is
+    snapshotted even when it is simple: a local storage pointer can be
+    reassigned by the index expression, and the write must land where the
+    receiver pointed before the index ran. `…ComplexRecv` takes a
+    `Path[…,complex]` receiver and any index, `…NonSimpleIndex` a
+    `Path[…,simple]` receiver and a `NonSimpleExpression` index; the split
+    keeps them off the fully simple `sp[se] = e` (which they would re-match
+    forever) with sorts alone, no varcond. On
+    `nsp[se] = rhs` the index temporary is redundant, a few extra nodes.
   - **Rule 3, receiver and index simple, RHS non-simple**: the RHS capture
     rules of the two bullets above, plus the root-target
     `storageRootWriteValueRhsCapture`.
 
-  **The index halves of Rules 1 and 2 are a taclet option**, `indexWriteCapture`
-  (`optionsDeclarations.key`), selectable per obligation — `\withOptions
-  indexWriteCapture:…;` in a `.key` file, `run-key.sh -O indexWriteCapture:…`
-  for a `.sol` one, like `transferSemantics`:
-  - `receiverThenIndex` (**default**) is the two-rule split just described.
-  - `allAtOnce` merges them into five `…CaptureAll` rules, one per RHS kind,
-    which capture RHS, receiver and index in a single application. Their
-    receiver SV is a `Path` of any simplicity, so a disjunctive side condition
-    is needed to keep them off the fully simple `sp[se] = e` (which they would
-    re-match forever): the new varcond `\notAllSimple(p, ie)`
-    (`parser/varcond/NotAllSimpleCondition.java`).
-
-  Both close every example; they differ only in proof size, measured over all
-  278 functions of `TestSuite.sol` by
-  `./gradlew :keyext.solidity.core:testProofSize`
-  (`IndexWriteCaptureProofSizeTest`, which pins these numbers — see `docs/ci.md`):
-
-  | shape | applications | `receiverThenIndex` | `allAtOnce` |
-  |---|---|---|---|
-  | `nsp[se] = rhs` (16 functions) | 1 each | — | +9 … +21 nodes each |
-  | `nsp[nse] = rhs` (7 functions) | 2 vs 1 | +13 … +16 nodes each | — |
-  | `sp[nse] = rhs` | 1 each | identical | identical |
-  | **whole file, rule applications** | | 46 | **39** |
-  | **whole file, total nodes** | | **82 336** | 82 536 |
-
-  The 38 functions that apply a capture rule at all need 1.21 applications each
-  under `receiverThenIndex` and 1.03 under `allAtOnce` — that merged application
-  is exactly what `allAtOnce` buys, and the extra nodes are what it costs.
-
-  `receiverThenIndex` is the default because the simple-index shape dominates
-  real code: `allAtOnce` saves an application only when receiver *and* index are
-  both impure, and pays a redundant index temporary everywhere else.
-  `allAtOnce` is half the taclets, which is why it is kept as an option rather
-  than deleted. Field writes are outside the option — a field name is always
-  simple, so the two variants coincide there.
   Examples: `indexWriteBothImpure{StorageRef,MemToStorage,MemoryValue,MemRef}`
-  cover the both-impure shape for every RHS kind, and
-  `TacletStarterExamplesTest.indexWriteExampleClosesUnderEitherCapture` proves
-  the whole index-write set under both choices.
+  cover the both-impure shape for every RHS kind.
 
   What differs between the members of a rule is only the *declaration* the
   capture emits, which follows the right-hand side's kind: `T rv = e;` for
@@ -551,11 +576,8 @@ kind:
   path twice is `ternaryToIfStorage`, whose two occurrences are in mutually
   exclusive `if`/`else` branches, so the path is resolved exactly once per trace.
 
-  The whole family is skeleton-checked as `RuleGeneralizationTest`'s
-  `indexCapture` family (variants `rhsCapture` / `value` / `ref`),
-  `indexCaptureAll` family (variants `value` / `ref`, the `allAtOnce` rules) and
-  `receiverCapture` family (variants `valueField` / `valueIndex` / `refField` /
-  `refIndex`), so the storage and memory halves cannot drift apart again.
+  Their `// generalization:` comments are checked by `RuleGeneralizationTest`, so
+  the storage and memory halves cannot drift apart again.
 Also `storageIndexReadMappingStoreRoot` closes the paper's §11 table
 (`gsp = sp[i]` for mappings, no bounds branch).
 
@@ -586,9 +608,9 @@ path is only ever captured via `\newTypeOf`, never lowered directly.
 
 ## End-to-end examples (the `test*` functions)
 
-`TestSuite.sol` holds 55 end-to-end `test*` functions driven by `PaperTestExamplesTest.java`;
+`TestSuite.sol` holds 64 end-to-end `test*` functions driven by `PaperTestExamplesTest.java`;
 each is called with postcondition `true`, the obligations being carried by in-body `assert`s.
-The other 210 functions are the focused starters run by `TacletStarterExamplesTest`.
+The other 223 functions are the focused starters run by `TacletStarterExamplesTest`.
 
 **Passing (most close automatically):** storage write/read, nested + deep copy,
 aliases, mapping read/write/delete, struct-`delete` preserving mapping members
@@ -657,8 +679,9 @@ closes where `nested.recursive[4].z` does not).
 - `storageIndexWrite{Array,Mapping}CopySource` carry the copied value sort-free, as
   `find<[StValue]>`, instead of hard-coding `int` / `Struct` — the sort arrives with the
   read (see "Sort-free clearing and copying").
-- `storagePushLengthSave` clears the appended slot as well as bumping `size`, mirroring
-  `storagePopSave`. It writes the lazy delete marker rather than an eager `defaultValue`, so the
+- `storagePushLengthSave` clears the appended slot of a value-type array as well as bumping
+  `size`, mirroring `storagePopSave` (arrays of structs or arrays use
+  `storagePushLengthSaveReferenceElement`, which does not clear). It writes the lazy delete marker rather than an eager `defaultValue`, so the
   reset resolves by sort: a primitive element becomes 0 (which is what makes
   `arr.push(); assert(arr[0] == 0);` provable), while a struct element becomes a
   `delNode` whose mapping members still read through — so
@@ -701,3 +724,44 @@ Note that a `.sol` body is parsed by `SolJSONParser` (the solc-JSON path), not b
 `SolidityToKeyConverter` (the ANTLR path used for programs written inline in a modality). Both
 paths now handle `msg.sender`, `msg.value`, `.transfer` and `.send`, which is why the `net-*`
 examples load their programs from the `.sol` beside them via `\programSource`.
+
+## Synthesized obligations from `@custom:key` specifications
+
+A `.sol` function whose contract carries `@custom:key invariant` clauses, or which carries
+`@custom:key requires`/`ensures` clauses itself, is proved against them: `SolidityProblemSynthesizer`
+compiles the clauses (`speclang/natspec/`: `KeyNatspec` splits the natspec text, `SpecParser`
+parses an expression with the ANTLR grammar `SolSpec.g4`, `SpecCompiler` — a visitor over
+that parse tree — emits the `.key` term text) into the same generated `.key`
+problem the `net/*.key` files spell out by hand — an `insertCInv` rewrite taclet defining
+`CInv(s, n)` as the conjoined invariants, and the ISoLA 2020 eq.-4 problem: `msg.value` bound,
+requires, `CInv(storage, net)` in the antecedent; the ledger booking
+`net := storeSt(net, at(msgSender), …)` as update; the call in the **box** modality; `CInv`
+and the ensures as postcondition. `\old(e)` declares `Struct old, oldNet` and snapshots them in
+the update; a named return declares `int result` and calls `result = f()@C;`. A function
+without any clause keeps the plain `(true)` obligation byte for byte, so `TestSuite.sol` and
+the `solc/` ports are unaffected. `./run-key.sh F.sol -f fn --print-problem` prints the text.
+
+A parameter of type `uint`/`int`, `address`/`address payable` or an enum is declared `int`, a
+`bool` one `bool`; `public` and `external` functions both get an obligation.
+
+A quantified invariant keeps its bound variables as plain logic variables in the taclet's
+`\replacewith` (`\forall int a; …`), guarded by `\varcond(\noFreeVarIn(s), \noFreeVarIn(n))`.
+They used to be declared as `\schemaVar \variables`, but then the binder and its occurrences
+were instantiated apart, `all_unused` dropped the quantifier, and every quantified invariant
+was unprovable. Two calculus repairs from that attempt remain: `TacletPrefixBuilder` now gives
+a `\noFreeVarIn` schema variable an empty prefix (its instantiation is closed, so it may sit
+under any binder), and `TacletApp` instantiates a `\variables` schema variable that occurs only
+in `\replacewith` with a fresh `BoundVariable` (it used to throw). `GenericSortCondition` also accepts a plain `InstantiationEntry` holding a
+term, which is what `createSkolemConstant` records — before, every `exLeft`/`allRight` skolem
+failed the generic-sort check, so no quantified problem could be proved. The surface grammar
+and the emission table are in `keyext.solidity.examples/README.md`.
+
+`trueNotFalse` / `falseNotTrue` (`formulaNormalizationRules.key`) rewrite `TRUE = FALSE` and
+`FALSE = TRUE` to `false`. The bool literals had no distinctness axiom, so an infeasible branch
+of `if (p != 0)` could end with `TRUE = FALSE` in the antecedent and stay open
+(`real-world/SimpleAuction.sol`'s `bid`).
+
+`boolNotTrue` / `boolNotFalse` (same file) move a succedent `b = TRUE` to the antecedent as
+`b = FALSE`, and vice versa, since `bool` has exactly the two values. `applyEq` then rewrites `b`,
+so a symbolic `bool` splits into its two cases (`boolIsTrueOrFalse`) and a `bool` mapping key
+resolves against both written entries (`boolKeyMappingSymbolicKey`).

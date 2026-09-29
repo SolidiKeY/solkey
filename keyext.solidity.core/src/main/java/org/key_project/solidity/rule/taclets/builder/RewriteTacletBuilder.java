@@ -11,8 +11,8 @@ import org.key_project.prover.rules.tacletbuilder.TacletGoalTemplate;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.rule.taclets.SolRewriteTaclet;
 
-public class RewriteTacletBuilder<T extends SolRewriteTaclet> extends FindTacletBuilder<T> {
-    public RewriteTacletBuilder<T> setApplicationRestriction(
+public class RewriteTacletBuilder extends FindTacletBuilder<SolRewriteTaclet> {
+    public RewriteTacletBuilder setApplicationRestriction(
             ApplicationRestriction p_applicationRestriction) {
         applicationRestriction = p_applicationRestriction;
         return this;
@@ -30,7 +30,7 @@ public class RewriteTacletBuilder<T extends SolRewriteTaclet> extends FindTaclet
     /// sets the _find_ of the Taclet that is to build to the given term.
     ///
     /// @return this RewriteTacletBuilder
-    public RewriteTacletBuilder<T> setFind(Term findTerm) {
+    public RewriteTacletBuilder setFind(Term findTerm) {
         checkContainsFreeVarSV(findTerm, this.getName(), "find term");
         find = findTerm;
         return this;
@@ -46,8 +46,7 @@ public class RewriteTacletBuilder<T extends SolRewriteTaclet> extends FindTaclet
     /// are not set. No specified find part causes an TacletBuilderException. Throws an
     /// TacletBuilderException if a bound SchemaVariable occurs more than once in if and find or an
     /// InvalidPrefixException if the building of the Taclet Prefix fails.
-    @SuppressWarnings("unchecked")
-    public T getRewriteTaclet(Services services) {
+    public SolRewriteTaclet getRewriteTaclet(Services services) {
         if (find == null) {
             throw new TacletBuilder.TacletBuilderException(this, "No find part specified");
         }
@@ -61,7 +60,7 @@ public class RewriteTacletBuilder<T extends SolRewriteTaclet> extends FindTaclet
             goals, ruleSets, attrs, prefixBuilder.getPrefixMap(),
             choices, surviveSmbExec, tacletAnnotations, noFreeVarIns);
         // t.setOrigin(origin);
-        return (T) t;
+        return t;
     }
 
     /// adds a new goal descriptions to the goal descriptions of the Taclet. the TacletGoalTemplate
@@ -86,7 +85,7 @@ public class RewriteTacletBuilder<T extends SolRewriteTaclet> extends FindTaclet
     /// are not set.
     /// @throws IllegalStateException if no find is specified.
     @Override
-    public T getTaclet(Services services) {
+    public SolRewriteTaclet getTaclet(Services services) {
         return getRewriteTaclet(services);
     }
 }

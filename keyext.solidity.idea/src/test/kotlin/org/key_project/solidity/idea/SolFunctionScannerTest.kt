@@ -12,6 +12,8 @@ class SolFunctionScannerTest {
 
     private fun names(source: String) = SolFunctionScanner.scan(source).map { "${it.contract}.${it.name}" }
 
+    private fun contracts(source: String) = SolFunctionScanner.scanAll(source).contracts
+
     @Test
     fun `finds public functions of every contract in a file`() {
         val source = """
@@ -239,5 +241,87 @@ class SolFunctionScannerTest {
         assertTrue(SolFunctionScanner.scan("\"unterminated").isEmpty())
         assertTrue(SolFunctionScanner.scan("").isEmpty())
         assertEquals(listOf("null.f"), names("function f() public { }"))
+    }
+
+    @Test
+    fun `finds every container, in the order they are declared`() {
+        val source = """
+            contract A {
+                function one() public { }
+            }
+            library L {
+                function two() internal { }
+            }
+            interface I {
+                function three() external;
+            }
+        """.trimIndent()
+
+        assertEquals(listOf("A", "L", "I"), contracts(source).map { it.name })
+    }
+
+    @Test
+    fun `a contract spans from its keyword to its closing brace`() {
+        val source = """
+            contract A {
+                function f() public { if (true) { } }
+            }
+            contract B { }
+        """.trimIndent()
+
+        val (a, b) = contracts(source)
+        assertEquals(source.indexOf("contract A"), a.offset)
+        assertTrue(source.indexOf("function f") in a)
+        assertTrue(source.indexOf("contract B") !in a)
+        assertEquals("}", source.substring(a.endOffset - 1, a.endOffset))
+        assertTrue(source.indexOf("contract B") in b)
+    }
+
+    /** Braces inside a function body, a string or a comment must not close the contract early. */
+    @Test
+    fun `only the contract's own brace closes it`() {
+        val source = """
+            contract A {
+                function f() public {
+                    // }
+                    string memory s = "}";
+                    /* } */
+                    if (true) { }
+                }
+            }
+        """.trimIndent()
+
+        val contract = contracts(source).single()
+        assertEquals(source.length, contract.endOffset)
+        assertEquals(listOf("A.f"), names(source))
+    }
+
+    @Test
+    fun `the word contract outside a declaration is not one`() {
+        val source = """
+            // contract Commented { }
+            contract A {
+                string memory s = "contract Quoted {";
+            }
+        """.trimIndent()
+
+        assertEquals(listOf("A"), contracts(source).map { it.name })
+    }
+
+    /** Half-typed input is the common case while editing, and still deserves its icon. */
+    @Test
+    fun `an unclosed contract runs to the end of the file`() {
+        val source = "contract A {\n    function f() public { }\n"
+
+        val contract = contracts(source).single()
+        assertEquals(0, contract.offset)
+        assertEquals(source.length, contract.endOffset)
+    }
+
+    @Test
+    fun `a file with no container has no contract`() {
+        assertTrue(contracts("function f() public { }").isEmpty())
+        assertTrue(contracts("").isEmpty())
+        assertTrue(contracts("contract").isEmpty())
     }
 }

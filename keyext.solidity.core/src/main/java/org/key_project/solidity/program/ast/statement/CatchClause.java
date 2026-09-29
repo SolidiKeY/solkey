@@ -6,6 +6,7 @@ package org.key_project.solidity.program.ast.statement;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.key_project.solidity.program.ast.HashCachingElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.abstractions.Type;
@@ -16,7 +17,7 @@ import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.Nullable;
 
-public class CatchClause implements SolidityProgramElement {
+public class CatchClause extends HashCachingElement {
     enum Kind {
         Error, Panic, LowLevel, ALL;
     }
@@ -26,7 +27,6 @@ public class CatchClause implements SolidityProgramElement {
     private final Block body;
 
     // TODO: Make this field protected and in SolidityProgramElement
-    private int hashCode = -1;
 
     public CatchClause(@Nullable ImmutableArray<StatementVariableDeclaration> declarations,
             Block body) {
@@ -88,16 +88,6 @@ public class CatchClause implements SolidityProgramElement {
         if (index == -1)
             return Objects.requireNonNull(declarations).get(0);
         return body.getStatements().get(index);
-    }
-
-    // TODO: Move this to SolidityProgramElement and should be protected
-    @Override
-    public int hashCode() {
-        if (hashCode == -1) {
-            int hash = computeHashCode();
-            hashCode = hash == -1 ? 0 : hash;
-        }
-        return hashCode;
     }
 
     @Override

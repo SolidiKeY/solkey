@@ -5,7 +5,6 @@ package org.key_project.solidity.runtime;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +13,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
-import org.key_project.solidity.program.parser.SolcWrapper;
 import org.key_project.solidity.program.parser.SolidityOutline;
 import org.key_project.solidity.proof.init.SolidityProblemSynthesizer;
 import org.key_project.solidity.testutil.SolidityExampleTests;
@@ -25,8 +23,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -56,20 +52,7 @@ public class SolidityRuntimeExecutionTest {
     /// hide an assert violation and needs written justification.
     private static final Set<String> KNOWN_DIVERGENT = Set.of();
 
-    private static final Bytes PANIC_SELECTOR = Bytes.fromHexString("0x4e487b71");
-
     private static final Set<Integer> PANICS_MODELED_AS_REVERT = Set.of(0x12, 0x31, 0x32);
-
-    private static final Map<Integer, String> PANIC_NAMES = Map.of(
-        0x01, "assert failed",
-        0x11, "arithmetic overflow",
-        0x12, "division by zero",
-        0x21, "invalid enum value",
-        0x22, "corrupt storage byte array",
-        0x31, "pop on empty array",
-        0x32, "array index out of bounds",
-        0x41, "allocation too large",
-        0x51, "uninitialized function pointer");
 
     private record Fixture(SolidityOutline.Contract contract, EvmContractRunner runner,
             Path source) {
@@ -120,7 +103,7 @@ public class SolidityRuntimeExecutionTest {
     }
 
     private static void judgeRevert(String example, Bytes revertData, boolean box) {
-        int panicCode = panicCode(revertData);
+        int panicCode = SolidityRuntimeCheck.panicCode(revertData);
         if (panicCode < 0) {
             if (!box) {
                 fail(example + ": require reverted (" + revertData
@@ -131,7 +114,7 @@ public class SolidityRuntimeExecutionTest {
                 + ": assumption require reverted on fresh storage — runtime check is vacuous");
         }
         String panic = "Panic(0x%02x %s)".formatted(panicCode,
-            PANIC_NAMES.getOrDefault(panicCode, "unknown"));
+            SolidityRuntimeCheck.PANIC_NAMES.getOrDefault(panicCode, "unknown"));
         if (KNOWN_DIVERGENT.contains(example)) {
             Assumptions.assumeTrue(false,
                 example + ": " + panic + " — known unbounded-integer divergence");
@@ -151,41 +134,13 @@ public class SolidityRuntimeExecutionTest {
             + " intended, add the example to KNOWN_DIVERGENT");
     }
 
-    /// The Panic code carried by `revertData`, or `-1` if it is not a Panic payload.
-    private static int panicCode(Bytes revertData) {
-        if (revertData.size() != 36 || !revertData.slice(0, 4).equals(PANIC_SELECTOR)) {
-            return -1;
-        }
-        return revertData.slice(4).toUnsignedBigInteger().intValueExact();
-    }
-
     static Stream<Arguments> testSuiteExamples() throws IOException {
-        return examplesOf(List.of(SolidityExampleTests.TEST_SUITE_CONTRACT));
+        return SolidityExampleTests.contractFunctions(SolidityExampleTests.testSuite(),
+            SolidityExampleTests.TEST_SUITE_CONTRACT);
     }
 
     static Stream<Arguments> solcExamples() throws IOException {
-        return examplesOf(solcContracts());
-    }
-
-    private static Stream<Arguments> examplesOf(List<String> contracts) throws IOException {
-        Stream.Builder<Arguments> args = Stream.builder();
-        for (String contract : contracts) {
-            SolidityProblemSynthesizer.provableFunctions(source(contract), contract)
-                    .stream()
-                    .sorted()
-                    .forEach(function -> args.add(Arguments.of(contract, function)));
-        }
-        return args.build();
-    }
-
-    private static List<String> solcContracts() throws IOException {
-        try (Stream<Path> files = Files.list(SolidityExampleTests.examplesDir("solc"))) {
-            return files.map(p -> p.getFileName().toString())
-                    .filter(name -> name.endsWith(".sol"))
-                    .map(name -> name.substring(0, name.length() - ".sol".length()))
-                    .sorted()
-                    .toList();
-        }
+        return SolidityExampleTests.contractFunctions("solc");
     }
 
     private static Path source(String contract) {
@@ -198,55 +153,17 @@ public class SolidityRuntimeExecutionTest {
         return FIXTURES.computeIfAbsent(contract, name -> {
             try {
                 Path source = source(name);
-                assertDirectRuntimeDeploymentIsSound(source, name);
+                String deploymentLogic = SolidityRuntimeCheck.deploymentLogicOf(source, name);
+                assertTrue(deploymentLogic == null, () -> name + " " + deploymentLogic
+                    + "; the runtime harness needs a real deployment step for it");
                 SolidityOutline.Contract outline =
                     SolidityOutline.of(source).contract(name).orElseThrow();
-                return new Fixture(outline, new EvmContractRunner(runtimeBin(source, name)),
+                return new Fixture(outline,
+                    new EvmContractRunner(SolidityRuntimeCheck.runtimeBytecode(source, name)),
                     source);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         });
-    }
-
-    private static String runtimeBin(Path source, String contract) throws IOException {
-        JsonNode contracts =
-            new ObjectMapper().readTree(SolcWrapper.getBinJson(source)).get("contracts");
-        for (Map.Entry<String, JsonNode> unit : contracts.properties()) {
-            JsonNode compiled = unit.getValue().get(contract);
-            if (compiled != null) {
-                return compiled.get("evm").get("deployedBytecode").get("object").asString();
-            }
-        }
-        throw new IllegalArgumentException("no contract " + contract + " compiled from "
-            + source + "; candidates: " + contracts.propertyNames());
-    }
-
-    /// [EvmContractRunner] installs the runtime bytecode without executing the creation code,
-    /// which is only equivalent while the contract has no constructor and no initialized state
-    /// variable. All examples satisfy this today; this guard turns a future violation into an
-    /// explicit demand for a real deployment step instead of a wrong all-zero initial storage.
-    private static void assertDirectRuntimeDeploymentIsSound(Path source, String contract)
-            throws IOException {
-        JsonNode root = new ObjectMapper().readTree(SolcWrapper.getJsonSolidity(source));
-        for (JsonNode contractNode : root.get("nodes").values()) {
-            if (!contract.equals(text(contractNode, "name"))) {
-                continue;
-            }
-            for (JsonNode member : contractNode.get("nodes").values()) {
-                boolean constructor = "FunctionDefinition".equals(text(member, "nodeType"))
-                        && "constructor".equals(text(member, "kind"));
-                boolean initializedStateVariable =
-                    "VariableDeclaration".equals(text(member, "nodeType"))
-                            && member.has("value") && !member.get("value").isNull();
-                assertTrue(!constructor && !initializedStateVariable, contract
-                    + " has deployment logic (constructor or state variable initializer);"
-                    + " the runtime harness needs a real deployment step for it");
-            }
-        }
-    }
-
-    private static String text(JsonNode node, String field) {
-        return node != null && node.has(field) ? node.get(field).asString() : "";
     }
 }

@@ -159,7 +159,7 @@ public class SyntacticalReplaceVisitor implements Visitor<Term> {
             if (boundVars != visited.boundVars() || sBlockChanged || (newOp != visitedOp)
                     || (!subStack.empty() && subStack.peek() == newMarker)) {
                 final Term newTerm = tb.tf().createTerm(newOp, neededsubs,
-                    (ImmutableArray<QuantifiableVariable>) boundVars);
+                    boundVars);
                 pushNew(resolveSubst(newTerm));
             } else {
                 Term t;

@@ -3,8 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions.literals;
 
-import java.util.Objects;
-
 import org.key_project.logic.Name;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.visitor.Visitor;
@@ -12,6 +10,8 @@ import org.key_project.solidity.theory.BoolLDT;
 import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.Nullable;
+
+import static org.key_project.solidity.program.ast.SolidityProgramElement.takeChild;
 
 public class BoolLiteral extends Literal {
 
@@ -30,7 +30,7 @@ public class BoolLiteral extends Literal {
 
     public BoolLiteral(ExtList children) {
         super(PrimitiveType.BOOL);
-        this.value = Objects.requireNonNull(children.removeFirstOccurrence(boolean.class));
+        this.value = takeChild(children, boolean.class);
     }
 
     public boolean getValue() {
@@ -44,11 +44,6 @@ public class BoolLiteral extends Literal {
 
     public void visit(Visitor v) {
         v.performActionOnBoolLiteral(this);
-    }
-
-    @Override
-    public int computeHashCode() {
-        return 37 * super.computeHashCode() + Boolean.hashCode(value);
     }
 
     @Override

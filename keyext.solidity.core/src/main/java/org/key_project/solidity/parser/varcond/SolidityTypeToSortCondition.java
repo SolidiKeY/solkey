@@ -3,37 +3,24 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser.varcond;
 
-import org.key_project.logic.LogicServices;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.Term;
 import org.key_project.logic.op.sv.OperatorSV;
-import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.logic.sort.Sort;
-import org.key_project.prover.rules.VariableCondition;
-import org.key_project.prover.rules.instantiation.MatchResultInfo;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.sort.GenericSort;
-import org.key_project.solidity.program.ast.StaticTypes;
-import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
-import org.key_project.solidity.rule.matching.inst.GenericSortCondition;
-import org.key_project.solidity.rule.matching.inst.SVInstantiations;
-import org.key_project.solidity.rule.matching.inst.SortException;
 import org.key_project.solidity.rule.sv.sort.ProgramSVSort;
 
 import org.jspecify.annotations.Nullable;
 
 /// Variable condition that enforces a given generic sort to be instantiated with the sort of a
 /// program expression a schema variable is instantiated with
-public final class SolidityTypeToSortCondition implements VariableCondition {
-    private final OperatorSV exprOrTypeSV;
-    private final GenericSort sort;
+public final class SolidityTypeToSortCondition extends TypeToSortCondition {
 
     public SolidityTypeToSortCondition(OperatorSV exprOrTypeSV, GenericSort sort) {
-        this.exprOrTypeSV = exprOrTypeSV;
-        this.sort = sort;
-
+        super(exprOrTypeSV, sort);
         if (!checkSortedSV(exprOrTypeSV)) {
             throw new RuntimeException("Expected a program schemavariable for expressions");
         }
@@ -47,49 +34,17 @@ public final class SolidityTypeToSortCondition implements VariableCondition {
     }
 
     @Override
-    @Nullable
-    public MatchResultInfo check(SchemaVariable var, SyntaxElement svSubst,
-            MatchResultInfo matchCond, LogicServices lServices) {
-        if (var != exprOrTypeSV) {
-            return matchCond;
-        }
-
-        final var inst = (SVInstantiations) matchCond.getInstantiations();
-        Services services = (Services) lServices;
-        Sort type;
-
-        if (svSubst instanceof Term t) {
-            type = t.sort();
-        } else if (svSubst instanceof Type st) {
-            type = sortOf(services, st);
-        } else if (svSubst instanceof Expression expr) {
-            type = sortOf(services, expr.getType());
-        } else {
-            return null;
-        }
-        if (type == null) {
-            return null;
-        }
-        try {
-            return matchCond.setInstantiations(
-                inst.add(GenericSortCondition.createIdentityCondition(sort, type), lServices));
-        } catch (SortException e) {
-            return null;
-        }
-    }
-
-    @Nullable
-    private static Sort sortOf(Services services, @Nullable Type type) {
-        Type unwrapped = StaticTypes.unwrap(type);
-        if (unwrapped == null) {
-            return null;
-        }
-        KeYSolidityType keyType = services.getSolidityInfo().getKeYSolidityType(unwrapped);
-        return keyType == null ? null : keyType.getSort();
+    protected @Nullable Sort sortOf(SyntaxElement svSubst, Services services) {
+        return switch (svSubst) {
+            case Term t -> t.sort();
+            case Type st -> payloadSort(services, st, false);
+            case Expression expr -> payloadSort(services, expr.getType(), false);
+            default -> null;
+        };
     }
 
     @Override
-    public String toString() {
-        return "\\hasSort(" + exprOrTypeSV.name() + ", " + sort.name() + ")";
+    protected String keyword() {
+        return "\\hasSort";
     }
 }

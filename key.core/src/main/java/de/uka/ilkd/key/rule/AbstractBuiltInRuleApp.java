@@ -135,8 +135,8 @@ public abstract class AbstractBuiltInRuleApp<T extends BuiltInRule> implements I
     public <G extends ProofGoal<G>> RuleAppContainer createRuleAppContainer(PosInOccurrence pos,
             ProofGoal<G> p_goal, boolean initial) {
         var goal = (Goal) p_goal;
-        final RuleAppCost cost = goal.getGoalStrategy().computeCost(this, pio, goal);
-        return new BuiltInRuleAppContainer(this, pio, cost, goal);
+        final RuleAppCost cost = goal.getGoalStrategy().computeCost(this, pos, goal);
+        return new BuiltInRuleAppContainer(this, pos, cost, goal);
     }
 
     @Override

@@ -33,6 +33,7 @@ public class AbstractBuilder<T> extends KeYSolidityDLParserBaseVisitor<T> {
     /// @param ctx
     /// @param <S>
     /// @return
+    @SuppressWarnings("unchecked")
     public <S> @Nullable S accept(@Nullable RuleContext ctx) {
         if (ctx == null) {
             return null;
@@ -56,6 +57,7 @@ public class AbstractBuilder<T> extends KeYSolidityDLParserBaseVisitor<T> {
     }
 
     // ask about parameterization
+    @SuppressWarnings("unchecked")
     protected <T> T pop() {
         if (parameters == null) {
             throw new IllegalStateException("Stack is empty");
@@ -88,6 +90,7 @@ public class AbstractBuilder<T> extends KeYSolidityDLParserBaseVisitor<T> {
     }
 
     // TODO ask about generics; should this be parameterized?
+    @SuppressWarnings("unchecked")
     protected <S> @Nullable S oneOf(ParserRuleContext... ctxs) {
         for (ParserRuleContext ctx : ctxs) {
             if (ctx != null) {
@@ -104,6 +107,7 @@ public class AbstractBuilder<T> extends KeYSolidityDLParserBaseVisitor<T> {
         return buildingIssues;
     }
 
+    @SuppressWarnings("unchecked")
     protected <S> List<S> mapOf(Collection<? extends ParserRuleContext> argument) {
         return argument.stream().map(it -> (S) it.accept(this)).collect(Collectors.toList());
     }
@@ -120,8 +124,9 @@ public class AbstractBuilder<T> extends KeYSolidityDLParserBaseVisitor<T> {
         }
     }
 
-    protected <T2> List<T2> mapMapOf(List<? extends RuleContext>... ctxs) {
-        return Arrays.stream(ctxs).flatMap(it -> it.stream().map(a -> (T2) accept(a)))
+    @SafeVarargs
+    protected final <T2> List<T2> mapMapOf(List<? extends RuleContext>... ctxs) {
+        return Arrays.stream(ctxs).flatMap(it -> it.stream().map(a -> this.<T2>accept(a)))
                 .collect(Collectors.toList());
     }
 

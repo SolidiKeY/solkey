@@ -4,13 +4,10 @@
 package org.key_project.solidity.taclets;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.stream.Stream;
 
 import org.key_project.solidity.proof.Proof;
-import org.key_project.solidity.proof.init.SolidityProblemSynthesizer;
 import org.key_project.solidity.testutil.SolidityExampleTests;
 
 import org.junit.jupiter.api.Tag;
@@ -39,37 +36,13 @@ public class SolcSemanticsExamplesTest {
     @ParameterizedTest(name = "{0}.{1}")
     @MethodSource("examples")
     void solcSemanticsExampleCloses(String contract, String function) throws Exception {
-        Path sol = contractSource(contract);
-        Proof proof = SolidityExampleTests.prove(
-            SolidityExampleTests.load(sol, contract, function), 50000, 30000);
+        Path sol = SolidityExampleTests.example(DIRECTORY + "/" + contract + ".sol");
+        Proof proof = SolidityExampleTests.proveFunction(sol, contract, function, 50000, 30000);
         assertTrue(proof.closed(),
-            () -> contract + "." + function + " should close; open goals: "
-                + proof.openGoals().size()
-                + "; first open goal: " + proof.openGoals().head().sequent());
+            () -> SolidityExampleTests.describeOpenGoals(contract + "." + function, proof));
     }
 
     static Stream<Arguments> examples() throws IOException {
-        Stream.Builder<Arguments> args = Stream.builder();
-        for (String contract : contracts()) {
-            SolidityProblemSynthesizer.provableFunctions(contractSource(contract), contract)
-                    .stream()
-                    .sorted()
-                    .forEach(function -> args.add(Arguments.of(contract, function)));
-        }
-        return args.build();
-    }
-
-    private static List<String> contracts() throws IOException {
-        try (Stream<Path> files = Files.list(SolidityExampleTests.examplesDir(DIRECTORY))) {
-            return files.map(p -> p.getFileName().toString())
-                    .filter(name -> name.endsWith(".sol"))
-                    .map(name -> name.substring(0, name.length() - ".sol".length()))
-                    .sorted()
-                    .toList();
-        }
-    }
-
-    private static Path contractSource(String contract) {
-        return SolidityExampleTests.example(DIRECTORY + "/" + contract + ".sol");
+        return SolidityExampleTests.contractFunctions(DIRECTORY);
     }
 }

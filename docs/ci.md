@@ -10,6 +10,11 @@ CI enforces three gates. **Two of them are off in a normal build**, so
 | Nullness | `CodeQuality / checkerFramework` | `./gradlew -DENABLE_NULLNESS=true :keyext.solidity.core:compileTestJava` |
 | Module tests | `Solidity / test` | `./gradlew :keyext.solidity.core:test` |
 
+The module tests include `SolcWrapperTest.exampleCompilesWithoutWarnings`: every `.sol` under
+`keyext.solidity.examples/` (except `illegal/` and `functionBody/`) must compile without a solc
+warning. Only the `transfer`/`send` deprecation is tolerated, since those are the constructs the
+prover models. `./run-key.sh FILE.sol --solc` prints the warnings.
+
 ## CI-only test groups
 
 Not part of `ciGates` — the two slow proof suites are split off by JUnit tag so
@@ -17,36 +22,13 @@ the local gate stays fast, and the GUI module has its own job.
 
 | CI job | Local command | Content |
 |---|---|---|
-| `Solidity / examples` | `./gradlew :keyext.solidity.core:testSolidityExamples` | `RulesTest` (`.key` problems), `NetExamplesTest`, `SolcSemanticsExamplesTest`, the one-example showcases, the `solc/*.sol` half of `SolidityRuntimeExecutionTest` |
+| `Solidity / examples` | `./gradlew :keyext.solidity.core:testSolidityExamples` | `RulesTest` (`.key` problems), `NetExamplesTest`, `SolcSemanticsExamplesTest`, `TacletCoverageTest`, the one-example showcases, the `solc/*.sol` half of `SolidityRuntimeExecutionTest` |
 | `Solidity / rule-generalization` | `./gradlew :keyext.solidity.core:testRuleGeneralization` | `RuleGeneralizationTest` |
 | `Solidity / gui` | `./gradlew :keyext.solidity.gui:test` | the `keyext.solidity.gui` tests (headless) |
 
 A `--tests` filter naming a class of a CI-only group must go on **that group's
 task** — on `test` the tag exclusion leaves zero matches and Gradle fails with
 "No tests found".
-
-## The manual proof-size group
-
-`./gradlew :keyext.solidity.core:testProofSize` (tag `proofSize`,
-`IndexWriteCaptureProofSizeTest`) is excluded from `test` **and** has no CI job.
-It proves every function of `TestSuite.sol` under both `indexWriteCapture`
-options — 556 proofs — and asserts the node count, the number of applications of
-the option's own rules, and the closing status of each against the checked-in
-baseline
-`keyext.solidity.core/src/test/resources/org/key_project/solidity/proofsize/indexWriteCapture.csv`.
-A failure prints the whole diff table plus the per-option totals. The baseline is
-optional: the totals and means are asserted from the test source, so deleting the
-file only *skips* the per-function check. Regenerate it — after deleting it, or
-when a taclet change moves proof sizes on purpose — with
-
-```bash
-./gradlew :keyext.solidity.core:testProofSize \
-    -Dorg.key_project.solidity.taclets.IndexWriteCaptureProofSizeTest.update=true
-```
-
-which rewrites the file and reports itself as a *skipped* test, never a green
-one, and update the "Capture partition" table in `docs/taclets-implementation.md`
-from the totals it prints.
 
 ## `ciGates`
 

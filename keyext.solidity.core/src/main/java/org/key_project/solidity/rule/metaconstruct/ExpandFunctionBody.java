@@ -28,6 +28,8 @@ import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.util.collection.ImmutableArray;
 
+import org.jspecify.annotations.Nullable;
+
 /// Program transformer inlining the body of a [FunctionBodyStatement].
 ///
 /// For each formal input parameter of the target function a *fresh* program variable is
@@ -60,29 +62,15 @@ public class ExpandFunctionBody extends ProgramTransformer {
         final List<Statement> stmts = new ArrayList<>(formals.size() + returns.size() + 2);
 
         for (int i = 0; i < formals.size(); i++) {
-            final ProgramVariable formal = formals.get(i);
             // a fresh variable, identical in name/type/location to the formal parameter
-            final ProgramVariable fresh = new ProgramVariable(formal.name(),
-                formal.getKeYSolidityType(), formal.getDataLocation());
-            replaceMap.put(formal, fresh);
-
-            final Declaration decl = new StatementVariableDeclaration(fresh);
-            final Expression arg = args.get(i);
-            stmts.add(new DeclarationStatement(List.of(decl), arg));
+            declareFresh(formals.get(i), args.get(i), replaceMap, stmts);
         }
 
         // declare a fresh, uninitialised variable for each (named) return parameter so the body
         // can assign to it; remember the first one to connect to the call's result variable.
         final List<ProgramVariable> freshReturns = new ArrayList<>(returns.size());
         for (int i = 0; i < returns.size(); i++) {
-            final ProgramVariable ret = returns.get(i);
-            final ProgramVariable fresh = new ProgramVariable(ret.name(),
-                ret.getKeYSolidityType(), ret.getDataLocation());
-            replaceMap.put(ret, fresh);
-            freshReturns.add(fresh);
-
-            final Declaration decl = new StatementVariableDeclaration(fresh);
-            stmts.add(new DeclarationStatement(List.of(decl), null));
+            freshReturns.add(declareFresh(returns.get(i), null, replaceMap, stmts));
         }
 
         // rewrite the body so its parameter and named-return references point at the fresh
@@ -102,5 +90,16 @@ public class ExpandFunctionBody extends ProgramTransformer {
         }
 
         return stmts.toArray(new SolidityProgramElement[0]);
+    }
+
+    private static ProgramVariable declareFresh(ProgramVariable original,
+            @Nullable Expression initializer, Map<ProgramVariable, ProgramVariable> replaceMap,
+            List<Statement> stmts) {
+        final ProgramVariable fresh = new ProgramVariable(original.name(),
+            original.getKeYSolidityType(), original.getDataLocation());
+        replaceMap.put(original, fresh);
+        final Declaration decl = new StatementVariableDeclaration(fresh);
+        stmts.add(new DeclarationStatement(List.of(decl), initializer));
+        return fresh;
     }
 }

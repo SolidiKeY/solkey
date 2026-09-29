@@ -15,23 +15,18 @@ import static org.key_project.solidity.program.parser.SolcWrapper.getJsonSolidit
 
 public class SolcParser {
 
-    static Services services;
-    static SolJSONParser jsonParser;
+    private final SolJSONParser jsonParser;
 
     public SolcParser(Services services) {
-        this.services = services;
         jsonParser = new SolJSONParser(services);
     }
 
     public List<SyntaxElement> getDeclsJsonParser(String contract) throws IOException {
-        String contractJson = SolcWrapper.readSol(contract);
-        return jsonParser.parse(contractJson);
+        return jsonParser.parse(SolcWrapper.readSol(contract));
     }
 
     public ContractDeclaration getDeclStrJsonParser(String contract) throws IOException {
-        SolcWrapper solcWrapper = new SolcWrapper();
-        String contractJson = solcWrapper.readSol(contract);
-        SyntaxElement programElement = getSolidityFromStrJsonParser(contractJson);
+        SyntaxElement programElement = getSolidityFromStrJsonParser(SolcWrapper.readSol(contract));
         return (ContractDeclaration) programElement;
     }
 

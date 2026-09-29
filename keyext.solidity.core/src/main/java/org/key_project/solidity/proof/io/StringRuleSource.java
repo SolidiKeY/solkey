@@ -11,6 +11,8 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.util.Objects;
 
+import org.key_project.solidity.util.PathUrls;
+
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.jspecify.annotations.NonNull;
@@ -39,7 +41,7 @@ public class StringRuleSource extends RuleSource {
 
     @Override
     public URL url() throws IOException {
-        return anchor.toUri().toURL();
+        return PathUrls.toURL(anchor);
     }
 
     @Override
@@ -55,7 +57,7 @@ public class StringRuleSource extends RuleSource {
     @Override
     public String getExternalForm() {
         try {
-            return anchor.toUri().toURL().toExternalForm();
+            return PathUrls.toURL(anchor).toExternalForm();
         } catch (final MalformedURLException exception) {
             throw new RuntimeException(exception);
         }

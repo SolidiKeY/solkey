@@ -3,31 +3,20 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions;
 
-import java.util.Objects;
-
-import org.key_project.logic.SyntaxElement;
-import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.LeafProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
+import static org.key_project.solidity.program.ast.SolidityProgramElement.takeChild;
 
-public class UnresolvedTypeException extends RuntimeException implements SolidityProgramElement {
+
+public class UnresolvedTypeException extends RuntimeException implements LeafProgramElement {
     public UnresolvedTypeException(String s) {
         super(s);
     }
 
     public UnresolvedTypeException(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(String.class)));
-    }
-
-    @Override
-    public SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException();
-    }
-
-    @Override
-    public int getChildCount() {
-        return 0;
+        super(takeChild(children, String.class));
     }
 
     public void visit(Visitor v) {

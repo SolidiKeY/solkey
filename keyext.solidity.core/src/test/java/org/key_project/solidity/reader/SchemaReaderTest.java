@@ -8,7 +8,7 @@ import java.io.IOException;
 import org.key_project.logic.*;
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.solidity.common.Services;
-import org.key_project.solidity.program.SoliditySchemaReader;
+import org.key_project.solidity.program.SolidityReader;
 import org.key_project.solidity.program.ast.Context;
 import org.key_project.solidity.program.ast.expressions.NewExpression;
 import org.key_project.solidity.program.ast.statement.*;
@@ -31,11 +31,10 @@ public class SchemaReaderTest {
         ns.add(sv);
 
         Services services = new Services();
-        SoliditySchemaReader scr = new SoliditySchemaReader(services, null);
-        scr.setSVNamespace(ns);
+        SolidityReader scr = new SolidityReader(services);
         Context ctx = new Context(new Namespace<>());
 
-        Block block = (Block) scr.readBlock("{ s#v; }", ctx).program();
+        Block block = (Block) scr.readBlock("{ s#v; }", ctx, ns).program();
         assertEquals(sv, ((ExpressionStatement) block.getStatements().get(0)).getExpression());
     }
 
@@ -46,11 +45,10 @@ public class SchemaReaderTest {
         ns.add(t);
 
         Services services = new Services();
-        SoliditySchemaReader scr = new SoliditySchemaReader(services, null);
-        scr.setSVNamespace(ns);
+        SolidityReader scr = new SolidityReader(services);
         Context ctx = new Context(new Namespace<>());
 
-        Block block = (Block) scr.readBlock("{ new s#t; }", ctx).program();
+        Block block = (Block) scr.readBlock("{ new s#t; }", ctx, ns).program();
         NewExpression newExp =
             (NewExpression) ((ExpressionStatement) block.getStatements().get(0)).getExpression();
         assertSame(t, newExp.getType(), "the new-expression type is the Type schema variable");

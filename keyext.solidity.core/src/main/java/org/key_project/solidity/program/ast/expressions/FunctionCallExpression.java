@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
@@ -70,6 +71,13 @@ public class FunctionCallExpression extends SolidityExpression {
 
     public void visit(Visitor v) {
         v.performActionOnFunctionCallExpression(this);
+    }
+
+    public boolean isNoArgPush() {
+        return getArguments().isEmpty()
+                && getFunctionExp() instanceof MemberExp member
+                && member.getRightExp() instanceof FunctionDeclaration function
+                && "push".equals(function.name().toString());
     }
 
     public ImmutableArray<Expression> getArguments() {

@@ -10,9 +10,8 @@ import java.util.Map;
 import org.key_project.logic.Name;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
-import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
+import org.key_project.solidity.program.ast.StaticTypes;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
-import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
 import org.key_project.solidity.program.ast.expressions.IndexExpression;
@@ -48,20 +47,13 @@ public class NonSimpleExpressionSVSort extends ProgramSVSort {
             return true;
         if (isPathShaped(pe))
             return false;
-        return unwrap(expression.getType()) instanceof PrimitiveType;
+        return StaticTypes.unwrap(expression.getType()) instanceof PrimitiveType;
     }
 
     private static boolean isPathShaped(SolidityProgramElement pe) {
         return pe instanceof FieldReference || pe instanceof MemberExp
                 || pe instanceof IndexExpression
-                || (pe instanceof FunctionCallExpression call && PathSVSort.isNoArgPush(call));
-    }
-
-    private static Type unwrap(Type type) {
-        if (type instanceof KeYSolidityType keyType && keyType.getSolidityType() != null) {
-            return keyType.getSolidityType();
-        }
-        return type;
+                || (pe instanceof FunctionCallExpression call && call.isNoArgPush());
     }
 
     @Override

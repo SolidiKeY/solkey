@@ -3,15 +3,13 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions;
 
-import java.util.Objects;
-
 import org.key_project.logic.SyntaxElement;
-import org.key_project.solidity.program.ast.abstractions.ArrayType;
-import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
-import org.key_project.solidity.program.ast.abstractions.MappingType;
+import org.key_project.solidity.program.ast.StaticTypes;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
+
+import static org.key_project.solidity.program.ast.SolidityProgramElement.takeChild;
 
 
 public class IndexExpression extends SolidityExpression {
@@ -34,18 +32,14 @@ public class IndexExpression extends SolidityExpression {
         if (containerType == null) {
             return null;
         }
-        return switch (containerType) {
-            case MappingType m -> m.valueType();
-            case ArrayType a -> a.getElementType();
-            case DynamicArrayType d -> d.getElementType();
-            default -> containerType;
-        };
+        Type elementType = StaticTypes.elementTypeOf(containerType);
+        return elementType != null ? elementType : containerType;
     }
 
     public IndexExpression(ExtList children, Type type) {
         super(type != null ? type : elementTypeOf(containerTypeOf(children)));
-        this.leftExp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
-        this.indexExp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.leftExp = takeChild(children, Expression.class);
+        this.indexExp = takeChild(children, Expression.class);
     }
 
     @SuppressWarnings("return.type.incompatible")

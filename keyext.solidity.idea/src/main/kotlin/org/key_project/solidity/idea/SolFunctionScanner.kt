@@ -15,6 +15,25 @@ data class SolFunction(
 }
 
 /**
+ * A container declaration — `contract`, `library` or `interface` — found in the text of a `.sol`
+ * file. [offset] is the offset of the keyword and [endOffset] the offset just past the closing
+ * brace of its body.
+ */
+data class SolContract(
+    val name: String,
+    val offset: Int,
+    val endOffset: Int,
+) {
+    operator fun contains(caret: Int): Boolean = caret in offset until endOffset
+}
+
+/** Everything one scan of a `.sol` file found. */
+data class SolOutline(
+    val contracts: List<SolContract>,
+    val functions: List<SolFunction>,
+)
+
+/**
  * Finds the functions worth offering a proof for, by scanning the text rather than the PSI.
  *
  * The IDE only has Solidity PSI when a third-party Solidity plugin is installed, so anything built
@@ -35,11 +54,16 @@ object SolFunctionScanner {
 
     private val CONTAINER_KEYWORDS = setOf("contract", "library", "interface")
 
-    fun scan(text: CharSequence): List<SolFunction> {
-        val found = mutableListOf<SolFunction>()
-        // One frame per open brace; a frame carries the container name the brace belongs to.
-        val containers = ArrayDeque<String?>()
-        var pending: String? = null
+    private data class Frame(val name: String?, val keywordStart: Int)
+
+    fun scan(text: CharSequence): List<SolFunction> = scanAll(text).functions
+
+    fun scanAll(text: CharSequence): SolOutline {
+        val contracts = mutableListOf<SolContract>()
+        val functions = mutableListOf<SolFunction>()
+        // One frame per open brace; a frame carries the container the brace belongs to.
+        val containers = ArrayDeque<Frame>()
+        var pending: Frame? = null
         var i = 0
 
         while (i < text.length) {
@@ -49,13 +73,16 @@ object SolFunctionScanner {
                 c == '/' && i + 1 < text.length && text[i + 1] == '*' -> i = skipBlockComment(text, i)
                 c == '"' || c == '\'' -> i = skipString(text, i)
                 c == '{' -> {
-                    containers.addLast(pending)
+                    containers.addLast(pending ?: Frame(null, i))
                     pending = null
                     i++
                 }
                 c == '}' -> {
-                    containers.removeLastOrNull()
                     i++
+                    val closed = containers.removeLastOrNull()
+                    if (closed?.name != null) {
+                        contracts += SolContract(closed.name, closed.keywordStart, i)
+                    }
                 }
                 c == ';' -> {
                     // An abstract declaration or an import: whatever was pending never opens a body.
@@ -68,13 +95,14 @@ object SolFunctionScanner {
                     when {
                         word in CONTAINER_KEYWORDS -> {
                             val name = readIdentifierAfter(text, end)
-                            pending = name?.first
+                            pending = name?.let { Frame(it.first, i) }
                             i = name?.second ?: end
                         }
                         word == "function" -> {
-                            val function = readFunction(text, i, end, containers.lastOrNull { it != null })
+                            val contract = containers.lastOrNull { it.name != null }?.name
+                            val function = readFunction(text, i, end, contract)
                             if (function != null) {
-                                found += function.first
+                                functions += function.first
                             }
                             i = function?.second ?: end
                         }
@@ -84,7 +112,13 @@ object SolFunctionScanner {
                 else -> i++
             }
         }
-        return found
+        for (unclosed in containers) {
+            if (unclosed.name != null) {
+                contracts += SolContract(unclosed.name, unclosed.keywordStart, text.length)
+            }
+        }
+        contracts.sortBy { it.offset }
+        return SolOutline(contracts, functions)
     }
 
     /**

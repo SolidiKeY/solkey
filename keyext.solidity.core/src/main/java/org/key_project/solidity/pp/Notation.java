@@ -19,7 +19,6 @@ import org.key_project.solidity.logic.op.UpdateJunctor;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.rule.sv.*;
 import org.key_project.solidity.theory.IntLDT;
-import org.key_project.util.collection.ImmutableArray;
 import org.key_project.util.collection.ImmutableList;
 
 /// Encapsulate the concrete syntax used to print a term. The [NotationInfo] class associates a
@@ -121,7 +120,7 @@ public abstract class Notation {
 
         public void print(Term t, LogicPrinter sp) {
             sp.addBoundVars(t.boundVars());
-            sp.printQuantifierTerm(name, (ImmutableArray<QuantifiableVariable>) t.varsBoundHere(0),
+            sp.printQuantifierTerm(name, t.varsBoundHere(0),
                 t.sub(0), ass);
             sp.removeBoundVars(t.boundVars().size());
         }
@@ -173,8 +172,9 @@ public abstract class Notation {
         public void print(Term t, LogicPrinter sp) {
             assert t.op() == UpdateApplication.UPDATE_APPLICATION;
             final Operator targetOp = UpdateApplication.getTarget(t).op();
-            final int assTarget =
-                (t.sort() == SolidityDLTheory.FORMULA ? (targetOp.arity() == 1 ? 60 : 85) : 110);
+            final int assTarget = t.sort() == SolidityDLTheory.UPDATE ? Integer.MAX_VALUE
+                    : t.sort() == SolidityDLTheory.FORMULA ? (targetOp.arity() == 1 ? 60 : 85)
+                            : 110;
 
             sp.printUpdateApplicationTerm("{", "}", t, assTarget);
         }
@@ -382,7 +382,6 @@ public abstract class Notation {
             }
         }
 
-        @SuppressWarnings("unchecked")
         public void print(Term t, LogicPrinter sp) {
             // logger.debug("SSV: " + t+ " [" + t.op() + "]");
             Object o = sp.getInstantiations()
@@ -399,15 +398,15 @@ public abstract class Notation {
                 } else {
                     // logger.debug("Instantiation of " + t+ " [" + t.op() +
                     // "]" + " known.");
-                    if (o instanceof ImmutableList) {
-                        final Iterator<Object> it = ((ImmutableList<Object>) o).iterator();
+                    if (o instanceof ImmutableList<?> list) {
+                        final Iterator<?> it = list.iterator();
                         sp.layouter().print("{");
                         while (it.hasNext()) {
                             final Object next = it.next();
-                            if (next instanceof Term) {
-                                sp.printTerm((Term) o);
+                            if (next instanceof Term term) {
+                                sp.printTerm(term);
                             } else {
-                                sp.printConstant(o.toString());
+                                sp.printConstant(next.toString());
                             }
                             if (it.hasNext()) {
                                 sp.layouter.print(",");

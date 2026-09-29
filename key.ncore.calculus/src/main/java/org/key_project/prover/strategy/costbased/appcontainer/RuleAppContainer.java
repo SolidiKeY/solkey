@@ -5,6 +5,7 @@ package org.key_project.prover.strategy.costbased.appcontainer;
 
 import org.key_project.prover.proof.ProofGoal;
 import org.key_project.prover.rules.RuleApp;
+import org.key_project.prover.rules.Taclet;
 import org.key_project.prover.sequent.PosInOccurrence;
 import org.key_project.prover.strategy.costbased.RuleAppCost;
 import org.key_project.util.collection.ImmutableList;
@@ -91,10 +92,24 @@ public abstract class RuleAppContainer implements Comparable<RuleAppContainer> {
         if (rules.size() == 1) {
             result = result.prepend(createAppContainer(rules.head(), pos, goal));
         } else if (rules.size() > 1) {
+            ImmutableList<RuleApp> tacletApps = ImmutableSLList.nil();
+            ImmutableList<RuleApp> builtInApps = ImmutableSLList.nil();
             for (RuleApp rule : rules) {
-                // Used to have taclet apps at front and builtin apps at the end
-                result = result.prepend(rule.createRuleAppContainer(pos, goal, true));
+                if (rule.rule() instanceof Taclet) {
+                    tacletApps = tacletApps.prepend(rule);
+                } else {
+                    builtInApps = builtInApps.prepend(rule);
+                }
             }
+            for (RuleApp app : builtInApps) {
+                result = result.prepend(app.createRuleAppContainer(pos, goal, true));
+            }
+            ImmutableList<RuleAppContainer> tacletContainers = ImmutableSLList.nil();
+            for (RuleApp app : tacletApps) {
+                tacletContainers =
+                    tacletContainers.prepend(app.createRuleAppContainer(pos, goal, true));
+            }
+            result = result.prepend(tacletContainers);
         }
         return result;
     }

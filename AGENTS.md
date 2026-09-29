@@ -31,15 +31,21 @@ These keep a task to few tool calls. Cost is dominated by round-trips, not by ou
 ./run-key.sh FILE.sol fnName                   # prove one function
 ./run-key.sh FILE.sol -f fnName --open-goals   # ... and show why it did not close
 ./run-key.sh FILE.key -m 20000 --no-prove      # a .key problem; any CLI option works
-./run-key.sh FILE.sol -O indexWriteCapture:allAtOnce   # prove under a non-default taclet option
+./run-key.sh FILE.sol -O transferSemantics:withCallback   # prove under a non-default taclet option
+./run-key.sh FILE.sol --solc                   # compile, then run on an EVM: reports a failing assert
+./run-key.sh FILE.sol --solc -f fnName         # ... for one function
+./run-key.sh FILE.sol -f fnName --print-problem # print the generated .key problem instead
 ./run-key.sh --help                            # every CLI option
 
 scripts/taclet.sh requireSimple      # print one taclet with its file:line
 scripts/taclet.sh --index            # the rule-section banners
 scripts/taclet.sh --list             # every rule name with its file:line
+scripts/benchmark.sh                 # published contracts as published: N/M closed each
 
 ./gradlew :keyext.solidity.gui:solidityGui     # KeYther, the Swing GUI
 ./gradlew :key.ui:shadowJar                    # fat JAR
+./gradlew :keyext.solidity.web:site            # the browser build (needs GRAALVM_HOME, docs/web.md)
+./gradlew :keyext.solidity.web:browserTest     # ... and its headless-Chromium test
 ```
 
 `run-key.sh` rebuilds `keyext.solidity.core-exe.jar` only when the sources are newer;
@@ -60,6 +66,7 @@ outside if explicitly instructed.
 | Purpose | Location |
 |---|---|
 | **Taclet examples (`.sol`)** | `keyext.solidity.examples/TestSuite.sol` — see its `README.md` |
+| **Specified contracts (`.sol` + `@custom:key` clauses)** | `keyext.solidity.examples/contracts/`, published ones in `real-world/` — the spec language is in that `README.md` |
 | **Problem files (`.key`)** | `keyext.solidity.core/src/test/resources/org/key_project/solidity/examples/` |
 | **Proof rules (`.key`)** | `keyext.solidity.core/src/main/resources/org/key_project/solidity/proof/rules/` |
 
@@ -74,7 +81,8 @@ outside if explicitly instructed.
 | `key.ui` | GUI + CLI entry point |
 | `keyext.solidity.core` | **Solidity verification** — main focus |
 | `keyext.solidity.gui` | **KeYther**, the standalone Swing GUI for the Solidity prover |
-| `keyext.solidity.idea` | IntelliJ IDEA plugin — ▶ gutter icon on public functions. Standalone Gradle build, deliberately **not** in `settings.gradle`. See `docs/idea-setup.md` |
+| `keyext.solidity.idea` | IntelliJ IDEA plugin — ▶ gutter icon on public functions and contracts; left click opens KeYther, right click also offers the headless prover and solc+EVM. Standalone Gradle build, deliberately **not** in `settings.gradle`. See `docs/idea-setup.md` |
+| `keyext.solidity.web` | The prover compiled to WebAssembly by GraalVM Web Image, as a static page on GitHub Pages. Included only when `GRAALVM_HOME` has Web Image. See `docs/web.md` |
 | `keyext.solidity.examples` | **Main taclet examples** (`TestSuite.sol`) |
 
 Dependencies: `keyext.*` → `key.core` → `key.ncore` → `key.util`.
@@ -94,12 +102,20 @@ Solidity → ANTLR → SolidityToKeyConverter → AST → TypeResolver → Abstr
 - **`strategy/`** — `Strategy`, `ApplyStrategy`
 - **`common/`** — `SolidityInfo`, the registry for Solidity types (int8–int256, uint8–uint256,
   bytes1–bytes32, bool, address). Register new types here.
+- **`runtime/`** — the in-process Besu EVM. `SolidityRuntimeCheck` compiles a contract, deploys it
+  and calls its functions, reporting `Panic(0x01)` as a failed `assert`; drives `--solc` and
+  `SolidityRuntimeExecutionTest`
 - **`program/parser/SolJSONParser`** — parses solc's compact JSON AST; `SolcWrapper` and
   `WasmSolcCompiler` produce it by running solc's WebAssembly build on the JVM, with no
   external compiler. See `docs/solc-ast.md`
 
 ANTLR grammars live in `keyext.solidity.core/src/main/antlr/`, generated sources in
-`build/generated-src/antlr/main/`.
+`build/generated-src/antlr/main/`. One lexer/parser pair reads both logic and Solidity: a
+modality opener pushes the lexer's `SOL` mode, whose tokens `KeYSolidityDLLexer` imports from
+`SolidityLexer.g4`, and `KeYSolidityDLParser` imports the Solidity rules from
+`SolidityRules.g4`, so a modality body is a subtree that `ExpressionBuilder` hands to
+`SolidityToKeyConverter`. `SolidityLexer.g4` needs its one default-mode fragment: ANTLR rejects
+a lexer grammar that starts with `mode`. Syntax errors fail the load (`ThrowingErrorListener`).
 
 ## CI gates — run before committing
 
@@ -128,7 +144,7 @@ comments untouched unless the change makes them wrong.
 `./gradlew :keyext.solidity.core:test` is the fast local set: unit tests plus the `TestSuite.sol`
 suites (`TacletStarterExamplesTest`, `PaperTestExamplesTest`), ~30 s. It prints failures only;
 `-PverboseTests` restores the per-test progress lines. The `solidityExamples` and
-`ruleGeneralization` groups are CI-only, and `testProofSize` is manual-only — see `docs/ci.md`.
+`ruleGeneralization` groups are CI-only — see `docs/ci.md`.
 Run `test` after refactoring, and prefer modifying existing test classes over creating new ones.
 
 ## Documentation
@@ -140,14 +156,16 @@ Read the relevant doc before working on taclets. Each is a compact, agent-facing
 | `key-taclets.md` | **Start here** to author a taclet — rule shape, schema variables, varconds |
 | `taclets-implementation.md` | Checking what is already implemented and why it is shaped that way |
 | `taclet-ideas.md` | Picking the next unimplemented construct (the backlog) |
+| `bugs.md` | Known bugs: crashes, stuck proofs, unprovable true facts |
 | `storage.md` | Storage rules — calculus spec, three-step strategy, statement→rule table |
 | `memory.md` | Memory rules — identity heap, aliasing, delete, cross-domain copies |
 | `net.md` | The payment/ledger model (`net`, `msg.sender`/`msg.value`, `transfer`, invariants) |
 | `require-assert.md` | `require` / `assert` rules (box vs. diamond false-branch behavior) |
-| `rule-generalizations.md` | The `// generalized by:` annotations and `RuleGeneralizationTest` |
+| `rule-generalizations.md` | The `// generalization:` comments and `RuleGeneralizationTest` |
 | `solc-ast.md` | The solc AST and the in-JVM compiler that produces it |
 | `ci.md` | CI gates in detail, the nullness idiom, CI-only test groups |
 | `forked-key-core.md` | Editing code forked from `key.core` — which files must not be restyled |
+| `web.md` | The browser build — Web Image, the JS solc bridge, the Pages deploy |
 | `idea-setup.md` | IntelliJ setup — gutter-icon plugin, External Tools, `.run/` configurations |
 
 Program rules live in `…/proof/rules/solidityProgramRules.key`, loaded via
@@ -156,6 +174,8 @@ Program rules live in `…/proof/rules/solidityProgramRules.key`, loaded via
 `.key` obligations in `keyext.solidity.examples/net/`; conventions for both are in
 `keyext.solidity.examples/README.md`. After changing a feature, update
 `docs/taclets-implementation.md` (implemented) or `docs/taclet-ideas.md` (backlog).
+**When a change fixes a bug listed in `docs/bugs.md`, delete that entry in the same change;**
+record newly found bugs there.
 
 **When planning a new taclet:** begin with a plain-English statement of the precondition (what
 must hold before the rule fires), the transformation (what sequent change it performs) and the

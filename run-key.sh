@@ -51,21 +51,43 @@ if [ "${SOLKEY_REBUILD:-}" = "1" ] || needs_build; then
     touch "$JAR"
 fi
 
-# solc runs on the JVM as WebAssembly, which Truffle interprets — about ten times slower —
-# unless the Graal compiler is put in the boot layer. Only JDK 21 has the module it upgrades,
-# so the flags are tried once and dropped if this JVM will not take them.
+# solc runs on the JVM as WebAssembly, and the Truffle release that interprets it calls a
+# sun.misc.Unsafe method that JDK 24 removed, so a newer `java` on PATH dies on the first
+# contract. JDK 21 is also the only one carrying the module the Graal compiler jar upgrades,
+# which keeps solc compiled instead of interpreted — about ten times the speed. So: find a 21.
+java_major() {
+    "$1" -XshowSettings:properties -version 2>&1 \
+        | sed -n 's/^ *java\.specification\.version = //p'
+}
+
+JAVA=""
+for candidate in "${SOLKEY_JAVA_HOME:-}/bin/java" "${JAVA_HOME:-}/bin/java" \
+    "$(command -v java || true)" \
+    "$HOME"/.jdks/*/bin/java "$HOME"/.gradle/jdks/*/bin/java /usr/lib/jvm/*/bin/java; do
+    if [ -x "$candidate" ] && [ "$(java_major "$candidate")" = "21" ]; then
+        JAVA="$candidate"
+        break
+    fi
+done
+
+if [ -z "$JAVA" ]; then
+    echo "run-key.sh needs a JDK 21: the WebAssembly solc does not run on 24 or newer." >&2
+    echo "Install one, or point SOLKEY_JAVA_HOME at an existing JDK 21." >&2
+    exit 1
+fi
+
 JVM_ARGS=()
 UPGRADE_PATH="$(find "$GRAAL_DIR" -name '*.jar' 2>/dev/null | paste -sd: -)"
 if [ -n "$UPGRADE_PATH" ]; then
     JIT=(-XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI
          --upgrade-module-path="$UPGRADE_PATH")
-    if java "${JIT[@]}" -version >/dev/null 2>&1; then
+    if "$JAVA" "${JIT[@]}" -version >/dev/null 2>&1; then
         JVM_ARGS=("${JIT[@]}")
     fi
 fi
 
 cd "$EXAMPLES_DIR"
 if [ -z "$FILE" ]; then
-    exec java "${JVM_ARGS[@]}" -jar "$JAR" "$@"
+    exec "$JAVA" "${JVM_ARGS[@]}" -jar "$JAR" "$@"
 fi
-exec java "${JVM_ARGS[@]}" -jar "$JAR" "$FILE" "$@"
+exec "$JAVA" "${JVM_ARGS[@]}" -jar "$JAR" "$FILE" "$@"

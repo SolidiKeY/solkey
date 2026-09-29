@@ -145,7 +145,7 @@ public class TriggersSet {
 
         public ClauseTrigger(Term clause) {
             this.clause = clause;
-            selfUQVS = TriggerUtils.intersect((ImmutableSet<LogicVariable>) this.clause.freeVars(),
+            selfUQVS = TriggerUtils.intersect(this.clause.freeVars(),
                 uniQuantifiedVariables);
         }
 
@@ -177,7 +177,7 @@ public class TriggersSet {
             }
 
             final ImmutableSet<LogicVariable> uniVarsInTerm =
-                TriggerUtils.intersect((ImmutableSet<LogicVariable>) term.freeVars(), selfUQVS);
+                TriggerUtils.intersect(term.freeVars(), selfUQVS);
 
             boolean foundSubtriggers = false;
             for (int i = 0; i < term.arity(); i++) {
@@ -198,19 +198,20 @@ public class TriggersSet {
         }
 
         private Set<Term> expandIfThenElse(Term t, Services services) {
-            final Set<Term>[] possibleSubs = new Set[t.arity()];
+            final List<Set<Term>> possibleSubs = new ArrayList<>(t.arity());
             boolean changed = false;
             for (int i = 0; i != t.arity(); ++i) {
                 final Term oriSub = t.sub(i);
-                possibleSubs[i] = expandIfThenElse(oriSub, services);
-                changed = changed || possibleSubs[i].size() != 1
-                        || possibleSubs[i].iterator().next() != oriSub;
+                final Set<Term> expanded = expandIfThenElse(oriSub, services);
+                possibleSubs.add(expanded);
+                changed = changed || expanded.size() != 1
+                        || expanded.iterator().next() != oriSub;
             }
 
             final Set<Term> res = new LinkedHashSet<>();
             if (t.op() == IfThenElse.IF_THEN_ELSE) {
-                res.addAll(possibleSubs[1]);
-                res.addAll(possibleSubs[2]);
+                res.addAll(possibleSubs.get(1));
+                res.addAll(possibleSubs.get(2));
             }
 
             if (!changed) {
@@ -220,15 +221,16 @@ public class TriggersSet {
 
             final Term[] chosenSubs = new Term[t.arity()];
             res.addAll(combineSubterms(t, possibleSubs, chosenSubs,
-                (ImmutableArray<QuantifiableVariable>) t.boundVars(), 0, services));
+                t.boundVars(), 0, services));
             return res;
         }
 
-        private Set<Term> combineSubterms(Term oriTerm, Set<Term>[] possibleSubs,
+        private Set<Term> combineSubterms(Term oriTerm, List<Set<Term>> possibleSubs,
                 Term[] chosenSubs,
-                ImmutableArray<QuantifiableVariable> boundVars, int i, Services services) {
+                ImmutableArray<? extends QuantifiableVariable> boundVars, int i,
+                Services services) {
             final HashSet<Term> set = new LinkedHashSet<>();
-            if (i >= possibleSubs.length) {
+            if (i >= possibleSubs.size()) {
                 final Term res = services.getTermFactory().createTerm(oriTerm.op(), chosenSubs,
                     boundVars);
 
@@ -238,7 +240,7 @@ public class TriggersSet {
             }
 
 
-            for (Term term : possibleSubs[i]) {
+            for (Term term : possibleSubs.get(i)) {
                 chosenSubs[i] = term;
                 set.addAll(
                     combineSubterms(oriTerm, possibleSubs, chosenSubs, boundVars, i + 1, services));
@@ -289,7 +291,7 @@ public class TriggersSet {
             final boolean isUnify = !term.freeVars().subset(selfUQVS);
             final boolean isElement = !selfUQVS.subset(term.freeVars());
             final ImmutableSet<LogicVariable> uniVarsInTerm =
-                TriggerUtils.intersect((ImmutableSet<LogicVariable>) term.freeVars(), selfUQVS);
+                TriggerUtils.intersect(term.freeVars(), selfUQVS);
             Trigger t = createUniTrigger(term, uniVarsInTerm, isUnify, isElement);
             if (isElement) {
                 elementsOfMultiTrigger = elementsOfMultiTrigger.add(t);

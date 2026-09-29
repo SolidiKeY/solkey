@@ -5,6 +5,8 @@ package org.key_project.solidity.gui;
 
 import java.io.File;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
@@ -39,6 +41,11 @@ public final class SolidityMain {
     @Nullable
     String contract;
 
+    @Option(names = { "-O", "--option" }, paramLabel = "<category:choice>",
+        description = "for a .sol FILE with --function: a taclet option to prove under, such as "
+            + "transferSemantics:withCallback; repeatable")
+    List<String> choices = new ArrayList<>();
+
     @Option(names = { "-h", "--help" }, usageHelp = true, description = "display this help message")
     boolean usageHelpRequested;
 
@@ -62,15 +69,24 @@ public final class SolidityMain {
             return null;
         }
         if (cli.file == null) {
-            if (cli.function != null || cli.contract != null) {
+            if (cli.function != null || cli.contract != null || !cli.choices.isEmpty()) {
                 throw new CommandLine.ParameterException(cmd,
-                    "--function and --contract need a FILE");
+                    "--function, --contract and --option need a FILE");
             }
             return new Invocation(null, null);
         }
         if (cli.contract != null && cli.function == null) {
             // Without --function the picker infers the contract itself, so -c alone does nothing.
             throw new CommandLine.ParameterException(cmd, "--contract needs --function");
+        }
+        if (!cli.choices.isEmpty() && cli.function == null) {
+            throw new CommandLine.ParameterException(cmd, "--option needs --function");
+        }
+        for (String choice : cli.choices) {
+            if (!choice.matches("[A-Za-z_][A-Za-z0-9_]*:[A-Za-z_][A-Za-z0-9_]*")) {
+                throw new CommandLine.ParameterException(cmd,
+                    "--option expects category:choice, got '" + choice + "'");
+            }
         }
         if (cli.function == null) {
             return new Invocation(cli.file, null);
@@ -79,7 +95,8 @@ public final class SolidityMain {
             throw new CommandLine.ParameterException(cmd,
                 "--function and --contract apply to .sol files only");
         }
-        return new Invocation(cli.file, new SolidityProblemSpec(cli.contract, cli.function));
+        return new Invocation(cli.file,
+            new SolidityProblemSpec(cli.contract, cli.function, cli.choices));
     }
 
     public static void main(String[] args) {

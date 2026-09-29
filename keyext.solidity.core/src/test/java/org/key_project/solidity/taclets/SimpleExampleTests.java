@@ -15,6 +15,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.key_project.solidity.testutil.SolidityExampleTests.describeOpenGoals;
 import static org.key_project.solidity.testutil.SolidityExampleTests.example;
 import static org.key_project.solidity.testutil.SolidityExampleTests.loadAndProve;
 
@@ -37,8 +38,7 @@ public class SimpleExampleTests {
     @MethodSource("examples")
     void exampleCloses(String name, Path file) throws Exception {
         Proof proof = loadAndProve(file);
-        assertTrue(proof.closed(),
-            () -> name + " should close; open goals: " + proof.openGoals().size());
+        assertTrue(proof.closed(), () -> describeOpenGoals(name, proof));
     }
 
     static Stream<Arguments> examples() {

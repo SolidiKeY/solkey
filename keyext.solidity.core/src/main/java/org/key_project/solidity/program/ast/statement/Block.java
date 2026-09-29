@@ -10,6 +10,7 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.PosInProgram;
 import org.key_project.solidity.program.ProgramPrefix;
 import org.key_project.solidity.program.ProgramPrefixUtil;
+import org.key_project.solidity.program.ast.HashCachingElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
@@ -17,11 +18,10 @@ import org.key_project.util.collection.ImmutableArray;
 import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 import org.jspecify.annotations.Nullable;
 
-public class Block implements Statement, ProgramPrefix {
+public class Block extends HashCachingElement implements Statement, ProgramPrefix {
 
     private final ImmutableArray<Statement> statements;
     private final int prefixLength;
-    private int hashcode = -1;
 
     public Block(ImmutableArray<Statement> statements) {
         this.statements = statements;
@@ -129,14 +129,5 @@ public class Block implements Statement, ProgramPrefix {
         if (!(o instanceof Block that))
             return false;
         return statements.equals(that.statements);
-    }
-
-    @Override
-    public int hashCode() {
-        if (hashcode == -1) {
-            int hash = computeHashCode();
-            hashcode = hash == -1 ? 0 : hash;
-        }
-        return hashcode;
     }
 }

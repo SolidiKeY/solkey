@@ -1,0 +1,80 @@
+name: Web
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - 'keyext.solidity.web/**'
+      - 'keyext.solidity.core/src/main/**'
+      - '.github/workflows/web.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: web-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Web Image (native-image --tool:svm-wasm) is in Oracle GraalVM 25.1+ and its early-access
+  # builds, not in GraalVM Community. When this EA tag disappears, point GRAALVM_URL at a newer
+  # build from github.com/graalvm/oracle-graalvm-ea-builds or at an Oracle GraalVM release.
+  GRAALVM_URL: https://github.com/graalvm/oracle-graalvm-ea-builds/releases/download/jdk-25i5-25.0.4.1.1-ea.01/graalvm-jdk-25i5-25.0.4.1.1-ea.01_linux-x64_bin.tar.gz
+  BINARYEN_VERSION: '119'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: corretto
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '25'
+      - name: Install Oracle GraalVM (with Web Image)
+        run: |
+          curl -fsSL "$GRAALVM_URL" | tar xz -C "$RUNNER_TEMP"
+          home="$(ls -d "$RUNNER_TEMP"/graalvm-*)"
+          test -d "$home/lib/svm/tools/svm-wasm" || { echo "::error::$GRAALVM_URL has no Web Image backend"; exit 1; }
+          echo "GRAALVM_HOME=$home" >> "$GITHUB_ENV"
+      - name: Install binaryen
+        run: |
+          curl -fsSL "https://github.com/WebAssembly/binaryen/releases/download/version_${BINARYEN_VERSION}/binaryen-version_${BINARYEN_VERSION}-x86_64-linux.tar.gz" | tar xz -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/binaryen-version_${BINARYEN_VERSION}/bin" >> "$GITHUB_PATH"
+      - name: Build the site and smoke-test it in Node
+        run: ./gradlew :keyext.solidity.web:smokeTest
+      - name: Install headless Chromium
+        working-directory: keyext.solidity.web
+        run: npx playwright-core install --with-deps --only-shell chromium
+      - name: Test the page in headless Chromium
+        run: ./gradlew :keyext.solidity.web:browserTest -PsolkeyShots=build/screenshots
+      - name: Keep the screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: web-screenshots
+          path: keyext.solidity.web/build/screenshots
+          if-no-files-found: ignore
+      - if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: keyext.solidity.web/build/site
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v5

@@ -37,6 +37,12 @@ include 'keyext.client.java'
 
 include 'keyext.solidity.core'
 include 'keyext.solidity.gui'
+// keyext.solidity.web compiles against GraalVM's Web Image API, so it is only part of the build
+// when GRAALVM_HOME (or -PgraalvmHome) points at a GraalVM that has it. See docs/web.md.
+def graalvmHome = System.getenv('GRAALVM_HOME') ?: startParameter.projectProperties.graalvmHome
+if (graalvmHome && new File(graalvmHome, 'jmods/org.graalvm.webimage.api.jmod').isFile()) {
+    include 'keyext.solidity.web'
+}
 // keyext.solidity.idea is a standalone Gradle build and must NOT be included here: an include
 // would enrol an IDE plugin in spotless, the nullness gate and the nightly Maven publish, and pull
 // a ~1 GB IDE download into every repo-wide assemble/test. See docs/idea-setup.md.

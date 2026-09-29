@@ -4,11 +4,28 @@
 package org.key_project.solidity.logic.parser;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
+
+import org.key_project.solidity.CLI;
+import org.key_project.solidity.program.parser.SolcWrapper;
+import org.key_project.solidity.testutil.SolidityExampleTests;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import tools.jackson.databind.JsonNode;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.key_project.solidity.program.parser.SolcWrapper.readSol;
 
 public class SolcWrapperTest {
@@ -35,5 +52,87 @@ public class SolcWrapperTest {
             Assertions.fail();
         } catch (RuntimeException exception) {
         } ;
+    }
+
+    @Test
+    void solcModeExitsOnErrorsOnly(@TempDir Path directory) throws IOException {
+        // language=solidity
+        Path good = Files.writeString(directory.resolve("Good.sol"), """
+                contract Good {
+                    uint256 balance;
+                    function f() public { balance = 1; }
+                }""");
+        assertEquals(0, CLI.execute(good.toString(), "--solc"));
+
+        // language=solidity
+        Path broken = Files.writeString(directory.resolve("Broken.sol"), """
+                contract Broken {
+                    uint256 balance
+                }""");
+        assertEquals(1, CLI.execute(broken.toString(), "--solc"));
+    }
+
+    /// `--solc` does not stop at compiling: it deploys the contract on an in-process EVM and
+    /// calls the function, so a violated `assert` is reported as one without any proof.
+    @Test
+    void solcModeRunsTheFunctionAndCatchesAFailingAssert(@TempDir Path directory)
+            throws IOException {
+        // language=solidity
+        Path file = Files.writeString(directory.resolve("Demo.sol"), """
+                contract Demo {
+                    uint256 balance;
+                    function holds() public { balance = 5; assert(balance == 5); }
+                    function fails() public { balance = 5; assert(balance == 6); }
+                }""");
+
+        assertEquals(0, CLI.execute(file.toString(), "--solc", "--function", "holds"));
+        assertEquals(1, CLI.execute(file.toString(), "--solc", "--function", "fails"));
+        // Both together: the failing one decides the exit code.
+        assertEquals(1, CLI.execute(file.toString(), "--solc"));
+    }
+
+    /// Taclet options select proof rules, and `--solc` proves nothing.
+    @Test
+    void solcModeRejectsTacletOptions(@TempDir Path directory) throws IOException {
+        // language=solidity
+        Path file = Files.writeString(directory.resolve("Good.sol"), """
+                contract Good {
+                    function f() public { }
+                }""");
+        assertEquals(1, CLI.execute(file.toString(), "--solc", "-O", "intRules:javaSemantics"));
+    }
+
+    private static final List<String> TOLERATED_WARNINGS =
+        List.of("'transfer' is deprecated", "'send' is deprecated", "Contract code size is",
+            "Contract initcode size is");
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("exampleContracts")
+    void exampleCompilesWithoutWarnings(String name, Path file) throws IOException {
+        List<String> warnings = new ArrayList<>();
+        for (JsonNode diagnostic : SolcWrapper.readJson(SolcWrapper.diagnose(file))
+                .path("errors").values()) {
+            String message = diagnostic.path("message").asString("");
+            if (TOLERATED_WARNINGS.stream().noneMatch(message::startsWith)) {
+                warnings.add(diagnostic.path("formattedMessage").asString(message));
+            }
+        }
+        assertTrue(warnings.isEmpty(),
+            () -> name + " has solc diagnostics:\n" + String.join("\n", warnings));
+    }
+
+    static Stream<Arguments> exampleContracts() throws IOException {
+        Path dir = SolidityExampleTests.examplesDir("");
+        try (Stream<Path> files = Files.walk(dir)) {
+            List<Arguments> contracts = files
+                    .filter(p -> p.getFileName().toString().endsWith(".sol"))
+                    .map(p -> dir.relativize(p).toString().replace('\\', '/'))
+                    .filter(p -> !p.startsWith("illegal/") && !p.startsWith("functionBody/"))
+                    .sorted()
+                    .map(p -> Arguments.of(p, dir.resolve(p)))
+                    .toList();
+            assertFalse(contracts.isEmpty(), () -> "no contracts in " + dir.toAbsolutePath());
+            return contracts.stream();
+        }
     }
 }

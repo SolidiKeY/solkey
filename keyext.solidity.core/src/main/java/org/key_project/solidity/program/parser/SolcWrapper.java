@@ -4,17 +4,15 @@
 package org.key_project.solidity.program.parser;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.jspecify.annotations.Nullable;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 /// The Solidity compiler, addressed through its Standard JSON interface.
 ///
@@ -32,13 +30,31 @@ public class SolcWrapper {
 
     private static final Map<CompilationUnit, String> AST_CACHE = new ConcurrentHashMap<>();
 
+    private record Build(CompilationUnit unit, JsonNode output) {
+    }
+
+    private static volatile @Nullable Build lastBuild;
+
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private static final String STDIN_UNIT = "<stdin>";
 
     private static final long UNSIGNED_32_BIT = 1L << 32;
 
-    private static final SolcCompiler COMPILER = WasmSolcCompiler.get();
+    private static @Nullable SolcCompiler compiler;
+
+    public static synchronized void useCompiler(SolcCompiler replacement) {
+        compiler = replacement;
+        AST_CACHE.clear();
+        lastBuild = null;
+    }
+
+    private static synchronized SolcCompiler compiler() {
+        if (compiler == null) {
+            compiler = WasmSolcCompiler.get();
+        }
+        return compiler;
+    }
 
     /// The solc AST JSON of `contractPath`.
     public static String getJsonSolidity(Path contractPath) throws IOException {
@@ -50,7 +66,7 @@ public class SolcWrapper {
     }
 
     private static String readSource(Path contractPath) throws IOException {
-        return Files.readString(contractPath, UTF_8);
+        return SoliditySources.read(contractPath);
     }
 
     /// The `SourceUnit` node of `source`, as a JSON string.
@@ -111,24 +127,56 @@ public class SolcWrapper {
     /// Standard JSON output. Used by the runtime cross-check tests to execute the examples on a
     /// real EVM.
     public static String getBinJson(Path contractPath) throws IOException {
+        JsonNode output = build(contractPath);
+        failOnErrors(output);
+        return output.toString();
+    }
+
+    public static String diagnose(Path contractPath) throws IOException {
+        return build(contractPath).toString();
+    }
+
+    private static JsonNode build(Path contractPath) throws IOException {
+        CompilationUnit unit =
+            new CompilationUnit(unitNameOf(contractPath), readSource(contractPath));
+        Build last = lastBuild;
+        if (last != null && last.unit().equals(unit)) {
+            return last.output();
+        }
         ObjectNode outputSelection = MAPPER.createObjectNode();
+        outputSelection.putArray("").add("ast");
         outputSelection.putArray("*")
                 .add("evm.bytecode.object")
                 .add("evm.deployedBytecode.object");
-        return compile(unitNameOf(contractPath), readSource(contractPath), outputSelection)
-                .toString();
+        JsonNode output = compileRaw(unit.name(), unit.source(), outputSelection);
+        JsonNode ast = output.path("sources").path(unit.name()).path("ast");
+        if (!ast.isMissingNode() && !ast.isNull()) {
+            restoreNegativeIds(ast);
+            AST_CACHE.putIfAbsent(unit, ast.toString());
+        }
+        lastBuild = new Build(unit, output);
+        return output;
+    }
+
+    public static String version() {
+        return compiler().version();
     }
 
     private static JsonNode compile(String unitName, String source, ObjectNode outputSelection)
+            throws IOException {
+        JsonNode output = compileRaw(unitName, source, outputSelection);
+        failOnErrors(output);
+        return output;
+    }
+
+    private static JsonNode compileRaw(String unitName, String source, ObjectNode outputSelection)
             throws IOException {
         ObjectNode input = MAPPER.createObjectNode();
         input.put("language", "Solidity");
         input.putObject("sources").putObject(unitName).put("content", source);
         input.putObject("settings").putObject("outputSelection").set("*", outputSelection);
 
-        JsonNode output = MAPPER.readTree(COMPILER.compile(input.toString()));
-        failOnErrors(output);
-        return output;
+        return MAPPER.readTree(compiler().compile(input.toString()));
     }
 
     private static void failOnErrors(JsonNode output) {
@@ -144,15 +192,11 @@ public class SolcWrapper {
         }
     }
 
-    public static String readSolBuff(byte[] contract) throws IOException {
-        return readSolString(new String(contract, UTF_8));
-    }
-
-    public static String readSolString(String contract) throws IOException {
+    public static String readSol(String contract) throws IOException {
         return astOf(STDIN_UNIT, contract);
     }
 
-    public static String readSol(String s) throws IOException {
-        return readSolString(s);
+    public static JsonNode readJson(String json) {
+        return MAPPER.readTree(json);
     }
 }

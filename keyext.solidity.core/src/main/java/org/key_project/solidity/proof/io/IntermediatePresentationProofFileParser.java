@@ -36,7 +36,6 @@ public class IntermediatePresentationProofFileParser implements IProofFileParser
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void beginExpr(IProofFileParser.ProofElementID eid, String str) {
         switch (eid) {
             case BRANCH -> {

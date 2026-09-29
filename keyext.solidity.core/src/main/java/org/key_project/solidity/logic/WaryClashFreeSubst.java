@@ -5,12 +5,10 @@ package org.key_project.solidity.logic;
 
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Operator;
-import org.key_project.logic.op.QuantifiableVariable;
 import org.key_project.solidity.logic.op.LogicVariable;
 import org.key_project.solidity.logic.op.SModality;
 import org.key_project.solidity.logic.op.UpdateApplication;
 import org.key_project.solidity.rule.metaconstruct.TermTransformer;
-import org.key_project.util.collection.ImmutableArray;
 
 /// De Bruijn substitution that does **not** push the replacement into "state-dependent" positions
 /// — the post-formula of a modality, the target of an update application, or an operand of a
@@ -60,7 +58,7 @@ public class WaryClashFreeSubst {
             newSubterms[i] = apply1(t.sub(i), subIndex, below || isProtected(t.op()));
         }
         return tb.tf().createTerm(t.op(), newSubterms,
-            (ImmutableArray<QuantifiableVariable>) t.boundVars());
+            t.boundVars());
     }
 
     /// Whether the subterms of an `op`-rooted term are state dependent: a modality, an update

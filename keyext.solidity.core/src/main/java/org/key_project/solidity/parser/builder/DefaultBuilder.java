@@ -102,17 +102,14 @@ public class DefaultBuilder extends AbstractBuilder<@Nullable Object> {
         final Namespace<?>[] lookups =
             { programVariables(),
                 variables(), functions() };
-        return doLookup(n, lookups);
+        return doLookup(n, Named.class, lookups);
     }
 
-    protected <T> T doLookup(Name n, Namespace<?>... lookups) {
+    protected <T> T doLookup(Name n, Class<T> type, Namespace<?>... lookups) {
         for (Namespace<?> lookup : lookups) {
-            Object l;
-            if (lookup != null && (l = lookup.lookup(n)) != null) {
-                try {
-                    return (T) l;
-                } catch (ClassCastException e) {
-                }
+            Object l = lookup == null ? null : lookup.lookup(n);
+            if (type.isInstance(l)) {
+                return type.cast(l);
             }
         }
         return null;

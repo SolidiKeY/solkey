@@ -10,7 +10,6 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.Term;
 import org.key_project.logic.Visitor;
 import org.key_project.logic.op.Operator;
-import org.key_project.logic.op.QuantifiableVariable;
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.prover.rules.VariableCondition;
 import org.key_project.prover.rules.instantiation.MatchResultInfo;
@@ -19,7 +18,6 @@ import org.key_project.solidity.logic.TermBuilder;
 import org.key_project.solidity.logic.op.LogicVariable;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.solidity.rule.sv.UpdateSV;
-import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.NonNull;
 
@@ -78,7 +76,7 @@ public final class ApplyUpdateOnRigidCondition implements VariableCondition {
             }
 
             return services.getTermFactory().createTerm(phi.op(), updatedSubs,
-                (ImmutableArray<QuantifiableVariable>) phi.boundVars());
+                phi.boundVars());
         }
 
         // Here we have to check for name collisions as there are free variables in u
@@ -126,7 +124,7 @@ public final class ApplyUpdateOnRigidCondition implements VariableCondition {
                 final Term[] neededSubs = neededSubs(visitedOp.arity());
                 if (!subStack.empty() && subStack.peek() == newMarker) {
                     final Term newTerm = tb.tf().createTerm(visitedOp, neededSubs,
-                        (ImmutableArray<QuantifiableVariable>) visited.boundVars());
+                        visited.boundVars());
                     pushNew(newTerm);
                 } else {
                     subStack.push(visited);
@@ -159,7 +157,7 @@ public final class ApplyUpdateOnRigidCondition implements VariableCondition {
         });
 
         return services.getTermFactory().createTerm(phi.op(), updatedSubs,
-            (ImmutableArray<QuantifiableVariable>) phi.boundVars());
+            phi.boundVars());
     }
 
     @Override

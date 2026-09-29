@@ -3,14 +3,14 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions.operators;
 
-import java.util.Objects;
-
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
+
+import static org.key_project.solidity.program.ast.SolidityProgramElement.takeChild;
 
 
 public class UnaryExpression implements SolidityProgramElement, Expression, OperatorExpression {
@@ -24,8 +24,8 @@ public class UnaryExpression implements SolidityProgramElement, Expression, Oper
     }
 
     public UnaryExpression(ExtList children) {
-        this.operator = Objects.requireNonNull(children.removeFirstOccurrence(Operator.class));
-        this.exp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.operator = takeChild(children, Operator.class);
+        this.exp = takeChild(children, Expression.class);
     }
 
     @Override

@@ -28,7 +28,16 @@ solc --ast-compact-json --pretty-json Contract.sol | less
 
 Truffle interprets the compiler unless the Graal compiler is in the boot layer, which costs about
 a factor of ten; `run-key.sh` and the Gradle tasks add `-XX:+EnableJVMCI` and the
-`--upgrade-module-path` for it when the JDK accepts them.
+`--upgrade-module-path` for it when the JDK accepts them. The context runs Truffle with
+`engine.Mode=latency`: every run is a fresh JVM, and that mode cuts a cold compile of
+`TestSuite.sol` from ~40 s to ~26 s.
+
+Every JVM would still pay that cold compile, so `WasmSolcCompiler` keeps solc's outputs on disk
+(`SolcOutputCache`), keyed by the SHA-256 of `soljson.js` and of the exact Standard JSON input,
+in `$XDG_CACHE_HOME/solkey/solc` (else `~/.cache/solkey/solc`), newest 256 kept. A run on an
+unchanged file never starts solc. `-Dsolkey.solcCache=DIR` moves it; `-Dsolkey.solcCache=off`
+disables it. `--solc` makes one request (AST plus bytecode) that serves the diagnostics, the
+outline and the EVM run.
 
 Every node carries `id`, `nodeType` and `src` (`"byteOffset:byteLength:sourceIndex"`). Expression
 nodes additionally carry `typeDescriptions` with `typeIdentifier` and `typeString`; the parser
@@ -45,7 +54,7 @@ The parser dispatches on `nodeType` at four places. Anything not listed below ra
 | Contract members (`parseContract`) | `VariableDeclaration`, `FunctionDefinition`, `StructDefinition`, `ModifierDefinition`, `EnumDefinition` |
 | Statements (`parseStatement`) | `ExpressionStatement`, `Return`, `IfStatement`, `WhileStatement`, `DoWhileStatement`, `ForStatement`, `TryStatement`, `Continue`, `Break`, `PlaceholderStatement`, plus blocks (any node with `statements`) and declarations (any node with `declarations`) |
 | Type names (`parseTypeName`) | `ElementaryTypeName`, `ArrayTypeName`, `Mapping`, `UserDefinedTypeName`, `Identifier` |
-| Expressions (`parseExpression`) | `Literal`, `Identifier`, `BinaryOperation`, `UnaryOperation`, `Assignment`, `MemberAccess`, `IndexAccess`, `IndexRangeAccess`, `Conditional`, `TupleExpression`, `FunctionCall`, `ElementaryTypeNameExpression`, `NewExpression`, `ExpressionStatement` |
+| Expressions (`parseExpression`) | `Literal`, `Identifier`, `BinaryOperation`, `UnaryOperation`, `Assignment`, `MemberAccess`, `IndexAccess`, `IndexRangeAccess`, `Conditional`, `TupleExpression` (only a parenthesized expression, unwrapped; a real tuple or inline array is rejected), `FunctionCall`, `ElementaryTypeNameExpression`, `NewExpression`, `ExpressionStatement` |
 
 Note that a block and a variable-declaration statement are recognised by the presence of the
 `statements` / `declarations` field, not by their `nodeType`, so they do not appear as `case`

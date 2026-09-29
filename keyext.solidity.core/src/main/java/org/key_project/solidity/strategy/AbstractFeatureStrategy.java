@@ -104,7 +104,7 @@ public abstract class AbstractFeatureStrategy extends StaticFeatureCollection
     public abstract RuleAppCost instantiateApp(RuleApp app, PosInOccurrence pio, Goal goal,
             MutableState mState);
 
-    protected Feature forEach(TermBuffer x, TermGenerator gen, Feature body) {
+    protected Feature forEach(TermBuffer x, TermGenerator<Goal> gen, Feature body) {
         return ForEachCP.create(x, gen, body);
     }
 

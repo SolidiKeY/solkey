@@ -528,12 +528,10 @@ public abstract class TacletApp implements RuleApp {
                     proposals = proposals.prepend(proposal);
                 } while (conflictNames.contains(proposal));
 
-                throw new RuntimeException("TODO @ DD: Implement VarSV inst");
-
-                // LogicVariable v =
-                // new LogicVariable(-1, getRealSort(operatorSv));
-
-                // app = app.addCheckedInstantiation(operatorSv, tb.var(v), services, true);
+                BoundVariable v =
+                    new BoundVariable(new Name(proposal), app.getRealSort(operatorSv, services));
+                app = app.addInstantiation(operatorSv, services.getTermBuilder().var(v), true,
+                    services);
             } else {
                 if (force) {
                     return null;

@@ -80,11 +80,11 @@ public class SolJsonParserTest {
         // ... as a Field-sorted constant, so the selectSt/storeSt theory covers it uniformly
         // with struct members (phase 2 unification). Mapping and reference members carry a
         // Field sub-sort so rules dispatch on it instead of recovering the value kind from
-        // the AST; a value member stays base Field (SolJSONParser#fieldSortFor).
+        // the AST; a value member is a MemberField (SolJSONParser#fieldSortFor).
         var fieldConstant =
             services.getNamespaces().functions().lookup(balanceDecl.getFieldConstantName());
         assertNotNull(fieldConstant, "field constant should be registered");
-        assertEquals("Field", fieldConstant.sort().name().toString());
+        assertEquals("MemberField", fieldConstant.sort().name().toString());
         // no initializer -> the declaration has no syntactic children
         assertEquals(0, balanceDecl.getChildCount());
         assertThrows(IndexOutOfBoundsException.class, () -> balanceDecl.getChild(0));
@@ -569,7 +569,7 @@ public class SolJsonParserTest {
         var ageField = services.getNamespaces().functions()
                 .lookup(new Name("SimpleContract$Person$age"));
         assertNotNull(ageField, "struct member field constant should be registered");
-        assertEquals("Field", ageField.sort().name().toString());
+        assertEquals("MemberField", ageField.sort().name().toString());
     }
 
     @Test
@@ -1501,17 +1501,37 @@ public class SolJsonParserTest {
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract, services);
-        String contractS = contractDec.toString();
-        assertTrue(contractS.contains("State.Begin"));
-        EnumDeclaration stateEnum = contractDec.getEnumDeclarations().get(0);
         DeclarationStatement declStm = (DeclarationStatement) contractDec.getFunctions().getFirst()
                 .getBody().getStatements().get(0);
         StatementVariableDeclaration decl =
             (StatementVariableDeclaration) declStm.getDeclarations().get(0);
         ProgramVariable s = decl.getProgramVariable();
-        Type sType = s.getType();
-        assertInstanceOf(EnumDeclaration.class, sType);
-        assertSame(stateEnum, sType);
+        assertSame(UINT256, s.getType());
+        assertEquals("0", String.valueOf(declStm.getInitialValue()));
+    }
+
+    @Test
+    void enumMembersAreOrdinalsAndEnumFieldsAreInts() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    State state;
+                    function f() public {
+                        state = State.End;
+                    }
+                    enum State {
+                        Begin,
+                        End
+                    }
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract, services);
+        StateVariableDeclaration state = contractDec.getFieldDeclarations().get(0);
+        assertSame(UINT256, state.getType());
+        assertEquals(1, contractDec.getEnumDeclarations().get(0).findMember(new Name("End"))
+                .getOrdinal());
+        assertEquals("state = 1;",
+            contractDec.getFunctions().getFirst().getBody().getStatements().get(0).toString()
+                    .trim());
     }
 
     @Test

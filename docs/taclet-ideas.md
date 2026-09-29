@@ -1,6 +1,6 @@
 # Taclet Ideas (Backlog)
 
-Constructs that `Solidity.g4` parses but that have **no symbolic-execution
+Constructs that `SolidityRules.g4` parses but that have **no symbolic-execution
 taclet yet**, ordered simple → complex. This is a scratch backlog of *ideas*,
 not a spec. For each item: the grammar rule, the program shape, and a one-line
 note on the intended sequent transformation. Implement against the conventions
@@ -91,9 +91,6 @@ Edge cases of already-supported constructs (see `docs/taclets-implementation.md`
 - **Whole-struct write from a struct *value*** (`alice = pVal;`, vs. the
   supported root-to-root `alice = bob;`): needs Step-1 unfolding for struct
   constructors / memory-struct sources.
-- **Dynamic-array `delete arr;` length reset**: not modeled by the current
-  memory/storage delete rules. (Struct-`delete` preserving mapping members is now
-  implemented via the lazy `delNode` marker — see `docs/storage.md` §6.)
 - **Reject uint unary minus in the parsers** (solc compile error); today the
   shape is executed as plain `neg` on the unbounded logic int instead of being
   rejected up front.
@@ -107,12 +104,20 @@ Found by porting the Solidity compiler's own semantic tests into
 `keyext.solidity.examples/solc/` (`taclets-implementation.md`, "solc semantic-test ports").
 Each has a failing example in the suite naming it, so closing the gap is observable.
 
-- **`SolJSONParser`: self-recursive struct types.** `struct s2 { mapping(k => s2) recursive; }`
-  throws an NPE in `getOrCreateMappingKeYSolidityType` and takes the whole file down at load.
-  Worked around in the ports by unrolling the hierarchy.
 - **Mapping members must be aliased before being indexed.** `nested.recursive[4].z` is open
   where `map[4].z` with `map = nested.recursive` closes; the member-mapping index rules need
   the same complex-receiver capture the other index families have.
+
+## Raised by the mapping-index probe
+
+Found by pushing mapping indexing into its odd corners (nested mappings, arrays of mappings,
+storage pointers, memory-valued keys). Everything else in that sweep closes, except the
+non-integer key crash in `docs/bugs.md` and the gap below.
+
+- **An assignment used as an expression.** `balances[balances[1] = 2] = 7;` captures the index
+  correctly and then gets stuck on `u = (balances[1] = 2);` — no rule consumes an assignment in
+  value position. Related to `return e;` (Tier 3): both are expression forms the calculus only
+  handles as statements.
 
 ## Raised in priority by the TestSuite.sol migration
 
@@ -171,3 +176,20 @@ shape. Two neighbouring statement forms are not yet as general:
   reference into a storage location outside the receiver-capture path. A
   storage-to-memory element copy is a deep copy (`copySt`) and needs its own
   terminal, not just a capture.
+
+## Raised by the benchmark
+
+Found by loading published contracts as published (`keyext.solidity.examples/benchmark/`, whose
+README ranks every blocker by the number of contracts it stops). Parser gaps, not taclets, and
+the cheapest wins there:
+
+- **Event and error definitions** (`EventDefinition`, `ErrorDefinition`) are rejected at load, so
+  a contract that merely declares one does not load. Skip both, make `emit` a no-op (Tier 4),
+  and read `revert Err(..)` / `require(c, Err(..))` as `revert()` / `require(c)`.
+- **`require(c, "msg")`** fails with "Not yet supported literal"; the message can be ignored.
+- **`address(this).balance`** throws a `NullPointerException` in
+  `SolJSONParser.parseIdentifier` (`this` has no type) instead of reading `selfBalance`.
+- **`bytes32` / `bytes`** have no `KeYSolidityType`, so a contract declaring one does not load.
+- **Imports** are not resolved: only the opened file is handed to solc.
+- **`block.timestamp`** has no counterpart in the spec language, so a spec that mentions time
+  needs the `timeNow` convention.

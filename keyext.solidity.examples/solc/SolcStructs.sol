@@ -16,20 +16,15 @@ contract SolcStructs {
     struct Triple { uint x; uint y; uint z; }
     struct Flagged { uint x; bool y; }
 
-    // Upstream declares one self-recursive struct `s2 { …; mapping(k => s2) recursive; }`.
-    // `SolJSONParser` cannot build a struct type that refers to itself, so the hierarchy is
-    // unrolled to the two levels the tests actually walk (README, "Deviations").
-    struct Depth2 { uint z; Flagged flagged; }
-    struct Depth1 { uint z; Flagged flagged; mapping(uint => Depth2) recursive; }
-    struct Depth0 { uint z; Flagged flagged; mapping(uint => Depth1) recursive; }
+    struct s2 { uint z; Flagged flagged; mapping(uint => s2) recursive; }
 
     Simple data1;
     WithArray withArray;
     Triple triple;
     uint neighbourBefore;
     uint neighbourAfter;
-    Depth0 data;
-    Depth0 nested;
+    s2 data;
+    s2 nested;
     Pair source;
     Pair target;
     Pair[] pairs1;
@@ -98,9 +93,9 @@ contract SolcStructs {
     /// "Deviations").
     /// @custom:key box
     function recursiveStructThroughAliases() public {
-        mapping(uint => Depth1) storage map = data.recursive;
-        Depth1 storage inner = map[0];
-        mapping(uint => Depth2) storage innerMap = inner.recursive;
+        mapping(uint => s2) storage map = data.recursive;
+        s2 storage inner = map[0];
+        mapping(uint => s2) storage innerMap = inner.recursive;
         require(innerMap[1].z == 0);
         data.z = 2;
         inner.z = 3;
@@ -116,11 +111,11 @@ contract SolcStructs {
     /// nests both a plain struct and a recursive mapping; every write is independent. One
     /// alias per member mapping, as in [recursiveStructThroughAliases].
     function nestedRecursiveStructSetAndCheck() public {
-        mapping(uint => Depth1) storage map = nested.recursive;
-        Depth1 storage third = map[3];
-        mapping(uint => Depth2) storage thirdMap = third.recursive;
-        Depth1 storage fourth = map[4];
-        mapping(uint => Depth2) storage fourthMap = fourth.recursive;
+        mapping(uint => s2) storage map = nested.recursive;
+        s2 storage third = map[3];
+        mapping(uint => s2) storage thirdMap = third.recursive;
+        s2 storage fourth = map[4];
+        mapping(uint => s2) storage fourthMap = fourth.recursive;
         nested.z = 1;
         nested.flagged.x = 2;
         nested.flagged.y = true;

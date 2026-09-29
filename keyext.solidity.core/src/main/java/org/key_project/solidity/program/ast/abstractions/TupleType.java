@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.util.collection.ImmutableArray;
 
 
@@ -32,8 +33,7 @@ public class TupleType implements Type {
     public SyntaxElement getChild(int n) {
         if (0 <= n && n < getChildCount())
             return types.get(n);
-        throw new IndexOutOfBoundsException(
-            "Index should be 0 <= " + n + " < " + getChildCount());
+        throw SolidityProgramElement.outOfBounds(n, getChildCount());
     }
 
     @Override

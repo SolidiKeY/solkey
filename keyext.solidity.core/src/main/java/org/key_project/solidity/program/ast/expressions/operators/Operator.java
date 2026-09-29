@@ -3,14 +3,13 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions.operators;
 
-import org.key_project.logic.SyntaxElement;
-import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.LeafProgramElement;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 
 import static org.key_project.solidity.program.ast.expressions.operators.Operator.OperatorPos.POSTFIX;
 import static org.key_project.solidity.program.ast.expressions.operators.Operator.OperatorPos.PREFIX;
 
-public enum Operator implements SolidityProgramElement {
+public enum Operator implements LeafProgramElement {
     POST_INC("++", 15, 0, POSTFIX),
     POST_DEC("--", 15, 0, POSTFIX),
     PRE_INC("++", 14, 0, PREFIX),
@@ -92,16 +91,6 @@ public enum Operator implements SolidityProgramElement {
         this(symbol, precedence, assoc, OperatorPos.INFIX);
     }
 
-
-    @Override
-    public SyntaxElement getChild(int n) {
-        throw new IndexOutOfBoundsException("Operators have no children");
-    }
-
-    @Override
-    public int getChildCount() {
-        return 0;
-    }
 
     @Override
     public void visit(Visitor v) {

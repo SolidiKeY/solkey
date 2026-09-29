@@ -14,6 +14,8 @@ import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.Nullable;
 
+import static org.key_project.solidity.program.ast.SolidityProgramElement.takeChild;
+
 public class Uint256Literal extends Literal {
 
     @Override
@@ -28,7 +30,7 @@ public class Uint256Literal extends Literal {
 
     public Uint256Literal(ExtList children) {
         super(PrimitiveType.UINT256);
-        this.value = Objects.requireNonNull(children.removeFirstOccurrence(BigInteger.class));
+        this.value = takeChild(children, BigInteger.class);
     }
 
     public BigInteger getValue() {
@@ -42,11 +44,6 @@ public class Uint256Literal extends Literal {
 
     public void visit(Visitor v) {
         v.performActionOnUint256Literal(this);
-    }
-
-    @Override
-    public int computeHashCode() {
-        return 37 * super.computeHashCode() + value.hashCode();
     }
 
     @Override

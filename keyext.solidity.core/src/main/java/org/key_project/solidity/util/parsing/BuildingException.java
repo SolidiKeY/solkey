@@ -22,6 +22,11 @@ public class BuildingException extends RuntimeException {
         offendingSymbol = null;
     }
 
+    public BuildingException(String message, @Nullable Throwable e) {
+        super(message, e);
+        offendingSymbol = null;
+    }
+
     public BuildingException(@Nullable ParserRuleContext ctx, String message,
             @Nullable Throwable e) {
         this(ctx == null ? null : ctx.start, message, e);

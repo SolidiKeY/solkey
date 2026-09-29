@@ -134,7 +134,7 @@ public class ProofStarter {
 
             proof.setActiveStrategy(strategy);
 
-            var goalChooser = profile.<Proof, Goal>getSelectedGoalChooserBuilder().create();
+            var goalChooser = profile.getSelectedGoalChooserBuilder().create();
             ProverCore<@NonNull Proof, Goal> prover = new ApplyStrategy(goalChooser);
             if (ptl != null) {
                 prover.addProverTaskObserver(ptl);

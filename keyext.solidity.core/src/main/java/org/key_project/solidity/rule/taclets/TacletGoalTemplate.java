@@ -19,6 +19,8 @@ import org.jspecify.annotations.NonNull;
 /// implemented in subclasses
 public class TacletGoalTemplate
         extends org.key_project.prover.rules.tacletbuilder.TacletGoalTemplate {
+    private final ImmutableList<Taclet> rules;
+
     /// creates new Goaldescription
     ///
     /// @param addedSeq new [Sequent] to be added
@@ -30,6 +32,7 @@ public class TacletGoalTemplate
             ImmutableList<Taclet> addedRules,
             ImmutableSet<SchemaVariable> addedProgVars) {
         super(addedSeq, addedRules, addedProgVars);
+        this.rules = addedRules;
     }
 
     /// creates new Goaldescription same effect as <code>new TacletGoalTemplate(addedSeq,
@@ -57,7 +60,7 @@ public class TacletGoalTemplate
     /// @return IList<Taclet> contains new introduced rules
     @Override
     public @NonNull ImmutableList<Taclet> rules() {
-        return (ImmutableList<@NonNull Taclet>) super.rules();
+        return rules;
     }
 
     public Object replaceWithExpressionAsObject() {

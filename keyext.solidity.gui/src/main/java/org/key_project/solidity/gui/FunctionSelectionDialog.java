@@ -10,14 +10,17 @@ import java.awt.Window;
 import java.awt.event.KeyEvent;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
@@ -41,7 +44,13 @@ final class FunctionSelectionDialog extends JDialog {
     /// `ProofManagementDialog.previouslySelectedContracts`.
     private static final Map<Path, SolidityProblemSpec> LAST_SELECTION = new HashMap<>();
 
+    /// The taclet option a specified function is proved under; the first entry is the default.
+    static final String[] TRANSFER_SEMANTICS =
+        { "transferSemantics:noCallback", "transferSemantics:withCallback" };
+
     private final FunctionSelectionPanel panel;
+    private final JComboBox<String> transferSemantics =
+        new JComboBox<>(new String[] { "transfer without callback", "transfer with callback" });
     private final JButton start = new JButton("Start Proof");
     private @Nullable SolidityProblemSpec result;
 
@@ -54,6 +63,8 @@ final class FunctionSelectionDialog extends JDialog {
         SolidityProblemSpec previous = LAST_SELECTION.get(file.toAbsolutePath());
         if (previous != null && previous.contract() != null && previous.function() != null) {
             panel.select(previous.contract(), previous.function());
+            transferSemantics.setSelectedIndex(
+                previous.choices().contains(TRANSFER_SEMANTICS[1]) ? 1 : 0);
         }
 
         start.addActionListener(e -> onStart());
@@ -66,6 +77,11 @@ final class FunctionSelectionDialog extends JDialog {
         JPanel buttons = new JPanel();
         buttons.setLayout(new BoxLayout(buttons, BoxLayout.LINE_AXIS));
         buttons.setBorder(BorderFactory.createEmptyBorder(8, 12, 12, 12));
+        transferSemantics.setToolTipText("How a .transfer is modelled when the function is proved"
+            + " against its specification: without callbacks (the default) or with the invariant"
+            + " re-established at every payment");
+        buttons.add(new JLabel("Transfer semantics: "));
+        buttons.add(transferSemantics);
         buttons.add(Box.createHorizontalGlue());
         buttons.add(cancel);
         buttons.add(Box.createHorizontalStrut(6));
@@ -99,12 +115,19 @@ final class FunctionSelectionDialog extends JDialog {
 
     private void updateStartButton() {
         start.setEnabled(panel.selection().isPresent());
+        transferSemantics.setEnabled(panel.selectionIsSpecified());
     }
 
     private void onStart() {
         panel.selection().ifPresent(spec -> {
-            result = spec;
+            result = withTransferSemantics(spec, transferSemantics.getSelectedIndex());
             dispose();
         });
+    }
+
+    static SolidityProblemSpec withTransferSemantics(SolidityProblemSpec spec, int index) {
+        return index == 0 ? spec
+                : new SolidityProblemSpec(spec.contract(), spec.function(),
+                    List.of(TRANSFER_SEMANTICS[index]));
     }
 }

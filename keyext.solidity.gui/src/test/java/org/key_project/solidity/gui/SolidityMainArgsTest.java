@@ -6,6 +6,7 @@ package org.key_project.solidity.gui;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import org.key_project.solidity.gui.SolidityMain.Invocation;
 import org.key_project.solidity.proof.init.SolidityProblemSpec;
@@ -81,6 +82,17 @@ public class SolidityMainArgsTest {
     void theFlagsApplyToSolidityFilesOnly() {
         assertTrue(rejects("a.key", "-f", "f").getMessage().contains(".sol files only"));
         assertEquals("a.key", parse("a.key").file().getName());
+    }
+
+    @Test
+    void tacletOptionsTravelWithTheFunction() {
+        assertEquals(new SolidityProblemSpec("C", "f", List.of("transferSemantics:withCallback")),
+            parse("A.sol", "-c", "C", "-f", "f", "-O", "transferSemantics:withCallback").spec());
+        assertEquals(List.of("a:b", "c:d"),
+            parse("A.sol", "-f", "f", "--option", "a:b", "-O", "c:d").spec().choices());
+        rejects("A.sol", "-O", "transferSemantics:withCallback");
+        rejects("-O", "a:b");
+        rejects("A.sol", "-f", "f", "-O", "withCallback");
     }
 
     @Test

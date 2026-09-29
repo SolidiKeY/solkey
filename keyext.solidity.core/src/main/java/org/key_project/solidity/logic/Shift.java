@@ -45,7 +45,7 @@ public class Shift {
             applyOnSubterm(t, i, newSubterms);
         }
         return tb.tf().createTerm(t.op(), newSubterms,
-            (ImmutableArray<QuantifiableVariable>) t.boundVars());
+            t.boundVars());
     }
 
     /// Apply the substitution of the subterm <code>subtermIndex</code> of term/formula

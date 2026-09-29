@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.program.ast.HashCachingElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
@@ -18,7 +19,7 @@ import org.jspecify.annotations.Nullable;
 
 /// At the moment TryStatement is not a ProgramPrefix as it works different to
 /// Java and we may not want it to disappear in the prefix, this has to be checked
-public class TryStatement implements Statement {
+public class TryStatement extends HashCachingElement implements Statement {
 
     private final Expression expression;
     private final ImmutableArray<@NonNull ProgramVariable> returnDeclaration;
@@ -26,7 +27,6 @@ public class TryStatement implements Statement {
     private final ImmutableArray<@NonNull CatchClause> catchClauses;
 
     // cache hash
-    private int hashcode = -1;
 
     public TryStatement(Expression expression,
             ImmutableArray<@NonNull ProgramVariable> returnDeclaration,
@@ -105,12 +105,8 @@ public class TryStatement implements Statement {
     }
 
     @Override
-    public int hashCode() {
-        if (hashcode == -1) {
-            int hash = Objects.hash(expression, returnDeclaration, body, catchClauses);
-            hashcode = hash == -1 ? 0 : hash;
-        }
-        return hashcode;
+    public int computeHashCode() {
+        return Objects.hash(expression, returnDeclaration, body, catchClauses);
     }
 
     @Override

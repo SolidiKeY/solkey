@@ -6,10 +6,12 @@ package org.key_project.solidity.gui;
 import java.awt.Font;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 import org.key_project.solidity.program.parser.SolidityOutline;
 import org.key_project.solidity.program.parser.SolidityOutline.Span;
+import org.key_project.solidity.proof.init.SolidityProblemSpec;
 
 import org.junit.jupiter.api.Test;
 
@@ -34,7 +36,7 @@ public class FunctionSelectionPanelTest {
                 function returnsSomething() public returns (uint r) { r = 1; }
             }
             contract B {
-                function pay(address payable a) public { a.transfer(5); }
+                function pay(string memory memo) public { }
                 function withdraw() public { assert(false); }
             }
             """;
@@ -53,8 +55,8 @@ public class FunctionSelectionPanelTest {
         var returnsSomething = new SolidityOutline.Function("returnsSomething", List.of(), 1, "",
             spanOf("function returnsSomething() public returns (uint r) { r = 1; }"));
         var pay = new SolidityOutline.Function("pay",
-            List.of(new SolidityOutline.Parameter("a", "address payable")), 0, "",
-            spanOf("function pay(address payable a) public { a.transfer(5); }"));
+            List.of(new SolidityOutline.Parameter("memo", "string")), 0, "",
+            spanOf("function pay(string memory memo) public { }"));
         var withdraw = new SolidityOutline.Function("withdraw", List.of(), 0, "",
             spanOf("function withdraw() public { assert(false); }"));
         return new SolidityOutline(List.of(
@@ -91,7 +93,7 @@ public class FunctionSelectionPanelTest {
     @Test
     void labelsCarryTheParameterList() {
         var pay = outline().contract("B").orElseThrow().function("pay").orElseThrow();
-        assertEquals("pay(address payable a)", FunctionSelectionPanel.label(pay));
+        assertEquals("pay(string memo)", FunctionSelectionPanel.label(pay));
 
         var ok = outline().contract("A").orElseThrow().function("ok").orElseThrow();
         assertEquals("ok()", FunctionSelectionPanel.label(ok));
@@ -109,7 +111,7 @@ public class FunctionSelectionPanelTest {
         String payTooltip = FunctionSelectionPanel
                 .tooltip(outline().contract("B").orElseThrow().function("pay").orElseThrow());
         assertNotNull(payTooltip);
-        assertTrue(payTooltip.contains("address payable"), payTooltip);
+        assertTrue(payTooltip.contains("unsupported type string"), payTooltip);
     }
 
     /// The first provable function is preselected, so the dialog opens ready to start.
@@ -140,7 +142,7 @@ public class FunctionSelectionPanelTest {
         panel.select("B", "pay");
 
         assertTrue(panel.selection().isEmpty());
-        assertEquals("function pay(address payable a) public { a.transfer(5); }",
+        assertEquals("function pay(string memory memo) public { }",
             panel.sourceText());
         assertTrue(panel.headerText().contains("B.pay"), panel.headerText());
     }
@@ -181,5 +183,31 @@ public class FunctionSelectionPanelTest {
         FunctionSelectionPanel plain = panel();
         assertTrue(plain.headerText().contains("diamond modality"), plain.headerText());
         assertFalse(plain.headerText().contains("not provable"), plain.headerText());
+        assertFalse(plain.selectionIsSpecified());
+    }
+
+    /// A specified function is proved in the box modality against the contract invariant, and
+    /// the header says so; the transfer semantics then becomes a meaningful choice.
+    @Test
+    void theHeaderNamesTheSpecification() {
+        var deposit = new SolidityOutline.Function("deposit", List.of(), List.of(), "payable",
+            "@custom:key requires n == 0\n@custom:key ensures n == 1",
+            spanOf("function ok() public { assert(true); }"));
+        var contract = new SolidityOutline.Contract("C",
+            "@custom:key invariant n >= 0\n@custom:key invariant n < 10",
+            List.of(new SolidityOutline.Variable("n", "uint256")), Map.of(), Map.of(),
+            List.of(deposit));
+        FunctionSelectionPanel panel = new FunctionSelectionPanel(
+            new SolidityOutline(List.of(contract)), BYTES,
+            new Font(Font.MONOSPACED, Font.PLAIN, 12));
+
+        assertTrue(panel.headerText().contains(
+            "box modality, specified: 2 invariant, 1 requires, 1 ensures"), panel.headerText());
+        assertTrue(panel.selectionIsSpecified());
+        assertEquals(new SolidityProblemSpec("C", "deposit",
+            List.of("transferSemantics:withCallback")),
+            FunctionSelectionDialog.withTransferSemantics(panel.selection().orElseThrow(), 1));
+        assertEquals(panel.selection().orElseThrow(),
+            FunctionSelectionDialog.withTransferSemantics(panel.selection().orElseThrow(), 0));
     }
 }

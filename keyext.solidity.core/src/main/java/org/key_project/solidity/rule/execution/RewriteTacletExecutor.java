@@ -5,7 +5,6 @@ package org.key_project.solidity.rule.execution;
 
 import org.key_project.logic.IntIterator;
 import org.key_project.logic.Term;
-import org.key_project.logic.op.QuantifiableVariable;
 import org.key_project.logic.op.SortedOperator;
 import org.key_project.logic.sort.Sort;
 import org.key_project.prover.rules.RuleApp;
@@ -21,7 +20,6 @@ import org.key_project.solidity.rule.SolTaclet;
 import org.key_project.solidity.rule.matching.inst.MatchConditions;
 import org.key_project.solidity.rule.taclets.TacletGoalTemplate;
 import org.key_project.solidity.rule.taclets.builder.RewriteTacletGoalTemplate;
-import org.key_project.util.collection.ImmutableArray;
 
 public class RewriteTacletExecutor
         extends FindTacletExecutor {
@@ -109,7 +107,7 @@ public class RewriteTacletExecutor
                 mc, newMaxSort, goal, services, ruleApp);
 
             return services.getTermFactory().createTerm(term.op(), subs,
-                (ImmutableArray<QuantifiableVariable>) term.boundVars());
+                term.boundVars());
         }
 
         with = syntacticalReplace(with, posOfFind, mc, goal, ruleApp, services);

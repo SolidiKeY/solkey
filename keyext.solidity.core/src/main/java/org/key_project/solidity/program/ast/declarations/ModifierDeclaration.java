@@ -8,6 +8,7 @@ import java.util.List;
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.Visibility;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.util.collection.ImmutableArray;
@@ -36,8 +37,7 @@ public class ModifierDeclaration implements Declaration {
             return inputParameters.get(n);
         if (n == inputParameters.size())
             return body;
-        throw new IndexOutOfBoundsException(
-            "Index should be 0 <= " + n + " < " + getChildCount());
+        throw SolidityProgramElement.outOfBounds(n, getChildCount());
     }
 
     @Override

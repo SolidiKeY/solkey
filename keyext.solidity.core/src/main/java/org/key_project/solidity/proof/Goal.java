@@ -240,7 +240,7 @@ public class Goal implements ProofGoal<@NonNull Goal> {
                 ruleAppManager.copy(),
                 localNamespaces);
         }
-        clone.listeners = (List<GoalListener>) ((ArrayList<GoalListener>) listeners).clone();
+        clone.listeners = new ArrayList<>(listeners);
         // clone.automatic = this.automatic;
         return clone;
     }

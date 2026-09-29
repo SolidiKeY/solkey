@@ -6,7 +6,7 @@ package org.key_project.solidity.program.ast.expressions.operators;
 import java.util.Objects;
 
 import org.key_project.logic.SyntaxElement;
-import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.HashCachingElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
@@ -14,13 +14,13 @@ import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.Nullable;
 
-public final class AssignExpression
-        implements SolidityProgramElement, Expression, OperatorExpression {
+import static org.key_project.solidity.program.ast.SolidityProgramElement.takeChild;
+
+public final class AssignExpression extends HashCachingElement implements OperatorExpression {
 
     private final Operator operator;
     private final Expression lhs;
     private final Expression rhs;
-    private int hashcode = -1;
 
     public AssignExpression(Operator operator, Expression lhs, Expression rhs) {
         this.operator = Objects.requireNonNull(operator);
@@ -29,9 +29,9 @@ public final class AssignExpression
     }
 
     public AssignExpression(ExtList children) {
-        this.operator = Objects.requireNonNull(children.removeFirstOccurrence(Operator.class));
-        this.lhs = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
-        this.rhs = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.operator = takeChild(children, Operator.class);
+        this.lhs = takeChild(children, Expression.class);
+        this.rhs = takeChild(children, Expression.class);
     }
 
     @Override
@@ -80,15 +80,6 @@ public final class AssignExpression
         if (!(o instanceof AssignExpression that))
             return false;
         return operator.equals(that.operator) && lhs.equals(that.lhs) && rhs.equals(that.rhs);
-    }
-
-    @Override
-    public int hashCode() {
-        if (hashcode == -1) {
-            int hash = computeHashCode();
-            hashcode = hash == -1 ? 0 : hash;
-        }
-        return hashcode;
     }
 
 }

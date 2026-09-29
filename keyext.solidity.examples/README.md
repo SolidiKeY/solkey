@@ -1,7 +1,11 @@
 # Solidity Examples
 
 `TestSuite.sol` holds the taclet examples; `net/` holds the scenario contracts with their
-invariant-based `.key` proof obligations (see "The `net/` directory").
+invariant-based `.key` proof obligations (see "The `net/` directory"); `contracts/` holds the
+solidiKeY example contracts, specified in natspec `@custom:key` clauses (see "The `contracts/`
+directory"); `real-world/` holds published contracts specified the same way (see "The
+`real-world/` directory"); `benchmark/` holds published contracts kept as published, to measure
+what SolKey verifies without a rewrite (see "The `benchmark/` directory").
 
 There are no `.key` problem files beside `TestSuite.sol`: the loader reads the contract and
 synthesizes one obligation per function, so the whole specification lives in the Solidity body
@@ -25,7 +29,9 @@ a range). Three kinds of case are skipped rather than failed:
 
 ## Writing an example
 
-Every function is `public` and returns nothing. A function may take arguments: the loader
+Every function is `public` and returns nothing. Mark it `pure` or `view` when it touches no
+storage or only reads it, so solc compiles the file without warnings; `./run-key.sh FILE.sol
+--solc` lists what is left. A function may take arguments: the loader
 declares one unconstrained program variable per parameter and passes them as the call's
 arguments, so the function must be box-tagged and pin the values its asserts rely on in one
 conjoined `require(x == 5 && y == 7)` — it plays the role of the old `.key` precondition
@@ -82,8 +88,16 @@ and `storagePushReadBack` on a fully unknown storage.
 | Natspec tag | Effect |
 |---|---|
 | `/// @custom:key box` | box modality — `require` becomes an assumption |
+| `/// @custom:key skip` | no obligation for this function (loops, constructors) |
+| `/// @custom:key invariant e` | on the contract: a conjunct of the contract invariant `CInv` |
+| `/// @custom:key requires e` | assumed before the call (the old `only_if`) |
+| `/// @custom:key ensures e` | proved after the call (the old `on_success`) |
+| `/// @custom:key assignable …` | accepted and ignored: bodies are inlined whole |
 
-`@custom:` is solc's extension prefix; any other tag is rejected as invalid documentation.
+`@custom:` is solc's extension prefix; any other tag is rejected as invalid documentation. A
+tag starts a line and a clause runs to the next tag, so a long clause may continue on the next
+`///` line. The last four make a function *specified* — see "The `contracts/` directory" for
+what that means and for the expression language.
 
 ## Known gaps
 
@@ -91,11 +105,12 @@ Three shapes have no `assert` form and are not covered by any example:
 
 - **"this always reverts"** — was `\[{ … }\](false)`. `require`'s box false-branch and
   out-of-bounds array access used to be checked this way.
-- **The `net` payment ledger** (`docs/net.md`) — needs `\rules` blocks to define `CInv`,
-  which a synthesized obligation cannot carry. (Taclet *options* it can: a `.sol` obligation
-  takes them from `run-key.sh -O category:choice`, which is how the `indexWriteCapture`
-  examples are proved under both calculi.) Covered by the `.key` problems of `net/` instead, which call real functions of
-  the contracts beside them (see "The `net/` directory" below).
+- **The `net` payment ledger** (`docs/net.md`) — needs a `\rules` block to define `CInv`
+  and an obligation that books `msg.value`, which the plain `assert`-style obligation does
+  not carry. Covered by the `.key` problems of `net/` (see "The `net/` directory" below) and,
+  since the `@custom:key` clauses exist, by the specified contracts of `contracts/`, whose
+  obligation is generated in exactly that shape. (Taclet *options* a plain obligation can
+  take too: `run-key.sh -O category:choice`, e.g. `-O transferSemantics:withCallback`.)
 - **Whole-subtree equality** — `find<[int]>(storage, cons2(matrix, at(0))) = find<[int]>(storage,
   cons1(values))` compares two storage subtrees; Solidity cannot state it, and reading
   `matrix[0].length` back does not discharge. `storageIndexCopysourceAfterPush` therefore only
@@ -209,10 +224,145 @@ without pointing at the culprit:
   (`uint rt = timeNow + delayUntilRelease; releaseTime = rt;`);
 - a bare `require(someBool)` on a storage bool is assumable but not observable: a local
   bound from that bool won't discharge an assert. Use `require(someBool == true)` when the
-  proof later needs the value;
-- a parenthesized subexpression inside a larger condition
-  (`require(a && (b || c))`) is a solc `TupleExpression`, which `SolJSONParser` rejects at
-  load time — split it into its own `require(b || c)`.
+  proof later needs the value.
+
+## The `contracts/` directory
+
+`contracts/` holds the example contracts of solidiKeY (`solidity-contracts-examples` of the
+`solidityFlattening` branch), whose `SoliditySpecCompiler` turned `/*@ contract_invariant …
+only_if … on_success … */` blocks into a `.key` problem. Here the same specification lives in
+`@custom:key` natspec clauses and the obligation is generated when the `.sol` is loaded, so
+every function runs with `./run-key.sh contracts/Escrow.sol -f placeInEscrow`, with the whole
+file (`./run-key.sh contracts/Escrow.sol`), and in KeYther (open the file, pick the function;
+the browser's header says what it is proved against). `--print-problem` prints the generated
+`.key` text, which is the `net/*.key` shape: an `insertCInv` taclet defining `CInv(s, n)` as
+the conjoined invariants, and the ISoLA 2020 eq.-4 problem
+
+```
+msg.value bound & requires & CInv(storage, net) ->
+{[old := storage || oldNet := net ||] net := storeSt(net, at(msgSender), net(msgSender) + msgValue)
+ || selfBalance := selfBalance + msgValue}
+\[{ [result = ]f()@C; }\] (CInv(storage, net) & ensures)
+```
+
+A specified function is always proved in the box modality (partial correctness, as the paper);
+`msg.value >= 0` is assumed for a `payable` function and `msg.value == 0` otherwise. `-O
+transferSemantics:withCallback` (the dialog's "transfer with callback" in KeYther) selects the
+callback rules, which re-establish `CInv` at every `.transfer`.
+
+### Specification expressions
+
+Solidity-like, with a few logic additions:
+
+```
+expr    ::= iff
+iff     ::= impl ('<->' impl)*            impl ::= or ('->' impl)?
+or      ::= and ('||' and)*               and  ::= eq ('&&' eq)*
+eq      ::= rel (('==' | '!=') rel)?      rel  ::= add (('<' | '<=' | '>' | '>=') add)?
+add     ::= mul (('+' | '-') mul)*        mul  ::= unary (('*' | '/' | '%') unary)*
+unary   ::= ('!' | '-') unary | postfix   postfix ::= primary ('[' expr ']' | '.' IDENT)*
+primary ::= INT | true | false | IDENT | net(expr) | \old(expr) | \result | address(expr)
+          | this | (expr) | (\forall | \exists) sort IDENT ; expr
+```
+
+A quantifier's body extends as far right as possible; parenthesize it to end it earlier. What
+each construct becomes (`S` is `s` inside the invariant, `storage` in requires/ensures, `old`
+inside `\old`; `N` likewise `n`/`net`/`oldNet`):
+
+| Spec | Term |
+|---|---|
+| state variable `x` | `find<[int]>(S, cons1(C$x))`, a `bool` one `find<[bool]>(…) = TRUE` |
+| `m[k]`, `arr[i]`, `arr.length`, `st.f` | `find<[τ]>(S, cons2(C$m, at(k)))`, `… at(i)`, `… size`, `cons2(C$st, C$St$f)` |
+| `Enum.Member` | the member's ordinal |
+| `net(a)`, `msg.sender`, `msg.value`, `address(this)` | `selectSt<[int]>(N, at(a))`, `msgSender`, `msgValue`, `self` |
+| parameter `p`, `\result` | the program variable `p`, `result` (needs one *named* return) |
+| `\old(e)` | `e` over `old`/`oldNet` (ensures only) |
+| `== != < <= > >= + - * / %` | `= , !(=), <, <=, >, >=, +, -, *, div, mod`; `==` on bools is `<->` |
+| `&& \|\| ! -> <->`, `\forall address a; e` | `& \| ! -> <->`, `\forall int a; e` (`bool` stays `bool`) |
+
+Errors (an unknown identifier, `\old` outside ensures, indexing a non-mapping, …) name the
+function and the clause. The grammar is `src/main/antlr/SolSpec.g4`, the compiler a visitor
+over its parse tree (`speclang/natspec/SpecCompiler`), and the golden tests `SpecCompilerTest`
+list every row.
+
+### The contracts
+
+- **`Escrow.sol`** — escrow-v2 with its `State` enum and all three functions, the course
+  invariant (`sender != receiver`, `amountInEscrow == net(sender) + net(receiver)`, the two
+  state conditionals) and the original `only_if`/`on_success` clauses. All close; the
+  original's extra `\forall address a; …` "no third party pays" conjunct is left out — it
+  would need the callee-side reasoning of `withdrawFromEscrow`'s transfer.
+- **`PiggyBank.sol`** — PiggyBank1 with its enum; the original carried no specification, so
+  the course invariant of `net/PiggyBankNet.sol` is used and the modifier conditions become
+  `requires`. Both functions close.
+- **`MultiAuction.sol`** — the quantified invariant ported as written (`\exists address hb;
+  \forall address a; …`, array membership via `\exists uint i; … bidders[i] == a`,
+  `auctionOwner != address(this)`). Its obligations load, expand the invariant and run, but
+  automode does not close them: the quantifier instantiations explode into hundreds of goals
+  within the step budget, including goals that are closable by hand (`ContractExamplesTest`
+  lists `placeOrIncreaseBid`, `withdraw` and even the empty `myTest` as known-open).
+  `closeAuction` is skipped: its loops have no rules.
+- **`Storage.sol`** — MyContract's live probes `m`, `a1`, `d1`, `f`, `h` with their `\result`
+  clauses as named returns. All close. (`m` writes 8 and the original spec claimed 7; the port
+  states what the body does.)
+
+Not ported: `multicontract/MultiAuction.sol` (a `library` with a struct-with-mapping parameter;
+libraries are unsupported) and `text/`. The `net/*.key` problems stay as the hand-written
+reference for the same obligation shape.
+
+Every body follows the calculus conventions listed under "The `net/` directory": modifiers
+are inlined requires, `now` is a `timeNow` state variable, a storage read inside a comparison
+or a compound expression is bound to a local first. `ContractExamplesTest` enumerates the
+directory (the CI-only `solidityExamples` group), so a new contract joins by being written.
+
+## The `real-world/` directory
+
+`real-world/` holds small contracts taken from well-known public sources: the Solidity
+documentation, Solidity by Example, OpenZeppelin and the deployed WETH9. Each one is specified
+in `@custom:key` clauses like `contracts/`, and every function is proved. Each file's header
+names its source and lists every change to the original. Those changes are only what the
+supported fragment forces: events, custom errors and string metadata are dropped, modifiers
+and internal helpers are inlined, `block.timestamp` becomes `timeNow`, storage reads are bound
+to locals as described under "Calculus conventions", and `return true;` becomes an assignment
+to a named return. `ContractExamplesTest` enumerates this directory too.
+
+Checked arithmetic is not modelled (integers are unbounded), so a `uint` parameter gets a
+`requires x >= 0`, and a function whose body would underflow gets a `requires` for the case in
+which the EVM does not revert. Access control is stated as an `ensures` rather than a
+`requires`: `ensures \old(_owner) == msg.sender` holds on every run that does not revert, so it
+proves that the code's own checks keep everyone else out.
+
+- **`SimpleAuction.sol`** — the Solidity docs' open auction. The invariant is
+  `\forall address a; pendingReturns[a] >= 0`. `bid` credits the outbid leader with their bid;
+  `withdraw` zeroes the caller's refund and pays exactly that amount (`net` drops by it);
+  `auctionEnd` pays the highest bid to the beneficiary. `send` has no rule yet, so `withdraw`
+  uses `transfer` and returns nothing.
+- **`Purchase.sol`** — the Solidity docs' Safe Remote Purchase, a state machine with a
+  ledger invariant for each state: the seller has 2 × value deposited while Created, Locked and
+  Release, and the buyer has 0, 2 × value and value in those states; once Inactive, their nets
+  cancel out. `refundSeller` ends with the seller at `-value` (deposit back plus the price) and
+  the buyer at `value`. `confirmPurchase` assumes a fresh buyer.
+- **`ERC20.sol`** — Solidity by Example's token. `transfer`/`transferFrom` move the amount
+  between the two balances (self-transfer leaves the balance unchanged), keep `totalSupply` and
+  spend the allowance; `transfer` also proves that no other balance changes (`\forall address a;
+  …`). `approve`, `mint` and `burn` are specified too.
+- **`WETH9.sol`** — Wrapped Ether ported to 0.8. `deposit` and `withdraw` prove that the token
+  balance and the payment ledger move together (tokens minted or burned = ether received or
+  paid out); `transferFrom` also covers the unlimited-allowance case.
+- **`EtherWallet.sol`** — Solidity by Example's wallet. `withdraw` proves that only the owner
+  can withdraw and that the owner receives exactly `_amount`.
+- **`Ownable.sol`** — OpenZeppelin's `Ownable`, simplified: `transferOwnership` and
+  `renounceOwnership` succeed only for the current owner and set the new one.
+
+Every clause was checked for vacuity: changing it to something false leaves the proof open.
+
+## The `benchmark/` directory
+
+Where `real-world/` rewrites a contract until it closes, `benchmark/` keeps the published source
+and allows only light, listed hacks; every file carries a specification. A contract that needs
+more is not added, only listed with its blocker. `scripts/benchmark.sh` prints `N/M` per
+contract. The results, and the blockers ranked by how many contracts they stop, are in
+`benchmark/README.md`. No test group runs this directory.
 
 ## The `solc/` directory
 
@@ -229,6 +379,25 @@ kept red on purpose. `SolcSemanticsExamplesTest` enumerates the directory, so a 
 joins `./gradlew :keyext.solidity.core:testSolidityExamples` (the CI-only examples group)
 by being written.
 
+## The `proofs/` directory
+
+`TacletCoverageTest` (the CI-only examples group) requires every taclet of the Solidity rule
+files to be applied by some proof: a `TestSuite.sol` function in automode, or a saved proof here
+for the taclets no such function reaches. Each `NAME.key` is a problem whose proof applies the
+taclet `NAME`. It is either a logic lemma, for a taclet whose function symbols the program rules
+never produce (`headDefinition`, `precOfInt`, `applySkip3`, …), or a `TestSuite.sol` obligation
+the synthesizer cannot state: one where automode prefers a competing rule
+(`localDeclPostdecrement`), or a diamond `transfer` that needs a `selfBalance` precondition.
+`NAME.proof` beside it is the saved proof the test replays. After adding a `.key` or changing
+the rules, regenerate the proofs with
+
+```bash
+./gradlew :keyext.solidity.core:testSolidityExamples --tests "*TacletCoverageTest" \
+    -Dorg.key_project.solidity.taclets.TacletCoverageTest.update=true
+```
+
+A new taclet that a `TestSuite.sol` function can exercise gets a function there instead.
+
 ## The `unprovable/` directory
 
 `unprovable/` holds valid solc ≥ 0.8 examples whose EVM behavior the calculus does not model,
@@ -237,6 +406,36 @@ EVM's checked arithmetic (Panic 0x11) before their `assert(false)`, while SolKey
 mathematical integers give the overflowing operation a non-reverting path. No test suite scans
 the directory; moving an example here is how it is retired from the suites while staying
 compilable.
+
+## The `illegal/` directory
+
+`illegal/` holds the mapping shapes Solidity itself rejects — currently `IllegalMappings.sol`.
+A mapping lives only in storage: it has no memory or calldata representation, it cannot be
+copied, assigned or deleted as a whole, and its key must be elementary. Each construct is a
+commented-out line with the verbatim solc diagnostic above it, so the file compiles and no suite
+scans the directory; uncommenting a line must reproduce the quoted error. The record says which
+rules the calculus never has to have, and its legal counterparts are the "Mapping indices"
+section of `TestSuite.sol`.
+
+`illegal/nocompile/` is the executable half of that record: one **minimal contract per construct**,
+written out rather than commented out, so each file really does fail to compile.
+`IllegalExamplesCompileTest` enumerates the directory and asserts solc rejects every contract with
+the diagnostic the file names on its single
+
+```solidity
+/// solc: <substring of the diagnostic>
+```
+
+line, so a new case joins the suite by being written, and a solc release that started accepting one
+of them turns the test red instead of going unnoticed. The directory also holds the one non-mapping
+case, `NestedArrayCalldataToStorage.sol`.
+
+The test compiles through `SolcWrapper.getBinJson` (bytecode), not `getJsonSolidity` (AST only),
+because the two stages reject different things. Every mapping case is an analysis-stage
+`TypeError`/`ParserError` and shows up either way, but `NestedArrayCalldataToStorage` is rejected
+during **code generation** — so it passes an AST-only request, and therefore passes
+`./run-key.sh … --no-prove`, while still being uncompilable. Checking a `.sol` file with
+`--no-prove` proves it parses and type-checks, not that solc can compile it.
 
 ## Other directories
 

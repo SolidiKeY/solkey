@@ -243,7 +243,7 @@ public class InitConfig {
         }
 
         ic.setTaclet2Builder(
-            (HashMap<Taclet, TacletBuilder<? extends Taclet>>) taclet2Builder.clone());
+            new LinkedHashMap<>(taclet2Builder));
         ic.taclets = taclets;
         ic.fileRepo = fileRepo; // TODO: copy instead? delete via dispose method?
         ic.setActivatedChoices(activatedChoices);

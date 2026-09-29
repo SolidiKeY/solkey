@@ -3,14 +3,14 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.statement;
 
-import java.util.Objects;
-
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.Nullable;
+
+import static org.key_project.solidity.program.ast.SolidityProgramElement.takeChild;
 
 public class ReturnStatement implements Statement {
     private @Nullable Expression returnExp;
@@ -20,7 +20,7 @@ public class ReturnStatement implements Statement {
     }
 
     public ReturnStatement(ExtList children) {
-        this.returnExp = Objects.requireNonNull(children.removeFirstOccurrence(Expression.class));
+        this.returnExp = takeChild(children, Expression.class);
     }
 
     @Override

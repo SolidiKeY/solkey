@@ -6,13 +6,11 @@ package org.key_project.solidity.common;
 
 import org.key_project.logic.Name;
 import org.key_project.prover.engine.GoalChooserFactory;
-import org.key_project.prover.proof.ProofGoal;
-import org.key_project.prover.proof.ProofObject;
 import org.key_project.prover.rules.Rule;
+import org.key_project.solidity.proof.Goal;
+import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.mgt.RuleJustification;
 import org.key_project.solidity.strategy.StrategyFactory;
-
-import org.jspecify.annotations.NonNull;
 
 public interface Profile {
     /// returns the rule source containg all taclets for this profile
@@ -38,8 +36,8 @@ public interface Profile {
     StrategyFactory getDefaultStrategyFactory();
 
     /// returns the default builder for a goal chooser
-    <P extends @NonNull ProofObject<G>, G extends @NonNull ProofGoal<@NonNull G>> GoalChooserFactory<P, G> getDefaultGoalChooserBuilder();
+    GoalChooserFactory<Proof, Goal> getDefaultGoalChooserBuilder();
 
     /// returns a new builder instance for the selected goal choooser
-    <P extends @NonNull ProofObject<G>, G extends @NonNull ProofGoal<@NonNull G>> GoalChooserFactory<P, G> getSelectedGoalChooserBuilder();
+    GoalChooserFactory<Proof, Goal> getSelectedGoalChooserBuilder();
 }

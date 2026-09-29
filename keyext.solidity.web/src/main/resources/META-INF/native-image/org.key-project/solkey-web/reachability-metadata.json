@@ -1,0 +1,45 @@
+{
+  "reflection": [
+    {
+      "type": "org.key_project.solidity.parser.varcond.DifferentInstantiationCondition",
+      "allPublicConstructors": true
+    },
+    {
+      "type": "org.key_project.solidity.parser.varcond.NoFixedArrayElementCondition",
+      "allPublicConstructors": true
+    },
+    {
+      "type": "org.key_project.solidity.parser.varcond.ApplyUpdateOnRigidCondition",
+      "allPublicConstructors": true
+    },
+    {
+      "type": "org.key_project.solidity.parser.varcond.DropEffectlessElementariesCondition",
+      "allPublicConstructors": true
+    },
+    {
+      "type": "org.key_project.solidity.parser.varcond.EqualUniqueCondition",
+      "allPublicConstructors": true
+    },
+    {
+      "type": "org.key_project.solidity.parser.varcond.SimplifyIfThenElseUpdateCondition",
+      "allPublicConstructors": true
+    },
+    {
+      "type": "org.key_project.solidity.parser.varcond.HasLoopInvariantCondition",
+      "allPublicConstructors": true
+    },
+    {
+      "type": "org.key_project.solidity.parser.varcond.LoopInvariantCondition",
+      "allPublicConstructors": true
+    },
+    {
+      "type": "org.key_project.solidity.parser.varcond.NewLocalVarsCondition",
+      "allPublicConstructors": true
+    }
+  ],
+  "resources": [
+    {
+      "glob": "org/key_project/solidity/proof/rules/*.key"
+    }
+  ]
+}

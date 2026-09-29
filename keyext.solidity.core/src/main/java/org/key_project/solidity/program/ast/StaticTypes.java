@@ -23,18 +23,21 @@ public final class StaticTypes {
             return null;
         }
         if (pe instanceof IndexExpression index) {
-            Type baseType = typeOf(index.getLeftExp());
-            if (baseType instanceof DynamicArrayType arrayType) {
-                return unwrap(arrayType.getElementType());
-            }
-            if (baseType instanceof ArrayType arrayType) {
-                return unwrap(arrayType.getElementType());
-            }
-            if (baseType instanceof MappingType mappingType) {
-                return unwrap(mappingType.valueType());
+            Type elementType = elementTypeOf(typeOf(index.getLeftExp()));
+            if (elementType != null) {
+                return unwrap(elementType);
             }
         }
         return unwrap(expression.getType());
+    }
+
+    public static @Nullable Type elementTypeOf(@Nullable Type container) {
+        return switch (container) {
+            case MappingType mapping -> mapping.valueType();
+            case ArrayType array -> array.getElementType();
+            case DynamicArrayType array -> array.getElementType();
+            case null, default -> null;
+        };
     }
 
     public static @Nullable Type unwrap(@Nullable Type type) {

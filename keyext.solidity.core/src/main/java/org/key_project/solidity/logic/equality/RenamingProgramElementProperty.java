@@ -40,7 +40,8 @@ public class RenamingProgramElementProperty implements Property<SolidityProgramE
     /// modulo renaming
     /// @param <V> is supposed to be [NameAbstractionTable] for this equality check
     @Override
-    public <V> boolean equalsModThisProperty(SolidityProgramElement rpe1,
+    @SafeVarargs
+    public final <V> boolean equalsModThisProperty(SolidityProgramElement rpe1,
             SolidityProgramElement rpe2,
             V... v) {
         NameAbstractionTable nat;

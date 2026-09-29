@@ -12,13 +12,13 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.StaticTypes;
+import org.key_project.solidity.program.ast.StorageDeleteTypes;
 import org.key_project.solidity.program.ast.abstractions.ArrayType;
 import org.key_project.solidity.program.ast.abstractions.DynamicArrayType;
 import org.key_project.solidity.program.ast.abstractions.MappingType;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.abstractions.StorageReferenceTypes;
 import org.key_project.solidity.program.ast.abstractions.Type;
-import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
 import org.key_project.solidity.program.ast.declarations.StructDeclaration;
 import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
@@ -49,6 +49,10 @@ final class PathSVSort extends ProgramSVSort {
         ANY, PRIMITIVE, REFERENCE
     }
 
+    private enum MappingElement {
+        ANY, YES, NO
+    }
+
     private record PathInfo(DataArea dataArea, boolean simple, Origin origin,
             TypeCategory typeCategory) {
     }
@@ -59,14 +63,17 @@ final class PathSVSort extends ProgramSVSort {
     private final TypeCategory typeCategory;
     private final TypeKind typeKind;
     private final TypeKind elementKind;
+    private final MappingElement mappingElement;
+    private final boolean noFixedArrayElement;
 
     PathSVSort(String name, DataArea dataArea, Simplicity simplicity) {
         this(name, dataArea, simplicity, Origin.ANY, TypeCategory.ANY, TypeKind.ANY,
-            TypeKind.ANY);
+            TypeKind.ANY, MappingElement.ANY, false);
     }
 
     private PathSVSort(String name, DataArea dataArea, Simplicity simplicity, Origin origin,
-            TypeCategory typeCategory, TypeKind typeKind, TypeKind elementKind) {
+            TypeCategory typeCategory, TypeKind typeKind, TypeKind elementKind,
+            MappingElement mappingElement, boolean noFixedArrayElement) {
         super(new Name(name));
         this.dataArea = dataArea;
         this.simplicity = simplicity;
@@ -74,6 +81,8 @@ final class PathSVSort extends ProgramSVSort {
         this.typeCategory = typeCategory;
         this.typeKind = typeKind;
         this.elementKind = elementKind;
+        this.mappingElement = mappingElement;
+        this.noFixedArrayElement = noFixedArrayElement;
     }
 
     @Override
@@ -95,6 +104,14 @@ final class PathSVSort extends ProgramSVSort {
             return false;
         }
         if (elementKind != TypeKind.ANY && elementKindOf(pe) != elementKind) {
+            return false;
+        }
+        if (mappingElement != MappingElement.ANY
+                && StorageDeleteTypes
+                        .hasMappingElement(typeOf(pe)) != (mappingElement == MappingElement.YES)) {
+            return false;
+        }
+        if (noFixedArrayElement && StorageDeleteTypes.pathResetsFixedArrayElement(typeOf(pe))) {
             return false;
         }
         return switch (simplicity) {
@@ -127,6 +144,9 @@ final class PathSVSort extends ProgramSVSort {
                 case "reference" -> filters.typeKind.set(TypeKind.REFERENCE, flag);
                 case "primitiveelement" -> filters.elementKind.set(TypeKind.PRIMITIVE, flag);
                 case "referenceelement" -> filters.elementKind.set(TypeKind.REFERENCE, flag);
+                case "mappingelement" -> filters.mappingElement.set(MappingElement.YES, flag);
+                case "nonmappingelement" -> filters.mappingElement.set(MappingElement.NO, flag);
+                case "nofixedarrayelement" -> filters.noFixedArrayElement.set(true, flag);
                 default -> throw new IllegalArgumentException(
                     "Unknown Path sort flag '" + rawFlag + "'");
             }
@@ -137,7 +157,8 @@ final class PathSVSort extends ProgramSVSort {
         }
         ProgramSVSort result = new PathSVSort("Path[" + parameter + "]", filters.dataArea.value,
             filters.simplicity.value, filters.origin.value, filters.typeCategory.value,
-            filters.typeKind.value, filters.elementKind.value);
+            filters.typeKind.value, filters.elementKind.value, filters.mappingElement.value,
+            filters.noFixedArrayElement.value);
         PARAMETERIZED_SORTS.put(parameter, result);
         return result;
     }
@@ -173,7 +194,7 @@ final class PathSVSort extends ProgramSVSort {
         // A no-arg `arr.push()` returns the freshly appended slot: a complex storage
         // location rooted at the array receiver, with the array's element type. Treating
         // it as a complex path lets the ordinary complex-receiver unfold rules capture it.
-        if (pe instanceof FunctionCallExpression call && isNoArgPush(call)) {
+        if (pe instanceof FunctionCallExpression call && call.isNoArgPush()) {
             PathInfo base =
                 classify(((MemberExp) call.getFunctionExp()).getLeftExp(), services);
             if (base == null) {
@@ -182,13 +203,6 @@ final class PathSVSort extends ProgramSVSort {
             return new PathInfo(base.dataArea(), false, base.origin(), typeCategoryOf(pe));
         }
         return null;
-    }
-
-    static boolean isNoArgPush(FunctionCallExpression call) {
-        return call.getArguments().isEmpty()
-                && call.getFunctionExp() instanceof MemberExp m
-                && m.getRightExp() instanceof FunctionDeclaration fd
-                && "push".equals(fd.name().toString());
     }
 
     private static TypeKind typeKindOf(SolidityProgramElement pe) {
@@ -205,14 +219,7 @@ final class PathSVSort extends ProgramSVSort {
 
     private static TypeKind elementKindOf(SolidityProgramElement pe) {
         Type type = typeOf(pe);
-        Type elementType = null;
-        if (type instanceof MappingType mappingType) {
-            elementType = unwrap(mappingType.valueType());
-        } else if (type instanceof ArrayType arrayType) {
-            elementType = unwrap(arrayType.getElementType());
-        } else if (type instanceof DynamicArrayType dynamicArrayType) {
-            elementType = unwrap(dynamicArrayType.getElementType());
-        }
+        Type elementType = unwrap(StaticTypes.elementTypeOf(type));
         if (elementType instanceof PrimitiveType) {
             return TypeKind.PRIMITIVE;
         }
@@ -248,6 +255,8 @@ final class PathSVSort extends ProgramSVSort {
         private final Filter<TypeCategory> typeCategory = new Filter<>(TypeCategory.ANY);
         private final Filter<TypeKind> typeKind = new Filter<>(TypeKind.ANY);
         private final Filter<TypeKind> elementKind = new Filter<>(TypeKind.ANY);
+        private final Filter<MappingElement> mappingElement = new Filter<>(MappingElement.ANY);
+        private final Filter<Boolean> noFixedArrayElement = new Filter<>(false);
     }
 
     /** One filter axis: its value plus the flag that set it, so conflicts can be reported. */

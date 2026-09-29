@@ -834,7 +834,7 @@ public class TacletPBuilder extends ExpressionBuilder {
         if (find == null) {
             return new NoFindTacletBuilder();
         } else if (find instanceof Term) {
-            return new RewriteTacletBuilder<>().setFind((Term) find)
+            return new RewriteTacletBuilder().setFind((Term) find)
                     .setApplicationRestriction(applicationRestriction);
         } else if (find instanceof Sequent findSeq) {
             if (findSeq.isEmpty()) {

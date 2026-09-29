@@ -263,7 +263,9 @@ Effect:
 
 ## 11. Memory Arrays
 
-Memory arrays have fixed length after allocation:
+Memory arrays have fixed length after allocation. A fresh fixed-size array, local or
+member, has its declared length: every object's identity carries its `Shape`
+(`docs/storage.md` section 8c).
 
     uint[] memory xs = new uint[](4);
 
@@ -285,17 +287,17 @@ Index evaluation follows the usual RHS-before-LHS discipline:
 The value-producing RHS is captured before the indexed LHS update fires.
 
 The discipline also binds when the RHS is *already* simple, because capturing
-the index can change what the RHS reads. `memoryIndexWriteNonSimpleIndexCapture`
-therefore snapshots the RHS ahead of the index:
+the index can change what the RHS reads. `memoryIndexWriteCaptureAll…`
+therefore snapshots the RHS ahead of the receiver and the index:
 
-    xs[nse] = se;   ⟹   T_{se} rv = se; T pv = nse; xs[pv] = rv;
+    xs[nse] = se;   ⟹   T_{se} rv = se; T_{xs} memory mv = xs; T pv = nse; mv[pv] = rv;
 
 so `xs[i++] = i;` writes the *old* `i`, as the EVM does
 (`testMemoryIndexWriteImpureIndexPrimitiveRhs`). A reference RHS is captured the
-same way by `memoryIndexWriteMemRefNonSimpleIndexCapture`, into a
+same way by `memoryIndexWriteMemRefCaptureAll…`, into a
 `T memory rv = src;` alias rather than a value snapshot — the declaration is
-what differs between the two, not the order. Both are storage-twin-checked by
-`RuleGeneralizationTest`'s `indexCapture` family.
+what differs between the two, not the order. Both are listed with their storage
+twins under a `// generalization:` comment.
 
 When the impure index sits in the *receiver* rather than at the top of the
 statement (`ps[i++].account = acc;`), the receiver-capture rules take over and
@@ -304,13 +306,13 @@ capture all three constituents at once, right-hand side first:
     nmp.fld = e;   ⟹   T_{e} rv = e; T_{nmp} memory mv = nmp; mv.fld = rv;
 
 `memoryFieldWrite_unfold_leftFst` is the primitive form and
-`memoryFieldWriteMemRef_unfold_leftFst` the reference one, with
-`memoryIndexWrite…` the `[ie]` twins (those also capture the index, after the
-receiver). Their receivers are ordinary `Path[memory,complex]` — the sort places
+`memoryFieldWriteMemRef_unfold_leftFst` the reference one; the `[ie]` forms are
+the `…CaptureAll` rules above, which also capture the index, after the
+receiver. Their receivers are ordinary `Path[memory,complex]` — the sort places
 no purity requirement on an index, because the capture order is what keeps the
 rule sound. The alias declaration is dropped by `memoryLocalDeclInitDrop`, so
-nesting recurses. Checked as `RuleGeneralizationTest`'s `receiverCapture` family;
-witnesses `memory{Field,Index}WriteMemRefImpureReceiver` and
+nesting recurses. Listed with their storage twins under a `// generalization:`
+comment; witnesses `memory{Field,Index}WriteMemRefImpureReceiver` and
 `testMemoryFieldWriteImpureReceiver` in `TestSuite.sol`.
 
 Arrays of structs still alias through identity-valued elements:

@@ -40,7 +40,7 @@ public class VMTacletMatcher implements TacletMatcher {
 
     /// the variable conditions of the taclet that need to be satisfied by found schema variable
     /// instantiations
-    private final ImmutableList<VariableCondition> varconditions;
+    private final ImmutableList<? extends VariableCondition> varconditions;
 
     /// the assumes sequent of the taclet
     private final org.key_project.prover.sequent.Sequent assumesSequent;
@@ -58,8 +58,7 @@ public class VMTacletMatcher implements TacletMatcher {
 
     public VMTacletMatcher(SolTaclet taclet) {
         this.taclet = taclet;
-        varconditions = (ImmutableList<org.key_project.prover.rules.VariableCondition>) taclet
-                .getVariableConditions();
+        varconditions = taclet.getVariableConditions();
         assumesSequent = taclet.assumesSequent();
         boundVars = taclet.getBoundVariables();
 

@@ -13,6 +13,8 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
+import static org.key_project.solidity.program.ast.SolidityProgramElement.takeChild;
+
 
 public class TupleExpression extends SolidityExpression {
     private final ImmutableArray<Expression> expressions;
@@ -23,10 +25,10 @@ public class TupleExpression extends SolidityExpression {
     }
 
     public TupleExpression(ExtList children) {
-        super(Objects.requireNonNull(children.removeFirstOccurrence(Type.class)));
-        List<Expression> exprList =
-            Objects.requireNonNull(children.removeFirstOccurrence(List.class));
-        this.expressions = new ImmutableArray<>(exprList);
+        super(takeChild(children, Type.class));
+        List<?> exprList = takeChild(children, List.class);
+        this.expressions = new ImmutableArray<>(exprList.stream()
+                .map(e -> Expression.class.cast(Objects.requireNonNull(e))).toList());
     }
 
     @Override

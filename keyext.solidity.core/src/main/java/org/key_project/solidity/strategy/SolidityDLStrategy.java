@@ -6,6 +6,7 @@ package org.key_project.solidity.strategy;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 import org.key_project.logic.Name;
 import org.key_project.prover.proof.ProofGoal;
@@ -94,12 +95,7 @@ public final class SolidityDLStrategy extends AbstractFeatureStrategy implements
             @NonNull PosInOccurrence pio,
             @NonNull GOAL goal,
             @NonNull MutableState mState) {
-        var time = System.nanoTime();
-        try {
-            return costComputationF.computeCost(app, pio, goal, mState);
-        } finally {
-            PERF_COMPUTE.addAndGet(System.nanoTime() - time);
-        }
+        return timed(PERF_COMPUTE, () -> costComputationF.computeCost(app, pio, goal, mState));
     }
 
     /// Re-Evaluate a <code>RuleApp</code>. This method is called immediately before a rule is
@@ -113,24 +109,23 @@ public final class SolidityDLStrategy extends AbstractFeatureStrategy implements
     @Override
     public final boolean isApprovedApp(RuleApp app,
             PosInOccurrence pio, Goal goal) {
-        var time = System.nanoTime();
-        try {
-            return !(approvalF.computeCost(app, pio, goal,
-                new MutableState()) == TopRuleAppCost.INSTANCE);
-        } finally {
-            PERF_APPROVE.addAndGet(System.nanoTime() - time);
-        }
+        return timed(PERF_APPROVE, () -> approvalF.computeCost(app, pio, goal,
+            new MutableState()) != TopRuleAppCost.INSTANCE);
     }
 
     @Override
     public RuleAppCost instantiateApp(RuleApp app,
             PosInOccurrence pio, Goal goal,
             MutableState mState) {
-        var time = System.nanoTime();
+        return timed(PERF_INSTANTIATE, () -> instantiationF.computeCost(app, pio, goal, mState));
+    }
+
+    private static <T> T timed(AtomicLong counter, Supplier<T> action) {
+        long time = System.nanoTime();
         try {
-            return instantiationF.computeCost(app, pio, goal, mState);
+            return action.get();
         } finally {
-            PERF_INSTANTIATE.addAndGet(System.nanoTime() - time);
+            counter.addAndGet(System.nanoTime() - time);
         }
     }
 
