@@ -10,6 +10,11 @@ CI enforces three gates. **Two of them are off in a normal build**, so
 | Nullness | `CodeQuality / checkerFramework` | `./gradlew -DENABLE_NULLNESS=true :keyext.solidity.core:compileTestJava` |
 | Module tests | `Solidity / test` | `./gradlew :keyext.solidity.core:test` |
 
+The module tests include `SolcWrapperTest.exampleCompilesWithoutWarnings`: every `.sol` under
+`keyext.solidity.examples/` (except `illegal/` and `functionBody/`) must compile without a solc
+warning. Only the `transfer`/`send` deprecation is tolerated, since those are the constructs the
+prover models. `./run-key.sh FILE.sol --solc` prints the warnings.
+
 ## CI-only test groups
 
 Not part of `ciGates` — the two slow proof suites are split off by JUnit tag so

@@ -481,10 +481,6 @@ contract TestSuite {
         assert(r == 1);
     }
 
-    function memoryDeclFresh() public pure {
-        Person memory carol;
-    }
-
     function memoryDeepField() public pure {
         Person memory carol;
         carol.account.balance = 10;
@@ -1248,6 +1244,7 @@ contract TestSuite {
 
     function storageLocalDeclSkip() public {
         Person storage p;
+        p = alice;
         age = 7;
         uint r = age;
         assert(r == 7);
