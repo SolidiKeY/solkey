@@ -6,6 +6,7 @@ package org.key_project.solidity.rule.metaconstruct;
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.NamespaceSet;
 import org.key_project.solidity.logic.TermBuilder;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.op.TypedField;
@@ -29,21 +30,22 @@ public class ShapeTransformer extends AbstractTermTransformer {
             case TypedField field -> field.type();
             default -> null;
         };
-        return type == null ? services.getTermBuilder().func(services.requireFunction("leaf"))
+        return type == null ? services.getTermBuilder().func(services.getNamespaces().requireFunction("leaf"))
                 : shapeOf(type, services);
     }
 
     private static Term shapeOf(Type type, Services services) {
         TermBuilder tb = services.getTermBuilder();
+        final NamespaceSet namespaces = services.getNamespaces();
         return switch (type) {
             case ArrayType array ->
-                tb.func(services.requireFunction("fixedArr"), tb.zTerm(array.length()),
+                tb.func(namespaces.requireFunction("fixedArr"), tb.zTerm(array.length()),
                     shapeOf(StaticTypes.unwrap(array.getElementType()), services));
-            case DynamicArrayType array -> tb.func(services.requireFunction("dynArr"),
+            case DynamicArrayType array -> tb.func(namespaces.requireFunction("dynArr"),
                 shapeOf(StaticTypes.unwrap(array.getElementType()), services));
-            case MappingType mapping -> tb.func(services.requireFunction("mapOf"),
+            case MappingType mapping -> tb.func(namespaces.requireFunction("mapOf"),
                 shapeOf(StaticTypes.unwrap(mapping.valueType()), services));
-            default -> tb.func(services.requireFunction("leaf"));
+            default -> tb.func(namespaces.requireFunction("leaf"));
         };
     }
 }
