@@ -30,6 +30,11 @@ public class SolcWrapper {
 
     private static final Map<CompilationUnit, String> AST_CACHE = new ConcurrentHashMap<>();
 
+    private record Build(CompilationUnit unit, JsonNode output) {
+    }
+
+    private static volatile @Nullable Build lastBuild;
+
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private static final String STDIN_UNIT = "<stdin>";
@@ -41,6 +46,7 @@ public class SolcWrapper {
     public static synchronized void useCompiler(SolcCompiler replacement) {
         compiler = replacement;
         AST_CACHE.clear();
+        lastBuild = null;
     }
 
     private static synchronized SolcCompiler compiler() {
@@ -121,17 +127,35 @@ public class SolcWrapper {
     /// Standard JSON output. Used by the runtime cross-check tests to execute the examples on a
     /// real EVM.
     public static String getBinJson(Path contractPath) throws IOException {
-        ObjectNode outputSelection = MAPPER.createObjectNode();
-        outputSelection.putArray("*")
-                .add("evm.bytecode.object")
-                .add("evm.deployedBytecode.object");
-        return compile(unitNameOf(contractPath), readSource(contractPath), outputSelection)
-                .toString();
+        JsonNode output = build(contractPath);
+        failOnErrors(output);
+        return output.toString();
     }
 
     public static String diagnose(Path contractPath) throws IOException {
-        return compileRaw(unitNameOf(contractPath), readSource(contractPath),
-            MAPPER.createObjectNode()).toString();
+        return build(contractPath).toString();
+    }
+
+    private static JsonNode build(Path contractPath) throws IOException {
+        CompilationUnit unit =
+            new CompilationUnit(unitNameOf(contractPath), readSource(contractPath));
+        Build last = lastBuild;
+        if (last != null && last.unit().equals(unit)) {
+            return last.output();
+        }
+        ObjectNode outputSelection = MAPPER.createObjectNode();
+        outputSelection.putArray("").add("ast");
+        outputSelection.putArray("*")
+                .add("evm.bytecode.object")
+                .add("evm.deployedBytecode.object");
+        JsonNode output = compileRaw(unit.name(), unit.source(), outputSelection);
+        JsonNode ast = output.path("sources").path(unit.name()).path("ast");
+        if (!ast.isMissingNode() && !ast.isNull()) {
+            restoreNegativeIds(ast);
+            AST_CACHE.putIfAbsent(unit, ast.toString());
+        }
+        lastBuild = new Build(unit, output);
+        return output;
     }
 
     public static String version() {

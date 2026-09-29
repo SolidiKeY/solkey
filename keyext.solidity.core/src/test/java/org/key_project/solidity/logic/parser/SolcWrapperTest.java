@@ -103,7 +103,8 @@ public class SolcWrapperTest {
     }
 
     private static final List<String> TOLERATED_WARNINGS =
-        List.of("'transfer' is deprecated", "'send' is deprecated");
+        List.of("'transfer' is deprecated", "'send' is deprecated", "Contract code size is",
+            "Contract initcode size is");
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("exampleContracts")
