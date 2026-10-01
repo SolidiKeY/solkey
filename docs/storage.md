@@ -860,10 +860,10 @@ variable's declared type, so the shape survives every write, copy and delete:
 | `new uint[2][](n)` | `idC(shaped(idp, dynArr(fixedArr(2, leaf))), nil)` |
 | `Triple memory t` | `idC(shaped(idp, leaf), nil)` |
 
-A fresh node's length is `defaultSize`:
-`default<[int]>(idC(shaped(idp, sh), flds), size) ⇝ sizeOf(shapeAt(sh, flds))`, with
-`sizeOf` reading `n` from `fixedArr(n, s)` and `0` otherwise; `defaultDefElement` and
-`defaultDefMember` give the other fields their defaults and, being matched on `at(pk)` and
+A fresh node's length is `initSize`:
+`init<[int]>(idC(shaped(idp, sh), flds), size) ⇝ sizeOf(shapeAt(sh, flds))`, with
+`sizeOf` reading `n` from `fixedArr(n, s)` and `0` otherwise; `initElement` and
+`initMember` give the other fields their defaults and, being matched on `at(pk)` and
 `m`, never touch `size`. `idShape(idC(shaped(idp, s), flds)) = shapeAt(s, flds)` is the
 shape of any node: `delete x` keeps `idShape(x)`, a freshened member is allocated with
 `#shapeOf(fld)`, a freshened element with `shapeAt(idShape(z), cons(at(i), nil))`. This

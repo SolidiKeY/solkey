@@ -34,7 +34,7 @@
     \unique MemberField g;
 }
 \problem {
-read<[int]>(mtMem, id, f) = default<[int]>(id, f)
+read<[int]>(mtMem, id, f) = init<[int]>(id, f)
 }
 
 \proof {

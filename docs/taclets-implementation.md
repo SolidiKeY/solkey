@@ -377,7 +377,7 @@ calculus as the `Shape` term `fieldShape(m)`. `find` wraps the node it reads thr
 in `typed(fieldShape(m), …)`, and the `selectOnTyped…` rules carry the shape down with each struct-valued read and rewrite
 `size` of a `fixedArr(n, s)` node to `n`, so `f.length`, `s.items.length` and `rows[i].length`
 for `uint[3][] rows` all reduce to literals with no axiom. Memory objects carry a `Shape` in
-their identity (`shaped(idp, fixedArr(3, leaf))`), and `defaultSize` reads a fresh node's
+their identity (`shaped(idp, fixedArr(3, leaf))`), and `initSize` reads a fresh node's
 length off it (`testFixedArrayLength`, `testFixedElementOfDynamicArrayLength`,
 `testMemoryFixedArrayLength`, `testNewArrayOfFixedElementLength`; `docs/storage.md`
 section 8c).
