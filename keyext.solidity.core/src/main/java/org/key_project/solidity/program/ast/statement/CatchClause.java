@@ -3,77 +3,93 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.statement;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import org.key_project.solidity.program.ast.HashCachingElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
-import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
-import org.key_project.solidity.program.ast.abstractions.Type;
+import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
-import org.key_project.util.collection.ImmutableArray;
 
 import org.jspecify.annotations.Nullable;
 
 public class CatchClause extends HashCachingElement {
-    enum Kind {
-        Error, Panic, LowLevel, ALL;
-    }
+    public enum Kind {
+        Error, Panic, Other;
 
-    private final Kind kind;
-    private final @Nullable ImmutableArray<StatementVariableDeclaration> declarations;
-    private final Block body;
-
-    // TODO: Make this field protected and in SolidityProgramElement
-
-    public CatchClause(@Nullable ImmutableArray<StatementVariableDeclaration> declarations,
-            Block body) {
-        this.declarations = declarations;
-        this.body = body;
-        if (declarations == null)
-            this.kind = Kind.ALL;
-        else {
-            Type type = declarations.get(0).getProgramVariable().getType();
-            if (type == PrimitiveType.UINT)
-                this.kind = Kind.Panic;
-            else if (type == PrimitiveType.STRING)
-                this.kind = Kind.Error;
-            else if (type == PrimitiveType.BYTES)
-                this.kind = Kind.LowLevel;
-            else
-                throw new IllegalArgumentException(
-                    "Unknown catch clause kind for declared catch variable " + declarations);
+        public static Kind fromName(@Nullable String name) {
+            if (name == null) {
+                return Other;
+            }
+            return switch (name) {
+                case "Error" -> Error;
+                case "Panic" -> Panic;
+                default -> throw new IllegalArgumentException("Unknown catch clause " + name);
+            };
         }
     }
 
-    public CatchClause(Block body) {
-        this(null, body);
+    private final Kind kind;
+    private final Statement body;
+
+    public CatchClause(Kind kind, Statement body) {
+        this.kind = kind;
+        this.body = body;
     }
 
-    public CatchClause(ExtList children) {
-        this(new ImmutableArray<>(children.collect(StatementVariableDeclaration.class)),
-            Objects.requireNonNull(children.get(Block.class)));
+    public CatchClause(Kind kind, ExtList children) {
+        this(kind, Objects.requireNonNull(children.get(Statement.class)));
+    }
+
+    public static CatchClause of(Kind kind, @Nullable StatementVariableDeclaration parameter,
+            Statement body) {
+        return new CatchClause(kind, declaring(parameter == null ? List.of() : List.of(parameter),
+            body));
+    }
+
+    static Statement declaring(List<StatementVariableDeclaration> variables, Statement body) {
+        if (variables.isEmpty()) {
+            return body;
+        }
+        List<Statement> statements = new ArrayList<>();
+        for (StatementVariableDeclaration variable : variables) {
+            statements.add(new DeclarationStatement(List.<Declaration>of(variable), null));
+        }
+        if (body instanceof Block block) {
+            block.getStatements().forEach(statements::add);
+        } else {
+            statements.add(body);
+        }
+        return new Block(statements);
     }
 
     public Kind getKind() {
         return kind;
     }
 
-    public StatementVariableDeclaration getCatchDeclaration() {
-        return Objects.requireNonNull(declarations).get(0);
-    }
-
-    public Block getBody() {
+    public Statement getBody() {
         return body;
     }
 
     @Override
     public int getChildCount() {
-        int count = declarations == null ? 0 : 1;
-        count += body.getChildCount();
-        return count;
+        return 1;
+    }
+
+    @Override
+    public SolidityProgramElement getChild(int index) {
+        if (index != 0) {
+            throw new IndexOutOfBoundsException(index);
+        }
+        return body;
+    }
+
+    @Override
+    public boolean matchesHead(SolidityProgramElement src) {
+        return ((CatchClause) src).kind == kind;
     }
 
     @Override
@@ -82,12 +98,8 @@ public class CatchClause extends HashCachingElement {
     }
 
     @Override
-    public SolidityProgramElement getChild(int index) {
-        if (declarations != null)
-            index -= 1;
-        if (index == -1)
-            return Objects.requireNonNull(declarations).get(0);
-        return body.getStatements().get(index);
+    public int computeHashCode() {
+        return Objects.hash(kind, body);
     }
 
     @Override
@@ -97,27 +109,12 @@ public class CatchClause extends HashCachingElement {
         if (obj == null || getClass() != obj.getClass())
             return false;
         final CatchClause other = (CatchClause) obj;
-        return Objects.equals(declarations, other.declarations) && Objects.equals(body, other.body);
+        return kind == other.kind && Objects.equals(body, other.body);
     }
 
     @Override
     public String toString() {
-        String catchString = "catch ";
-
-        switch (kind) {
-            case Error, Panic:
-                catchString += kind.toString();
-                break;
-        }
-
-        if (declarations != null) {
-            catchString += "(" + declarations.stream().map(StatementVariableDeclaration::toString)
-                    .collect(Collectors.joining(", "))
-                + ")";
-        }
-
-        catchString += " " + body.toString();
-
-        return catchString;
+        String head = kind == Kind.Other ? "catch " : "catch " + kind + " ";
+        return head + body;
     }
 }

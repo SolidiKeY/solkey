@@ -35,7 +35,6 @@ import org.key_project.solidity.program.ast.references.*;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.theory.StructLDT;
 import org.key_project.util.collection.DefaultImmutableSet;
-import org.key_project.util.collection.ImmutableArray;
 import org.key_project.util.collection.ImmutableSet;
 
 import org.jspecify.annotations.*;
@@ -374,19 +373,18 @@ public class SolJSONParser {
         return new Block(blockStatements);
     }
 
-    private CatchClause parseCatchClause(JsonNode jsonBody) {
-        Block block = parseBlock(jsonBody.get("block"));
-        if (jsonBody.has("errorName")) {
-            String errorName = jsonBody.get("errorName").asString();
-            if (!errorName.isEmpty()) {
-                List<StatementVariableDeclaration> arguments =
-                    jsonBody.get("parameters").get("parameters").valueStream()
-                            .map(this::parseDeclaration)
-                            .map(StatementVariableDeclaration.class::cast).toList();
-                return new CatchClause(new ImmutableArray<>(arguments), block);
-            }
-        }
-        return new CatchClause(block);
+    private CatchClause parseCatchClause(JsonNode clause) {
+        String errorName = clause.has("errorName") ? clause.get("errorName").asString() : "";
+        JsonNode parameters = clause.get("parameters");
+        StatementVariableDeclaration parameter =
+            parameters == null || parameters.isNull() || parameters.get("parameters").isEmpty()
+                    || parameters.get("parameters").get(0).get("name").asString().isEmpty()
+                            ? null
+                            : (StatementVariableDeclaration) parseDeclaration(
+                                parameters.get("parameters").get(0));
+        Block block = parseBlock(clause.get("block"));
+        return CatchClause.of(CatchClause.Kind.fromName(errorName.isEmpty() ? null : errorName),
+            parameter, block);
     }
 
     private @NonNull Statement parseStatement(JsonNode statement) {
@@ -444,8 +442,7 @@ public class SolJSONParser {
                 yield new DoWhileStatement(condition, body);
             }
             case "TryStatement" -> {
-                Expression expression =
-                    parseExpression(statement.get("externalCall").get("expression"));
+                Expression expression = parseExpression(statement.get("externalCall"));
                 List<JsonNode> clausesList = statement.get("clauses").valueStream().toList();
                 JsonNode firstClause = clausesList.getFirst();
                 List<ProgramVariable> returns = parseParameters(firstClause.get("parameters"));
@@ -453,8 +450,7 @@ public class SolJSONParser {
                 List<CatchClause> clauses = clausesList.stream().skip(1)
                         .map(this::parseCatchClause)
                         .toList();
-                yield new TryStatement(expression, new ImmutableArray<>(returns), body,
-                    new ImmutableArray<>(clauses));
+                yield TryStatement.of(expression, returns, body, clauses);
             }
             case "PlaceholderStatement" -> new PlaceholdStatement();
             default -> throw new IllegalStateException("Statement does not have type " + type);
@@ -731,11 +727,17 @@ public class SolJSONParser {
                 return solcType == null ? function.getType() : solcType;
             }
         }
-        if (expNode.has("referencedDeclaration")) {
+        if (expNode.has("referencedDeclaration") && !isUnparsedFunction(expNode)) {
             return parseReferenceTypeDeclaration(expNode);
         }
         Type solcType = parseSolcTypeDescription(callNode);
         return solcType == null ? parseTypeName(expNode) : solcType;
+    }
+
+    private boolean isUnparsedFunction(JsonNode expNode) {
+        int id = expNode.get("referencedDeclaration").asInt();
+        return "MemberAccess".equals(expNode.get("nodeType").asString())
+                && !id2Name.containsKey(id) && !functionId2Type.containsKey(id);
     }
 
     private @Nullable Type parseSolcTypeDescription(JsonNode node) {
@@ -745,7 +747,8 @@ public class SolJSONParser {
                 || typeDescriptions.get("typeString").isNull()) {
             return null;
         }
-        return SolidityInfo.getPrimitiveType(typeDescriptions.get("typeString").asString());
+        String typeString = typeDescriptions.get("typeString").asString();
+        return "tuple()".equals(typeString) ? VOID : SolidityInfo.getPrimitiveType(typeString);
     }
 
     private Expression parseIndexRangeAccess(JsonNode initializer) {
@@ -887,6 +890,7 @@ public class SolJSONParser {
                 stmVarDeclaration.getProgramVariable();
             case EnumDeclaration enumDeclaration ->
                 new EnumReference(enumDeclaration, type);
+            case ContractDeclaration ignored -> new ContractReference(idDecl, ADDRESS);
             case ProgramVariable p -> p;
             case null ->
                 functionId2Type.containsKey(idDecl) ? new FunctionReference(idDecl, type)

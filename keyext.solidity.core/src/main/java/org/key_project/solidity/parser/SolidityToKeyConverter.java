@@ -4,6 +4,7 @@
 package org.key_project.solidity.parser;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.Namespace;
@@ -535,7 +536,15 @@ public class SolidityToKeyConverter extends KeYSolidityDLParserBaseVisitor<Synta
 
     @Override
     public SyntaxElement visitCatchClause(CatchClauseContext ctx) {
-        return new CatchClause(null, (Block) visitBlock(ctx.block()));
+        CatchClause.Kind kind = CatchClause.Kind
+                .fromName(ctx.identifier() == null ? null : ctx.identifier().getText());
+        StatementVariableDeclaration parameter = ctx.parameterList() == null ? null
+                : ctx.parameterList().functionParameter().stream()
+                        .filter(p -> p.identifier() != null)
+                        .map(p -> (ProgramVariable) visitFunctionParameter(p))
+                        .map(StatementVariableDeclaration::new).findFirst().orElse(null);
+        return CatchClause.of(kind, parameter,
+            tryBody(ctx.block(), ctx.schemaVariable()));
     }
 
     @Override
@@ -544,11 +553,16 @@ public class SolidityToKeyConverter extends KeYSolidityDLParserBaseVisitor<Synta
         List<ProgramVariable> parameters = ctx.returnParameters() == null ? List.of()
                 : ((SyntaxElementList) visitReturnParameters(ctx.returnParameters()))
                         .getElements().stream().map(ProgramVariable.class::cast).toList();
-        Block body = (Block) visitBlock(ctx.block());
         List<CatchClause> clauses = ctx.catchClause().stream().map(this::visitCatchClause)
                 .map(CatchClause.class::cast).toList();
-        return new TryStatement(exp, new ImmutableArray<>(parameters), body,
-            new ImmutableArray<>(clauses));
+        return TryStatement.of(exp, parameters, tryBody(ctx.block(), ctx.schemaVariable()),
+            clauses);
+    }
+
+    private Statement tryBody(@Nullable BlockContext block,
+            @Nullable SchemaVariableContext schemaVariable) {
+        return block != null ? (Block) visitBlock(block)
+                : (Statement) visitSchemaVariable(Objects.requireNonNull(schemaVariable));
     }
 
     @Override

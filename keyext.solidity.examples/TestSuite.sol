@@ -3470,4 +3470,50 @@ contract TestSuite {
         uint x = 3;
         to.transfer(x + 2);
     }
+
+    /// @custom:key skip
+    function tryCalleeGet(uint x) external pure returns (uint) {
+        return x;
+    }
+
+    /// @custom:key skip
+    function tryCalleePing() external pure {
+    }
+
+    /// @custom:key box
+    function tryCallCatchKeepsState() public {
+        total = 1;
+        try TestSuite(owner).tryCalleePing() {
+            total = 2;
+        } catch {
+            assert(total == 1);
+        }
+        assert(total == 1 || total == 2);
+    }
+
+    /// @custom:key box
+    function tryCallBindsReturnAndPanicCode() public view {
+        uint r = 0;
+        try TestSuite(owner).tryCalleeGet(5) returns (uint v) {
+            r = v + 1;
+            assert(r == v + 1);
+        } catch Error(string memory) {
+            r = 2;
+            assert(r == 2);
+        } catch Panic(uint code) {
+            r = code + 3;
+            assert(r == code + 3);
+        }
+    }
+
+    /// @custom:key box
+    function tryCallUnmatchedFailureReverts() public {
+        total = 3;
+        try TestSuite(owner).tryCalleePing() {
+            total = 4;
+        } catch Error(string memory) {
+            total = 5;
+        }
+        assert(total == 4 || total == 5);
+    }
 }

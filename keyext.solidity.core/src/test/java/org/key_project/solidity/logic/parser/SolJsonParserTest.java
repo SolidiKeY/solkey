@@ -1025,14 +1025,15 @@ public class SolJsonParserTest {
         assertTrue(contractS.contains("SimpleContract(target).g"));
         TryStatement tryStmt = (TryStatement) contractDec.getFunctions().getFirst()
                 .getBody().getStatements().get(0);
-        MemberExp memberExp = (MemberExp) tryStmt.getExpression();
+        FunctionCallExpression call = (FunctionCallExpression) tryStmt.getExpression();
+        MemberExp memberExp = (MemberExp) call.getFunctionExp();
         FunctionCallExpression innerCall = (FunctionCallExpression) memberExp.getLeftExp();
         ContractReference contr = (ContractReference) innerCall.getFunctionExp();
         assertEquals(0, contr.getChildCount());
-        assertEquals(3, tryStmt.getChildCount());
-        assertSame(memberExp, tryStmt.getChild(0));
+        assertEquals(5, tryStmt.getChildCount());
+        assertSame(call, tryStmt.getChild(0));
         assertInstanceOf(Block.class, tryStmt.getChild(1));
-        assertThrows(IndexOutOfBoundsException.class, () -> tryStmt.getChild(3));
+        assertThrows(IndexOutOfBoundsException.class, () -> tryStmt.getChild(5));
     }
 
     @Test
@@ -1053,14 +1054,15 @@ public class SolJsonParserTest {
         ContractDeclaration contractDec = getDeclStr(contract, services);
         TryStatement tryStatement =
             (TryStatement) contractDec.getFunctions().get(0).getBody().getStatements().get(0);
-        assertTrue(tryStatement.toString().contains("SimpleContract(target).g returns (int a)"));
-        ProgramVariable returnA = tryStatement.getReturnDeclaration().get(0);
-        ProgramVariable rightA = (ProgramVariable) ((DeclarationStatement) tryStatement.getBody()
-                .getStatements().get(0)).getInitialValue();
+        ImmutableArray<Statement> body = ((Block) tryStatement.getBody()).getStatements();
+        ProgramVariable returnA =
+            ((StatementVariableDeclaration) ((DeclarationStatement) body.get(0)).getChild(0))
+                    .getProgramVariable();
+        ProgramVariable rightA =
+            (ProgramVariable) ((DeclarationStatement) body.get(1)).getInitialValue();
         assertSame(returnA, rightA);
         assertSame(INT, returnA.getType());
-        assertEquals(4, tryStatement.getChildCount());
-        assertSame(returnA, tryStatement.getChild(1));
+        assertEquals(5, tryStatement.getChildCount());
     }
 
     @Test
@@ -1087,22 +1089,19 @@ public class SolJsonParserTest {
         TryStatement tryStmt = (TryStatement) contractDec.getFunctions().getFirst()
                 .getBody().getStatements().get(0);
         ImmutableArray<CatchClause> clauses = tryStmt.getCatchClauses();
-        assertEquals(2, clauses.size());
-        assertSame(tryStmt.getCatchClause(0), clauses.get(0));
+        assertEquals(3, clauses.size());
         CatchClause errorClause = tryStmt.getCatchClause(0);
-        assertEquals("Error", ((Object) errorClause.getKind()).toString());
-        DeclarationStatement jDecl =
-            (DeclarationStatement) errorClause.getBody().getStatements().get(0);
-        assertEquals("int j;", jDecl.toString());
-        StatementVariableDeclaration catchDecl = errorClause.getCatchDeclaration();
-        assertEquals("string memory reason", catchDecl.toString());
-        assertSame(STRING, catchDecl.getProgramVariable().getType());
-        assertEquals("catch Error(string memory reason) {\nint j;\n}\n", errorClause.toString());
-        CatchClause allClause = tryStmt.getCatchClause(1);
-        assertEquals("ALL", ((Object) allClause.getKind()).toString());
-        DeclarationStatement kDecl =
-            (DeclarationStatement) allClause.getBody().getStatements().get(0);
-        assertEquals("int k;", kDecl.toString());
+        assertSame(CatchClause.Kind.Error, errorClause.getKind());
+        ImmutableArray<Statement> error = ((Block) errorClause.getBody()).getStatements();
+        assertEquals("string memory reason;", error.get(0).toString());
+        assertSame(STRING, ((StatementVariableDeclaration) error.get(0).getChild(0))
+                .getProgramVariable().getType());
+        assertEquals("int j;", error.get(1).toString());
+        assertEquals("catch Error {\nstring memory reason;\nint j;\n}\n",
+            errorClause.toString());
+        Statement other = tryStmt.getCatchBody(CatchClause.Kind.Other);
+        assertEquals("{\nint k;\n}\n", other.toString());
+        assertSame(other, tryStmt.getCatchBody(CatchClause.Kind.Panic));
     }
 
     @Disabled("Revert and require should be implemented as a regular function")

@@ -15,6 +15,7 @@ import org.key_project.solidity.program.ast.references.FunctionReference;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.solidity.testutil.ExpectedToFail;
+import org.key_project.util.collection.ImmutableArray;
 
 import org.junit.jupiter.api.*;
 
@@ -216,30 +217,37 @@ public class SolidityToKeyConverterTest {
 
     @Test
     void tryStm() {
-        TryStatement stm = (TryStatement) parseStatement("try false { true; }");
+        TryStatement stm = (TryStatement) parseStatement("try false { true; } catch { }");
         assertFalse(((BoolLiteral) stm.getExpression()).getValue());
-        assertTrue(((BoolLiteral) ((ExpressionStatement) stm.getBody().getStatements().get(0))
-                .getExpression())
-                .getValue());
+        assertTrue(((BoolLiteral) ((ExpressionStatement) ((Block) stm.getBody()).getStatements()
+                .get(0)).getExpression()).getValue());
+        assertEquals(3, stm.getCatchClauseCount());
+        Statement other = stm.getCatchBody(CatchClause.Kind.Other);
+        assertSame(other, stm.getCatchBody(CatchClause.Kind.Error));
+        assertSame(other, stm.getCatchBody(CatchClause.Kind.Panic));
     }
 
     @Test
     void tryWithReturn() {
-        TryStatement stm =
-            (TryStatement) parseStatement("try false returns (bool a) { a = false; }");
-        assertFalse(((BoolLiteral) stm.getExpression()).getValue());
-        assertEquals(1, stm.getReturnCount());
-        ProgramVariable ra = stm.getReturnParameter(0);
-        ProgramVariable ba = (ProgramVariable) ((AssignExpression) ((ExpressionStatement) stm
-                .getBody().getStatements().get(0)).getExpression()).getLeft();
+        TryStatement stm = (TryStatement) parseStatement(
+            "try false returns (bool a) { a = false; } catch { }");
+        ImmutableArray<Statement> body = ((Block) stm.getBody()).getStatements();
+        ProgramVariable ra = ((StatementVariableDeclaration) ((DeclarationStatement) body.get(0))
+                .getChild(0)).getProgramVariable();
+        ProgramVariable ba = (ProgramVariable) ((AssignExpression) ((ExpressionStatement) body
+                .get(1)).getExpression()).getLeft();
         assertSame(ra, ba);
     }
 
     @Test
-    void tryCatch() {
-        TryStatement stm = (TryStatement) parseStatement("try false catch {}");
-        assertFalse(((BoolLiteral) stm.getExpression()).getValue());
-        assertEquals(0, stm.getCatchClauseCount());
+    void tryCatchFillsMissingClauses() {
+        TryStatement stm = (TryStatement) parseStatement(
+            "try false { } catch Error(string memory reason) { }");
+        ImmutableArray<Statement> error =
+            ((Block) stm.getCatchBody(CatchClause.Kind.Error)).getStatements();
+        assertEquals("string memory reason;", error.get(0).toString());
+        assertEquals("{\nrevert();\n}\n", stm.getCatchBody(CatchClause.Kind.Panic).toString());
+        assertEquals("{\nrevert();\n}\n", stm.getCatchBody(CatchClause.Kind.Other).toString());
     }
 
     @Test

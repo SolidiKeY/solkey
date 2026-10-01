@@ -19,7 +19,8 @@ public class DeclarationStatement implements Statement {
     private final ImmutableArray<Declaration> declarations;
     private final @Nullable Expression initialValue;
 
-    public DeclarationStatement(List<Declaration> declarations, Expression initialValue) {
+    public DeclarationStatement(List<Declaration> declarations,
+            @Nullable Expression initialValue) {
         this.declarations = new ImmutableArray<>(declarations);
         this.initialValue = initialValue;
     }

@@ -86,13 +86,13 @@ expressionStatement
 ifStatement
   : SOL_IF SOL_LPAREN expression SOL_RPAREN ifStm=statement ( SOL_ELSE elseStm=statement )? ;
 
-tryStatement : TRY expression returnParameters? block catchClause+ ;
+tryStatement : TRY expression returnParameters? ( block | schemaVariable ) catchClause+ ;
 
 // In reality catch clauses still are not processed as below
 // the identifier can only be a set string: "Error". But plans
 // of the Solidity team include possible expansion so we'll
 // leave this as is, befitting with the Solidity docs.
-catchClause : CATCH ( identifier? parameterList )? block ;
+catchClause : CATCH ( identifier parameterList? | parameterList )? ( block | schemaVariable ) ;
 
 whileStatement
   : WHILE SOL_LPAREN expression SOL_RPAREN statement ;

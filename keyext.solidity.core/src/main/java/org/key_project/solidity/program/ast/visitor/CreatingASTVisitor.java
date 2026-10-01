@@ -219,7 +219,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
 
     @Override
     public void performActionOnCatchClause(CatchClause x) {
-        rebuild(x, CatchClause::new);
+        rebuild(x, children -> new CatchClause(x.getKind(), children));
     }
 
     @Override

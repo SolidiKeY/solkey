@@ -297,32 +297,10 @@ public class PrettyPrinter implements Visitor {
 
     @Override
     public void performActionOnCatchClause(CatchClause x) {
-        layouter.keyWord("catch");
-        // Derive the catch kind from the declared variable's type the same way the
-        // CatchClause constructor does (its Kind enum is not visible here):
-        // uint -> catch Panic(uint code)
-        // string-> catch Error(string memory reason)
-        // bytes -> catch (bytes memory data) (low-level)
-        // none -> catch
-        StatementVariableDeclaration decl = null;
-        try {
-            decl = x.getCatchDeclaration();
-        } catch (RuntimeException ignored) {
-            // no declaration -> catch-all
+        layouter.keyWord("catch").print(" ");
+        if (x.getKind() != CatchClause.Kind.Other) {
+            layouter.print(x.getKind().toString()).print(" ");
         }
-        if (decl != null) {
-            var type = decl.getProgramVariable().getType();
-            String typeName = type != null ? type.toString() : "";
-            if ("uint".equals(typeName) || "uint256".equals(typeName)) {
-                layouter.print(" ").print("Panic");
-            } else if ("string".equals(typeName)) {
-                layouter.print(" ").print("Error");
-            }
-            layouter.print("(");
-            decl.visit(this);
-            layouter.print(")");
-        }
-        layouter.print(" ");
         x.getBody().visit(this);
     }
 
@@ -510,19 +488,6 @@ public class PrettyPrinter implements Visitor {
         markStart(x);
         layouter.keyWord("try").print(" ");
         x.getExpression().visit(this);
-        if (x.getReturnCount() > 0) {
-            layouter.print(" ");
-            layouter.keyWord("returns");
-            layouter.print(" ").print("(");
-            var rets = x.getReturnDeclaration();
-            for (int i = 0; i < rets.size(); i++) {
-                if (i != 0) {
-                    layouter.print(",").brk();
-                }
-                rets.get(i).visit(this);
-            }
-            layouter.print(")");
-        }
         layouter.print(" ");
         x.getBody().visit(this);
         for (CatchClause cc : x.getCatchClauses()) {

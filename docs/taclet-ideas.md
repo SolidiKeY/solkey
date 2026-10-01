@@ -60,8 +60,11 @@ and the `net` payment model.
 
 - **`SliceAccess`** (`a[start:end]`): array-slice value; no calculus support
   yet.
-- **`tryStatement` / `catchClause`**: exception-handling control flow; depends
-  on a revert/exception model richer than `revert();`.
+- **`try` beyond the box rules** (`docs/taclets-implementation.md`): a diamond rule needs a
+  model of "the target has code and its return data decodes"; `try new C()` and calls with
+  complex arguments or `{value: v}` match no rule; `SolJSONParser` skips `interface`
+  declarations and rejects contract-typed state variables, so callees must be concrete
+  contracts reached through `C(addr)`.
 - **Bitwise & fixed-point arithmetic** (`Fixed`/`Ufixed`, full bit-ops):
   needs new LDTs.
 - **Bounded/checked integer semantics** (solc ≥ 0.8 overflow reverts): the

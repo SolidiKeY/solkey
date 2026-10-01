@@ -606,6 +606,42 @@ positions lower to logic `List` terms automatically; indexed segments lower to
 `at(index)` (sort `Field`); `arr.length` lowers to the `size` field. A `push()`
 path is only ever captured via `\newTypeOf`, never lowered directly.
 
+### `try` / `catch` (external calls)
+
+The callee of an external call is never executed: its effect is havocked, so a reverting call
+changes nothing and its rollback needs no rule. `tryCallNoCallbackBox` and
+`tryCallWithCallbackBox` (under the `transferSemantics` choice) therefore split a `try` into one
+goal per outcome:
+
+| Goal | `noCallback` | `withCallback` |
+|---|---|---|
+| `invariant on exit` | — | `CInv(storage, net)` |
+| `call succeeded` | the success block | `{storage, net, selfBalance := fresh}(CInv → …)`, then the success block |
+| `Error caught` / `Panic caught` / `other failure caught` | that clause's block, state unchanged | same |
+
+A `revert` inside any of these blocks is not caught: after the split it is an ordinary
+statement and `revertBox` closes its goal.
+
+The rule needs a fixed shape, so both parsers build every `TryStatement` through
+`TryStatement.of`:
+
+- the `returns (T v)` variables and each clause's parameter become declarations without an
+  initializer at the head of their block, so `valueDeclSkip` leaves them unconstrained;
+- the clauses are ordered `Error`, `Panic`, other (`catch (bytes memory d)` and bare `catch`);
+- a missing `Error`/`Panic` clause gets the other clause's block, and a missing other clause
+  gets `{ revert(); }`, which is the revert passing on to the caller.
+
+A taclet then matches `try s#call s#body catch Error s#eb catch Panic s#pb catch s#ob`, the
+form the pretty printer prints. `s#call` has the `ExternalCall` sort: `e.f(a1, …)` of a
+non-builtin function, whose receiver and arguments are literals, variables, state-variable or
+member reads, or contract conversions `C(e)` of those, so evaluating them cannot revert or
+have side effects.
+
+Only the **box** is covered. A call to an address without code, and return data that does
+not decode, revert in the caller, and no catch clause catches that; such a revert is vacuous
+in a box but would be an extra failing goal in a diamond. A diamond `try` therefore matches
+no rule. Examples: `tryCall*` in `TestSuite.sol`, which call `TestSuite(owner).tryCallee*`.
+
 ## End-to-end examples (the `test*` functions)
 
 `TestSuite.sol` holds 64 end-to-end `test*` functions driven by `PaperTestExamplesTest.java`;

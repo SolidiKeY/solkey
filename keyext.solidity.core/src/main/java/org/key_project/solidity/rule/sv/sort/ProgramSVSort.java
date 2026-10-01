@@ -53,6 +53,7 @@ public abstract class ProgramSVSort extends SortImpl {
             PathSVSort.Simplicity.COMPLEX);
     public static final ProgramSVSort TYPE = new ClassSVSort("Type", Type.class);
     public static final ProgramSVSort STATEMENT = new ClassSVSort("Statement", Statement.class);
+    public static final ProgramSVSort EXTERNAL_CALL = new ExternalCallSVSort();
 
 
     @SuppressWarnings("argument.type.incompatible")

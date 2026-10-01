@@ -48,6 +48,8 @@ public class FunctionReference extends SolidityExpression
 
     @Override
     public void resolve(HashMap<Integer, SyntaxElement> id2Name) {
+        if (id == -1)
+            return;
         if (this.referencedDeclaration == null)
             this.referencedDeclaration =
                 Objects.requireNonNull((FunctionDeclaration) id2Name.get(id));
