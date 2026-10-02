@@ -140,6 +140,8 @@ public class SolidityProblemSynthesizerTest {
                     \\problem {
                         // msg.value >= 0 :
                         geq(msgValue, 0)
+                        // msg.sender != this :
+                        & !(msgSender = self)
                         // msg.sender == sender && state == State.AwaitingDeposit && msg.value > 0 :
                         & (((msgSender = find<[int]>(storage, cons1(Escrow$sender))) & (find<[int]>(storage, cons1(Escrow$state)) = 0)) & (msgValue > 0))
                         & CInv(storage, net) ->

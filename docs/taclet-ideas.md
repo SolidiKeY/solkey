@@ -82,8 +82,8 @@ and the `net` payment model.
   `block.*`, `.balance`, `.transfer`): require an environment/ledger model
   beyond the storage/memory heaps. Ordered implementation plan: `docs/net.md`.
   First slice done — `net` ledger, `msg.sender`/`msg.value`, and
-  `transfer` in both callback semantics, now with the EVM balance check
-  against `selfBalance` (see `docs/taclets-implementation.md` "Payments").
+  `transfer` in both callback semantics, with a transfer to `self` leaving
+  `net` unchanged (see `docs/net.md`).
   Still open: `send`, `call{value:}`, `block.*`, and `address(this).balance`
   reading `selfBalance` in the parsers.
 
@@ -97,9 +97,6 @@ Edge cases of already-supported constructs (see `docs/taclets-implementation.md`
 - **Reject uint unary minus in the parsers** (solc compile error); today the
   shape is executed as plain `neg` on the unbounded logic int instead of being
   rejected up front.
-- **Ternary `CInv(storage, net, selfBalance)`**: needed only if an example ever
-  wants to prove a *funded* transfer after a callback — the havoc currently
-  leaves `selfBalance` unconstrained.
 
 ## Raised by the solc semantic-test ports
 

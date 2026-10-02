@@ -187,15 +187,14 @@ The contract sets, ported from the SolidityCalculus course (`maltaCourseKey`):
 
 The `net-*` starters cover the raw machinery: the ledger update, `msg.*` desugaring, and
 `.transfer` under both semantics (simple, capture-argument, capture-receiver,
-with-callback). The transfer rules are split by modality — box books the debit with no
-funds check, diamond owes `0 <= v & v <= selfBalance` as a "sufficient funds" goal — so
-the starters run in box with no funding premises (`net-transfer-unfunded.key` pins the
-unconditional booking on a fully symbolic balance), while
-`net-transfer-diamond-funded.key` / `net-transfer-withcallback-diamond-funded.key`
-discharge the diamond obligation from a funding antecedent. The negative twins (an
-unfunded diamond must stay open) live in
-`keyext.solidity.core/src/test/resources/org/key_project/solidity/examples/open/`,
-asserted by `NetExamplesTest#unfundedDiamondStaysOpen`.
+with-callback, transfer to self). The transfer rules are split by modality — box books the
+debit with no funds check, diamond owes `0 <= v` as a "non-negative amount" goal — and a
+transfer to `self` leaves `net` unchanged, so a starter paying an arbitrary address assumes
+it is not `self` (`net-transfer-self.key` / `net-transfer-withcallback-self.key` cover that
+case). `net-transfer-diamond.key` / `net-transfer-withcallback-diamond.key` discharge the
+diamond obligation; the negative twins (a diamond over an unconstrained amount must stay
+open) live in `keyext.solidity.core/src/test/resources/org/key_project/solidity/examples/open/`,
+asserted by `NetExamplesTest#negativeAmountDiamondStaysOpen`.
 
 Symbolic POs occasionally need two kinds of sound antecedent strengthening, always noted
 in the file comment: `geq(field, 0)` uint-range assumptions ("Solidity Light" uses
@@ -239,14 +238,15 @@ the browser's header says what it is proved against). `--print-problem` prints t
 the conjoined invariants, and the ISoLA 2020 eq.-4 problem
 
 ```
-msg.value bound & requires & CInv(storage, net) ->
+msg.value bound & !(msgSender = self) & requires & CInv(storage, net) ->
 {[old := storage || oldNet := net ||] net := storeSt(net, at(msgSender), net(msgSender) + msgValue)
  || selfBalance := selfBalance + msgValue}
 \[{ [result = ]f()@C; }\] (CInv(storage, net) & ensures)
 ```
 
 A specified function is always proved in the box modality (partial correctness, as the paper);
-`msg.value >= 0` is assumed for a `payable` function and `msg.value == 0` otherwise. `-O
+`msg.value >= 0` is assumed for a `payable` function and `msg.value == 0` otherwise, and the
+caller is assumed not to be the contract itself (`msg.sender != address(this)`). `-O
 transferSemantics:withCallback` (the dialog's "transfer with callback" in KeYther) selects the
 callback rules, which re-establish `CInv` at every `.transfer`.
 
@@ -387,7 +387,7 @@ for the taclets no such function reaches. Each `NAME.key` is a problem whose pro
 taclet `NAME`. It is either a logic lemma, for a taclet whose function symbols the program rules
 never produce (`headDefinition`, `precOfInt`, `applySkip3`, …), or a `TestSuite.sol` obligation
 the synthesizer cannot state: one where automode prefers a competing rule
-(`localDeclPostdecrement`), or a diamond `transfer` that needs a `selfBalance` precondition.
+(`localDeclPostdecrement`), or a diamond `transfer`.
 `NAME.proof` beside it is the saved proof the test replays. After adding a `.key` or changing
 the rules, regenerate the proofs with
 

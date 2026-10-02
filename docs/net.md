@@ -8,15 +8,13 @@ implemented in this fork. The ledger, `msg.sender`/`msg.value`, both
 "Rules for address payments" banner (`scripts/taclet.sh --index`); examples
 and their proof obligations are in `keyext.solidity.examples/net/`.
 
-Beyond the paper, the implemented rules add the EVM balance check as a
-**diamond-only proof obligation**: the program variable `selfBalance`
-models the contract's own funds, the diamond transfer rules owe
-`0 <= v & v <= selfBalance` as a "sufficient funds" goal, while the box
-rules book the debit unconditionally (a reverting run is trivially correct
-under partial correctness, so the box does not owe the check). Both
-modalities debit `selfBalance`, the callback havoc quantifies over
-`selfBalance` alongside `storage` and `net`, and the PO pattern credits
-`msgValue` to `selfBalance` next to the `net(msgSender)` booking.
+Beyond the paper, the diamond transfer rules owe `0 <= v` as a
+"non-negative amount" goal (the EVM's value field is unsigned), while the
+box rules book the debit unconditionally. A transfer to `self` keeps the
+money in the contract, so the rules leave `net` unchanged in that case
+(`\if(a = self) \then(net) \else(...)`); the PO pattern assumes
+`msgSender != self`. The transfer rules do not track the contract's own
+balance; the PO pattern still credits `msgValue` to `selfBalance`.
 
 Read `storage.md` (calculus conventions), `key-taclets.md` (authoring
 syntax), and `require-assert.md` (box/diamond revert discipline) first.
@@ -62,7 +60,7 @@ maintained by the calculus, not by the program. On top of it:
 | `net` mapping | **Done**: `Struct net` in `netHeader.key`, read/write via `selectSt`/`storeSt` |
 | `msg.sender` / `msg.value` | **Done**: desugared to the `msgSender`/`msgValue` program variables in `SolidityToKeyConverter` |
 | `transfer` / `send` / `call{value:}` | `transfer` **done with both semantics, each split by modality** (`transferNoCallbackBox`/`transferNoCallbackDiamond` and both capture rules; `transferWithCallbackBox`/`transferWithCallbackDiamond` under the `transferSemantics` choice); `send` has builtin + classification but no rule; `call{value:}` missing |
-| Havoc update | **Done** in `transferWithCallbackBox`/`Diamond`: `{storage := storageSk \|\| net := netSk \|\| selfBalance := selfBalanceSk}` with skolem SVs (the `memoryReferenceDeclFreshAlloc` fresh-symbol pattern) |
+| Havoc update | **Done** in `transferWithCallbackBox`/`Diamond`: `{storage := storageSk \|\| net := netSk}` with skolem SVs (the `memoryReferenceDeclFreshAlloc` fresh-symbol pattern) |
 | Contract invariant storage + retrieval | **Phase 1 done**: uninterpreted `CInv(Struct, Struct)` predicate (`netHeader.key`) expanded by a per-example `insertCInv` taclet. Repository-backed retrieval still missing; the loop-invariant machinery (`SpecificationRepository`, `\getInvariant`/`\hasInvariant` varconds in `TacletBuilderManipulators`) is the exact template |
 | Proof-obligation generator | **Missing**; `proof/init/` already has `AbstractPO` / `ContractPO` / `FunctionalOperationContractPO` scaffolding. The paper's prototype also wrote POs by hand, so a manual pattern is faithful for phase 1 |
 
@@ -103,14 +101,13 @@ coexist and examples pin the variant they need.
 (reverting runs are trivially correct). `require` already degenerates to
 `c → φ` in box (`require-assert.md` §5), which is exactly the paper's
 `require` rule. The transfer rules are split by modality along the same
-line: the box rules carry no funds guard at all — the debit is booked
+line: the box rules carry no guard at all — the debit is booked
 unconditionally, exactly the paper's rule — while the diamond rules owe
-`0 <= v & v <= selfBalance` as an explicit "sufficient funds" goal, which
-is the EVM's actual behavior under total correctness
-(`net-transfer-unfunded.key` pins the unconditional box booking, the
-`net-transfer-*diamond-funded.key` starters discharge the diamond
-obligation, and the `examples/open/` twins in the core test resources pin
-that an unfunded diamond stays open).
+`0 <= v` as a "non-negative amount" goal (`net-transfer-unfunded.key` pins
+the unconditional box booking, the `net-transfer-*diamond.key` starters
+discharge the diamond obligation, and the `examples/open/` twins in the
+core test resources pin that a diamond over an unconstrained amount stays
+open).
 
 ## 4. Remaining work
 

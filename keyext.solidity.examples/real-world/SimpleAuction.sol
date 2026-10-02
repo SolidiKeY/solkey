@@ -10,6 +10,7 @@ pragma solidity ^0.8.4;
 // the function returns nothing.
 /// @custom:key invariant highestBid >= 0
 /// @custom:key invariant \forall address a; pendingReturns[a] >= 0
+/// @custom:key invariant beneficiary != address(this)
 contract SimpleAuction {
     address payable public beneficiary;
     uint public auctionEndTime;

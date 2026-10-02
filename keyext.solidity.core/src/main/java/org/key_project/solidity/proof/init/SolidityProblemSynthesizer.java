@@ -157,6 +157,7 @@ public final class SolidityProblemSynthesizer {
                 .anyMatch(text -> SpecParser.quantifies(SpecParser.parse(text)));
         String precondition = "    // " + (function.payable() ? "msg.value >= 0" : "msg.value == 0")
             + " :\n    " + (function.payable() ? "geq(msgValue, 0)" : "msgValue = 0")
+            + "\n    // msg.sender != this :\n    & !(msgSender = self)"
             + conjunction(functionSpec.requires(),
                 text -> compiler.formula(text, SpecCompiler.Context.requires(parameters),
                     where + " requires"),

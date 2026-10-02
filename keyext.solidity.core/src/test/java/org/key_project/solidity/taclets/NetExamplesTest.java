@@ -22,11 +22,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /// covering `msg.sender`/`msg.value`, `.transfer` under both `transferSemantics` choices, and
 /// the contract-invariant-at-transfer obligations (`CInv` via a per-problem `insertCInv`
 /// taclet, `docs/net.md`). They stay `.key`-based because the synthesized `.sol` obligations
-/// cannot carry an invariant, an antecedent (e.g. on `selfBalance`), or the
+/// cannot carry an invariant, an antecedent (e.g. `to = self`), or the
 /// `transferSemantics` taclet option; the program bodies themselves load from the `.sol`
 /// beside each problem via `\programSource`. The negative twins under the
-/// `org/key_project/solidity/examples/open/` test resources pin the diamond funding
-/// obligation by staying open.
+/// `org/key_project/solidity/examples/open/` test resources pin the diamond non-negative
+/// amount obligation by staying open.
 @Tag("solidityExamples")
 public class NetExamplesTest {
 
@@ -47,11 +47,10 @@ public class NetExamplesTest {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("openExamples")
-    void unfundedDiamondStaysOpen(String name, Path key) throws Exception {
+    void negativeAmountDiamondStaysOpen(String name, Path key) throws Exception {
         Proof proof = SolidityExampleTests.loadAndProve(key, 2000, 10000);
         assertFalse(proof.closed(),
-            () -> name + " must stay open: a diamond transfer without funding owes"
-                + " 0 <= v & v <= selfBalance");
+            () -> name + " must stay open: a diamond transfer owes 0 <= v");
     }
 
     static Stream<Arguments> openExamples() throws Exception {
