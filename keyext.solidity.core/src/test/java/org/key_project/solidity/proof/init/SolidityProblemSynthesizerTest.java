@@ -349,6 +349,13 @@ public class SolidityProblemSynthesizerTest {
 
         ProofSession holds =
             ProofSession.start(file, spec(null, "holds"), ProofSession.Limits.defaults());
+        var closedRoot = holds.tree().getFirst().serial();
+        var refused = assertThrows(IllegalArgumentException.class, () -> holds.prune(closedRoot));
+        assertTrue(refused.getMessage().contains("closed branch"), refused.getMessage());
+        var goal = session.tree().stream().filter(e -> e.state().equals("open")).findFirst()
+                .orElseThrow();
+        assertThrows(IllegalArgumentException.class, () -> session.prune(goal.serial()));
+        assertTrue(holds.summary().closed());
         Path sol = dir.resolve("Session.sol");
         Files.writeString(sol, SoliditySources.read(file));
         Path proof = dir.resolve("Session.holds.proof");

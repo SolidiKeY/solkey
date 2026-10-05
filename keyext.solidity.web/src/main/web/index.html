@@ -176,8 +176,11 @@
           <button id="nodePrune" type="button" hidden title="Remove everything below this node">Prune here</button>
         </div>
         <p class="hint muted" id="nodeHint">Click a term in the sequent of an open goal to see the rules that apply to it.</p>
-        <pre id="sequent" class="sequent" tabindex="0"></pre>
-        <details id="tacletBox" hidden><summary id="tacletSummary">Applied rule</summary><pre id="taclet" class="taclet"></pre></details>
+        <div class="node-body split">
+          <pre id="sequent" class="sequent" tabindex="0"></pre>
+          <div class="splitter" role="separator" tabindex="0" aria-label="Resize the sequent and the applied rule"><button type="button" tabindex="-1"></button><button type="button" tabindex="-1"></button></div>
+          <div id="tacletBox" hidden><p id="tacletSummary" class="taclet-head">Applied rule</p><pre id="taclet" class="taclet"></pre></div>
+        </div>
       </div>
     </div>
     <div id="ruleMenu" class="rule-menu" hidden role="menu"></div>

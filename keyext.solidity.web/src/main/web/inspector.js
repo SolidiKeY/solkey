@@ -188,7 +188,7 @@ async function selectNode(serial, quiet) {
   $('nodeTitle').textContent = `Node ${serial} · ${view.openGoal ? 'open goal' : view.children ? 'inner node' : 'closed goal'}`
     + (view.rule ? ` · rule ${view.rule}` : '') + (view.branchLabel ? ` · ${view.branchLabel}` : '');
   $('nodeAuto').hidden = !view.openGoal;
-  $('nodePrune').hidden = view.children === 0;
+  $('nodePrune').hidden = view.children === 0 || branchClosed(serial);
   $('nodeHint').hidden = !view.openGoal;
   renderSequent(view.sequent);
   $('tacletBox').hidden = !view.taclet;

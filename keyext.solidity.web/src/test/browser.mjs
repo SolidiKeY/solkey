@@ -86,14 +86,14 @@ const editorText = (page) => page.$eval('.cm-content', (el) => el.innerText);
 const background = (page) => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
 const widthOf = (page, selector) => page.$eval(selector, (el) => el.getBoundingClientRect().width);
 
-async function drag(page, splitter, dx) {
+async function drag(page, splitter, dx, dy = 0) {
   const grip = await page.$eval(splitter, (s) => {
     const r = s.getBoundingClientRect();
-    return { x: r.x + r.width / 2, y: r.y + r.height / 4 };
+    return r.width > r.height ? { x: r.x + r.width / 4, y: r.y + r.height / 2 } : { x: r.x + r.width / 2, y: r.y + r.height / 4 };
   });
   await page.mouse.move(grip.x, grip.y);
   await page.mouse.down();
-  await page.mouse.move(grip.x + dx, grip.y, { steps: 5 });
+  await page.mouse.move(grip.x + dx, grip.y + dy, { steps: 5 });
   await page.mouse.up();
 }
 
@@ -171,6 +171,15 @@ async function desktop() {
     Math.abs(treeBefore + 120 - await widthOf(page, '.inspector-tree')) < 4);
   await page.click('#treePane .tree-node >> nth=0');
   await page.waitForFunction(() => /Node 0/.test(document.getElementById('nodeTitle').textContent));
+  const heightOf = (selector) => page.$eval(selector, (el) => el.getBoundingClientRect().height);
+  const sequentBefore = await heightOf('#sequent');
+  await drag(page, '.node-body > .splitter', 0, -60);
+  check(`the node divider resizes the sequent (${Math.round(sequentBefore)} → ${Math.round(await heightOf('#sequent'))})`,
+    Math.abs(sequentBefore - 60 - await heightOf('#sequent')) < 4);
+  await page.click('.node-body > .splitter button >> nth=1');
+  check('the node divider arrow collapses the applied rule', await page.isHidden('#tacletBox'));
+  await page.click('.node-body > .splitter button >> nth=0');
+  check('the other arrow restores it', await page.isVisible('#tacletBox'));
   await page.click('#nodePrune');
   await page.waitForFunction(() => /· 1 nodes/.test(document.getElementById('inspectorSummary').textContent), null, { timeout: 60000 });
   check('pruning at the root leaves one node', true);
@@ -252,6 +261,9 @@ async function desktop() {
   await page.waitForSelector('#inspector:not([hidden])', { timeout: 120000 });
   await page.waitForFunction(() => /closed/.test(document.getElementById('inspectorSummary').textContent), null, { timeout: 120000 });
   check(`a downloaded .proof loads and replays: ${await page.textContent('#inspectorSummary')}`, /^closed/.test(await page.textContent('#inspectorSummary')));
+  await page.click('#treePane .tree-node >> nth=0');
+  await page.waitForFunction(() => /Node 0/.test(document.getElementById('nodeTitle').textContent));
+  check('a closed proof offers no Prune', await page.isHidden('#nodePrune'));
   await page.click('#inspectorClose');
 
   await page.setInputFiles('#file', path.join(contracts, 'NoProvable.sol'));

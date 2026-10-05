@@ -307,7 +307,10 @@ public final class ProofSession {
 
     public Summary prune(int serial) {
         Node node = requireNode(serial);
-        proof.pruneProof(node);
+        if (proof.pruneProof(node) == null) {
+            throw new IllegalArgumentException("nothing was pruned: node " + serial
+                + " is an open goal or lies in a closed branch");
+        }
         invalidate();
         return summary();
     }
