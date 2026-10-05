@@ -2796,6 +2796,14 @@ contract TestSuite {
         assert(x == 41);
     }
 
+    function localPreincrementAssign() public pure {
+        uint x = 40;
+        uint r = 0;
+        r = ++x;
+        assert(r == 41);
+        assert(x == 41);
+    }
+
     function localPostdecrement() public pure {
         uint x = 40;
         x--;
