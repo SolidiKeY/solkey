@@ -11,6 +11,7 @@ import org.key_project.logic.op.Function;
 import org.key_project.logic.op.QuantifiableVariable;
 import org.key_project.logic.sort.Sort;
 import org.key_project.prover.rules.RuleSet;
+import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ParametricFunctionDecl;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.*;
@@ -299,4 +300,15 @@ public class NamespaceSet {
             choiceNS.parent(), progVarNS.parent());
     }
 
+    public Function requireFunction(String name) {
+        return requireFunction(new Name(name));
+    }
+
+    public Function requireFunction(Name name) {
+        Function function = functions().lookup(name);
+        if (function == null) {
+            throw new IllegalStateException("Function " + name + " is not declared");
+        }
+        return function;
+    }
 }

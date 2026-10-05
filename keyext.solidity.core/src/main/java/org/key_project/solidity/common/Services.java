@@ -106,9 +106,9 @@ public class Services implements LogicServices, ProofServices {
         if (pe instanceof FieldReference fieldRef) {
             // a contract field access resolves to a single-element List path (cons(field, nil))
             // so that global roots are treated uniformly with local storage paths
-            Term field = tb.func(services.requireFunction(fieldRef.getFieldConstantName()));
-            return tb.func(services.requireFunction("cons"), field,
-                tb.func(services.requireFunction("nil")));
+            Term field = tb.func(services.getNamespaces().requireFunction(fieldRef.getFieldConstantName()));
+            return tb.func(services.getNamespaces().requireFunction("cons"), field,
+                tb.func(services.getNamespaces().requireFunction("nil")));
         }
         if (pe instanceof MemberExp member) {
             Term basePath = convertToLogicElement(member.getLeftExp(), services);
@@ -138,25 +138,13 @@ public class Services implements LogicServices, ProofServices {
                 + "position it should stand for.");
     }
 
-    public Function requireFunction(String name) {
-        return requireFunction(new Name(name));
-    }
-
-    public Function requireFunction(Name name) {
-        Function function = getNamespaces().functions().lookup(name);
-        if (function == null) {
-            throw new IllegalStateException("Function " + name + " is not declared");
-        }
-        return function;
-    }
-
     private static Term fieldConstant(FieldDeclaration field, Services services) {
         StructDeclaration owner = field.getContainingStruct();
         Name constantName = owner != null && owner.getContract() != null
                 ? new Name(StructLDT.fieldConstantName(owner.getContract().name(), owner.name(),
                     field.name()))
                 : field.name();
-        return services.getTermBuilder().func(services.requireFunction(constantName));
+        return services.getTermBuilder().func(services.getNamespaces().requireFunction(constantName));
     }
 
     private static Term memberFieldTerm(MemberExp member, Services services) {
@@ -169,14 +157,15 @@ public class Services implements LogicServices, ProofServices {
     }
 
     private static Term indexFieldTerm(Term indexTerm, Services services) {
-        return services.getTermBuilder().func(services.requireFunction("at"), indexTerm);
+        return services.getTermBuilder().func(services.namespaces.requireFunction("at"), indexTerm);
     }
 
     private static Term appendPathSegment(Term basePath, Term field, Services services) {
         var tb = services.getTermBuilder();
-        Function cons = services.requireFunction("cons");
-        Function consr = services.requireFunction("consr");
-        Function nil = services.requireFunction("nil");
+        final NamespaceSet namespaces = services.getNamespaces();
+        Function cons = namespaces.requireFunction("cons");
+        Function consr = namespaces.requireFunction("consr");
+        Function nil = namespaces.requireFunction("nil");
         if ("List".equals(basePath.sort().name().toString())) {
             return tb.func(consr, basePath, field);
         }

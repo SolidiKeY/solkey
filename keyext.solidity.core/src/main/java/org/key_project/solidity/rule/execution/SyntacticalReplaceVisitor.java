@@ -135,15 +135,14 @@ public class SyntacticalReplaceVisitor implements Visitor<Term> {
                 /* svInst.getExecutionContext(), */ services));
             pushNew(newTerm);
         } else {
-            // instantiation of Solidity block
-            boolean rBlockChanged = false;
+            boolean sBlockChanged = false;
 
             if (visitedOp instanceof SModality mod) {
                 var block = mod.programBlock();
                 var olfRb = block;
                 block = replacePrg(svInst, block);
                 if (block != olfRb) {
-                    rBlockChanged = true;
+                    sBlockChanged = true;
                 }
 
                 visitedOp = instantiateModality(mod, block);
@@ -157,7 +156,7 @@ public class SyntacticalReplaceVisitor implements Visitor<Term> {
 
             // instantiate sub terms
             final Term[] neededsubs = neededSubs(newOp != null ? newOp.arity() : 0);
-            if (boundVars != visited.boundVars() || rBlockChanged || (newOp != visitedOp)
+            if (boundVars != visited.boundVars() || sBlockChanged || (newOp != visitedOp)
                     || (!subStack.empty() && subStack.peek() == newMarker)) {
                 final Term newTerm = tb.tf().createTerm(newOp, neededsubs,
                     boundVars);
@@ -297,8 +296,7 @@ public class SyntacticalReplaceVisitor implements Visitor<Term> {
             if (!(p_operatorToBeInstantiated instanceof ProgramSV)
                     || !((ProgramSV) p_operatorToBeInstantiated).isListSV()) {
                 instantiatedOp =
-                    (Operator) svInst.getInstantiation(
-                        (org.key_project.logic.op.sv.SchemaVariable) p_operatorToBeInstantiated);
+                        svInst.getInstantiation((SchemaVariable) p_operatorToBeInstantiated);
             }
         }
         assert instantiatedOp != null;
