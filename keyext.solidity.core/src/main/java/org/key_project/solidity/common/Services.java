@@ -106,7 +106,8 @@ public class Services implements LogicServices, ProofServices {
         if (pe instanceof FieldReference fieldRef) {
             // a contract field access resolves to a single-element List path (cons(field, nil))
             // so that global roots are treated uniformly with local storage paths
-            Term field = tb.func(services.getNamespaces().requireFunction(fieldRef.getFieldConstantName()));
+            Term field =
+                tb.func(services.getNamespaces().requireFunction(fieldRef.getFieldConstantName()));
             return tb.func(services.getNamespaces().requireFunction("cons"), field,
                 tb.func(services.getNamespaces().requireFunction("nil")));
         }
@@ -144,7 +145,8 @@ public class Services implements LogicServices, ProofServices {
                 ? new Name(StructLDT.fieldConstantName(owner.getContract().name(), owner.name(),
                     field.name()))
                 : field.name();
-        return services.getTermBuilder().func(services.getNamespaces().requireFunction(constantName));
+        return services.getTermBuilder()
+                .func(services.getNamespaces().requireFunction(constantName));
     }
 
     private static Term memberFieldTerm(MemberExp member, Services services) {

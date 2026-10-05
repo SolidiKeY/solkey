@@ -84,7 +84,9 @@ and the `net` payment model.
   First slice done — `net` ledger, `msg.sender`/`msg.value`, and
   `transfer` in both callback semantics, with a transfer to `self` leaving
   `net` unchanged (see `docs/net.md`).
-  Still open: `send`, `call{value:}`, `block.*`, and `address(this).balance`
+  `send` and the trivial `(bool ok, ) = a.call{value: v}("")` are done too
+  (`call` is lowered to `send`). Still open: `call` with data or tuple results,
+  `block.*`, and `address(this).balance`
   reading `selfBalance` in the parsers.
 
 ## Refinements to implemented rules

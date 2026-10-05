@@ -1,0 +1,77 @@
+\profile "Solidity Profile";
+
+\settings // Proof-Settings-Config-File
+{
+    "Choice": {
+        "integerSimplificationRules": "integerSimplificationRules:full",
+        "programRules": "programRules:Solidity",
+        "transferSemantics": "transferSemantics:noCallback"
+    },
+    "Strategy": {
+        "ActiveStrategy": "Modular SolidityDL Strategy",
+        "MaximumNumberOfAutomaticApplications": 10000,
+        "Timeout": -1,
+        "options": {
+            "AUTO_INDUCTION_OPTIONS_KEY": "AUTO_INDUCTION_OFF",
+            "FUNCTION_OPTIONS_KEY": "FUNCTION_CONTRACT",
+            "LOOP_OPTIONS_KEY": "LOOP_INVARIANT",
+            "NON_LIN_ARITH_OPTIONS_KEY": "NON_LIN_ARITH_NONE",
+            "QUANTIFIERS_OPTIONS_KEY": "QUANTIFIERS_NON_SPLITTING_WITH_PROGS",
+            "SPLITTING_OPTIONS_KEY": "SPLITTING_DELAYED",
+            "STOPMODE_OPTIONS_KEY": "STOPMODE_DEFAULT",
+            "USER_TACLETS_OPTIONS_KEY1": "USER_TACLETS_OFF",
+            "USER_TACLETS_OPTIONS_KEY2": "USER_TACLETS_OFF",
+            "USER_TACLETS_OPTIONS_KEY3": "USER_TACLETS_OFF"
+        }
+    }
+} 
+
+\programSource "../TestSuite.sol";
+\problem {
+\<{
+  sendToOwner()@TestSuite;
+}\> true
+}
+
+\proof {
+(branch "dummy ID"
+(rule "functionBodyExpand" (formula "1"))
+(rule "localValueDeclInitDrop" (formula "1") (newnames "to"))
+(rule "storageRootReadSelect" (formula "1"))
+(rule "findDefinitionMemberPrim" (formula "1") (term "0,0"))
+(rule "localValueDeclInitDrop" (formula "1") (term "1") (newnames "ok"))
+(rule "sendNoCallbackDiamond" (formula "1") (term "1"))
+(branch
+   (rule "simplifyUpdate2" (formula "1"))
+   (rule "leq_literals" (formula "1"))
+   (rule "closeTrue" (formula "1"))
+)
+(branch
+   (rule "simplifyUpdate2" (formula "1") (term "1"))
+   (rule "simplifyUpdate2" (formula "1"))
+   (rule "storageRootWriteStore" (formula "1") (term "1"))
+   (rule "sequentialToParallel2" (formula "1"))
+   (rule "simplifyUpdate2" (formula "1"))
+   (rule "applyOnElementary" (formula "1") (term "0"))
+   (rule "applyOnRigidTerm" (formula "1") (term "0,0"))
+   (rule "applyOnPV" (formula "1") (term "2,0,0"))
+   (rule "simplifyUpdate1" (formula "1") (term "1,0,0"))
+   (rule "simplifyUpdate1" (formula "1") (term "0,0,0"))
+   (rule "emptyModality" (formula "1") (term "1"))
+   (rule "closeTrue" (formula "1"))
+)
+(branch
+   (rule "simplifyUpdate2" (formula "1"))
+   (rule "storageRootWriteStore" (formula "1") (term "1"))
+   (rule "sequentialToParallel2" (formula "1"))
+   (rule "simplifyUpdate2" (formula "1"))
+   (rule "applyOnElementary" (formula "1") (term "0"))
+   (rule "applyOnRigidTerm" (formula "1") (term "0,0"))
+   (rule "applyOnPV" (formula "1") (term "2,0,0"))
+   (rule "simplifyUpdate1" (formula "1") (term "1,0,0"))
+   (rule "simplifyUpdate1" (formula "1") (term "0,0,0"))
+   (rule "emptyModality" (formula "1") (term "1"))
+   (rule "closeTrue" (formula "1"))
+)
+)
+}

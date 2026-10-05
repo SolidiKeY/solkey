@@ -30,7 +30,8 @@ public class ShapeTransformer extends AbstractTermTransformer {
             case TypedField field -> field.type();
             default -> null;
         };
-        return type == null ? services.getTermBuilder().func(services.getNamespaces().requireFunction("leaf"))
+        return type == null
+                ? services.getTermBuilder().func(services.getNamespaces().requireFunction("leaf"))
                 : shapeOf(type, services);
     }
 

@@ -3479,6 +3479,34 @@ contract TestSuite {
         to.transfer(x + 2);
     }
 
+    /// @custom:key box
+    function sendToOwner() public {
+        address payable to = payable(owner);
+        bool ok = to.send(5);
+        flag = ok;
+    }
+
+    /// @custom:key box
+    function sendUnfoldReceiver() public {
+        bool ok = payable(owner).send(5);
+        flag = ok;
+    }
+
+    /// @custom:key box
+    function sendUnfoldArgument() public {
+        address payable to = payable(owner);
+        uint x = 3;
+        bool ok = to.send(x + 2);
+        flag = ok;
+    }
+
+    /// @custom:key box
+    function callToSender() public {
+        uint amount = 5;
+        (bool success, ) = payable(msg.sender).call{value: amount}("");
+        flag = success;
+    }
+
     /// @custom:key skip
     function tryCalleeGet(uint x) external pure returns (uint) {
         return x;

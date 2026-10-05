@@ -35,6 +35,7 @@ import org.key_project.solidity.program.ast.references.FunctionReference;
 import org.key_project.solidity.program.ast.references.ModifierReference;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.program.parser.SolcParser;
+import org.key_project.solidity.program.parser.SolidityParseException;
 import org.key_project.solidity.testutil.ExpectedToFail;
 import org.key_project.util.collection.ImmutableArray;
 
@@ -1695,5 +1696,39 @@ public class SolJsonParserTest {
         // Right-hand side literal value 10
         Uint256Literal rhs = (Uint256Literal) assignExpr.getRight();
         assertEquals(10, rhs.getValue().intValueExact());
+    }
+
+    @Test
+    void trivialValueCallLowersToSend() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                    function f(address payable a, uint v) public {
+                        (bool ok, ) = a.call{value: v}("");
+                    }
+                }""";
+        FunctionDeclaration f = getDeclStr(contract, services).getFunctions().get(0);
+        DeclarationStatement decl = (DeclarationStatement) f.getBody().getStatements().get(0);
+        assertEquals(1, decl.getDeclarations().size());
+        FunctionCallExpression call = (FunctionCallExpression) decl.getInitialValue();
+        assertSame(BOOL, call.getType());
+        MemberExp member = (MemberExp) call.getFunctionExp();
+        assertEquals("send", ((FunctionDeclaration) member.getRightExp()).name().toString());
+        assertEquals(1, call.getArguments().size());
+    }
+
+    @Test
+    void nonTrivialValueCallsAreRejected() {
+        for (String statement : List.of(
+            "(bool ok, bytes memory d) = a.call{value: 1}(\"\");",
+            "(bool ok, ) = a.call{value: 1, gas: 5}(\"\");",
+            "(bool ok, ) = a.call{value: 1}(\"x\");",
+            "(bool ok, ) = a.call(\"\");")) {
+            String contract = "contract SimpleContract {\n"
+                + "    function f(address payable a) public {\n        " + statement
+                + "\n    }\n}";
+            assertThrows(SolidityParseException.class, () -> getDeclStr(contract, services),
+                statement);
+        }
     }
 }

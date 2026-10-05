@@ -11,7 +11,6 @@ import org.key_project.logic.op.Function;
 import org.key_project.logic.op.QuantifiableVariable;
 import org.key_project.logic.sort.Sort;
 import org.key_project.prover.rules.RuleSet;
-import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ParametricFunctionDecl;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.logic.sort.*;

@@ -399,6 +399,9 @@ public class SolJSONParser {
                         "Statement type " + type + " is not supported");
             };
         } else if (statement.has("declarations")) {
+            if (statement.get("declarations").size() > 1) {
+                return parseValueCall(statement);
+            }
             List<Declaration> declarations = statement.get("declarations").valueStream()
                     .map(this::parseDeclaration).toList();
             Expression initialValue = findOrNullExpression(statement, "initialValue");
@@ -455,6 +458,42 @@ public class SolJSONParser {
             case "PlaceholderStatement" -> new PlaceholdStatement();
             default -> throw new IllegalStateException("Statement does not have type " + type);
         };
+    }
+
+    private Statement parseValueCall(JsonNode statement) {
+        List<JsonNode> declarations = statement.get("declarations").valueStream().toList();
+        JsonNode call = statement.get("initialValue");
+        JsonNode options = call == null ? null : call.get("expression");
+        JsonNode member = options == null ? null : options.get("expression");
+        boolean trivial = member != null && declarations.size() == 2
+                && !declarations.get(0).isNull()
+                && declarations.get(1).isNull()
+                && "bool".equals(declarations.get(0).get("typeDescriptions").get("typeString")
+                        .asString())
+                && "FunctionCall".equals(call.get("nodeType").asString())
+                && "FunctionCallOptions".equals(options.get("nodeType").asString())
+                && options.get("names").size() == 1
+                && "value".equals(options.get("names").get(0).asString())
+                && "MemberAccess".equals(member.get("nodeType").asString())
+                && "call".equals(member.get("memberName").asString())
+                && call.get("arguments").size() == 1
+                && isEmptyStringLiteral(call.get("arguments").get(0));
+        if (!trivial) {
+            throw new SolidityParseException(
+                "Only the tuple declaration (bool ok, ) = a.call{value: v}(\"\") is supported",
+                statement);
+        }
+        Expression receiver = parseExpression(member.get("expression"));
+        Expression amount = parseExpression(options.get("options").get(0));
+        Expression send = new FunctionCallExpression(BOOL,
+            ParserUtils.builtinMemberAccess(receiver, "send"), List.of(amount));
+        return new DeclarationStatement(List.of(parseDeclaration(declarations.get(0))), send);
+    }
+
+    private static boolean isEmptyStringLiteral(JsonNode node) {
+        return "Literal".equals(node.get("nodeType").asString())
+                && "string".equals(node.get("kind").asString())
+                && "".equals(node.get("value").asString());
     }
 
     private Declaration parseDeclaration(JsonNode declaration) {

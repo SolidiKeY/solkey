@@ -11,8 +11,8 @@ pragma solidity ^0.8.0;
 // breakPiggyBank keeps the course order (state = Broken written before the payout
 // leaves), so the invariant also holds at the transfer point
 // (piggybank-breakPiggyBank-withcallback.key).
-// The readMsg/payTo/payToPlus/payOwner helpers host the net-* machinery starters; the
-// invariant does not mention their paidBy/paidValue fields.
+// The readMsg/payTo/payToPlus/sendTo/callTo/payOwner helpers host the net-* machinery
+// starters; the invariant does not mention their paidBy/paidValue/sent fields.
 contract PiggyBankNet {
     address payable owner;
     address paidBy;
@@ -21,6 +21,7 @@ contract PiggyBankNet {
     uint timeOfFirstDeposit;
     uint balance;
     uint timeNow;
+    bool sent;
 
     function readMsg() public payable {
         paidValue = msg.value;
@@ -33,6 +34,16 @@ contract PiggyBankNet {
 
     function payToPlus(address payable a, uint x) public {
         a.transfer(x + 2);
+    }
+
+    function sendTo(address payable a) public {
+        bool ok = a.send(5);
+        sent = ok;
+    }
+
+    function callTo(address payable a) public {
+        (bool ok, ) = a.call{value: 5}("");
+        sent = ok;
     }
 
     function payOwner() public {

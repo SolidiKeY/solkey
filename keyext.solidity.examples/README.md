@@ -387,7 +387,7 @@ for the taclets no such function reaches. Each `NAME.key` is a problem whose pro
 taclet `NAME`. It is either a logic lemma, for a taclet whose function symbols the program rules
 never produce (`headDefinition`, `precOfInt`, `applySkip3`, …), or a `TestSuite.sol` obligation
 the synthesizer cannot state: one where automode prefers a competing rule
-(`localDeclPostdecrement`), or a diamond `transfer`.
+(`localDeclPostdecrement`), or a diamond `transfer` or `send`.
 `NAME.proof` beside it is the saved proof the test replays. After adding a `.key` or changing
 the rules, regenerate the proofs with
 

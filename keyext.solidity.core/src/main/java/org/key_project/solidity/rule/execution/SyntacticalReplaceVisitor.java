@@ -296,7 +296,7 @@ public class SyntacticalReplaceVisitor implements Visitor<Term> {
             if (!(p_operatorToBeInstantiated instanceof ProgramSV)
                     || !((ProgramSV) p_operatorToBeInstantiated).isListSV()) {
                 instantiatedOp =
-                        svInst.getInstantiation((SchemaVariable) p_operatorToBeInstantiated);
+                    svInst.getInstantiation((SchemaVariable) p_operatorToBeInstantiated);
             }
         }
         assert instantiatedOp != null;

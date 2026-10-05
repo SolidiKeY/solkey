@@ -642,6 +642,30 @@ not decode, revert in the caller, and no catch clause catches that; such a rever
 in a box but would be an extra failing goal in a diamond. A diamond `try` therefore matches
 no rule. Examples: `tryCall*` in `TestSuite.sol`, which call `TestSuite(owner).tryCallee*`.
 
+### `send` and `call{value: v}("")`
+
+`ok = a.send(v)` books the same ledger debit as `transfer`, but a failure binds `false` instead of
+reverting. Each rule adds a `send failed` goal, `{ok := FALSE}`, where nothing else changes:
+
+| Goal | `noCallback` | `withCallback` |
+|---|---|---|
+| `non-negative amount` (diamond only) | `0 <= v` | same |
+| `invariant on exit` | — | `{net := debit} CInv(storage, net)` |
+| `send succeeded` | `{net := debit \|\| ok := TRUE}` | `{storage, net := fresh \|\| ok := TRUE}(CInv → …)` |
+| `send failed` | `{ok := FALSE}` | same |
+
+The rules are `sendNoCallbackBox`/`sendNoCallbackDiamond`, `sendWithCallbackBox`/`sendWithCallbackDiamond`,
+and the capture rules `send_unfold_leftFstReceiver`/`send_unfold_rightSndArgument`. They match the
+assignment `s#pv = s#sadr.send(s#se)` that `localValueDeclInitDrop` leaves behind `bool ok = …;`.
+
+`call` gets no rules of its own. Gas is not modeled, so `call{value}` follows the
+`transferSemantics` choice just like `transfer` and `try`. `SolJSONParser.parseValueCall` lowers
+the one supported shape, `(bool ok, ) = a.call{value: v}("")`, to `bool ok = a.send(v);`. Every
+other tuple declaration (another tuple, a second option such as `gas`, non-empty data, or no
+`{value: …}`) is a `SolidityParseException`, because tuples are not implemented. Examples:
+`send*` and `callToSender` in `TestSuite.sol`, and `net/net-send-simple.key` and
+`net/net-call-withcallback-simple.key`.
+
 ## End-to-end examples (the `test*` functions)
 
 `TestSuite.sol` holds 64 end-to-end `test*` functions driven by `PaperTestExamplesTest.java`;
@@ -758,7 +782,8 @@ A test that observes more than one value therefore asserts in the body and uses 
 
 Note that a `.sol` body is parsed by `SolJSONParser` (the solc-JSON path), not by
 `SolidityToKeyConverter` (the ANTLR path used for programs written inline in a modality). Both
-paths now handle `msg.sender`, `msg.value`, `.transfer` and `.send`, which is why the `net-*`
+paths now handle `msg.sender`, `msg.value`, `.transfer` and `.send` (`call{value}` only on the
+solc-JSON path, lowered to `.send`), which is why the `net-*`
 examples load their programs from the `.sol` beside them via `\programSource`.
 
 ## Synthesized obligations from `@custom:key` specifications

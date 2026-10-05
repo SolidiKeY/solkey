@@ -59,7 +59,7 @@ maintained by the calculus, not by the program. On top of it:
 | `address` type | Registered in `SolidityInfo`, mapped to the `int` sort |
 | `net` mapping | **Done**: `Struct net` in `netHeader.key`, read/write via `selectSt`/`storeSt` |
 | `msg.sender` / `msg.value` | **Done**: desugared to the `msgSender`/`msgValue` program variables in `SolidityToKeyConverter` |
-| `transfer` / `send` / `call{value:}` | `transfer` **done with both semantics, each split by modality** (`transferNoCallbackBox`/`transferNoCallbackDiamond` and both capture rules; `transferWithCallbackBox`/`transferWithCallbackDiamond` under the `transferSemantics` choice); `send` has builtin + classification but no rule; `call{value:}` missing |
+| `transfer` / `send` / `call{value:}` | `transfer` **done with both semantics, each split by modality** (`transferNoCallbackBox`/`transferNoCallbackDiamond` and both capture rules; `transferWithCallbackBox`/`transferWithCallbackDiamond` under the `transferSemantics` choice); `send` **done** the same way (`send*` rules: success books the debit and binds `TRUE`, failure binds `FALSE`); `call{value:}` only as `(bool ok, ) = a.call{value: v}("")`, lowered to `send` by `SolJSONParser` |
 | Havoc update | **Done** in `transferWithCallbackBox`/`Diamond`: `{storage := storageSk \|\| net := netSk}` with skolem SVs (the `memoryReferenceDeclFreshAlloc` fresh-symbol pattern) |
 | Contract invariant storage + retrieval | **Phase 1 done**: uninterpreted `CInv(Struct, Struct)` predicate (`netHeader.key`) expanded by a per-example `insertCInv` taclet. Repository-backed retrieval still missing; the loop-invariant machinery (`SpecificationRepository`, `\getInvariant`/`\hasInvariant` varconds in `TacletBuilderManipulators`) is the exact template |
 | Proof-obligation generator | **Missing**; `proof/init/` already has `AbstractPO` / `ContractPO` / `FunctionalOperationContractPO` scaffolding. The paper's prototype also wrote POs by hand, so a manual pattern is faithful for phase 1 |
@@ -137,12 +137,16 @@ Mapped to this repository, roughly in order of usefulness:
    `old`/`oldNet` variables. Not done: feeding the clauses into a
    `SpecificationRepository` so a callback varcond could look them up; the
    with-callback rules still expand `CInv` through the generated taclet.
-5. **`send` and `call{value: v}(data)`**: `b = a.send(v)` is `transfer`
-   that binds `false` instead of reverting — two branches (success: net
-   update + `b := TRUE`; failure: `b := FALSE`, no net change), each
-   followed by the callback/no-callback treatment. `call` always permits
-   callbacks (paper Remark 1), so it only gets the with-callback rule;
-   its `data` payload stays opaque.
+5. **`send` and `call{value: v}(data)`**: **done for the trivial shape.**
+   `b = a.send(v)` is `transfer` that binds `false` instead of reverting.
+   It has two branches (success: net update and `b := TRUE`; failure:
+   `b := FALSE`, no net change), each followed by the callback/no-callback
+   treatment (`send*` rules). Unlike paper Remark 1, `call` follows the
+   `transferSemantics` choice like `transfer` and `try` (gas is not modeled).
+   `SolJSONParser` lowers `(bool ok, ) = a.call{value: v}("")` to
+   `bool ok = a.send(v);` and rejects every other tuple declaration. Still
+   open: `call` with a data payload or a used `bytes` result, which need
+   tuples.
 6. **Control flow for the remaining examples**: Tier-3 `if` (escrow,
    closeAuction) and loop rules. The loop-invariant infrastructure
    (`LoopSpecification`, `\getInvariant`, `\getVariant`) already exists —
