@@ -386,12 +386,29 @@ body.inspecting { overflow: hidden; }
 .inspector-node { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
 .node-head span:first-child { font-size: 13px; font-weight: 600; }
 .hint { margin: 6px 12px 0; }
-.sequent { flex: 1; margin: 8px 12px; padding: 10px; overflow: auto; background: var(--code); border: 1px solid var(--border); border-radius: 8px;
+.node-body {
+  --gutter: 9px;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, var(--split, 70%)) var(--gutter) minmax(0, 1fr);
+  grid-template-areas: "a" "s" "b";
+  min-height: 0;
+}
+.node-body:has(> #tacletBox[hidden]) { grid-template-rows: minmax(0, 1fr); grid-template-areas: "a"; }
+.node-body:has(> #tacletBox[hidden]) > .splitter { display: none; }
+.node-body.collapse-start > .sequent, .node-body.collapse-end > #tacletBox { display: none; }
+.node-body > .splitter { flex-direction: row; cursor: row-resize; }
+.node-body > .splitter::before { inset: calc(50% - .5px) 0; background: var(--border); }
+.node-body > .splitter:hover::before, .node-body > .splitter:focus-visible::before,
+.node-body > .splitter.dragging::before { inset: calc(50% - 1.5px) 0; background: var(--accent); }
+.node-body > .splitter button { width: 20px; height: 16px; }
+.sequent { margin: 8px 12px; padding: 10px; overflow: auto; background: var(--code); border: 1px solid var(--border); border-radius: 8px;
   font-size: 13px; line-height: 1.5; white-space: pre; cursor: text; min-height: 0; }
 .sequent mark { background: color-mix(in srgb, var(--accent) 30%, transparent); color: inherit; border-radius: 2px; }
-#tacletBox { margin: 0 12px 10px; }
-#tacletBox summary { cursor: pointer; font-size: 13px; color: var(--muted); }
-.taclet { max-height: 30vh; overflow: auto; font-size: 12px; background: var(--code); border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
+#tacletBox { display: flex; flex-direction: column; margin: 0 12px 10px; min-height: 0; }
+#tacletBox[hidden] { display: none; }
+.taclet-head { margin: 0 0 4px; font-size: 13px; color: var(--muted); }
+.taclet { flex: 1; min-height: 0; margin: 0; overflow: auto; font-size: 12px; background: var(--code); border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
 .rule-menu {
   position: absolute;
   z-index: 11;

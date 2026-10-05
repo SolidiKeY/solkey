@@ -776,6 +776,7 @@ makeSplit(document.querySelector('main'), { key: 'main', initial: 58, min: 280 }
 makeSplit(document.querySelector('.inspector-body'), {
   key: 'inspector', initial: 33, initialVertical: 35, min: 160, verticalWhen: matchMedia('(max-width: 860px)'),
 });
+makeSplit(document.querySelector('.node-body'), { key: 'node', initial: 70, min: 80, verticalWhen: matchMedia('all') });
 $('workers').value = defaultWorkers();
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !inspectorOpen() && $('options').open) $('options').open = false;
