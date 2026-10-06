@@ -161,8 +161,9 @@ public class ProgVarReplaceVisitorTest {
         assertSame(replacement, getDeclaredVar(result));
         Statement forLoop = result.getStatements().get(1);
         assertSame(replacement,
-            ((AssignExpression) Objects.requireNonNull(((ForStatement) forLoop).getInit())
-                    .getInit()).getLeft());
+            ((AssignExpression) ((ExpressionStatement) Objects
+                    .requireNonNull(((ForStatement) forLoop).getInit()).getInit())
+                    .getExpression()).getLeft());
         assertSame(replacement,
             ((BinaryExpression) Objects.requireNonNull(((ForStatement) forLoop).getCondition()))
                     .getLeft());

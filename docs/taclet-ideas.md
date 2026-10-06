@@ -30,11 +30,15 @@ and the `net` payment model.
   rule can drop the block marker and execute the body as-is. Real wrapping
   semantics would only matter together with a bounded/checked integer model
   (see the Tier-5 entry below).
-- **`whileStatement`** / **`forStatement`** / **`doWhileStatement`**: loop
-  unrolling rule (one iteration + residual loop) for bounded proofs, plus an
-  invariant rule later. `for` first desugars init/cond/update into a `while`.
-- **`breakStatement`** / **`continueStatement`**: only meaningful with the loop
-  rules; model via abrupt-completion markers like KeY's Java loop scope.
+- **Loop invariants, what is left.** `whileInvariantBox`/`whileInvariantDiamond` are in
+  (`docs/taclets-implementation.md`, "Loops"). Open: a body that writes memory gets no rule
+  (anonymising the memory heap needs its well-formedness facts); a diamond loop without
+  `decreases` silently falls back to unwinding instead of failing with a message; a `uint`
+  parameter is not known to be non-negative, so an invariant over `n` needs `require(n >= 0)`
+  under a box and cannot be assumed under a diamond (an obligation could assume `0 <= p` for
+  every unsigned parameter). `MultiAuction.closeAuction` stays skipped: its loops transfer, so
+  their invariants must re-establish the contract's `\exists`/`\forall` ledger invariant at
+  every callback.
 
 ## Tier 4 — Calls, types, events
 
@@ -119,10 +123,6 @@ non-integer key crash in `docs/bugs.md` and the gap below.
 
 ## Raised by `return` and tuple support
 
-- **`return` inside a loop.** `blockReturn` moves a `return` out of blocks up to its
-  `function-frame`. Once loop rules exist, a loop node (or KeY-Java's loop scope) needs its own
-  rule that passes a `return` through, and `break`/`continue` can follow the same pattern
-  (`blockBreak`, stopped by the loop).
 - **Modifiers beyond one `_;`.** A modifier with two `_;` or with a `return` is not inlined.
   The first needs the body's locals renamed per copy; the second needs a frame around the
   modifier, so that its `return` skips the rest of it.

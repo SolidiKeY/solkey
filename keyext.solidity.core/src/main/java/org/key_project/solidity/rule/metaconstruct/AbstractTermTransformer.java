@@ -53,6 +53,7 @@ public abstract class AbstractTermTransformer extends AbstractSortedOperator
 
     public static final AbstractTermTransformer LOGIC_SHIFT = new ShiftTransformer();
     public static final AbstractTermTransformer SHAPE_OF = new ShapeTransformer();
+    public static final AbstractTermTransformer LOOP_ANON = new LoopAnonTransformer();
 
     @SuppressWarnings("argument.type.incompatible")
     protected AbstractTermTransformer(Name name, int arity, Sort sort) {

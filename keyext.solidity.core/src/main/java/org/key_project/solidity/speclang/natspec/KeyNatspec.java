@@ -32,14 +32,14 @@ public record KeyNatspec(List<Clause> clauses) {
     private static final Pattern TAG_START = Pattern.compile("(?m)^[ \\t]*@[A-Za-z][\\w:-]*");
 
     public enum Kind {
-        BOX, SKIP, INVARIANT, REQUIRES, ENSURES, ASSIGNABLE;
+        BOX, SKIP, INVARIANT, REQUIRES, ENSURES, ASSIGNABLE, DECREASES;
 
         static Kind of(String word) {
             try {
                 return valueOf(word.toUpperCase(Locale.ROOT));
             } catch (IllegalArgumentException e) {
                 throw new SpecException("unknown " + TAG + " directive '" + word
-                    + "'; expected one of box, skip, invariant, requires, ensures, assignable");
+                    + "'; expected one of box, skip, invariant, requires, ensures, assignable, decreases");
             }
         }
     }
@@ -76,11 +76,11 @@ public record KeyNatspec(List<Clause> clauses) {
         String rest = space < 0 ? "" : text.substring(space + 1);
         if (word.isEmpty()) {
             throw new SpecException(TAG + " needs a directive: box, skip, invariant, requires,"
-                + " ensures or assignable");
+                + " ensures, assignable or decreases");
         }
         Kind kind = Kind.of(word);
         boolean needsExpression = kind == Kind.INVARIANT || kind == Kind.REQUIRES
-                || kind == Kind.ENSURES;
+                || kind == Kind.ENSURES || kind == Kind.DECREASES;
         if (needsExpression && rest.isEmpty()) {
             throw new SpecException(TAG + " " + word + " needs an expression");
         }
@@ -108,6 +108,10 @@ public record KeyNatspec(List<Clause> clauses) {
 
     public List<String> ensures() {
         return texts(Kind.ENSURES);
+    }
+
+    public List<String> decreases() {
+        return texts(Kind.DECREASES);
     }
 
     /// Whether the comment carries a specification proper: an invariant, a precondition or a

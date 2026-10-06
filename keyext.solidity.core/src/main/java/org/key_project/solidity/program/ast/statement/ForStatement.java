@@ -7,6 +7,7 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.solidity.speclang.LoopSpec;
 import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.Nullable;
@@ -15,9 +16,14 @@ public class ForStatement extends LoopStatement {
     private final @Nullable ForInit init;
     private final @Nullable ForUpdate update;
 
-    public ForStatement(ForInit init, Expression condition,
-            ForUpdate updateExpression, Statement body) {
-        super(condition, body);
+    public ForStatement(@Nullable ForInit init, @Nullable Expression condition,
+            @Nullable ForUpdate updateExpression, Statement body) {
+        this(init, condition, updateExpression, body, null);
+    }
+
+    public ForStatement(@Nullable ForInit init, @Nullable Expression condition,
+            @Nullable ForUpdate updateExpression, Statement body, @Nullable LoopSpec spec) {
+        super(condition, body, spec);
         this.init = init;
         this.update = updateExpression;
     }
@@ -76,8 +82,8 @@ public class ForStatement extends LoopStatement {
 
     @Override
     public String toString() {
-        return "for(" + nullOrEmpty(init)
-            + "; " + nullOrEmpty(condition) + "; " + nullOrEmpty(update) + ")\n" + body;
+        return "for(" + (init == null ? ";" : init.toString())
+            + " " + nullOrEmpty(condition) + "; " + nullOrEmpty(update) + ")\n" + body;
     }
 
     public void visit(Visitor v) {

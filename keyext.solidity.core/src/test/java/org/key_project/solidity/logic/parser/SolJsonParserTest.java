@@ -927,9 +927,11 @@ public class SolJsonParserTest {
                 .getBody().getStatements().get(0);
         assertEquals(4, forStmt.getChildCount());
         assertThrows(IndexOutOfBoundsException.class, () -> forStmt.getChild(4));
-        checkExpressionForAssign(Operator.COPY_ASSIGN, forStmt.getInit().getInit());
+        checkExpressionForAssign(Operator.COPY_ASSIGN,
+            ((ExpressionStatement) forStmt.getInit().getInit()).getExpression());
         assertEquals(1, forStmt.getInit().getChildCount());
-        checkExpressionForAssign(Operator.COPY_ASSIGN, forStmt.getInit().getInit());
+        checkExpressionForAssign(Operator.COPY_ASSIGN,
+            ((ExpressionStatement) forStmt.getInit().getInit()).getExpression());
         checkExpressionForUnary(Operator.POST_INC, forStmt.getUpdate().getUpdate());
         assertEquals(1, forStmt.getUpdate().getChildCount());
     }

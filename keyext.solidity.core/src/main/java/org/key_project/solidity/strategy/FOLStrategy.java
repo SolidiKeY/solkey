@@ -260,7 +260,13 @@ public class FOLStrategy extends AbstractFeatureStrategy implements ComponentStr
 
         bindRuleSet(d, "cnf_andComm", termSmallerThan("commRight", "commLeft"));
 
-        bindRuleSet(d, "cnf_orComm", termSmallerThan("commRight", "commLeft"));
+        bindRuleSet(d, "cnf_orComm",
+            SumFeature.createSum(applyTF("commRight", ff.clause),
+                applyTFNonStrict("commResidue", ff.clauseSet),
+                or(applyTF("commLeft", ff.andF),
+                    add(applyTF("commLeft", ff.literal),
+                        termSmallerThan("commRight", "commLeft"))),
+                longConst(-100)));
 
         bindRuleSet(d, "elimQuantifier", -1000);
         bindRuleSet(d, "elimQuantifierWithCast", 50);

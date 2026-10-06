@@ -9,6 +9,7 @@ import java.util.Objects;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.speclang.LoopSpec;
 import org.key_project.util.ExtList;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -66,6 +67,11 @@ public class ProgVarReplaceVisitor extends CreatingASTVisitor {
 
     public SolidityProgramElement result() {
         return Objects.requireNonNull(result);
+    }
+
+    @Override
+    protected LoopSpec mapLoopSpec(LoopSpec spec) {
+        return spec.rename(replaceMap);
     }
 
     @Override

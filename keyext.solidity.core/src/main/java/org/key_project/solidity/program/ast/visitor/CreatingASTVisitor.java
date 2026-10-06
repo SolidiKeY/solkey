@@ -18,6 +18,7 @@ import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.references.*;
 import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.program.ext.ContextStatementBlock;
+import org.key_project.solidity.speclang.LoopSpec;
 import org.key_project.util.ExtList;
 
 import org.jspecify.annotations.Nullable;
@@ -81,6 +82,24 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
         } else {
             doDefaultAction(x);
         }
+    }
+
+    private void rebuildLoop(LoopStatement x, Function<ExtList, SolidityProgramElement> factory) {
+        LoopSpec spec = x.getSpec();
+        LoopSpec mapped = spec == null ? null : mapLoopSpec(spec);
+        if (mapped != spec) {
+            changed();
+        }
+        rebuild(x, changeList -> {
+            if (mapped != null) {
+                changeList.add(mapped);
+            }
+            return factory.apply(changeList);
+        });
+    }
+
+    protected LoopSpec mapLoopSpec(LoopSpec spec) {
+        return spec;
     }
 
     @Override
@@ -250,7 +269,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
 
     @Override
     public void performActionOnDoWhileStatement(DoWhileStatement x) {
-        rebuild(x, DoWhileStatement::new);
+        rebuildLoop(x, DoWhileStatement::new);
     }
 
     @Override
@@ -260,7 +279,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
 
     @Override
     public void performActionOnForStatement(ForStatement x) {
-        rebuild(x, ForStatement::new);
+        rebuildLoop(x, ForStatement::new);
     }
 
     @Override
@@ -295,6 +314,6 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
 
     @Override
     public void performActionOnWhileStatement(WhileStatement x) {
-        rebuild(x, WhileStatement::new);
+        rebuildLoop(x, WhileStatement::new);
     }
 }

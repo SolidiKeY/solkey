@@ -134,7 +134,8 @@ public class ExpandFunctionBody extends ProgramTransformer {
                 : List.of();
 
         final Statement body = ModifierInlining.wrap(fn.getModifiers(), new FunctionFrame(
-            ReturnLowering.lower(fbs.getBody(), returns.toList(), services).getStatements()),
+            LoopLowering.lower(ReturnLowering.lower(fbs.getBody(), returns.toList(), services),
+                services).getStatements()),
             services);
         final ProgVarReplaceVisitor repl =
             new ProgVarReplaceVisitor(body, replaceMap, true, services);

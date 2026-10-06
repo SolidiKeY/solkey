@@ -3806,4 +3806,166 @@ contract TestSuite {
     function modifierOnObligation() public setsFive {
         assert(total == 5);
     }
+
+    // ── Loops: unwound by whileUnwind after LoopLowering ──
+
+    function whileCountsUp() public pure {
+        uint i = 0;
+        while (i < 3) {
+            i = i + 1;
+        }
+        assert(i == 3);
+    }
+
+    function whileBodyDeclaresLocal() public pure {
+        uint i = 0;
+        uint s = 0;
+        while (i < 3) {
+            uint t = i * 2;
+            s = s + t;
+            i = i + 1;
+        }
+        assert(s == 6);
+    }
+
+    function whileBreakLeavesLoop() public pure {
+        uint i = 0;
+        while (i < 10) {
+            if (i == 4) break;
+            i = i + 1;
+        }
+        assert(i == 4);
+    }
+
+    function whileContinueSkipsRest() public pure {
+        uint i = 0;
+        uint s = 0;
+        while (i < 5) {
+            i = i + 1;
+            if (i == 2) continue;
+            s = s + i;
+        }
+        assert(s == 13);
+    }
+
+    function forContinueStillUpdates() public pure {
+        uint s = 0;
+        for (uint i = 0; i < 5; i++) {
+            if (i == 1) {
+                continue;
+            }
+            s = s + i;
+        }
+        assert(s == 9);
+    }
+
+    function forBreakKeepsCounter() public pure {
+        uint i;
+        for (i = 0; i < 9; i++) {
+            if (i == 3) break;
+        }
+        assert(i == 3);
+    }
+
+    function doWhileRunsBodyFirst() public pure {
+        uint i = 7;
+        do {
+            i = i + 1;
+        } while (i < 3);
+        assert(i == 8);
+    }
+
+    /// @custom:key box
+    function forWritesStorageArray() public {
+        require(values.length == 3);
+        for (uint i = 0; i < values.length; i++) {
+            values[i] = i * i;
+        }
+        assert(values[2] == 4);
+    }
+
+    function loopNestedReturn(uint k) internal pure returns (uint r) {
+        for (uint i = 0; i < 3; i++) {
+            for (uint j = 0; j < 3; j++) {
+                if (i * 3 + j == k) {
+                    return i * 10 + j;
+                }
+            }
+        }
+        r = 99;
+    }
+
+    function returnLeavesNestedLoops() public pure {
+        uint r = loopNestedReturn(5);
+        assert(r == 12);
+        r = loopNestedReturn(20);
+        assert(r == 99);
+    }
+
+    // ── Loop invariants: whileInvariantBox / whileInvariantDiamond ──
+
+    /// @custom:key box
+    function invariantCountsToBound(uint n) public pure {
+        require(n >= 0);
+        uint i = 0;
+        /// @custom:key invariant i <= n
+        while (i < n) {
+            i = i + 1;
+        }
+        assert(i == n);
+    }
+
+    function invariantForCountsArrayLength() public view {
+        uint c = 0;
+        /// @custom:key invariant 0 <= i && i <= values.length && c == i
+        /// @custom:key decreases values.length - i
+        for (uint i = 0; i < values.length; i++) {
+            c = c + 1;
+        }
+        assert(c == values.length);
+    }
+
+    function invariantClosedFormSum() public view {
+        uint s = 0;
+        uint i = 0;
+        /// @custom:key invariant 0 <= i && i <= values.length && s == 2 * i
+        /// @custom:key decreases values.length - i
+        while (i < values.length) {
+            s = s + 2;
+            i = i + 1;
+        }
+        assert(s == 2 * values.length);
+    }
+
+    function invariantVariantSkipsBreakIteration(uint n) public pure {
+        uint i = 0;
+        /// @custom:key invariant 0 <= i && i <= 10
+        /// @custom:key decreases 10 - i
+        while (i < 10) {
+            if (i == n) break;
+            i = i + 1;
+        }
+        assert(i <= 10);
+    }
+
+    /// @custom:key box
+    function invariantOverStorageWrites(uint n) public {
+        require(n >= 0);
+        total = 0;
+        /// @custom:key invariant total == i && i <= n
+        for (uint i = 0; i < n; i++) {
+            total = total + 1;
+        }
+        assert(total == n);
+    }
+
+    /// @custom:key box
+    function invariantQuantifiedOverPrefix() public {
+        /// @custom:key invariant 0 <= i && i <= values.length
+        /// @custom:key invariant \forall uint q; 0 <= q && q < i -> values[q] == 0
+        for (uint i = 0; i < values.length; i++) {
+            values[i] = 0;
+        }
+        assert(values.length == 0 || values[0] == 0);
+    }
 }

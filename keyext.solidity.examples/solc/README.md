@@ -46,9 +46,10 @@ Applied uniformly; every function names the upstream file it came from.
 - The upstream `// f() -> 42` expectation becomes an in-body `assert`.
 - `constructor` bodies and state-variable initializers become plain assignments at the top of
   the body.
-- Loops are unrolled to a fixed small trip count (there is no loop rule). What these tests pin
-  down — what `push` appends, which element `delete` resets, which branch runs — does not
-  depend on the loop construct.
+- A loop with a statically known trip count stays a loop, which `whileUnwind` runs to the end
+  (`SolcControlFlow`). Ports written before the loop rules unroll it by hand; what they pin
+  down — what `push` appends, which element `delete` resets — does not depend on the loop
+  construct.
 - Tuple assignment becomes the sequential assignments it desugars to.
 - `uint8`/`uint16`/`uint32`/`bytesN` become `uint`, with values kept far from any bound. The
   calculus uses unbounded integers, so the upstream width-truncation and cleanup tests are out

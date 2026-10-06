@@ -102,14 +102,12 @@ public class SymExStrategy extends AbstractFeatureStrategy implements ComponentS
             add(longConst(-11000),
                 ScaleFeature.createScaled(findDepthFeature, 10.0)));
 
-        boolean useLoopExpand = strategyProperties.getProperty(StrategyProperties.LOOP_OPTIONS_KEY)
-                .equals(StrategyProperties.LOOP_EXPAND);
-        boolean useLoopInvTaclets =
-            strategyProperties.getProperty(StrategyProperties.LOOP_OPTIONS_KEY)
-                    .equals(StrategyProperties.LOOP_INVARIANT);
+        final String loopProp = strategyProperties.getProperty(StrategyProperties.LOOP_OPTIONS_KEY);
+        boolean useLoopInv = loopProp.equals(StrategyProperties.LOOP_INVARIANT);
+        boolean useLoopExpand = useLoopInv || loopProp.equals(StrategyProperties.LOOP_EXPAND);
 
-        // bindRuleSet(d, "loop_expand", useLoopExpand ? longConst(1000) : inftyConst());
-        bindRuleSet(d, "loop_scope_inv", useLoopInvTaclets ? longConst(0) : inftyConst());
+        bindRuleSet(d, "loop_expand", useLoopExpand ? longConst(1000) : inftyConst());
+        bindRuleSet(d, "loop_inv", useLoopInv ? longConst(0) : inftyConst());
 
 
         final String fnProp =

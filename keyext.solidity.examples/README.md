@@ -89,11 +89,13 @@ and `storagePushReadBack` on a fully unknown storage.
 | Natspec tag | Effect |
 |---|---|
 | `/// @custom:key box` | box modality — `require` becomes an assumption |
-| `/// @custom:key skip` | no obligation for this function (loops) |
+| `/// @custom:key skip` | no obligation for this function |
 | `/// @custom:key invariant e` | on the contract: a conjunct of the contract invariant `CInv` |
 | `/// @custom:key requires e` | assumed before the call (the old `only_if`) |
 | `/// @custom:key ensures e` | proved after the call (the old `on_success`) |
 | `/// @custom:key assignable …` | accepted and ignored: bodies are inlined whole |
+| `/// @custom:key invariant e` | directly above a loop: its loop invariant (`docs/taclets-implementation.md`, "Loops") |
+| `/// @custom:key decreases e` | directly above a loop: its variant, needed under the diamond |
 
 `@custom:` is solc's extension prefix; any other tag is rejected as invalid documentation. A
 tag starts a line and a clause runs to the next tag, so a long clause may continue on the next
@@ -302,7 +304,8 @@ list every row.
   automode does not close them: the quantifier instantiations explode into hundreds of goals
   within the step budget, including goals that are closable by hand (`ContractExamplesTest`
   lists `placeOrIncreaseBid`, `withdraw` and even the empty `myTest` as known-open).
-  `closeAuction` is skipped: its loops have no rules.
+  `closeAuction` is skipped: its loops transfer, so their invariants would have to
+  re-establish the contract invariant at every callback.
 - **`Storage.sol`** — MyContract's live probes `m`, `a1`, `d1`, `f`, `h` with their `\result`
   clauses as named returns. All close. (`m` writes 8 and the original spec claimed 7; the port
   states what the body does.)
@@ -374,7 +377,7 @@ arrays, memory, mappings, control flow). Where `TestSuite.sol` exercises one tac
 cross-check the calculus against a description of Solidity semantics SolKey did not write.
 
 `solc/README.md` has the provenance table (upstream file → function), the adaptation rules
-(loops unrolled, `return e;` turned into `assert`, `bytesN` dropped), and the list of known
+(older ports unroll loops, `return e;` turned into `assert`, `bytesN` dropped), and the list of known
 failures — examples that state upstream semantics the calculus cannot discharge yet and are
 kept red on purpose. `SolcSemanticsExamplesTest` enumerates the directory, so a new example
 joins `./gradlew :keyext.solidity.core:testSolidityExamples` (the CI-only examples group)

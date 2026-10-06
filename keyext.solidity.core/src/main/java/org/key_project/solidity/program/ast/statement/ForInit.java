@@ -7,23 +7,22 @@ import java.util.Objects;
 
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
-import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 
 
 public class ForInit implements SolidityProgramElement {
-    private final Expression init;
+    private final Statement init;
 
-    public ForInit(Expression init) {
+    public ForInit(Statement init) {
         this.init = init;
     }
 
     public ForInit(ExtList children) {
-        this.init = Objects.requireNonNull(children.get(Expression.class));
+        this.init = Objects.requireNonNull(children.get(Statement.class));
     }
 
-    public Expression getInit() {
+    public Statement getInit() {
         return init;
     }
 
@@ -46,6 +45,7 @@ public class ForInit implements SolidityProgramElement {
 
     @Override
     public String toString() {
-        return init.toString();
+        String text = init.toString();
+        return text.endsWith(";") ? text : text + ";";
     }
 }

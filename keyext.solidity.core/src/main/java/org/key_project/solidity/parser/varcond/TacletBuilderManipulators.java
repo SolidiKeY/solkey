@@ -100,18 +100,22 @@ public class TacletBuilderManipulators {
     public static final AbstractConditionBuilder SIMPLIFY_ITE_UPDATE =
         new ConstructorBasedBuilder("simplifyIfThenElseUpdate",
             SimplifyIfThenElseUpdateCondition.class, FSV, USV, USV, FSV, SV);
-    public static final AbstractConditionBuilder HAS_INVARIANT =
-        new ConstructorBasedBuilder("\\hasInvariant", HasLoopInvariantCondition.class, PV, SV);
     public static final AbstractConditionBuilder GET_INVARIANT =
-        new ConstructorBasedBuilder("\\getInvariant", LoopInvariantCondition.class, PV, SV, SV);
-    public static final AbstractConditionBuilder GET_VARIANT =
-        new AbstractConditionBuilder("\\getVariant", PV, SV) {
+        new AbstractConditionBuilder("\\getInvariant", PV, PV, SV) {
             @Override
-            public VariableCondition build(Object[] arguments,
-                    List<String> parameters,
+            public VariableCondition build(Object[] arguments, List<String> parameters,
                     boolean negated) {
-                return new LoopVariantCondition((ProgramSV) arguments[0],
-                    (SchemaVariable) arguments[1]);
+                return new LoopInvariantCondition((ProgramSV) arguments[0],
+                    (ProgramSV) arguments[1], (SchemaVariable) arguments[2], false);
+            }
+        };
+    public static final AbstractConditionBuilder GET_VARIANT =
+        new AbstractConditionBuilder("\\getVariant", PV, PV, SV) {
+            @Override
+            public VariableCondition build(Object[] arguments, List<String> parameters,
+                    boolean negated) {
+                return new LoopInvariantCondition((ProgramSV) arguments[0],
+                    (ProgramSV) arguments[1], (SchemaVariable) arguments[2], true);
             }
         };
 
@@ -272,7 +276,7 @@ public class TacletBuilderManipulators {
             NEW_TYPE_OF, NEW_SOLIDITY_TYPE,
             IS_SUBTYPE, SAME, HAS_SORT, HAS_FIELD_SORT, HAS_MEMORY_FIELD_SORT, HAS_ELEMENT_SORT,
             HAS_MEMORY_ELEMENT_SORT,
-            NEW_LOCAL_VARS, HAS_INVARIANT, GET_INVARIANT, GET_VARIANT, SAME_AS_TERM,
+            NEW_LOCAL_VARS, GET_INVARIANT, GET_VARIANT, SAME_AS_TERM,
             NO_FIXED_ARRAY_ELEMENT);
     }
 

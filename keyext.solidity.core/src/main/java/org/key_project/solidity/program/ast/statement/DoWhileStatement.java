@@ -5,12 +5,19 @@ package org.key_project.solidity.program.ast.statement;
 
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
+import org.key_project.solidity.speclang.LoopSpec;
 import org.key_project.util.ExtList;
+
+import org.jspecify.annotations.Nullable;
 
 public class DoWhileStatement extends LoopStatement {
 
     public DoWhileStatement(Expression condition, Statement body) {
-        super(condition, body);
+        super(condition, body, null);
+    }
+
+    public DoWhileStatement(Expression condition, Statement body, @Nullable LoopSpec spec) {
+        super(condition, body, spec);
     }
 
     public DoWhileStatement(ExtList children) {

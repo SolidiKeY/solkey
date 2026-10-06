@@ -5,10 +5,6 @@ pragma solidity ^0.8.0;
 /// `semanticTests/statements/`, `semanticTests/various/swap_in_storage_overwrite.sol` and
 /// `semanticTests/expressions/conditional_expression_storage_memory_*.sol`.
 ///
-/// The calculus has `if`/`else` and `?:` but no loop rule, so a loop with a statically known
-/// trip count is unrolled — what these tests pin down (which branch runs, in what order the
-/// assignments happen) does not depend on the loop construct itself.
-///
 /// A parameter must be integer-typed for an obligation to be generated, so upstream's
 /// `f(bool cond)` becomes `f(uint cond)` with the flag derived in the body.
 contract SolcControlFlow {
@@ -20,36 +16,27 @@ contract SolcControlFlow {
     uint[] values;
 
     /// solc: statements/do_while_loop_continue.sol — `do { … } while (false)` runs its body
-    /// exactly once. Unrolled: the guard `i > 0` is false on the only iteration, so the body
-    /// increments `i` and execution continues past the loop.
-    ///
-    /// The increment is written `i = i + 1;` rather than `i++;` — a bare increment of a
-    /// *local* has no rule (see `SolcExpressions.bareIncrementOnLocal`).
+    /// exactly once: the guard `i > 0` is false on the only iteration, so the body increments
+    /// `i`, and the `continue` it skips would have jumped to the false condition.
     function doWhileFalseRunsBodyOnce() public pure {
         uint i = 0;
         uint r = 0;
-        if (i > 0) {
-            r = 0;
-        } else {
+        do {
+            if (i > 0) continue;
             i = i + 1;
-        }
+        } while (false);
         r = 42;
         assert(i == 1);
         assert(r == 42);
     }
 
     /// solc: array/array_storage_index_zeroed_test.sol — the upstream
-    /// `for (uint i = 0; i < len; i++) storageArray[i] = i + 1;`, unrolled at length 3.
+    /// `for (uint i = 0; i < len; i++) storageArray[i] = i + 1;` at length 3.
     /// @custom:key box
-    function forLoopUnrolledOverArray() public {
+    function forLoopOverArray() public {
         require(values.length == 3);
-        uint i = 0;
-        values[i] = i + 1;
-        i = i + 1;
-        values[i] = i + 1;
-        i = i + 1;
-        values[i] = i + 1;
-        i = i + 1;
+        uint i;
+        for (i = 0; i < values.length; i++) values[i] = i + 1;
         assert(i == 3);
         assert(values[0] == 1);
         assert(values[1] == 2);

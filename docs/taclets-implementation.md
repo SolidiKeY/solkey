@@ -667,6 +667,84 @@ calls (see "Function-body inlining"). Examples:
 `send*` and `callToSender` in `TestSuite.sol`, and `net/net-send-simple.key` and
 `net/net-call-withcallback-simple.key`.
 
+### Loops (`while`, `for`, `do … while`, `break`, `continue`)
+
+One taclet runs loops; a source pass reduces every loop to its shape first.
+
+`LoopLowering` runs in `ExpandFunctionBody` right after `ReturnLowering`, so it sees only bare
+`return;`. It leaves a `while` whose body has no `break`, `continue` or `return`, recording the
+abrupt completion in fresh `bool` flags as solidity-lean's `docs/loops.md` does:
+
+| Source | Lowered |
+|---|---|
+| `break;` / `continue;` / `return;` in a loop body | `brk = true;` / `cnt = true;` / `ret = true;`, the rest of the block dropped |
+| a statement that may set a flag, then `rest` | `s; if (!flag…) { rest }`, testing only the flags `s` may set |
+| `while (c) body` with `break`/`return` | `bool brk = false; while (!brk && !ret && c) { bool cnt = false; body }` |
+| `for (init; c; upd) body` | `{ init; while (c) { body if (!brk && !ret) upd; } }`, so `continue` still runs `upd` |
+| `do body while (c)` | `{ bool first = true; while (first \|\| c) { first = false; body } }` |
+| a loop with a `return` | `ret` is shared by nested loops; the outermost is followed by `if (ret) return;` |
+
+A flag is created only when used, so a loop without `break`/`continue`/`return` keeps its
+condition. A missing `for` condition is `true`. A `break`, `continue` or `return` inside a `try`
+inside a loop is rejected. `ForInit` holds a statement, so `for (uint i = 0; …)` parses on both
+the solc-JSON and the ANTLR path.
+
+`whileUnwind` (rule set `loop_expand`) unwinds one iteration:
+`while (c) body` → `if (c) { body while (c) body }`. The condition is evaluated again in every
+copy (`ifUnfold` captures a non-simple one), and a local declared in `body` is declared again,
+as solc re-initialises it. The strategy unwinds under `LOOP_EXPAND` and `LOOP_INVARIANT` (the
+default) and never under `LOOP_NONE`, so a loop with a statically known trip count runs to its
+end. Examples: the `Loops` section of `TestSuite.sol`, and `doWhileFalseRunsBodyOnce` /
+`forLoopOverArray` in `solc/SolcControlFlow.sol`.
+
+**Loop invariants.** A loop with a symbolic bound needs `///` clauses directly above it:
+
+```solidity
+/// @custom:key invariant 0 <= i && i <= values.length && c == i
+/// @custom:key decreases values.length - i
+for (uint i = 0; i < values.length; i++) { c = c + 1; }
+```
+
+The expression language is that of the function specifications (`keyext.solidity.examples/
+README.md`, "Specification expressions"), with the `uint`/`int`/`bool`/`address` locals and
+parameters in scope at the loop as variables; several `invariant` lines are conjoined. solc
+drops comments inside a function body, so `SolcParser` hands the source to `SolJSONParser`,
+which reads the `///` lines above the loop's `src` offset into a `LoopSpec` on the
+`LoopStatement`. The spec binds each source name to the program variable it denotes;
+`CreatingASTVisitor` carries it through rebuilds, `ProgVarReplaceVisitor` renames its bindings
+(inlining, clashing declarations), and `LoopLowering` moves it to the `while` it produces, so
+the invariant of a `for` or `do … while` holds at the head of that `while` — also on the
+iteration a `break` or `return` ends. `LoopSpecCompiler` compiles the clauses when the rule
+fires, against the variables' current names.
+
+| Rule | Goals |
+|---|---|
+| `whileInvariantBox` | `inv`; `#loopAnon(body, inv -> [bool b = c;]((b = TRUE -> [body] inv) & (b = FALSE -> [c# #c] post)))` |
+| `whileInvariantDiamond` | `inv`; the same under `<>` with `inv & dec = v ->` and, after the body, `inv & <b = c;>(b = TRUE -> 0 <= dec & dec < v)` |
+
+- `\getInvariant(cond, body, inv)` / `\getVariant(cond, body, dec)` find the matched loop in
+  the context program by its condition and body, and fail when it has no clause, so a loop
+  without `invariant` (or, under the diamond, without `decreases`) is unwound instead.
+- `#loopAnon` (`LoopAnonTransformer`) gives a fresh constant to what `LoopFrame` says the body
+  may change: the locals it assigns or declares (the lowering's flags included), `storage` when
+  it writes a non-local, and `net` when it calls anything but `require`/`assert`/`revert`
+  (calls also make it write storage). A loop that only reads storage keeps every storage fact.
+- A body that allocates or writes memory gets no invariant rule (`LoopFrame.memory`): the
+  memory heap is not anonymised.
+- The lowered body has no `break`/`continue`/`return`, so it runs without its context; a
+  `revert` in it closes the goal through `revertBox`/`revertDiamond`.
+- The variant must decrease only when the loop goes on, i.e. when the condition holds again
+  after the body: the iteration a `break` ends need not decrease it. `0 <= dec` is checked
+  because a `uint` is not known to be non-negative.
+- Integers are unbounded, so anonymised locals need no range facts; but neither is a `uint`
+  parameter non-negative, so a box example states `require(n >= 0)` and the diamond examples
+  loop over `values.length`, which `sizeNotNegative` bounds.
+
+Examples: the `Loop invariants` section of `TestSuite.sol`, including a `\forall` over the
+written prefix of a storage array. That one needed `cnf_orComm` to get KeY-Java's guards back
+(`FOLStrategy`): bound only by `termSmallerThan`, it cycled with `shift_paren_or` on a
+three-literal clause under a quantifier.
+
 ## End-to-end examples (the `test*` functions)
 
 `TestSuite.sol` holds 64 end-to-end `test*` functions driven by `PaperTestExamplesTest.java`;
@@ -807,7 +885,7 @@ sort, so no tuple sort exists and every component is handled by the ordinary rul
 statements inside it; it is not a `Block`, so no block rule matches it. `ProgramContextAdder`
 rebuilds a frame as a frame and `TacletIndex` counts it as a prefix class. When the body is
 inlined, `ReturnLowering` turns every `return e;` into `{ r0 = e; return; }`, so the rules only
-ever see a bare `return;`:
+ever see a bare `return;` (one inside a loop is then turned into a flag, see "Loops"):
 
 - `return (e1, …, en);` becomes `{ r1 = e1; …; rn = en; return; }`. When a value reads a return
   variable (`return (y, x);` with `returns (uint x, uint y)`), all values go through temporaries

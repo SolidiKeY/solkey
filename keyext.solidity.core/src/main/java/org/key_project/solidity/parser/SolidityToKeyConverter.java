@@ -608,8 +608,7 @@ public class SolidityToKeyConverter extends KeYSolidityDLParserBaseVisitor<Synta
     @Override
     public SyntaxElement visitForStatement(ForStatementContext ctx) {
         ForInit initial = ctx.simpleStatement() == null ? null
-                : new ForInit(((ExpressionStatement) visitSimpleStatement(ctx.simpleStatement()))
-                        .getExpression());
+                : new ForInit((Statement) visitSimpleStatement(ctx.simpleStatement()));
         Expression condition = ctx.expressionStatement() == null ? null
                 : ((ExpressionStatement) visitExpressionStatement(ctx.expressionStatement()))
                         .getExpression();

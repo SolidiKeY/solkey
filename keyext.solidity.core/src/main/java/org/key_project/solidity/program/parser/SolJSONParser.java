@@ -6,6 +6,8 @@ package org.key_project.solidity.program.parser;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -34,6 +36,8 @@ import org.key_project.solidity.program.ast.expressions.literals.*;
 import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.references.*;
 import org.key_project.solidity.program.ast.statement.*;
+import org.key_project.solidity.speclang.LoopSpec;
+import org.key_project.solidity.speclang.natspec.KeyNatspec;
 import org.key_project.solidity.theory.StructLDT;
 import org.key_project.util.collection.DefaultImmutableSet;
 import org.key_project.util.collection.ImmutableSet;
@@ -75,8 +79,21 @@ public class SolJSONParser {
     private final HashMap<Name, MappingType> mappingTypes = new HashMap<>();
     private final HashMap<Name, KeYSolidityType> mappingKSTs = new HashMap<>();
 
+    private byte @Nullable [] source;
+    private @Nullable SolidityOutline outline;
+    private String contractName = "";
+    private String functionName = "";
+    private final Map<String, LoopSpec.Binding> scope = new LinkedHashMap<>();
+
     public SolJSONParser(Services services) {
         this.services = services;
+    }
+
+    /// Reads `solFile` so that the `@custom:key` clauses written above a loop, which solc does
+    /// not keep in its AST, are attached to the loop.
+    public void setSource(Path solFile) throws IOException {
+        source = SoliditySources.read(solFile).getBytes(StandardCharsets.UTF_8);
+        outline = SolidityOutline.of(solFile);
     }
 
     /// parses the Solidity file found at the provided [URI] and converts it into a
@@ -154,6 +171,7 @@ public class SolJSONParser {
 
     private ContractDeclaration parseContract(JsonNode contractNode) {
         String contractName = contractNode.get("canonicalName").asString(); // there is also a
+        this.contractName = contractName;
         final int contractId = contractNode.get("id").asInt();
         contractIds.add(contractId);
         List<StateVariableDeclaration> fields = new ArrayList<>();
@@ -342,6 +360,8 @@ public class SolJSONParser {
         final String kind = node.get("kind").asString();
         final String name =
             "constructor".equals(kind) ? "constructor" : node.get("name").asString();
+        functionName = name;
+        scope.clear();
         List<ProgramVariable> returnParameters = parseParameters(node.get("returnParameters"));
         Type returnType = returnType(returnParameters);
         functionId2Type.put(id, returnType);
@@ -530,7 +550,7 @@ public class SolJSONParser {
 
             } else if (type.equals("WhileStatement")) {
                 Statement body = parseStatement(statement.get("body"));
-                return new WhileStatement(condition, body);
+                return new WhileStatement(condition, body, loopSpec(statement));
 
             }
         } else if (statement.has("statements")) {
@@ -542,20 +562,20 @@ public class SolJSONParser {
             case "Break" -> new BreakStatement();
             case "ForStatement" -> {
                 ForInit init = statement.has("initializationExpression")
-                        ? new ForInit(
-                            parseExpression(statement.get("initializationExpression")))
+                        ? new ForInit(parseStatement(statement.get("initializationExpression")))
                         : null;
                 Expression condition = findOrNullExpression(statement, "condition");
                 ForUpdate forUpdate = statement.has("loopExpression")
-                        ? new ForUpdate(parseExpression(statement.get("loopExpression")))
+                        ? new ForUpdate(
+                            parseExpression(statement.get("loopExpression").get("expression")))
                         : null;
                 Statement body = parseStatement(statement.get("body"));
-                yield new ForStatement(init, condition, forUpdate, body);
+                yield new ForStatement(init, condition, forUpdate, body, loopSpec(statement));
             }
             case "DoWhileStatement" -> {
                 Expression condition = parseExpression(statement.get("condition"));
                 Statement body = parseStatement(statement.get("body"));
-                yield new DoWhileStatement(condition, body);
+                yield new DoWhileStatement(condition, body, loopSpec(statement));
             }
             case "TryStatement" -> {
                 Expression expression = parseExpression(statement.get("externalCall"));
@@ -626,6 +646,7 @@ public class SolJSONParser {
         }
         ProgramVariable programVariable = new ProgramVariable(name,
             MemoryReferenceTypes.asLocalVariableType(ksType, dataLocation, services), dataLocation);
+        scope.put(nameS, new LoopSpec.Binding(programVariable, typeString(declaration)));
         return register(declaration, new StatementVariableDeclaration(programVariable));
     }
 
@@ -652,6 +673,7 @@ public class SolJSONParser {
             programVariable = new ProgramVariable(new Name(fieldName),
                 asMemoryReferenceType(kst, dataLocation), dataLocation);
         }
+        scope.put(fieldName, new LoopSpec.Binding(programVariable, typeString(node)));
         return register(node, programVariable);
     }
 
@@ -1091,6 +1113,50 @@ public class SolJSONParser {
     private <T extends SyntaxElement> T register(JsonNode node, T declaration) {
         id2Name.put(node.get("id").asInt(), declaration);
         return declaration;
+    }
+
+    private static String typeString(JsonNode declaration) {
+        JsonNode descriptions = declaration.get("typeDescriptions");
+        JsonNode type = descriptions == null ? null : descriptions.get("typeString");
+        return type == null ? "" : type.asString();
+    }
+
+    /// The clauses of the `///` lines directly above `loop`, or null when there are none.
+    private @Nullable LoopSpec loopSpec(JsonNode loop) {
+        byte[] bytes = source;
+        SolidityOutline unit = outline;
+        if (bytes == null || unit == null) {
+            return null;
+        }
+        int start = Integer.parseInt(loop.get("src").asString().split(":")[0]);
+        String[] lines = new String(bytes, 0, start, StandardCharsets.UTF_8).split("\n", -1);
+        if (!lines[lines.length - 1].isBlank()) {
+            return null;
+        }
+        List<String> comment = new ArrayList<>();
+        for (int i = lines.length - 2; i >= 0 && lines[i].trim().startsWith("///"); i--) {
+            comment.addFirst(lines[i].trim().substring(3));
+        }
+        KeyNatspec spec = KeyNatspec.of(String.join("\n", comment));
+        if (spec.clauses().isEmpty()) {
+            return null;
+        }
+        for (KeyNatspec.Clause clause : spec.clauses()) {
+            if (clause.kind() != KeyNatspec.Kind.INVARIANT
+                    && clause.kind() != KeyNatspec.Kind.DECREASES) {
+                throw new SolidityParseException("a loop takes only " + KeyNatspec.TAG
+                    + " invariant and decreases, not " + clause.kind(), loop);
+            }
+        }
+        if (spec.decreases().size() > 1) {
+            throw new SolidityParseException("a loop takes one decreases clause", loop);
+        }
+        SolidityOutline.Contract contract = unit.contract(contractName).orElseThrow();
+        SolidityOutline.Function function = contract.function(functionName).orElseThrow(
+            () -> new SolidityParseException("a loop specification outside a function", loop));
+        return new LoopSpec(spec.invariants(),
+            spec.decreases().isEmpty() ? null : spec.decreases().getFirst(),
+            new LinkedHashMap<>(scope), contract, function);
     }
 
     private List<ProgramVariable> parseParameters(@Nullable JsonNode parameterList) {

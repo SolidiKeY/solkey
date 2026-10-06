@@ -36,6 +36,7 @@ public class SolcParser {
     }
 
     public SyntaxElement getSolidityFromStrJsonParser(Path contractPath) throws IOException {
+        jsonParser.setSource(contractPath);
         String jsonSolidity = getJsonSolidity(contractPath);
         List<SyntaxElement> unit = jsonParser.parse(jsonSolidity);
         return unit.getFirst();

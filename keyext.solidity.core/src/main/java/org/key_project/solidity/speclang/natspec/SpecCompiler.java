@@ -99,6 +99,20 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
         }
     }
 
+    /// The integer term for `text`; `where` names the clause in error messages.
+    public String term(String text, Context context, String where) {
+        try {
+            ctx = context;
+            Value value = visit(SpecParser.parse(text));
+            if (value.formula() || !(value.type() instanceof SpecType.Int)) {
+                throw new SpecException("expected an integer but got " + value.text());
+            }
+            return value.text();
+        } catch (SpecException e) {
+            throw new SpecException(where + ": " + e.getMessage());
+        }
+    }
+
     @Override
     public Value visitParens(SolSpecParser.ParensContext node) {
         return visit(node.expr());

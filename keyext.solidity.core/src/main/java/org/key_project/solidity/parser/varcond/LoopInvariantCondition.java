@@ -10,60 +10,77 @@ import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.prover.rules.VariableCondition;
 import org.key_project.prover.rules.instantiation.MatchResultInfo;
 import org.key_project.solidity.common.Services;
-import org.key_project.solidity.logic.SolidityBlock;
-import org.key_project.solidity.logic.op.SModality;
 import org.key_project.solidity.program.ast.statement.LoopStatement;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
+import org.key_project.solidity.rule.metaconstruct.LoopFrame;
 import org.key_project.solidity.rule.sv.ProgramSV;
-import org.key_project.solidity.speclang.LoopSpecification;
+import org.key_project.solidity.speclang.LoopSpec;
+import org.key_project.solidity.speclang.natspec.LoopSpecCompiler;
 
-/// Extracts the loop invariants for a loop term (for all applicable heap contexts).
-///
-/// @author Dominic Steinhoefel
+import org.jspecify.annotations.Nullable;
+
+/// `\getInvariant(cond, body, inv)` matches a `while (cond) body` whose loop carries
+/// `@custom:key invariant` clauses and whose body does not touch memory, and binds `inv` to the
+/// conjunction of the clauses. `\getVariant(cond, body, dec)` binds `dec` to its `decreases`
+/// term and fails when there is none.
 public class LoopInvariantCondition implements VariableCondition {
-    private final ProgramSV loopStatementSV;
-    private final SchemaVariable modalitySV;
-    private final SchemaVariable invSV;
+    private final ProgramSV conditionSV;
+    private final ProgramSV bodySV;
+    private final SchemaVariable resultSV;
+    private final boolean variant;
 
-    public LoopInvariantCondition(ProgramSV loopExprSV, SchemaVariable modalitySV,
-            SchemaVariable invSV) {
-        this.loopStatementSV = loopExprSV;
-        this.modalitySV = modalitySV;
-        this.invSV = invSV;
+    public LoopInvariantCondition(ProgramSV conditionSV, ProgramSV bodySV,
+            SchemaVariable resultSV, boolean variant) {
+        this.conditionSV = conditionSV;
+        this.bodySV = bodySV;
+        this.resultSV = resultSV;
+        this.variant = variant;
     }
 
     @Override
-    public MatchResultInfo check(SchemaVariable var, SyntaxElement instCandidate,
+    public @Nullable MatchResultInfo check(SchemaVariable var, SyntaxElement instCandidate,
             MatchResultInfo matchCond, LogicServices lServices) {
         final var services = (Services) lServices;
         final var svInst = (SVInstantiations) matchCond.getInstantiations();
-        final var tb = services.getTermBuilder();
-
-        final var loop = (LoopStatement) svInst.getInstantiation(loopStatementSV);
-        LoopSpecification loopSpec = services.getSpecificationRepository().getLoopSpec(loop);
-
-        if (loopSpec == null) {
+        if (svInst.getInstantiation(resultSV) != null) {
+            return matchCond;
+        }
+        Object condition = svInst.getInstantiation(conditionSV);
+        Object body = svInst.getInstantiation(bodySV);
+        if (condition == null || body == null || svInst.getContextInstantiation() == null) {
             return null;
         }
-
-        final var solidityBlock =
-            new SolidityBlock(svInst.getContextInstantiation().contextProgram());
-
-        var modKind = (SModality.SolidityModalityKind) svInst.getInstantiation(modalitySV);
-
-        Term invInst = tb.tt();
-
-        final var inst = loopSpec.getInvariant(services);
-        if (inst != null) {
-            invInst = tb.and(invInst, inst);
+        LoopStatement loop =
+            find(svInst.getContextInstantiation().contextProgram(), condition, body);
+        LoopSpec spec = loop == null ? null : loop.getSpec();
+        if (spec == null || spec.invariants().isEmpty()
+                || LoopFrame.of(loop.getBody()).memory()) {
+            return null;
         }
+        Term result = variant ? LoopSpecCompiler.variant(spec, services)
+                : LoopSpecCompiler.invariant(spec, services);
+        return result == null ? null
+                : matchCond.setInstantiations(svInst.add(resultSV, result, services));
+    }
 
-        return matchCond.setInstantiations(svInst.add(invSV, invInst, services));
+    private static @Nullable LoopStatement find(SyntaxElement element, Object condition,
+            Object body) {
+        if (element instanceof LoopStatement loop && loop.getCondition() == condition
+                && loop.getBody() == body) {
+            return loop;
+        }
+        for (int i = 0; i < element.getChildCount(); i++) {
+            LoopStatement found = find(element.getChild(i), condition, body);
+            if (found != null) {
+                return found;
+            }
+        }
+        return null;
     }
 
     @Override
     public String toString() {
-        return "\\getInvariant(" + loopStatementSV.name() + ", " + modalitySV.name() + ", "
-            + invSV.name() + ")";
+        return (variant ? "\\getVariant(" : "\\getInvariant(") + conditionSV.name() + ", "
+            + bodySV.name() + ", " + resultSV.name() + ")";
     }
 }
