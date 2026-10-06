@@ -123,6 +123,8 @@ public record SolidityOutline(List<Contract> contracts) {
     public record Function(String name, List<Parameter> parameters, List<Parameter> returns,
             String stateMutability, String documentation, Span source) {
 
+        public static final String CONSTRUCTOR = "constructor";
+
         public Function(String name, List<Parameter> parameters, int resultCount,
                 String documentation, Span source) {
             this(name, parameters, unnamed(resultCount), "nonpayable", documentation, source);
@@ -180,6 +182,10 @@ public record SolidityOutline(List<Contract> contracts) {
 
         /// Whether an obligation can be generated for this function; [#unsupportedReason] says
         /// why not.
+        public boolean isConstructor() {
+            return CONSTRUCTOR.equals(name);
+        }
+
         public boolean isProvable() {
             return unsupportedReason().isEmpty();
         }
@@ -263,13 +269,16 @@ public record SolidityOutline(List<Contract> contracts) {
     private static List<Function> functionsOf(JsonNode contract) {
         List<Function> functions = new ArrayList<>();
         for (JsonNode node : contract.get("nodes").values()) {
-            if (!"FunctionDefinition".equals(text(node, "nodeType"))
-                    || !"function".equals(text(node, "kind"))
-                    || !List.of("public", "external").contains(text(node, "visibility"))) {
+            if (!"FunctionDefinition".equals(text(node, "nodeType"))) {
+                continue;
+            }
+            boolean constructor = "constructor".equals(text(node, "kind"));
+            if (!constructor && (!"function".equals(text(node, "kind"))
+                    || !List.of("public", "external").contains(text(node, "visibility")))) {
                 continue;
             }
             JsonNode documentation = node.has("documentation") ? node.get("documentation") : null;
-            functions.add(new Function(text(node, "name"),
+            functions.add(new Function(constructor ? Function.CONSTRUCTOR : text(node, "name"),
                 parametersOf(node, "parameters"), parametersOf(node, "returnParameters"),
                 text(node, "stateMutability"),
                 documentation != null ? text(documentation, "text") : "",

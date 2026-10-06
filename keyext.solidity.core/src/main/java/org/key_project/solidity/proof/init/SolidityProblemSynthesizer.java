@@ -35,6 +35,8 @@ public final class SolidityProblemSynthesizer {
     /// other tag is rejected as invalid documentation.
     public static final String BOX_DIRECTIVE = "@custom:key box";
 
+    private static final String EMPTY_STORAGE = "storage := mtSt || net := mtSt";
+
     private SolidityProblemSynthesizer() {}
 
     /// Fills in whatever the caller left open, and fails with the available candidates listed
@@ -123,6 +125,9 @@ public final class SolidityProblemSynthesizer {
         if (!contractSpec.isSpecified() && !functionSpec.isSpecified()) {
             String modality = functionSpec.box() ? "\\[{ " + call + " }\\](true)"
                     : "\\<{ " + call + " }\\>(true)";
+            if (function.isConstructor()) {
+                modality = "{" + EMPTY_STORAGE + "} " + modality;
+            }
             return """
                     %s\\problem {
                         %s
@@ -170,9 +175,14 @@ public final class SolidityProblemSynthesizer {
             text -> compiler.formula(text, SpecCompiler.Context.ensures(parameters),
                 where + " ensures"),
             "         ", true);
-        String update = (usesOld ? "old := storage || oldNet := net\n     || " : "")
-            + "net := storeSt(net, at(msgSender), selectSt<[int]>(net, at(msgSender)) + msgValue)"
-            + "\n     || selfBalance := selfBalance + msgValue";
+        boolean constructor = function.isConstructor();
+        String storage = constructor ? "mtSt" : "storage";
+        String ledger = constructor ? "mtSt" : "net";
+        String update = (constructor ? "storage := mtSt" + "\n     || " : "")
+            + (usesOld ? "old := " + storage + " || oldNet := " + ledger + "\n     || " : "")
+            + "net := storeSt(" + ledger + ", at(msgSender), selectSt<[int]>(" + ledger
+            + ", at(msgSender)) + msgValue)\n     || selfBalance := "
+            + (constructor ? "" : "selfBalance + ") + "msgValue";
         return """
                 %s\\rules {
                     insertCInv {
@@ -186,7 +196,7 @@ public final class SolidityProblemSynthesizer {
 
                 \\problem {
                 %s
-                    & CInv(storage, net) ->
+                    %s->
                     {%s}
                     \\[{ %s }\\]
                         (%s)
@@ -194,7 +204,8 @@ public final class SolidityProblemSynthesizer {
                 """.formatted(header(solFile, options, declared),
             !quantified ? ""
                     : "        \\varcond(\\noFreeVarIn(s), \\noFreeVarIn(n))\n",
-            invariant, precondition, update, call, postcondition);
+            invariant, precondition, constructor ? "" : "& CInv(storage, net) ", update, call,
+            postcondition);
     }
 
     private static String conjunction(List<String> clauses, Function<String, String> compile,

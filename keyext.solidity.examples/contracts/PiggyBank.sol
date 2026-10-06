@@ -12,7 +12,6 @@ contract PiggyBank {
     uint public balance;
     uint timeNow;
 
-    /// @custom:key skip
     constructor(address payable _owner) {
         owner = _owner;
         state = PiggyBankState.Unused;

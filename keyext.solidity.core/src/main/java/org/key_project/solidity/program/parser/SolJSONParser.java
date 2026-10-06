@@ -339,14 +339,15 @@ public class SolJSONParser {
 
     private FunctionDeclaration parseFunction(JsonNode node) {
         final int id = node.get("id").asInt();
-        final String name = node.get("name").asString();
+        final String kind = node.get("kind").asString();
+        final String name =
+            "constructor".equals(kind) ? "constructor" : node.get("name").asString();
         List<ProgramVariable> returnParameters = parseParameters(node.get("returnParameters"));
         Type returnType = returnType(returnParameters);
         functionId2Type.put(id, returnType);
         List<ProgramVariable> inputParamenters = parseParameters(node.get("parameters"));
 
         Block body = parseBlock(node.get("body"));
-        String kind = node.get("kind").asString();
         Visibility visibility = Visibility.fromString(node.get("visibility").asString());
         StateMutability stateMutability =
             StateMutability.valueOf(node.get("stateMutability").asString());

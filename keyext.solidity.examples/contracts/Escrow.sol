@@ -6,7 +6,7 @@ pragma solidity ^0.8.0;
 // Deviations from the original, all forced by the supported fragment: the by/stateIs
 // modifiers are inlined requires, `now` is the timeNow state variable, storage reads that
 // the original placed inside a comparison or a compound expression are bound to a local
-// first, and the constructor is skipped.
+// first.
 /// @custom:key invariant sender != receiver
 /// @custom:key invariant amountInEscrow == net(sender) + net(receiver)
 /// @custom:key invariant state != State.AwaitingDeposit || net(sender) == 0
@@ -24,7 +24,6 @@ contract Escrow {
     State public state;
     uint timeNow;
 
-    /// @custom:key skip
     constructor(address _sender, address payable _receiver, uint _delayUntilRelease) {
         require(_sender != _receiver);
         sender = _sender;

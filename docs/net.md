@@ -164,8 +164,8 @@ Mapped to this repository, roughly in order of usefulness:
    system" outlook, paper §4.1): **done for specified functions** — the
    `.sol` path generates the PO from the natspec clauses, and KeYther's
    function browser shows what a function is proved against and offers the
-   transfer semantics. Still open: a constructor PO (`storage = mt`,
-   `net = mt`), and frame conditions from `assignable`.
+   transfer semantics. The constructor PO (`storage = mtSt`,
+   `net = mtSt`) is done too; still open: frame conditions from `assignable`.
 
 The paper's own limitations to keep in mind when porting examples: it
 verifies partial correctness only (box), assumes `transfer`'s gas stipend

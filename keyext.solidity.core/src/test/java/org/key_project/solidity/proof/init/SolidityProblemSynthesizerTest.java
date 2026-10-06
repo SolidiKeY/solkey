@@ -84,6 +84,17 @@ public class SolidityProblemSynthesizerTest {
     }
 
     @Test
+    void aConstructorStartsFromEmptyStorageAndAssumesNoInvariant() throws IOException {
+        Path file = SolidityExampleTests.example("contracts/Counter.sol");
+
+        String text = SolidityProblemSynthesizer.problemText(file, spec("Counter", "constructor"));
+
+        assertTrue(text.contains("storage := mtSt"), text);
+        assertTrue(text.contains("constructor(start)@Counter;"), text);
+        assertFalse(text.contains("& CInv(storage, net) ->"), text);
+    }
+
+    @Test
     void aNamedReturnBecomesTheResultVariable() throws IOException {
         Path file = SolidityExampleTests.example("functionBody/C.sol");
 

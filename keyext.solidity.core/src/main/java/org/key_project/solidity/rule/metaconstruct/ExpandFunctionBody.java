@@ -15,8 +15,10 @@ import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
+import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
+import org.key_project.solidity.program.ast.declarations.StateVariableDeclaration;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
@@ -24,6 +26,7 @@ import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
 import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.AssignExpression;
 import org.key_project.solidity.program.ast.expressions.operators.Operator;
+import org.key_project.solidity.program.ast.references.FieldReference;
 import org.key_project.solidity.program.ast.references.FunctionReference;
 import org.key_project.solidity.program.ast.statement.DeclarationStatement;
 import org.key_project.solidity.program.ast.statement.ExpressionStatement;
@@ -126,12 +129,17 @@ public class ExpandFunctionBody extends ProgramTransformer {
             freshReturns.add(declareFresh(ret, name, zero(ret), replaceMap, stmts));
         }
 
+        final List<Statement> initializers = fn.getKind().equals("constructor")
+                ? stateVariableInitializers(fn, services)
+                : List.of();
+
         final Statement body = ModifierInlining.wrap(fn.getModifiers(), new FunctionFrame(
             ReturnLowering.lower(fbs.getBody(), returns.toList(), services).getStatements()),
             services);
         final ProgVarReplaceVisitor repl =
             new ProgVarReplaceVisitor(body, replaceMap, true, services);
         repl.start();
+        stmts.addAll(initializers);
         stmts.add((Statement) repl.result());
 
         for (int i = 0; i < targets.size(); i++) {
@@ -143,6 +151,25 @@ public class ExpandFunctionBody extends ProgramTransformer {
         }
 
         return stmts.toArray(new SolidityProgramElement[0]);
+    }
+
+    private static List<Statement> stateVariableInitializers(FunctionDeclaration constructor,
+            Services services) {
+        final List<Statement> initializers = new ArrayList<>();
+        for (ContractDeclaration contract : services.getSolidityInfo().getContracts()) {
+            if (!contract.getFunctions().contains(constructor)) {
+                continue;
+            }
+            for (StateVariableDeclaration field : contract.getFieldDeclarations()) {
+                Expression initializer = field.getInitializer();
+                if (initializer != null) {
+                    initializers.add(new ExpressionStatement(new AssignExpression(
+                        Operator.COPY_ASSIGN, new FieldReference(field, field.getType()),
+                        initializer)));
+                }
+            }
+        }
+        return initializers;
     }
 
     private static @Nullable Expression zero(ProgramVariable variable) {

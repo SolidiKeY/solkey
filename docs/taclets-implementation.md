@@ -886,6 +886,17 @@ term, which is what `createSkolemConstant` records — before, every `exLeft`/`a
 failed the generic-sort check, so no quantified problem could be proved. The surface grammar
 and the emission table are in `keyext.solidity.examples/README.md`.
 
+### Constructors
+
+A constructor is listed by `SolidityOutline` and `SolJSONParser` under the name `constructor` (solc
+names it `""`), so `constructor(args)@C;` is an ordinary function-body call. Its obligation starts
+from the empty state: the update is `storage := mtSt || net := storeSt(mtSt, at(msgSender), …) ||
+selfBalance := msgValue` (a function without clauses gets `{storage := mtSt || net := mtSt}`), and
+`CInv(storage, net)` is *not* assumed — the constructor has to establish it. `ExpandFunctionBody`
+prepends `field = initializer;` for every state variable of the contract that has an initializer,
+in declaration order, before the constructor's `function-frame`. `contracts/Counter.sol` is the
+minimal example (`uint limit = 5;` establishes the invariant `limit == 5`).
+
 `trueNotFalse` / `falseNotTrue` (`formulaNormalizationRules.key`) rewrite `TRUE = FALSE` and
 `FALSE = TRUE` to `false`. The bool literals had no distinctness axiom, so an infeasible branch
 of `if (p != 0)` could end with `TRUE = FALSE` in the antecedent and stay open

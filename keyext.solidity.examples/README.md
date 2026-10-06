@@ -89,7 +89,7 @@ and `storagePushReadBack` on a fully unknown storage.
 | Natspec tag | Effect |
 |---|---|
 | `/// @custom:key box` | box modality — `require` becomes an assumption |
-| `/// @custom:key skip` | no obligation for this function (loops, constructors) |
+| `/// @custom:key skip` | no obligation for this function (loops) |
 | `/// @custom:key invariant e` | on the contract: a conjunct of the contract invariant `CInv` |
 | `/// @custom:key requires e` | assumed before the call (the old `only_if`) |
 | `/// @custom:key ensures e` | proved after the call (the old `on_success`) |
