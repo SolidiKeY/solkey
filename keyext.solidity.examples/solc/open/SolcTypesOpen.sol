@@ -6,10 +6,7 @@ pragma solidity ^0.8.0;
 contract SolcTypesOpen {
     enum Truth { False, True }
     enum ActionChoices { GoLeft, GoRight, GoStraight }
-    enum Choice { A, B, C }
     enum D { Left, Right }
-
-    uint constant X = 1 ether + 1 gwei + 1 wei;
 
     ActionChoices choice;
     address a;
@@ -38,14 +35,6 @@ contract SolcTypesOpen {
         require(x == 0);
         D p = D(x);
         assert(p == D.Left);
-    }
-
-    /// solc: semanticTests/enums/using_contract_enums_with_explicit_contract_name.sol
-    function enumExplicitContractName() public pure {
-        // open: a contract-qualified enum type SolcTypesOpen.Choice throws ClassCastException in the prover
-        SolcTypesOpen.Choice r = SolcTypesOpen.Choice.B;
-        uint v = uint(r);
-        assert(v == 1);
     }
 
     /// solc: smtCheckerTests/types/enum_range.sol
@@ -153,13 +142,6 @@ contract SolcTypesOpen {
         ((x, b)) = (2, true);
         assert(x == 2);
         assert(b);
-    }
-
-    /// solc: semanticTests/literals/denominations.sol
-    function denominationsConstant() public pure {
-        // open: a constant is read from unconstrained storage, its initializer is not known
-        uint r = X;
-        assert(r == 1000000001000000001);
     }
 
     /// solc: semanticTests/literals/ternary_operator_with_literal_types_overflow.sol

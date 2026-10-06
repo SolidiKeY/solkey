@@ -11,13 +11,16 @@ import org.key_project.solidity.rule.metaconstruct.ExpandFunctionBody;
 
 final class InternalCallSVSort extends ProgramSVSort {
 
-    InternalCallSVSort() {
-        super(new Name("InternalCall"));
+    private final boolean bodyStatement;
+
+    InternalCallSVSort(String name, boolean bodyStatement) {
+        super(new Name(name));
+        this.bodyStatement = bodyStatement;
     }
 
     @Override
     public boolean canStandFor(SolidityProgramElement pe, Services services) {
-        return !(pe instanceof FunctionBodyStatement)
+        return pe instanceof FunctionBodyStatement == bodyStatement
                 && ExpandFunctionBody.asFunctionBody(pe) != null;
     }
 }

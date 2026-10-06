@@ -96,19 +96,19 @@ ranks the backlog of `docs/taclet-ideas.md` by what real code needs. Each was re
 | custom errors | 9: Coin, SimpleAuction, Purchase, SendContract, WithdrawalContract, AccessRestriction, BlindAuction, Ownable, StateMachine | open: `Unknown node type ErrorDefinition` |
 | events / `emit` | 8: Coin, ERC20, SimpleAuction, Purchase, BlindAuction, Ownable, WETH9, Token | open: `Unknown node type EventDefinition` |
 | `require(c, "msg")` | 5: EtherWallet, SendingEther, Ballot, Token, KingOfEther | open: `Not yet supported literal` |
-| `address(this)` | 4: EtherWallet, Purchase, SendingEther, WETH9 | open: NPE in `SolJSONParser.parseIdentifier` |
-| `block.timestamp` | 4: SimpleAuction, AccessRestriction, BlindAuction, StateMachine | open: the same NPE; the spec language has no `block` |
+| `address(this)` | 4: EtherWallet, Purchase, SendingEther, WETH9 | open: refused at load (`The built-in this is not supported`) |
+| `block.timestamp` | 4: SimpleAuction, AccessRestriction, BlindAuction, StateMachine | open: refused at load; the spec language has no `block` |
 | `bytes32` / `bytes` | 4: Ballot, BlindAuction, Ownable, SendingEther | open: `No KeYSolidityType for bytes32`; a `bytes32` parameter gets no obligation; `(bool ok, bytes memory d) = a.call{..}("")` is rejected |
 | struct constructors | 3: Todos, Ballot, BlindAuction | open: `Unexpected reference declaration Todo expected a state variable` |
 | unnamed return value | 2 hacked (ERC20, SimpleAuction); no obligation for `get`-style functions | by design: `\result` needs one named return |
-| internal call inside a modifier | 2: Ownable, StateMachine | **new**, crash: the same NPE |
+| internal call inside a modifier | 0 | **fixed** (2026-10-07; was Ownable, StateMachine) |
 | storage read as the key of `m[k] op= e` | 2: SimpleAuction (hacked), WithdrawalContract | **new**, stalls on `m[r] += e;` |
 | imports | 2: ERC20, Ownable | open: only the opened file is given to solc |
 | bitwise operators | 1: AccessRestriction | design: no bitwise LDT, stalls on `owner & 0` |
 | enum conversion `E(uint(e) + 1)` | 1: StateMachine | **new**, stalls |
-| libraries / `using for` | 1: Token | open: `Unknown node type UsingForDirective`; `L.f(x)` hits the same NPE |
+| libraries / `using for` | 0 | **fixed** (2026-10-07; was Token): `L.f(x)` and `x.f()` are inlined |
 | external call with options `c.f{value: v}()` | 1: KingOfEther | open: `Not yet supported expression type: FunctionCallOptions` |
-| indexing a memory-array parameter | 1: Ballot | **new**, crash: `ClassCastException` in `SolJSONParser.getVariableExpression` |
+| indexing a memory-array parameter | 0 | **fixed** (2026-10-07; was Ballot) |
 | internal calls | 0 | **fixed**: `ERC20.mint`/`burn` close |
 | `return e;` / tuple return | 0 | **fixed**: `ERC20` keeps `return true;` |
 | loops | 0 | **fixed** (a minimal `for` with an invariant closes; Ballot and BlindAuction do not reach theirs) |
@@ -119,6 +119,5 @@ Events, custom errors and `require` messages have no effect on the state the cal
 and still account for most of the hacks: accepting them in the parser (events and errors
 skipped, `emit` a no-op, the message ignored) would make `Coin`, `SendContract` and
 `WithdrawalContract` load verbatim and remove most of the edits elsewhere. The next
-cheapest step is the null declaration at `SolJSONParser.parseIdentifier`: one site behind
-`address(this)`, `block.timestamp`, library calls and internal calls in modifiers, which
-together stop or force hacks in ten contracts.
+cheapest step is `this` and `block.*`, refused at load since 2026-10-07 (library calls and
+internal calls in modifiers now load).

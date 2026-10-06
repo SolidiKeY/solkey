@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 contract SolcHigherLevelOpenBaseBase {
     uint x;
-    uint constant K = 7;
 
     function bg() internal pure virtual returns (uint256 r) {
         return 1;
@@ -112,12 +111,5 @@ contract SolcHigherLevelOpen is SolcHigherLevelOpenBase {
         SolcHigherLevelOpenBaseBase.init(c, d);
         uint r = x;
         assert(r == c);
-    }
-
-    /// solc: semanticTests/inheritance/inherited_constant_state_var.sol
-    // open: an inherited constant is read from unconstrained storage, its initializer is not known
-    function inheritedConstantStateVar() public pure {
-        uint256 r = K;
-        assert(r == 7);
     }
 }

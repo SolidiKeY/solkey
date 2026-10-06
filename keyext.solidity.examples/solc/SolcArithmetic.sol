@@ -8,6 +8,14 @@ contract SolcArithmetic {
     uint value2;
     mapping(uint => uint) map;
     uint[] array;
+    uint constant DEPTH = 32;
+    uint constant MAX_COUNT = 2**DEPTH - 1;
+    uint constant CX = 7;
+    uint constant CY = 3;
+    uint constant CZ = CX / CY;
+    uint constant EX = 2;
+    uint constant EY = EX ** 10;
+    int256 constant SIGNED_CONSTANT = 42;
 
     /// solc: semanticTests/arithmetics/divisiod_by_zero.sol
     /// @custom:key box
@@ -470,5 +478,40 @@ contract SolcArithmetic {
         require(a == 7);
         uint16 r = addUnchecked16(a, 0x100) + 0x100;
         assert(r == 0x0207);
+    }
+
+    /// solc: smtCheckerTests/operators/constant_propagation_1.sol
+    function constantPropagationPower() public pure {
+        uint d = DEPTH;
+        uint m = MAX_COUNT;
+        assert(d == 32);
+        assert(m == 4294967295);
+    }
+
+    /// solc: smtCheckerTests/operators/constant_propagation_2.sol
+    function constantPropagationDivision() public pure {
+        uint z = CZ;
+        uint a = CX / 3;
+        uint b = 7 / CY;
+        uint c = CZ * 3;
+        assert(z == 2);
+        assert(z == a);
+        assert(z == b);
+        assert(c != 7);
+    }
+
+    /// solc: smtCheckerTests/operators/const_exp_1.sol
+    function constantExponent() public pure {
+        uint y = EY;
+        uint e = 2 ** 10;
+        assert(y == e);
+        assert(y == 1024);
+    }
+
+    /// solc: smtCheckerTests/operators/constant_evaluation_unary_minus_chc.sol
+    function constantUnaryMinus() public pure {
+        int r = -SIGNED_CONSTANT;
+        int expected = -42;
+        assert(r == expected);
     }
 }

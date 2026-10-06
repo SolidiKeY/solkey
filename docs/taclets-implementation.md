@@ -871,8 +871,8 @@ Each application declares the modifier's parameters fresh at its entry, so its a
 evaluated when it is entered, after the code of the modifiers outside it. A `return` in the body
 completes the frame only, and the modifier code after `_;` still runs. A modifier is inlined
 when it is resolved (a `ModifierDefinition` of the same contract), has exactly one `_;`
-(anywhere, nested blocks included) and no `return`; a function with any other modifier is not
-an `InternalCall`, and its obligation fails. Top-level obligations go through the same
+(anywhere, nested blocks included) and no `return`; a call of a function with any other
+modifier matches neither `FunctionBody` nor `InternalCall`, so its obligation stays open. Top-level obligations go through the same
 transformer, so a public function is proved with its modifiers. The rules follow
 solidity-lean's `wrapMods`, except that solidity-lean also rejects a `_;` inside a block and a
 reference-typed modifier parameter.
@@ -922,6 +922,26 @@ Remaining constraints:
 
 Examples: the `internalCall*`, `return*`, `tuple*`, `overload*` and `modifier*` functions in
 `TestSuite.sol`.
+
+**Declarations outside the contract.** `SolJSONParser` reads the file-level declarations and
+every library before the contracts:
+
+- A `constant` (of a contract, inherited, written `C.K` or `L.K`, or at file level) is replaced
+  at each read by its initializer expression; it is never read from storage.
+- A file-level or library function is inlined like an internal function. `L.f(a)` calls it, and
+  `x.f(a)` under `using L for T` calls it as `f(x, a)`.
+- A file-level or library enum or struct is declared like a contract's; the field constants of
+  such a struct are named `S$field`.
+- A user-defined value type is its underlying type, and `T.wrap`/`T.unwrap` the identity.
+- `type(T).min`/`type(T).max` of an integer or enum type is a literal; `addmod(a, b, n)` and
+  `mulmod(a, b, n)` are `(a + b) % n` and `(a * b) % n`, exact under the unbounded integers.
+- A `storage` parameter of an internal function is a storage alias (`List` sort), like a
+  `storage` local, so a struct, array or mapping passed by reference is written through.
+- A bodiless function is never inlined; a bodiless modifier has an empty body, without `_;`, so
+  it is not inlined either.
+
+Examples: the functions of the "Constants, file-level declarations and libraries" and
+"Parameters and modifiers" sections of `TestSuite.sol`.
 
 Note that a `.sol` body is parsed by `SolJSONParser` (the solc-JSON path), not by
 `SolidityToKeyConverter` (the ANTLR path used for programs written inline in a modality). Both

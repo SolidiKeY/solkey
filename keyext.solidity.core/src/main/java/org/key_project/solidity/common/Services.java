@@ -141,10 +141,11 @@ public class Services implements LogicServices, ProofServices {
 
     private static Term fieldConstant(FieldDeclaration field, Services services) {
         StructDeclaration owner = field.getContainingStruct();
-        Name constantName = owner != null && owner.getContract() != null
-                ? new Name(StructLDT.fieldConstantName(owner.getContract().name(), owner.name(),
-                    field.name()))
-                : field.name();
+        Name constantName = owner == null ? field.name()
+                : owner.getContract() == null
+                        ? new Name(StructLDT.fieldConstantName(owner.name(), field.name()))
+                        : new Name(StructLDT.fieldConstantName(owner.getContract().name(),
+                            owner.name(), field.name()));
         return services.getTermBuilder()
                 .func(services.getNamespaces().requireFunction(constantName));
     }

@@ -25,7 +25,7 @@ public final class Abi {
     /// parameter types come from solc's `typeString`, which is already canonical.
     public static String signatureOf(SolidityOutline.Function function) {
         return function.name() + function.parameters().stream()
-                .map(SolidityOutline.Parameter::type)
+                .map(parameter -> parameter.type().replace("address payable", "address"))
                 .collect(Collectors.joining(",", "(", ")"));
     }
 

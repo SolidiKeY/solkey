@@ -208,7 +208,8 @@ public record SolidityOutline(List<Contract> contracts) {
         JsonNode root = SolcAst.of(solFile);
         List<Contract> contracts = new ArrayList<>();
         for (JsonNode node : root.get("nodes").values()) {
-            if ("ContractDefinition".equals(text(node, "nodeType"))) {
+            if ("ContractDefinition".equals(text(node, "nodeType"))
+                    && !"library".equals(text(node, "contractKind"))) {
                 contracts.add(contractOf(node));
             }
         }

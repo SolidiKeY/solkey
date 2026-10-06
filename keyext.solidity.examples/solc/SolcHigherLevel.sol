@@ -7,6 +7,7 @@ interface SolcHigherLevelParent {
 
 contract SolcHigherLevelRoot {
     uint256 x;
+    uint constant K = 7;
 }
 
 contract SolcHigherLevelA is SolcHigherLevelRoot {
@@ -337,5 +338,11 @@ contract SolcHigherLevel is SolcHigherLevelA, SolcHigherLevelB, SolcHigherLevelP
         assert(n == 2);
         assert(r0 == 3);
         assert(r1 == 4);
+    }
+
+    /// solc: semanticTests/inheritance/inherited_constant_state_var.sol
+    function inheritedConstantStateVar() public pure {
+        uint256 r = K;
+        assert(r == 7);
     }
 }

@@ -43,40 +43,9 @@ non-reverting.
 
 ## Crashes at load or during the proof
 
-- **Indexing a parameter or named return**: `ClassCastException: ProgramVariable cannot be cast
-  to Declaration` at `SolJSONParser.getVariableExpression` (unchecked cast; `parseIndexAccess`).
-  `function g(uint[] memory a) internal { x = a[0]; }` makes the whole file fail to load, even
-  if `g` is never called; storage mapping and array parameters alike. Workaround: alias first,
-  `uint[] memory b = a; b[0]`.
-- **An identifier with no user declaration**: `NullPointerException` at
-  `SolJSONParser.parseIdentifier` (`case null`, then `switch` on a null type). Triggers: `this`
-  (`address(this)`, `this.a()`), `super.g()`, `block.timestamp`, `tx.origin`,
-  `type(uint8).max`, `addmod(10, 5, 7)`, a library call `L.inc(1)` or type `L.Enum`, a free
-  (file-level) function. `address(this).balance` is already in `docs/taclet-ideas.md`.
-- **An internal call inside a modifier body**: `NullPointerException` in `parseIdentifier`.
-  `parseContract` parses each modifier before `functionId2Type` is filled:
-  `function g() internal { x = 1; } modifier m() { g(); _; } function f() public m { assert(x == 1); }`.
-- **File-level declarations**: a file-level `uint constant FX = 42;`, `enum`, `struct` or free
-  function: `NullPointerException` in `ContractReference.resolve` or
-  `getOrCreateKeYSolidityType` (`parseSourceUnit` keeps only contracts).
-- **A `storage` struct or array parameter of an internal function**:
-  `TermCreationException` (`consr` over a `Struct`-sorted variable).
-  `struct S { uint v; } S s; function g(S storage x) internal { x.v = 1; } function f() public { g(s); assert(s.v == 1); }`.
-  `parseParam` types the parameter with `asMemoryReferenceType`, not `asLocalVariableType`; a
-  local `S storage x = s;` closes. A read `return x.v;` crashes too.
-- **A bodiless (abstract) function or modifier**: `Cannot invoke "JsonNode.get(String)" because
-  "jsonBody" is null` (`parseFunction`/`parseModifier` → `parseBlock(null)`):
-  `abstract contract A { function h() internal virtual returns (uint); }`.
-- **A local of contract type or of a user-defined value type**: `NullPointerException` at
-  `getOrCreateKeYSolidityType` (`parseType` returns null): `C c = C(address(0));`,
-  `type MyInt is uint; … MyInt a;` (a state variable alike).
-- **A contract-qualified state variable or enum value**: `ClassCastException:
-  StateVariableDeclaration` (resp. `EnumDeclaration`) `cannot be cast to SolidityProgramElement`
-  at `SolidityASTWalker.walk` during the proof: `uint r = C.K;`, `C.Choice r = C.Choice.B;`.
-  `MemberExp` keeps the declaration as an AST child.
-- **A modifier containing `return`**: `IllegalStateException: … has a modifier that cannot be
-  inlined` from `ExpandFunctionBody.transform`, in the automode thread, instead of the rule being
-  inapplicable. `modifier inc() { if (x == 0) { return; } x = x + 1; _; }`.
+None known. A construct the parser does not support (`this`, `super`, `block.*`, `tx.*`, an
+event) is refused at load with a `SolidityParseException` naming it; those are in
+`docs/taclet-ideas.md`.
 
 ## Proof gets stuck on program text
 
@@ -86,6 +55,11 @@ non-reverting.
   which excludes paths (`NonSimpleExpressionSVSort.isPathShaped`). Workaround:
   `uint o = other; pot += o;`. A storage read as the mapping key (`m[r] += 1`) stalls the same
   way.
+- **A state variable assigned from a memory array element.** `uint[] memory b = new uint[](2);`
+  `b[0] = 7; x = b[0];` stays as program text; `uint y = b[0]; x = y;` closes. Same when `b` is
+  a memory parameter.
+- **A local of contract type.** `C c = C(address(0)); assert(address(c) == address(0));` loads
+  but leaves `c = address(0);` as program text: the contract conversion is not modelled.
 
 ## True facts that cannot be proved
 
@@ -97,11 +71,6 @@ non-reverting.
   (`solidityProgramRules.key`) drops `T v;` with `\addprogvars(v)` and no default:
   `uint x; assert(x == 0);` leaves `==> x = 0`; `bool b; assert(!b);` leaves `b = TRUE ==>`.
   `defaultValue` already exists (`memoryRules.key`). Workaround: `uint x = 0;`.
-- **A `constant` state variable reads as unconstrained storage outside the constructor.**
-  `parseVariableField` ignores `constant`, so
-  `uint constant X = 56; function f() public pure { uint r = X; assert(r == 56); }` leaves
-  `==> selectSt<[int]>(storage, C$X) = 56`. Inherited constants alike. Workaround: inline the
-  literal. (`--solc` also skips any contract with a constant, see below.)
 - **A variable mentioned only in a loop invariant loses its value.** `\dropEffectlessElementaries`
   (`DropEffectlessElementariesCondition.searchTerm`) does not see a loop's `LoopSpec` bindings, so
   `simplifyUpdate*` drops the update before `whileInvariantBox`:
@@ -124,24 +93,8 @@ non-reverting.
 - **Copying a shorter static storage array into a longer one leaves the tail.**
   `uint[40] big; uint[20] small;` `big[30] = 4; big = small; assert(big[30] == 0);` leaves
   `==> selectSt<[int]>(selectSt<[Struct]>(storage, C$small), at(30)) = 0`.
-- **A mapping storage reference passed as an argument cannot be read back.** Binding `maps[y]`
-  (or `ms[x]`) to a `mapping(uint => uint) storage p` parameter leaves the path as
-  `cast<[List]>(cast<[mapping(int => int)]>(cons(…)))`, which `castDel` never removes, so
-  `consrCons`/`selectOnSaveCons` cannot fire: `m[0] = 1; assert(m[0] == 1);` through `p`, and
-  an unrelated `assert(other == 1)` after the call, stay open. The same body without the call
-  closes.
 - **A succedent `\exists` whose body has a nested quantifier is never instantiated.**
   `ex_pull_out0..3` (`formulaNormalizationRules.key`) lack `\heuristics(pullOutQuantifierEx)`,
   unlike Java KeY: `requires \forall uint i; i < vals.length -> vals[i] <= vals[k]`,
   `ensures \exists uint w; w < vals.length && res == vals[w] && (\forall uint i; … vals[i] <= vals[w])`
   with `res = vals[k]` stays open. `real-world/open/DocsBallot.sol` `winnerName`.
-
-## Runtime cross-check (`--solc`)
-
-- **A `!=` conjunct in the pinning `require` aborts the run.** `require(y != 0 && x == 42);`
-  gives `Cannot invoke "java.math.BigInteger.signum()" because "value" is null`:
-  `PinnedArguments.recordPin` creates empty `Bounds` before rejecting the operator, and its null
-  witness reaches `Abi`. It should report SKIP.
-- **An `address payable` parameter gets the wrong selector.** `Abi.signatureOf` writes
-  `f(address payable,uint256)`, so the call reverts (or silently runs a payable `fallback()`
-  instead of the body). Workaround: declare `address p`, convert with `payable(p)`.

@@ -94,13 +94,6 @@ contract SolcConstructorsOpen {
         return msg.value;
     }
 
-    /// solc: semanticTests/constants/simple_constant_variables_test.sol
-    // open: a constant is a storage slot written only by the constructor obligation, so outside it the read is unconstrained
-    function simpleConstantVariables() public pure {
-        uint r = X;
-        assert(r == 56);
-    }
-
     /// solc: semanticTests/immutable/uninitialized.sol
     // open: an immutable is plain storage, so outside the constructor a never-assigned one is unconstrained instead of zero
     function immutableUninitialized() public view {

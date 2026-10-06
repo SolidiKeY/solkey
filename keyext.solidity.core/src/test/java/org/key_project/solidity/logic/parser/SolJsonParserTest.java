@@ -1599,6 +1599,19 @@ public class SolJsonParserTest {
     }
 
     @Test
+    void bodilessFunctionAndModifier() throws IOException {
+        // language=solidity
+        String contract = """
+                abstract contract A {
+                    function h() internal virtual returns (uint);
+                    modifier m() virtual;
+                }""";
+        ContractDeclaration contractDec = getDeclStr(contract, services);
+        assertFalse(contractDec.getFunctions().get(0).hasBody());
+        assertTrue(contractDec.getModifiers().get(0).getBody().isEmpty());
+    }
+
+    @Test
     @ExpectedToFail("self-referencing contracts not yet supported")
     void selfReferenceContract() throws IOException {
         // language=solidity

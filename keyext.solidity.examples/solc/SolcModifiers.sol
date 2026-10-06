@@ -60,10 +60,18 @@ abstract contract SolcModifiersC is SolcModifiersA {
 }
 
 contract SolcModifiers is SolcModifiersB, SolcModifiersC {
+    struct S { uint v; }
+
     uint x;
     uint a;
     uint called;
     address owner;
+    S s;
+
+    modifier incV(S storage t) {
+        t.v++;
+        _;
+    }
 
     modifier setsx() {
         _;
@@ -551,5 +559,17 @@ contract SolcModifiers is SolcModifiersB, SolcModifiersC {
     function smtCodeAfterPlaceholder() public requirePositive {
         assert(x > 0);
         unchecked { x = x + 1; }
+    }
+
+    function addHundred(S storage t) internal incV(t) {
+        t.v += 0x100;
+    }
+
+    /// solc: semanticTests/modifiers/function_modifier_library.sol
+    function storageModifierParameter() public {
+        s.v = 0;
+        addHundred(s);
+        addHundred(s);
+        assert(s.v == 0x202);
     }
 }

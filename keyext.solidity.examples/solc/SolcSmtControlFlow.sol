@@ -12,6 +12,7 @@ contract SolcSmtControlFlow {
     uint yc;
     bool flag;
     S s;
+    uint constant X = 32**22 + 8;
     uint[] arr;
     int ix;
     int iy;
@@ -994,5 +995,12 @@ contract SolcSmtControlFlow {
         ctorBAlt(a);
         assert(a > 0 || ux == 3);
         assert(a <= 0 || ux == 2);
+    }
+
+    /// solc: smtCheckerTests/complex/slither/const_state_variables.sol
+    function constStateVariable() public pure {
+        uint r = X;
+        uint e = 32**22 + 8;
+        assert(r == e);
     }
 }

@@ -61,6 +61,10 @@ public class SolJSONParser {
 
     private final HashMap<Integer, Type> functionId2Type = new HashMap<>();
     private final Set<Integer> contractIds = new HashSet<>();
+    private final Set<Integer> libraryIds = new HashSet<>();
+    private final Set<Integer> valueTypeIds = new HashSet<>();
+    private final Set<Integer> freeFunctionIds = new HashSet<>();
+    private final Map<Integer, Expression> constants = new HashMap<>();
     private final HashMap<Name, DynamicArrayType> dynamicArrayTypes = new HashMap<>();
     private final HashMap<Name, ArrayType> arrayTypes = new HashMap<>();
 
@@ -135,12 +139,68 @@ public class SolJSONParser {
     }
 
     private List<SyntaxElement> parseSourceUnit(List<JsonNode> nodes) {
+        for (JsonNode node : nodes) {
+            if ("ContractDefinition".equals(node.get("nodeType").asString())) {
+                ("library".equals(node.get("contractKind").asString()) ? libraryIds : contractIds)
+                        .add(node.get("id").asInt());
+            }
+        }
+        parseFreeDeclarations(nodes, null);
+        for (JsonNode node : nodes) {
+            if (libraryIds.contains(node.get("id").asInt())) {
+                parseFreeDeclarations(node.get("nodes").valueStream().toList(),
+                    node.get("name").asString());
+            }
+        }
         return nodes.stream()
                 // skip non-contract top-level nodes (e.g. PragmaDirective, ImportDirective)
                 .filter(n -> n.get("contractKind") != null
                         && "contract".equals(n.get("contractKind").asString()))
                 .map(this::parseContract)
                 .collect(Collectors.toList());
+    }
+
+    private void parseFreeDeclarations(List<JsonNode> nodes, @Nullable String library) {
+        contractName = library == null ? "" : library;
+        for (JsonNode node : nodes) {
+            switch (node.get("nodeType").asString()) {
+                case "EnumDefinition" -> parseEnum(node);
+                case "StructDefinition" -> declareStruct(node, -1);
+                case "UserDefinedValueTypeDefinition" -> parseValueType(node);
+                default -> {
+                }
+            }
+        }
+        List<JsonNode> functionNodes = new ArrayList<>();
+        for (JsonNode node : nodes) {
+            switch (node.get("nodeType").asString()) {
+                case "StructDefinition" -> defineStruct(node, null);
+                case "VariableDeclaration" -> parseConstant(node);
+                case "FunctionDefinition" -> functionNodes.add(node);
+                default -> {
+                }
+            }
+        }
+        for (JsonNode node : functionNodes) {
+            freeFunctionIds.add(node.get("id").asInt());
+            functionId2Type.put(node.get("id").asInt(),
+                returnType(parseParameters(node.get("returnParameters"))));
+        }
+        for (JsonNode node : functionNodes) {
+            completeReferences(parseFunction(node));
+        }
+    }
+
+    private void parseConstant(JsonNode node) {
+        if (!node.has("value") || node.get("value").isNull()) {
+            throw new SolidityParseException("A file-level variable must be a constant", node);
+        }
+        constants.put(node.get("id").asInt(), parseExpression(node.get("value")));
+    }
+
+    private void parseValueType(JsonNode node) {
+        valueTypeIds.add(node.get("id").asInt());
+        register(node, parseType(node.get("underlyingType")));
     }
 
     private void registerBuiltinFunctions(JsonNode node) {
@@ -187,10 +247,12 @@ public class SolJSONParser {
         // resolved (a member access on an array- or mapping-valued member is classified by its
         // declared type).
         List<JsonNode> functionNodes = new ArrayList<>();
+        List<JsonNode> modifierNodes = new ArrayList<>();
         for (JsonNode node : contractNode.get("nodes").values()) {
             switch (node.get("nodeType").asString()) {
                 case "EnumDefinition" -> enums.add(parseEnum(node));
                 case "StructDefinition" -> structs.add(declareStruct(node, contractId));
+                case "UserDefinedValueTypeDefinition" -> parseValueType(node);
                 default -> {
                 }
             }
@@ -201,8 +263,8 @@ public class SolJSONParser {
                 case "VariableDeclaration" -> fields.add(parseVariableField(contractName, node));
                 case "FunctionDefinition" -> functionNodes.add(node);
                 case "StructDefinition" -> defineStruct(node, contractName);
-                case "ModifierDefinition" -> modifiers.add(parseModifier(node));
-                case "EnumDefinition" -> {
+                case "ModifierDefinition" -> modifierNodes.add(node);
+                case "EnumDefinition", "UserDefinedValueTypeDefinition", "UsingForDirective" -> {
                 }
                 default -> throw new SolidityParseException("Unknown node type " + nodeType, node);
             }
@@ -210,6 +272,9 @@ public class SolJSONParser {
         for (JsonNode node : functionNodes) {
             functionId2Type.put(node.get("id").asInt(),
                 returnType(parseParameters(node.get("returnParameters"))));
+        }
+        for (JsonNode node : modifierNodes) {
+            modifiers.add(parseModifier(node));
         }
         for (JsonNode node : functionNodes) {
             functions.add(parseFunction(node));
@@ -299,7 +364,9 @@ public class SolJSONParser {
     private ModifierDeclaration parseModifier(JsonNode node) {
         final String name = node.get("name").asString();
         List<ProgramVariable> inputParameters = parseParameters(node.get("parameters"));
-        Block body = parseBlock(node.get("body"));
+        JsonNode bodyNode = node.get("body");
+        Block body = bodyNode == null || bodyNode.isNull() ? new Block(List.of())
+                : parseBlock(bodyNode);
         Visibility visibility = Visibility.fromString(node.get("visibility").asString());
         return register(node,
             new ModifierDeclaration(new Name(name), inputParameters, body, visibility));
@@ -312,10 +379,11 @@ public class SolJSONParser {
         return register(structNode, stDecl);
     }
 
-    private void defineStruct(JsonNode structNode, String contractName) {
+    private void defineStruct(JsonNode structNode, @Nullable String contractName) {
         StructDeclaration stDecl = (StructDeclaration) id2Name.get(structNode.get("id").asInt());
         // unique field constants are namespaced by the full enclosing name: contract$struct
-        String fieldPrefix = StructLDT.fieldConstantName(contractName, stDecl.name());
+        String fieldPrefix = contractName == null ? stDecl.name().toString()
+                : StructLDT.fieldConstantName(contractName, stDecl.name());
         List<FieldDeclaration> fields =
             structNode.get("members").valueStream().map(m -> parseField(m, fieldPrefix)).toList();
         fields.forEach(f -> f.setContainingStruct(stDecl));
@@ -367,7 +435,8 @@ public class SolJSONParser {
         functionId2Type.put(id, returnType);
         List<ProgramVariable> inputParamenters = parseParameters(node.get("parameters"));
 
-        Block body = parseBlock(node.get("body"));
+        JsonNode bodyNode = node.get("body");
+        Block body = bodyNode == null || bodyNode.isNull() ? null : parseBlock(bodyNode);
         Visibility visibility = Visibility.fromString(node.get("visibility").asString());
         StateMutability stateMutability =
             StateMutability.valueOf(node.get("stateMutability").asString());
@@ -637,7 +706,8 @@ public class SolJSONParser {
         Name name = new Name(nameS);
         JsonNode typeNameNode = declaration.get("typeName");
         Type type = parseType(typeNameNode);
-        KeYSolidityType ksType = getOrCreateKeYSolidityType(type);
+        KeYSolidityType ksType = type == null ? pendingContractKST(typeNameNode)
+                : getOrCreateKeYSolidityType(type);
         DataLocation dataLocation =
             DataLocation.fromString(declaration.get("storageLocation").asString());
         if (dataLocation == DataLocation.Memory
@@ -648,6 +718,16 @@ public class SolJSONParser {
             MemoryReferenceTypes.asLocalVariableType(ksType, dataLocation, services), dataLocation);
         scope.put(nameS, new LoopSpec.Binding(programVariable, typeString(declaration)));
         return register(declaration, new StatementVariableDeclaration(programVariable));
+    }
+
+    private KeYSolidityType pendingContractKST(JsonNode typeName) {
+        KeYSolidityType kst = typeName.has("referencedDeclaration")
+                ? contractKSTById.get(typeName.get("referencedDeclaration").asInt())
+                : null;
+        if (kst == null) {
+            throw new SolidityParseException("Unsupported type", typeName);
+        }
+        return kst;
     }
 
     private ProgramVariable parseParam(JsonNode node) {
@@ -666,20 +746,20 @@ public class SolJSONParser {
                     ? contractKSTById.get(typeId)
                     : getOrCreateKeYSolidityType(typeRef);
             programVariable = new ProgramVariable(new Name(fieldName),
-                asMemoryReferenceType(kst, dataLocation), dataLocation);
+                asLocalVariableType(kst, dataLocation), dataLocation);
         } else {
             Type type = parseTypeName(node);
             final KeYSolidityType kst = getOrCreateKeYSolidityType(type);
             programVariable = new ProgramVariable(new Name(fieldName),
-                asMemoryReferenceType(kst, dataLocation), dataLocation);
+                asLocalVariableType(kst, dataLocation), dataLocation);
         }
         scope.put(fieldName, new LoopSpec.Binding(programVariable, typeString(node)));
         return register(node, programVariable);
     }
 
-    private KeYSolidityType asMemoryReferenceType(KeYSolidityType original,
+    private KeYSolidityType asLocalVariableType(KeYSolidityType original,
             DataLocation dataLocation) {
-        return MemoryReferenceTypes.asMemoryReferenceType(original, dataLocation, services);
+        return MemoryReferenceTypes.asLocalVariableType(original, dataLocation, services);
     }
 
     private Type parseType(JsonNode node) {
@@ -743,8 +823,14 @@ public class SolJSONParser {
         Visibility visibility = Visibility.fromString(fieldNode.get("visibility").asString());
 
         Expression initializerExp = findOrNullExpression(fieldNode, "value");
+        if (initializerExp != null && fieldNode.has("constant")
+                && fieldNode.get("constant").asBoolean()) {
+            constants.put(fieldNode.get("id").asInt(), initializerExp);
+        }
 
-        KeYSolidityType type = getOrCreateKeYSolidityType(expType);
+        KeYSolidityType type = expType == null && contractKSTById.containsKey(idRef)
+                ? contractKSTById.get(idRef)
+                : getOrCreateKeYSolidityType(expType);
 
         Name fieldConstantName = registerFieldConstant(
             new Name(StructLDT.fieldConstantName(contractName, fieldNameAsString)), type);
@@ -877,11 +963,50 @@ public class SolJSONParser {
             return parseExpression(initializer.get("arguments").get(0));
         }
         JsonNode expNode = initializer.get("expression");
-        Expression functionExp = parseExpression(expNode);
         List<Expression> arguments =
             initializer.get("arguments").valueStream().map(this::parseExpression).toList();
+        if (isIdentityConversion(expNode)) {
+            return arguments.getFirst();
+        }
+        if (isBuiltin(expNode, "addmod") || isBuiltin(expNode, "mulmod")) {
+            String operator = isBuiltin(expNode, "addmod") ? "+" : "*";
+            return ParserUtils.parseBinaryOperation(ParserUtils.parseBinaryOperation(
+                arguments.get(0), arguments.get(1), operator), arguments.get(2), "%");
+        }
+        if (isAttachedFunction(expNode)) {
+            int id = expNode.get("referencedDeclaration").asInt();
+            List<Expression> withReceiver = new ArrayList<>(arguments.size() + 1);
+            withReceiver.add(parseExpression(expNode.get("expression")));
+            withReceiver.addAll(arguments);
+            return new FunctionCallExpression(functionId2Type.get(id),
+                new FunctionReference(id, functionId2Type.get(id)), withReceiver);
+        }
+        Expression functionExp = parseExpression(expNode);
         Type callType = inferFunctionCallType(initializer, expNode, functionExp, arguments);
         return new FunctionCallExpression(callType, functionExp, arguments);
+    }
+
+    private boolean isIdentityConversion(JsonNode expNode) {
+        JsonNode base = expNode.get("expression");
+        return "MemberAccess".equals(expNode.get("nodeType").asString())
+                && List.of("wrap", "unwrap").contains(expNode.get("memberName").asString())
+                && base.has("referencedDeclaration")
+                && valueTypeIds.contains(base.get("referencedDeclaration").asInt());
+    }
+
+    private static boolean isBuiltin(JsonNode node, String name) {
+        return "Identifier".equals(node.get("nodeType").asString())
+                && name.equals(node.get("name").asString())
+                && node.has("referencedDeclaration")
+                && node.get("referencedDeclaration").asInt() < 0;
+    }
+
+    private boolean isAttachedFunction(JsonNode expNode) {
+        return "MemberAccess".equals(expNode.get("nodeType").asString())
+                && expNode.has("referencedDeclaration")
+                && !expNode.get("referencedDeclaration").isNull()
+                && freeFunctionIds.contains(expNode.get("referencedDeclaration").asInt())
+                && !namesLibrary(expNode.get("expression"));
     }
 
     private Type inferFunctionCallType(JsonNode callNode, JsonNode expNode, Expression functionExp,
@@ -976,15 +1101,14 @@ public class SolJSONParser {
     /// [FieldReference] for a contract state variable, or the local [ProgramVariable] for a
     /// statement-local variable.
     private Expression getVariableExpression(int idLeftRef) {
-        Declaration declaration = (Declaration) id2Name.get(idLeftRef);
-
-        return switch (declaration) {
+        return switch (id2Name.get(idLeftRef)) {
             case StateVariableDeclaration stateVarDeclaration ->
                 new FieldReference(stateVarDeclaration, stateVarDeclaration.getType());
             case StatementVariableDeclaration stmVarDeclaration ->
                 stmVarDeclaration.getProgramVariable();
-            default -> throw new SolidityParseException(
-                "Declaration " + declaration + " does not denote a variable");
+            case ProgramVariable parameter -> parameter;
+            case null, default -> throw new SolidityParseException(
+                "Declaration " + idLeftRef + " does not denote a variable");
         };
     }
 
@@ -1007,13 +1131,32 @@ public class SolJSONParser {
             }
             return pv;
         }
-        if ("Identifier".equals(baseNode.get("nodeType").asString())
-                && baseNode.has("referencedDeclaration")
-                && id2Name.get(baseNode.get("referencedDeclaration")
-                        .asInt()) instanceof EnumDeclaration enumDeclaration) {
+        if ("FunctionCall".equals(baseNode.get("nodeType").asString())
+                && isBuiltin(baseNode.get("expression"), "type")) {
+            return typeBound(baseNode.get("arguments").get(0),
+                initializer.get("memberName").asString());
+        }
+        if (namesLibrary(baseNode)) {
+            int id = initializer.get("referencedDeclaration").asInt();
+            return constants.containsKey(id) ? constants.get(id)
+                    : new FunctionReference(id, functionId2Type.get(id));
+        }
+        SyntaxElement base = baseNode.has("referencedDeclaration")
+                ? id2Name.get(baseNode.get("referencedDeclaration").asInt())
+                : null;
+        if (base instanceof EnumDeclaration enumDeclaration) {
             MemberEnumDeclaration member =
                 enumDeclaration.findMember(new Name(initializer.get("memberName").asString()));
             return new Uint256Literal(BigInteger.valueOf(member.getOrdinal()));
+        }
+        if (namesContract(baseNode) && initializer.has("referencedDeclaration")
+                && constants.containsKey(initializer.get("referencedDeclaration").asInt())) {
+            return constants.get(initializer.get("referencedDeclaration").asInt());
+        }
+        if (namesContract(baseNode) && initializer.has("referencedDeclaration")
+                && id2Name.get(initializer.get("referencedDeclaration")
+                        .asInt()) instanceof StateVariableDeclaration field) {
+            return new FieldReference(field, field.getType());
         }
         Expression leftExp = parseExpression(baseNode);
         if (!initializer.has("referencedDeclaration")
@@ -1035,6 +1178,46 @@ public class SolJSONParser {
         if (id2Name.containsKey(rightId))
             return new MemberExp(leftExp, id2Name.get(rightId), type);
         return new MemberExp(leftExp, rightId, type);
+    }
+
+    private Expression typeBound(JsonNode typeNode, String bound) {
+        BigInteger min;
+        BigInteger max;
+        if ("ElementaryTypeNameExpression".equals(typeNode.get("nodeType").asString())) {
+            String name = typeNode.get("typeName").get("name").asString();
+            boolean signed = name.startsWith("int");
+            String digits = name.substring(signed ? 3 : 4);
+            int bits = digits.isEmpty() ? 256 : Integer.parseInt(digits);
+            max = BigInteger.TWO.pow(signed ? bits - 1 : bits).subtract(BigInteger.ONE);
+            min = signed ? max.add(BigInteger.ONE).negate() : BigInteger.ZERO;
+        } else if (typeNode.has("referencedDeclaration") && id2Name.get(
+            typeNode.get("referencedDeclaration").asInt()) instanceof EnumDeclaration enumDecl) {
+            min = BigInteger.ZERO;
+            max = BigInteger.valueOf(enumDecl.getMembers().size() - 1L);
+        } else {
+            throw new SolidityParseException("type(T)." + bound + " is supported only for "
+                + "integer and enum types", typeNode);
+        }
+        BigInteger value = switch (bound) {
+            case "min" -> min;
+            case "max" -> max;
+            default -> throw new SolidityParseException("type(T)." + bound + " is not supported",
+                typeNode);
+        };
+        Expression literal = new Uint256Literal(value.abs());
+        return value.signum() < 0 ? ParserUtils.parseUnaryOperation(literal, "-", true) : literal;
+    }
+
+    private boolean namesLibrary(JsonNode node) {
+        return "Identifier".equals(node.get("nodeType").asString())
+                && node.has("referencedDeclaration")
+                && libraryIds.contains(node.get("referencedDeclaration").asInt());
+    }
+
+    private boolean namesContract(JsonNode node) {
+        return "Identifier".equals(node.get("nodeType").asString())
+                && node.has("referencedDeclaration")
+                && contractIds.contains(node.get("referencedDeclaration").asInt());
     }
 
     private Expression parseAssignment(JsonNode assign) {
@@ -1061,7 +1244,15 @@ public class SolJSONParser {
 
     private Expression parseIdentifier(JsonNode literal) {
         final int idDecl = literal.get("referencedDeclaration").asInt();
+        Expression constant = constants.get(idDecl);
+        if (constant != null) {
+            return constant;
+        }
         final SyntaxElement declaration = id2Name.get(idDecl);
+        if (declaration == null && idDecl < 0 && !functionId2Type.containsKey(idDecl)) {
+            throw new SolidityParseException(
+                "The built-in " + literal.get("name").asString() + " is not supported", literal);
+        }
         Type type = parseReferenceTypeDeclaration(literal);
         return switch (declaration) {
             case StateVariableDeclaration stateVarDeclaration ->
@@ -1079,7 +1270,7 @@ public class SolJSONParser {
                         : switch (type) {
                             case TupleType tupleType -> new FunctionReference(idDecl, tupleType);
                             case PrimitiveType tp -> new ContractReference(idDecl, tp);
-                            default ->
+                            case null, default ->
                                 throw new SolidityParseException(
                                     "Type " + type + " is not function or contract");
                         };
@@ -1151,7 +1342,8 @@ public class SolJSONParser {
         if (spec.decreases().size() > 1) {
             throw new SolidityParseException("a loop takes one decreases clause", loop);
         }
-        SolidityOutline.Contract contract = unit.contract(contractName).orElseThrow();
+        SolidityOutline.Contract contract = unit.contract(contractName).orElseThrow(
+            () -> new SolidityParseException("a loop specification outside a contract", loop));
         SolidityOutline.Function function = contract.function(functionName).orElseThrow(
             () -> new SolidityParseException("a loop specification outside a function", loop));
         return new LoopSpec(spec.invariants(),

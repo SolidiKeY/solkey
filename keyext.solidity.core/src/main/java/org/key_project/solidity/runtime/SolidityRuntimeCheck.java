@@ -179,7 +179,8 @@ public final class SolidityRuntimeCheck {
                     + "contract you deploy";
             }
             if ("VariableDeclaration".equals(text(member, "nodeType"))
-                    && member.has("value") && !member.get("value").isNull()) {
+                    && member.has("value") && !member.get("value").isNull()
+                    && !(member.has("constant") && member.get("constant").asBoolean())) {
                 return "initializes " + text(member, "name") + " at declaration, so a run "
                     + "from all-zero storage would not be the contract you deploy";
             }

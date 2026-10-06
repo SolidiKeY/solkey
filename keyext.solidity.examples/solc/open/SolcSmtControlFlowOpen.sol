@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 contract SolcSmtControlFlowOpen {
     uint counter;
     bool flag;
-    uint constant X = 32**22 + 8;
 
     modifier check() {
         require(counter == 0);
@@ -164,21 +163,13 @@ contract SolcSmtControlFlowOpen {
         assert(v >= 0);
     }
 
-    // open: a constant state variable is read as an unconstrained storage slot, not as its value
-    /// solc: smtCheckerTests/complex/slither/const_state_variables.sol
-    function constStateVariable() public pure {
-        uint r = X;
-        uint e = 32**22 + 8;
-        assert(r == e);
-    }
-
-    // open: IllegalStateException, a modifier containing `return` cannot be inlined
+    // open: a modifier containing `return` is not inlined
     /// solc: smtCheckerTests/control_flow/branches_with_return/branches_in_modifiers.sol
     /// @custom:key box
     function branchesInModifiers() public check incM {
     }
 
-    // open: IllegalStateException, a modifier containing `return` cannot be inlined
+    // open: a modifier containing `return` is not inlined
     /// solc: smtCheckerTests/control_flow/branches_with_return/branches_in_modifiers_2.sol
     function branchesInModifiers2() public {
         if (counter == 0) {

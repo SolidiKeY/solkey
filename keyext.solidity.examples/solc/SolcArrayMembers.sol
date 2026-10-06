@@ -856,4 +856,23 @@ contract SolcArrayMembers {
         assert(nestedP[0].length == 1);
         assert(nestedP[0][0] == 0);
     }
+
+    function setX(S storage s, uint y) internal {
+        s.x = y;
+    }
+
+    /// solc: semanticTests/array/push/push_no_args_struct.sol
+    /// @custom:key box
+    function pushNoArgsStruct(uint y) public {
+        require(y == 42);
+        require(noArgsStruct.length == 0);
+        S storage s = noArgsStruct.push();
+        setX(s, y);
+        setX(noArgsStruct.push(), 84);
+        assert(noArgsStruct.length == 2);
+        uint a0 = noArgsStruct[0].x;
+        uint a1 = noArgsStruct[1].x;
+        assert(a0 == 42);
+        assert(a1 == 84);
+    }
 }

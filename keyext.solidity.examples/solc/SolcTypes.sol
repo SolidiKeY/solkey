@@ -6,6 +6,7 @@ contract SolcTypes {
     enum ActionChoices { GoLeft, GoRight, GoStraight, Sit }
     enum Direction { A, B, Left, Right }
     enum E3 { A, B, C }
+    enum Choice { A, B, C }
     enum D { Left, Right }
     enum E { Left, Right }
     enum E256 {
@@ -37,6 +38,8 @@ contract SolcTypes {
         E250, E251, E252, E253, E254, E255
     }
     struct SD { uint x; D d; }
+
+    uint constant X = 1 ether + 1 gwei + 1 wei;
 
     ActionChoices choices;
     mapping(E3 => uint8) table;
@@ -431,5 +434,18 @@ contract SolcTypes {
         assert(x == 5000);
         address p = address(uint160(uint8(0)));
         assert(p == address(0));
+    }
+
+    /// solc: semanticTests/enums/using_contract_enums_with_explicit_contract_name.sol
+    function enumExplicitContractName() public pure {
+        SolcTypes.Choice r = SolcTypes.Choice.B;
+        uint v = uint(r);
+        assert(v == 1);
+    }
+
+    /// solc: semanticTests/literals/denominations.sol
+    function denominationsConstant() public pure {
+        uint r = X;
+        assert(r == 1000000001000000001);
     }
 }

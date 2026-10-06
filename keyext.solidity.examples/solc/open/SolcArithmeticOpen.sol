@@ -2,15 +2,6 @@
 pragma solidity ^0.8.0;
 
 contract SolcArithmeticOpen {
-    uint constant DEPTH = 32;
-    uint constant MAX_COUNT = 2**DEPTH - 1;
-    uint constant CX = 7;
-    uint constant CY = 3;
-    uint constant CZ = CX / CY;
-    uint constant EX = 2;
-    uint constant EY = EX ** 10;
-    int256 constant SIGNED_CONSTANT = 42;
-
     uint[] array;
     uint[] pushed;
     mapping(uint => uint) map;
@@ -117,45 +108,6 @@ contract SolcArithmeticOpen {
         uint r = pushed[0];
         assert(len == 1);
         assert(r == 1);
-    }
-
-    // open: true-fact-unprovable: a constant state variable is read as unconstrained storage
-    /// solc: smtCheckerTests/operators/constant_propagation_1.sol
-    function constantPropagationPower() public pure {
-        uint d = DEPTH;
-        uint m = MAX_COUNT;
-        assert(d == 32);
-        assert(m == 4294967295);
-    }
-
-    // open: true-fact-unprovable: a constant state variable is read as unconstrained storage
-    /// solc: smtCheckerTests/operators/constant_propagation_2.sol
-    function constantPropagationDivision() public pure {
-        uint z = CZ;
-        uint a = CX / 3;
-        uint b = 7 / CY;
-        uint c = CZ * 3;
-        assert(z == 2);
-        assert(z == a);
-        assert(z == b);
-        assert(c != 7);
-    }
-
-    // open: true-fact-unprovable: a constant state variable is read as unconstrained storage
-    /// solc: smtCheckerTests/operators/const_exp_1.sol
-    function constantExponent() public pure {
-        uint y = EY;
-        uint e = 2 ** 10;
-        assert(y == e);
-        assert(y == 1024);
-    }
-
-    // open: true-fact-unprovable: a constant state variable is read as unconstrained storage
-    /// solc: smtCheckerTests/operators/constant_evaluation_unary_minus_chc.sol
-    function constantUnaryMinus() public pure {
-        int r = -SIGNED_CONSTANT;
-        int expected = -42;
-        assert(r == expected);
     }
 
     // open: unsupported-construct: an expression statement (a + b;) in the modifier has no rule

@@ -67,7 +67,7 @@ public class ExpandFunctionBody extends ProgramTransformer {
 
     public static @Nullable FunctionBodyStatement asFunctionBody(SolidityProgramElement pe) {
         if (pe instanceof FunctionBodyStatement fbs) {
-            return fbs;
+            return inlinable(fbs.getFunction()) ? fbs : null;
         }
         if (!(pe instanceof ExpressionStatement statement)) {
             return null;

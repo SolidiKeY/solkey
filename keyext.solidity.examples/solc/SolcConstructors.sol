@@ -9,6 +9,7 @@ contract SolcConstructors {
         uint[] a;
     }
 
+    uint constant X = 56;
     uint public test;
     uint i;
     uint k;
@@ -477,5 +478,11 @@ contract SolcConstructors {
         test = 2;
         uint r = test;
         assert(r == 2);
+    }
+
+    /// solc: semanticTests/constants/simple_constant_variables_test.sol
+    function simpleConstantVariables() public pure {
+        uint r = X;
+        assert(r == 56);
     }
 }

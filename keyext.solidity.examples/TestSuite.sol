@@ -1,6 +1,32 @@
 // SPDX-License-Identifier: GPL-2.0-only
 pragma solidity ^0.8.0;
 
+uint constant FILE_LEVEL_LIMIT = 42;
+
+enum FileLevelColor { Red, Green, Blue }
+
+struct FileLevelPair { uint left; uint right; }
+
+type Wei is uint;
+
+function fileLevelTwice(uint v) pure returns (uint) {
+    return 2 * v;
+}
+
+library PairLib {
+    uint constant UNIT = 10;
+
+    function bump(uint v) internal pure returns (uint) {
+        return v + UNIT;
+    }
+
+    function swap(FileLevelPair storage p) internal {
+        uint l = p.left;
+        p.left = p.right;
+        p.right = l;
+    }
+}
+
 /// The taclet example suite. There are no `.key` problem files: the loader synthesizes one
 /// obligation per function of this contract, calling it with postcondition `true`, so every test
 /// is real Solidity that `solc` parses and type-checks.
@@ -24,6 +50,8 @@ pragma solidity ^0.8.0;
 ///   - a tagged function must `require` every bound its body relies on, outermost first
 ///     (`require(2 < matrix.length);` before `require(3 < matrix[2].length);`).
 contract TestSuite {
+    using PairLib for uint;
+
     struct Token { uint value; }
     struct Account { uint balance; Token token; }
     struct Person { Account account; uint age; }
@@ -80,6 +108,10 @@ contract TestSuite {
     mapping(uint => uint)[] mapArray;
     mapping(bool => uint) boolKeyed;
     Tree tree;
+    FileLevelPair pair;
+
+    uint constant LIMIT = 7;
+    enum Phase { Open, Closed }
 
     // ── Arithmetic ──
 
@@ -3967,5 +3999,122 @@ contract TestSuite {
             values[i] = 0;
         }
         assert(values.length == 0 || values[0] == 0);
+    }
+
+    // ── Constants, file-level declarations and libraries ──
+
+    function constantInlined() public pure {
+        uint r = LIMIT;
+        assert(r == 7);
+    }
+
+    function contractQualifiedConstantAndEnum() public pure {
+        uint r = TestSuite.LIMIT;
+        TestSuite.Phase p = TestSuite.Phase.Closed;
+        assert(r == 7);
+        assert(p == Phase.Closed);
+    }
+
+    function fileLevelConstantEnumAndFunction() public pure {
+        uint r = fileLevelTwice(FILE_LEVEL_LIMIT);
+        FileLevelColor c = FileLevelColor.Blue;
+        assert(r == 84);
+        assert(uint(c) == 2);
+    }
+
+    function fileLevelStructThroughLibrary() public {
+        pair.left = 1;
+        pair.right = 2;
+        PairLib.swap(pair);
+        uint l = pair.left;
+        assert(l == 2);
+    }
+
+    function libraryCallAndUsingFor() public pure {
+        uint v = 5;
+        assert(PairLib.bump(v) == 15);
+        assert(v.bump() == 15);
+        assert(PairLib.UNIT == 10);
+    }
+
+    function valueTypeWrapUnwrap() public pure {
+        Wei w = Wei.wrap(3);
+        assert(Wei.unwrap(w) == 3);
+    }
+
+    function typeBounds() public pure {
+        uint8 m = type(uint8).max;
+        int8 n = type(int8).min;
+        int e = -128;
+        assert(m == 255);
+        assert(n == e);
+        assert(uint(type(FileLevelColor).max) == 2);
+    }
+
+    function addmodMulmod() public pure {
+        assert(addmod(10, 5, 7) == 1);
+        assert(mulmod(3, 5, 7) == 1);
+    }
+
+    // ── Parameters and modifiers ──
+
+    function setTotalToOne() internal {
+        total = 1;
+    }
+
+    modifier callsInternal() {
+        setTotalToOne();
+        _;
+    }
+
+    function modifierCallsInternalFunction() public callsInternal {
+        assert(total == 1);
+    }
+
+    function firstOf(uint[] memory xs) internal pure returns (uint) {
+        return xs[0];
+    }
+
+    function indexParameter() public pure {
+        uint[] memory xs = new uint[](1);
+        xs[0] = 9;
+        uint r = firstOf(xs);
+        assert(r == 9);
+    }
+
+    function setTokenValue(Token storage t, uint v) internal {
+        t.value = v;
+    }
+
+    function readTokenValue(Token storage t) internal view returns (uint) {
+        return t.value;
+    }
+
+    function storageStructParameter() public {
+        setTokenValue(tok, 4);
+        uint r = readTokenValue(tok);
+        assert(r == 4);
+    }
+
+    function credit(mapping(uint => uint) storage m, uint k) internal {
+        m[k] = 1;
+    }
+
+    function storageMappingParameter() public {
+        credit(valuesMap, 3);
+        uint r = valuesMap[3];
+        assert(r == 1);
+    }
+
+    /// @custom:key box
+    function pinWithInequality(uint x, uint y) public pure {
+        require(y != 0 && x == 42);
+        assert(x == 42);
+    }
+
+    /// @custom:key box
+    function payableAddressParameter(address payable p) public pure {
+        require(p == 0x5B38Da6a701c568545dCfcB03FcB875f56beddC4);
+        assert(p != address(0));
     }
 }

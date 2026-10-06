@@ -4,12 +4,9 @@ pragma solidity ^0.8.0;
 /// Ports of `test/libsolidity/semanticTests/modifiers/` and
 /// `test/libsolidity/smtCheckerTests/modifiers/` that load but do not close.
 contract SolcModifiersOpen {
-    struct S { uint v; }
-
     uint x;
     uint a;
     uint[] order;
-    S s;
 
     modifier addThenRemove(uint y) {
         uint b = y;
@@ -25,11 +22,6 @@ contract SolcModifiersOpen {
 
     modifier namedArg1(uint value) { _; }
     modifier namedArg2(uint value) { _; }
-
-    modifier incV(S storage t) {
-        t.v++;
-        _;
-    }
 
     modifier runBreak() {
         for (uint256 i = 0; i < 10; i++) {
@@ -106,10 +98,6 @@ contract SolcModifiersOpen {
         pushOrder(7);
     }
 
-    function addHundred(S storage t) internal incV(t) {
-        t.v += 0x100;
-    }
-
     function returnsAssigned() internal pure namedArg1(r1 = 2) namedArg2(r2 = 3)
         returns (uint r1, uint r2)
     {
@@ -179,15 +167,6 @@ contract SolcModifiersOpen {
         assert(order[1] == 3);
         assert(order[2] == 5);
         assert(order[3] == 7);
-    }
-
-    // open: TermCreationException on a field access through a struct storage-reference parameter
-    /// solc: semanticTests/modifiers/function_modifier_library.sol
-    function storageModifierParameter() public {
-        s.v = 0;
-        addHundred(s);
-        addHundred(s);
-        assert(s.v == 0x202);
     }
 
     // open: an assignment expression used as a modifier argument has no rule

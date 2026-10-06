@@ -140,7 +140,7 @@ public final class PinnedArguments {
         if (value == null && "Identifier".equals(text(valueNode, "nodeType"))) {
             value = locals.get(text(valueNode, "name"));
         }
-        if (value == null) {
+        if (value == null || !List.of("==", ">=", ">", "<=", "<").contains(operator)) {
             return false;
         }
         Bounds bounds = pins.computeIfAbsent(text(identifier, "name"), name -> new Bounds());
@@ -153,9 +153,6 @@ public final class PinnedArguments {
             case ">" -> bounds.low = max(bounds.low, value.add(BigInteger.ONE));
             case "<=" -> bounds.high = min(bounds.high, value);
             case "<" -> bounds.high = min(bounds.high, value.subtract(BigInteger.ONE));
-            default -> {
-                return false;
-            }
         }
         return true;
     }

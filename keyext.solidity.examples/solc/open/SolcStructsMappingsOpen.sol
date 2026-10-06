@@ -14,11 +14,6 @@ contract SolcStructsMappingsOpen {
     V[] vb;
     SA saStorage;
     SA[] saArray;
-    mapping(uint => uint) ma;
-    mapping(uint => mapping(uint => uint)) maps;
-    mapping(uint => mapping(uint => uint)) maps8;
-    mapping(uint => uint)[] severalMaps;
-    mapping(uint => uint)[] severalMaps8;
 
     /// solc: semanticTests/structs/struct_storage_push_zero_value.sol
     // open: push() on a storage array of structs does not zero the appended element; every field of pushZero[0] stays symbolic
@@ -164,46 +159,5 @@ contract SolcStructsMappingsOpen {
         saArray.pop();
         saArray.pop();
         saArray.pop();
-    }
-
-    function writeTwoMappings(mapping(uint => uint) storage map1Param, mapping(uint => uint) storage mapBParam) internal {
-        mapping(uint => uint) storage map1 = map1Param;
-        mapping(uint => uint) storage mapB = mapBParam;
-        map1[0] = 2;
-        ma[0] = 42;
-        maps[0][0] = 42;
-        maps8[0][0] = 42;
-        mapB[0] = 1;
-        assert(maps8[0][0] == 42);
-        assert(mapB[0] == 1);
-    }
-
-    /// solc: smtCheckerTests/types/mapping_aliasing_2.sol
-    // open: a write through a mapping parameter bound to maps[y] is not read back: the path stays cast<[List]>(cast<[mapping]>(…)) and find(save(st, p, 1), p) = 1 does not simplify
-    /// @custom:key box
-    function mappingParametersMayAlias(uint flag, uint x, uint y) public {
-        require(flag <= 1 && x <= 1000 && y <= 1000);
-        bool b = flag != 0;
-        if (b) writeTwoMappings(ma, maps[y]);
-        else writeTwoMappings(maps[x], maps[y]);
-    }
-
-    function writeMappingElement(mapping(uint => uint) storage mParam) internal {
-        mapping(uint => uint) storage m = mParam;
-        require(severalMaps.length > 0);
-        require(severalMaps8.length > 0);
-        severalMaps[0][0] = 42;
-        severalMaps8[0][0] = 42;
-        m[0] = 2;
-        assert(severalMaps8[0][0] == 42);
-    }
-
-    /// solc: smtCheckerTests/types/array_mapping_aliasing_1.sol
-    // open: after a write through a mapping parameter bound to severalMaps[x], reads of other state variables do not simplify past the cast<[List]>(cast<[mapping]>(…)) path
-    /// @custom:key box
-    function arrayOfMappingsElementAlias(uint x) public {
-        require(x <= 1000);
-        require(x < severalMaps.length);
-        writeMappingElement(severalMaps[x]);
     }
 }

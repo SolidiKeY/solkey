@@ -23,16 +23,16 @@ EVM without a failing `assert`:
 | `SolcMappings.sol` | `structs/*mapping*`, `array/copying/array_elements_to_mapping.sol` | 9 |
 | `SolcControlFlow.sol` | `statements/`, `various/`, `expressions/conditional_expression_storage_memory_*` | 10 |
 | `SolcLoops.sol` | `statements/`, `viaYul/loops/`, loop-heavy `array/`; smt `loops/` | 49 |
-| `SolcArrayMembers.sol` | `array/` push, pop, delete, copying, allocation; `storage/`; smt `array_members/` | 60 |
+| `SolcArrayMembers.sol` | `array/` push, pop, delete, copying, allocation; `storage/`; smt `array_members/` | 61 |
 | `SolcFunctionCalls.sol` | `functionCall/`, `freeFunctions/`; smt `functions/` | 29 |
-| `SolcStructsMappings.sol` | remaining `structs/`, mapping tests of `functionCall/`, `variables/`, `types/`, `storage/`, `viaYul/storage/`; smt `types/struct*`, `mapping*` | 48 |
-| `SolcConstructors.sol` | `constructor/`, `immutable/`, `constants/`, `scoping/`; smt constructor, `inheritance/constructor_*`, `file_level/` | 34 |
+| `SolcStructsMappings.sol` | remaining `structs/`, mapping tests of `functionCall/`, `variables/`, `types/`, `storage/`, `viaYul/storage/`; smt `types/struct*`, `mapping*` | 50 |
+| `SolcConstructors.sol` | `constructor/`, `immutable/`, `constants/`, `scoping/`; smt constructor, `inheritance/constructor_*`, `file_level/` | 35 |
 | `SolcPayments.sol` | `payable/`, `receive/`, `fallback/`, `reverts/`, `errors/`, `tryCatch/`; smt `special/`, `blockchain_state/`, `try_catch/` | 35 |
-| `SolcModifiers.sol` | `modifiers/`; smt `modifiers/` | 33 |
-| `SolcSmtControlFlow.sol` | smt `control_flow/`, `bmc_coverage/`, `verification_target/`, `invariants/`, `complex/slither/` | 84 |
-| `SolcArithmetic.sol` | `arithmetics/`, `exponentiation/`, `integer/`, `operators/`; smt `operators/`, `overflow/` | 42 |
-| `SolcHigherLevel.sol` | `inheritance/`, `virtualFunctions/`, `getters/`; smt `inheritance/` | 18 |
-| `SolcTypes.sol` | `enums/`, `literals/`, `types/`; smt `types/`, `typecast/` | 37 |
+| `SolcModifiers.sol` | `modifiers/`; smt `modifiers/` | 34 |
+| `SolcSmtControlFlow.sol` | smt `control_flow/`, `bmc_coverage/`, `verification_target/`, `invariants/`, `complex/slither/` | 85 |
+| `SolcArithmetic.sol` | `arithmetics/`, `exponentiation/`, `integer/`, `operators/`; smt `operators/`, `overflow/` | 46 |
+| `SolcHigherLevel.sol` | `inheritance/`, `virtualFunctions/`, `getters/`; smt `inheritance/` | 19 |
+| `SolcTypes.sol` | `enums/`, `literals/`, `types/`; smt `types/`, `typecast/` | 39 |
 
 The function counts are obligations (helpers included). `solc/open/` holds what did not close
 (see "The `open/` directory").
@@ -71,20 +71,20 @@ Applied uniformly; every function names its upstream file in a `/// solc:` line.
 - `return e;`, tuples, internal calls, loops, modifiers and constructor obligations are
   supported now. Ports written before that (the first six files) turn `return e;` into an
   `assert` over a bound local, tuple assignments into sequential assignments, and unroll loops.
-- No constructor, state-variable initializer or `constant` in a closing file:
+- No constructor or non-constant state-variable initializer in a closing file:
   `SolidityRuntimeCheck` runs from all-zero storage and skips any contract that has one, which
   would hide every other function from the EVM check. Constructor bodies become internal
-  helpers or assignments at the top of the body, constants are inlined. The faithful
-  constructor port, which closes, is in `open/SolcConstructorsOpen.sol`.
+  helpers or assignments at the top of the body. A `constant` is allowed: the prover inlines
+  its initializer and the runtime check does not skip it (older ports inline constants by
+  hand). The faithful constructor port, which closes, is in `open/SolcConstructorsOpen.sol`.
 - Symbolic execution starts from unconstrained storage, so wherever upstream relies on storage
   being zero-initialized (fresh deployment, a constructor-built state, a freshly pushed inner
   array) the premise is stated with `require` and the function is tagged `/// @custom:key box`.
   A box `require` that reverts on the EVM's fresh storage is skipped by the runtime check.
 - Parameters: a `bool` becomes a `uint` with `require(p <= 1)` and the flag derived in the body;
   a symbolic parameter gets a range pin (`require(x >= 0 && x < N)`), which keeps the proof
-  universal and gives `PinnedArguments` a witness for the EVM run. Only number literals pin, and
-  the leading `require` must not contain `!=`; enum and `bool` parameters cannot be pinned, and
-  an `address payable` parameter gets the wrong selector, so ports declare `address`.
+  universal and gives `PinnedArguments` a witness for the EVM run. Only number literals pin (a
+  `!=` conjunct pins nothing); enum and `bool` parameters cannot be pinned.
 - Widths: older ports widen `uint8`/`uint16`/`bytesN` to `uint`. `SolcTypes` and
   `SolcArithmetic` keep widths where the width is the subject, and port only the
   value-preserving cases; wrapping and truncating ones are in `open/`. `address` stays
@@ -120,8 +120,7 @@ into the closing file is how a fix is recorded. Four functions here do close:
 `SolcConstructorsOpen.constructor` (true, kept out only because the runtime check skips
 constructors), and `SolcPaymentsOpen.trySuccessKeepsStorageUnsound`/`callKeepsStorageUnsound`
 and `SolcTypesOpen.ternaryLiteralOverflow` (false on the EVM: soundness witnesses, see
-`docs/bugs.md`). Files with a constant are skipped whole by `--solc`; their asserts were checked
-on a copy without it.
+`docs/bugs.md`).
 
 ```bash
 ./run-key.sh keyext.solidity.examples/solc/open/SolcLoopsOpen.sol -f forBreakOrIncrement --open-goals
@@ -196,7 +195,7 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `semanticTests/array/pop/array_pop_storage_empty.sol` | `pushPopLeavesEmpty` |
 | `semanticTests/array/pop/parenthesized.sol` | `parenthesizedPop` |
 | `semanticTests/array/push/push_no_args_1d.sol` | `pushNoArgs1dLvalue` |
-| `semanticTests/array/push/push_no_args_struct.sol` | `pushNoArgsStructLvalue` |
+| `semanticTests/array/push/push_no_args_struct.sol` | `pushNoArgsStructLvalue`, `pushNoArgsStruct` |
 | `semanticTests/array/delete/delete_storage_array.sol` | `deleteStorageArray` |
 | `semanticTests/array/copying/array_copy_clear_storage.sol` | `copyShrinksStorage` |
 | `semanticTests/array/copying/array_copy_memory_to_storage.sol` | `copyMemoryToStorage`, `copyMemoryFixedToStorage` |
@@ -322,6 +321,8 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `semanticTests/storage/mappings_array_pop_delete.sol` | `mappingsSurvivePopAndDelete` |
 | `semanticTests/viaYul/storage/mappings.sol` | `mappingComputedKeys`, `twoDimMappingTransposedKey` |
 | `semanticTests/storage/accessors_mapping_for_array.sol` | `mappingOfArrays` |
+| `smtCheckerTests/types/mapping_aliasing_2.sol` | `mappingParametersMayAlias` |
+| `smtCheckerTests/types/array_mapping_aliasing_1.sol` | `arrayOfMappingsElementAlias` |
 
 ### `SolcConstructors.sol`
 
@@ -359,6 +360,7 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `smtCheckerTests/file_level/enum.sol` | `fileLevelEnum` |
 | `smtCheckerTests/file_level/struct.sol` | `fileLevelStruct` |
 | `semanticTests/variables/public_state_overridding.sol` | `publicStateOverridding` |
+| `semanticTests/constants/simple_constant_variables_test.sol` | `simpleConstantVariables` |
 
 ### `SolcPayments.sol`
 
@@ -431,6 +433,7 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `smtCheckerTests/modifiers/modifier_virtual_static_call_2.sol` | `smtVirtualStaticCall2` |
 | `smtCheckerTests/modifiers/modifier_assignment_outside_branch.sol` | `smtAssignmentOutsideBranch` |
 | `smtCheckerTests/modifiers/modifier_code_after_placeholder.sol` | `smtCodeAfterPlaceholder` |
+| `semanticTests/modifiers/function_modifier_library.sol` | `storageModifierParameter` |
 
 ### `SolcSmtControlFlow.sol`
 
@@ -506,6 +509,7 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `smtCheckerTests/control_flow/branches_with_return/simple_if2.sol` | `simpleIf2Counterexample` |
 | `smtCheckerTests/control_flow/branches_with_return/constructor_state_variable_init.sol` | `constructorStateVariableInit` |
 | `smtCheckerTests/control_flow/branches_with_return/constructor_state_variable_init_chain_alternate.sol` | `constructorStateVariableInitChainAlternate` |
+| `smtCheckerTests/complex/slither/const_state_variables.sol` | `constStateVariable` |
 
 ### `SolcArithmetic.sol`
 
@@ -543,6 +547,10 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `smtCheckerTests/overflow/overflow_and_underflow_chc.sol` | `signedSumOfZeros` |
 | `smtCheckerTests/overflow/unsigned_guard_sub_overflow.sol` | `guardedSubtractionNonNegative` |
 | `semanticTests/arithmetics/unchecked_called_by_checked.sol` | `uncheckedCalledByChecked` |
+| `smtCheckerTests/operators/constant_propagation_1.sol` | `constantPropagationPower` |
+| `smtCheckerTests/operators/constant_propagation_2.sol` | `constantPropagationDivision` |
+| `smtCheckerTests/operators/const_exp_1.sol` | `constantExponent` |
+| `smtCheckerTests/operators/constant_evaluation_unary_minus_chc.sol` | `constantUnaryMinus` |
 
 ### `SolcHigherLevel.sol`
 
@@ -566,6 +574,7 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `semanticTests/getters/mapping_array_struct.sol` | `getterMappingArrayStruct` |
 | `semanticTests/getters/array_mapping_struct.sol` | `getterArrayMappingStruct` |
 | `semanticTests/getters/arrays.sol` | `getterArrays` |
+| `semanticTests/inheritance/inherited_constant_state_var.sol` | `inheritedConstantStateVar` |
 
 ### `SolcTypes.sol`
 
@@ -576,7 +585,7 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `semanticTests/enums/enum_with_256_members.sol` | `enumWith256Members` |
 | `semanticTests/types/mapping_enum_key_v1.sol` | `mappingEnumKey` |
 | `semanticTests/types/nested_tuples.sol` | `nestedTuplesTrailingWildcard` |
-| `semanticTests/literals/denominations.sol` | `denominations` |
+| `semanticTests/literals/denominations.sol` | `denominations`, `denominationsConstant` |
 | `semanticTests/literals/ether.sol` | `etherDenomination` |
 | `semanticTests/literals/gwei.sol` | `gweiDenomination` |
 | `semanticTests/literals/wei.sol` | `weiDenomination` |
@@ -608,6 +617,7 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `smtCheckerTests/typecast/number_literal.sol` | `numberLiteral` |
 | `smtCheckerTests/typecast/same_size.sol` | `sameSizePreserving` |
 | `smtCheckerTests/typecast/upcast.sol` | `upcastPreserving` |
+| `semanticTests/enums/using_contract_enums_with_explicit_contract_name.sol` | `enumExplicitContractName` |
 
 ## Provenance of `open/`
 
@@ -631,7 +641,6 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | Function | Upstream (`test/libsolidity/`) | Why it stays open |
 |---|---|---|
 | `pushNoArgs1d` | `semanticTests/array/push/push_no_args_1d.sol` | push() used as an rvalue (uint y = arr.push();) is stuck on the program text |
-| `pushNoArgsStruct` | `semanticTests/array/push/push_no_args_struct.sol` | a storage struct reference passed to an internal function that writes a member throws TermCreationException (consr over a Struct-sorted variable) |
 | `pushNested` | `semanticTests/array/push/array_push_nested.sol` | push() onto an array of arrays leaves the new element's length unknown, so nested[0].length == 0 does not follow |
 | `pushNestedFromMemory` | `semanticTests/array/push/array_push_nested_from_memory.sol` | push(m) of a memory array onto a storage array of arrays is stuck on the program text |
 | `copyStorageStorageDynDyn` | `semanticTests/array/copying/array_copy_storage_storage_dyn_dyn.sol` | assigning new uint[](n) directly to a storage array is stuck on the program text |
@@ -672,15 +681,12 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `copyStructArraysIntoMemoryRows` | `semanticTests/structs/copy_struct_array_from_storage.sol` | temp[0] = va[0] (storage array copied into an element of a memory array of arrays) has no rule: symbolic execution stops on the statement |
 | `storageNestedStructArrays` | `smtCheckerTests/types/struct/struct_array_struct_array_storage_safe.sol` | closes only with -m 300000 (~130 s); exceeds the suite budget of 50000 steps / 30 s |
 | `storageArrayOfNestedStructArrays` | `smtCheckerTests/types/struct/array_struct_array_struct_storage_safe.sol` | closes only with -m 300000 (~340 s); exceeds the suite budget of 50000 steps / 30 s |
-| `mappingParametersMayAlias` | `smtCheckerTests/types/mapping_aliasing_2.sol` | a write through a mapping parameter bound to maps[y] is not read back: the path stays cast<[List]>(cast<[mapping]>(…)) and find(save(st, p, 1), p) = 1 does not simplify |
-| `arrayOfMappingsElementAlias` | `smtCheckerTests/types/array_mapping_aliasing_1.sol` | after a write through a mapping parameter bound to severalMaps[x], reads of other state variables do not simplify past the cast<[List]>(cast<[mapping]>(…)) path |
 
 ### `open/SolcConstructorsOpen.sol`
 
 | Function | Upstream (`test/libsolidity/`) | Why it stays open |
 |---|---|---|
 | `constructor` | `semanticTests/constructor/state_variable_initialization.sol` | closes in KeY, but SolidityRuntimeCheck skips a contract with a constructor or an initialized state variable, so no EVM cross-check |
-| `simpleConstantVariables` | `semanticTests/constants/simple_constant_variables_test.sol` | a constant is a storage slot written only by the constructor obligation, so outside it the read is unconstrained |
 | `immutableUninitialized` | `semanticTests/immutable/uninitialized.sol` | an immutable is plain storage, so outside the constructor a never-assigned one is unconstrained instead of zero |
 | `deleteLocal` | `semanticTests/variables/delete_local.sol` | no rule for delete on a local variable |
 | `deleteLocals` | `semanticTests/variables/delete_locals.sol` | no rule for delete on a local variable |
@@ -718,7 +724,6 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 |---|---|---|
 | `modifierMultipleTimesLocalVars` | `semanticTests/modifiers/function_modifier_multiple_times_local_vars.sol` | nested applications of one modifier share its local b, so the outer assert(b == y) reads the inner b |
 | `modifierArgumentEvaluationOrder` | `semanticTests/modifiers/evaluation_order.sol` | a function call as a modifier argument stays stuck as an unresolved fn#id(...) declaration |
-| `storageModifierParameter` | `semanticTests/modifiers/function_modifier_library.sol` | TermCreationException on a field access through a struct storage-reference parameter |
 | `modifierArgumentAssignsReturn` | `semanticTests/modifiers/function_modifier_return_reference.sol` | an assignment expression used as a modifier argument has no rule |
 | `breakInModifier` | `semanticTests/modifiers/break_in_modifier.sol` | a for loop in a modifier body is not lowered, so no loop rule matches it |
 | `continueInModifier` | `semanticTests/modifiers/continue_in_modifier.sol` | a for loop in a modifier body is not lowered, so no loop rule matches it |
@@ -746,9 +751,8 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `bmcRequireAlwaysTrue` | `smtCheckerTests/bmc_coverage/assert.sol` | a uint parameter is not known to be non-negative, so the diamond leaves leq(x, -1) open |
 | `msgValueZeroWhenNonPayable` | `smtCheckerTests/bmc_coverage/msg_value_4.sol` | a non-payable function does not fix msg.value to 0 |
 | `msgValueNonNegative` | `smtCheckerTests/bmc_coverage/range_check.sol` | msg.value is not known to be non-negative |
-| `constStateVariable` | `smtCheckerTests/complex/slither/const_state_variables.sol` | a constant state variable is read as an unconstrained storage slot, not as its value |
-| `branchesInModifiers` | `smtCheckerTests/control_flow/branches_with_return/branches_in_modifiers.sol` | IllegalStateException, a modifier containing `return` cannot be inlined |
-| `branchesInModifiers2` | `smtCheckerTests/control_flow/branches_with_return/branches_in_modifiers_2.sol` | IllegalStateException, a modifier containing `return` cannot be inlined |
+| `branchesInModifiers` | `smtCheckerTests/control_flow/branches_with_return/branches_in_modifiers.sol` | a modifier containing `return` is not inlined, so the obligation stays open |
+| `branchesInModifiers2` | `smtCheckerTests/control_flow/branches_with_return/branches_in_modifiers_2.sol` | a modifier containing `return` is not inlined, so the obligation stays open |
 
 ### `open/SolcArithmeticOpen.sol`
 
@@ -762,10 +766,6 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `compoundSubArrayIndex` | `smtCheckerTests/operators/compound_sub_array_index.sol` | true-fact-unprovable: a uint parameter carries no 0 <= x fact, goal leq(x, -1) ==> |
 | `compoundAddChain` | `smtCheckerTests/operators/compound_add_chain.sol` | unsupported-construct: a compound assignment used as a value (u = (b += c);) has no rule |
 | `unaryAddOnPush` | `smtCheckerTests/operators/unary_add_array_push_1.sol` | unsupported-construct: ++pushed.push() has no rule |
-| `constantPropagationPower` | `smtCheckerTests/operators/constant_propagation_1.sol` | true-fact-unprovable: a constant state variable is read as unconstrained storage |
-| `constantPropagationDivision` | `smtCheckerTests/operators/constant_propagation_2.sol` | true-fact-unprovable: a constant state variable is read as unconstrained storage |
-| `constantExponent` | `smtCheckerTests/operators/const_exp_1.sol` | true-fact-unprovable: a constant state variable is read as unconstrained storage |
-| `constantUnaryMinus` | `smtCheckerTests/operators/constant_evaluation_unary_minus_chc.sol` | true-fact-unprovable: a constant state variable is read as unconstrained storage |
 | `checkedModifierCalledByUnchecked` | `semanticTests/arithmetics/checked_modifier_called_by_unchecked.sol` | unsupported-construct: an expression statement (a + b;) in the modifier has no rule |
 | `uncheckedCalledByCheckedWraps` | `semanticTests/arithmetics/unchecked_called_by_checked.sol` | design-limitation: unbounded integers, uint16 0xffff + 0x100 does not wrap to 0xff |
 | `checkedCalledByUncheckedWraps` | `semanticTests/arithmetics/checked_called_by_unchecked.sol` | design-limitation: unbounded integers, the unchecked uint16 sum 0x10000 does not wrap to 0 |
@@ -790,7 +790,6 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `inheritedNamedBaseOrdered` | `semanticTests/inheritance/inherited_function_named_parameters.sol` | a base-qualified call A.f(...) is lowered to address.f(...) and has no rule |
 | `inheritedNamedOverrideUnordered` | `semanticTests/inheritance/inherited_function_named_parameters.sol` | named arguments are bound in call order, not by name, so the call computes 17 |
 | `overriddenFunctionStaticCallParent` | `smtCheckerTests/inheritance/overridden_function_static_call_parent.sol` | a base-qualified call BaseBase.init(c, d) is lowered to address.init(c, d) and has no rule |
-| `inheritedConstantStateVar` | `semanticTests/inheritance/inherited_constant_state_var.sol` | an inherited constant is read from unconstrained storage, its initializer is not known |
 
 ### `open/SolcTypesOpen.sol`
 
@@ -799,7 +798,6 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `constructingEnumsFromInts` | `semanticTests/enums/constructing_enums_from_ints.sol` | no rule executes an integer-to-enum conversion E(x); the proof stops on it |
 | `enumExplicitConversionInRange` | `semanticTests/enums/enum_explicit_overflow.sol` | no rule executes an integer-to-enum conversion E(x); the proof stops on it |
 | `enumFromUint` | `smtCheckerTests/typecast/enum_from_uint.sol` | no rule executes an integer-to-enum conversion E(x); the proof stops on it |
-| `enumExplicitContractName` | `semanticTests/enums/using_contract_enums_with_explicit_contract_name.sol` | a contract-qualified enum type SolcTypesOpen.Choice throws ClassCastException in the prover |
 | `enumRange` | `smtCheckerTests/types/enum_range.sol` | an enum parameter is an unconstrained int, its member range is not assumed |
 | `enumToUintMaxValue` | `smtCheckerTests/typecast/enum_to_uint_max_value.sol` | an enum parameter is an unconstrained int, its member range is not assumed |
 | `storageValueVarsNonNegative` | `smtCheckerTests/types/storage_value_vars_3.sol` | a uint state variable read from storage is not known to be non-negative |
@@ -813,7 +811,6 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `typeConversionCleanup` | `semanticTests/types/type_conversion_cleanup.sol` | uint128(x) is the identity instead of truncating to the low 128 bits |
 | `packingSignedTypes` | `semanticTests/types/packing_signed_types.sol` | int8(uint8 0xfa) is the identity instead of reinterpreting to -6 |
 | `nestedTuplesParenthesized` | `semanticTests/types/nested_tuples.sol` | a parenthesized tuple target ((a, b)) = (...) has no rule |
-| `denominationsConstant` | `semanticTests/literals/denominations.sol` | a constant is read from unconstrained storage, its initializer is not known |
 | `ternaryLiteralOverflow` | `semanticTests/literals/ternary_operator_with_literal_types_overflow.sol` | closes in KeY, but the uint8 addition 63 + 255 panics with 0x11 on the EVM |
 
 ## Gaps the first port found
