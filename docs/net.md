@@ -120,10 +120,10 @@ Mapped to this repository, roughly in order of usefulness:
    fresh formals initialized with the actuals, so only the capture step is
    missing.
 2. **Modifiers** (`inMode(m)`, `notBy(c)`, placeholder `_;`, paper §5):
-   desugar at parse time in `SolJSONParser` by splicing the modifier body
-   around the function body (substituting `_;`). No new taclets: the
-   spliced `require`s are handled by existing rules. The ported contracts
-   inline them by hand (`keyext.solidity.examples/contracts/`).
+   **done** — `ExpandFunctionBody` wraps the body in its modifiers when it
+   inlines a call or an obligation (`docs/taclets-implementation.md`,
+   "Function-body inlining"). No new taclets. The ported contracts of
+   `keyext.solidity.examples/contracts/` still inline them by hand.
 3. **Enums**: **done** — `SolJSONParser` gives enum-typed declarations the
    `uint256` type and lowers `State.Open` to the member's ordinal, so the
    calculus never sees an enum; a specification writes `State.Open` too.

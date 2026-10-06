@@ -371,8 +371,17 @@ public class SolJSONParser {
     }
 
     private ModifierReference parseModifierReference(JsonNode node) {
-        String name = node.get("modifierName").get("name").asString();
-        return new ModifierReference(name);
+        JsonNode modifierName = node.get("modifierName");
+        String name = modifierName.get("name").asString();
+        JsonNode reference = modifierName.get("referencedDeclaration");
+        ModifierDeclaration declaration =
+            reference != null && id2Name.get(reference.asInt()) instanceof ModifierDeclaration m
+                    ? m
+                    : null;
+        JsonNode arguments = node.get("arguments");
+        List<Expression> args = arguments == null || arguments.isNull() ? List.of()
+                : arguments.valueStream().map(this::parseExpression).toList();
+        return new ModifierReference(name, declaration, args);
     }
 
     private Block parseBlock(JsonNode jsonBody) {

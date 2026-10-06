@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.rule.metaconstruct;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,15 +14,17 @@ import org.key_project.logic.Name;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
+import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
+import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
+import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.AssignExpression;
 import org.key_project.solidity.program.ast.expressions.operators.Operator;
 import org.key_project.solidity.program.ast.references.FunctionReference;
-import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.program.ast.statement.DeclarationStatement;
 import org.key_project.solidity.program.ast.statement.ExpressionStatement;
 import org.key_project.solidity.program.ast.statement.FunctionBodyStatement;
@@ -45,10 +48,12 @@ import org.jspecify.annotations.Nullable;
 /// `return;` completes. The result spliced into the modality is the sequence
 ///
 /// ```
-/// T0 p0 = arg0; ... Tn pn = argn; R0 r0; ... Rm rm; function-frame { <body> } t0 = r0; ...
+/// T0 p0 = arg0; ... Tn pn = argn; R0 r0 = 0; ... Rm rm = 0; function-frame { <body> } t0 = r0; ...
 /// ```
 ///
-/// where `ti` are the call site's targets; a discarded target gets no assignment.
+/// where `ti` are the call site's targets; a discarded target gets no assignment. A return
+/// variable of integer or `bool` type starts at its default, `0` or `false`. The function's
+/// modifiers are wrapped around the frame (see [ModifierInlining]).
 ///
 /// This mirrors KeY-Java's `MethodCall` metaconstruct and KeY-Rust's `ExpandFnBody`.
 public class ExpandFunctionBody extends ProgramTransformer {
@@ -76,12 +81,17 @@ public class ExpandFunctionBody extends ProgramTransformer {
             return null;
         }
         FunctionDeclaration function = reference.getReferencedDeclaration();
-        if (function == null || !function.hasBody() || !function.getModifiers().isEmpty()
+        if (function == null || !inlinable(function)
                 || target != null && function.getReturnParameters().size() != 1) {
             return null;
         }
         List<@Nullable Expression> targets = target == null ? List.of() : List.of(target);
         return new FunctionBodyStatement(targets, reference, call.getArguments(), null);
+    }
+
+    public static boolean inlinable(FunctionDeclaration function) {
+        return function.hasBody()
+                && function.getModifiers().stream().allMatch(ModifierInlining::inlinable);
     }
 
     @Override
@@ -90,6 +100,9 @@ public class ExpandFunctionBody extends ProgramTransformer {
         final FunctionBodyStatement fbs = Objects.requireNonNull(asFunctionBody(pe),
             () -> "not a call of a function with a body: " + pe);
         final FunctionDeclaration fn = fbs.getFunction();
+        if (!inlinable(fn)) {
+            throw new IllegalStateException(fn.name() + " has a modifier that cannot be inlined");
+        }
         final ImmutableArray<ProgramVariable> formals = fn.getInputParameters();
         final ImmutableArray<ProgramVariable> returns = fn.getReturnParameters();
         final ImmutableArray<Expression> args = fbs.getArguments();
@@ -110,14 +123,16 @@ public class ExpandFunctionBody extends ProgramTransformer {
         for (int i = 0; i < returns.size(); i++) {
             ProgramVariable ret = returns.get(i);
             Name name = ret.name().toString().isEmpty() ? new Name("ret" + i) : ret.name();
-            freshReturns.add(declareFresh(ret, name, null, replaceMap, stmts));
+            freshReturns.add(declareFresh(ret, name, zero(ret), replaceMap, stmts));
         }
 
+        final Statement body = ModifierInlining.wrap(fn.getModifiers(), new FunctionFrame(
+            ReturnLowering.lower(fbs.getBody(), returns.toList(), services).getStatements()),
+            services);
         final ProgVarReplaceVisitor repl =
-            new ProgVarReplaceVisitor(fbs.getBody(), replaceMap, true, services);
+            new ProgVarReplaceVisitor(body, replaceMap, true, services);
         repl.start();
-        stmts.add(new FunctionFrame(
-            ReturnLowering.lower((Block) repl.result(), freshReturns, services).getStatements()));
+        stmts.add((Statement) repl.result());
 
         for (int i = 0; i < targets.size(); i++) {
             Expression target = targets.get(i);
@@ -128,6 +143,17 @@ public class ExpandFunctionBody extends ProgramTransformer {
         }
 
         return stmts.toArray(new SolidityProgramElement[0]);
+    }
+
+    private static @Nullable Expression zero(ProgramVariable variable) {
+        if (!(variable.getType() instanceof PrimitiveType type)) {
+            return null;
+        }
+        return switch (type.kind()) {
+            case INTEGER -> new Uint256Literal(BigInteger.ZERO);
+            case BOOLEAN -> BoolLiteral.FALSE;
+            default -> null;
+        };
     }
 
     private static ProgramVariable declareFresh(ProgramVariable original, Name name,

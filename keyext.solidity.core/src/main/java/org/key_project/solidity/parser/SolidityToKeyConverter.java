@@ -18,6 +18,7 @@ import org.key_project.solidity.program.ast.SolidityInfo;
 import org.key_project.solidity.program.ast.StaticTypes;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.MemoryReferenceTypes;
+import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.abstractions.StorageReferenceTypes;
 import org.key_project.solidity.program.ast.abstractions.TupleType;
 import org.key_project.solidity.program.ast.abstractions.Type;
@@ -217,6 +218,47 @@ public class SolidityToKeyConverter extends KeYSolidityDLParserBaseVisitor<Synta
         return ParserUtils.parseUnaryOperation(uExp, operator, false);
     }
 
+    private FunctionDeclaration resolveFunction(Name contractName, Name functionName,
+            ImmutableArray<Expression> args, Token at) {
+        List<FunctionDeclaration> candidates = services.getSolidityInfo()
+                .getFunctions(contractName).stream()
+                .filter(fd -> fd.name().equals(functionName)
+                        && fd.getInputParameters().size() == args.size())
+                .toList();
+        if (candidates.size() > 1) {
+            candidates = candidates.stream().filter(fd -> kindsMatch(fd, args)).toList();
+        }
+        if (candidates.isEmpty()) {
+            reportError("Unknown function " + functionName + " with " + args.size()
+                + " arguments in contract " + contractName, at);
+        }
+        if (candidates.size() > 1) {
+            reportError("Ambiguous call of the overloaded function " + functionName
+                + " in contract " + contractName, at);
+        }
+        return candidates.getFirst();
+    }
+
+    private static boolean kindsMatch(FunctionDeclaration function,
+            ImmutableArray<Expression> args) {
+        for (int i = 0; i < args.size(); i++) {
+            PrimitiveType.Kind expected = kind(function.getInputParameters().get(i).getType());
+            PrimitiveType.Kind actual = kind(args.get(i).getType());
+            if (expected != null && actual != null && expected != actual) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static PrimitiveType.@Nullable Kind kind(@Nullable Type type) {
+        if (!(type instanceof PrimitiveType primitive)) {
+            return null;
+        }
+        return primitive.kind() == PrimitiveType.Kind.ADDRESS ? PrimitiveType.Kind.INTEGER
+                : primitive.kind();
+    }
+
     @Override
     public SyntaxElement visitFunctionBodyStatement(FunctionBodyStatementContext ctx) {
         Name functionName = new Name(ctx.fn.getText());
@@ -225,11 +267,7 @@ public class SolidityToKeyConverter extends KeYSolidityDLParserBaseVisitor<Synta
             (FunctionCallArguments) visitFunctionCallArguments(ctx.functionCallArguments());
 
         FunctionDeclaration function =
-            services.getSolidityInfo().getFunctionDeclaration(contractName, functionName);
-        if (function == null) {
-            reportError("Unknown function " + functionName + " in contract " + contractName,
-                ctx.start);
-        }
+            resolveFunction(contractName, functionName, args.getArgs(), ctx.start);
         List<@Nullable Expression> targets = ctx.lhs == null ? List.of() : targets(ctx.lhs);
         if (!targets.isEmpty() && targets.size() != function.getReturnParameters().size()) {
             reportError(functionName + " returns " + function.getReturnParameters().size()

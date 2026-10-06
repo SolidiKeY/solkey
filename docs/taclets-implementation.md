@@ -766,19 +766,38 @@ anywhere in the program (`c# … #c`), via the `ExpandFunctionBody` transformer:
   is a call, `(q, r) = f(a);`, which `SolJSONParser` builds directly.
 - `internalCallExpand` matches an expression statement `f(a);` or `lhs = f(a);` calling a
   function of the contract (`InternalCall` sort: the callee is a `FunctionReference` to a
-  declaration with a body and no modifiers, so `require`/`assert` and modifier-guarded callees
-  do not match). A declaration `uint y = f(a);` reaches it through `localValueDeclInitDrop`, and a
+  declaration with a body whose modifiers can all be inlined, so `require`/`assert` do not
+  match). A declaration `uint y = f(a);` reaches it through `localValueDeclInitDrop`, and a
   call nested in an expression (`f() + 1`, `a[f()] = g()`) through the operator unfolds, which
   capture it into a temporary first.
 
 The transformer emits
 
 ```
-T0 p0 = arg0; ... Tn pn = argn; R0 r0; ... Rm rm; function-frame { <body> } t0 = r0; ... tm = rm;
+T0 p0 = arg0; ... Tn pn = argn; R0 r0 = 0; ... Rm rm = 0; function-frame { <body> } t0 = r0; ... tm = rm;
 ```
 
 where `ti` are the call's targets: none for a bare call, one per return value otherwise, and no
-assignment for a discarded component. An unnamed return value gets the fresh name `reti`.
+assignment for a discarded component. An unnamed return value gets the fresh name `reti`. A
+return variable of an integer type starts at `0` and a `bool` one at `false`, as in Solidity;
+one of any other type is declared without a value.
+
+**Modifiers are wrapped around the frame** (`ModifierInlining`), the first listed outermost, so
+`f() m1(a) m2` becomes
+
+```
+{ T q = a; <m1 body, with _; replaced by> { <m2 body, with _; replaced by> function-frame { <body> } } }
+```
+
+Each application declares the modifier's parameters fresh at its entry, so its arguments are
+evaluated when it is entered, after the code of the modifiers outside it. A `return` in the body
+completes the frame only, and the modifier code after `_;` still runs. A modifier is inlined
+when it is resolved (a `ModifierDefinition` of the same contract), has exactly one `_;`
+(anywhere, nested blocks included) and no `return`; a function with any other modifier is not
+an `InternalCall`, and its obligation fails. Top-level obligations go through the same
+transformer, so a public function is proved with its modifiers. The rules follow
+solidity-lean's `wrapMods`, except that solidity-lean also rejects a `_;` inside a block and a
+reference-typed modifier parameter.
 
 **Tuples are never terms.** A tuple of `n` values is `n` program variables, each of its own
 sort, so no tuple sort exists and every component is handled by the ordinary rules.
@@ -816,13 +835,15 @@ returning a tuple) is a `SolidityParseException`.
 
 Remaining constraints:
 
-- **No overloading.** `visitFunctionBodyStatement` takes the first function whose *name*
-  matches, ignoring the signature, so function names must be unique.
-- **No modifiers on inlined internal calls.** `ExpandFunctionBody` inlines the body alone, so
-  `internalCallExpand` does not match a callee with modifiers.
-- **Named returns start unconstrained**, not at zero: `R ri;` is skipped by `valueDeclSkip`.
+- **Overloading.** A `.sol` call names its callee by solc's declaration id, so overloads
+  resolve as solc resolves them. A `.key` call `f(a)@C` picks among the functions named `f` by
+  arity, then by argument kind (integer/address, `bool`); two overloads with the same arity and
+  kinds (`uint8` vs `uint256`) are an ambiguity error. An obligation is still named by the
+  function alone, so `--function` proves the first of two public overloads.
+- **Returns of other types start unconstrained**: `R ri;` is skipped by `valueDeclSkip`.
 
-Examples: the `internalCall*`, `return*` and `tuple*` functions in `TestSuite.sol`.
+Examples: the `internalCall*`, `return*`, `tuple*`, `overload*` and `modifier*` functions in
+`TestSuite.sol`.
 
 Note that a `.sol` body is parsed by `SolJSONParser` (the solc-JSON path), not by
 `SolidityToKeyConverter` (the ANTLR path used for programs written inline in a modality). Both

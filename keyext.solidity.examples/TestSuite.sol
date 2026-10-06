@@ -3723,4 +3723,87 @@ contract TestSuite {
         returnVoidEarly(9);
         assert(total == 9);
     }
+
+    function returnDefaults() internal pure returns (uint r, bool b) {
+    }
+
+    function returnDefaultsAreZero() public pure {
+        (uint r, bool b) = returnDefaults();
+        assert(r == 0 && !b);
+    }
+
+    function overloadPick(uint x) internal pure returns (uint) {
+        return x + 1;
+    }
+
+    function overloadPick(bool b) internal pure returns (uint) {
+        return b ? 10 : 20;
+    }
+
+    function overloadedInternalCall() public pure {
+        uint n = overloadPick(1);
+        uint t = overloadPick(true);
+        assert(n == 2 && t == 10);
+    }
+
+    // ── Modifiers ──
+
+    modifier nonZero(uint v) {
+        require(v > 0);
+        _;
+    }
+
+    modifier countAround() {
+        total = total + 1;
+        _;
+        total = total + 10;
+    }
+
+    modifier doubleAfter() {
+        _;
+        total = total * 2;
+    }
+
+    modifier addThreeAfter() {
+        _;
+        total = total + 3;
+    }
+
+    modifier setsFive() {
+        total = 5;
+        _;
+    }
+
+    function modifierGuarded(uint v) internal pure nonZero(v) returns (uint) {
+        return v;
+    }
+
+    function modifierAroundBody() internal countAround returns (uint r) {
+        r = total;
+        return r;
+    }
+
+    function modifierOrdered() internal doubleAfter addThreeAfter {
+        total = 1;
+    }
+
+    function modifierArgument() public pure {
+        uint r = modifierGuarded(3);
+        assert(r == 3);
+    }
+
+    function modifierResumesAfterReturn() public {
+        total = 0;
+        uint r = modifierAroundBody();
+        assert(r == 1 && total == 11);
+    }
+
+    function modifierFirstListedOutermost() public {
+        modifierOrdered();
+        assert(total == 8);
+    }
+
+    function modifierOnObligation() public setsFive {
+        assert(total == 5);
+    }
 }

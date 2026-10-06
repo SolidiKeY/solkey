@@ -123,9 +123,18 @@ non-integer key crash in `docs/bugs.md` and the gap below.
   `function-frame`. Once loop rules exist, a loop node (or KeY-Java's loop scope) needs its own
   rule that passes a `return` through, and `break`/`continue` can follow the same pattern
   (`blockBreak`, stopped by the loop).
-- **Modifiers.** `internalCallExpand` refuses a callee with modifiers, and a top-level obligation
-  inlines the body alone. When modifiers are inlined, the body spliced in for `_;` needs a
-  `function-frame` of its own, so that its `return` resumes the modifier code after `_;`.
+- **Modifiers beyond one `_;`.** A modifier with two `_;` or with a `return` is not inlined.
+  The first needs the body's locals renamed per copy; the second needs a frame around the
+  modifier, so that its `return` skips the rest of it.
+- **Function contracts at call sites.** Every internal call is inlined, so recursion does not
+  terminate and large callees are re-executed at each call. A `useFunctionContract` rule would
+  prove the callee's `requires`, anonymise what it may change (storage, `net`, memory reachable
+  from memory arguments; nothing but its returns for a `pure` callee, and no storage for a
+  `view` one) and assume its `ensures`. Recursion also needs a `decreases` clause. Being
+  written first in solidity-lean as a soundness lemma over `Stmt.run`, so the taclet can
+  follow its shape.
+- **Overloaded obligations.** `--function` and the obligation's `f(a)@C` name a function alone;
+  two public overloads need the signature in both.
 - **Unnamed or non-`.key`-sort returns in obligations.** `SolidityOutline.unsupportedReason`
   still refuses a public function whose return value is unnamed. Now that `return e;` executes,
   such a function could get an obligation that discards the value (`(result_a, ) = f()@C;`).

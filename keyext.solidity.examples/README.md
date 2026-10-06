@@ -312,7 +312,7 @@ libraries are unsupported) and `text/`. The `net/*.key` problems stay as the han
 reference for the same obligation shape.
 
 Every body follows the calculus conventions listed under "The `net/` directory": modifiers
-are inlined requires, `now` is a `timeNow` state variable, a storage read inside a comparison
+are inlined requires (written before the prover inlined modifiers itself), `now` is a `timeNow` state variable, a storage read inside a comparison
 or a compound expression is bound to a local first. `ContractExamplesTest` enumerates the
 directory (the CI-only `solidityExamples` group), so a new contract joins by being written.
 
@@ -323,7 +323,7 @@ documentation, Solidity by Example, OpenZeppelin and the deployed WETH9. Each on
 in `@custom:key` clauses like `contracts/`, and every function is proved. Each file's header
 names its source and lists every change to the original. Those changes are only what the
 supported fragment forces: events, custom errors and string metadata are dropped, modifiers
-and internal helpers are inlined, `block.timestamp` becomes `timeNow`, storage reads are bound
+and internal helpers are inlined (a choice made before the prover inlined them itself), `block.timestamp` becomes `timeNow`, storage reads are bound
 to locals as described under "Calculus conventions", and return values are named, since an
 obligation refers to them by name. `ContractExamplesTest` enumerates this directory too.
 

@@ -31,6 +31,18 @@ public class ModifierDeclaration implements Declaration {
         this.visibility = visibility;
     }
 
+    public Name name() {
+        return name;
+    }
+
+    public ImmutableArray<@NonNull ProgramVariable> getInputParameters() {
+        return inputParameters;
+    }
+
+    public Block getBody() {
+        return body;
+    }
+
     @Override
     public SyntaxElement getChild(int n) {
         if (n < inputParameters.size())

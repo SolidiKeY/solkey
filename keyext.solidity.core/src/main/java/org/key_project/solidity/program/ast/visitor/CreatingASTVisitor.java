@@ -194,7 +194,8 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
 
     @Override
     public void performActionOnModifierReference(ModifierReference x) {
-        rebuild(x, changeList -> new ModifierReference(x.name));
+        rebuild(x, changeList -> new ModifierReference(x.name, x.getDeclaration(),
+            x.getArguments().toList()));
     }
 
     @Override
