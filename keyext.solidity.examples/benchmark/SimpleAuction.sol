@@ -1,7 +1,7 @@
 // Source: https://raw.githubusercontent.com/ethereum/solidity/v0.8.30/docs/examples/blind-auction.rst
 // Changes: events and custom errors are dropped (`revert Err()` becomes `revert()`),
 // emits are dropped; block.timestamp is the timeNow state variable; bid binds the outbid
-// bidder and bid to locals. withdraw is left as is: it returns bool and uses send.
+// bidder and bid to locals; withdraw's `returns (bool)` becomes `returns (bool success)`.
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.4;
 /// @custom:key invariant highestBid >= 0
@@ -42,7 +42,7 @@ contract SimpleAuction {
     /// Create a simple auction with `biddingTime`
     /// seconds bidding time on behalf of the
     /// beneficiary address `beneficiaryAddress`.
-    /// @custom:key skip
+    /// @custom:key ensures beneficiary == beneficiaryAddress && auctionEndTime == timeNow + biddingTime
     constructor(
         uint biddingTime,
         address payable beneficiaryAddress
@@ -93,7 +93,10 @@ contract SimpleAuction {
     }
 
     /// Withdraw a bid that was overbid.
-    function withdraw() external returns (bool) {
+    /// @custom:key ensures \result -> pendingReturns[msg.sender] == 0
+    /// @custom:key ensures \result -> net(msg.sender) == \old(net(msg.sender)) - \old(pendingReturns[msg.sender])
+    /// @custom:key ensures !\result -> pendingReturns[msg.sender] == \old(pendingReturns[msg.sender])
+    function withdraw() external returns (bool success) {
         uint amount = pendingReturns[msg.sender];
         if (amount > 0) {
             // It is important to set this to zero because the recipient
@@ -115,7 +118,7 @@ contract SimpleAuction {
 
     /// End the auction and send the highest bid
     /// to the beneficiary.
-    /// @custom:key requires timeNow >= auctionEndTime && !ended
+    /// @custom:key requires timeNow >= auctionEndTime && !ended && beneficiary != address(this)
     /// @custom:key ensures ended && net(beneficiary) == \old(net(beneficiary)) - \old(highestBid)
     function auctionEnd() external {
         // It is a good guideline to structure functions that interact

@@ -5,7 +5,9 @@ invariant-based `.key` proof obligations (see "The `net/` directory"); `contract
 solidiKeY example contracts, specified in natspec `@custom:key` clauses (see "The `contracts/`
 directory"); `real-world/` holds published contracts specified the same way (see "The
 `real-world/` directory"); `benchmark/` holds published contracts kept as published, to measure
-what SolKey verifies without a rewrite (see "The `benchmark/` directory").
+what SolKey verifies without a rewrite (see "The `benchmark/` directory"); `solc/` holds ports of the
+Solidity compiler's own tests (see "The `solc/` directory"). `solc/open/` and `real-world/open/`
+keep what does not close yet; `docs/limitations.md` explains why.
 
 There are no `.key` problem files beside `TestSuite.sol`: the loader reads the contract and
 synthesizes one obligation per function, so the whole specification lives in the Solidity body
@@ -214,11 +216,10 @@ by being written.
 Found while closing these proofs; violating one leaves an open goal (or fails to load)
 without pointing at the culprit:
 
-- a comparison may read storage on the **left side only** — `require(msg.sender == sender)`
-  and `b = msgSender == sender` stall; bind the storage read first
-  (`address snd = sender; require(msg.sender == snd);`);
-- the right side of a compound assignment must not read storage —
-  `pot += msg.value` stalls; bind first (`uint p = pot; pot = p + msg.value;`);
+- the right side of a compound assignment must not be a bare storage path, and its mapping key
+  must not read storage — `pot += other;` and `m[king] += b;` stall; bind first
+  (`uint o = other; pot += o;`, `address k = king; m[k] += b;`). A comparison may now read
+  storage on either side (`require(msg.sender == sender)` closes);
 - an assert compares bound locals, never an arithmetic expression —
   `assert(r == x + y)` stalls; bind `uint expected = x + y;` first;
 - a storage-to-storage copy (`releaseTime = timeNow;`) stalls when other storage writes
@@ -322,13 +323,16 @@ directory (the CI-only `solidityExamples` group), so a new contract joins by bei
 ## The `real-world/` directory
 
 `real-world/` holds small contracts taken from well-known public sources: the Solidity
-documentation, Solidity by Example, OpenZeppelin and the deployed WETH9. Each one is specified
-in `@custom:key` clauses like `contracts/`, and every function is proved. Each file's header
-names its source and lists every change to the original. Those changes are only what the
-supported fragment forces: events, custom errors and string metadata are dropped, modifiers
-and internal helpers are inlined (a choice made before the prover inlined them itself), `block.timestamp` becomes `timeNow`, storage reads are bound
-to locals as described under "Calculus conventions", and return values are named, since an
-obligation refers to them by name. `ContractExamplesTest` enumerates this directory too.
+documentation, Solidity by Example, OpenZeppelin, solmate and the deployed WETH9. Each one is
+specified in `@custom:key` clauses like `contracts/`, and every function is proved. Each file's
+header has a pinned `// Source:` URL and a `// Changes:` list of every change to the original.
+Those changes are only what the supported fragment forces: events, custom errors and string
+messages are dropped; a call inside a modifier is replaced by the callee's body, libraries are
+inlined and inheritance is flattened (each crashes the loader, `docs/bugs.md`); `bytes32`
+becomes `uint256`; struct constructors become `push()` plus field writes; `block.timestamp`
+becomes `timeNow`; storage reads are bound to locals as described under "Calculus conventions";
+and return values are named, since an obligation refers to them by name. `ContractExamplesTest`
+enumerates this directory (not `real-world/open/`).
 
 Checked arithmetic is not modelled (integers are unbounded), so a `uint` parameter gets a
 `requires x >= 0`, and a function whose body would underflow gets a `requires` for the case in
@@ -358,7 +362,42 @@ proves that the code's own checks keep everyone else out.
 - **`Ownable.sol`** — OpenZeppelin's `Ownable`, simplified: `transferOwnership` and
   `renounceOwnership` succeed only for the current owner and set the new one.
 
+- **`OZPausable.sol`** — OpenZeppelin v5.0.0 `Pausable` with its mock: `pause`/`unpause`
+  succeed only from the opposite state and flip `_paused`; `whenNotPaused`/`whenPaused` bodies
+  run only in that state.
+- **`OZReentrancyGuard.sol`** — `ReentrancyGuard` with its mock under the invariant
+  `_status == 1`; `countLocalRecursive` proves that the guarded recursion reverts for every
+  `n > 0` (`ensures n == 0`). The constants are pinned in the invariant (a constant reads as
+  unconstrained storage).
+- **`OZNonces.sol`** — `useNonce` returns the old nonce and increments only the owner's
+  (`\forall` frame); `useCheckedNonce` too.
+- **`OZOwnable2Step.sol`** — two-step ownership: `transferOwnership` only sets the pending
+  owner; `acceptOwnership` succeeds only for it, makes it owner and clears the slot.
+- **`OZMath.sol`** — `tryAdd`/`trySub`/`tryMul` (success implies the exact result; `trySub`
+  succeeds iff `b <= a`), `max`, `min`.
+- **`OZCounters.sol`** — the v4.9.0 `Counters` library inlined into a contract.
+- **`SolmateOwned.sol`** — solmate v7 `Owned`.
+- **`DocsBallot.sol`** — the docs' `Ballot` (`voting.rst`): `delegate` follows the delegation
+  chain under a loop invariant; `winningProposal` proves its result has the maximal `voteCount`
+  over the scanned prefix. The constructor gets no obligation (a `uint256[] memory` parameter).
+- **Solidity by Example** (pinned at commit `5bcdca02`): `ArrayReplaceFromEnd.sol`,
+  `ArrayRemoveByShifting.sol` (bounds only; shifting checked on concrete data), `Enum.sol`,
+  `FunctionModifier.sol` (the `noReentrancy` guard proves the recursive call reverts),
+  `Counter.sol`, `Mapping.sol` and `NestedMapping.sol` (frames over `\forall` keys),
+  `KingOfEther.sol`, `EtherGame.sol` (`0 <= balance <= TARGET_AMOUNT`), `EtherStore.sol`
+  (`\forall address a; balances[a] == net(a)` under the default transfer semantics; under
+  `-O transferSemantics:withCallback` `withdraw` stays open — the re-entrancy the example
+  teaches), `Account.sol`, `IterableMapping.sol` (library inlined; three quantified invariants
+  of the index structure, swap-and-pop removal included), `SendEther.sol` (`transfer`, `send`,
+  `call{value}`) and `TimeLock.sol` (no withdrawal before the lock time).
+
 Every clause was checked for vacuity: changing it to something false leaves the proof open.
+
+`real-world/open/` holds specifications that load but do not close, with the reason in the file:
+`OZMath.sol` (`tryDiv`, `tryMod`, `ceilDiv`: no bounds for `sdiv`/`smod`; `average`: bitwise),
+`DocsBallot.sol` (`winnerName` with one `\exists` over a nested `\forall`) and
+`ArrayRemoveByShifting.sol` (the full functional spec of `remove`: a loop invariant cannot use
+`\old`). No test enumerates it. `docs/limitations.md` explains each.
 
 ## The `benchmark/` directory
 
@@ -370,18 +409,24 @@ contract. The results, and the blockers ranked by how many contracts they stop, 
 
 ## The `solc/` directory
 
-`solc/` holds ports of the Solidity compiler's own semantic tests
-(`ethereum/solidity`, `test/libsolidity/semanticTests/`) — six contracts written in the same
-`require`/`assert` style as `TestSuite.sol`, one per upstream theme (expressions, structs,
-arrays, memory, mappings, control flow). Where `TestSuite.sol` exercises one taclet each, these
+`solc/` holds ports of the Solidity compiler's own tests (`ethereum/solidity`,
+`test/libsolidity/semanticTests/` and `smtCheckerTests/`) — seventeen contracts written in the
+same `require`/`assert` style as `TestSuite.sol`, one per upstream theme (expressions, structs,
+arrays, memory, mappings, control flow, loops, array members, function calls, structs and
+mappings, constructors, payments and `try`, modifiers, SMTChecker control flow, arithmetic,
+inheritance and getters, types). Where `TestSuite.sol` exercises one taclet each, these
 cross-check the calculus against a description of Solidity semantics SolKey did not write.
+Every function there closes and runs on the EVM without a failing `assert`.
 
-`solc/README.md` has the provenance table (upstream file → function), the adaptation rules
-(older ports unroll loops, `return e;` turned into `assert`, `bytesN` dropped), and the list of known
-failures — examples that state upstream semantics the calculus cannot discharge yet and are
-kept red on purpose. `SolcSemanticsExamplesTest` enumerates the directory, so a new example
-joins `./gradlew :keyext.solidity.core:testSolidityExamples` (the CI-only examples group)
-by being written.
+`solc/open/` holds what did not close: the faithful forms of ports that needed a workaround, and
+upstream claims stopped by a missing construct or a defect. Its files load, each function names
+the reason in an `// open:` line, and no test enumerates the directory.
+
+`solc/README.md` has the provenance tables (upstream file → function, for `open/` with the
+reason) and the adaptation rules. `docs/limitations.md` summarises what the ports could not
+prove and why. `SolcSemanticsExamplesTest` enumerates the directory (not `open/`), so a new
+example joins `./gradlew :keyext.solidity.core:testSolidityExamples` (the CI-only examples
+group) by being written.
 
 ## The `proofs/` directory
 

@@ -208,3 +208,48 @@ the cheapest wins there:
 - **Imports** are not resolved: only the opened file is handed to solc.
 - **`block.timestamp`** has no counterpart in the spec language, so a spec that mentions time
   needs the `timeNow` convention.
+
+## Raised by the second solc port and the real-world ports
+
+Found by the eleven `solc/` themes ported from `semanticTests/` and `smtCheckerTests/` and by the
+OpenZeppelin, solmate and Solidity-by-Example ports. `docs/limitations.md` ranks these by how
+many upstream tests and contracts each blocks; defects in supported constructs are in
+`docs/bugs.md`. Each item has a faithful example in `solc/open/` or `real-world/open/`.
+
+- **Parser: magic and builtin identifiers.** `this`, `super`, `block.*`, `tx.*`,
+  `type(T).min/max`, `addmod`/`mulmod`: today a `NullPointerException`. `type(T).max` is a
+  literal; `addmod`/`mulmod` are `mod(add|mul(a, b), n)`.
+- **Libraries and free functions.** `L.f()`, `using L for T`, library-qualified types, and
+  file-level functions, constants, enums and structs: register them like contract members and
+  inline as internal calls.
+- **`super.f()` and `Base.f()`** (the latter is lowered to `address.f()`), and **virtual
+  dispatch from base functions** (resolve against the most-derived contract).
+- **Struct constructors** `S(..)`, `S({..})` in every position (extends `ObjectInit`, Tier 4).
+- **Push forms.** `x = a.push()`, `a.push(memArr)`, `a.push(memStruct)`, `a.push() -= 1`,
+  `++a.push()`, `f().push()` on a returned storage reference.
+- **Assignment and compound assignment as values** beyond indices: `a = (b = c)`,
+  `a += b += c`, `a[0] = a[1] = 1`, `(m = m2)[2] = 21`, modifier arguments `m(r = 2)`.
+- **Tuple targets**: nested `(((a, ), )) = …` and parenthesized `((a, b)) = …`.
+- **Integer → enum conversion** `E(x)` (revert when `x` is out of range).
+- **User-defined value types**: map `MyInt` to its underlying type, `wrap`/`unwrap` to the
+  identity.
+- **Function types** (`FunctionTypeName`): internal pointers, `(c ? g : h)(..)` callees.
+- **Inline array literals** `[uint(1), 2, 3]`, and constant expressions as fixed array lengths
+  (`uint[LEN]`, `uint[(a / b) * b]`).
+- **`new T[](e)` with a non-simple length**, and `storageArr = new T[](n)` (today both stuck;
+  bind the length / the array to a local first).
+- **`delete` on a local** (`delete v;`).
+- **`for` loops inside modifier bodies** (lower them after `ModifierInlining`; `while` works).
+- **Effect-free expression statements**: `a + b;`, `arr.pop;`, `S[7][];` (evaluate and drop).
+- **Calls**: an external call as a statement outside `try`, a `try` argument with side
+  effects, `c.f{value: v}()`, `(bool, bytes memory) = a.call(..)`, contract creation
+  `new D()`, and executing the `try` callee instead of havocking it.
+- **Obligations**: contract-typed and `string` parameters, inherited public functions; range
+  antecedents for every parameter's type and for `msg.value`/`msg.sender` (also in unspecified
+  obligations, with `msg.value == 0` for non-payable functions).
+- **Constants and immutables** as values, not storage slots (inline at reads).
+- **Spec language**: name a loop's lowered `break` flag in its invariant; `\old` inside loop
+  invariants; ether/time units and `block` in clauses; signed `/` and `%` matching the program's
+  `sdiv`/`smod`; library struct members.
+- **Strategy**: heuristics for the `smod`/`sdiv` bound lemmas (or a selectable arithmetic mode
+  on the `.sol` path), and `\heuristics(pullOutQuantifierEx)` on `ex_pull_out*`.

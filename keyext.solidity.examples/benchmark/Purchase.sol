@@ -50,7 +50,8 @@ contract Purchase {
     // Ensure that `msg.value` is an even number.
     // Division will truncate if it is an odd number.
     // Check via multiplication that it wasn't an odd number.
-    /// @custom:key skip
+    /// @custom:key requires msg.sender != address(0)
+    /// @custom:key ensures seller == msg.sender && 2 * value == msg.value && state == State.Created
     constructor() payable {
         seller = payable(msg.sender);
         value = msg.value / 2;

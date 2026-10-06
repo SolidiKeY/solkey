@@ -16,6 +16,7 @@ contract Coin {
 
     // Constructor code is only run when the contract
     // is created
+    /// @custom:key ensures minter == msg.sender
     constructor() {
         minter = msg.sender;
     }
