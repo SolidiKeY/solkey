@@ -616,7 +616,7 @@ goal per outcome:
 | Goal | `noCallback` | `withCallback` |
 |---|---|---|
 | `invariant on exit` | — | `CInv(storage, net)` |
-| `call succeeded` | the success block | `{storage, net, selfBalance := fresh}(CInv → …)`, then the success block |
+| `call succeeded` | the success block | `{storage, net := fresh}(CInv → …)`, then the success block |
 | `Error caught` / `Panic caught` / `other failure caught` | that clause's block, state unchanged | same |
 
 A `revert` inside any of these blocks is not caught: after the split it is an ordinary
