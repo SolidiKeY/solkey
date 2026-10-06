@@ -31,6 +31,13 @@ dependencies {
         // ExternalSystemUtil / GradleConstants, for launching :keyext.solidity.gui:solidityGui.
         bundledPlugin("com.intellij.gradle")
     }
+    // The KeY file type lexes with the very lexer the prover uses: ANTLR generates
+    // KeYSolidityDLLexer from the grammars in key.ncore and keyext.solidity.core, and
+    // includeBuild("..") in settings.gradle.kts substitutes this coordinate for that project.
+    // Its @members touch only java.util and the ANTLR runtime, so nothing else is needed.
+    implementation("org.key-project:keyext.solidity.core:3.0.0-dev") { isTransitive = false }
+    implementation("org.antlr:antlr4-runtime:4.13.2")
+
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     // The platform plugin installs its own class loader and its test bootstrap reaches for JUnit 4,

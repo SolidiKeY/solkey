@@ -18,9 +18,14 @@
         <code>assert</code> is reported as such, without a proof.
         <p>
         No Solidity language plugin is required: the declarations are found by scanning the file.
+        <p>
+        <code>.key</code> and <code>.proof</code> files are syntax highlighted with the prover's
+        own ANTLR lexer, so taclet keywords, variable conditions and the Solidity inside a
+        modality are coloured exactly as the prover reads them.
     ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
     <depends>com.intellij.gradle</depends>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -32,6 +37,18 @@
             displayName="SolKey"
             instance="org.key_project.solidity.idea.SolKeyConfigurable"/>
         <notificationGroup id="SolKey" displayType="BALLOON"/>
+
+        <fileType name="KeY"
+                  implementationClass="org.key_project.solidity.idea.lang.KeyFileType"
+                  fieldName="INSTANCE"
+                  language="KeY"
+                  extensions="key;proof"/>
+        <lang.parserDefinition language="KeY"
+            implementationClass="org.key_project.solidity.idea.lang.KeyParserDefinition"/>
+        <lang.syntaxHighlighterFactory language="KeY"
+            implementationClass="org.key_project.solidity.idea.lang.KeySyntaxHighlighterFactory"/>
+        <colorSettingsPage
+            implementation="org.key_project.solidity.idea.lang.KeyColorSettingsPage"/>
     </extensions>
 
     <actions>

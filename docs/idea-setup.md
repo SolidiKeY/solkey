@@ -185,6 +185,54 @@ with `libXext.so.6: cannot open shared object file`), and `-PideProject=/path/to
 project in the sandbox — `keyext.solidity.examples` is a good one, small enough to import
 instantly and full of `.sol` files to see icons on.
 
+## Colors in `.key` files → the prover's own lexer
+
+The same plugin registers a **KeY** file type for `.key` and `.proof`, highlighted by the very
+lexer the prover parses with. There is no second copy of the grammar and no keyword list to
+maintain: ANTLR generates `KeYSolidityDLLexer` from `key.ncore/src/main/antlr/KeYLexer.g4` and
+`keyext.solidity.core/src/main/antlr/SolidityLexer.g4`, `KeyTokenTypes` derives one IntelliJ token
+type per entry of that lexer's vocabulary, and `KeyColors` names only the categories that are
+*not* keywords — so a taclet keyword added to the grammar is coloured with no change to the
+plugin.
+
+Recolour anything in **Settings → Editor → Color Scheme → KeY**. Beyond the usual comment, string
+and number categories it separates:
+
+| Category | What wears it |
+|---|---|
+| Variable condition | `\hasSort`, `\notFreeIn`, `\sameAsTerm`, … |
+| Modality delimiter | `\<` `\>`, `\[` `\]`, `\box`, `\diamond`, `\endmodality`, `{c#` `#c}` |
+| Sequent arrow | `==>` |
+| Type/Sort | `address`, `bool`, `mapping`, `uint256`, … |
+| Schema variable | the `s#…` schema names inside a modality body |
+
+Because the lexer pushes its `SOL` mode at a modality opener, the Solidity inside `\<{ … }\>` is
+lexed as Solidity, and the mode stack is interned into the state an IntelliJ lexer reports, so
+re-lexing resumes correctly after an edit in the middle of a modality body.
+
+### Why it needs `includeBuild("..")`
+
+The generated lexer lives in `keyext.solidity.core`, which belongs to the repository's build,
+while the plugin is a separate one. `keyext.solidity.idea/settings.gradle.kts` therefore includes
+the repository root, and Gradle substitutes `org.key-project:keyext.solidity.core` for that
+project and builds its jar on demand. This is the opposite direction from the one that section
+warns about: including the *plugin* in the root build subjects it to the root's `subprojects { }`
+block and pulls an IDE distribution into every root task, whereas including the *root* from the
+plugin leaves the repository build untouched.
+
+The dependency is declared `isTransitive = false`, which is enough because the lexer's `@members`
+block touches only `java.util` and the ANTLR runtime — no KeY class. The cost is that the whole
+`keyext.solidity.core` jar rides along in the plugin zip for one class; a thin jar task would fix
+that if the size ever matters.
+
+Two adjustments turn the prover's lexer into an editor's, both in `EditorKeyLexer`. `SOL_WS` is
+declared `-> skip`, and a lexer error consumes a character without emitting one, but an IntelliJ
+lexer's tokens have to tile the document — so `skip()` is overridden away and `KeyLexer` reports
+anything left uncovered as a bad character. And the inherited `nextToken` stashes an end-of-file
+token the moment it reads `\proof`, which is right for a parse and would cut highlighting off at
+a saved proof, so a premature one is stepped over.
+
+
 ## Right-click a `.sol` file → prove it
 
 This is the whole-file entry point — it opens the function picker, where the gutter icon above

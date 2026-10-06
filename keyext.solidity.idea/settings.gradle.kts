@@ -9,3 +9,9 @@
 //
 // See docs/idea-setup.md.
 rootProject.name = "keyext.solidity.idea"
+
+// The reverse direction is fine and is what the KeY file type needs: the generated
+// KeYSolidityDLLexer lives in keyext.solidity.core, and including the repo root *from here* leaves
+// the root build untouched — Gradle substitutes the dependency below for that project and builds
+// only its jar. The grammar is never copied.
+includeBuild("..")
