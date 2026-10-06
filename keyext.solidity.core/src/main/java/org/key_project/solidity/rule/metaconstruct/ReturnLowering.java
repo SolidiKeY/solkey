@@ -7,85 +7,87 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.TupleExpression;
 import org.key_project.solidity.program.ast.expressions.operators.AssignExpression;
 import org.key_project.solidity.program.ast.expressions.operators.Operator;
 import org.key_project.solidity.program.ast.statement.Block;
-import org.key_project.solidity.program.ast.statement.ConditionStatement;
 import org.key_project.solidity.program.ast.statement.DeclarationStatement;
 import org.key_project.solidity.program.ast.statement.ExpressionStatement;
 import org.key_project.solidity.program.ast.statement.ReturnStatement;
 import org.key_project.solidity.program.ast.statement.Statement;
+import org.key_project.solidity.program.ast.visitor.CreatingASTVisitor;
+import org.key_project.util.ExtList;
 
-final class ReturnLowering {
+import org.jspecify.annotations.Nullable;
+
+final class ReturnLowering extends CreatingASTVisitor {
 
     private final List<ProgramVariable> returns;
     private final Set<ProgramVariable> returnSet =
         Collections.newSetFromMap(new IdentityHashMap<>());
+    private @Nullable SolidityProgramElement result;
 
-    private ReturnLowering(List<ProgramVariable> returns) {
+    private ReturnLowering(Block body, List<ProgramVariable> returns, Services services) {
+        super(body, services);
         this.returns = returns;
         returnSet.addAll(returns);
     }
 
-    static Block lower(Block body, List<ProgramVariable> returns) {
-        return new Block(new ReturnLowering(returns).lower(body.getStatements().toList()));
+    static Block lower(Block body, List<ProgramVariable> returns, Services services) {
+        ReturnLowering lowering = new ReturnLowering(body, returns, services);
+        lowering.start();
+        return (Block) Objects.requireNonNull(lowering.result);
     }
 
-    private List<Statement> lower(List<Statement> statements) {
-        List<Statement> lowered = new ArrayList<>(statements.size());
-        for (int i = 0; i < statements.size(); i++) {
-            Statement statement = statements.get(i);
-            List<Statement> rest = statements.subList(i + 1, statements.size());
-            if (!containsReturn(statement)) {
-                lowered.add(statement);
-                continue;
+    @Override
+    public void start() {
+        stack.push(new ExtList());
+        walk(root());
+        for (Object element : getTop()) {
+            if (element instanceof SolidityProgramElement pe) {
+                result = pe;
+                return;
             }
-            switch (statement) {
-                case ReturnStatement ret -> lowered.addAll(assignments(ret));
-                case Block block -> lowered
-                        .add(new Block(lower(followedBy(block.getStatements().toList(), rest))));
-                case ConditionStatement cond -> lowered.add(branches(cond, rest));
-                default -> {
-                    lowered.add(statement);
-                    continue;
-                }
-            }
-            return lowered;
         }
-        return lowered;
     }
 
-    private Statement branches(ConditionStatement cond, List<Statement> rest) {
-        Block thenBlock = new Block(lower(followedBy(List.of(cond.getThenBody()), rest)));
-        Statement elseBody = cond.getElseBody();
-        List<Statement> elseStatements =
-            lower(followedBy(elseBody == null ? List.of() : List.of(elseBody), rest));
-        return elseStatements.isEmpty() ? new ConditionStatement(cond.getCondition(), thenBlock)
-                : new ConditionStatement(cond.getCondition(), thenBlock, new Block(elseStatements));
+    @Override
+    protected void walk(SolidityProgramElement node) {
+        if (node instanceof Expression) {
+            stack.push(new ExtList());
+            doDefaultAction(node);
+            return;
+        }
+        super.walk(node);
     }
 
-    private static List<Statement> followedBy(List<Statement> first, List<Statement> rest) {
-        List<Statement> all = new ArrayList<>(first);
-        all.addAll(rest);
-        return all;
+    @Override
+    public void performActionOnReturnStatement(ReturnStatement x) {
+        if (x.getReturnExp() == null) {
+            doDefaultAction(x);
+            return;
+        }
+        List<Statement> statements = new ArrayList<>(assignments(x));
+        statements.add(new ReturnStatement((Expression) null));
+        addChild(new Block(statements));
+        changed();
     }
 
     private List<Statement> assignments(ReturnStatement ret) {
-        Expression value = ret.getReturnExp();
-        List<Expression> values = value == null ? List.of()
-                : value instanceof TupleExpression tuple ? tuple.getExpressions().toList()
-                        : List.of(value);
-        if (values.isEmpty()) {
-            return List.of();
-        }
+        Expression value = Objects.requireNonNull(ret.getReturnExp());
+        List<Expression> values = value instanceof TupleExpression tuple
+                ? tuple.getExpressions().toList()
+                : List.of(value);
         if (values.size() != returns.size()) {
             throw new IllegalStateException("return of " + values.size()
                 + " values from a function with " + returns.size() + " return values");
@@ -118,21 +120,6 @@ final class ReturnLowering {
         }
         for (int i = 0; i < element.getChildCount(); i++) {
             if (readsReturn(element.getChild(i))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean containsReturn(SyntaxElement element) {
-        if (element instanceof ReturnStatement) {
-            return true;
-        }
-        if (!(element instanceof Statement)) {
-            return false;
-        }
-        for (int i = 0; i < element.getChildCount(); i++) {
-            if (containsReturn(element.getChild(i))) {
                 return true;
             }
         }

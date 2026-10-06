@@ -46,6 +46,7 @@
 (branch
    (rule "simplifyUpdate2" (formula "1") (term "1"))
    (rule "simplifyUpdate2" (formula "1"))
+   (rule "functionFrameEmpty" (formula "1"))
    (rule "emptyModality" (formula "1"))
    (rule "closeTrue" (formula "1"))
 )

@@ -296,6 +296,23 @@ public class PrettyPrinter implements Visitor {
     }
 
     @Override
+    public void performActionOnFunctionFrame(FunctionFrame x) {
+        markStart(x);
+        layouter.keyWord("function-frame").print(" ");
+        if (x.getChildCount() == 0) {
+            layouter.print("{}");
+        } else {
+            beginBlock();
+            for (Statement stmt : x.getStatements()) {
+                layouter.nl();
+                stmt.visit(this);
+            }
+            endBlock();
+        }
+        markEnd(x);
+    }
+
+    @Override
     public void performActionOnCatchClause(CatchClause x) {
         layouter.keyWord("catch").print(" ");
         if (x.getKind() != CatchClause.Kind.Other) {

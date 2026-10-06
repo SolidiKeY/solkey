@@ -38,7 +38,7 @@ contract WETH9 {
     /// @custom:key ensures \result && allowance[msg.sender][guy] == wad
     function approve(address guy, uint wad) public returns (bool ok) {
         allowance[msg.sender][guy] = wad;
-        ok = true;
+        return true;
     }
 
     // 115792089237316195423570985008687907853269984665640564039457584007913129639935 is
@@ -57,7 +57,7 @@ contract WETH9 {
         }
         balanceOf[src] -= wad;
         balanceOf[dst] += wad;
-        ok = true;
+        return true;
     }
 
     /// @custom:key skip

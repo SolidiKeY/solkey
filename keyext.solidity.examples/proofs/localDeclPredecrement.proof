@@ -94,6 +94,7 @@
    (rule "assertSimple" (formula "2") (term "1"))
    (branch
       (rule "simplifyUpdate2" (formula "3"))
+      (rule "functionFrameEmpty" (formula "3"))
       (rule "emptyModality" (formula "3"))
       (rule "closeTrue" (formula "3"))
    )

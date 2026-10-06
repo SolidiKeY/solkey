@@ -119,10 +119,13 @@ non-integer key crash in `docs/bugs.md` and the gap below.
 
 ## Raised by `return` and tuple support
 
-- **`return` inside a loop or `try`.** `ReturnLowering` moves the rest of the block into the
-  branches of an `if`, which suffices while the calculus has no loops. Once loop rules exist, a
-  `return` in a loop body needs a function frame (KeY-Java's `method-frame`) and a rule that
-  completes it abruptly.
+- **`return` inside a loop.** `blockReturn` moves a `return` out of blocks up to its
+  `function-frame`. Once loop rules exist, a loop node (or KeY-Java's loop scope) needs its own
+  rule that passes a `return` through, and `break`/`continue` can follow the same pattern
+  (`blockBreak`, stopped by the loop).
+- **Modifiers.** `internalCallExpand` refuses a callee with modifiers, and a top-level obligation
+  inlines the body alone. When modifiers are inlined, the body spliced in for `_;` needs a
+  `function-frame` of its own, so that its `return` resumes the modifier code after `_;`.
 - **Unnamed or non-`.key`-sort returns in obligations.** `SolidityOutline.unsupportedReason`
   still refuses a public function whose return value is unnamed. Now that `return e;` executes,
   such a function could get an obligation that discards the value (`(result_a, ) = f()@C;`).

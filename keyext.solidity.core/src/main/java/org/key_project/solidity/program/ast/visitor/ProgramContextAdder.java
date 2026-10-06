@@ -11,6 +11,7 @@ import org.key_project.logic.IntIterator;
 import org.key_project.solidity.program.PosInProgram;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.statement.Block;
+import org.key_project.solidity.program.ast.statement.FunctionFrame;
 import org.key_project.solidity.program.ast.statement.Statement;
 import org.key_project.solidity.program.ext.ContextStatementBlock;
 import org.key_project.solidity.rule.matching.inst.ContextBlockExpressionInstantiation;
@@ -57,6 +58,8 @@ public class ProgramContextAdder {
             wrap(Objects.requireNonNull(next), putIn, prefixPos, suffix);
         if (context instanceof Block block) {
             return createBlockWrapper(block, body);
+        } else if (context instanceof FunctionFrame frame) {
+            return new FunctionFrame(replaceFirst(frame, body));
         } else {
             throw new RuntimeException(
                 new UnexpectedException("Unexpected block type: " + context.getClass()));
@@ -65,8 +68,8 @@ public class ProgramContextAdder {
 
     /// Inserts the content of `putIn` and appends the succeeding (suffix) children of the innermost
     /// context block.
-    private Block createWrapperBody(SolidityProgramElement wrapper, ContextStatementBlock putIn,
-            PosInProgram suffix) {
+    private Statement createWrapperBody(SolidityProgramElement wrapper,
+            ContextStatementBlock putIn, PosInProgram suffix) {
         final int putInLength = putIn.getChildCount();
 
         // ATTENTION: may be -1
@@ -75,7 +78,7 @@ public class ProgramContextAdder {
         final int childrenToAdd = putInLength + childLeft;
 
         if (childLeft == 0 || lastChild == -1) {
-            return new Block(putIn.getStatements());
+            return rebuild(wrapper, putIn.getStatements());
         }
 
         final Statement[] body = new Statement[childrenToAdd];
@@ -85,7 +88,13 @@ public class ProgramContextAdder {
         for (int i = putInLength; i < childrenToAdd; i++) {
             body[i] = (Statement) wrapper.getChild(lastChild + (i - putInLength));
         }
-        return new Block(new ImmutableArray<>(body));
+        return rebuild(wrapper, new ImmutableArray<>(body));
+    }
+
+    private static Statement rebuild(SolidityProgramElement wrapper,
+            ImmutableArray<Statement> statements) {
+        return wrapper instanceof FunctionFrame ? new FunctionFrame(statements)
+                : new Block(statements);
     }
 
     /// Replaces the first statement of a block by the (already wrapped) replacement. Optimised: if
@@ -96,11 +105,17 @@ public class ProgramContextAdder {
         if (childrenCount <= 1 && replacement instanceof Block block) {
             return block;
         }
+        return new Block(replaceFirst(wrapper, replacement));
+    }
+
+    private static ImmutableArray<Statement> replaceFirst(SolidityProgramElement wrapper,
+            SolidityProgramElement replacement) {
+        final int childrenCount = wrapper.getChildCount();
         final Statement[] body = new Statement[childrenCount > 0 ? childrenCount : 1];
         body[0] = (Statement) replacement;
         for (int i = 1; i < childrenCount; i++) {
             body[i] = (Statement) wrapper.getChild(i);
         }
-        return new Block(new ImmutableArray<>(body));
+        return new ImmutableArray<>(body);
     }
 }

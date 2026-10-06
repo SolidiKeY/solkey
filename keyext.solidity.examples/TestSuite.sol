@@ -14,8 +14,8 @@ pragma solidity ^0.8.0;
 ///     storage stay in their own ordered requires (next point), since each one guards the
 ///     evaluation of the next;
 ///   - what the test observes is stated in the body with `assert` — a value the old `.key`
-///     postcondition named is bound to a local first (`return e;` is not supported by the
-///     calculus);
+///     postcondition named is bound to a local first, since a test function returns nothing
+///     (internal helpers may `return` values);
 ///   - what the test assumes is stated with `require`, and the function is then tagged
 ///     `/// @custom:key box`. `require` is an assumption under a box modality and an obligation
 ///     under a diamond (docs/require-assert.md), so the tag is what makes it an assumption.
@@ -3640,5 +3640,87 @@ contract TestSuite {
     function tupleDeclaration() public pure {
         (uint first, , bool third) = (4, 5, true);
         assert(first == 4 && third);
+    }
+
+    function returnFromNestedBlock(uint x) internal pure returns (uint) {
+        {
+            {
+                if (x > 0) {
+                    return 1;
+                }
+            }
+            x = 5;
+        }
+        return x;
+    }
+
+    function returnOrFallThrough(bool stop) internal pure returns (uint r) {
+        r = 5;
+        if (stop) return r;
+        r = 6;
+    }
+
+    function returnAddOne(uint x) internal pure returns (uint) {
+        return x + 1;
+    }
+
+    function returnAddTwo(uint x) internal pure returns (uint) {
+        uint y = returnAddOne(x);
+        return returnAddOne(y);
+    }
+
+    function returnRevertsOnZero(uint x) internal pure returns (uint) {
+        if (x == 0) revert();
+        return x;
+    }
+
+    function returnInsideTry() internal view returns (uint) {
+        try TestSuite(owner).tryCalleeGet(5) returns (uint) {
+            return 7;
+        } catch {
+            return 8;
+        }
+    }
+
+    function returnVoidEarly(uint v) internal {
+        if (total != 0) return;
+        total = v;
+    }
+
+    function returnLeavesNestedBlocks() public pure {
+        uint one = returnFromNestedBlock(3);
+        uint five = returnFromNestedBlock(0);
+        assert(one == 1 && five == 5);
+    }
+
+    function returnOrFallThroughNamed() public pure {
+        uint stopped = returnOrFallThrough(true);
+        uint finished = returnOrFallThrough(false);
+        assert(stopped == 5 && finished == 6);
+    }
+
+    function returnFromNestedCall() public pure {
+        uint r = returnAddTwo(1);
+        assert(r == 3);
+    }
+
+    function returnAfterRevertGuard() public pure {
+        uint r = returnRevertsOnZero(3);
+        assert(r == 3);
+    }
+
+    /// @custom:key box
+    function returnFromTryBranches() public view {
+        uint r = returnInsideTry();
+        assert(r == 7 || r == 8);
+    }
+
+    function returnFromVoidFunction() public {
+        total = 4;
+        returnVoidEarly(9);
+        assert(total == 4);
+        total = 0;
+        returnVoidEarly(9);
+        assert(total == 9);
     }
 }

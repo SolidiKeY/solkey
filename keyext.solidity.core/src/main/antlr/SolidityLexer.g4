@@ -14,6 +14,7 @@ ADDRESS : 'address';
 SOL_DOT : '.';
 MAPPING : 'mapping';
 ARROW : '=>';
+FUNCTION_FRAME : 'function-frame';
 FUNCTION : 'function';
 MEMORY : 'memory';
 STORAGE : 'storage';

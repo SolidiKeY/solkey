@@ -324,8 +324,8 @@ in `@custom:key` clauses like `contracts/`, and every function is proved. Each f
 names its source and lists every change to the original. Those changes are only what the
 supported fragment forces: events, custom errors and string metadata are dropped, modifiers
 and internal helpers are inlined, `block.timestamp` becomes `timeNow`, storage reads are bound
-to locals as described under "Calculus conventions", and `return true;` becomes an assignment
-to a named return. `ContractExamplesTest` enumerates this directory too.
+to locals as described under "Calculus conventions", and return values are named, since an
+obligation refers to them by name. `ContractExamplesTest` enumerates this directory too.
 
 Checked arithmetic is not modelled (integers are unbounded), so a `uint` parameter gets a
 `requires x >= 0`, and a function whose body would underflow gets a `requires` for the case in

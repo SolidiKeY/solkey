@@ -365,7 +365,8 @@ public class SolJSONParser {
         return switch (returnParameters.size()) {
             case 0 -> VOID;
             case 1 -> returnParameters.getFirst().getType();
-            default -> new TupleType(returnParameters.stream().map(ProgramVariable::getType).toList());
+            default ->
+                new TupleType(returnParameters.stream().map(ProgramVariable::getType).toList());
         };
     }
 
@@ -558,6 +559,7 @@ public class SolJSONParser {
                 yield TryStatement.of(expression, returns, body, clauses);
             }
             case "PlaceholderStatement" -> new PlaceholdStatement();
+            case "Return" -> new ReturnStatement((Expression) null);
             default -> throw new IllegalStateException("Statement does not have type " + type);
         };
     }

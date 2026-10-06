@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 // The ERC20 token of Solidity by Example (https://solidity-by-example.org/app/erc20/).
 // Deviations, all forced by the supported fragment: the IERC20 interface and the events are
-// dropped; `return true;` becomes an assignment to the named return success; mint and burn
+// dropped; the return value is named success; mint and burn
 // inline the bodies of _mint and _burn, since a call nested in a body is not expanded. Checked
 // arithmetic is not modelled, so the requires state the case in which the EVM would not revert
 // on underflow (balance and allowance cover the amount).
@@ -30,14 +30,14 @@ contract ERC20 {
     function transfer(address recipient, uint256 amount) external returns (bool success) {
         balanceOf[msg.sender] -= amount;
         balanceOf[recipient] += amount;
-        success = true;
+        return true;
     }
 
     /// @custom:key requires amount >= 0
     /// @custom:key ensures \result && allowance[msg.sender][spender] == amount
     function approve(address spender, uint256 amount) external returns (bool success) {
         allowance[msg.sender][spender] = amount;
-        success = true;
+        return true;
     }
 
     /// @custom:key requires amount >= 0 && allowance[sender][msg.sender] >= amount && balanceOf[sender] >= amount
@@ -52,7 +52,7 @@ contract ERC20 {
         allowance[sender][msg.sender] -= amount;
         balanceOf[sender] -= amount;
         balanceOf[recipient] += amount;
-        success = true;
+        return true;
     }
 
     /// @custom:key requires amount >= 0

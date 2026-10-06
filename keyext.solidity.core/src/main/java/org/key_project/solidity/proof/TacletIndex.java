@@ -22,6 +22,7 @@ import org.key_project.solidity.logic.sort.GenericSort;
 import org.key_project.solidity.program.ProgramPrefix;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.statement.Block;
+import org.key_project.solidity.program.ast.statement.FunctionFrame;
 import org.key_project.solidity.rule.NoPosTacletApp;
 import org.key_project.solidity.rule.SolTaclet;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
@@ -508,10 +509,7 @@ public class TacletIndex {
     private static class PrefixOccurrences {
         /// the classes that represent prefix elements of a Solidity block
         static final Class<?>[] prefixClasses =
-            new Class<?>[] { Block.class, /*
-                                           * LoopScope.class,
-                                           * FunctionFrame.class
-                                           */ };
+            new Class<?>[] { Block.class, FunctionFrame.class };
 
         /// number of prefix types
         static final int PREFIXTYPES = prefixClasses.length;
@@ -521,7 +519,7 @@ public class TacletIndex {
 
         /// fields to indicate the position of the next relevant child (the next possible prefix
         /// element or real statement
-        static final int[] nextChild = { 0 };
+        static final int[] nextChild = { 0, 0 };
 
         PrefixOccurrences() {
             reset();

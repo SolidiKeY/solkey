@@ -66,6 +66,7 @@ statement
   | schemaVariable
   | programTransformer
   | functionBodyStatement
+  | functionFrame
   | ifStatement
   | tryStatement
   | whileStatement
@@ -117,6 +118,9 @@ breakStatement
 
 returnStatement
   : RETURN expression? SOL_SEMI ;
+
+functionFrame
+  : FUNCTION_FRAME SOL_LBRACE statement* SOL_RBRACE ;
 
 throwStatement
   : THROW SOL_SEMI ;

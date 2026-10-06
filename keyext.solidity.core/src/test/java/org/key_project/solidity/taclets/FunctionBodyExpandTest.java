@@ -9,6 +9,7 @@ import org.key_project.solidity.control.KeYEnvironment;
 import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.program.ast.statement.DeclarationStatement;
 import org.key_project.solidity.program.ast.statement.FunctionBodyStatement;
+import org.key_project.solidity.program.ast.statement.FunctionFrame;
 import org.key_project.solidity.proof.Goal;
 
 import org.junit.jupiter.api.Tag;
@@ -49,8 +50,9 @@ public class FunctionBodyExpandTest {
             "expanded program should contain parameter declarations and the body");
         assertInstanceOf(DeclarationStatement.class, after.getStatements().get(0),
             "first statement should be the inlined parameter declaration");
-        assertInstanceOf(Block.class, after.getStatements().get(after.getStatements().size() - 1),
-            "last statement should be the inlined function body block");
+        assertInstanceOf(FunctionFrame.class,
+            after.getStatements().get(after.getStatements().size() - 1),
+            "last statement should be the function frame of the inlined body");
         // and the function-body placeholder is gone
         for (var st : after.getStatements()) {
             assertEquals(false, st instanceof FunctionBodyStatement,

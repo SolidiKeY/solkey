@@ -117,6 +117,10 @@ public interface Visitor {
         performActionOnDefault(x);
     }
 
+    default void performActionOnFunctionFrame(FunctionFrame x) {
+        performActionOnDefault(x);
+    }
+
     default void performActionOnCatchClause(CatchClause catchClause) {
         performActionOnDefault(catchClause);
     }

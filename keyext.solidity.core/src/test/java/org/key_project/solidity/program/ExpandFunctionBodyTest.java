@@ -22,6 +22,8 @@ import org.key_project.solidity.program.ast.statement.Block;
 import org.key_project.solidity.program.ast.statement.DeclarationStatement;
 import org.key_project.solidity.program.ast.statement.ExpressionStatement;
 import org.key_project.solidity.program.ast.statement.FunctionBodyStatement;
+import org.key_project.solidity.program.ast.statement.FunctionFrame;
+import org.key_project.solidity.program.ast.statement.ReturnStatement;
 import org.key_project.solidity.program.ast.statement.Statement;
 import org.key_project.solidity.rule.metaconstruct.ExpandFunctionBody;
 import org.key_project.solidity.rule.sv.SchemaVariableFactory;
@@ -81,9 +83,9 @@ public class ExpandFunctionBodyTest {
         SolidityProgramElement[] result = transformer.transform(fbs, services, null);
 
         // expect: one parameter declaration followed by the (rewritten) body block
-        assertEquals(2, result.length, "one param decl + body block");
+        assertEquals(2, result.length, "one param decl + function frame");
         assertTrue(result[0] instanceof DeclarationStatement, "first element is a declaration");
-        assertTrue(result[1] instanceof Block, "second element is the body block");
+        assertTrue(result[1] instanceof FunctionFrame, "second element is the function frame");
 
         DeclarationStatement decl = (DeclarationStatement) result[0];
         ProgramVariable declared =
@@ -96,10 +98,42 @@ public class ExpandFunctionBodyTest {
         assertSame(a, decl.getInitialValue(), "parameter initialised with the actual argument");
 
         // the rewritten body references the fresh declared variable (object identity!)
-        Block newBody = (Block) result[1];
-        Statement first = newBody.getStatements().get(0);
+        FunctionFrame frame = (FunctionFrame) result[1];
+        Statement first = frame.getStatements().get(0);
         Expression newRef = ((ExpressionStatement) first).getExpression();
         assertSame(declared, newRef,
             "inlined body must reference the freshly declared variable object");
+    }
+
+    @Test
+    void lowersReturnValueToAssignmentAndBareReturnInsideFrame() throws IOException {
+        ProgramVariable p = var("p");
+        ProgramVariable r = var("r");
+        Namespace<ProgramVariable> bodyVars = new Namespace<>();
+        bodyVars.add(p);
+        Block body = (Block) reader
+                .readBlockWithProgramVariables(bodyVars, "{ if (p) { return p; } return; }")
+                .program();
+
+        FunctionDeclaration fn = new FunctionDeclaration(new Name("f"), List.of(r),
+            p.getKeYSolidityType(), List.of(p), body, "function",
+            Visibility.Public, StateMutability.nonpayable, List.of(), "");
+        FunctionBodyStatement fbs = new FunctionBodyStatement(List.of(), fn,
+            new ImmutableArray<>(List.<Expression>of(var("a"))), null);
+        ExpandFunctionBody transformer = new ExpandFunctionBody(
+            SchemaVariableFactory.createProgramSV(new Name("fbs"),
+                ProgramSVSort.FUNCTION_BODY, false));
+
+        SolidityProgramElement[] result = transformer.transform(fbs, services, null);
+
+        assertEquals(3, result.length, "param decl + return decl + function frame");
+        FunctionFrame frame = (FunctionFrame) result[2];
+        assertEquals("function-frame {\n"
+            + "if(p) {\n{\nr = p;\nreturn;\n}\n\n}\n\n"
+            + "return;\n"
+            + "}\n", frame.toString());
+        assertTrue(frame.getStatements().get(1) instanceof ReturnStatement ret
+                && ret.getReturnExp() == null,
+            "a bare return stays a bare return");
     }
 }

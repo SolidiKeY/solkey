@@ -99,6 +99,15 @@ public class SolidityToKeyConverter extends KeYSolidityDLParserBaseVisitor<Synta
     }
 
     @Override
+    public SyntaxElement visitFunctionFrame(FunctionFrameContext ctx) {
+        localVars = new Namespace<>(localVars);
+        List<Statement> stms = ctx.statement().stream()
+                .map(this::visitStatement).map(Statement.class::cast).toList();
+        localVars = localVars.parent();
+        return new FunctionFrame(stms);
+    }
+
+    @Override
     public SyntaxElement visitNumberLiteral(NumberLiteralContext ctx) {
         TerminalNode number = ctx.DecimalNumber() != null ? ctx.DecimalNumber() : ctx.HexNumber();
         TerminalNode unit = ctx.NumberUnit();

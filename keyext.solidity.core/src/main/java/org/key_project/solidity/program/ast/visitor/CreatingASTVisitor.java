@@ -213,6 +213,11 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
     }
 
     @Override
+    public void performActionOnFunctionFrame(FunctionFrame x) {
+        rebuild(x, FunctionFrame::new);
+    }
+
+    @Override
     public void performActionOnContextStatementBlock(ContextStatementBlock x) {
         rebuild(x, ContextStatementBlock::new);
     }

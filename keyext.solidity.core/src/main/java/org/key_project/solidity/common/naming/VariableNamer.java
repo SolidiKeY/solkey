@@ -23,6 +23,7 @@ import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.statement.Block;
+import org.key_project.solidity.program.ast.statement.FunctionFrame;
 import org.key_project.solidity.program.ast.visitor.SolidityASTWalker;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Node;
@@ -336,7 +337,7 @@ public class VariableNamer {
         }
 
         protected void walk(SolidityProgramElement node) {
-            if (node instanceof Block) {
+            if (node instanceof Block || node instanceof FunctionFrame) {
                 currentScopeDepth = depth();
             } else if (node == declarationNode) {
                 declarationScopeDepth = currentScopeDepth;

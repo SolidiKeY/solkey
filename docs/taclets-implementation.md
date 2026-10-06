@@ -774,26 +774,37 @@ anywhere in the program (`c# … #c`), via the `ExpandFunctionBody` transformer:
 The transformer emits
 
 ```
-T0 p0 = arg0; ... Tn pn = argn; R0 r0; ... Rm rm; { <body> } t0 = r0; ... tm = rm;
+T0 p0 = arg0; ... Tn pn = argn; R0 r0; ... Rm rm; function-frame { <body> } t0 = r0; ... tm = rm;
 ```
 
 where `ti` are the call's targets: none for a bare call, one per return value otherwise, and no
 assignment for a discarded component. An unnamed return value gets the fresh name `reti`.
-`blockEmpty` then discards the body block once its statements have run.
 
 **Tuples are never terms.** A tuple of `n` values is `n` program variables, each of its own
 sort, so no tuple sort exists and every component is handled by the ordinary rules.
 
-**`return` is lowered when the body is inlined** (`ReturnLowering`), so no rule consumes a
-`ReturnStatement`:
+**`return` completes the innermost function frame.** `FunctionFrame` (printed and parsed as
+`function-frame { … }`) is a `ProgramPrefix` like `Block`, so every `c# … #c` rule executes the
+statements inside it; it is not a `Block`, so no block rule matches it. `ProgramContextAdder`
+rebuilds a frame as a frame and `TacletIndex` counts it as a prefix class. When the body is
+inlined, `ReturnLowering` turns every `return e;` into `{ r0 = e; return; }`, so the rules only
+ever see a bare `return;`:
 
-- `return (e1, …, en);` becomes `r1 = e1; …; rn = en;`. When a value reads a return variable
-  (`return (y, x);` with `returns (uint x, uint y)`), all values go through temporaries first,
-  `T1 x_ret = e1; …; r1 = x_ret; …`. `return;` keeps the named returns as assigned.
-- The statements after a `return` are dropped. The statements after an `if` or a block that
-  contains a `return` are moved into each branch, so `if (c) return a; rest` becomes
-  `if (c) { r = a; } else { rest }`. This needs no abrupt-completion rule because the calculus
-  has no loops; a `return` inside a loop or a `try` is left in place and stays stuck.
+- `return (e1, …, en);` becomes `{ r1 = e1; …; rn = en; return; }`. When a value reads a return
+  variable (`return (y, x);` with `returns (uint x, uint y)`), all values go through temporaries
+  first, `T1 x_ret = e1; …; r1 = x_ret; …`. `return;` keeps the named returns as assigned. A
+  `return` is found in any statement (`if`, nested block, `try` branch); expressions are not
+  searched, so a callee's `return` reached through a `FunctionReference` is left alone.
+- `blockReturn`: `{ return; rest }` → `return;`, dropping `rest` and moving the `return` out one
+  block at a time.
+- `functionFrameReturn`: `function-frame { return; rest }` → nothing; execution continues after
+  the frame, with the target assignments `ti = ri`.
+- `functionFrameEmpty`: a frame whose body ran to its end without `return` is dropped.
+
+Since `blockReturn` never matches a frame, a callee's `return` cannot complete its caller: each
+inlined call has its own frame. `revert` needs no frame rule, because `revertBox` /
+`revertDiamond` close the goal for the whole transaction. A `.key` program that writes `return;`
+outside any frame is stuck.
 
 **Tuple assignments are desugared by the parsers** (`ParserUtils.tupleAssignment`):
 `(a, b, c) = (b, c, a);` evaluates every value into a temporary before assigning any target, so
@@ -811,7 +822,7 @@ Remaining constraints:
   `internalCallExpand` does not match a callee with modifiers.
 - **Named returns start unconstrained**, not at zero: `R ri;` is skipped by `valueDeclSkip`.
 
-Examples: the `internalCall*`, `returnEarly` and `tuple*` functions in `TestSuite.sol`.
+Examples: the `internalCall*`, `return*` and `tuple*` functions in `TestSuite.sol`.
 
 Note that a `.sol` body is parsed by `SolJSONParser` (the solc-JSON path), not by
 `SolidityToKeyConverter` (the ANTLR path used for programs written inline in a modality). Both
