@@ -62,15 +62,21 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
     }
 
     private final SolidityOutline.Contract contract;
+    private final SolidityOutline.Function function;
     private final @Nullable SpecType resultType;
     private Context ctx = Context.invariant();
 
     public SpecCompiler(SolidityOutline.Contract contract, SolidityOutline.Function function) {
         this.contract = contract;
+        this.function = function;
         this.resultType =
             function.returns().size() == 1 && function.returns().get(0).keySort() != null
                     ? SpecType.of(function.returns().get(0).type())
                     : null;
+    }
+
+    public static String resultVariable(SolidityOutline.Function function, String name) {
+        return function.returns().size() == 1 ? "result" : "result_" + name;
     }
 
     public static Map<String, SpecType> parameterTypes(SolidityOutline.Function function) {
@@ -115,7 +121,7 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
         }
         if (resultType == null) {
             throw new SpecException("\\result needs a function with one named return"
-                + " value of an int or bool type");
+                + " value of an int or bool type; refer to several return values by name");
         }
         return new Value("result", resultType, false);
     }
@@ -145,6 +151,14 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
         SpecType local = ctx.locals().get(name);
         if (local != null) {
             return new Value(name, local, false);
+        }
+        if (ctx.ensures()) {
+            for (SolidityOutline.Parameter ret : function.returns()) {
+                if (ret.name().equals(name) && ret.keySort() != null) {
+                    return new Value(resultVariable(function, name), SpecType.of(ret.type()),
+                        false);
+                }
+            }
         }
         if (name.equals("this") && stateVariable("this") == null) {
             return new Value("self", SpecType.INT, false);

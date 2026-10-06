@@ -10,6 +10,7 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
@@ -189,6 +190,10 @@ public class SolJSONParser {
             }
         }
         for (JsonNode node : functionNodes) {
+            functionId2Type.put(node.get("id").asInt(),
+                returnType(parseParameters(node.get("returnParameters"))));
+        }
+        for (JsonNode node : functionNodes) {
             functions.add(parseFunction(node));
         }
 
@@ -336,13 +341,7 @@ public class SolJSONParser {
         final int id = node.get("id").asInt();
         final String name = node.get("name").asString();
         List<ProgramVariable> returnParameters = parseParameters(node.get("returnParameters"));
-        // void / the single return type; multiple returns would need tuple
-        // types, which are not supported yet (the type stays null then).
-        Type returnType = switch (returnParameters.size()) {
-            case 0 -> VOID;
-            case 1 -> returnParameters.getFirst().getType();
-            default -> null;
-        };
+        Type returnType = returnType(returnParameters);
         functionId2Type.put(id, returnType);
         List<ProgramVariable> inputParamenters = parseParameters(node.get("parameters"));
 
@@ -362,15 +361,114 @@ public class SolJSONParser {
             inputParamenters, body, kind, visibility, stateMutability, modifiers, documentation));
     }
 
+    private static Type returnType(List<ProgramVariable> returnParameters) {
+        return switch (returnParameters.size()) {
+            case 0 -> VOID;
+            case 1 -> returnParameters.getFirst().getType();
+            default -> new TupleType(returnParameters.stream().map(ProgramVariable::getType).toList());
+        };
+    }
+
     private ModifierReference parseModifierReference(JsonNode node) {
         String name = node.get("modifierName").get("name").asString();
         return new ModifierReference(name);
     }
 
     private Block parseBlock(JsonNode jsonBody) {
-        List<Statement> blockStatements =
-            jsonBody.get("statements").valueStream().map(this::parseStatement).toList();
+        List<Statement> blockStatements = jsonBody.get("statements").valueStream()
+                .flatMap(statement -> {
+                    List<Statement> tuple = parseTupleStatement(statement);
+                    return tuple != null ? tuple.stream() : Stream.of(parseStatement(statement));
+                }).toList();
         return new Block(blockStatements);
+    }
+
+    private @Nullable List<Statement> parseTupleStatement(JsonNode statement) {
+        String type = statement.get("nodeType").asString();
+        if ("ExpressionStatement".equals(type)) {
+            JsonNode assign = statement.get("expression");
+            if (!"Assignment".equals(assign.get("nodeType").asString())
+                    || !"=".equals(assign.get("operator").asString())
+                    || !isTuple(assign.get("leftHandSide"))) {
+                return null;
+            }
+            requireTupleValue(assign.get("rightHandSide"));
+            List<@Nullable Expression> targets = new ArrayList<>();
+            for (JsonNode component : assign.get("leftHandSide").get("components").values()) {
+                targets.add(component.isNull() ? null : parseExpression(component));
+            }
+            return tupleAssignment(targets, assign.get("rightHandSide"), false);
+        }
+        if (!"VariableDeclarationStatement".equals(type)
+                || statement.get("declarations").size() < 2 || isValueCall(statement)) {
+            return null;
+        }
+        requireTupleValue(statement.get("initialValue"));
+        List<Statement> statements = new ArrayList<>();
+        List<@Nullable Expression> targets = new ArrayList<>();
+        for (JsonNode declaration : statement.get("declarations").values()) {
+            if (declaration.isNull()) {
+                targets.add(null);
+                continue;
+            }
+            StatementVariableDeclaration variable =
+                (StatementVariableDeclaration) parseDeclaration(declaration);
+            statements.add(new DeclarationStatement(List.of(variable), null));
+            targets.add(variable.getProgramVariable());
+        }
+        statements.addAll(tupleAssignment(targets, statement.get("initialValue"), true));
+        return statements;
+    }
+
+    private static boolean isTuple(JsonNode node) {
+        JsonNode inlineArray = node.get("isInlineArray");
+        return "TupleExpression".equals(node.get("nodeType").asString())
+                && (inlineArray == null || !inlineArray.asBoolean())
+                && node.get("components").size() > 1;
+    }
+
+    private static void requireTupleValue(@Nullable JsonNode value) {
+        boolean internalCall = value != null
+                && "FunctionCall".equals(value.get("nodeType").asString())
+                && "Identifier".equals(value.get("expression").get("nodeType").asString());
+        if (value == null || !isTuple(value) && !internalCall) {
+            throw new SolidityParseException(
+                "A tuple is only assigned from a tuple, a call of a function of this contract, or"
+                    + " (bool ok, ) = a.call{value: v}(\"\")",
+                value);
+        }
+    }
+
+    private List<Statement> tupleAssignment(List<@Nullable Expression> targets, JsonNode value,
+            boolean direct) {
+        if (isTuple(value)) {
+            List<Expression> values = new ArrayList<>();
+            for (JsonNode component : value.get("components").values()) {
+                values.add(parseExpression(component));
+            }
+            return ParserUtils.tupleAssignment(targets, values, direct, this::tupleTemporary);
+        }
+        if (parseExpression(value) instanceof FunctionCallExpression call
+                && call.getFunctionExp() instanceof FunctionReference function) {
+            return List.of(new FunctionBodyStatement(targets, function, call.getArguments(), null));
+        }
+        throw new SolidityParseException(
+            "A tuple is only assigned from a tuple, a call of a function of this contract, or"
+                + " (bool ok, ) = a.call{value: v}(\"\")",
+            value);
+    }
+
+    private ProgramVariable tupleTemporary(Expression target) {
+        if (target instanceof ProgramVariable pv) {
+            return new ProgramVariable(new Name(pv.name() + "_tuple"), pv.getKeYSolidityType(),
+                pv.getDataLocation());
+        }
+        Type type = target.getType();
+        DataLocation location = type instanceof PrimitiveType || type instanceof EnumDeclaration
+                ? DataLocation.Default
+                : DataLocation.Memory;
+        return new ProgramVariable(new Name("tuple"), MemoryReferenceTypes.asLocalVariableType(
+            getOrCreateKeYSolidityType(type), location, services), location);
     }
 
     private CatchClause parseCatchClause(JsonNode clause) {
@@ -389,6 +487,10 @@ public class SolJSONParser {
 
     private @NonNull Statement parseStatement(JsonNode statement) {
         String type = statement.get("nodeType").asString();
+        List<Statement> tuple = parseTupleStatement(statement);
+        if (tuple != null) {
+            return new Block(tuple);
+        }
         if (statement.has("expression")) {
             Expression expression = parseExpression(statement.get("expression"));
             return switch (type) {
@@ -399,7 +501,7 @@ public class SolJSONParser {
                         "Statement type " + type + " is not supported");
             };
         } else if (statement.has("declarations")) {
-            if (statement.get("declarations").size() > 1) {
+            if (isValueCall(statement)) {
                 return parseValueCall(statement);
             }
             List<Declaration> declarations = statement.get("declarations").valueStream()
@@ -460,12 +562,12 @@ public class SolJSONParser {
         };
     }
 
-    private Statement parseValueCall(JsonNode statement) {
+    private static boolean isValueCall(JsonNode statement) {
         List<JsonNode> declarations = statement.get("declarations").valueStream().toList();
         JsonNode call = statement.get("initialValue");
         JsonNode options = call == null ? null : call.get("expression");
         JsonNode member = options == null ? null : options.get("expression");
-        boolean trivial = member != null && declarations.size() == 2
+        return member != null && declarations.size() == 2
                 && !declarations.get(0).isNull()
                 && declarations.get(1).isNull()
                 && "bool".equals(declarations.get(0).get("typeDescriptions").get("typeString")
@@ -478,11 +580,13 @@ public class SolJSONParser {
                 && "call".equals(member.get("memberName").asString())
                 && call.get("arguments").size() == 1
                 && isEmptyStringLiteral(call.get("arguments").get(0));
-        if (!trivial) {
-            throw new SolidityParseException(
-                "Only the tuple declaration (bool ok, ) = a.call{value: v}(\"\") is supported",
-                statement);
-        }
+    }
+
+    private Statement parseValueCall(JsonNode statement) {
+        List<JsonNode> declarations = statement.get("declarations").valueStream().toList();
+        JsonNode call = statement.get("initialValue");
+        JsonNode options = call.get("expression");
+        JsonNode member = options.get("expression");
         Expression receiver = parseExpression(member.get("expression"));
         Expression amount = parseExpression(options.get("options").get(0));
         Expression send = new FunctionCallExpression(BOOL,
@@ -805,7 +909,12 @@ public class SolJSONParser {
         if (parenthesized) {
             return parseExpression(components.get(0));
         }
-        throw new SolidityParseException("Not yet supported expression type", initializer);
+        if (!isTuple(initializer) || components.valueStream().anyMatch(JsonNode::isNull)) {
+            throw new SolidityParseException("Not yet supported expression type", initializer);
+        }
+        List<Expression> expressions = components.valueStream().map(this::parseExpression).toList();
+        return new TupleExpression(
+            new TupleType(expressions.stream().map(Expression::getType).toList()), expressions);
     }
 
     private Expression parseConditional(JsonNode initializer) {

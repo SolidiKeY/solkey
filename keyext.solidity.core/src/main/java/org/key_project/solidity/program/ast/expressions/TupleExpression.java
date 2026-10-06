@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.expressions;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -13,7 +14,6 @@ import org.key_project.solidity.program.ast.visitor.Visitor;
 import org.key_project.util.ExtList;
 import org.key_project.util.collection.ImmutableArray;
 
-import static org.key_project.solidity.program.ast.SolidityProgramElement.takeChild;
 
 
 public class TupleExpression extends SolidityExpression {
@@ -24,11 +24,18 @@ public class TupleExpression extends SolidityExpression {
         this.expressions = new ImmutableArray<>(expressions);
     }
 
-    public TupleExpression(ExtList children) {
-        super(takeChild(children, Type.class));
-        List<?> exprList = takeChild(children, List.class);
-        this.expressions = new ImmutableArray<>(exprList.stream()
-                .map(e -> Expression.class.cast(Objects.requireNonNull(e))).toList());
+    public TupleExpression(ExtList children, Type type) {
+        super(type);
+        List<Expression> components = new ArrayList<>();
+        Expression component;
+        while ((component = children.removeFirstOccurrence(Expression.class)) != null) {
+            components.add(component);
+        }
+        this.expressions = new ImmutableArray<>(components);
+    }
+
+    public ImmutableArray<Expression> getExpressions() {
+        return expressions;
     }
 
     @Override

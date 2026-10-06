@@ -232,9 +232,14 @@ programTransformer
 
 // a call annotated with the declaring contract, standing for the (not yet inlined)
 // body of that function, e.g.  withdraw(a)@Contract;  or  r = balanceOf()@Contract;
-// the optional left-hand side binds the function's (named) return value.
+// or  (q, , r) = divmod(a, b)@Contract;  the optional left-hand side binds the function's
+// return values, an empty component discarding one.
 functionBodyStatement
-   : (lhs=identifier SOL_ASSIGN)? fn=identifier SOL_LPAREN functionCallArguments SOL_RPAREN SOL_AT contract=identifier SOL_SEMI ;
+   : (lhs=functionBodyTargets SOL_ASSIGN)? fn=identifier SOL_LPAREN functionCallArguments SOL_RPAREN SOL_AT contract=identifier SOL_SEMI ;
+
+functionBodyTargets
+   : identifier
+   | SOL_LPAREN identifier? ( SOL_COMMA identifier? )+ SOL_RPAREN ;
 
 solidityBlockEOF
   : block EOF ;

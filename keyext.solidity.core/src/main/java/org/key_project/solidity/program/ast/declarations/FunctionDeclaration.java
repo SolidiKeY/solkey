@@ -62,6 +62,10 @@ public class FunctionDeclaration implements Declaration, Named, SolidityProgramE
         return Objects.requireNonNull(body);
     }
 
+    public boolean hasBody() {
+        return body != null;
+    }
+
     public ImmutableArray<ProgramVariable> getReturnParameters() {
         return returnParameters;
     }

@@ -89,6 +89,7 @@ public class SolidityOutlineTest {
                 contract R {
                     function unnamed() public pure returns (uint) { return 1; }
                     function two() public pure returns (uint a, uint b) { a = 1; b = 2; }
+                    function pair() public pure returns (uint, uint) { return (1, 2); }
                     /// @custom:key skip
                     function skipped() public {}
                 }""");
@@ -97,11 +98,13 @@ public class SolidityOutlineTest {
         Optional<String> reason = contract.function("unnamed").orElseThrow().unsupportedReason();
         assertTrue(reason.isPresent());
         assertTrue(reason.get().contains("returns a value"), reason.get());
-        assertTrue(contract.function("two").orElseThrow().unsupportedReason().orElseThrow()
-                .contains("more than one"));
+        assertTrue(contract.function("two").orElseThrow().isProvable());
+        assertTrue(contract.function("pair").orElseThrow().unsupportedReason().orElseThrow()
+                .contains("returns a value"));
         assertTrue(contract.function("skipped").orElseThrow().unsupportedReason().orElseThrow()
                 .contains("skip"));
-        assertEquals(List.of(), contract.provableFunctions());
+        assertEquals(List.of("two"),
+            contract.provableFunctions().stream().map(SolidityOutline.Function::name).toList());
     }
 
     @Test

@@ -94,6 +94,36 @@ public class SolidityProblemSynthesizerTest {
     }
 
     @Test
+    void severalNamedReturnsAreBoundByNameAndProved() throws IOException {
+        Path file = Path.of("/nonexistent-solkey-dir/Ordered.sol");
+        SoliditySources.register(file, """
+                // SPDX-License-Identifier: GPL-2.0-only
+                pragma solidity ^0.8.0;
+                contract Ordered {
+                    /// @custom:key ensures lo <= hi
+                    /// @custom:key ensures lo == x || lo == y
+                    function order(uint x, uint y) public pure returns (uint lo, uint hi) {
+                        if (x < y) return (x, y);
+                        return (y, x);
+                    }
+                    /// @custom:key ensures lo < hi
+                    function strict(uint x, uint y) public pure returns (uint lo, uint hi) {
+                        if (x < y) return (x, y);
+                        return (y, x);
+                    }
+                }""");
+
+        String text = SolidityProblemSynthesizer.problemText(file, spec("Ordered", "order"));
+
+        assertTrue(text.contains("int result_lo;") && text.contains("int result_hi;"), text);
+        assertTrue(text.contains("\\[{ (result_lo, result_hi) = order(x, y)@Ordered; }\\]"),
+            text);
+        assertTrue(text.contains("(result_lo <= result_hi)"), text);
+        assertTrue(SolidityVerifier.verify(file, spec(null, "order"), 10000, -1, 3).closed());
+        assertFalse(SolidityVerifier.verify(file, spec(null, "strict"), 10000, -1, 3).closed());
+    }
+
+    @Test
     void anUnspecifiedFunctionKeepsThePlainObligation() throws IOException {
         Path file = SolidityExampleTests.testSuite();
 

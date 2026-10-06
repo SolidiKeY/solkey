@@ -123,7 +123,7 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
 
     @Override
     public void performActionOnTupleExpression(TupleExpression x) {
-        rebuild(x, TupleExpression::new);
+        rebuild(x, changeList -> new TupleExpression(changeList, x.getType()));
     }
 
     @Override
@@ -270,6 +270,11 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
     @Override
     public void performActionOnPlaceholdStatement(PlaceholdStatement x) {
         rebuild(x, changeList -> new PlaceholdStatement());
+    }
+
+    @Override
+    public void performActionOnFunctionBodyStatement(FunctionBodyStatement x) {
+        rebuild(x, changeList -> new FunctionBodyStatement(changeList, x));
     }
 
     @Override

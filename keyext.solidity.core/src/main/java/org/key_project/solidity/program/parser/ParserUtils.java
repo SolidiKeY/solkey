@@ -5,11 +5,13 @@ package org.key_project.solidity.program.parser;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.key_project.logic.Name;
@@ -24,11 +26,15 @@ import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
+import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
 import org.key_project.solidity.program.ast.expressions.MemberExp;
 import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.references.TypeReference;
+import org.key_project.solidity.program.ast.statement.DeclarationStatement;
+import org.key_project.solidity.program.ast.statement.ExpressionStatement;
+import org.key_project.solidity.program.ast.statement.Statement;
 
 import org.jspecify.annotations.Nullable;
 
@@ -165,6 +171,34 @@ public class ParserUtils {
         return parseAssignmentMaybe(left, right, operator)
                 .orElseThrow(
                     () -> new RuntimeException("Assignment: " + operator + " not supported"));
+    }
+
+    public static List<Statement> tupleAssignment(List<@Nullable Expression> targets,
+            List<Expression> values, boolean direct, Function<Expression, ProgramVariable> temp) {
+        if (targets.size() != values.size()) {
+            throw new SolidityParseException("Tuple assignment of " + values.size()
+                + " values to " + targets.size() + " targets");
+        }
+        List<Statement> evaluations = new ArrayList<>(values.size());
+        List<Statement> assignments = new ArrayList<>(values.size());
+        for (int i = 0; i < values.size(); i++) {
+            Expression target = targets.get(i);
+            Expression value = values.get(i);
+            if (target == null) {
+                if (value instanceof FunctionCallExpression) {
+                    evaluations.add(new ExpressionStatement(value));
+                }
+            } else if (direct) {
+                evaluations.add(new ExpressionStatement(parseAssignment(target, value, "=")));
+            } else {
+                ProgramVariable t = temp.apply(target);
+                evaluations.add(new DeclarationStatement(
+                    List.of(new StatementVariableDeclaration(t)), value));
+                assignments.add(new ExpressionStatement(parseAssignment(target, t, "=")));
+            }
+        }
+        evaluations.addAll(assignments);
+        return evaluations;
     }
 
     static public Optional<Expression> parseAllBinaryMaybe(Expression left, Expression right,

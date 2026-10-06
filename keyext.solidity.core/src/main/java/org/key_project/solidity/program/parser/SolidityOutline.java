@@ -150,9 +150,10 @@ public record SolidityOutline(List<Contract> contracts) {
         }
 
         /// Why no obligation can be generated for this function, or empty when one can: it is
-        /// not skipped, it returns nothing or exactly one named value with a `.key` sort (the
-        /// `\result` of an `ensures` clause), and every parameter needs a `.key` sort, so the
-        /// obligation can bind it to an unconstrained program variable.
+        /// not skipped, every value it returns is named and has a `.key` sort (an `ensures`
+        /// clause refers to it by name, or as `\result` when it is the only one), and every
+        /// parameter needs a `.key` sort, so the obligation can bind it to an unconstrained
+        /// program variable.
         public Optional<String> unsupportedReason() {
             try {
                 if (natspec().skip()) {
@@ -161,14 +162,12 @@ public record SolidityOutline(List<Contract> contracts) {
             } catch (SpecException e) {
                 return Optional.of(e.getMessage());
             }
-            if (returns.size() > 1) {
-                return Optional.of("returns more than one value");
-            }
-            if (returns.size() == 1
-                    && (returns.get(0).name().isEmpty() || returns.get(0).keySort() == null)) {
-                return Optional.of("returns a value without a name or a .key sort; name it to"
-                    + " refer to it as \\result, or move the specification into the body as"
-                    + " assert");
+            for (Parameter ret : returns) {
+                if (ret.name().isEmpty() || ret.keySort() == null) {
+                    return Optional.of("returns a value without a name or a .key sort; name it to"
+                        + " refer to it in ensures, or move the specification into the body as"
+                        + " assert");
+                }
             }
             for (Parameter parameter : parameters) {
                 if (parameter.keySort() == null) {

@@ -39,7 +39,8 @@ conjoined `require(x == 5 && y == 7)` — it plays the role of the old `.key` pr
 guards the evaluation of the next.
 
 **What the test observes** goes in the body as `assert`. A value the postcondition talks about
-is bound to a local first — `return e;` is not supported by the calculus:
+is bound to a local first, since every function returns nothing (internal helpers may return
+values, and tuples of them, with `return`):
 
 ```solidity
 function storageFieldWriteRead() public {

@@ -25,9 +25,6 @@ and the `net` payment model.
 
 ## Tier 3 — Control flow
 
-- **`returnStatement`** (`return e;`): bind the function's named return value
-  and discard the rest of the block. Pairs with `functionBodyStatement`
-  inlining (`ExpandFunctionBody`).
 - **`uncheckedStatement`** (`unchecked { … }`): with the unbounded-integer
   calculus arithmetic never reverts, so the wrapper carries no semantics — a
   rule can drop the block marker and execute the body as-is. Real wrapping
@@ -118,15 +115,19 @@ non-integer key crash in `docs/bugs.md` and the gap below.
 
 - **An assignment used as an expression.** `balances[balances[1] = 2] = 7;` captures the index
   correctly and then gets stuck on `u = (balances[1] = 2);` — no rule consumes an assignment in
-  value position. Related to `return e;` (Tier 3): both are expression forms the calculus only
-  handles as statements.
+  value position: the calculus handles an assignment only as a statement.
 
-## Raised in priority by the TestSuite.sol migration
+## Raised by `return` and tuple support
 
-- **`return e;` (Tier 3).** Now on the critical path: every example in `TestSuite.sol` has to
-  use a *named* return and assign to it, because no taclet consumes a `ReturnStatement`. A
-  companion fix belongs in `ExpandFunctionBody`, which currently wires only the first named
-  return and silently drops the rest.
+- **`return` inside a loop or `try`.** `ReturnLowering` moves the rest of the block into the
+  branches of an `if`, which suffices while the calculus has no loops. Once loop rules exist, a
+  `return` in a loop body needs a function frame (KeY-Java's `method-frame`) and a rule that
+  completes it abruptly.
+- **Unnamed or non-`.key`-sort returns in obligations.** `SolidityOutline.unsupportedReason`
+  still refuses a public function whose return value is unnamed. Now that `return e;` executes,
+  such a function could get an obligation that discards the value (`(result_a, ) = f()@C;`).
+- **Tuples from external calls.** `(bool ok, bytes memory d) = a.call(…)` and
+  `(uint a, uint b) = other.f()` are rejected: they need `bytes` and a model of return data.
 
 ## Schema-variable sort cleanups (from the naming pass)
 

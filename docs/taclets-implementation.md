@@ -661,8 +661,9 @@ assignment `s#pv = s#sadr.send(s#se)` that `localValueDeclInitDrop` leaves behin
 `call` gets no rules of its own. Gas is not modeled, so `call{value}` follows the
 `transferSemantics` choice just like `transfer` and `try`. `SolJSONParser.parseValueCall` lowers
 the one supported shape, `(bool ok, ) = a.call{value: v}("")`, to `bool ok = a.send(v);`. Every
-other tuple declaration (another tuple, a second option such as `gas`, non-empty data, or no
-`{value: …}`) is a `SolidityParseException`, because tuples are not implemented. Examples:
+other `call` (a second option such as `gas`, non-empty data, a used `bytes` result, or no
+`{value: …}`) is a `SolidityParseException`: tuples are assigned only from tuples and internal
+calls (see "Function-body inlining"). Examples:
 `send*` and `callToSender` in `TestSuite.sol`, and `net/net-send-simple.key` and
 `net/net-call-withcallback-simple.key`.
 
@@ -757,28 +758,60 @@ closes where `nested.recursive[4].z` does not).
 
 ## Function-body inlining
 
-`functionBodyExpand` (in `solidityProgramRules.key`, so examples need not declare it) rewrites
-a call statement to the callee's body via the `ExpandFunctionBody` transformer, which emits
+Two rules (in `solidityProgramRules.key`, so examples need not declare them) inline a call,
+anywhere in the program (`c# … #c`), via the `ExpandFunctionBody` transformer:
+
+- `functionBodyExpand` matches a `FunctionBodyStatement` (`FunctionBody` sort): the `.key` form
+  `r = f(a)@C;` / `(q, , r) = f(a)@C;`, and a `.sol` tuple assignment or declaration whose value
+  is a call, `(q, r) = f(a);`, which `SolJSONParser` builds directly.
+- `internalCallExpand` matches an expression statement `f(a);` or `lhs = f(a);` calling a
+  function of the contract (`InternalCall` sort: the callee is a `FunctionReference` to a
+  declaration with a body and no modifiers, so `require`/`assert` and modifier-guarded callees
+  do not match). A declaration `uint y = f(a);` reaches it through `localValueDeclInitDrop`, and a
+  call nested in an expression (`f() + 1`, `a[f()] = g()`) through the operator unfolds, which
+  capture it into a temporary first.
+
+The transformer emits
 
 ```
-T0 p0 = arg0; ... Tn pn = argn; Tr r0; { <body> } result = r0;
+T0 p0 = arg0; ... Tn pn = argn; R0 r0; ... Rm rm; { <body> } t0 = r0; ... tm = rm;
 ```
 
-`blockEmpty` then discards the body block once its statements have run. Constraints that
-follow from the current implementation — every example in `TestSuite.sol` respects them:
+where `ti` are the call's targets: none for a bare call, one per return value otherwise, and no
+assignment for a discarded component. An unnamed return value gets the fresh name `reti`.
+`blockEmpty` then discards the body block once its statements have run.
 
-- **The call must be the whole modality program.** `functionBodyExpand`'s `\find` is a bare
-  `s#fbs`, not a context block, so `\<{ f()@C; g()@C; }\>` does not match.
-- **Exactly one named return.** Only `freshReturns.get(0)` is wired to the result variable; a
-  second named return is silently dropped.
-- **No `return e;`.** It parses, but no taclet consumes a `ReturnStatement`, so symbolic
-  execution gets stuck. Assign to the named return instead.
+**Tuples are never terms.** A tuple of `n` values is `n` program variables, each of its own
+sort, so no tuple sort exists and every component is handled by the ordinary rules.
+
+**`return` is lowered when the body is inlined** (`ReturnLowering`), so no rule consumes a
+`ReturnStatement`:
+
+- `return (e1, …, en);` becomes `r1 = e1; …; rn = en;`. When a value reads a return variable
+  (`return (y, x);` with `returns (uint x, uint y)`), all values go through temporaries first,
+  `T1 x_ret = e1; …; r1 = x_ret; …`. `return;` keeps the named returns as assigned.
+- The statements after a `return` are dropped. The statements after an `if` or a block that
+  contains a `return` are moved into each branch, so `if (c) return a; rest` becomes
+  `if (c) { r = a; } else { rest }`. This needs no abrupt-completion rule because the calculus
+  has no loops; a `return` inside a loop or a `try` is left in place and stays stuck.
+
+**Tuple assignments are desugared by the parsers** (`ParserUtils.tupleAssignment`):
+`(a, b, c) = (b, c, a);` evaluates every value into a temporary before assigning any target, so
+permutations are correct. A declaration `(uint a, , bool b) = (4, 5, true);` declares the
+variables and assigns them directly, since a new variable cannot occur in its own initializer.
+A discarded component keeps only a call among the values, for its effects. A tuple is assigned
+from a tuple or from a call of a function of the contract; anything else (an external call
+returning a tuple) is a `SolidityParseException`.
+
+Remaining constraints:
+
 - **No overloading.** `visitFunctionBodyStatement` takes the first function whose *name*
   matches, ignoring the signature, so function names must be unique.
-- **Single-identifier left-hand side.** `(a, b) = f()@C;` is not parseable.
+- **No modifiers on inlined internal calls.** `ExpandFunctionBody` inlines the body alone, so
+  `internalCallExpand` does not match a callee with modifiers.
+- **Named returns start unconstrained**, not at zero: `R ri;` is skipped by `valueDeclSkip`.
 
-A test that observes more than one value therefore asserts in the body and uses postcondition
-`true`; a test that observes only storage/memory has no return value at all.
+Examples: the `internalCall*`, `returnEarly` and `tuple*` functions in `TestSuite.sol`.
 
 Note that a `.sol` body is parsed by `SolJSONParser` (the solc-JSON path), not by
 `SolidityToKeyConverter` (the ANTLR path used for programs written inline in a modality). Both
@@ -798,7 +831,11 @@ problem the `net/*.key` files spell out by hand — an `insertCInv` rewrite tacl
 requires, `CInv(storage, net)` in the antecedent; the ledger booking
 `net := storeSt(net, at(msgSender), …)` as update; the call in the **box** modality; `CInv`
 and the ensures as postcondition. `\old(e)` declares `Struct old, oldNet` and snapshots them in
-the update; a named return declares `int result` and calls `result = f()@C;`. A function
+the update; a single named return declares `int result` and calls `result = f()@C;`, and
+several named returns `lo, hi` declare `int result_lo, result_hi` and call
+`(result_lo, result_hi) = f()@C;`. An `ensures` clause refers to a return value by its name
+(`SpecCompiler` maps it to the variable), or as `\result` when it is the only one. Every return
+value must be named and have a `.key` sort. A function
 without any clause keeps the plain `(true)` obligation byte for byte, so `TestSuite.sol` and
 the `solc/` ports are unaffected. `./run-key.sh F.sol -f fn --print-problem` prints the text.
 

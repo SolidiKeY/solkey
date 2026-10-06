@@ -45,7 +45,7 @@ public class FunctionBodyResultExpandTest {
         FunctionBodyStatement fbs =
             assertInstanceOf(FunctionBodyStatement.class, before.getStatements().get(0),
                 "modality should start with a function-body statement");
-        assertNotNull(fbs.getResultVar(), "the call should carry a result variable");
+        assertNotNull(fbs.getTargets().get(0), "the call should carry a result variable");
 
         // find and apply the functionBodyExpand taclet at the modality formula
         // after: the placeholder is gone and the last statement is the result assignment
@@ -62,7 +62,7 @@ public class FunctionBodyResultExpandTest {
         AssignExpression assign = assertInstanceOf(AssignExpression.class,
             assignStmt.getExpression(), "result assignment should be an assignment expression");
         assertEquals(Operator.COPY_ASSIGN, assign.getOperator(), "result assignment uses '='");
-        assertEquals(fbs.getResultVar(), assign.getLeft(),
+        assertEquals(fbs.getTargets().get(0), assign.getLeft(),
             "left-hand side of the result assignment is the call's result variable");
     }
 }

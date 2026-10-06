@@ -3552,4 +3552,93 @@ contract TestSuite {
         }
         assert(total == 4 || total == 5);
     }
+
+    // ── Internal calls, return statements and tuples ──
+
+    function returnOne() internal pure returns (uint) {
+        return 1;
+    }
+
+    function returnSign(int v) internal pure returns (int) {
+        if (v < 0) return -1;
+        if (v == 0) return 0;
+        return 1;
+    }
+
+    function returnOrdered(uint x, uint y) internal pure returns (uint lo, uint hi) {
+        if (x < y) return (x, y);
+        return (y, x);
+    }
+
+    function returnSwapped() internal pure returns (uint x, uint y) {
+        x = 1;
+        y = 2;
+        return (y, x);
+    }
+
+    function returnStats(uint x, uint y, uint z)
+        internal pure returns (uint lo, uint hi, uint sum, bool same)
+    {
+        lo = x < y ? x : y;
+        lo = lo < z ? lo : z;
+        hi = x > y ? x : y;
+        hi = hi > z ? hi : z;
+        return (lo, hi, x + y + z, x == y && y == z);
+    }
+
+    function internalCallDeclaration() public pure {
+        uint r = returnOne();
+        assert(r == 1);
+    }
+
+    function internalCallInExpression() public pure {
+        uint r = returnOne() + returnOne();
+        assert(r == 2);
+    }
+
+    function internalCallToStorage() public {
+        total = returnOne();
+        assert(total == 1);
+    }
+
+    function returnEarly() public pure {
+        int negative = returnSign(-3);
+        int zero = returnSign(0);
+        int positive = returnSign(4);
+        assert(negative < 0 && zero == 0 && positive > 0);
+    }
+
+    function tupleReturnPair() public pure {
+        (uint lo, uint hi) = returnOrdered(5, 2);
+        assert(lo == 2 && hi == 5);
+    }
+
+    function tupleReturnReadsReturnVariables() public pure {
+        (uint x, uint y) = returnSwapped();
+        assert(x == 2 && y == 1);
+    }
+
+    function tupleReturnDiscardsComponents() public pure {
+        (uint lo, , uint sum, bool same) = returnStats(3, 1, 2);
+        assert(lo == 1 && sum == 6 && !same);
+    }
+
+    function tupleReturnAssignsExisting() public {
+        uint hi;
+        (total, hi) = returnOrdered(9, 4);
+        assert(total == 4 && hi == 9);
+    }
+
+    function tupleAssignmentRotates() public pure {
+        uint first = 1;
+        uint second = 2;
+        uint third = 3;
+        (first, second, third) = (second, third, first);
+        assert(first == 2 && second == 3 && third == 1);
+    }
+
+    function tupleDeclaration() public pure {
+        (uint first, , bool third) = (4, 5, true);
+        assert(first == 4 && third);
+    }
 }

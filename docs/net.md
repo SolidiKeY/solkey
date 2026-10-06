@@ -144,9 +144,9 @@ Mapped to this repository, roughly in order of usefulness:
    treatment (`send*` rules). Unlike paper Remark 1, `call` follows the
    `transferSemantics` choice like `transfer` and `try` (gas is not modeled).
    `SolJSONParser` lowers `(bool ok, ) = a.call{value: v}("")` to
-   `bool ok = a.send(v);` and rejects every other tuple declaration. Still
+   `bool ok = a.send(v);` and rejects every other `call`. Still
    open: `call` with a data payload or a used `bytes` result, which need
-   tuples.
+   `bytes` and a model of return data.
 6. **Control flow for the remaining examples**: Tier-3 `if` (escrow,
    closeAuction) and loop rules. The loop-invariant infrastructure
    (`LoopSpecification`, `\getInvariant`, `\getVariant`) already exists —

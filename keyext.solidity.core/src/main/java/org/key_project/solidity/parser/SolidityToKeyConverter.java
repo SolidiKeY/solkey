@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -18,6 +19,7 @@ import org.key_project.solidity.program.ast.StaticTypes;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.abstractions.MemoryReferenceTypes;
 import org.key_project.solidity.program.ast.abstractions.StorageReferenceTypes;
+import org.key_project.solidity.program.ast.abstractions.TupleType;
 import org.key_project.solidity.program.ast.abstractions.Type;
 import org.key_project.solidity.program.ast.declarations.FieldDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
@@ -27,6 +29,7 @@ import org.key_project.solidity.program.ast.declarations.StatementVariableDeclar
 import org.key_project.solidity.program.ast.declarations.StructDeclaration;
 import org.key_project.solidity.program.ast.expressions.*;
 import org.key_project.solidity.program.ast.expressions.literals.*;
+import org.key_project.solidity.program.ast.expressions.operators.AssignExpression;
 import org.key_project.solidity.program.ast.expressions.operators.Operator;
 import org.key_project.solidity.program.ast.expressions.operators.TernaryExpression;
 import org.key_project.solidity.program.ast.expressions.operators.UnaryExpression;
@@ -44,6 +47,7 @@ import org.key_project.util.collection.ImmutableArray;
 import org.key_project.util.collection.ImmutableList;
 
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.jspecify.annotations.Nullable;
 
@@ -153,13 +157,13 @@ public class SolidityToKeyConverter extends KeYSolidityDLParserBaseVisitor<Synta
                 && ctx.expression().size() == 1) {
             return visitExpression(ctx.expression(0));
         }
-        reportError("Tuple expressions are not implemented yet.", ctx.start);
-        return null; // unreachable: reportError always throws
-        // TODO: implement (see disabled body below)
-        // List<Expression> exps = parseExps(ctx.expression());
-        // TupleType tupleType = services.getSolidityInfo().getTupleTypeMap(
-        // exps.stream().map(Expression::getType).toList());
-        // return new TupleExpression(tupleType, exps);
+        if (ctx.SOL_LPAREN() == null || ctx.expression().size() != ctx.SOL_COMMA().size() + 1) {
+            reportError("Inline arrays and tuples with an empty component are not implemented"
+                + " yet.", ctx.start);
+        }
+        List<Expression> exps = parseExps(ctx.expression());
+        return new TupleExpression(new TupleType(exps.stream().map(Expression::getType).toList()),
+            exps);
     }
 
     List<Expression> parseExps(List<ExpressionContext> exps) {
@@ -217,16 +221,34 @@ public class SolidityToKeyConverter extends KeYSolidityDLParserBaseVisitor<Synta
             reportError("Unknown function " + functionName + " in contract " + contractName,
                 ctx.start);
         }
-        // optional left-hand side binds the function's return value
-        ProgramVariable resultVar = null;
-        if (ctx.lhs != null) {
-            String resultName = ctx.lhs.getText();
-            resultVar = localVars.lookup(resultName);
-            if (resultVar == null) {
-                reportError("Result variable " + resultName + " out of the scope", ctx.start);
+        List<@Nullable Expression> targets = ctx.lhs == null ? List.of() : targets(ctx.lhs);
+        if (!targets.isEmpty() && targets.size() != function.getReturnParameters().size()) {
+            reportError(functionName + " returns " + function.getReturnParameters().size()
+                + " values, but the call binds " + targets.size(), ctx.start);
+        }
+        return new FunctionBodyStatement(targets, function, args.getArgs(), contractName);
+    }
+
+    private List<@Nullable Expression> targets(FunctionBodyTargetsContext ctx) {
+        List<@Nullable Expression> targets = new ArrayList<>();
+        ProgramVariable current = null;
+        for (ParseTree child : ctx.children) {
+            if (child instanceof IdentifierContext identifier) {
+                String resultName = identifier.getText();
+                current = localVars.lookup(resultName);
+                if (current == null) {
+                    reportError("Result variable " + resultName + " out of the scope",
+                        identifier.start);
+                }
+            } else if (",".equals(child.getText()) || ")".equals(child.getText())) {
+                targets.add(current);
+                current = null;
             }
         }
-        return new FunctionBodyStatement(resultVar, function, args.getArgs(), contractName);
+        if (ctx.SOL_LPAREN() == null) {
+            targets.add(current);
+        }
+        return targets;
     }
 
     @Override
@@ -361,7 +383,25 @@ public class SolidityToKeyConverter extends KeYSolidityDLParserBaseVisitor<Synta
 
     @Override
     public SyntaxElement visitExpressionStatement(ExpressionStatementContext ctx) {
-        return new ExpressionStatement(visitExpression(ctx.expression()));
+        Expression expression = visitExpression(ctx.expression());
+        if (expression instanceof AssignExpression assign
+                && assign.getOperator() == Operator.COPY_ASSIGN
+                && assign.getLeft() instanceof TupleExpression targets
+                && assign.getRight() instanceof TupleExpression values) {
+            return new Block(ParserUtils.tupleAssignment(
+                new ArrayList<>(targets.getExpressions().toList()),
+                values.getExpressions().toList(), false, this::tupleTemporary));
+        }
+        return new ExpressionStatement(expression);
+    }
+
+    private ProgramVariable tupleTemporary(Expression target) {
+        if (!(target instanceof ProgramVariable pv)) {
+            throw new SolidityParseException(
+                "A tuple assignment in a .key program only assigns local variables");
+        }
+        return new ProgramVariable(new Name(pv.name() + "_tuple"), pv.getKeYSolidityType(),
+            pv.getDataLocation());
     }
 
     @Override

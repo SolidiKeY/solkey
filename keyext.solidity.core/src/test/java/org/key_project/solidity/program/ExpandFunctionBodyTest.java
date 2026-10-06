@@ -26,6 +26,7 @@ import org.key_project.solidity.program.ast.statement.Statement;
 import org.key_project.solidity.rule.metaconstruct.ExpandFunctionBody;
 import org.key_project.solidity.rule.sv.SchemaVariableFactory;
 import org.key_project.solidity.rule.sv.sort.ProgramSVSort;
+import org.key_project.util.collection.ImmutableArray;
 
 import org.junit.jupiter.api.Test;
 
@@ -69,7 +70,8 @@ public class ExpandFunctionBodyTest {
             Visibility.Public, StateMutability.nonpayable, List.of(), "");
 
         FunctionBodyStatement fbs =
-            new FunctionBodyStatement(null, fn, List.<Expression>of(a));
+            new FunctionBodyStatement(List.of(), fn, new ImmutableArray<>(List.<Expression>of(a)),
+                null);
 
         // dummy transformer; the body argument is irrelevant for transform()
         ExpandFunctionBody transformer = new ExpandFunctionBody(

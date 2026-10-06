@@ -107,11 +107,15 @@ public final class SolidityProblemSynthesizer {
         for (SolidityOutline.Parameter parameter : parameters) {
             variables.add(parameter.keySort() + " " + parameter.name());
         }
-        String result = "";
-        if (!function.returns().isEmpty()) {
-            variables.add(function.returns().get(0).keySort() + " result");
-            result = "result = ";
+        List<String> results = new ArrayList<>();
+        for (SolidityOutline.Parameter ret : function.returns()) {
+            String variable = SpecCompiler.resultVariable(function, ret.name());
+            variables.add(ret.keySort() + " " + variable);
+            results.add(variable);
         }
+        String result = results.isEmpty() ? ""
+                : results.size() == 1 ? results.get(0) + " = "
+                        : "(" + String.join(", ", results) + ") = ";
         String call = result + spec.function() + "(" + arguments + ")@" + spec.contract() + ";";
         String options = spec.choices().isEmpty() ? ""
                 : spec.choices().stream()
