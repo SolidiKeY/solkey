@@ -337,9 +337,10 @@ public class SolJsonParserTest {
             ((StatementVariableDeclaration) ds.getDeclarations().get(0)).getProgramVariable();
         assertSame(Default, v.getDataLocation());
         assertSame(INT256, v.getType());
-        assertEquals(1, ds.getChildCount());
+        assertEquals(2, ds.getChildCount());
         assertInstanceOf(StatementVariableDeclaration.class, ds.getChild(0));
-        assertThrows(IndexOutOfBoundsException.class, () -> ds.getChild(1));
+        assertEquals("0", ds.getChild(1).toString());
+        assertThrows(IndexOutOfBoundsException.class, () -> ds.getChild(2));
     }
 
     @Test
@@ -1099,11 +1100,11 @@ public class SolJsonParserTest {
         assertEquals("string memory reason;", error.get(0).toString());
         assertSame(STRING, ((StatementVariableDeclaration) error.get(0).getChild(0))
                 .getProgramVariable().getType());
-        assertEquals("int j;", error.get(1).toString());
-        assertEquals("catch Error {\nstring memory reason;\nint j;\n}\n",
+        assertEquals("int j = 0;", error.get(1).toString());
+        assertEquals("catch Error {\nstring memory reason;\nint j = 0;\n}\n",
             errorClause.toString());
         Statement other = tryStmt.getCatchBody(CatchClause.Kind.Other);
-        assertEquals("{\nint k;\n}\n", other.toString());
+        assertEquals("{\nint k = 0;\n}\n", other.toString());
         assertSame(other, tryStmt.getCatchBody(CatchClause.Kind.Panic));
     }
 

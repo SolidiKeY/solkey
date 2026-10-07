@@ -304,7 +304,7 @@ public class SolidityToKeyConverter extends KeYSolidityDLParserBaseVisitor<Synta
             (FunctionCallArguments) visitFunctionCallArguments(ctx.functionCallArguments());
         FunctionDeclaration functionDeclaration = simpleFunctionCallTarget(ctx.expression());
         if (functionDeclaration != null) {
-            return callTo(functionDeclaration, args.getArgs());
+            return callTo(functionDeclaration, args);
         }
         Expression functionExp = visitExpression(ctx.expression());
         if (functionExp instanceof NewExpression newExp) {
@@ -323,13 +323,16 @@ public class SolidityToKeyConverter extends KeYSolidityDLParserBaseVisitor<Synta
         if (functionDeclaration == null) {
             reportError("Unknown function " + name, ctx.start);
         }
-        return callTo(functionDeclaration, args.getArgs());
+        return callTo(functionDeclaration, args);
     }
 
-    private static FunctionCallExpression callTo(FunctionDeclaration function,
-            ImmutableArray<Expression> args) {
+    private FunctionCallExpression callTo(FunctionDeclaration function,
+            FunctionCallArguments args) {
         FunctionReference functionRef = new FunctionReference(function, function.getType());
-        return new FunctionCallExpression(functionRef.getType(), functionRef, args);
+        List<String> parameters = function.getInputParameters().stream()
+                .map(parameter -> parameter.name().toString()).toList();
+        return new FunctionCallExpression(functionRef.getType(), functionRef,
+            ParserUtils.inParameterOrder(parameters, args.getNames(), args.getArgs().toList()));
     }
 
     private @Nullable FunctionDeclaration simpleFunctionCallTarget(ExpressionContext ctx) {
@@ -659,8 +662,15 @@ public class SolidityToKeyConverter extends KeYSolidityDLParserBaseVisitor<Synta
 
     @Override
     public SyntaxElement visitFunctionCallArguments(FunctionCallArgumentsContext ctx) {
+        if (ctx.SOL_LBRACE() == null) {
+            return new FunctionCallArguments(
+                (ExpressionList) visitExpressionList(ctx.expressionList()));
+        }
+        List<NameValueContext> named =
+            ctx.nameValueList() == null ? List.of() : ctx.nameValueList().nameValue();
         return new FunctionCallArguments(
-            (ExpressionList) visitExpressionList(ctx.expressionList()));
+            new ExpressionList(named.stream().map(nv -> visitExpression(nv.expression())).toList()),
+            named.stream().map(nv -> nv.identifier().getText()).toList());
     }
 
     @Override

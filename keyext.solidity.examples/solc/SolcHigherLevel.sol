@@ -31,6 +31,22 @@ contract SolcHigherLevelA is SolcHigherLevelRoot {
         return 1;
     }
 
+    function vf() internal pure returns (uint256 i) {
+        return vg();
+    }
+
+    function ivf() internal pure returns (uint256 i) {
+        return ivg();
+    }
+
+    function ivg() internal pure virtual returns (uint256 i) {
+        return 1;
+    }
+
+    function nf(uint256 a, uint256 b, uint256 c) internal pure virtual returns (uint256) {
+        return 1 * a + 2 * b + 3 * c;
+    }
+
     function mutability() internal virtual {
         mutableWithViewOverride();
         mutableWithPureOverride();
@@ -99,6 +115,14 @@ contract SolcHigherLevel is SolcHigherLevelA, SolcHigherLevelB, SolcHigherLevelP
 
     function vg() internal pure override returns (uint256 i) {
         return 2;
+    }
+
+    function ivg() internal pure override returns (uint256 i) {
+        return 2;
+    }
+
+    function nf(uint256 b, uint256 a, uint256 c) internal pure override returns (uint256) {
+        return 2 * b + 3 * a + 4 * c;
     }
 
     function parentFun() external pure override returns (uint256) {
@@ -344,5 +368,23 @@ contract SolcHigherLevel is SolcHigherLevelA, SolcHigherLevelB, SolcHigherLevelP
     function inheritedConstantStateVar() public pure {
         uint256 r = K;
         assert(r == 7);
+    }
+
+    /// solc: semanticTests/virtualFunctions/internal_virtual_function_calls.sol
+    function internalVirtualFunctionCalls() public pure {
+        uint256 r = ivf();
+        assert(r == 2);
+    }
+
+    /// solc: semanticTests/virtualFunctions/virtual_function_calls.sol
+    function virtualFunctionCallViaBase() public pure {
+        uint256 r = vf();
+        assert(r == 2);
+    }
+
+    /// solc: semanticTests/inheritance/inherited_function_named_parameters.sol
+    function inheritedNamedOverrideUnordered() public pure {
+        uint256 r = nf({c: 3, b: 1, a: 2});
+        assert(r == 20);
     }
 }

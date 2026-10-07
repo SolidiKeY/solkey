@@ -76,6 +76,11 @@ contract TestSuite {
     uint[][] matrix;
     uint[3] fixedValues;
     uint[3][] rows;
+    uint[9] copySource9;
+    uint[] copyTargetDyn;
+    uint[40] copyBig;
+    uint[20] copySmall;
+    uint localOut;
     mapping(uint => uint[3]) fixedByKey;
     Token[2] fixedTokens;
     mapping(uint => uint)[2] fixedMaps;
@@ -4116,5 +4121,56 @@ contract TestSuite {
     function payableAddressParameter(address payable p) public pure {
         require(p == 0x5B38Da6a701c568545dCfcB03FcB875f56beddC4);
         assert(p != address(0));
+    }
+
+    function digits(uint p, uint q, uint s) internal pure returns (uint r) {
+        r = p * 100 + q * 10 + s;
+    }
+
+    function namedArgumentsBindByName() public pure {
+        uint r = digits({q: 2, s: 3, p: 1});
+        assert(r == 123);
+    }
+
+    modifier keepsLocal(uint y) {
+        uint c = y;
+        _;
+        localOut = c;
+    }
+
+    function twiceKeepsLocal() internal keepsLocal(2) keepsLocal(5) {}
+
+    function modifierLocalsArePerApplication() public {
+        twiceKeepsLocal();
+        uint r = localOut;
+        assert(r == 2);
+    }
+
+    function uninitialisedLocalsAreDefault() public pure {
+        uint x;
+        bool b;
+        address addr;
+        assert(x == 0);
+        assert(!b);
+        assert(addr == address(0));
+    }
+
+    function storageStaticToDynamicCopyKeepsLength() public {
+        copySource9[8] = 4;
+        copyTargetDyn = copySource9;
+        uint n = copyTargetDyn.length;
+        uint r = copyTargetDyn[8];
+        assert(n == 9);
+        assert(r == 4);
+    }
+
+    function storageShorterStaticCopyClearsTail() public {
+        copyBig[30] = 4;
+        copySmall[3] = 8;
+        copyBig = copySmall;
+        uint head = copyBig[3];
+        uint tail = copyBig[30];
+        assert(head == 8);
+        assert(tail == 0);
     }
 }

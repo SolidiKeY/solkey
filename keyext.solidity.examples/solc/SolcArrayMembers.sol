@@ -62,6 +62,10 @@ contract SolcArrayMembers {
     uint[] dyn2;
     uint[] dynamicData;
     uint[] smallTypeData;
+    uint[9] staticData1;
+    uint[] staticData2;
+    uint[40] big;
+    uint[20] small;
     mapping(uint => mapping(uint => St[5])) multipleMap;
     uint[][][] src1;
     uint[][] dst1;
@@ -874,5 +878,28 @@ contract SolcArrayMembers {
         uint a1 = noArgsStruct[1].x;
         assert(a0 == 42);
         assert(a1 == 84);
+    }
+
+    /// solc: semanticTests/array/copying/array_copy_storage_storage_static_dynamic.sol
+    function copyStaticToDynamic() public {
+        staticData1[8] = 4;
+        staticData2 = staticData1;
+        uint x = staticData2.length;
+        uint y = staticData2[8];
+        assert(x == 9);
+        assert(y == 4);
+    }
+
+    /// solc: semanticTests/array/copying/array_copy_storage_storage_static_static.sol
+    function copyStaticToLargerStatic() public {
+        big[30] = 4;
+        big[2] = 7;
+        big[3] = 9;
+        small[3] = 8;
+        big = small;
+        uint x = big[3];
+        uint y = big[30];
+        assert(x == 8);
+        assert(y == 0);
     }
 }

@@ -217,31 +217,6 @@ contract SolcArrayMembersOpen {
         assert(d == 5);
     }
 
-    // open: copying a uint[9] storage array into a uint[] storage array leaves the copy's length unknown instead of 9
-    /// solc: semanticTests/array/copying/array_copy_storage_storage_static_dynamic.sol
-    function copyStaticToDynamic() public {
-        staticData1[8] = 4;
-        staticData2 = staticData1;
-        uint x = staticData2.length;
-        uint y = staticData2[8];
-        assert(x == 9);
-        assert(y == 4);
-    }
-
-    // open: copying a uint[20] into a uint[40] storage array does not clear the tail; big[30] reads small[30]
-    /// solc: semanticTests/array/copying/array_copy_storage_storage_static_static.sol
-    function copyStaticToLargerStatic() public {
-        big[30] = 4;
-        big[2] = 7;
-        big[3] = 9;
-        small[3] = 8;
-        big = small;
-        uint x = big[3];
-        uint y = big[30];
-        assert(x == 8);
-        assert(y == 0);
-    }
-
     // open: the pushed inner arrays start from an unknown length, so the two row lengths are unrelated
     /// solc: smtCheckerTests/array_members/length_1d_assignment_2d_storage_to_storage.sol
     /// @custom:key box

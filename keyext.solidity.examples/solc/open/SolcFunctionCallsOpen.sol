@@ -12,22 +12,6 @@ contract SolcFunctionCallsOpen {
         r = p * 100 + q * 10 + s * 1;
     }
 
-    /// solc: semanticTests/functionCall/named_args.sol
-    // open: named arguments are bound in call order, not by name, so the call computes 231
-    function namedArgsUnordered() public pure {
-        uint internalUnordered = internalFunction({q: 2, s: 3, p: 1});
-        uint publicUnordered = publicFunction({q: 2, s: 3, p: 1});
-        assert(internalUnordered == 123);
-        assert(publicUnordered == 123);
-    }
-
-    /// solc: semanticTests/functionCall/disordered_named_args.sol
-    // open: named arguments are bound in call order, not by name, so the call computes 312
-    function disorderedNamedArgs() public pure {
-        uint r = publicFunction({s: 3, p: 1, q: 2});
-        assert(r == 123);
-    }
-
     function exp(uint base, uint exponent) internal pure returns (uint power) {
         if (exponent == 0)
             return 1;

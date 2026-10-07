@@ -6,6 +6,7 @@ package org.key_project.solidity.program.ast.references;
 import java.util.HashMap;
 import java.util.Objects;
 
+import org.key_project.logic.Name;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.program.ast.LeafProgramElement;
 import org.key_project.solidity.program.ast.Resolver;
@@ -23,6 +24,7 @@ public class FunctionReference extends SolidityExpression
 
     public final int id;
     private @Nullable FunctionDeclaration referencedDeclaration;
+    private final @Nullable Name dispatchContract;
 
     public @Nullable FunctionDeclaration getReferencedDeclaration() {
         return referencedDeclaration;
@@ -32,12 +34,23 @@ public class FunctionReference extends SolidityExpression
         super(type);
         this.id = id;
         this.referencedDeclaration = null;
+        this.dispatchContract = null;
     }
 
     public FunctionReference(@Nullable FunctionDeclaration referencedDeclaration, Type type) {
+        this(referencedDeclaration, type, null);
+    }
+
+    public FunctionReference(@Nullable FunctionDeclaration referencedDeclaration, Type type,
+            @Nullable Name dispatchContract) {
         super(type);
         this.referencedDeclaration = referencedDeclaration;
         this.id = -1;
+        this.dispatchContract = dispatchContract;
+    }
+
+    public @Nullable Name getDispatchContract() {
+        return dispatchContract;
     }
 
     @Override

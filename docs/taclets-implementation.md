@@ -134,6 +134,15 @@ Notes that are not derivable from the rule names:
   `lsv = sp` stay legal), and both parsers reject `memory` declarations of
   mapping-carrying types (`StorageReferenceTypes.containsMapping`). The copy
   taclets themselves stay unconditional — the illegal shapes never reach them.
+- A whole-array copy keeps lengths and clears the tail. `findDefinitionMemberValueFixed` reads
+  a fixed-size state array as `typed(fieldShape(ff), …)`, so the copied value carries its length
+  (`d2 = d1` with `uint[9] d1` gives `d2.length == 9`), and `selectOnSaveEmptyFixed` types a
+  copied fixed-size member the same way. `selectOnTypedSaveEmptyIndexPrim` reads an element of a
+  copy from a fixed-size source of `n` primitive elements in three cases, as
+  `selectOnSaveEmptyIndexStruct` does for structs: below `n` the source element, below the
+  target size the default, else the old element (`uint[40] big = uint[20] small` zeroes
+  `big[30]`). It is in `concrete` so it fires before `selectOnTypedElement` drops the target's
+  `typed`; restricting it to fixed-size sources keeps other reads of a saved value unsplit.
 
 ### Increment / decrement (`++`/`--`, pre/post, plain and `result = …`)
 Direct storage updates (no program-level desugaring), e.g. `++age;` ⇝
@@ -939,6 +948,23 @@ every library before the contracts:
   `storage` local, so a struct, array or mapping passed by reference is written through.
 - A bodiless function is never inlined; a bodiless modifier has an empty body, without `_;`, so
   it is not inlined either.
+
+**Binding, locals and dispatch.**
+
+- Named arguments `f({q: 2, p: 1})` are put in the callee's parameter order by both parsers
+  (`ParserUtils.inParameterOrder`), from the parameter names `SolJSONParser` records per
+  function.
+- Every inlining declares fresh copies of the locals of the inlined body
+  (`ModifierInlining.freshenLocals`), for a function body and for each modifier application, so
+  `h() m(2) m(5)` keeps two copies of `m`'s locals.
+- A local of value type declared without an initializer gets its default (`0`, `false`,
+  `address(0)`, the first enum member) as initializer in `SolJSONParser`
+  (`ParserUtils.defaultValue`).
+- Internal calls dispatch virtually. `SolJSONParser` gives each contract an override table
+  from solc's `linearizedBaseContracts` and `baseFunctions` (`ContractDeclaration.dispatch`);
+  `ExpandFunctionBody` inlines the obligation contract's override and tags the calls in the
+  inlined body with that contract (`FunctionReference.getDispatchContract`), so a call from a
+  base function reaches the derived override at any depth.
 
 Examples: the functions of the "Constants, file-level declarations and libraries" and
 "Parameters and modifiers" sections of `TestSuite.sol`.

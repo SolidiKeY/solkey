@@ -238,6 +238,8 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `smtCheckerTests/array_members/length_same_after_assignment_2.sol` | `lengthSameAfterElementWrite` |
 | `smtCheckerTests/array_members/length_same_after_assignment_3.sol` | `lengthSameAfterRowCopy` |
 | `semanticTests/array/push/array_push_nested.sol` | `pushNested` |
+| `semanticTests/array/copying/array_copy_storage_storage_static_dynamic.sol` | `copyStaticToDynamic` |
+| `semanticTests/array/copying/array_copy_storage_storage_static_static.sol` | `copyStaticToLargerStatic` |
 
 ### `SolcFunctionCalls.sol`
 
@@ -271,6 +273,8 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `smtCheckerTests/functions/internal_call_with_assertion_1.sol` | `internalCallWithAssertion` |
 | `smtCheckerTests/functions/internal_multiple_calls_with_assertion_1.sol` | `internalMultipleCallsWithAssertion` |
 | `smtCheckerTests/functions/functions_library_1.sol` | `functionsLibrary1` |
+| `semanticTests/functionCall/named_args.sol` | `namedArgsUnordered` |
+| `semanticTests/functionCall/disordered_named_args.sol` | `disorderedNamedArgs` |
 
 ### `SolcStructsMappings.sol`
 
@@ -434,6 +438,7 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `smtCheckerTests/modifiers/modifier_assignment_outside_branch.sol` | `smtAssignmentOutsideBranch` |
 | `smtCheckerTests/modifiers/modifier_code_after_placeholder.sol` | `smtCodeAfterPlaceholder` |
 | `semanticTests/modifiers/function_modifier_library.sol` | `storageModifierParameter` |
+| `semanticTests/modifiers/function_modifier_multiple_times_local_vars.sol` | `modifierMultipleTimesLocalVars` |
 
 ### `SolcSmtControlFlow.sol`
 
@@ -575,6 +580,9 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `semanticTests/getters/array_mapping_struct.sol` | `getterArrayMappingStruct` |
 | `semanticTests/getters/arrays.sol` | `getterArrays` |
 | `semanticTests/inheritance/inherited_constant_state_var.sol` | `inheritedConstantStateVar` |
+| `semanticTests/virtualFunctions/internal_virtual_function_calls.sol` | `internalVirtualFunctionCalls` |
+| `semanticTests/virtualFunctions/virtual_function_calls.sol` | `virtualFunctionCallViaBase` |
+| `semanticTests/inheritance/inherited_function_named_parameters.sol` | `inheritedNamedOverrideUnordered` |
 
 ### `SolcTypes.sol`
 
@@ -655,8 +663,6 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `storagePointerPush` | `smtCheckerTests/array_members/storage_pointer_push_1.sol` | push() on the storage reference an internal call returns (f().push()) is stuck on the program text |
 | `popIsolated` | `semanticTests/array/pop/array_pop_isolated.sol` | the bare member access popIso.pop; as a statement is stuck on the program text |
 | `pushStructFromMemory` | `semanticTests/array/push/array_push_struct.sol` | push(s) of a memory struct onto a storage array of structs is stuck on the program text |
-| `copyStaticToDynamic` | `semanticTests/array/copying/array_copy_storage_storage_static_dynamic.sol` | copying a uint[9] storage array into a uint[] storage array leaves the copy's length unknown instead of 9 |
-| `copyStaticToLargerStatic` | `semanticTests/array/copying/array_copy_storage_storage_static_static.sol` | copying a uint[20] into a uint[40] storage array does not clear the tail; big[30] reads small[30] |
 | `length2dStorageToStorage` | `smtCheckerTests/array_members/length_1d_assignment_2d_storage_to_storage.sol` | the pushed inner arrays start from an unknown length, so the two row lengths are unrelated |
 | `memoryMultipleDynamic` | `semanticTests/array/create_multiple_dynamic_arrays.sol` | closes only with -m 100000 (about 25 s); the default step budget runs out before the last asserts |
 
@@ -664,8 +670,6 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 
 | Function | Upstream (`test/libsolidity/`) | Why it stays open |
 |---|---|---|
-| `namedArgsUnordered` | `semanticTests/functionCall/named_args.sol` | named arguments are bound in call order, not by name, so the call computes 231 |
-| `disorderedNamedArgs` | `semanticTests/functionCall/disordered_named_args.sol` | named arguments are bound in call order, not by name, so the call computes 312 |
 | `freeFunctionRecursionBitAnd` | `semanticTests/freeFunctions/recursion.sol` | no rule for the bitwise `&` |
 | `conditionalWithArguments` | `semanticTests/functionCall/conditional_with_arguments.sol` | a call whose callee is a conditional expression is read as `false ? g : h(2, 1)` and gets stuck |
 | `functionsStorageVar1` | `smtCheckerTests/functions/functions_storage_var_1.sol` | no rule for an assignment used as a value, `a = (y = v)` |
@@ -722,7 +726,6 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 
 | Function | Upstream (`test/libsolidity/`) | Why it stays open |
 |---|---|---|
-| `modifierMultipleTimesLocalVars` | `semanticTests/modifiers/function_modifier_multiple_times_local_vars.sol` | nested applications of one modifier share its local b, so the outer assert(b == y) reads the inner b |
 | `modifierArgumentEvaluationOrder` | `semanticTests/modifiers/evaluation_order.sol` | a function call as a modifier argument stays stuck as an unresolved fn#id(...) declaration |
 | `modifierArgumentAssignsReturn` | `semanticTests/modifiers/function_modifier_return_reference.sol` | an assignment expression used as a modifier argument has no rule |
 | `breakInModifier` | `semanticTests/modifiers/break_in_modifier.sol` | a for loop in a modifier body is not lowered, so no loop rule matches it |
@@ -783,12 +786,9 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 
 | Function | Upstream (`test/libsolidity/`) | Why it stays open |
 |---|---|---|
-| `internalVirtualFunctionCalls` | `semanticTests/virtualFunctions/internal_virtual_function_calls.sol` | a call from a base function binds the base's own g() statically, so the result is 1, not the override's 2 |
-| `virtualFunctionCallViaBase` | `semanticTests/virtualFunctions/virtual_function_calls.sol` | a call from a base function binds the base's own g() statically, so the result is 1, not the override's 2 |
 | `explicitBaseClass` | `semanticTests/inheritance/explicit_base_class.sol` | a base-qualified call BaseBase.g() is lowered to address.g() and has no rule |
 | `inheritedFunction` | `semanticTests/inheritance/inherited_function.sol` | a base-qualified call A.f() is lowered to address.f() and has no rule |
 | `inheritedNamedBaseOrdered` | `semanticTests/inheritance/inherited_function_named_parameters.sol` | a base-qualified call A.f(...) is lowered to address.f(...) and has no rule |
-| `inheritedNamedOverrideUnordered` | `semanticTests/inheritance/inherited_function_named_parameters.sol` | named arguments are bound in call order, not by name, so the call computes 17 |
 | `overriddenFunctionStaticCallParent` | `smtCheckerTests/inheritance/overridden_function_static_call_parent.sol` | a base-qualified call BaseBase.init(c, d) is lowered to address.init(c, d) and has no rule |
 
 ### `open/SolcTypesOpen.sol`

@@ -60,6 +60,7 @@ public class SolJSONParser {
     private final HashMap<Integer, SyntaxElement> id2Name = new HashMap<>();
 
     private final HashMap<Integer, Type> functionId2Type = new HashMap<>();
+    private final Map<Integer, List<String>> parameterNames = new HashMap<>();
     private final Set<Integer> contractIds = new HashSet<>();
     private final Set<Integer> libraryIds = new HashSet<>();
     private final Set<Integer> valueTypeIds = new HashSet<>();
@@ -152,12 +153,69 @@ public class SolJSONParser {
                     node.get("name").asString());
             }
         }
-        return nodes.stream()
+        List<SyntaxElement> contracts = nodes.stream()
                 // skip non-contract top-level nodes (e.g. PragmaDirective, ImportDirective)
                 .filter(n -> n.get("contractKind") != null
                         && "contract".equals(n.get("contractKind").asString()))
                 .map(this::parseContract)
                 .collect(Collectors.toList());
+        registerOverrides(nodes);
+        return contracts;
+    }
+
+    private void registerOverrides(List<JsonNode> nodes) {
+        Map<Integer, JsonNode> contractNodes = new HashMap<>();
+        for (JsonNode node : nodes) {
+            if ("ContractDefinition".equals(node.get("nodeType").asString())) {
+                contractNodes.put(node.get("id").asInt(), node);
+            }
+        }
+        Map<Integer, List<Integer>> baseFunctions = baseFunctions(contractNodes.values());
+        for (JsonNode node : contractNodes.values()) {
+            if (!(id2Name.get(node.get("id").asInt()) instanceof ContractDeclaration contract)) {
+                continue;
+            }
+            for (JsonNode base : node.get("linearizedBaseContracts").values()) {
+                JsonNode baseNode = contractNodes.get(base.asInt());
+                for (JsonNode member : baseNode == null ? List.<JsonNode>of()
+                        : baseNode.get("nodes").values()) {
+                    int id = member.get("id").asInt();
+                    if (id2Name.get(id) instanceof FunctionDeclaration implementation) {
+                        for (int overridden : overriddenBy(id, baseFunctions)) {
+                            if (id2Name.get(overridden) instanceof FunctionDeclaration function) {
+                                contract.addOverride(function, implementation);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static Map<Integer, List<Integer>> baseFunctions(Collection<JsonNode> contracts) {
+        Map<Integer, List<Integer>> baseFunctions = new HashMap<>();
+        for (JsonNode contract : contracts) {
+            for (JsonNode member : contract.get("nodes").values()) {
+                if (member.has("baseFunctions")) {
+                    baseFunctions.put(member.get("id").asInt(), member.get("baseFunctions")
+                            .valueStream().map(JsonNode::asInt).toList());
+                }
+            }
+        }
+        return baseFunctions;
+    }
+
+    private static Set<Integer> overriddenBy(int function,
+            Map<Integer, List<Integer>> baseFunctions) {
+        Set<Integer> overridden = new HashSet<>();
+        Deque<Integer> pending = new ArrayDeque<>(baseFunctions.getOrDefault(function, List.of()));
+        while (!pending.isEmpty()) {
+            int base = pending.pop();
+            if (overridden.add(base)) {
+                pending.addAll(baseFunctions.getOrDefault(base, List.of()));
+            }
+        }
+        return overridden;
     }
 
     private void parseFreeDeclarations(List<JsonNode> nodes, @Nullable String library) {
@@ -183,8 +241,7 @@ public class SolJSONParser {
         }
         for (JsonNode node : functionNodes) {
             freeFunctionIds.add(node.get("id").asInt());
-            functionId2Type.put(node.get("id").asInt(),
-                returnType(parseParameters(node.get("returnParameters"))));
+            registerSignature(node);
         }
         for (JsonNode node : functionNodes) {
             completeReferences(parseFunction(node));
@@ -270,8 +327,7 @@ public class SolJSONParser {
             }
         }
         for (JsonNode node : functionNodes) {
-            functionId2Type.put(node.get("id").asInt(),
-                returnType(parseParameters(node.get("returnParameters"))));
+            registerSignature(node);
         }
         for (JsonNode node : modifierNodes) {
             modifiers.add(parseModifier(node));
@@ -451,6 +507,13 @@ public class SolJSONParser {
             inputParamenters, body, kind, visibility, stateMutability, modifiers, documentation));
     }
 
+    private void registerSignature(JsonNode functionNode) {
+        int id = functionNode.get("id").asInt();
+        functionId2Type.put(id, returnType(parseParameters(functionNode.get("returnParameters"))));
+        parameterNames.put(id, functionNode.get("parameters").get("parameters").valueStream()
+                .map(parameter -> parameter.get("name").asString()).toList());
+    }
+
     private static Type returnType(List<ProgramVariable> returnParameters) {
         return switch (returnParameters.size()) {
             case 0 -> VOID;
@@ -607,6 +670,10 @@ public class SolJSONParser {
             List<Declaration> declarations = statement.get("declarations").valueStream()
                     .map(this::parseDeclaration).toList();
             Expression initialValue = findOrNullExpression(statement, "initialValue");
+            if (initialValue == null && declarations.size() == 1
+                    && declarations.getFirst() instanceof StatementVariableDeclaration local) {
+                initialValue = ParserUtils.defaultValue(local.getProgramVariable().getType());
+            }
             return new DeclarationStatement(declarations, initialValue);
         } else if (statement.has("condition")) {
             Expression condition = parseExpression(statement.get("condition"));
@@ -963,8 +1030,8 @@ public class SolJSONParser {
             return parseExpression(initializer.get("arguments").get(0));
         }
         JsonNode expNode = initializer.get("expression");
-        List<Expression> arguments =
-            initializer.get("arguments").valueStream().map(this::parseExpression).toList();
+        List<Expression> arguments = inParameterOrder(expNode, initializer.get("names"),
+            initializer.get("arguments").valueStream().map(this::parseExpression).toList());
         if (isIdentityConversion(expNode)) {
             return arguments.getFirst();
         }
@@ -984,6 +1051,22 @@ public class SolJSONParser {
         Expression functionExp = parseExpression(expNode);
         Type callType = inferFunctionCallType(initializer, expNode, functionExp, arguments);
         return new FunctionCallExpression(callType, functionExp, arguments);
+    }
+
+    private List<Expression> inParameterOrder(JsonNode callee, @Nullable JsonNode namesNode,
+            List<Expression> arguments) {
+        List<String> names = namesNode == null || namesNode.isNull() ? List.of()
+                : namesNode.valueStream().map(JsonNode::asString).toList();
+        if (names.isEmpty()) {
+            return arguments;
+        }
+        JsonNode reference = callee.get("referencedDeclaration");
+        List<String> parameters = reference == null || reference.isNull() ? null
+                : parameterNames.get(reference.asInt());
+        if (parameters == null) {
+            throw new SolidityParseException("Named arguments to an unknown callee", callee);
+        }
+        return ParserUtils.inParameterOrder(parameters, names, arguments);
     }
 
     private boolean isIdentityConversion(JsonNode expNode) {

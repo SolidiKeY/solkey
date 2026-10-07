@@ -68,6 +68,20 @@ contract SolcModifiers is SolcModifiersB, SolcModifiersC {
     address owner;
     S s;
 
+    modifier addThenRemove(uint y) {
+        uint b = y;
+        a += b;
+        _;
+        a -= b;
+        assert(b == y);
+    }
+
+    function sumOfLocals(uint y) internal addThenRemove(2) addThenRemove(5) addThenRemove(y)
+        returns (uint)
+    {
+        return a;
+    }
+
     modifier incV(S storage t) {
         t.v++;
         _;
@@ -571,5 +585,15 @@ contract SolcModifiers is SolcModifiersB, SolcModifiersC {
         addHundred(s);
         addHundred(s);
         assert(s.v == 0x202);
+    }
+
+    /// solc: semanticTests/modifiers/function_modifier_multiple_times_local_vars.sol
+    /// @custom:key box
+    function modifierMultipleTimesLocalVars(uint y) public {
+        require(y == 3);
+        a = 0;
+        uint r = sumOfLocals(y);
+        assert(r == 10);
+        assert(a == 0);
     }
 }

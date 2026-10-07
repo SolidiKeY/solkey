@@ -27,6 +27,8 @@ import static org.key_project.solidity.program.parser.SolcAst.text;
 /// function to prove. This scan closes that circle.
 public record SolidityOutline(List<Contract> contracts) {
 
+    private static final String INT_CONST = "int_const ";
+
     /// A range of the source file, as solc reports it in a node's `src` field.
     ///
     /// solc counts **bytes**, not characters, so a file with a non-ASCII comment above a function
@@ -90,8 +92,12 @@ public record SolidityOutline(List<Contract> contracts) {
         }
     }
 
-    /// A state variable or struct member: its name and solc's `typeString`.
-    public record Variable(String name, String type) {
+    /// A state variable or struct member: its name, solc's `typeString` and, for a constant
+    /// whose value solc folds to an integer, that integer.
+    public record Variable(String name, String type, @Nullable String constantValue) {
+        public Variable(String name, String type) {
+            this(name, type, null);
+        }
     }
 
     /// `documentation` is the contract's natspec comment, which carries the contract invariant;
@@ -264,7 +270,17 @@ public record SolidityOutline(List<Contract> contracts) {
     }
 
     private static Variable variableOf(JsonNode node) {
-        return new Variable(text(node, "name"), text(node.get("typeDescriptions"), "typeString"));
+        return new Variable(text(node, "name"), text(node.get("typeDescriptions"), "typeString"),
+            constantValue(node));
+    }
+
+    private static @Nullable String constantValue(JsonNode node) {
+        JsonNode value = node.get("value");
+        if (!node.path("constant").asBoolean(false) || value == null || value.isNull()) {
+            return null;
+        }
+        String typeString = text(value.get("typeDescriptions"), "typeString");
+        return typeString.startsWith(INT_CONST) ? typeString.substring(INT_CONST.length()) : null;
     }
 
     private static List<Function> functionsOf(JsonNode contract) {

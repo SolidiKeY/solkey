@@ -208,7 +208,8 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
 
     @Override
     public void performActionOnFunctionReference(FunctionReference x) {
-        rebuild(x, changeList -> new FunctionReference(x.getReferencedDeclaration(), x.getType()));
+        rebuild(x, changeList -> new FunctionReference(x.getReferencedDeclaration(), x.getType(),
+            x.getDispatchContract()));
     }
 
     @Override

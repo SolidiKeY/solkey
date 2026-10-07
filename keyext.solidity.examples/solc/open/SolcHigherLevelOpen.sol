@@ -59,20 +59,6 @@ contract SolcHigherLevelOpen is SolcHigherLevelOpenBase {
         return 2;
     }
 
-    /// solc: semanticTests/virtualFunctions/internal_virtual_function_calls.sol
-    // open: a call from a base function binds the base's own g() statically, so the result is 1, not the override's 2
-    function internalVirtualFunctionCalls() public pure {
-        uint256 r = ivf();
-        assert(r == 2);
-    }
-
-    /// solc: semanticTests/virtualFunctions/virtual_function_calls.sol
-    // open: a call from a base function binds the base's own g() statically, so the result is 1, not the override's 2
-    function virtualFunctionCallViaBase() public pure {
-        uint256 r = vf();
-        assert(r == 2);
-    }
-
     /// solc: semanticTests/inheritance/explicit_base_class.sol
     // open: a base-qualified call BaseBase.g() is lowered to address.g() and has no rule
     function explicitBaseClass() public pure {
@@ -94,13 +80,6 @@ contract SolcHigherLevelOpen is SolcHigherLevelOpenBase {
     function inheritedNamedBaseOrdered() public pure {
         uint256 r = SolcHigherLevelOpenBaseBase.nf({a: 1, b: 2, c: 3});
         assert(r == 14);
-    }
-
-    /// solc: semanticTests/inheritance/inherited_function_named_parameters.sol
-    // open: named arguments are bound in call order, not by name, so the call computes 17
-    function inheritedNamedOverrideUnordered() public pure {
-        uint256 r = nf({c: 3, b: 1, a: 2});
-        assert(r == 20);
     }
 
     /// solc: smtCheckerTests/inheritance/overridden_function_static_call_parent.sol

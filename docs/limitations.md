@@ -18,9 +18,10 @@ runtime check skips the contract, true by the language definition).
 | real-world (OpenZeppelin, solmate, Solidity docs, Solidity by Example) | 22 + 3 open | 75 | 6 | no failing `assert` |
 | benchmark (published as published) | 6 added | 37/39 obligations | — | compiles, no asserts |
 
-Defects found (all in `docs/bugs.md`): **5 that prove something false**, 10 crash families
+Defects found (all in `docs/bugs.md` until fixed): **5 that prove something false** (three
+since fixed), 10 crash families
 (one of them in the `--solc` harness; all since fixed), 1 stuck-on-program-text gap and 10 true
-facts that cannot be proved (two since fixed). Of the 14 porting agents, 6 independently hit the `ClassCastException` on indexing a
+facts that cannot be proved (five since fixed). Of the 14 porting agents, 6 independently hit the `ClassCastException` on indexing a
 parameter, and 10 hit a `NullPointerException` at the same line, `SolJSONParser.java:1079`.
 
 ## (c) Genuine bugs
@@ -31,9 +32,9 @@ These close in KeY and fail with `Panic(0x01)` on the EVM. Each is a soundness b
 
 | Bug | Minimal reproducer | Where found |
 |---|---|---|
-| **Named arguments bind by position.** `parseFunctionCall` ignores the call's `names` | `digits({q: 2, s: 3, p: 1})` with `r = p*100 + q*10 + s` proves `r == 231` (true value 123) | `functionCall/named_args.sol`, `disordered_named_args.sol` |
-| **Nested applications of one modifier share its body locals.** `ModifierInlining` renames only parameters | `modifier m(uint y) { uint c = y; _; x = c; }` on `h() m(2) m(5)` proves `x == 5` (true: 2) | `modifiers/function_modifier_multiple_times_local_vars.sol` |
-| **A virtual call made inside a base-contract function is bound to the base implementation** | base `callsG() { return g(); }`, derived override `g()` returns 2; KeY proves `callsG() == 1` | `virtualFunctions/internal_virtual_function_calls.sol`, `virtual_function_calls.sol` |
+| *(fixed)* **Named arguments bind by position.** `parseFunctionCall` ignores the call's `names` | `digits({q: 2, s: 3, p: 1})` with `r = p*100 + q*10 + s` proves `r == 231` (true value 123) | `functionCall/named_args.sol`, `disordered_named_args.sol` |
+| *(fixed)* **Nested applications of one modifier share its body locals.** `ModifierInlining` renames only parameters | `modifier m(uint y) { uint c = y; _; x = c; }` on `h() m(2) m(5)` proves `x == 5` (true: 2) | `modifiers/function_modifier_multiple_times_local_vars.sol` |
+| *(fixed)* **A virtual call made inside a base-contract function is bound to the base implementation** | base `callsG() { return g(); }`, derived override `g()` returns 2; KeY proves `callsG() == 1` | `virtualFunctions/internal_virtual_function_calls.sol`, `virtual_function_calls.sol` |
 | **Elementary type conversions are the identity** (`uint16(x)`, `int8(x)`, `uint(int(-1))`). `SolJSONParser` returns the argument unchanged | `uint32 p = 0x12345678; uint16 q = uint16(p); assert(q == 0x12345678);` closes | 7 `typecast/` and `types/` tests (downcast, same_size, upcast, packing_signed_types, …) |
 | **`try` and `call{value}` assume the callee leaves the caller's storage alone** (default `transferSemantics:noCallback`), even when the callee is the contract itself; the gas-stipend argument holds for `transfer` only | `try C(p).setIx() { assert(ix == 0); }` with `p` the contract itself, `setIx` writing 42 | `try_catch/try_2.sol`, `receive/empty_calldata_calls_receive.sol` |
 
@@ -64,13 +65,13 @@ it.
 
 | Gap | Reproducer (open goal) | Reports |
 |---|---|---|
-| A local declared without an initializer is unconstrained (`valueDeclSkip` binds no default) | `uint x; assert(x == 0);` → `==> x = 0`; `bool b;` and `address a;` alike | 4 (loops, constructors, payments, smt control flow); ≥ 10 upstream tests |
+| *(fixed)* A local declared without an initializer is unconstrained (`valueDeclSkip` binds no default) | `uint x; assert(x == 0);` → `==> x = 0`; `bool b;` and `address a;` alike | 4 (loops, constructors, payments, smt control flow); ≥ 10 upstream tests |
 | A variable mentioned only in a loop invariant loses its value (`DropEffectlessElementaries` does not see `LoopSpec` bindings) | `uint i = 7; /// invariant j <= n && i == 7` → `==> i = 7` | 2; `dynamic_arrays_in_storage.sol`, `ArrayRemoveByShifting` |
 | `sdiv`/`smod` on symbolic operands get no bounds (default arithmetic mode `NON_LIN_ARITH_NONE`; `smod_*` lemmas have no heuristics) | `require(b >= 1); assert(a % b < b);` → `geq(smod(a,b), b) ==>` | 2; `mod_n`, `mod_signed`, `mod_even`, OZ `Math.tryDiv/tryMod/ceilDiv` |
 | Parameters carry no type range (`uint >= 0`, `uintN < 2^N`, enum `< #members`) | `function g(uint x) { assert(x >= 0); }` → `leq(x, -1) ==>` | 4; known (Tier 3/5 of `taclet-ideas.md`) |
 | `msg.value`/`msg.sender` carry no range; the non-payable `msg.value == 0` is assumed only in specified obligations | `function u() payable { assert(msg.value >= 0); }` → `leq(msgValue, -1) ==>` | 3; `msg_value_*`, `range_check.sol`, `payable_1.sol` |
-| Static → dynamic storage array copy loses the length | `uint[9] d1; uint[] d2; d2 = d1; assert(d2.length == 9)` | `array_copy_storage_storage_static_dynamic.sol` |
-| A shorter static array copied into a longer one leaves the tail | `big[30] = 4; big = small; assert(big[30] == 0)` | `array_copy_storage_storage_static_static.sol` |
+| *(fixed)* Static → dynamic storage array copy loses the length | `uint[9] d1; uint[] d2; d2 = d1; assert(d2.length == 9)` | `array_copy_storage_storage_static_dynamic.sol` |
+| *(fixed)* A shorter static array copied into a longer one leaves the tail | `big[30] = 4; big = small; assert(big[30] == 0)` | `array_copy_storage_storage_static_static.sol` |
 | A succedent `\exists` whose body has a nested quantifier is never instantiated (`ex_pull_out*` have no heuristics) | `ensures \exists w; … && (\forall i; … vals[i] <= vals[w])` with witness `k` | voting.rst `Ballot.winnerName` |
 
 ## (a) Design limitations of the model

@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.ghost;
 
+import java.util.List;
+
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.util.collection.ImmutableArray;
 
@@ -10,8 +12,19 @@ import org.jspecify.annotations.NonNull;
 
 public class FunctionCallArguments extends ElementList<@NonNull Expression> {
 
+    private final List<String> names;
+
     public FunctionCallArguments(ExpressionList expList) {
+        this(expList, List.of());
+    }
+
+    public FunctionCallArguments(ExpressionList expList, List<String> names) {
         super(expList.getExpressions());
+        this.names = names;
+    }
+
+    public List<String> getNames() {
+        return names;
     }
 
     public ImmutableArray<@NonNull Expression> getArgs() {

@@ -3,7 +3,9 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.program.ast.declarations;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -22,6 +24,7 @@ public class ContractDeclaration implements Declaration, Type {
     private final ImmutableArray<FunctionDeclaration> functions;
     private final ImmutableArray<EnumDeclaration> enums;
     private final Name name;
+    private final Map<FunctionDeclaration, FunctionDeclaration> overrides = new HashMap<>();
 
     public ContractDeclaration(Name name, List<StateVariableDeclaration> fields,
             List<StructDeclaration> structs,
@@ -33,6 +36,14 @@ public class ContractDeclaration implements Declaration, Type {
         this.modifiers = new ImmutableArray<>(modifiers);
         this.functions = new ImmutableArray<>(functions);
         this.enums = new ImmutableArray<>(enums);
+    }
+
+    public void addOverride(FunctionDeclaration base, FunctionDeclaration implementation) {
+        overrides.putIfAbsent(base, implementation);
+    }
+
+    public FunctionDeclaration dispatch(FunctionDeclaration function) {
+        return overrides.getOrDefault(function, function);
     }
 
     public ImmutableArray<StateVariableDeclaration> getFieldDeclarations() {

@@ -502,4 +502,18 @@ contract SolcFunctionCalls {
         uint w = addBounded(v, 999);
         assert(w < 10000);
     }
+
+    /// solc: semanticTests/functionCall/named_args.sol
+    function namedArgsUnordered() public pure {
+        uint internalUnordered = internalFunction({q: 2, s: 3, p: 1});
+        uint publicUnordered = publicFunction({q: 2, s: 3, p: 1});
+        assert(internalUnordered == 123);
+        assert(publicUnordered == 123);
+    }
+
+    /// solc: semanticTests/functionCall/disordered_named_args.sol
+    function disorderedNamedArgs() public pure {
+        uint r = publicFunction({s: 3, p: 1, q: 2});
+        assert(r == 123);
+    }
 }

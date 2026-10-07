@@ -32,7 +32,8 @@ public class SpecCompilerTest {
             new Variable("bidded", "mapping(address => bool)"),
             new Variable("bidders", "address[] storage ref"),
             new Variable("acc", "struct C.Account storage ref"),
-            new Variable("grid", "mapping(uint256 => mapping(uint256 => uint256))")),
+            new Variable("grid", "mapping(uint256 => mapping(uint256 => uint256))"),
+            new Variable("TARGET", "uint256", "7000000000000000000")),
         Map.of("State", List.of("Open", "Closed")),
         Map.of("Account", List.of(new Variable("id", "uint256"), new Variable("live", "bool"))),
         List.of(DEPOSIT));
@@ -66,6 +67,8 @@ public class SpecCompilerTest {
             invariant("acc.live"));
         assertEquals("(find<[int]>(s, cons3(C$grid, at(1), at(2))) = 3)",
             invariant("grid[1][2] == 3"));
+        assertEquals("(find<[int]>(s, cons1(C$n)) <= 7000000000000000000)",
+            invariant("n <= TARGET"));
     }
 
     @Test

@@ -75,6 +75,10 @@ public class FunctionBodyStatement implements Statement {
         this.contractName = template.contractName;
     }
 
+    public @Nullable Name getContractName() {
+        return contractName;
+    }
+
     public List<@Nullable Expression> getTargets() {
         return targets;
     }

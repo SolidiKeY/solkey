@@ -177,6 +177,10 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
         if (name.equals("this") && stateVariable("this") == null) {
             return new Value("self", SpecType.INT, false);
         }
+        SolidityOutline.Variable variable = stateVariable(name);
+        if (variable != null && variable.constantValue() != null) {
+            return new Value(variable.constantValue(), SpecType.of(variable.type()), false);
+        }
         return read(path(node));
     }
 

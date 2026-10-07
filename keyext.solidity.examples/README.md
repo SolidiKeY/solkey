@@ -417,6 +417,9 @@ mappings, constructors, payments and `try`, modifiers, SMTChecker control flow, 
 inheritance and getters, types). Where `TestSuite.sol` exercises one taclet each, these
 cross-check the calculus against a description of Solidity semantics SolKey did not write.
 Every function there closes and runs on the EVM without a failing `assert`.
+The ports keep upstream code that solc warns about (code after `break`, `virtual` modifiers,
+shadowing, a return left unassigned), so `SolcWrapperTest` tolerates those warning kinds in
+`solc/` and `real-world/`; every other example must compile without warnings.
 
 `solc/open/` holds what did not close: the faithful forms of ports that needed a workaround, and
 upstream claims stopped by a missing construct or a defect. Its files load, each function names

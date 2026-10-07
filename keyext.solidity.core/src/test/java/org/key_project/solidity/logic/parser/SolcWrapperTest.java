@@ -106,14 +106,26 @@ public class SolcWrapperTest {
         List.of("'transfer' is deprecated", "'send' is deprecated", "Contract code size is",
             "Contract initcode size is");
 
+    private static final List<String> FAITHFUL_PORT_DIRECTORIES = List.of("solc/", "real-world/");
+
+    private static final List<String> TOLERATED_IN_FAITHFUL_PORTS =
+        List.of("Unreachable code", "Virtual modifiers are deprecated", "This declaration shadows",
+            "Unnamed return variable can remain unassigned", "Unused function parameter",
+            "Unused try/catch parameter", "Unused local variable",
+            "Function state mutability can be restricted");
+
     @ParameterizedTest(name = "{0}")
     @MethodSource("exampleContracts")
     void exampleCompilesWithoutWarnings(String name, Path file) throws IOException {
+        List<String> tolerated = new ArrayList<>(TOLERATED_WARNINGS);
+        if (FAITHFUL_PORT_DIRECTORIES.stream().anyMatch(name::startsWith)) {
+            tolerated.addAll(TOLERATED_IN_FAITHFUL_PORTS);
+        }
         List<String> warnings = new ArrayList<>();
         for (JsonNode diagnostic : SolcWrapper.readJson(SolcWrapper.diagnose(file))
                 .path("errors").values()) {
             String message = diagnostic.path("message").asString("");
-            if (TOLERATED_WARNINGS.stream().noneMatch(message::startsWith)) {
+            if (tolerated.stream().noneMatch(message::startsWith)) {
                 warnings.add(diagnostic.path("formattedMessage").asString(message));
             }
         }

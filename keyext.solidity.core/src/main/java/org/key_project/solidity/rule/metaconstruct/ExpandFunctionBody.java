@@ -5,9 +5,7 @@ package org.key_project.solidity.rule.metaconstruct;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 import org.key_project.logic.Name;
@@ -16,10 +14,8 @@ import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
-import org.key_project.solidity.program.ast.declarations.Declaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.StateVariableDeclaration;
-import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
 import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
@@ -28,12 +24,10 @@ import org.key_project.solidity.program.ast.expressions.operators.AssignExpressi
 import org.key_project.solidity.program.ast.expressions.operators.Operator;
 import org.key_project.solidity.program.ast.references.FieldReference;
 import org.key_project.solidity.program.ast.references.FunctionReference;
-import org.key_project.solidity.program.ast.statement.DeclarationStatement;
 import org.key_project.solidity.program.ast.statement.ExpressionStatement;
 import org.key_project.solidity.program.ast.statement.FunctionBodyStatement;
 import org.key_project.solidity.program.ast.statement.FunctionFrame;
 import org.key_project.solidity.program.ast.statement.Statement;
-import org.key_project.solidity.program.ast.visitor.ProgVarReplaceVisitor;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.util.collection.ImmutableArray;
@@ -89,7 +83,8 @@ public class ExpandFunctionBody extends ProgramTransformer {
             return null;
         }
         List<@Nullable Expression> targets = target == null ? List.of() : List.of(target);
-        return new FunctionBodyStatement(targets, reference, call.getArguments(), null);
+        return new FunctionBodyStatement(targets, reference, call.getArguments(),
+            reference.getDispatchContract());
     }
 
     public static boolean inlinable(FunctionDeclaration function) {
@@ -100,58 +95,73 @@ public class ExpandFunctionBody extends ProgramTransformer {
     @Override
     public SolidityProgramElement[] transform(SolidityProgramElement pe, Services services,
             SVInstantiations svInst) {
-        final FunctionBodyStatement fbs = Objects.requireNonNull(asFunctionBody(pe),
+        final FunctionBodyStatement call = Objects.requireNonNull(asFunctionBody(pe),
             () -> "not a call of a function with a body: " + pe);
-        final FunctionDeclaration fn = fbs.getFunction();
+        final FunctionDeclaration fn = dispatch(call, services);
         if (!inlinable(fn)) {
             throw new IllegalStateException(fn.name() + " has a modifier that cannot be inlined");
         }
-        final ImmutableArray<ProgramVariable> formals = fn.getInputParameters();
-        final ImmutableArray<ProgramVariable> returns = fn.getReturnParameters();
-        final ImmutableArray<Expression> args = fbs.getArguments();
-        final List<@Nullable Expression> targets = fbs.getTargets();
-        if (!targets.isEmpty() && targets.size() != returns.size()) {
+        final List<@Nullable Expression> targets = call.getTargets();
+        if (!targets.isEmpty() && targets.size() != fn.getReturnParameters().size()) {
             throw new IllegalStateException(targets.size() + " targets for the "
-                + returns.size() + " return values of " + fn.name());
+                + fn.getReturnParameters().size() + " return values of " + fn.name());
         }
 
-        final Map<ProgramVariable, ProgramVariable> replaceMap = new HashMap<>();
-        final List<Statement> stmts = new ArrayList<>(formals.size() + 2 * returns.size() + 1);
-
+        final FreshVariables fresh = new FreshVariables();
+        final List<Statement> stmts = new ArrayList<>();
+        final ImmutableArray<ProgramVariable> formals = fn.getInputParameters();
         for (int i = 0; i < formals.size(); i++) {
-            declareFresh(formals.get(i), formals.get(i).name(), args.get(i), replaceMap, stmts);
+            fresh.declare(formals.get(i), formals.get(i).name(), call.getArguments().get(i),
+                stmts);
         }
+        final List<ProgramVariable> results = declareReturns(fn, fresh, stmts);
+        fresh.addLocalsOf(fn.getBody());
 
-        final List<ProgramVariable> freshReturns = new ArrayList<>(returns.size());
+        if (fn.getKind().equals("constructor")) {
+            stmts.addAll(stateVariableInitializers(fn, services));
+        }
+        stmts.add((Statement) fresh.rename(frame(fn, services), call.getContractName(),
+            services));
+        stmts.addAll(assignResults(targets, results));
+        return stmts.toArray(new SolidityProgramElement[0]);
+    }
+
+    private static FunctionDeclaration dispatch(FunctionBodyStatement call, Services services) {
+        final Name contractName = call.getContractName();
+        final ContractDeclaration contract =
+            contractName == null ? null : services.getSolidityInfo().getContract(contractName);
+        return contract == null ? call.getFunction() : contract.dispatch(call.getFunction());
+    }
+
+    private static List<ProgramVariable> declareReturns(FunctionDeclaration fn,
+            FreshVariables fresh, List<Statement> stmts) {
+        final ImmutableArray<ProgramVariable> returns = fn.getReturnParameters();
+        final List<ProgramVariable> results = new ArrayList<>(returns.size());
         for (int i = 0; i < returns.size(); i++) {
             ProgramVariable ret = returns.get(i);
             Name name = ret.name().toString().isEmpty() ? new Name("ret" + i) : ret.name();
-            freshReturns.add(declareFresh(ret, name, zero(ret), replaceMap, stmts));
+            results.add(fresh.declare(ret, name, zero(ret), stmts));
         }
+        return results;
+    }
 
-        final List<Statement> initializers = fn.getKind().equals("constructor")
-                ? stateVariableInitializers(fn, services)
-                : List.of();
+    private static Statement frame(FunctionDeclaration fn, Services services) {
+        return ModifierInlining.wrap(fn.getModifiers(), new FunctionFrame(LoopLowering.lower(
+            ReturnLowering.lower(fn.getBody(), fn.getReturnParameters().toList(), services),
+            services).getStatements()), services);
+    }
 
-        final Statement body = ModifierInlining.wrap(fn.getModifiers(), new FunctionFrame(
-            LoopLowering.lower(ReturnLowering.lower(fbs.getBody(), returns.toList(), services),
-                services).getStatements()),
-            services);
-        final ProgVarReplaceVisitor repl =
-            new ProgVarReplaceVisitor(body, replaceMap, true, services);
-        repl.start();
-        stmts.addAll(initializers);
-        stmts.add((Statement) repl.result());
-
+    private static List<Statement> assignResults(List<@Nullable Expression> targets,
+            List<ProgramVariable> results) {
+        final List<Statement> assignments = new ArrayList<>(targets.size());
         for (int i = 0; i < targets.size(); i++) {
             Expression target = targets.get(i);
             if (target != null) {
-                stmts.add(new ExpressionStatement(new AssignExpression(
-                    Operator.COPY_ASSIGN, target, freshReturns.get(i))));
+                assignments.add(new ExpressionStatement(new AssignExpression(
+                    Operator.COPY_ASSIGN, target, results.get(i))));
             }
         }
-
-        return stmts.toArray(new SolidityProgramElement[0]);
+        return assignments;
     }
 
     private static List<Statement> stateVariableInitializers(FunctionDeclaration constructor,
@@ -182,16 +192,5 @@ public class ExpandFunctionBody extends ProgramTransformer {
             case BOOLEAN -> BoolLiteral.FALSE;
             default -> null;
         };
-    }
-
-    private static ProgramVariable declareFresh(ProgramVariable original, Name name,
-            @Nullable Expression initializer, Map<ProgramVariable, ProgramVariable> replaceMap,
-            List<Statement> stmts) {
-        final ProgramVariable fresh =
-            new ProgramVariable(name, original.getKeYSolidityType(), original.getDataLocation());
-        replaceMap.put(original, fresh);
-        final Declaration decl = new StatementVariableDeclaration(fresh);
-        stmts.add(new DeclarationStatement(List.of(decl), initializer));
-        return fresh;
     }
 }

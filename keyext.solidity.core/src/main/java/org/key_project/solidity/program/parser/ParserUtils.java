@@ -30,6 +30,8 @@ import org.key_project.solidity.program.ast.declarations.StatementVariableDeclar
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
 import org.key_project.solidity.program.ast.expressions.MemberExp;
+import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
+import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.references.TypeReference;
 import org.key_project.solidity.program.ast.statement.DeclarationStatement;
@@ -49,6 +51,38 @@ public class ParserUtils {
             + "declarations and they are not supported";
 
     private static final Set<String> BUILTIN_MEMBERS = Set.of("push", "pop", "transfer", "send");
+
+    public static @Nullable Expression defaultValue(Type type) {
+        if (!(type instanceof PrimitiveType primitive)) {
+            return null;
+        }
+        return switch (primitive.kind()) {
+            case INTEGER, ADDRESS -> new Uint256Literal(BigInteger.ZERO);
+            case BOOLEAN -> BoolLiteral.FALSE;
+            default -> null;
+        };
+    }
+
+    public static <T> List<T> inParameterOrder(List<String> parameters, List<String> names,
+            List<T> arguments) {
+        if (names.isEmpty()) {
+            return arguments;
+        }
+        if (names.size() != parameters.size() || names.size() != arguments.size()) {
+            throw new SolidityParseException("The named arguments " + names
+                + " do not match the parameters " + parameters);
+        }
+        List<T> ordered = new ArrayList<>(arguments.size());
+        for (String parameter : parameters) {
+            int position = names.indexOf(parameter);
+            if (position < 0) {
+                throw new SolidityParseException(
+                    "No argument is named " + parameter + " in " + names);
+            }
+            ordered.add(arguments.get(position));
+        }
+        return ordered;
+    }
 
     public static @Nullable String msgMemberVariable(String member) {
         return switch (member) {

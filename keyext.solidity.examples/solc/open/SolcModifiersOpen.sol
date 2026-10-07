@@ -8,14 +8,6 @@ contract SolcModifiersOpen {
     uint a;
     uint[] order;
 
-    modifier addThenRemove(uint y) {
-        uint b = y;
-        a += b;
-        _;
-        a -= b;
-        assert(b == y);
-    }
-
     modifier m1(uint) { _; }
     modifier m2(uint) { _; }
     modifier m3(uint) { _; }
@@ -83,12 +75,6 @@ contract SolcModifiersOpen {
         assert(x > 2);
     }
 
-    function sumOfLocals(uint y) internal addThenRemove(2) addThenRemove(5) addThenRemove(y)
-        returns (uint)
-    {
-        return a;
-    }
-
     function pushOrder(uint y) internal returns (uint) {
         order.push(y);
         return 0;
@@ -143,17 +129,6 @@ contract SolcModifiersOpen {
 
     function incTwice() internal twoPlaceholders {
         x = x + 1;
-    }
-
-    // open: nested applications of one modifier share its local b, so the outer assert(b == y) reads the inner b
-    /// solc: semanticTests/modifiers/function_modifier_multiple_times_local_vars.sol
-    /// @custom:key box
-    function modifierMultipleTimesLocalVars(uint y) public {
-        require(y == 3);
-        a = 0;
-        uint r = sumOfLocals(y);
-        assert(r == 10);
-        assert(a == 0);
     }
 
     // open: a function call as a modifier argument stays stuck as an unresolved fn#id(...) declaration
