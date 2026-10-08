@@ -10,6 +10,7 @@ import java.io.Reader;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.PolyglotAccess;
 import org.graalvm.polyglot.PolyglotException;
@@ -126,15 +127,17 @@ public final class WasmSolcCompiler implements SolcCompiler {
         if (compile != null) {
             return;
         }
-        Context built = Context.newBuilder("js", "wasm")
+        Context.Builder builder = Context.newBuilder("js", "wasm")
                 .allowExperimentalOptions(true)
                 .option("js.webassembly", "true")
                 .option("engine.WarnInterpreterOnly", "false")
-                .option("engine.Mode", "latency")
                 .allowPolyglotAccess(PolyglotAccess.ALL)
                 .allowHostAccess(HostAccess.NONE)
-                .allowIO(IOAccess.NONE)
-                .build();
+                .allowIO(IOAccess.NONE);
+        if (supportsEngineMode()) {
+            builder.option("engine.Mode", "latency");
+        }
+        Context built = builder.build();
         try {
             built.eval("js", PERFORMANCE_POLYFILL);
             built.eval(soljsonSource());
@@ -149,6 +152,13 @@ public final class WasmSolcCompiler implements SolcCompiler {
             throw e;
         }
         context = built;
+    }
+
+    private static boolean supportsEngineMode() {
+        try (Engine probe =
+            Engine.newBuilder().option("engine.WarnInterpreterOnly", "false").build()) {
+            return probe.getOptions().get("engine.Mode") != null;
+        }
     }
 
     private static Source soljsonSource() throws IOException {

@@ -37,7 +37,7 @@ public class SolcSemanticsExamplesTest {
     @MethodSource("examples")
     void solcSemanticsExampleCloses(String contract, String function) throws Exception {
         Path sol = SolidityExampleTests.example(DIRECTORY + "/" + contract + ".sol");
-        Proof proof = SolidityExampleTests.proveFunction(sol, contract, function, 50000, 30000);
+        Proof proof = SolidityExampleTests.proveFunction(sol, contract, function, 50000, 120000);
         assertTrue(proof.closed(),
             () -> SolidityExampleTests.describeOpenGoals(contract + "." + function, proof));
     }

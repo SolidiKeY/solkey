@@ -106,7 +106,7 @@ public class ParserUtils {
         if ("length".equals(member)
                 && (leftType instanceof DynamicArrayType || leftType instanceof ArrayType)) {
             FieldDeclaration sizeField =
-                new FieldDeclaration(new Name("size"), new TypeReference(new Name("uint256")));
+                new FieldDeclaration(new Name("size"), new TypeReference(PrimitiveType.UINT256));
             return new MemberExp(left, sizeField, PrimitiveType.UINT256);
         }
         return null;

@@ -77,6 +77,17 @@ tasks.register('solidityGui', JavaExec) {
 test {
     useJUnitPlatform()
     systemProperty 'java.awt.headless', 'true'
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    jvmArgumentProviders.add(new org.gradle.process.CommandLineArgumentProvider() {
+        @Override
+        Iterable<String> asArguments() {
+            return ["-XX:+UnlockExperimentalVMOptions", "-XX:+EnableJVMCI",
+                    "--upgrade-module-path="
+                        + project(':keyext.solidity.core').configurations.graalCompiler.asPath]
+        }
+    })
 }
 
 def core = project(':keyext.solidity.core')
