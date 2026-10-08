@@ -157,6 +157,7 @@ Read the relevant doc before working on taclets. Each is a compact, agent-facing
 | `taclets-implementation.md` | Checking what is already implemented and why it is shaped that way |
 | `taclet-ideas.md` | Picking the next unimplemented construct (the backlog) |
 | `bugs.md` | Known bugs: crashes, stuck proofs, unprovable true facts |
+| `semantics-bugs-fix-ideas.md` | Planning a fix for a semantics bug in `bugs.md` — ranked ideas and the order of work |
 | `limitations.md` | Why the supported Solidity is incomplete or buggy — what the solc and real-world ports could not prove |
 | `storage.md` | Storage rules — calculus spec, three-step strategy, statement→rule table |
 | `memory.md` | Memory rules — identity heap, aliasing, delete, cross-domain copies |
