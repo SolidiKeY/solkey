@@ -141,14 +141,61 @@ public class SolidityProblemSynthesizerTest {
         String text = SolidityProblemSynthesizer.problemText(file,
             spec(SolidityExampleTests.TEST_SUITE_CONTRACT, "testSimpleAssert"));
 
+        assertTrue(text.contains("\\find(wellformed(s))"), text);
+        assertTrue(text.contains(
+            "wf(fixedArr(9, leaf), selectSt<[Struct]>(s, TestSuite$copySource9))"), text);
+        assertTrue(text.endsWith("""
+                \\problem {
+                    wellformed(storage) ->
+                    \\<{ testSimpleAssert()@%s; }\\>(wellformed(storage))
+                }
+                """.formatted(SolidityExampleTests.TEST_SUITE_CONTRACT)), text);
+    }
+
+    @Test
+    void aContractWithoutArraysKeepsThePlainObligation() throws IOException {
+        Path file = SolidityExampleTests.example("functionBody/C.sol");
+
+        String text = SolidityProblemSynthesizer.problemText(file, spec("C", "expFctBdy"));
+
         assertEquals("""
                 \\programSource "%s";
 
-                \\problem {
-                    \\<{ testSimpleAssert()@%s; }\\>(true)
+                \\programVariables {
+                    int x;
+                    int y;
+                    int result;
                 }
-                """.formatted(file.toAbsolutePath(), SolidityExampleTests.TEST_SUITE_CONTRACT),
-            text);
+
+                \\rules {
+                    insertWellformed {
+                        \\schemaVar \\term Struct s;
+                        \\find(wellformed(s))
+                        \\replacewith(true)
+                        \\heuristics(simplify)
+                    };
+                }
+
+                \\problem {
+                    \\<{ result = expFctBdy(x, y)@C; }\\>(true)
+                }
+                """.formatted(file.toAbsolutePath()), text);
+    }
+
+    @Test
+    void aConstructorStartsFromTheShapedEmptyStorageAndEstablishesWellformedness()
+            throws IOException {
+        Path file = SolidityExampleTests.example("contracts/FixedLengths.sol");
+
+        String text =
+            SolidityProblemSynthesizer.problemText(file, spec("FixedLengths", "constructor"));
+
+        assertTrue(text.contains("{storage := storeSt(storeSt(storeSt(mtSt, FixedLengths$d1, "
+            + "emptyOf(fixedArr(9, leaf))), FixedLengths$d2, emptyOf(dynArr(leaf))), "
+            + "FixedLengths$dyn, emptyOf(dynArr(fixedArr(3, leaf)))) || net := mtSt} "
+            + "\\<{ constructor()@FixedLengths; }\\>(wellformed(storage))"), text);
+        assertTrue(text.contains("wf(dynArr(fixedArr(3, leaf)), selectSt<[Struct]>(s, "
+            + "FixedLengths$dyn))"), text);
     }
 
     @Test
@@ -174,6 +221,12 @@ public class SolidityProblemSynthesizerTest {
                                 & (!(find<[int]>(s, cons1(Escrow$state)) = 0) | (selectSt<[int]>(n, at(find<[int]>(s, cons1(Escrow$sender)))) = 0))
                                 // state == State.DepositPlaced || amountInEscrow == 0 :
                                 & ((find<[int]>(s, cons1(Escrow$state)) = 1) | (find<[int]>(s, cons1(Escrow$amountInEscrow)) = 0)))
+                            \\heuristics(simplify)
+                        };
+                        insertWellformed {
+                            \\schemaVar \\term Struct s;
+                            \\find(wellformed(s))
+                            \\replacewith(true)
                             \\heuristics(simplify)
                         };
                     }

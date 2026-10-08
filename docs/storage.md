@@ -784,68 +784,94 @@ cell (that needs per-contract layout knowledge the calculus does not
 have — a field constant like `C$total : Field` carries no declared
 type), and no upper bound (`< 2^256`) is stated.
 
-## 8c. Fixed-size arrays have their declared length (`typed`)
+## 8c. Fixed-size arrays have their declared length (`wellformed`, `emptyOf`)
 
-The declared length of a fixed-size array is read off a type annotation that reads carry
-with them; no axiom and no side condition is involved. The vocabulary
-(`memoryHeader.key`, `structHeader.key`):
+A fixed-size array has no length cell in the EVM; its length is a property of the declaration.
+The calculus keeps that knowledge in two places, neither of which touches a read or a write:
+the **shaped empty storage** a constructor starts from, and the **well-formedness predicate**
+a function assumes on entry and establishes on exit. The vocabulary (`memoryHeader.key`,
+`structHeader.key`):
 
-    Shape:  leaf | fixedArr(int, Shape) | dynArr(Shape) | mapOf(Shape)
-    Struct typed(Shape, Struct)       -- a storage value seen at its declared type
-    Shape fieldShape(MemberField)     -- the shape of a declared member, = #shapeOf(m)
+    Shape:  leaf | fixedArr(int, Shape) | dynArr(Shape) | mapOf(Shape) | C$S$shape
+    Struct emptyOf(Shape)          -- the empty node of a shape, as a storable value
+    wf(Shape, Struct)              -- "this node conforms to this shape"
+    wellformed(Struct)             -- wf of every declared root, generated per contract
+    fixed(Struct)                  -- "this node is a fixed-size array", decided by its shape
+    Shape fieldShape(MemberField)  -- the shape of a declared member, = #shapeOf(m)
 
-Every field constant is a `TypedField` (`logic/op`) that remembers the member's resolved
-Solidity type, and `fieldShapeDef` turns it into a shape term through the transformer
-`#shapeOf`, the only Java involved. Declared members have the sort `MemberField` (mapping
-members `MapMemberField`, which is both a `MapField` and a `MemberField`), while `at(i)`,
-`atMap(i)` and `size` stay plain `Field`s, so rules tell a member from an index by
-matching.
+Every field constant is a `TypedField` that remembers the member's resolved type, and
+`fieldShapeDef` turns it into a shape through the transformer `#shapeOf`. A struct type whose
+members carry a non-trivial shape gets a `\unique Shape C$S$shape` constant declared in the
+generated problem; `#shapeOf` returns it when it is declared and `leaf` otherwise, so a
+hand-written `.key` problem loses a length but never invents one.
 
-**The member field types the read.** `storage` stays the symbolic `Struct` of the proof
-obligation; nothing is assumed about it. Every read is a `find<[alpha]>(st, path)` whose
-path starts at a declared member, and `findDefinitionMemberCons` (or `…MemberStruct` for a
-whole-struct read) is where the annotation appears:
+**The predicate.** `wf` is defined only through `selectSt`; `save`, `delAt` and `delNode` are
+untouched. With `|st|` for `selectSt<[int]>(st, size)` and `st[a]` for `selectSt<[Struct]>(st, a)`:
 
-    find<[alpha]>(st, cons(m, cons(a, flds)))  ⇝ find<[alpha]>(typed(fieldShape(m), selectSt<[Struct]>(st, m)), cons(a, flds))
-    find<[Struct]>(st, cons(m, nil))           ⇝ typed(fieldShape(m), selectSt<[Struct]>(st, m))
+    wf(leaf,          st)  =  true
+    wf(fixedArr(n,s), st)  =  |st| = n    &  forall i. wf(s, st[at(i)]) & wf(s, st[atMap(i)])
+    wf(dynArr(s),     st)  =  0 <= |st|   &  forall i. wf(s, st[at(i)]) & wf(s, st[atMap(i)])
+    wf(mapOf(s),      st)  =                 forall k. wf(s, st[at(k)]) & wf(s, st[atMap(k)])
+    wf(C$S$shape,     st)  =  /\ over the members m of S : wf(fieldShape(m), st[m])
+    wellformed(s)          =  /\ over the roots m of C    : wf(fieldShape(m), s[m])
 
-The other head fields (`at(pk)`, `atMap(iv)`, `size`) unroll as before, so this is a split
-of the old `findDefinitionCons` by the sort of the head, not a new mechanism. A fixed-size
-array has no length cell in the EVM; its length is a property of the declaration, and that
-is exactly what the rule says: reading `size` through a path whose declared type at that
-point is `fixedArr(n, s)` is `n`, while for `dynArr` the read is passed on to the stored
-value. Writes are untouched: `save` and `delAt` stay lazy, and the same rule types a path
-that starts from `mtSt` or from a value inside a lazy `save`.
+(An array element that is a mapping is selected with `atMap`, everything else with `at`, so
+both selectors count as elements.) The last two lines are finite and per contract, so
+`SolidityProblemSynthesizer` emits them as the rules `insertWellformed` and `wfStruct_S`, next
+to `insertCInv`; roots and members whose shape is trivial (`leaf`, `mapOf(leaf)`, a struct of
+such) are left out, and `insertWellformed` of a contract without arrays is `true`.
 
-**Only `selectSt` moves the annotation further.** Once a node is typed, these rules apply:
+**The obligations** (`StorageShapes` builds both pieces):
 
-    selectSt<[Struct]>(typed(sh, st), a)               ⇝ typed(shapeAt(sh, cons(a, nil)), selectSt<[Struct]>(st, a))
-    selectSt<[int]>(typed(fixedArr(iv, sh), st), size)  ⇝ iv
-    selectSt<[int]>(typed(dynArr(sh), st), size)        ⇝ selectSt<[int]>(st, size)
-    selectSt<[alphaPrim]>(typed(sh, st), at(pk))        ⇝ selectSt<[alphaPrim]>(st, at(pk))
-    selectSt<[alphaPrim]>(typed(sh, st), m)             ⇝ selectSt<[alphaPrim]>(st, m)
+    constructor:  ==> {storage := storeSt(…storeSt(mtSt, C$d1, emptyOf(fixedArr(9, leaf))) …, C$dyn, emptyOf(dynArr(fixedArr(3, leaf))))}
+                      [ ctor ] (wellformed(storage) & CInv & ensures)
+    function:     wellformed(storage) & CInv & requires  ==>  [ f ] (wellformed(storage) & CInv & ensures)
 
-A struct-valued read carries the shape one level down with `shapeAt` (`memoryRules.key`):
-`at(i)` or `atMap(i)` steps into `fixedArr`, `dynArr` or `mapOf`, and a member `m`
-re-anchors on `fieldShape(m)`. A primitive read strips the annotation, except the one case
-it decides. So `rows[i].length` for `uint[3][] rows` reduces by three struct-read hops to
-`selectSt<[int]>(typed(fixedArr(3, leaf), …), size)` and then to `3`; for a dynamic array
-or a struct member the annotation strips off and leaves exactly the term the calculus
-produced before, so every other rule sees its familiar normal forms. A member declared
-without a type, as in a hand-written `.key` problem, has shape `leaf`, "no information":
-`size` strips through `typed(leaf, st)` and `shapeAt(leaf, cons(at(pk), xs))` stays `leaf`,
-so a missing declaration can lose a length but never invent one.
-A `mapping(K => V)` has shape `mapOf(s)` with `s` the shape of `V`, so an `at(k)` step
-into it keeps the value's length: `m[k].length == 3` for `mapping(uint => uint[3]) m`
-closes (`testMappingOfFixedArrayLength`).
+Nothing is assumed before the constructor; its start term is closed in its structure, so the
+exit `wellformed` is decided by unfolding. A function's exit obligation is what justifies the
+next function's entry assumption. A loop that writes storage anonymises it, so
+`LoopInvariantCondition` conjoins `wellformed(storage)` to every such loop invariant, as KeY
+does with `wellFormed(heap)`.
 
-Nothing else is needed. The empty storage reads `typed(fixedArr(3, leaf), mtSt)` as length
-`3` by the second rule, and `selectOnEmptyStorage` is its original one-liner. `delete`
-keeps a fixed length because `selectStDelNodeFixedSize` passes `size` through to the typed
-node. A whole struct read from typed storage is a `typed(…)` value; stored back by a lazy
-`save` or copied to memory by `copySt`, it is read through by the same rules. A memory
-value copied in by `copyMem` is untyped, but the read reaching it has already carried the
-shape down from the member it started at.
+**How the rules use it.** Three families, by where a `wf` atom sits:
+
+- *The shaped empty node* (`selectOnEmptyOf*`): `|emptyOf(sh)| ⇝ sizeOf(sh)`,
+  `emptyOf(sh)[a] ⇝ emptyOf(shapeAt(sh, cons(a, nil)))`, a primitive read is its default.
+  Root reads on the `storeSt` chain need nothing new (`selectOnStore`).
+- *Antecedent atoms are consumed by triggers, never unfolded.* A read on symbolic storage
+  normalises to a `selectSt` chain rooted at `storage` and stops; the atom on exactly that
+  chain answers it. `wfFixedSize` rewrites `|st|` to `n` under `wf(fixedArr(n, s), st) ==>`;
+  `wfDynSize` adds `0 <= |st|`; `wf{Fixed,Dyn,Map}Elem[Map]` add the element's atom when
+  `st[at(i)]` or `st[atMap(i)]` appears, so a nested length such as `rows[i].length` for
+  `uint[3][] rows` is two trigger steps. They are `\assumes` rewrite taclets with
+  `\sameUpdateLevel`, the add-only ones costed in `inReachableStateImplication` like
+  `sizeNotNegative`, and they match syntactically: after `d2 = d1` the read `|storage'[d2]|`
+  goes through `selectOnSaveCons`, `saveOnEmptyPrim` and `findStValueCast` to `|storage[d1]|`,
+  a select on the *entry* storage, which laziness keeps in the atom's normal form.
+- *Succedent atoms are peeled off writes, then unfolded.* `wfSaveRight` turns
+  `wf(sh, save(st, p, v))` into `wf(sh, st) & wf(shapeAt(sh, p), save(find<[Struct]>(st, p), nil, v))`
+  (the written node is a merge, so the leaf keeps the target's own fixed length);
+  `wfDelAtRight`, `wfDelNodeRight`, `wfDelNodeFixedRight` drop a reset; `wfLeaf` and
+  `wfEmptyOf` close; `wf{Fixed,Dyn,Map}Right` (ruleset `wfUnfold`, costed above the
+  triggers so an atom that reduces to an entry atom closes first) unfold a leaf-of-a-write by
+  definition with a `\skolemTerm` element index.
+
+**The kind of a node.** The size of a reset or copied-over node depends on whether it is a
+fixed-size array (keeps its declared length) or a dynamic one (reset to `0`, or to the copied
+length): `|delNode(st)| ⇝ \if(fixed(st)) \then(|st|) \else(0)` (`selectStDelNodeSize`) and
+`|save(st, nil, v)| ⇝ \if(fixed(st)) \then(|st|) \else(|cast<[Struct]>(v)|)`
+(`selectOnSaveEmptySize`). A write never changes the kind, so `fixed` reads it off the
+node's base: `fixedSave`, `fixedStore`, `fixedDelNode`, `fixedDelAt` descend, `delNodeFixed`
+and `emptyOf(fixedArr(…))` are fixed, `emptyOf(dynArr(…))` and `mtSt` are not, and
+`wfFixedIsFixed` / `wfDynIsNotFixed` decide it from the entry atom. This is what makes
+`uint[40] big = uint[20] small` keep `big.length == 40` and zero `big[30]`, and
+`dyn.pop()` keep the slot's `uint[3]` length. The other primitive reads through a leaf write or
+a reset are split by selector (`selectOnSaveEmpty{IndexPrim,MapValue,Member}`,
+`selectStDelNode{Element,MapValue,Member}`) so that `size` is never defaulted.
+
+`sizeNotNegative` (8b) stays for problems that state no `wellformed`; under `wellformed` it is
+the `dynArr` clause. The design and its worked examples are also in the pre-licentiate paper
+(`sections/fixed-length.tex`); `contracts/FixedLengths.sol` runs them.
 
 ### Memory objects carry their shape
 

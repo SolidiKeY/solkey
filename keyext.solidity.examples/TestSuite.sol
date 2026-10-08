@@ -78,6 +78,9 @@ contract TestSuite {
     uint[3][] rows;
     uint[9] copySource9;
     uint[] copyTargetDyn;
+    uint[3][2] fixedGrid;
+    mapping(uint => uint[3])[2] fixedMapsOfFixed;
+    mapping(uint => uint[3])[] dynMapsOfFixed;
     uint[40] copyBig;
     uint[20] copySmall;
     uint localOut;
@@ -4172,5 +4175,20 @@ contract TestSuite {
         uint tail = copyBig[30];
         assert(head == 8);
         assert(tail == 0);
+    }
+
+    function testFixedArrayOfFixedArraysLength() public view {
+        assert(fixedGrid.length == 2);
+        assert(fixedGrid[1].length == 3);
+    }
+
+    function testFixedArrayOfMappingsOfFixedArraysLength() public view {
+        assert(fixedMapsOfFixed[1][7].length == 3);
+    }
+
+    /// @custom:key box
+    function testDynamicArrayOfMappingsOfFixedArraysLength() public view {
+        require(0 < dynMapsOfFixed.length);
+        assert(dynMapsOfFixed[0][7].length == 3);
     }
 }

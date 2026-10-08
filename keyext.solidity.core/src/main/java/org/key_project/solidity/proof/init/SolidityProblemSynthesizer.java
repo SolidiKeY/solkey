@@ -35,8 +35,6 @@ public final class SolidityProblemSynthesizer {
     /// other tag is rejected as invalid documentation.
     public static final String BOX_DIRECTIVE = "@custom:key box";
 
-    private static final String EMPTY_STORAGE = "storage := mtSt || net := mtSt";
-
     private SolidityProblemSynthesizer() {}
 
     /// Fills in whatever the caller left open, and fails with the available candidates listed
@@ -122,32 +120,42 @@ public final class SolidityProblemSynthesizer {
         String options = spec.choices().isEmpty() ? ""
                 : spec.choices().stream()
                         .collect(Collectors.joining(", ", "\\withOptions ", ";\n\n"));
+        StorageShapes shapes = new StorageShapes(contract);
         if (!contractSpec.isSpecified() && !functionSpec.isSpecified()) {
-            String modality = functionSpec.box() ? "\\[{ " + call + " }\\](true)"
-                    : "\\<{ " + call + " }\\>(true)";
+            String post = shapes.isEmpty() ? "true" : WELLFORMED;
+            String modality = functionSpec.box() ? "\\[{ " + call + " }\\](" + post + ")"
+                    : "\\<{ " + call + " }\\>(" + post + ")";
             if (function.isConstructor()) {
-                modality = "{" + EMPTY_STORAGE + "} " + modality;
+                modality = "{storage := " + shapes.emptyStorage() + " || net := mtSt} " + modality;
+            } else if (!shapes.isEmpty()) {
+                modality = WELLFORMED + " ->\n    " + modality;
             }
             return """
-                    %s\\problem {
+                    %s%s\\problem {
                         %s
                     }
-                    """.formatted(header(solFile, options, variables), modality);
+                    """.formatted(header(solFile, options, variables, shapes),
+                "\\rules {\n" + shapes.rules() + "}\n\n", modality);
         }
         return specifiedProblemText(solFile, contract, function, contractSpec, functionSpec,
-            options, variables, call, where);
+            options, variables, call, where, shapes);
     }
 
-    private static String header(Path solFile, String options, List<String> variables) {
+    private static final String WELLFORMED = "wellformed(storage)";
+
+    private static String header(Path solFile, String options, List<String> variables,
+            StorageShapes shapes) {
         String declarations = variables.isEmpty() ? ""
                 : variables.stream().map(v -> "    " + v + ";")
                         .collect(Collectors.joining("\n", "\\programVariables {\n", "\n}\n\n"));
-        return "\\programSource \"" + solFile.toAbsolutePath() + "\";\n\n" + options + declarations;
+        return "\\programSource \"" + solFile.toAbsolutePath() + "\";\n\n" + options
+            + shapes.declarations() + declarations;
     }
 
     private static String specifiedProblemText(Path solFile, SolidityOutline.Contract contract,
             SolidityOutline.Function function, KeyNatspec contractSpec, KeyNatspec functionSpec,
-            String options, List<String> variables, String call, String where) {
+            String options, List<String> variables, String call, String where,
+            StorageShapes shapes) {
         SpecCompiler compiler = new SpecCompiler(contract, function);
         Map<String, SpecType> parameters = SpecCompiler.parameterTypes(function);
         boolean usesOld = functionSpec.ensures().stream()
@@ -171,14 +179,16 @@ public final class SolidityProblemSynthesizer {
                 text -> compiler.formula(text, SpecCompiler.Context.requires(parameters),
                     where + " requires"),
                 "    ", true);
-        String postcondition = "CInv(storage, net)" + conjunction(functionSpec.ensures(),
-            text -> compiler.formula(text, SpecCompiler.Context.ensures(parameters),
-                where + " ensures"),
-            "         ", true);
+        String wellformed = shapes.isEmpty() ? "" : WELLFORMED + " & ";
+        String postcondition = wellformed + "CInv(storage, net)"
+            + conjunction(functionSpec.ensures(),
+                text -> compiler.formula(text, SpecCompiler.Context.ensures(parameters),
+                    where + " ensures"),
+                "         ", true);
         boolean constructor = function.isConstructor();
         String storage = constructor ? "mtSt" : "storage";
         String ledger = constructor ? "mtSt" : "net";
-        String update = (constructor ? "storage := mtSt" + "\n     || " : "")
+        String update = (constructor ? "storage := " + shapes.emptyStorage() + "\n     || " : "")
             + (usesOld ? "old := " + storage + " || oldNet := " + ledger + "\n     || " : "")
             + "net := storeSt(" + ledger + ", at(msgSender), selectSt<[int]>(" + ledger
             + ", at(msgSender)) + msgValue)\n     || selfBalance := "
@@ -192,7 +202,7 @@ public final class SolidityProblemSynthesizer {
                 %s)
                         \\heuristics(simplify)
                     };
-                }
+                %s}
 
                 \\problem {
                 %s
@@ -201,10 +211,11 @@ public final class SolidityProblemSynthesizer {
                     \\[{ %s }\\]
                         (%s)
                 }
-                """.formatted(header(solFile, options, declared),
+                """.formatted(header(solFile, options, declared, shapes),
             !quantified ? ""
                     : "        \\varcond(\\noFreeVarIn(s), \\noFreeVarIn(n))\n",
-            invariant, precondition, constructor ? "" : "& CInv(storage, net) ", update, call,
+            invariant, shapes.rules(), precondition,
+            constructor ? "" : "& " + wellformed + "CInv(storage, net) ", update, call,
             postcondition);
     }
 

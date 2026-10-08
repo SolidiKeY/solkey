@@ -27,18 +27,16 @@
 } 
 
 \functions {
-    Struct s;
-    Shape sh;
-    int i;
+    \unique MemberField f;
 }
 \problem {
-  selectSt<[int]>(typed(mapOf(sh), s), size)
-= selectSt<[int]>(s, size)
+selectSt<[int]>(emptyOf(leaf), f) = 0
 }
 
 \proof {
 (branch "dummy ID"
-(rule "selectOnTypedMapSize" (formula "1") (term "0"))
+(rule "selectOnEmptyOfMember" (formula "1") (term "0"))
+(rule "defaultValueInt" (formula "1") (term "0"))
 (rule "eqClose" (formula "1"))
 (rule "closeTrue" (formula "1"))
 )

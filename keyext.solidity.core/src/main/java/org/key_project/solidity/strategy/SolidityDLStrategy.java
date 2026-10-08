@@ -161,6 +161,7 @@ public final class SolidityDLStrategy extends AbstractFeatureStrategy implements
 
         bindRuleSet(d, "inReachableStateImplication",
             add(NonDuplicateAppModPositionFeature.INSTANCE, longConst(100)));
+        bindRuleSet(d, "wfUnfold", longConst(500));
 
         setupUserTaclets(d);
 

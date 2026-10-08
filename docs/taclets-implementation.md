@@ -134,15 +134,13 @@ Notes that are not derivable from the rule names:
   `lsv = sp` stay legal), and both parsers reject `memory` declarations of
   mapping-carrying types (`StorageReferenceTypes.containsMapping`). The copy
   taclets themselves stay unconditional — the illegal shapes never reach them.
-- A whole-array copy keeps lengths and clears the tail. `findDefinitionMemberValueFixed` reads
-  a fixed-size state array as `typed(fieldShape(ff), …)`, so the copied value carries its length
-  (`d2 = d1` with `uint[9] d1` gives `d2.length == 9`), and `selectOnSaveEmptyFixed` types a
-  copied fixed-size member the same way. `selectOnTypedSaveEmptyIndexPrim` reads an element of a
-  copy from a fixed-size source of `n` primitive elements in three cases, as
-  `selectOnSaveEmptyIndexStruct` does for structs: below `n` the source element, below the
-  target size the default, else the old element (`uint[40] big = uint[20] small` zeroes
-  `big[30]`). It is in `concrete` so it fires before `selectOnTypedElement` drops the target's
-  `typed`; restricting it to fixed-size sources keeps other reads of a saved value unsplit.
+- A whole-array copy keeps lengths and clears the tail. `selectOnSaveEmptyIndexPrim` reads an
+  element of a copy in three cases, as `selectOnSaveEmptyIndexStruct` does for structs: below
+  the source size the source element, below the target size the default, else the old element
+  (`uint[40] big = uint[20] small` zeroes `big[30]`); it is in `concrete` so it fires before the
+  selector-split defaults. The sizes come from the shape: a fixed-size target keeps its own
+  length through `selectOnSaveEmptySize` and the `fixed` predicate, a dynamic one takes the
+  source's (`d2 = d1` with `uint[9] d1` gives `d2.length == 9`), see `docs/storage.md` 8c.
 
 ### Increment / decrement (`++`/`--`, pre/post, plain and `result = …`)
 Direct storage updates (no program-level desugaring), e.g. `++age;` ⇝
@@ -382,14 +380,16 @@ at `StValue` itself is routed by `delFieldStValueCast` (below). `pop()` on an ar
 only shortens it (`storagePopSaveMappingElement`, `testPopKeepsMappingElementEntries`).
 
 Every field constant is a `TypedField` carrying its declared Solidity type, exposed to the
-calculus as the `Shape` term `fieldShape(m)`. `find` wraps the node it reads through a member
-in `typed(fieldShape(m), …)`, and the `selectOnTyped…` rules carry the shape down with each struct-valued read and rewrite
-`size` of a `fixedArr(n, s)` node to `n`, so `f.length`, `s.items.length` and `rows[i].length`
-for `uint[3][] rows` all reduce to literals with no axiom. Memory objects carry a `Shape` in
-their identity (`shaped(idp, fixedArr(3, leaf))`), and `initSize` reads a fresh node's
-length off it (`testFixedArrayLength`, `testFixedElementOfDynamicArrayLength`,
-`testMemoryFixedArrayLength`, `testNewArrayOfFixedElementLength`; `docs/storage.md`
-section 8c).
+calculus as the `Shape` term `fieldShape(m)`. Lengths of fixed-size arrays are not read off an
+annotation: a constructor starts from the shaped empty storage
+(`storeSt(mtSt, C$d1, emptyOf(fixedArr(9, leaf)))`, read by `selectOnEmptyOf*`), and a function
+assumes the generated `wellformed(storage)`, whose `wf(shape, node)` atoms the `wf*` trigger
+taclets consume at each stuck `size` read and whose exit obligation the `wf*Right` taclets
+discharge (`StorageShapes`, `docs/storage.md` section 8c; `contracts/FixedLengths.sol`,
+`testFixedArrayLength`, `testFixedElementOfDynamicArrayLength`, `storageShorterStaticCopyClearsTail`).
+Memory objects carry a `Shape` in their identity (`shaped(idp, fixedArr(3, leaf))`), and
+`initSize` reads a fresh node's length off it (`testMemoryFixedArrayLength`,
+`testNewArrayOfFixedElementLength`).
 
 An array whose elements are fixed-size arrays (`uint[3][]`) is out of reach of `delete` and
 `pop()`: its elements are read through `at(i)`, which carries no field kind. So `delete` and `pop()` refuse to reset one:

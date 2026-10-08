@@ -26,19 +26,22 @@
     }
 } 
 
-\functions {
-    Struct s;
-    Shape sh;
-    int i;
-}
+
 \problem {
-  selectSt<[int]>(typed(leaf, s), size)
-= selectSt<[int]>(s, size)
+  selectSt<[int]>(selectSt<[Struct]>(emptyOf(dynArr(fixedArr(3,
+                                                             leaf))),
+                                     at(0)),
+                  size)
+= 3
 }
 
 \proof {
 (branch "dummy ID"
-(rule "selectOnTypedLeafSize" (formula "1") (term "0"))
+(rule "selectOnEmptyOfStruct" (formula "1") (term "0,0"))
+(rule "selectOnEmptyOfSize" (formula "1") (term "0"))
+(rule "shapeAtDyn" (formula "1") (term "0,0"))
+(rule "shapeAtNil" (formula "1") (term "0,0"))
+(rule "sizeOfFixed" (formula "1") (term "0"))
 (rule "eqClose" (formula "1"))
 (rule "closeTrue" (formula "1"))
 )
