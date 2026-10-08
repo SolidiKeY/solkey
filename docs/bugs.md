@@ -52,11 +52,6 @@ event) is refused at load with a `SolidityParseException` naming it; those are i
 
 ## True facts that cannot be proved
 
-- **An `address` named return starts unconstrained.** `ExpandFunctionBody.zero` initialises
-  only `int` and `bool` returns, so after `function z() internal pure returns (address r) {}`,
-  `address a = z(); assert(a == address(0));` leaves `==> r = 0` open; solc returns
-  `address(0)`. Every value type should start at its default (solidity-lean already does). Planned later: 7B
-  (one `defaultValue`, after 8C).
 - **A variable mentioned only in a loop invariant loses its value.** `\dropEffectlessElementaries`
   (`DropEffectlessElementariesCondition.searchTerm`) does not see a loop's `LoopSpec` bindings, so
   `simplifyUpdate*` drops the update before `whileInvariantBox`:

@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.rule.metaconstruct;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -12,14 +11,11 @@ import org.key_project.logic.Name;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
-import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.declarations.ContractDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.StateVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
-import org.key_project.solidity.program.ast.expressions.literals.BoolLiteral;
-import org.key_project.solidity.program.ast.expressions.literals.Uint256Literal;
 import org.key_project.solidity.program.ast.expressions.operators.AssignExpression;
 import org.key_project.solidity.program.ast.expressions.operators.Operator;
 import org.key_project.solidity.program.ast.references.FieldReference;
@@ -28,6 +24,7 @@ import org.key_project.solidity.program.ast.statement.ExpressionStatement;
 import org.key_project.solidity.program.ast.statement.FunctionBodyStatement;
 import org.key_project.solidity.program.ast.statement.FunctionFrame;
 import org.key_project.solidity.program.ast.statement.Statement;
+import org.key_project.solidity.program.parser.ParserUtils;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.util.collection.ImmutableArray;
@@ -140,7 +137,7 @@ public class ExpandFunctionBody extends ProgramTransformer {
         for (int i = 0; i < returns.size(); i++) {
             ProgramVariable ret = returns.get(i);
             Name name = ret.name().toString().isEmpty() ? new Name("ret" + i) : ret.name();
-            results.add(fresh.declare(ret, name, zero(ret), stmts));
+            results.add(fresh.declare(ret, name, ParserUtils.defaultValue(ret.getType()), stmts));
         }
         return results;
     }
@@ -181,16 +178,5 @@ public class ExpandFunctionBody extends ProgramTransformer {
             }
         }
         return initializers;
-    }
-
-    private static @Nullable Expression zero(ProgramVariable variable) {
-        if (!(variable.getType() instanceof PrimitiveType type)) {
-            return null;
-        }
-        return switch (type.kind()) {
-            case INTEGER -> new Uint256Literal(BigInteger.ZERO);
-            case BOOLEAN -> BoolLiteral.FALSE;
-            default -> null;
-        };
     }
 }

@@ -2,13 +2,13 @@
 
 ## Scope
 
-This covers the open semantics bugs: places where SolKey's model of a construct disagrees with the EVM. Three prove something false (unsound); two leave a true fact unprovable because the model forgets a value Solidity guarantees.
+This covers the open semantics bugs: places where SolKey's model of a construct disagrees with the EVM. Three prove something false (unsound); one leaves a true fact unprovable because the model forgets a value Solidity guarantees.
 
 All come from `docs/bugs.md` plus the unbounded-integer design choice it opens with. Each bug lists two to four fix ideas, labelled A, B, C, and listed in order of preference, best first. The numbers and letters are stable labels (`docs/bugs.md` cites them), so they do not run in order. **When a bug here is fixed, delete its section and its row in the plan.**
 
 Left out on purpose: crashes, proofs stuck on program text, strategy gaps (`sdiv` heuristics, `ex_pull_out`, `\dropEffectlessElementaries`, the mapping-reference `cast` chain) and the `--solc` runner bugs. Those are tool defects, not wrong semantics.
 
-Already fixed, and so removed: 1 (named arguments bind by position, 1B), 2 (modifier locals shared, 2B), 3 (virtual call binds to base, 3A), 8 (uninitialised local unconstrained, 8C: the `DefaultValue(T)` node), 9 (`constant` reads as storage, 9A), 11 (static → dynamic copy loses the length, 11B) and 12 (shorter static copy leaves the tail, 12D).
+Already fixed, and so removed: 1 (named arguments bind by position, 1B), 2 (modifier locals shared, 2B), 3 (virtual call binds to base, 3A), 7 (`address` named return unconstrained: returns take the locals' `ParserUtils.defaultValue`), 8 (uninitialised local unconstrained, 8A: `ParserUtils.defaultValue`), 9 (`constant` reads as storage, 9A), 11 (static → dynamic copy loses the length, 11B) and 12 (shorter static copy leaves the tail, 12D).
 
 ## Plan
 
@@ -17,7 +17,6 @@ Already fixed, and so removed: 1 (named arguments bind by position, 1B), 2 (modi
 | 4 | Type conversions are the identity | Not now | — |
 | 5 | `try` / `call{value}` keep storage | Later | 5A + 5D |
 | 6 | Unbounded integers | Not now | — |
-| 7 | `address` named return unconstrained | Later | 7B (small now that 8C landed) |
 | 10 | No type range on parameters, `msg.value` | Not now | — |
 
 ## Bugs that prove something false
@@ -81,22 +80,7 @@ function f() public pure {
 
 ## True facts the model loses
 
-Bugs 7 and 10 share one need with bug 4: a per-type table of default value and range.
-
-### 7. An `address` named return starts unconstrained
-
-`ExpandFunctionBody.zero` covers only `INTEGER` and `BOOLEAN`, so `returns (address r) {}` leaves `r` free.
-
-```solidity
-function z() internal pure returns (address r) {}
-function f() public pure {
-    address a = z();
-    assert(a == address(0)); // SolKey: open (r = 0 unproved). EVM: holds
-}
-```
-
-- **7B. Reuse the `DefaultValue(T)` node of 8C** for named returns. Named returns, uninitialised locals and deleted slots then agree by construction.
-- **7A. Complete `zero()`.** Add `ADDRESS`, enum and every other value kind. One switch; fixes this bug only.
+Bug 10 shares one need with bug 4: a per-type table of value ranges.
 
 ### 10. Parameters, `msg.value` and `msg.sender` carry no type range
 
@@ -112,15 +96,15 @@ function v() public payable { assert(msg.value >= 0); }          // SolKey: open
 
 - **10A. Range preconditions in the synthesizer.** For each parameter add `inRange(x, T)` (uint8 ≤ 255, enum < member count, address < 2^160); always add `msgValue >= 0` and a non-payable `msgValue = 0`. Small, local change.
 - **10C. Only fix `msg.value` now.** Move the non-payable `msgValue = 0` out of the specified-only branch. A one-line quick win to take regardless.
-- **10B. A general `inType<[T]>(v)` predicate.** One predicate from `KeYSolidityType`, used for parameters, return values and every value read from storage (storage starts arbitrary, so state variables lack ranges too). Bigger; also serves 4A, 6A and 7B.
+- **10B. A general `inType<[T]>(v)` predicate.** One predicate from `KeYSolidityType`, used for parameters, return values and every value read from storage (storage starts arbitrary, so state variables lack ranges too). Bigger; also serves 4A and 6A.
 
 ## Cross-cutting ideas
 
-- **X1. A per-type value table.** One place mapping a `KeYSolidityType` to its default, its range predicate and its wrap function. It is the base for 4A, 6A, 7B and 10B.
+- **X1. A per-type value table.** One place mapping a `KeYSolidityType` to its default, its range predicate and its wrap function. It is the base for 4A, 6A and 10B.
 - **X3. A soundness gate in CI.** Run `SolidityRuntimeCheck` on every function whose proof closes; a closed proof whose EVM run fails `assert` fails the build. That is how bugs 1–5 were found. It needs constructor support in the runtime check first, since that skips any contract with a constructor or constant today. `OpenExamplesStayOpenTest` already fails CI when an `open/` function starts to close.
-- **Mirror in solidity-lean.** It already has checked arithmetic, defaults and fresh renaming, so it can be the reference for 6 and 7. It shares bug 5 (its `noCallback` `try` never runs the callee), so a fix there should land in both.
+- **Mirror in solidity-lean.** It already has checked arithmetic, defaults and fresh renaming, so it can be the reference for 6. It shares bug 5 (its `noCallback` `try` never runs the callee), so a fix there should land in both.
 
 ## Order of work
 
-1. Later: 5A plus 5D, with an example per call kind in `TestSuite.sol`; then 7B.
+1. Later: 5A plus 5D, with an example per call kind in `TestSuite.sol`.
 2. Not now: 4, 6 and 10 (conversions, integer width, type ranges).

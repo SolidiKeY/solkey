@@ -3772,6 +3772,92 @@ contract TestSuite {
         assert(r == 0 && !b);
     }
 
+    function returnDefaultAddress() internal pure returns (address who) {
+    }
+
+    function returnDefaultEnum() internal pure returns (Phase p) {
+    }
+
+    function returnDefaultMemoryArray() internal pure returns (uint[] memory xs) {
+    }
+
+    function returnInThenBranch(bool b) internal pure returns (uint r, bool ok) {
+        if (b) {
+            return (5, true);
+        } else {
+        }
+    }
+
+    function returnInElseBranch(bool b) internal view returns (address who) {
+        if (b) {
+        } else {
+            return owner;
+        }
+    }
+
+    function returnEnumInOneBranch(bool b) internal pure returns (Phase p) {
+        if (b) return Phase.Closed;
+    }
+
+    function returnAssignsOneOfTwo() internal pure returns (uint r, address who) {
+        r = who == address(0) ? 3 : 4;
+    }
+
+    function returnReadsItsDefault() internal pure returns (uint r, bool wasZero) {
+        wasZero = r == 0;
+    }
+
+    function returnDefaultAddressIsZero() public pure {
+        address who = returnDefaultAddress();
+        assert(who == address(0));
+    }
+
+    function returnDefaultEnumIsFirstMember() public pure {
+        Phase p = returnDefaultEnum();
+        assert(p == Phase.Open);
+    }
+
+    function returnDefaultMemoryArrayIsEmpty() public pure {
+        uint[] memory xs = returnDefaultMemoryArray();
+        assert(xs.length == 0);
+    }
+
+    function returnInThenBranchElseIsDefault() public pure {
+        (uint r, bool ok) = returnInThenBranch(true);
+        assert(r == 5 && ok);
+        (r, ok) = returnInThenBranch(false);
+        assert(r == 0 && !ok);
+    }
+
+    function returnInElseBranchThenIsDefault() public view {
+        address returned = returnInElseBranch(false);
+        address fellThrough = returnInElseBranch(true);
+        assert(returned == owner);
+        assert(fellThrough == address(0));
+    }
+
+    function returnDefaultIsFreshPerCall() public pure {
+        (uint first, ) = returnInThenBranch(true);
+        (uint second, bool ok) = returnInThenBranch(false);
+        assert(first == 5 && second == 0 && !ok);
+    }
+
+    function returnEnumOtherBranchIsDefault() public pure {
+        Phase closed = returnEnumInOneBranch(true);
+        Phase open = returnEnumInOneBranch(false);
+        assert(closed == Phase.Closed && open == Phase.Open);
+    }
+
+    function returnUnassignedComponentIsDefault() public pure {
+        (uint r, address who) = returnAssignsOneOfTwo();
+        assert(r == 3 && who == address(0));
+    }
+
+    function returnDefaultIsVisibleInBody() public pure {
+        (uint r, bool wasZero) = returnReadsItsDefault();
+        assert(r == 0 && wasZero);
+    }
+
     function overloadPick(uint x) internal pure returns (uint) {
         return x + 1;
     }

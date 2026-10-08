@@ -861,13 +861,16 @@ anywhere in the program (`c# … #c`), via the `ExpandFunctionBody` transformer:
 The transformer emits
 
 ```
-T0 p0 = arg0; ... Tn pn = argn; R0 r0 = 0; ... Rm rm = 0; function-frame { <body> } t0 = r0; ... tm = rm;
+T0 p0 = arg0; ... Tn pn = argn; R0 r0 = d0; ... Rm rm = dm; function-frame { <body> } t0 = r0; ... tm = rm;
 ```
 
 where `ti` are the call's targets: none for a bare call, one per return value otherwise, and no
 assignment for a discarded component. An unnamed return value gets the fresh name `reti`. A
-return variable of an integer type starts at `0` and a `bool` one at `false`, as in Solidity;
-one of any other type is declared without a value.
+return variable starts at `di`, its type's default, as in Solidity: the
+`ParserUtils.defaultValue` an uninitialised local gets (`0` for an integer, enum or `address`,
+`false` for a `bool`). One of any other type is declared without a value, so a memory one is
+freshly allocated and empty (`memoryReferenceDeclFreshAlloc`). A path that never assigns a return
+variable therefore returns the default (`returnInThenBranchElseIsDefault` and its neighbours).
 
 **Modifiers are wrapped around the frame** (`ModifierInlining`), the first listed outermost, so
 `f() m1(a) m2` becomes
