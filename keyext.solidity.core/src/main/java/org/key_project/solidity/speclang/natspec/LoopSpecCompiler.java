@@ -11,6 +11,7 @@ import org.key_project.logic.Name;
 import org.key_project.logic.Term;
 import org.key_project.logic.op.Operator;
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.keyfile.KeyPrinter;
 import org.key_project.solidity.logic.NamespaceSet;
 import org.key_project.solidity.logic.TermFactory;
 import org.key_project.solidity.logic.op.ProgramVariable;
@@ -27,7 +28,8 @@ public final class LoopSpecCompiler {
         String text = String.join(" && ",
             spec.invariants().stream().map(clause -> "(" + clause + ")").toList());
         return compile(spec, services,
-            (compiler, context) -> compiler.formula(text, context, where(spec, "invariant")));
+            (compiler, context) -> KeyPrinter
+                    .print(compiler.formula(text, context, where(spec, "invariant"))));
     }
 
     public static @Nullable Term variant(LoopSpec spec, Services services) {
@@ -36,7 +38,8 @@ public final class LoopSpecCompiler {
             return null;
         }
         return compile(spec, services,
-            (compiler, context) -> compiler.term(text, context, where(spec, "decreases")));
+            (compiler, context) -> KeyPrinter
+                    .print(compiler.term(text, context, where(spec, "decreases"))));
     }
 
     private interface Translation {

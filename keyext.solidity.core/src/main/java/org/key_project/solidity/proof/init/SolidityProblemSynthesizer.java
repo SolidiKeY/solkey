@@ -9,8 +9,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
+import org.key_project.solidity.keyfile.Key;
+import org.key_project.solidity.keyfile.KeyFormula;
+import org.key_project.solidity.keyfile.KeyFormula.Assignment;
+import org.key_project.solidity.keyfile.KeyFormula.Call;
+import org.key_project.solidity.keyfile.KeyPrinter;
+import org.key_project.solidity.keyfile.KeyProblem;
+import org.key_project.solidity.keyfile.KeyTerm;
 import org.key_project.solidity.program.parser.SolidityOutline;
 import org.key_project.solidity.speclang.natspec.KeyNatspec;
 import org.key_project.solidity.speclang.natspec.SpecCompiler;
@@ -87,6 +93,11 @@ public final class SolidityProblemSynthesizer {
 
     public static String problemText(Path solFile, SolidityOutline outline,
             SolidityProblemSpec spec) {
+        return KeyPrinter.print(problem(solFile, outline, spec));
+    }
+
+    public static KeyProblem problem(Path solFile, SolidityOutline outline,
+            SolidityProblemSpec spec) {
         SolidityOutline.Contract contract = outline.requireContract(spec.contract(), solFile);
         SolidityOutline.Function function = contract.function(spec.function())
                 .orElseThrow(() -> new IllegalArgumentException(
@@ -100,138 +111,127 @@ public final class SolidityProblemSynthesizer {
         } catch (SpecException e) {
             throw new SpecException(where + ": " + e.getMessage());
         }
-        List<SolidityOutline.Parameter> parameters = function.parameters();
-        String arguments = parameters.stream().map(SolidityOutline.Parameter::name)
-                .collect(Collectors.joining(", "));
-        List<String> variables = new ArrayList<>();
-        for (SolidityOutline.Parameter parameter : parameters) {
-            variables.add(parameter.keySort() + " " + parameter.name());
+        List<String> arguments = function.parameters().stream()
+                .map(SolidityOutline.Parameter::name).toList();
+        List<KeyProblem.Variable> variables = new ArrayList<>();
+        for (SolidityOutline.Parameter parameter : function.parameters()) {
+            variables.add(new KeyProblem.Variable(parameter.keySort(), parameter.name()));
         }
         List<String> results = new ArrayList<>();
         for (SolidityOutline.Parameter ret : function.returns()) {
             String variable = SpecCompiler.resultVariable(function, ret.name());
-            variables.add(ret.keySort() + " " + variable);
+            variables.add(new KeyProblem.Variable(ret.keySort(), variable));
             results.add(variable);
         }
-        String result = results.isEmpty() ? ""
-                : results.size() == 1 ? results.get(0) + " = "
-                        : "(" + String.join(", ", results) + ") = ";
-        String call = result + spec.function() + "(" + arguments + ")@" + spec.contract() + ";";
-        String options = spec.choices().isEmpty() ? ""
-                : spec.choices().stream()
-                        .collect(Collectors.joining(", ", "\\withOptions ", ";\n\n"));
+        Call call = Key.call(results, spec.function(), arguments, spec.contract());
         StorageShapes shapes = new StorageShapes(contract);
         if (!contractSpec.isSpecified() && !functionSpec.isSpecified()) {
-            String post = shapes.isEmpty() ? "true" : WELLFORMED;
-            String modality = functionSpec.box() ? "\\[{ " + call + " }\\](" + post + ")"
-                    : "\\<{ " + call + " }\\>(" + post + ")";
+            KeyFormula post = shapes.isEmpty() ? Key.TRUE : WELLFORMED;
+            KeyFormula obligation = Key.modality(functionSpec.box(), call, post);
             if (function.isConstructor()) {
-                modality = "{storage := " + shapes.emptyStorage() + " || net := mtSt} " + modality;
+                obligation = Key.update(List.of(Key.assign("storage", shapes.emptyStorage()),
+                    Key.assign("net", MT_ST)), obligation);
             } else if (!shapes.isEmpty()) {
-                modality = WELLFORMED + " ->\n    " + modality;
+                obligation = Key.implies(WELLFORMED, obligation);
             }
-            return """
-                    %s%s\\problem {
-                        %s
-                    }
-                    """.formatted(header(solFile, options, variables, shapes),
-                "\\rules {\n" + shapes.rules() + "}\n\n", modality);
+            return new KeyProblem(solFile.toAbsolutePath(), spec.choices(),
+                shapes.declarations(), variables, shapes.rules(), obligation);
         }
-        return specifiedProblemText(solFile, contract, function, contractSpec, functionSpec,
-            options, variables, call, where, shapes);
+        return specifiedProblem(solFile, contract, function, contractSpec, functionSpec,
+            spec.choices(), variables, call, where, shapes);
     }
 
-    private static final String WELLFORMED = "wellformed(storage)";
+    private static final KeyTerm STORAGE = Key.constant("storage");
+    private static final KeyTerm NET = Key.constant("net");
+    private static final KeyTerm MT_ST = Key.constant("mtSt");
+    private static final KeyTerm MSG_SENDER = Key.constant("msgSender");
+    private static final KeyTerm MSG_VALUE = Key.constant("msgValue");
+    private static final KeyTerm SELF_BALANCE = Key.constant("selfBalance");
+    private static final KeyFormula WELLFORMED = Key.predicate("wellformed", STORAGE);
+    private static final KeyFormula INVARIANT = Key.predicate("CInv", STORAGE, NET);
 
-    private static String header(Path solFile, String options, List<String> variables,
-            StorageShapes shapes) {
-        String declarations = variables.isEmpty() ? ""
-                : variables.stream().map(v -> "    " + v + ";")
-                        .collect(Collectors.joining("\n", "\\programVariables {\n", "\n}\n\n"));
-        return "\\programSource \"" + solFile.toAbsolutePath() + "\";\n\n" + options
-            + shapes.declarations() + declarations;
-    }
-
-    private static String specifiedProblemText(Path solFile, SolidityOutline.Contract contract,
+    private static KeyProblem specifiedProblem(Path solFile, SolidityOutline.Contract contract,
             SolidityOutline.Function function, KeyNatspec contractSpec, KeyNatspec functionSpec,
-            String options, List<String> variables, String call, String where,
+            List<String> options, List<KeyProblem.Variable> variables, Call call, String where,
             StorageShapes shapes) {
         SpecCompiler compiler = new SpecCompiler(contract, function);
         Map<String, SpecType> parameters = SpecCompiler.parameterTypes(function);
         boolean usesOld = functionSpec.ensures().stream()
                 .anyMatch(e -> SpecParser.usesOld(SpecParser.parse(e)));
-        List<String> declared = new ArrayList<>(variables);
+        List<KeyProblem.Variable> declared = new ArrayList<>(variables);
         if (usesOld) {
-            declared.add("Struct old");
-            declared.add("Struct oldNet");
+            declared.add(new KeyProblem.Variable("Struct", "old"));
+            declared.add(new KeyProblem.Variable("Struct", "oldNet"));
         }
-        String invariant = contractSpec.invariants().isEmpty() ? "            true"
-                : conjunction(contractSpec.invariants(),
-                    text -> compiler.formula(text, SpecCompiler.Context.invariant(),
-                        contract.name() + " invariant"),
-                    "            ", false);
+        KeyFormula invariant = labeled(contractSpec.invariants(),
+            text -> compiler.formula(text, SpecCompiler.Context.invariant(),
+                contract.name() + " invariant"));
         boolean quantified = contractSpec.invariants().stream()
                 .anyMatch(text -> SpecParser.quantifies(SpecParser.parse(text)));
-        String precondition = "    // " + (function.payable() ? "msg.value >= 0" : "msg.value == 0")
-            + " :\n    " + (function.payable() ? "geq(msgValue, 0)" : "msgValue = 0")
-            + "\n    // msg.sender != this :\n    & !(msgSender = self)"
-            + conjunction(functionSpec.requires(),
-                text -> compiler.formula(text, SpecCompiler.Context.requires(parameters),
-                    where + " requires"),
-                "    ", true);
-        String wellformed = shapes.isEmpty() ? "" : WELLFORMED + " & ";
-        String postcondition = wellformed + "CInv(storage, net)"
-            + conjunction(functionSpec.ensures(),
-                text -> compiler.formula(text, SpecCompiler.Context.ensures(parameters),
-                    where + " ensures"),
-                "         ", true);
         boolean constructor = function.isConstructor();
-        String storage = constructor ? "mtSt" : "storage";
-        String ledger = constructor ? "mtSt" : "net";
-        String update = (constructor ? "storage := " + shapes.emptyStorage() + "\n     || " : "")
-            + (usesOld ? "old := " + storage + " || oldNet := " + ledger + "\n     || " : "")
-            + "net := storeSt(" + ledger + ", at(msgSender), selectSt<[int]>(" + ledger
-            + ", at(msgSender)) + msgValue)\n     || selfBalance := "
-            + (constructor ? "" : "selfBalance + ") + "msgValue";
-        return """
-                %s\\rules {
-                    insertCInv {
-                        \\schemaVar \\term Struct s, n;
-                        \\find(CInv(s, n))
-                %s        \\replacewith(
-                %s)
-                        \\heuristics(simplify)
-                    };
-                %s}
 
-                \\problem {
-                %s
-                    %s->
-                    {%s}
-                    \\[{ %s }\\]
-                        (%s)
-                }
-                """.formatted(header(solFile, options, declared, shapes),
-            !quantified ? ""
-                    : "        \\varcond(\\noFreeVarIn(s), \\noFreeVarIn(n))\n",
-            invariant, shapes.rules(), precondition,
-            constructor ? "" : "& " + wellformed + "CInv(storage, net) ", update, call,
-            postcondition);
+        List<KeyFormula> precondition = new ArrayList<>();
+        precondition.add(function.payable()
+                ? Key.labeled("msg.value >= 0", Key.predicate("geq", MSG_VALUE, Key.num(0)))
+                : Key.labeled("msg.value == 0", Key.eq(MSG_VALUE, Key.num(0))));
+        precondition.add(Key.labeled("msg.sender != this",
+            Key.not(Key.eq(MSG_SENDER, Key.constant("self")))));
+        precondition.addAll(labeledClauses(functionSpec.requires(),
+            text -> compiler.formula(text, SpecCompiler.Context.requires(parameters),
+                where + " requires")));
+        if (!constructor) {
+            if (!shapes.isEmpty()) {
+                precondition.add(WELLFORMED);
+            }
+            precondition.add(INVARIANT);
+        }
+
+        List<KeyFormula> postcondition = new ArrayList<>();
+        if (!shapes.isEmpty()) {
+            postcondition.add(WELLFORMED);
+        }
+        postcondition.add(INVARIANT);
+        postcondition.addAll(labeledClauses(functionSpec.ensures(),
+            text -> compiler.formula(text, SpecCompiler.Context.ensures(parameters),
+                where + " ensures")));
+
+        KeyTerm storage = constructor ? MT_ST : STORAGE;
+        KeyTerm ledger = constructor ? MT_ST : NET;
+        List<Assignment> update = new ArrayList<>();
+        if (constructor) {
+            update.add(Key.assign("storage", shapes.emptyStorage()));
+        }
+        if (usesOld) {
+            update.add(Key.assign("old", storage));
+            update.add(Key.assign("oldNet", ledger));
+        }
+        KeyTerm sender = Key.apply("at", MSG_SENDER);
+        update.add(Key.assign("net", Key.apply("storeSt", ledger, sender,
+            Key.plus(Key.typed("selectSt", "int", ledger, sender), MSG_VALUE))));
+        update.add(Key.assign("selfBalance",
+            constructor ? MSG_VALUE : Key.plus(SELF_BALANCE, MSG_VALUE)));
+
+        KeyProblem.Taclet insertInvariant = new KeyProblem.Taclet("insertCInv", "Struct",
+            List.of("s", "n"), quantified,
+            Key.predicate("CInv", Key.constant("s"), Key.constant("n")), invariant, "simplify");
+        List<KeyProblem.Taclet> rules = new ArrayList<>();
+        rules.add(insertInvariant);
+        rules.addAll(shapes.rules());
+
+        KeyFormula obligation = Key.implies(Key.and(precondition),
+            Key.update(update, Key.modality(true, call, Key.and(postcondition))));
+        return new KeyProblem(solFile.toAbsolutePath(), options, shapes.declarations(),
+            declared, rules, obligation);
     }
 
-    private static String conjunction(List<String> clauses, Function<String, String> compile,
-            String indent, boolean continued) {
-        StringBuilder text = new StringBuilder();
-        for (int i = 0; i < clauses.size(); i++) {
-            boolean conjunct = continued || i > 0;
-            if (conjunct) {
-                text.append("\n");
-            }
-            text.append(indent).append("// ").append(clauses.get(i)).append(" :\n")
-                    .append(indent).append(conjunct ? "& " : "")
-                    .append(compile.apply(clauses.get(i)));
-        }
-        return text.toString();
+    private static KeyFormula labeled(List<String> clauses,
+            Function<String, KeyFormula> compile) {
+        return Key.and(labeledClauses(clauses, compile));
+    }
+
+    private static List<KeyFormula> labeledClauses(List<String> clauses,
+            Function<String, KeyFormula> compile) {
+        return clauses.stream().map(text -> Key.labeled(text, compile.apply(text))).toList();
     }
 
     /// A path identifying this obligation. It is never created; it only fixes the directory

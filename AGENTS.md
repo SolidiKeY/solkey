@@ -100,6 +100,8 @@ Solidity → ANTLR → SolidityToKeyConverter → AST → TypeResolver → Abstr
 - **`logic/`** — `TermFactory`, `TermBuilder`; **`logic/op/`** — `ProgramVariable`
 - **`proof/`** — `Proof`, `Goal`; **`proof/init/`** — proof obligations
 - **`rule/`** — Rule interface, meta-constructs; **`speclang/`** — contracts and specifications
+- **`keyfile/`** — typed AST of a generated `.key` problem (`Key` builds it, `KeyPrinter` is the
+  only code that writes `.key` syntax); `SolidityProblemSynthesizer` and `SpecCompiler` build it
 - **`strategy/`** — `Strategy`, `ApplyStrategy`
 - **`common/`** — `SolidityInfo`, the registry for Solidity types (int8–int256, uint8–uint256,
   bytes1–bytes32, bool, address). Register new types here.

@@ -10,6 +10,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.key_project.solidity.keyfile.Key;
+import org.key_project.solidity.keyfile.KeyFormula;
+import org.key_project.solidity.keyfile.KeyProblem;
+import org.key_project.solidity.keyfile.KeyTerm;
 import org.key_project.solidity.program.parser.SolidityOutline;
 import org.key_project.solidity.theory.StructLDT;
 
@@ -19,7 +23,7 @@ public final class StorageShapes {
 
     private final SolidityOutline.Contract contract;
     private final Map<String, Shape> structShapes = new LinkedHashMap<>();
-    private final Map<String, String> roots = new LinkedHashMap<>();
+    private final Map<String, KeyTerm> roots = new LinkedHashMap<>();
 
     public StorageShapes(SolidityOutline.Contract contract) {
         this.contract = contract;
@@ -45,34 +49,29 @@ public final class StorageShapes {
 
     /// The constructor's starting storage: the shaped empty node of every non-trivial root
     /// stored into `mtSt`.
-    public String emptyStorage() {
-        String storage = "mtSt";
-        for (Map.Entry<String, String> root : roots.entrySet()) {
-            storage = "storeSt(" + storage + ", " + root.getKey() + ", emptyOf(" + root.getValue()
-                + "))";
+    public KeyTerm emptyStorage() {
+        KeyTerm storage = Key.constant("mtSt");
+        for (Map.Entry<String, KeyTerm> root : roots.entrySet()) {
+            storage = Key.apply("storeSt", storage, Key.constant(root.getKey()),
+                Key.apply("emptyOf", root.getValue()));
         }
         return storage;
     }
 
-    /// The `\functions` declarations of the struct shape constants, or `""`.
-    public String declarations() {
-        if (structShapes.isEmpty()) {
-            return "";
-        }
-        StringBuilder text = new StringBuilder("\\functions {\n");
-        for (String struct : structShapes.keySet()) {
-            text.append("    \\unique Shape ").append(shapeConstant(struct)).append(";\n");
-        }
-        return text.append("}\n\n").toString();
+    /// The `\functions` declarations of the struct shape constants.
+    public List<KeyProblem.Function> declarations() {
+        return structShapes.keySet().stream()
+                .map(struct -> new KeyProblem.Function(true, "Shape", shapeConstant(struct)))
+                .toList();
     }
 
     /// The rules unfolding `wellformed(s)` into one `wf` atom per non-trivial root and each
-    /// struct shape into the atoms of its members, as the bodies of a `\rules` block.
-    public String rules() {
-        StringBuilder text = new StringBuilder();
-        text.append(rule("insertWellformed", "wellformed(s)", conjunction(roots)));
+    /// struct shape into the atoms of its members.
+    public List<KeyProblem.Taclet> rules() {
+        List<KeyProblem.Taclet> rules = new ArrayList<>();
+        rules.add(rule("insertWellformed", Key.predicate("wellformed", S), conjunction(roots)));
         for (Map.Entry<String, Shape> struct : structShapes.entrySet()) {
-            Map<String, String> members = new LinkedHashMap<>();
+            Map<String, KeyTerm> members = new LinkedHashMap<>();
             for (SolidityOutline.Variable member : contract.structs().get(struct.getKey())) {
                 Shape shape = shapeOf(member.type());
                 if (!shape.isTrivial()) {
@@ -82,32 +81,27 @@ public final class StorageShapes {
                         shape.render(contract.name()));
                 }
             }
-            text.append(rule("wfStruct_" + struct.getKey(),
-                "wf(" + shapeConstant(struct.getKey()) + ", s)", conjunction(members)));
+            rules.add(rule("wfStruct_" + struct.getKey(),
+                Key.predicate("wf", Key.constant(shapeConstant(struct.getKey())), S),
+                conjunction(members)));
         }
-        return text.toString();
+        return rules;
     }
 
-    private static String rule(String name, String find, String body) {
-        return """
-                    %s {
-                        \\schemaVar \\term Struct s;
-                        \\find(%s)
-                        \\replacewith(%s)
-                        \\heuristics(simplify)
-                    };
-                """.formatted(name, find, body);
+    private static final KeyTerm S = Key.constant("s");
+
+    private static KeyProblem.Taclet rule(String name, KeyFormula find, KeyFormula body) {
+        return new KeyProblem.Taclet(name, "Struct", List.of("s"), false, find, body,
+            "simplify");
     }
 
-    private static String conjunction(Map<String, String> atoms) {
-        if (atoms.isEmpty()) {
-            return "true";
+    private static KeyFormula conjunction(Map<String, KeyTerm> atoms) {
+        List<KeyFormula> parts = new ArrayList<>();
+        for (Map.Entry<String, KeyTerm> atom : atoms.entrySet()) {
+            parts.add(Key.predicate("wf", atom.getValue(),
+                Key.typed("selectSt", "Struct", S, Key.constant(atom.getKey()))));
         }
-        List<String> parts = new ArrayList<>();
-        for (Map.Entry<String, String> atom : atoms.entrySet()) {
-            parts.add("wf(" + atom.getValue() + ", selectSt<[Struct]>(s, " + atom.getKey() + "))");
-        }
-        return String.join("\n            & ", parts);
+        return Key.and(parts);
     }
 
     private String field(String variable) {
@@ -186,7 +180,7 @@ public final class StorageShapes {
 
         boolean isTrivial();
 
-        String render(String contract);
+        KeyTerm render(String contract);
 
         record Leaf() implements Shape {
             @Override
@@ -195,8 +189,8 @@ public final class StorageShapes {
             }
 
             @Override
-            public String render(String contract) {
-                return "leaf";
+            public KeyTerm render(String contract) {
+                return Key.constant("leaf");
             }
         }
 
@@ -207,8 +201,8 @@ public final class StorageShapes {
             }
 
             @Override
-            public String render(String contract) {
-                return "fixedArr(" + length + ", " + element.render(contract) + ")";
+            public KeyTerm render(String contract) {
+                return Key.apply("fixedArr", Key.num(length), element.render(contract));
             }
         }
 
@@ -219,8 +213,8 @@ public final class StorageShapes {
             }
 
             @Override
-            public String render(String contract) {
-                return "dynArr(" + element.render(contract) + ")";
+            public KeyTerm render(String contract) {
+                return Key.apply("dynArr", element.render(contract));
             }
         }
 
@@ -231,8 +225,8 @@ public final class StorageShapes {
             }
 
             @Override
-            public String render(String contract) {
-                return "mapOf(" + value.render(contract) + ")";
+            public KeyTerm render(String contract) {
+                return Key.apply("mapOf", value.render(contract));
             }
         }
 
@@ -243,8 +237,8 @@ public final class StorageShapes {
             }
 
             @Override
-            public String render(String contract) {
-                return shapeConstantName(contract, name);
+            public KeyTerm render(String contract) {
+                return Key.constant(shapeConstantName(contract, name));
             }
         }
     }

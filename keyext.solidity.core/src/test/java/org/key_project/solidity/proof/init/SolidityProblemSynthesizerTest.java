@@ -6,6 +6,7 @@ package org.key_project.solidity.proof.init;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.stream.Stream;
 
 import org.key_project.solidity.control.ProofSession;
 import org.key_project.solidity.control.SolidityVerifier;
@@ -15,9 +16,13 @@ import org.key_project.solidity.testutil.SolidityExampleTests;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -192,7 +197,7 @@ public class SolidityProblemSynthesizerTest {
 
         assertTrue(text.contains("{storage := storeSt(storeSt(storeSt(mtSt, FixedLengths$d1, "
             + "emptyOf(fixedArr(9, leaf))), FixedLengths$d2, emptyOf(dynArr(leaf))), "
-            + "FixedLengths$dyn, emptyOf(dynArr(fixedArr(3, leaf)))) || net := mtSt} "
+            + "FixedLengths$dyn, emptyOf(dynArr(fixedArr(3, leaf))))\n     || net := mtSt}\n    "
             + "\\<{ constructor()@FixedLengths; }\\>(wellformed(storage))"), text);
         assertTrue(text.contains("wf(dynArr(fixedArr(3, leaf)), selectSt<[Struct]>(s, "
             + "FixedLengths$dyn))"), text);
@@ -239,8 +244,8 @@ public class SolidityProblemSynthesizerTest {
                         // msg.sender == sender && state == State.AwaitingDeposit && msg.value > 0 :
                         & (((msgSender = find<[int]>(storage, cons1(Escrow$sender))) & (find<[int]>(storage, cons1(Escrow$state)) = 0)) & (msgValue > 0))
                         & CInv(storage, net) ->
-                        {net := storeSt(net, at(msgSender), selectSt<[int]>(net, at(msgSender)) + msgValue)
-                         || selfBalance := selfBalance + msgValue}
+                        {net := storeSt(net, at(msgSender), (selectSt<[int]>(net, at(msgSender)) + msgValue))
+                         || selfBalance := (selfBalance + msgValue)}
                         \\[{ placeInEscrow()@Escrow; }\\]
                             (CInv(storage, net)
                              // net(sender) == msg.value && state == State.DepositPlaced :
@@ -259,7 +264,7 @@ public class SolidityProblemSynthesizerTest {
             spec("MultiAuction", "placeOrIncreaseBid"));
 
         assertTrue(text.contains("    Struct old;\n    Struct oldNet;\n"), text);
-        assertTrue(text.contains("{old := storage || oldNet := net\n     || net := storeSt("),
+        assertTrue(text.contains("{old := storage\n     || oldNet := net\n     || net := storeSt("),
             text);
         assertFalse(text.contains("\\schemaVar \\variables"), text);
         assertTrue(text.contains("(\\exists int hb; (\\forall int a; "), text);
@@ -270,7 +275,7 @@ public class SolidityProblemSynthesizerTest {
 
         String nonPayable = SolidityProblemSynthesizer.problemText(file,
             spec("MultiAuction", "withdraw"));
-        assertTrue(nonPayable.contains("// msg.value == 0 :\n    msgValue = 0"), nonPayable);
+        assertTrue(nonPayable.contains("// msg.value == 0 :\n    (msgValue = 0)"), nonPayable);
     }
 
     @Test
@@ -459,5 +464,19 @@ public class SolidityProblemSynthesizerTest {
         ProofSession replayed = ProofSession.load(proof, ProofSession.Limits.defaults(), false);
         assertTrue(replayed.summary().closed());
         assertTrue(replayed.replayErrors().isEmpty(), String.valueOf(replayed.replayErrors()));
+    }
+
+    static Stream<Arguments> specifiedContractFunctions() throws IOException {
+        return SolidityExampleTests.contractFunctions("contracts");
+    }
+
+    @ParameterizedTest(name = "{0}.{1}")
+    @MethodSource("specifiedContractFunctions")
+    void everyGeneratedProblemLoads(String contract, String function) {
+        Path file = SolidityExampleTests.example("contracts/" + contract + ".sol");
+
+        var outcome = SolidityVerifier.verify(file, spec(contract, function), 0, -1, 0);
+
+        assertNull(outcome.error(), outcome.error());
     }
 }

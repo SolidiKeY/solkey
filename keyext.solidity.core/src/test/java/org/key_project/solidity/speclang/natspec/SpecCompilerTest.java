@@ -6,6 +6,7 @@ package org.key_project.solidity.speclang.natspec;
 import java.util.List;
 import java.util.Map;
 
+import org.key_project.solidity.keyfile.KeyPrinter;
 import org.key_project.solidity.program.parser.SolidityOutline;
 import org.key_project.solidity.program.parser.SolidityOutline.Parameter;
 import org.key_project.solidity.program.parser.SolidityOutline.Span;
@@ -41,12 +42,12 @@ public class SpecCompilerTest {
     private static final SpecCompiler COMPILER = new SpecCompiler(C, DEPOSIT);
 
     private static String invariant(String text) {
-        return COMPILER.formula(text, SpecCompiler.Context.invariant(), "test");
+        return KeyPrinter.print(COMPILER.formula(text, SpecCompiler.Context.invariant(), "test"));
     }
 
     private static String ensures(String text) {
-        return COMPILER.formula(text,
-            SpecCompiler.Context.ensures(SpecCompiler.parameterTypes(DEPOSIT)), "test");
+        return KeyPrinter.print(COMPILER.formula(text,
+            SpecCompiler.Context.ensures(SpecCompiler.parameterTypes(DEPOSIT)), "test"));
     }
 
     @Test
@@ -86,7 +87,7 @@ public class SpecCompilerTest {
     @Test
     void connectivesQuantifiersAndArithmetic() {
         assertEquals(
-            "((find<[int]>(s, cons1(C$n)) < 1) -> !((find<[bool]>(s, cons1(C$open)) = TRUE)))",
+            "((find<[int]>(s, cons1(C$n)) < 1) -> !(find<[bool]>(s, cons1(C$open)) = TRUE))",
             invariant("n < 1 -> !open"));
         assertEquals(
             "(\\forall int a; ((selectSt<[int]>(n, at(a)) > 0) -> (find<[bool]>(s, cons2(C$bidded, at(a))) = TRUE)))",
