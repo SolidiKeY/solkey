@@ -109,17 +109,6 @@ contract SolcLoopsOpen {
         assert(x >= 15);
     }
 
-    // open: a local declared without initializer is not zero
-    /// solc: smtCheckerTests/loops/do_while_break.sol
-    function doWhileBreakDefaultZero() public pure {
-        uint x;
-        do {
-            break;
-            x = 1;
-        } while (x == 0);
-        assert(x == 0);
-    }
-
     function binomialFaithful(uint256 n, uint256 k) internal pure returns (uint256) {
         uint256[][] memory rows = new uint256[][](n + 1);
         for (uint256 i = 1; i <= n; i++) {

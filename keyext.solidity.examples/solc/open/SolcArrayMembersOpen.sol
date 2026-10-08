@@ -235,38 +235,4 @@ contract SolcArrayMembersOpen {
         assert(c == d);
     }
 
-    // open: closes only with -m 100000 (about 25 s); the default step budget runs out before the last asserts
-    /// solc: semanticTests/array/create_multiple_dynamic_arrays.sol
-    function memoryMultipleDynamic() public pure {
-        uint[][] memory x = new uint[][](42);
-        assert(x[0].length == 0);
-        x[0] = new uint[](1);
-        x[0][0] = 1;
-        assert(x[4].length == 0);
-        x[4] = new uint[](1);
-        x[4][0] = 2;
-        assert(x[10].length == 0);
-        x[10] = new uint[](1);
-        x[10][0] = 44;
-        uint[][] memory y = new uint[][](24);
-        assert(y[0].length == 0);
-        y[0] = new uint[](1);
-        y[0][0] = 1;
-        assert(y[4].length == 0);
-        y[4] = new uint[](1);
-        y[4][0] = 2;
-        assert(y[10].length == 0);
-        y[10] = new uint[](1);
-        y[10][0] = 88;
-        uint x0 = x[0][0];
-        uint y0 = y[0][0];
-        uint x4 = x[4][0];
-        uint y4 = y[4][0];
-        uint x10 = x[10][0];
-        uint y10 = y[10][0];
-        assert(x0 == y0);
-        assert(x4 == y4);
-        assert(x10 == 44);
-        assert(y10 == 88);
-    }
 }

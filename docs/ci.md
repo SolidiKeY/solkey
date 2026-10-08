@@ -17,12 +17,13 @@ prover models. `./run-key.sh FILE.sol --solc` prints the warnings.
 
 ## CI-only test groups
 
-Not part of `ciGates` — the two slow proof suites are split off by JUnit tag so
+Not part of `ciGates` — the three slow proof suites are split off by JUnit tag so
 the local gate stays fast, and the GUI module has its own job.
 
 | CI job | Local command | Content |
 |---|---|---|
 | `Solidity / examples` | `./gradlew :keyext.solidity.core:testSolidityExamples` | `RulesTest` (`.key` problems), `NetExamplesTest`, `SolcSemanticsExamplesTest`, `TacletCoverageTest`, the one-example showcases, the `solc/*.sol` half of `SolidityRuntimeExecutionTest` |
+| `Solidity / open-examples` | `./gradlew :keyext.solidity.core:testOpenExamples` | `OpenExamplesStayOpenTest`: every `solc/open/` and `real-world/open/` function stays open (a `// open: closes in KeY` one stays closed); `scripts/open-check.sh` is the fast CLI form |
 | `Solidity / rule-generalization` | `./gradlew :keyext.solidity.core:testRuleGeneralization` | `RuleGeneralizationTest` |
 | `Solidity / gui` | `./gradlew :keyext.solidity.gui:test` | the `keyext.solidity.gui` tests (headless) |
 

@@ -147,6 +147,9 @@ contract SolcArrayMembers {
         assert(x[4].length == 0);
         x[4] = new uint[](1);
         x[4][0] = 2;
+        assert(x[10].length == 0);
+        x[10] = new uint[](1);
+        x[10][0] = 44;
         uint[][] memory y = new uint[][](24);
         assert(y[0].length == 0);
         y[0] = new uint[](1);
@@ -154,18 +157,20 @@ contract SolcArrayMembers {
         assert(y[4].length == 0);
         y[4] = new uint[](1);
         y[4][0] = 2;
+        assert(y[10].length == 0);
         y[10] = new uint[](1);
         y[10][0] = 88;
         uint x0 = x[0][0];
         uint y0 = y[0][0];
         uint x4 = x[4][0];
         uint y4 = y[4][0];
+        uint x10 = x[10][0];
         uint y10 = y[10][0];
         assert(x0 == y0);
         assert(x4 == y4);
+        assert(x10 == 44);
         assert(y10 == 88);
     }
-
     /// solc: semanticTests/array/create_memory_array.sol
     function memoryArrayOfFixed() public pure {
         uint[2][] memory y = new uint[2][](300);

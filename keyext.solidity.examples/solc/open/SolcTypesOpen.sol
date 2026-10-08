@@ -144,9 +144,9 @@ contract SolcTypesOpen {
         assert(b);
     }
 
+    // open: closes in KeY, but the uint8 addition 63 + 255 panics with 0x11 on the EVM
     /// solc: semanticTests/literals/ternary_operator_with_literal_types_overflow.sol
     function ternaryLiteralOverflow() public pure {
-        // open: closes in KeY, but the uint8 addition 63 + 255 panics with 0x11 on the EVM
         bool t = true;
         bool f = false;
         uint16 r = (t ? 63 : 255) + (f ? 63 : 255);

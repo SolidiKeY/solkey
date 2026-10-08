@@ -101,22 +101,6 @@ contract SolcPaymentsOpen {
         assert(r == 13);
     }
 
-    // open: a local declared without an initializer is unconstrained rather than zero
-    /// solc: semanticTests/tryCatch/panic.sol
-    /// @custom:key box
-    function tryCatchPanicDefaults(address p, uint q) public pure {
-        require(p == 0x00000000000000000000000000000000DeaDBeef && q == 1);
-        bool flag = q == 1;
-        uint r;
-        uint code;
-        try SolcPaymentsOpen(payable(p)).uf(flag, 7, 6) returns (uint b) {
-            r = b;
-            assert(code == 0);
-        } catch Panic(uint c) {
-            code = c;
-        }
-    }
-
     // open: the callee of a try is never executed, so its write x = 42 is not seen on success
     /// solc: smtCheckerTests/try_catch/try_2.sol
     /// @custom:key box

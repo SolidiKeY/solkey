@@ -397,7 +397,7 @@ Every clause was checked for vacuity: changing it to something false leaves the 
 `OZMath.sol` (`tryDiv`, `tryMod`, `ceilDiv`: no bounds for `sdiv`/`smod`; `average`: bitwise),
 `DocsBallot.sol` (`winnerName` with one `\exists` over a nested `\forall`) and
 `ArrayRemoveByShifting.sol` (the full functional spec of `remove`: a loop invariant cannot use
-`\old`). No test enumerates it. `docs/limitations.md` explains each.
+`\old`). `OpenExamplesStayOpenTest` fails when one of them starts to close. `docs/limitations.md` explains each.
 
 ## The `benchmark/` directory
 
@@ -423,7 +423,8 @@ shadowing, a return left unassigned), so `SolcWrapperTest` tolerates those warni
 
 `solc/open/` holds what did not close: the faithful forms of ports that needed a workaround, and
 upstream claims stopped by a missing construct or a defect. Its files load, each function names
-the reason in an `// open:` line, and no test enumerates the directory.
+the reason in an `// open:` line, and `OpenExamplesStayOpenTest` (CI-only) fails when one starts
+to close: move it into the closing file. `scripts/open-check.sh` lists every such function.
 
 `solc/README.md` has the provenance tables (upstream file → function, for `open/` with the
 reason) and the adaptation rules. `docs/limitations.md` summarises what the ports could not

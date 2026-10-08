@@ -39,78 +39,8 @@ contract SolcSmtControlFlowOpen {
         return a;
     }
 
-    function hAddr() internal pure returns (address) {
-        address a;
-        return a;
-    }
-
     function readValue() internal view returns (uint) {
         return msg.value;
-    }
-
-    // open: `address a;` in hAddr starts unconstrained instead of address(0)
-    /// solc: smtCheckerTests/control_flow/function_call_inside_branch_4.sol
-    function functionCallInsideBranch4() public pure {
-        if (true) {
-            address a = gAddr();
-            assert(a == address(0));
-        }
-        if (true) {
-            address a = hAddr();
-            assert(a == address(0));
-        }
-    }
-
-    // open: an uninitialised `uint x;` starts unconstrained instead of 0
-    /// solc: smtCheckerTests/control_flow/side_effects_inside_if_1.sol
-    function sideEffectsInsideIf1() public pure {
-        uint x;
-        if (++x < 3) {}
-        assert(x == 1);
-    }
-
-    // open: an uninitialised `uint x;` starts unconstrained instead of 0
-    /// solc: smtCheckerTests/control_flow/side_effects_inside_ternary_1.sol
-    function sideEffectsInsideTernary1() public pure {
-        uint x;
-        uint y = (++x < 3) ? ++x : --x;
-        assert(y == x);
-        assert(x == 2);
-    }
-
-    // open: an uninitialised `uint y;` starts unconstrained instead of 0, so the invariant fails on entry
-    /// solc: smtCheckerTests/invariants/loop_basic.sol
-    /// @custom:key box
-    function loopBasic(uint x) public pure {
-        require(x > 0);
-        uint y;
-        /// @custom:key invariant 0 <= y && y <= x
-        while (y < x) ++y;
-        assert(y == x);
-    }
-
-    // open: an uninitialised `uint y;` starts unconstrained instead of 0, so the trip count is unknown
-    /// solc: smtCheckerTests/invariants/loop_nested.sol
-    function loopNested() public pure {
-        uint x = 10;
-        uint y;
-        while (y < x) {
-            ++y;
-            x = 0;
-            while (x < 10) ++x;
-            assert(x == 10);
-        }
-    }
-
-    // open: an uninitialised `uint y;` starts unconstrained instead of 0, so the trip count is unknown
-    /// solc: smtCheckerTests/invariants/loop_nested_for.sol
-    function loopNestedFor() public pure {
-        uint x;
-        uint y;
-        for (x = 10; y < x; ++y) {
-            for (x = 0; x < 10; ++x) {}
-            assert(x == 10);
-        }
     }
 
     // open: an assignment used as an operand, `b = (flag = false)`, is stuck on the program text

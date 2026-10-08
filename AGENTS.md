@@ -41,6 +41,7 @@ scripts/taclet.sh requireSimple      # print one taclet with its file:line
 scripts/taclet.sh --index            # the rule-section banners
 scripts/taclet.sh --list             # every rule name with its file:line
 scripts/benchmark.sh                 # published contracts as published: N/M closed each
+scripts/open-check.sh                # open/ functions whose status changed (now close: move them)
 
 ./gradlew :keyext.solidity.gui:solidityGui     # KeYther, the Swing GUI
 ./gradlew :key.ui:shadowJar                    # fat JAR
@@ -128,7 +129,7 @@ a lexer grammar that starts with `mode`. Syntax errors fail the load (`ThrowingE
 
 `ciGates` refuses to start without `-DENABLE_NULLNESS=true`. The nullness checker is scoped to
 `org.key_project.solidity.program.ast`, so **only edits under `program/ast/` can trip it**. CI
-also runs three test groups that `ciGates` does not. Details, the nullness idiom and the JDK
+also runs four test groups that `ciGates` does not. Details, the nullness idiom and the JDK
 caveat: `docs/ci.md`.
 
 ## Code style
@@ -143,8 +144,8 @@ comments untouched unless the change makes them wrong.
 
 `./gradlew :keyext.solidity.core:test` is the fast local set: unit tests plus the `TestSuite.sol`
 suites (`TacletStarterExamplesTest`, `PaperTestExamplesTest`), ~30 s. It prints failures only;
-`-PverboseTests` restores the per-test progress lines. The `solidityExamples` and
-`ruleGeneralization` groups are CI-only — see `docs/ci.md`.
+`-PverboseTests` restores the per-test progress lines. The `solidityExamples`,
+`ruleGeneralization` and `openExamples` groups are CI-only — see `docs/ci.md`.
 Run `test` after refactoring, and prefer modifying existing test classes over creating new ones.
 
 ## Documentation
@@ -176,8 +177,11 @@ Program rules live in `…/proof/rules/solidityProgramRules.key`, loaded via
 `.key` obligations in `keyext.solidity.examples/net/`; conventions for both are in
 `keyext.solidity.examples/README.md`. After changing a feature, update
 `docs/taclets-implementation.md` (implemented) or `docs/taclet-ideas.md` (backlog).
-**When a change fixes a bug listed in `docs/bugs.md`, delete that entry in the same change;**
-record newly found bugs there.
+**When a change fixes a bug listed in `docs/bugs.md`, delete that entry in the same change,**
+its section in `docs/semantics-bugs-fix-ideas.md`, and move every function it fixes out of
+`solc/open/` and `real-world/open/` (into the closing file, dropping the `// open:` line and its
+provenance row). `scripts/open-check.sh` lists them; CI's `OpenExamplesStayOpenTest` fails while
+any is left. Record newly found bugs there.
 
 **When planning a new taclet:** begin with a plain-English statement of the precondition (what
 must hold before the rule fires), the transformation (what sequent change it performs) and the

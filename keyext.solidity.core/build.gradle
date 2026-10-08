@@ -125,7 +125,7 @@ tasks.withType(Test) {
 
 // The tag groups CI runs as separate jobs. The common `test` task keeps the untagged unit
 // tests and the TestSuite.sol suites; the tagged groups only run locally on explicit request.
-def ciOnlyTestTags = ["solidityExamples", "ruleGeneralization"]
+def ciOnlyTestTags = ["solidityExamples", "ruleGeneralization", "openExamples"]
 
 test {
     useJUnitPlatform {
@@ -150,6 +150,15 @@ tasks.register('testSolidityExamples', Test) {
     def updateProperty = "org.key_project.solidity.taclets.TacletCoverageTest.update"
     if (System.getProperty(updateProperty) != null) {
         systemProperty updateProperty, System.getProperty(updateProperty)
+    }
+}
+
+tasks.register('testOpenExamples', Test) {
+    group = "verification"
+    description = "CI test group: OpenExamplesStayOpenTest, every function of the open/ " +
+        "example directories keeps its status (open, or a known closer)."
+    useJUnitPlatform {
+        includeTags "openExamples"
     }
 }
 

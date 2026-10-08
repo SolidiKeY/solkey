@@ -65,7 +65,6 @@ it.
 
 | Gap | Reproducer (open goal) | Reports |
 |---|---|---|
-| *(fixed)* A local declared without an initializer is unconstrained (`valueDeclSkip` binds no default) | `uint x; assert(x == 0);` → `==> x = 0`; `bool b;` and `address a;` alike | 4 (loops, constructors, payments, smt control flow); ≥ 10 upstream tests |
 | A variable mentioned only in a loop invariant loses its value (`DropEffectlessElementaries` does not see `LoopSpec` bindings) | `uint i = 7; /// invariant j <= n && i == 7` → `==> i = 7` | 2; `dynamic_arrays_in_storage.sol`, `ArrayRemoveByShifting` |
 | `sdiv`/`smod` on symbolic operands get no bounds (default arithmetic mode `NON_LIN_ARITH_NONE`; `smod_*` lemmas have no heuristics) | `require(b >= 1); assert(a % b < b);` → `geq(smod(a,b), b) ==>` | 2; `mod_n`, `mod_signed`, `mod_even`, OZ `Math.tryDiv/tryMod/ceilDiv` |
 | Parameters carry no type range (`uint >= 0`, `uintN < 2^N`, enum `< #members`) | `function g(uint x) { assert(x >= 0); }` → `leq(x, -1) ==>` | 4; known (Tier 3/5 of `taclet-ideas.md`) |
@@ -171,18 +170,18 @@ listed as outside the fragment or duplicated.
 
 | Theme | File | Closed | Open | Not-ported groups | Main reasons for open |
 |---|---|---|---|---|---|
-| Loops | `SolcLoops` | 49 | 10 | 6 | break flag in invariants, pushed inner array not empty, `new T[](n+1)`, cost |
+| Loops | `SolcLoops` | 49 | 9 | 6 | break flag in invariants, pushed inner array not empty, `new T[](n+1)`, cost |
 | Array members | `SolcArrayMembers` | 61 | 19 | 10 | push forms, pushed inner array not empty, static copies |
 | Function calls | `SolcFunctionCalls` | 29 | 7 | 11 | named args (proves false), `&`, assignment as value, conditional callee |
 | Structs and mappings | `SolcStructsMappings` | 50 | 5 | 9 | pushed struct not zero, cost |
-| Constructors | `SolcConstructors` | 35 | 11 (1 closes) | 11 | uninitialised locals, `delete v`, `msg.value` |
-| Payments, reverts, try | `SolcPayments` | 35 | 15 (2 close: proves-false witnesses) | 11 | `msg.*` ranges, `try` callee havocked, noCallback unsound |
+| Constructors | `SolcConstructors` | 38 | 8 (1 closes) | 11 | `delete v`, `msg.value` |
+| Payments, reverts, try | `SolcPayments` | 35 | 14 (2 close: proves-false witnesses) | 11 | `msg.*` ranges, `try` callee havocked, noCallback unsound |
 | Modifiers | `SolcModifiers` | 34 | 13 | 9 | `return`/two `_;`, `for` in modifier, shared locals (proves false) |
-| smtChecker control flow | `SolcSmtControlFlow` | 85 | 13 | 11 | uninitialised locals, `msg.value`, modifier `return` |
+| smtChecker control flow | `SolcSmtControlFlow` | 86 | 7 | 11 | `msg.value`, modifier `return` |
 | Arithmetic | `SolcArithmetic` | 46 | 20 | 10 | wrapping, shifts, `smod` lemmas |
 | Inheritance, getters | `SolcHigherLevel` | 19 | 7 | 13 | virtual dispatch (proves false), `Base.f()` |
 | Types, enums, tuples, literals | `SolcTypes` | 39 | 17 (1 closes: proves false) | 11 | identity casts (proves false), `E(x)`, enum ranges |
-| **Total** | 11 files | **482** | **137** | | |
+| **Total** | 11 files | **486** | **126** | | |
 
 Real-world and benchmark:
 

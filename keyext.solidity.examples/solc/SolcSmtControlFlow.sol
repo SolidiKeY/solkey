@@ -70,6 +70,11 @@ contract SolcSmtControlFlow {
         return a;
     }
 
+    function hAddr() internal pure returns (address) {
+        address a;
+        return a;
+    }
+
     function add(uint x, uint y) internal pure returns (uint) {
         if (y == 0) return x;
         if (y == 1) return ++x;
@@ -564,7 +569,7 @@ contract SolcSmtControlFlow {
 
     /// solc: smtCheckerTests/control_flow/side_effects_inside_if_1.sol
     function sideEffectsInsideIf1() public pure {
-        uint x = 0;
+        uint x;
         if (++x < 3) {}
         assert(x == 1);
     }
@@ -598,7 +603,7 @@ contract SolcSmtControlFlow {
 
     /// solc: smtCheckerTests/control_flow/side_effects_inside_ternary_1.sol
     function sideEffectsInsideTernary1() public pure {
-        uint x = 0;
+        uint x;
         uint y = (++x < 3) ? ++x : --x;
         assert(y == x);
         assert(x == 2);
@@ -807,7 +812,7 @@ contract SolcSmtControlFlow {
     /// @custom:key box
     function loopBasic(uint x) public pure {
         require(x > 0);
-        uint y = 0;
+        uint y;
         /// @custom:key invariant 0 <= y && y <= x
         while (y < x) ++y;
         assert(y == x);
@@ -816,7 +821,7 @@ contract SolcSmtControlFlow {
     /// solc: smtCheckerTests/invariants/loop_nested.sol
     function loopNested() public pure {
         uint x = 10;
-        uint y = 0;
+        uint y;
         while (y < x) {
             ++y;
             x = 0;
@@ -828,7 +833,7 @@ contract SolcSmtControlFlow {
     /// solc: smtCheckerTests/invariants/loop_nested_for.sol
     function loopNestedFor() public pure {
         uint x;
-        uint y = 0;
+        uint y;
         for (x = 10; y < x; ++y) {
             for (x = 0; x < 10; ++x) {}
             assert(x == 10);
@@ -921,6 +926,18 @@ contract SolcSmtControlFlow {
         }
         if (true) {
             address a = gAddr();
+            assert(a == address(0));
+        }
+    }
+
+    /// solc: smtCheckerTests/control_flow/function_call_inside_branch_4.sol
+    function functionCallInsideBranch4() public pure {
+        if (true) {
+            address a = gAddr();
+            assert(a == address(0));
+        }
+        if (true) {
+            address a = hAddr();
             assert(a == address(0));
         }
     }

@@ -89,9 +89,8 @@ Applied uniformly; every function names its upstream file in a `/// solc:` line.
   `SolcArithmetic` keep widths where the width is the subject, and port only the
   value-preserving cases; wrapping and truncating ones are in `open/`. `address` stays
   `address` (equality and `address(n)` literals now discharge).
-- Workarounds for the defects in `docs/bugs.md`, each named at the function: an uninitialised
-  local gets an explicit `= 0`; an indexed parameter is aliased to a local first; a storage read
-  on the right of a compound assignment is bound to a local; free and library functions,
+- Workarounds for the defects in `docs/bugs.md`, each named at the function: an indexed
+  parameter is aliased to a local first; a storage read on the right of a compound assignment is bound to a local; free and library functions,
   file-level declarations and abstract members move into the contract (with a `{ _; }` body);
   `this` as a call target becomes an `address p` pinned to the harness address
   `0x00000000000000000000000000000000DeaDBeef`; `type(T).max` becomes its literal; custom errors
@@ -114,9 +113,10 @@ Applied uniformly; every function names its upstream file in a `/// solc:` line.
 `open/` holds, for each of the eleven newer themes, the upstream claims that do **not** close:
 the faithful form of a port whose closing twin needed a workaround, and tests stopped by a
 missing construct or a defect. Every file loads (`--no-prove`) and states something true on the
-EVM, except the proves-false witnesses noted below. No test enumerates the directory, so nothing
-here is red in CI; each function has a `// open:` line with the reason, and moving a function
-into the closing file is how a fix is recorded. Four functions here do close:
+EVM, except the proves-false witnesses noted below. `OpenExamplesStayOpenTest` (CI-only)
+enumerates the directory and fails when a function changes status; each function has a
+`// open:` line with the reason, and moving a function into the closing file is how a fix is
+recorded. `scripts/open-check.sh` lists the functions to move. Four functions here do close:
 `SolcConstructorsOpen.constructor` (true, kept out only because the runtime check skips
 constructors), and `SolcPaymentsOpen.trySuccessKeepsStorageUnsound`/`callKeepsStorageUnsound`
 and `SolcTypesOpen.ternaryLiteralOverflow` (false on the EVM: soundness witnesses, see
@@ -346,7 +346,9 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `semanticTests/immutable/multiple_initializations.sol` | `multipleInitializations` |
 | `semanticTests/immutable/increment_decrement.sol` | `incrementDecrement` |
 | `semanticTests/immutable/stub.sol` | `immutableStub` |
-| `semanticTests/scoping/c99_scoping_activation.sol` | `c99ScopingAssignOuter`, `c99ScopingReadOuter`, `c99ScopingSelfInit` |
+| `semanticTests/scoping/c99_scoping_activation.sol` | `c99ScopingAssignOuter`, `c99ScopingReadOuter`, `c99ScopingSelfInit`, `c99ScopingShadowDefault` |
+| `semanticTests/immutable/uninitialized.sol` (local form) | `localDefaults` |
+| `semanticTests/constants/constant_variables.sol` (enum default) | `enumDefault` |
 | `smtCheckerTests/functions/constructor_simple.sol` | `constructorSimple` |
 | `smtCheckerTests/functions/constructor_state_value.sol` | `constructorStateValue` |
 | `smtCheckerTests/functions/constructor_state_value_parameter.sol` | `constructorStateValueParameter` |
@@ -508,6 +510,7 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `smtCheckerTests/invariants/aon_blog_post.sol` | `aonBlogPostSolvable` |
 | `smtCheckerTests/complex/slither/data_dependency.sol` | `dataDependencyReferenceSet3`, `dataDependencyPropagateThroughArguments`, `dataDependencyPropagateThroughReturnValue` |
 | `smtCheckerTests/control_flow/function_call_inside_branch_3.sol` | `functionCallInsideBranch3` |
+| `smtCheckerTests/control_flow/function_call_inside_branch_4.sol` | `functionCallInsideBranch4` |
 | `smtCheckerTests/control_flow/ways_to_merge_variables_1.sol` | `waysToMergeVariables1` |
 | `smtCheckerTests/control_flow/ways_to_merge_variables_2.sol` | `waysToMergeVariables2` |
 | `smtCheckerTests/control_flow/ways_to_merge_variables_3.sol` | `waysToMergeVariables3` |
@@ -637,7 +640,6 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `whileBreakOrIncrement` | `smtCheckerTests/loops/while_1_break.sol` | the invariant cannot name the lowered break flag, so the exit by break keeps x in [0, 10) |
 | `nestedWhileBreak` | `smtCheckerTests/loops/while_nested_break.sol` | the invariant cannot name the lowered break flag of the inner loop |
 | `nestedWhileContinue` | `smtCheckerTests/loops/while_nested_continue.sol` | the invariant cannot name the lowered break flag of the inner loop |
-| `doWhileBreakDefaultZero` | `smtCheckerTests/loops/do_while_break.sol` | a local declared without initializer is not zero |
 | `binomialFaithfulRowsSmall` | `semanticTests/array/memory_arrays_of_various_sizes.sol` | new uint256[][](n + 1) with a non-simple length is stuck on the program text |
 | `binomialRowsNine` | `semanticTests/array/memory_arrays_of_various_sizes.sol` | nested memory rows: does not close within the default budget, nor with -m 1000000 |
 | `multiArrayFillByPushLoops` | `semanticTests/array/dynamic_multi_array_cleanup.sol` | a pushed struct gets no empty array member, so the inner push loops start from an unknown length |
@@ -664,7 +666,6 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `popIsolated` | `semanticTests/array/pop/array_pop_isolated.sol` | the bare member access popIso.pop; as a statement is stuck on the program text |
 | `pushStructFromMemory` | `semanticTests/array/push/array_push_struct.sol` | push(s) of a memory struct onto a storage array of structs is stuck on the program text |
 | `length2dStorageToStorage` | `smtCheckerTests/array_members/length_1d_assignment_2d_storage_to_storage.sol` | the pushed inner arrays start from an unknown length, so the two row lengths are unrelated |
-| `memoryMultipleDynamic` | `semanticTests/array/create_multiple_dynamic_arrays.sol` | closes only with -m 100000 (about 25 s); the default step budget runs out before the last asserts |
 
 ### `open/SolcFunctionCallsOpen.sol`
 
@@ -694,9 +695,6 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `immutableUninitialized` | `semanticTests/immutable/uninitialized.sol` | an immutable is plain storage, so outside the constructor a never-assigned one is unconstrained instead of zero |
 | `deleteLocal` | `semanticTests/variables/delete_local.sol` | no rule for delete on a local variable |
 | `deleteLocals` | `semanticTests/variables/delete_locals.sol` | no rule for delete on a local variable |
-| `c99ScopingShadowDefault` | `semanticTests/scoping/c99_scoping_activation.sol` | a local declared without initializer starts unconstrained instead of zero |
-| `localDefaults` | `semanticTests/immutable/uninitialized.sol` | a local declared without initializer starts unconstrained instead of zero |
-| `enumDefault` | `semanticTests/constants/constant_variables.sol` | a local declared without initializer starts unconstrained instead of zero |
 | `msgValueZero` | `semanticTests/state/msg_value.sol` | a non-payable function does not assume msg.value == 0 |
 | `multipleInitializationsAssignExpr` | `semanticTests/immutable/multiple_initializations.sol` | no rule for a compound assignment used as an expression |
 | `mappingLocalCompoundAssignment` | `semanticTests/variables/mapping_local_compound_assignment.sol` | a parenthesized assignment as index base, (m = m2)[2] = 21, gets stuck |
@@ -712,7 +710,6 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `msgValueNonPayable` | `smtCheckerTests/special/msg_value_3.sol` | a non-payable function's obligation does not assume msg.value == 0 |
 | `nonPayableRequireHolds` | `smtCheckerTests/functions/payable_1.sol` | a non-payable function's obligation does not assume msg.value == 0, so the require may revert |
 | `tryCatchExactReturn` | `semanticTests/tryCatch/simple_notuple.sol` | the callee of a try is never executed, so its return value 13 is unconstrained |
-| `tryCatchPanicDefaults` | `semanticTests/tryCatch/panic.sol` | a local declared without an initializer is unconstrained rather than zero |
 | `trySuccessRunsCallee` | `smtCheckerTests/try_catch/try_2.sol` | the callee of a try is never executed, so its write x = 42 is not seen on success |
 | `trySuccessKeepsStorageUnsound` | `smtCheckerTests/try_catch/try_2.sol` | closes in KeY but fails on the EVM: under noCallback a successful try keeps the caller's storage, though the callee here is the contract itself and sets ix = 42 |
 | `tryMultipleCatchClausesSuccess` | `smtCheckerTests/try_catch/try_multiple_catch_clauses.sol` | the callee of a try is never executed, so its write x = 42 is not seen on success |
@@ -743,12 +740,6 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 
 | Function | Upstream (`test/libsolidity/`) | Why it stays open |
 |---|---|---|
-| `functionCallInsideBranch4` | `smtCheckerTests/control_flow/function_call_inside_branch_4.sol` | `address a;` in hAddr starts unconstrained instead of address(0) |
-| `sideEffectsInsideIf1` | `smtCheckerTests/control_flow/side_effects_inside_if_1.sol` | an uninitialised `uint x;` starts unconstrained instead of 0 |
-| `sideEffectsInsideTernary1` | `smtCheckerTests/control_flow/side_effects_inside_ternary_1.sol` | an uninitialised `uint x;` starts unconstrained instead of 0 |
-| `loopBasic` | `smtCheckerTests/invariants/loop_basic.sol` | an uninitialised `uint y;` starts unconstrained instead of 0, so the invariant fails on entry |
-| `loopNested` | `smtCheckerTests/invariants/loop_nested.sol` | an uninitialised `uint y;` starts unconstrained instead of 0, so the trip count is unknown |
-| `loopNestedFor` | `smtCheckerTests/invariants/loop_nested_for.sol` | an uninitialised `uint y;` starts unconstrained instead of 0, so the trip count is unknown |
 | `shortCircuitAndTouched` | `smtCheckerTests/control_flow/short_circuit_and_touched.sol` | an assignment used as an operand, `b = (flag = false)`, is stuck on the program text |
 | `shortCircuitOrTouched` | `smtCheckerTests/control_flow/short_circuit_or_touched.sol` | an assignment used as an operand, `b = (flag = true)`, is stuck on the program text |
 | `bmcRequireAlwaysTrue` | `smtCheckerTests/bmc_coverage/assert.sol` | a uint parameter is not known to be non-negative, so the diamond leaves leq(x, -1) open |

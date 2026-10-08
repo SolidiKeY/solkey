@@ -413,8 +413,8 @@ contract SolcPayments {
     function tryCatchPanic(address p, uint q) public pure {
         require(p == 0x00000000000000000000000000000000DeaDBeef && q == 1);
         bool flag = q == 1;
-        uint r = 0;
-        uint code = 0;
+        uint r;
+        uint code;
         try SolcPayments(payable(p)).uf(flag, 7, 6) returns (uint b) {
             r = b;
             assert(r == b && code == 0);

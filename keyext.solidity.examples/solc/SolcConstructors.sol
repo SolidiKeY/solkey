@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 contract SolcConstructors {
     enum E { READ, WRITE }
+    enum Choice { GoLeft, GoRight, GoStraight, Sit }
 
     struct S {
         uint x;
@@ -317,6 +318,34 @@ contract SolcConstructors {
         }
         assert(v == 3);
         assert(a == 3);
+    }
+
+    /// solc: semanticTests/scoping/c99_scoping_activation.sol (g)
+    function c99ScopingShadowDefault() public pure {
+        uint v = 7;
+        uint r;
+        {
+            v = 3;
+            uint v;
+            r = v;
+        }
+        assert(r == 0);
+    }
+
+    /// solc: semanticTests/immutable/uninitialized.sol (local form)
+    function localDefaults() public pure {
+        uint ru;
+        bool rb;
+        address ra;
+        assert(ru == 0);
+        assert(rb == false);
+        assert(ra == address(0));
+    }
+
+    /// solc: semanticTests/constants/constant_variables.sol (enum default)
+    function enumDefault() public pure {
+        Choice c;
+        assert(c == Choice.GoLeft);
     }
 
     /// solc: smtCheckerTests/functions/constructor_simple.sol

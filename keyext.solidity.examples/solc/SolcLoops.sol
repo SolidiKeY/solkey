@@ -599,7 +599,7 @@ contract SolcLoops {
 
     /// solc: smtCheckerTests/loops/do_while_break.sol
     function doWhileBreakSkipsAssignment() public pure {
-        uint x = 0;
+        uint x;
         do {
             break;
             x = 1;

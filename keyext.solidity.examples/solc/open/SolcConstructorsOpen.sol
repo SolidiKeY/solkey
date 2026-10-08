@@ -127,37 +127,6 @@ contract SolcConstructorsOpen {
         assert(res2 == 7);
     }
 
-    /// solc: semanticTests/scoping/c99_scoping_activation.sol (g)
-    // open: a local declared without initializer starts unconstrained instead of zero
-    function c99ScopingShadowDefault() public pure {
-        uint v = 7;
-        uint r;
-        {
-            v = 3;
-            uint v;
-            r = v;
-        }
-        assert(r == 0);
-    }
-
-    /// solc: semanticTests/immutable/uninitialized.sol (local form)
-    // open: a local declared without initializer starts unconstrained instead of zero
-    function localDefaults() public pure {
-        uint ru;
-        bool rb;
-        address ra;
-        assert(ru == 0);
-        assert(rb == false);
-        assert(ra == address(0));
-    }
-
-    /// solc: semanticTests/constants/constant_variables.sol (enum default)
-    // open: a local declared without initializer starts unconstrained instead of zero
-    function enumDefault() public pure {
-        Choice c;
-        assert(c == Choice.GoLeft);
-    }
-
     /// solc: semanticTests/state/msg_value.sol
     // open: a non-payable function does not assume msg.value == 0
     function msgValueZero() public view {
