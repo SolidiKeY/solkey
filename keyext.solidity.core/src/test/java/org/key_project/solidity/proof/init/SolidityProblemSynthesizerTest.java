@@ -196,8 +196,8 @@ public class SolidityProblemSynthesizerTest {
             SolidityProblemSynthesizer.problemText(file, spec("FixedLengths", "constructor"));
 
         assertTrue(text.contains("{storage := storeSt(storeSt(storeSt(mtSt, FixedLengths$d1, "
-            + "emptyOf(fixedArr(9, leaf))), FixedLengths$d2, emptyOf(dynArr(leaf))), "
-            + "FixedLengths$dyn, emptyOf(dynArr(fixedArr(3, leaf))))\n     || net := mtSt}\n    "
+            + "fixedArr(9, leaf)), FixedLengths$d2, dynArr(leaf)), "
+            + "FixedLengths$dyn, dynArr(fixedArr(3, leaf)))\n     || net := mtSt}\n    "
             + "\\<{ constructor()@FixedLengths; }\\>(wellformed(storage))"), text);
         assertTrue(text.contains("wf(dynArr(fixedArr(3, leaf)), selectSt<[Struct]>(s, "
             + "FixedLengths$dyn))"), text);

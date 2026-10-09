@@ -30,13 +30,13 @@
     \unique MemberField f;
 }
 \problem {
-wf(dynArr(leaf), storeSt(emptyOf(dynArr(leaf)), f, 1))
+wf(dynArr(leaf), storeSt(dynArr(leaf), f, 1))
 }
 
 \proof {
 (branch "dummy ID"
 (rule "wfStoreRight" (formula "1"))
-(rule "wfEmptyOf" (formula "1") (term "0"))
+(rule "wfShape" (formula "1") (term "0"))
 (rule "concrete_and_1" (formula "1"))
 (rule "shapeAtMember" (formula "1") (term "0"))
 (rule "shapeAtNil" (formula "1") (term "0"))

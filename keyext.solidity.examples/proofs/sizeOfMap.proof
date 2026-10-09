@@ -28,12 +28,12 @@
 
 
 \problem {
-selectSt<[int]>(emptyOf(mapOf(leaf)), size) = 0
+selectSt<[int]>(mapOf(leaf), size) = 0
 }
 
 \proof {
 (branch "dummy ID"
-(rule "selectOnEmptyOfSize" (formula "1") (term "0"))
+(rule "selectOnShapeSize" (formula "1") (term "0"))
 (rule "sizeOfMap" (formula "1") (term "0"))
 (rule "eqClose" (formula "1"))
 (rule "closeTrue" (formula "1"))

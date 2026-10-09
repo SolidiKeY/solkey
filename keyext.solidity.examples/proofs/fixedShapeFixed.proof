@@ -28,12 +28,15 @@
 
 
 \problem {
-selectSt<[int]>(emptyOf(fixedArr(3, leaf)), size) = 3
+selectSt<[int]>(delNode(fixedArr(3, leaf)), size) = 3
 }
 
 \proof {
 (branch "dummy ID"
-(rule "selectOnEmptyOfSize" (formula "1") (term "0"))
+(rule "selectStDelNodeSize" (formula "1") (term "0"))
+(rule "fixedShapeFixed" (formula "1") (term "0,0"))
+(rule "ifthenelse_true" (formula "1") (term "0"))
+(rule "selectOnShapeSize" (formula "1") (term "0"))
 (rule "sizeOfFixed" (formula "1") (term "0"))
 (rule "eqClose" (formula "1"))
 (rule "closeTrue" (formula "1"))

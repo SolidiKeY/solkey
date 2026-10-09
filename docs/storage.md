@@ -784,16 +784,15 @@ cell (that needs per-contract layout knowledge the calculus does not
 have — a field constant like `C$total : Field` carries no declared
 type), and no upper bound (`< 2^256`) is stated.
 
-## 8c. Fixed-size arrays have their declared length (`wellformed`, `emptyOf`)
+## 8c. Fixed-size arrays have their declared length (`wellformed`, shapes as nodes)
 
 A fixed-size array has no length cell in the EVM; its length is a property of the declaration.
 The calculus keeps that knowledge in two places, neither of which touches a read or a write:
-the **shaped empty storage** a constructor starts from, and the **well-formedness predicate**
-a function assumes on entry and establishes on exit. The vocabulary (`memoryHeader.key`,
-`structHeader.key`):
+the **shaped storage** a constructor starts from, and the **well-formedness predicate**
+a function assumes on entry and establishes on exit. The vocabulary (`structHeader.key`):
 
-    Shape:  leaf | fixedArr(int, Shape) | dynArr(Shape) | mapOf(Shape) | C$S$shape
-    Struct emptyOf(Shape)          -- the empty node of a shape, as a storable value
+    Shape \extends Struct:  leaf | fixedArr(int, Shape) | dynArr(Shape) | mapOf(Shape) | C$S$shape
+                                   -- a shape is also the empty node of its own type
     wf(Shape, Struct)              -- "this node conforms to this shape"
     wellformed(Struct)             -- wf of every declared root, generated per contract
     fixed(Struct)                  -- "this node is a fixed-size array", decided by its shape
@@ -823,7 +822,7 @@ such) are left out, and `insertWellformed` of a contract without arrays is `true
 
 **The obligations** (`StorageShapes` builds both pieces):
 
-    constructor:  ==> {storage := storeSt(…storeSt(mtSt, C$d1, emptyOf(fixedArr(9, leaf))) …, C$dyn, emptyOf(dynArr(fixedArr(3, leaf))))}
+    constructor:  ==> {storage := storeSt(…storeSt(mtSt, C$d1, fixedArr(9, leaf)) …, C$dyn, dynArr(fixedArr(3, leaf)))}
                       [ ctor ] (wellformed(storage) & CInv & ensures)
     function:     wellformed(storage) & CInv & requires  ==>  [ f ] (wellformed(storage) & CInv & ensures)
 
@@ -835,8 +834,10 @@ does with `wellFormed(heap)`.
 
 **How the rules use it.** Three families, by where a `wf` atom sits:
 
-- *The shaped empty node* (`selectOnEmptyOf*`): `|emptyOf(sh)| ⇝ sizeOf(sh)`,
-  `emptyOf(sh)[a] ⇝ emptyOf(shapeAt(sh, cons(a, nil)))`, a primitive read is its default.
+- *A shape as a node* (`selectOnShape*`): `|sh| ⇝ sizeOf(sh)`,
+  `sh[a] ⇝ shapeAt(sh, cons(a, nil))`, a primitive read is its default. The shape
+  constructors are `\unique`, so `leaf`, `dynArr(leaf)`, `mapOf(leaf)` and `mt` are distinct
+  though they read alike; this is sound because `Struct` has no extensionality rule.
   Root reads on the `storeSt` chain need nothing new (`selectOnStore`).
 - *Antecedent atoms are consumed by triggers, never unfolded.* A read on symbolic storage
   normalises to a `selectSt` chain rooted at `storage` and stops; the atom on exactly that
@@ -852,7 +853,7 @@ does with `wellFormed(heap)`.
   `wf(sh, save(st, p, v))` into `wf(sh, st) & wf(shapeAt(sh, p), save(find<[Struct]>(st, p), nil, v))`
   (the written node is a merge, so the leaf keeps the target's own fixed length);
   `wfDelAtRight`, `wfDelNodeRight`, `wfDelNodeFixedRight` drop a reset; `wfLeaf` and
-  `wfEmptyOf` close; `wf{Fixed,Dyn,Map}Right` (ruleset `wfUnfold`, costed above the
+  `wfShape` close; `wf{Fixed,Dyn,Map}Right` (ruleset `wfUnfold`, costed above the
   triggers so an atom that reduces to an entry atom closes first) unfold a leaf-of-a-write by
   definition with a `\skolemTerm` element index.
 
@@ -862,7 +863,7 @@ length): `|delNode(st)| ⇝ \if(fixed(st)) \then(|st|) \else(0)` (`selectStDelNo
 `|save(st, nil, v)| ⇝ \if(fixed(st)) \then(|st|) \else(|cast<[Struct]>(v)|)`
 (`selectOnSaveEmptySize`). A write never changes the kind, so `fixed` reads it off the
 node's base: `fixedSave`, `fixedStore`, `fixedDelNode`, `fixedDelAt` descend, `delNodeFixed`
-and `emptyOf(fixedArr(…))` are fixed, `emptyOf(dynArr(…))` and `mtSt` are not, and
+and `fixedArr(…)` are fixed, `dynArr(…)` and `mtSt` are not, and
 `wfFixedIsFixed` / `wfDynIsNotFixed` decide it from the entry atom. This is what makes
 `uint[40] big = uint[20] small` keep `big.length == 40` and zero `big[30]`, and
 `dyn.pop()` keep the slot's `uint[3]` length. The other primitive reads through a leaf write or

@@ -381,8 +381,8 @@ only shortens it (`storagePopSaveMappingElement`, `testPopKeepsMappingElementEnt
 
 Every field constant is a `TypedField` carrying its declared Solidity type, exposed to the
 calculus as the `Shape` term `fieldShape(m)`. Lengths of fixed-size arrays are not read off an
-annotation: a constructor starts from the shaped empty storage
-(`storeSt(mtSt, C$d1, emptyOf(fixedArr(9, leaf)))`, read by `selectOnEmptyOf*`), and a function
+annotation: a constructor starts from the shaped storage
+(`storeSt(mtSt, C$d1, fixedArr(9, leaf))`: `Shape \extends Struct`, read by `selectOnShape*`), and a function
 assumes the generated `wellformed(storage)`, whose `wf(shape, node)` atoms the `wf*` trigger
 taclets consume at each stuck `size` read and whose exit obligation the `wf*Right` taclets
 discharge (`StorageShapes`, `docs/storage.md` section 8c; `contracts/FixedLengths.sol`,

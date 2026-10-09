@@ -28,12 +28,12 @@
 
 
 \problem {
-selectSt<[int]>(emptyOf(fixedArr(3, leaf)), at(1)) = 0
+selectSt<[int]>(fixedArr(3, leaf), at(1)) = 0
 }
 
 \proof {
 (branch "dummy ID"
-(rule "selectOnEmptyOfElement" (formula "1") (term "0"))
+(rule "selectOnShapeElement" (formula "1") (term "0"))
 (rule "defaultValueInt" (formula "1") (term "0"))
 (rule "eqClose" (formula "1"))
 (rule "closeTrue" (formula "1"))

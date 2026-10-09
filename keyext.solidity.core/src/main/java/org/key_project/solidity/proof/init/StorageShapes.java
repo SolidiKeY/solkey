@@ -47,13 +47,14 @@ public final class StorageShapes {
         return roots.isEmpty();
     }
 
-    /// The constructor's starting storage: the shaped empty node of every non-trivial root
+    /// The constructor's starting storage: every non-trivial root holds its shape, its own empty
+    /// node,
     /// stored into `mtSt`.
     public KeyTerm emptyStorage() {
         KeyTerm storage = Key.constant("mtSt");
         for (Map.Entry<String, KeyTerm> root : roots.entrySet()) {
             storage = Key.apply("storeSt", storage, Key.constant(root.getKey()),
-                Key.apply("emptyOf", root.getValue()));
+                root.getValue());
         }
         return storage;
     }

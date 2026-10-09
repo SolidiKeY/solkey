@@ -26,17 +26,22 @@
     }
 } 
 
-\functions {
-    \unique MemberField f;
-}
+
 \problem {
-selectSt<[int]>(emptyOf(leaf), f) = 0
+  selectSt<[int]>(selectSt<[Struct]>(dynArr(fixedArr(3,
+                                                     leaf)),
+                                     at(0)),
+                  size)
+= 3
 }
 
 \proof {
 (branch "dummy ID"
-(rule "selectOnEmptyOfMember" (formula "1") (term "0"))
-(rule "defaultValueInt" (formula "1") (term "0"))
+(rule "selectOnShapeStruct" (formula "1") (term "0,0"))
+(rule "selectOnShapeSize" (formula "1") (term "0"))
+(rule "shapeAtDyn" (formula "1") (term "0,0"))
+(rule "shapeAtNil" (formula "1") (term "0,0"))
+(rule "sizeOfFixed" (formula "1") (term "0"))
 (rule "eqClose" (formula "1"))
 (rule "closeTrue" (formula "1"))
 )

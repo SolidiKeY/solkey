@@ -28,12 +28,12 @@
 
 
 \problem {
-wf(fixedArr(3, leaf), emptyOf(fixedArr(3, leaf)))
+wf(fixedArr(3, leaf), fixedArr(3, leaf))
 }
 
 \proof {
 (branch "dummy ID"
-(rule "wfEmptyOf" (formula "1"))
+(rule "wfShape" (formula "1"))
 (rule "closeTrue" (formula "1"))
 )
 }

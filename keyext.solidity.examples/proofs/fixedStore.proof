@@ -30,8 +30,7 @@
     \unique MemberField f;
 }
 \problem {
-  selectSt<[int]>(delNode(storeSt(emptyOf(fixedArr(3,
-                                                   leaf)),
+  selectSt<[int]>(delNode(storeSt(fixedArr(3, leaf),
                                   f,
                                   1)),
                   size)
@@ -42,12 +41,12 @@
 (branch "dummy ID"
 (rule "selectStDelNodeSize" (formula "1") (term "0"))
 (rule "fixedStore" (formula "1") (term "0,0"))
-(rule "fixedEmptyOfFixed" (formula "1") (term "0,0"))
+(rule "fixedShapeFixed" (formula "1") (term "0,0"))
 (rule "ifthenelse_true" (formula "1") (term "0"))
 (rule "selectOnStore" (formula "1") (term "0"))
+(rule "selectOnShapeSize" (formula "1") (term "2,0"))
 (rule "equalUnique" (formula "1") (term "0,0"))
 (rule "ifthenelse_false" (formula "1") (term "0"))
-(rule "selectOnEmptyOfSize" (formula "1") (term "0"))
 (rule "sizeOfFixed" (formula "1") (term "0"))
 (rule "eqClose" (formula "1"))
 (rule "closeTrue" (formula "1"))
