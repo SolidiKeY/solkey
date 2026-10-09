@@ -6,7 +6,7 @@ contract FunctionVerification {
 
     uint[1] d;
 
-    function test() public {
+    function test() public view {
         assert(d.length == 1);
     }
 
