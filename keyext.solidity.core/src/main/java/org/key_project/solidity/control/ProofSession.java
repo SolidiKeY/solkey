@@ -17,9 +17,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.key_project.logic.Name;
+import org.key_project.logic.Term;
 import org.key_project.logic.op.sv.SchemaVariable;
+import org.key_project.prover.engine.ProofSearchInformation;
 import org.key_project.prover.rules.RuleApp;
 import org.key_project.prover.sequent.PosInOccurrence;
+import org.key_project.prover.sequent.Sequent;
+import org.key_project.prover.strategy.costbased.TopRuleAppCost;
 import org.key_project.solidity.common.Profile;
 import org.key_project.solidity.pp.IdentitySequentPrintFilter;
 import org.key_project.solidity.pp.InitialPositionTable;
@@ -48,11 +52,19 @@ import org.key_project.util.collection.ImmutableSLList;
 
 import org.jspecify.annotations.Nullable;
 
-public final class ProofSession {
+public final class ProofSession implements AutoCloseable {
 
     public static final Map<String, List<String>> STRATEGY_CHOICES = strategyChoices();
 
     public record Limits(int maxSteps, long timeout, Map<String, String> strategy) {
+        public Limits {
+            if (maxSteps < 0 || timeout < -1) {
+                throw new IllegalArgumentException(
+                    "maxSteps must be nonnegative; timeout must be -1 or nonnegative");
+            }
+            strategy = Map.copyOf(strategy);
+        }
+
         public static Limits defaults() {
             return new Limits(10000, -1, Map.of());
         }
@@ -78,6 +90,24 @@ public final class ProofSession {
             long autoModeMillis) {
     }
 
+    public enum StopReason {
+        PROVED, TARGET_CLOSED, STEP_LIMIT, TIMEOUT, NO_APPLICABLE_RULE, NON_CLOSEABLE_GOAL,
+        INTERRUPTED, ERROR, OTHER
+    }
+
+    public record SearchResult(StopReason stopReason, String message, int appliedRules,
+            int closedGoals, long millis, @Nullable Integer nonCloseableGoal,
+            @Nullable Throwable exception) {
+    }
+
+    public enum RuleDisposition {
+        ACCEPTED, NEEDS_INSTANTIATION, INFINITE_COST, NOT_APPROVED, ERROR
+    }
+
+    public record RuleDiagnostic(RuleOption rule, RuleDisposition disposition,
+            @Nullable String cost, @Nullable Throwable exception) {
+    }
+
     private final Proof proof;
     private final @Nullable ReplayResult replay;
     private final Map<Integer, InitialPositionTable> tables = new HashMap<>();
@@ -85,6 +115,7 @@ public final class ProofSession {
     private List<TacletApp> lastRules = List.of();
     private @Nullable PosInOccurrence lastPosition;
     private int lastRulesSerial = -1;
+    private @Nullable SearchResult lastSearch;
 
     private ProofSession(Proof proof, @Nullable ReplayResult replay) {
         this.proof = proof;
@@ -93,34 +124,70 @@ public final class ProofSession {
 
     public static ProofSession start(Path solFile, SolidityProblemSpec spec, Limits limits)
             throws ProblemLoaderException {
+        ProofSession session = open(solFile, spec, limits);
+        try {
+            session.runAuto(null);
+            return session;
+        } catch (RuntimeException e) {
+            session.close();
+            throw e;
+        }
+    }
+
+    public static ProofSession open(Path solFile, SolidityProblemSpec spec, Limits limits)
+            throws ProblemLoaderException {
         String malformed = TacletChoices.malformed(spec.choices());
         if (malformed != null) {
             throw new IllegalArgumentException(malformed);
         }
         KeYEnvironment<?> env = KeYEnvironment.load(solFile, spec);
-        String unknown = TacletChoices.unknown(spec.choices(), env.getInitConfig().choiceNS());
-        if (unknown != null) {
-            throw new IllegalArgumentException(unknown);
-        }
         ProofSession session = new ProofSession(env.getLoadedProof(), null);
-        session.configure(limits);
-        session.runAuto(null);
-        return session;
+        try {
+            String unknown = TacletChoices.unknown(spec.choices(), env.getInitConfig().choiceNS());
+            if (unknown != null) {
+                throw new IllegalArgumentException(unknown);
+            }
+            session.configure(limits);
+            return session;
+        } catch (RuntimeException e) {
+            session.close();
+            throw e;
+        }
     }
 
     public static ProofSession load(Path keyOrProof, Limits limits, boolean prove)
             throws ProblemLoaderException {
         KeYEnvironment<?> env = KeYEnvironment.load(keyOrProof);
         ProofSession session = new ProofSession(env.getLoadedProof(), env.getReplayResult());
-        session.configure(limits);
-        if (prove && !session.proof.closed()) {
-            session.runAuto(null);
+        try {
+            session.configure(limits);
+            if (prove && !session.proof.closed()) {
+                session.runAuto(null);
+            }
+            return session;
+        } catch (RuntimeException e) {
+            session.close();
+            throw e;
         }
-        return session;
     }
 
     public Proof proof() {
         return proof;
+    }
+
+    @Override
+    public void close() {
+        invalidate();
+        lastSearch = null;
+        proof.dispose();
+    }
+
+    public boolean isClosed() {
+        return proof.isDisposed();
+    }
+
+    public @Nullable SearchResult lastSearch() {
+        return lastSearch;
     }
 
     public List<String> replayErrors() {
@@ -131,6 +198,7 @@ public final class ProofSession {
     }
 
     public void configure(Limits limits) {
+        requireActive();
         StrategySettings settings = proof.getSettings().getStrategySettings();
         settings.setMaxSteps(limits.maxSteps());
         settings.setTimeout(limits.timeout());
@@ -156,11 +224,16 @@ public final class ProofSession {
     }
 
     public Summary summary() {
+        requireActive();
         return new Summary(proof.closed(), proof.openGoals().size(), proof.countNodes(),
             leaves(), proof.getAutoModeTime());
     }
 
     public List<String> openGoalTexts(int max) {
+        requireActive();
+        if (max < 0) {
+            throw new IllegalArgumentException("max must be nonnegative");
+        }
         List<String> texts = new ArrayList<>();
         for (Goal goal : proof.openGoals()) {
             if (texts.size() >= max) {
@@ -173,18 +246,64 @@ public final class ProofSession {
     }
 
     public Summary runAuto(@Nullable Integer serial) {
-        ProofStarter starter = new ProofStarter(null, false);
-        starter.init(proof);
-        if (serial == null) {
-            starter.start();
-        } else {
-            starter.start(ImmutableSLList.<Goal>nil().prepend(requireGoal(serial)));
+        SearchResult result = runAutoDetailed(serial);
+        if (result.exception() != null) {
+            throw new RuntimeException("Proof attempt failed", result.exception());
         }
-        invalidate();
         return summary();
     }
 
+    public SearchResult runAutoDetailed(@Nullable Integer serial) {
+        requireActive();
+        Node target = serial == null ? null : requireGoal(serial).getNode();
+        ProofStarter starter = new ProofStarter(null, false);
+        starter.init(proof);
+        try {
+            ProofSearchInformation<Proof, Goal> result = serial == null
+                    ? starter.startWithDiagnostics()
+                    : starter.startWithDiagnostics(
+                        ImmutableSLList.<Goal>nil().prepend(requireGoal(serial)));
+            Goal nonCloseable = result.nonCloseableGoal();
+            lastSearch = new SearchResult(stopReason(result, target), result.reason(),
+                result.getNumberOfAppliedRuleApps(), result.getNumberOfClosedGoals(),
+                result.getTime(),
+                nonCloseable == null ? null : nonCloseable.getNode().getSerialNr(),
+                result.getException());
+            return lastSearch;
+        } finally {
+            invalidate();
+        }
+    }
+
+    private StopReason stopReason(ProofSearchInformation<Proof, Goal> result,
+            @Nullable Node target) {
+        if (result.isError()) {
+            return StopReason.ERROR;
+        }
+        if ("Interrupted.".equals(result.reason())) {
+            return StopReason.INTERRUPTED;
+        }
+        if (proof.closed()) {
+            return StopReason.PROVED;
+        }
+        if (target != null && target.isClosed()) {
+            return StopReason.TARGET_CLOSED;
+        }
+        return switch (result.reason()) {
+            case "Maximal number of rule applications reached or timed out." ->
+                result.getNumberOfAppliedRuleApps() >= proof.getSettings().getStrategySettings()
+                        .getMaxSteps()
+                                ? StopReason.STEP_LIMIT
+                                : StopReason.TIMEOUT;
+            case "No more rules automatically applicable to any goal." ->
+                StopReason.NO_APPLICABLE_RULE;
+            case "Could not close goal." -> StopReason.NON_CLOSEABLE_GOAL;
+            default -> StopReason.OTHER;
+        };
+    }
+
     public List<TreeEntry> tree() {
+        requireActive();
         List<TreeEntry> entries = new ArrayList<>();
         Deque<Node> stack = new ArrayDeque<>();
         stack.push(proof.root());
@@ -290,6 +409,50 @@ public final class ProofSession {
         return new RulesAt(start, end, term, options);
     }
 
+    public Sequent sequent(int serial) {
+        return requireNode(serial).sequent();
+    }
+
+    public @Nullable Term termAt(int serial, int offset) {
+        requireNode(serial);
+        if (offset < 0) {
+            return null;
+        }
+        if (!tables.containsKey(serial)) {
+            node(serial, true);
+        }
+        PosInSequent position = tables.get(serial).getPosInSequent(offset, filters.get(serial));
+        PosInOccurrence occurrence = position == null ? null : position.getPosInOccurrence();
+        return occurrence == null ? null : occurrence.subTerm();
+    }
+
+    public List<RuleDiagnostic> ruleDiagnosticsAt(int serial, int offset) {
+        RulesAt rules = rulesAt(serial, offset);
+        Goal goal = requireGoal(serial);
+        List<RuleDiagnostic> diagnostics = new ArrayList<>();
+        for (RuleOption rule : rules.rules()) {
+            if (!rule.missing().isEmpty()) {
+                diagnostics.add(new RuleDiagnostic(rule, RuleDisposition.NEEDS_INSTANTIATION,
+                    null, null));
+                continue;
+            }
+            TacletApp app = place(lastRules.get(rule.index()), lastPosition, goal);
+            try {
+                var strategy = proof.getActiveStrategy();
+                var cost = strategy.computeCost(app, app.posInOccurrence(), goal);
+                RuleDisposition disposition = cost instanceof TopRuleAppCost
+                        ? RuleDisposition.INFINITE_COST
+                        : strategy.isApprovedApp(app, app.posInOccurrence(), goal)
+                                ? RuleDisposition.ACCEPTED
+                                : RuleDisposition.NOT_APPROVED;
+                diagnostics.add(new RuleDiagnostic(rule, disposition, cost.toString(), null));
+            } catch (RuntimeException e) {
+                diagnostics.add(new RuleDiagnostic(rule, RuleDisposition.ERROR, null, e));
+            }
+        }
+        return List.copyOf(diagnostics);
+    }
+
     public Summary apply(int serial, int index, Map<String, String> instantiations)
             throws Exception {
         if (serial != lastRulesSerial || index < 0 || index >= lastRules.size()) {
@@ -302,6 +465,7 @@ public final class ProofSession {
         }
         goal.apply(toApply);
         invalidate();
+        lastSearch = null;
         return summary();
     }
 
@@ -312,10 +476,12 @@ public final class ProofSession {
                 + " is an open goal or lies in a closed branch");
         }
         invalidate();
+        lastSearch = null;
         return summary();
     }
 
     public String save() throws IOException {
+        requireActive();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         new OutputStreamProofSaver(proof).save(out);
         return out.toString(StandardCharsets.UTF_8);
@@ -375,6 +541,7 @@ public final class ProofSession {
     }
 
     private Node requireNode(int serial) {
+        requireActive();
         Deque<Node> stack = new ArrayDeque<>();
         stack.push(proof.root());
         while (!stack.isEmpty()) {
@@ -387,6 +554,12 @@ public final class ProofSession {
             }
         }
         throw new IllegalArgumentException("no node " + serial);
+    }
+
+    private void requireActive() {
+        if (isClosed()) {
+            throw new IllegalStateException("proof session is closed");
+        }
     }
 
     private int leaves() {

@@ -4,14 +4,22 @@
 package org.key_project.solidity.proof.init;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Proxy;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.stream.Stream;
 
+import org.key_project.prover.strategy.costbased.NumberRuleAppCost;
+import org.key_project.prover.strategy.costbased.RuleAppCost;
+import org.key_project.prover.strategy.costbased.TopRuleAppCost;
 import org.key_project.solidity.control.ProofSession;
 import org.key_project.solidity.control.SolidityVerifier;
 import org.key_project.solidity.program.parser.SolidityOutline;
 import org.key_project.solidity.program.parser.SoliditySources;
+import org.key_project.solidity.proof.Goal;
+import org.key_project.solidity.strategy.Strategy;
 import org.key_project.solidity.testutil.SolidityExampleTests;
 
 import org.junit.jupiter.api.Test;
@@ -22,7 +30,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -423,6 +433,206 @@ public class SolidityProblemSynthesizerTest {
     void theGeneratedProblemIsShown() throws IOException {
         assertTrue(SolidityVerifier.problem(inMemory("Problem"), spec(null, "holds"))
                 .contains("\\problem"));
+    }
+
+    @Test
+    void aSourceSessionCanBeInspectedBeforeSearchAndResumed() throws Exception {
+        try (var session = ProofSession.open(inMemory("Bounded"), spec(null, "holds"),
+            new ProofSession.Limits(1, -1, Map.of()))) {
+            int root = session.tree().getFirst().serial();
+            assertEquals(1, session.summary().nodes());
+            assertNull(session.lastSearch());
+            assertNotNull(session.sequent(root));
+            String sequent = session.node(root, true).sequent();
+            int offset = sequent.indexOf("holds");
+            var term = session.termAt(root, offset);
+            assertNotNull(term, sequent);
+            assertNotNull(term.op());
+            assertNotNull(term.sort());
+            assertNull(session.termAt(root, -1));
+            var rules = session.ruleDiagnosticsAt(root, offset);
+            assertFalse(rules.isEmpty(), sequent);
+            assertTrue(rules.stream().anyMatch(r -> r.rule().missing().isEmpty()));
+
+            var bounded = session.runAutoDetailed(null);
+            assertEquals(ProofSession.StopReason.STEP_LIMIT, bounded.stopReason());
+            assertEquals(1, bounded.appliedRules());
+            assertSame(bounded, session.lastSearch());
+            session.configure(ProofSession.Limits.defaults());
+            assertEquals(ProofSession.StopReason.PROVED,
+                session.runAutoDetailed(null).stopReason());
+        }
+    }
+
+    @Test
+    void timeoutAndExhaustedSearchAreDistinctFromAnError() throws Exception {
+        try (var session = ProofSession.open(inMemory("Timeout"), spec(null, "fails"),
+            new ProofSession.Limits(10000, 0, Map.of()))) {
+            var timedOut = session.runAutoDetailed(null);
+            assertEquals(ProofSession.StopReason.TIMEOUT, timedOut.stopReason());
+            assertEquals(0, timedOut.appliedRules());
+            assertNull(timedOut.exception());
+            session.configure(ProofSession.Limits.defaults());
+            var exhausted = session.runAutoDetailed(null);
+            assertEquals(ProofSession.StopReason.NO_APPLICABLE_RULE, exhausted.stopReason());
+            assertNull(exhausted.exception());
+            assertFalse(session.summary().closed());
+        }
+    }
+
+    @Test
+    void closingOneSubtreeDoesNotReportTheWholeProofAsProved() throws Exception {
+        Path file = Path.of("/nonexistent-solkey-dir/Branches.sol");
+        SoliditySources.register(file, """
+                // SPDX-License-Identifier: GPL-2.0-only
+                pragma solidity ^0.8.0;
+                contract Branches {
+                    function split(bool condition) public pure {
+                        if (condition) {
+                            assert(condition);
+                        } else {
+                            assert(!condition);
+                        }
+                    }
+                }""");
+        try (var session = ProofSession.open(file, spec(null, "split"),
+            new ProofSession.Limits(1, -1, Map.of()))) {
+            for (int i = 0; i < 100 && session.summary().openGoals() == 1; i++) {
+                session.runAutoDetailed(null);
+            }
+            assertTrue(session.summary().openGoals() > 1, session.summary().toString());
+            int goal = session.tree().stream().filter(n -> n.state().equals("open"))
+                    .findFirst().orElseThrow().serial();
+            session.configure(ProofSession.Limits.defaults());
+            assertEquals(ProofSession.StopReason.TARGET_CLOSED,
+                session.runAutoDetailed(goal).stopReason());
+            assertFalse(session.summary().closed());
+            assertEquals(ProofSession.StopReason.PROVED,
+                session.runAutoDetailed(null).stopReason());
+        }
+    }
+
+    @Test
+    void interruptionIsReportedWithoutBecomingAnExecutionError() throws Exception {
+        try (var session = ProofSession.open(inMemory("Interrupted"), spec(null, "holds"),
+            ProofSession.Limits.defaults())) {
+            Thread.currentThread().interrupt();
+            try {
+                var result = session.runAutoDetailed(null);
+                assertEquals(ProofSession.StopReason.INTERRUPTED, result.stopReason());
+                assertNull(result.exception());
+            } finally {
+                Thread.interrupted();
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void useDiagnosticStrategy(ProofSession session, RuleAppCost cost,
+            boolean approved, RuntimeException failure) {
+        var original = session.proof().getActiveStrategy();
+        session.proof().setActiveStrategy((Strategy<Goal>) Proxy.newProxyInstance(
+            Strategy.class.getClassLoader(), new Class<?>[] { Strategy.class },
+            (proxy, method, args) -> {
+                if (method.getName().equals("computeCost")) {
+                    if (failure != null) {
+                        throw failure;
+                    }
+                    return cost;
+                }
+                if (method.getName().equals("isApprovedApp")) {
+                    return approved;
+                }
+                try {
+                    return method.invoke(original, args);
+                } catch (InvocationTargetException e) {
+                    throw e.getCause();
+                }
+            }));
+    }
+
+    @Test
+    void ruleDiagnosticsReportCostApprovalAndExceptionsWithoutApplying() throws Exception {
+        try (var session = ProofSession.open(inMemory("Diagnostics"), spec(null, "holds"),
+            ProofSession.Limits.defaults())) {
+            int root = session.tree().getFirst().serial();
+            int offset = session.node(root, true).sequent().indexOf("holds");
+            useDiagnosticStrategy(session, TopRuleAppCost.INSTANCE, true, null);
+            var costly = session.ruleDiagnosticsAt(root, offset);
+            assertTrue(costly.stream().anyMatch(
+                r -> r.disposition() == ProofSession.RuleDisposition.INFINITE_COST));
+            useDiagnosticStrategy(session, NumberRuleAppCost.getZeroCost(), false, null);
+            assertTrue(session.ruleDiagnosticsAt(root, offset).stream().anyMatch(
+                r -> r.disposition() == ProofSession.RuleDisposition.NOT_APPROVED));
+            useDiagnosticStrategy(session, NumberRuleAppCost.getZeroCost(), true, null);
+            var accepted = session.ruleDiagnosticsAt(root, offset).stream()
+                    .filter(r -> r.disposition() == ProofSession.RuleDisposition.ACCEPTED)
+                    .findFirst().orElseThrow();
+            var failure = new IllegalStateException("diagnostic failure");
+            useDiagnosticStrategy(session, NumberRuleAppCost.getZeroCost(), true, failure);
+            var errored = session.ruleDiagnosticsAt(root, offset).stream()
+                    .filter(r -> r.disposition() == ProofSession.RuleDisposition.ERROR)
+                    .findFirst().orElseThrow();
+            assertSame(failure, errored.exception());
+            assertEquals(1, session.summary().nodes());
+            useDiagnosticStrategy(session, NumberRuleAppCost.getZeroCost(), true, null);
+            assertTrue(session.apply(root, accepted.rule().index(), Map.of()).nodes() > 1);
+        }
+    }
+
+    @Test
+    void searchErrorsKeepTheOriginalExceptionAndInvalidateCachedRules() throws Exception {
+        try (var session = ProofSession.open(inMemory("SearchError"), spec(null, "holds"),
+            ProofSession.Limits.defaults())) {
+            int root = session.tree().getFirst().serial();
+            session.rulesAt(root, session.node(root, true).sequent().indexOf("holds"));
+            var failure = new IllegalStateException("search failure");
+            useDiagnosticStrategy(session, NumberRuleAppCost.getZeroCost(), true, failure);
+            var result = session.runAutoDetailed(null);
+            assertEquals(ProofSession.StopReason.ERROR, result.stopReason());
+            assertSame(failure, result.exception());
+            assertSame(result, session.lastSearch());
+            var outcome = SolidityVerifier.outcome(session, "holds", 3, false, 0);
+            assertEquals(SolidityVerifier.Status.ERROR, outcome.status());
+            assertTrue(outcome.error().contains("search failure"));
+            assertThrows(IllegalArgumentException.class,
+                () -> session.apply(root, 0, Map.of()));
+        }
+    }
+
+    @Test
+    void detailedVerificationDistinguishesOpenProofsAndLoadFailures() throws Exception {
+        Path file = inMemory("Detailed");
+        var options = SolidityVerifier.VerificationOptions.defaults();
+        var open = SolidityVerifier.verifyDetailed(file, spec(null, "fails"), options);
+        assertEquals(SolidityVerifier.Status.OPEN, open.status());
+        assertEquals(ProofSession.StopReason.NO_APPLICABLE_RULE, open.search().stopReason());
+        assertNull(open.exception());
+        var proved = SolidityVerifier.verifyOrThrow(file, spec(null, "holds"), options);
+        assertEquals(SolidityVerifier.Status.PROVED, proved.status());
+        var bad = new SolidityProblemSpec(null, "holds", java.util.List.of("invalid"));
+        var failed = SolidityVerifier.verifyDetailed(file, bad, options);
+        assertEquals(SolidityVerifier.Status.ERROR, failed.status());
+        assertTrue(failed.exception() instanceof IllegalArgumentException);
+        assertNull(failed.search());
+        assertThrows(IllegalArgumentException.class,
+            () -> SolidityVerifier.verifyOrThrow(file, bad, options));
+    }
+
+    @Test
+    void closingASessionIsIdempotentAndRejectsFurtherProofOperations() throws Exception {
+        var session = ProofSession.open(inMemory("Close"), spec(null, "holds"),
+            ProofSession.Limits.defaults());
+        var proof = session.proof();
+        assertFalse(session.isClosed());
+        session.close();
+        session.close();
+        assertTrue(session.isClosed());
+        assertTrue(proof.isDisposed());
+        assertThrows(IllegalStateException.class, session::summary);
+        assertThrows(IllegalStateException.class, session::tree);
+        assertThrows(IllegalStateException.class, () -> session.runAutoDetailed(null));
+        assertThrows(IllegalStateException.class, session::save);
     }
 
     @Test

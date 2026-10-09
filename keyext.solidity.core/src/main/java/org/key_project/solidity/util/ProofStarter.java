@@ -122,6 +122,20 @@ public class ProofStarter {
     /// @return the proof after the attempt terminated
     /// @throws NullPointerException if the proof object is not yet created
     public ProofSearchInformation<@NonNull Proof, Goal> start(ImmutableList<Goal> goals) {
+        var result = startWithDiagnostics(goals);
+        if (result.isError()) {
+            throw new RuntimeException(
+                "Proof attempt failed due to exception:" + result.getException(),
+                result.getException());
+        }
+        return result;
+    }
+
+    public ProofSearchInformation<Proof, Goal> startWithDiagnostics() {
+        return startWithDiagnostics(proof.openGoals());
+    }
+
+    public ProofSearchInformation<Proof, Goal> startWithDiagnostics(ImmutableList<Goal> goals) {
         try {
             final Profile profile = proof.getInitConfig().getProfile();
 
@@ -149,12 +163,6 @@ public class ProofStarter {
 
             result = prover.start(proof, goals, maxSteps, timeout,
                 strategy.isStopAtFirstNonCloseableGoal());
-
-            if (result.isError()) {
-                throw new RuntimeException(
-                    "Proof attempt failed due to exception:" + result.getException(),
-                    result.getException());
-            }
 
             if (ptl != null) {
                 prover.removeProverTaskObserver(ptl);
