@@ -65,8 +65,28 @@ public final class ProofSession implements AutoCloseable {
             strategy = Map.copyOf(strategy);
         }
 
+        public static final long NO_TIMEOUT = -1;
+
         public static Limits defaults() {
-            return new Limits(10000, -1, Map.of());
+            return new Limits(10000, NO_TIMEOUT, Map.of());
+        }
+
+        public static Limits steps(int maxSteps) {
+            return defaults().withMaxSteps(maxSteps);
+        }
+
+        public Limits withMaxSteps(int maxSteps) {
+            return new Limits(maxSteps, timeout, strategy);
+        }
+
+        public Limits withTimeoutMillis(long timeout) {
+            return new Limits(maxSteps, timeout, strategy);
+        }
+
+        public Limits withStrategy(String option, String value) {
+            Map<String, String> choices = new HashMap<>(strategy);
+            choices.put(option, value);
+            return new Limits(maxSteps, timeout, choices);
         }
     }
 
@@ -345,6 +365,59 @@ public final class ProofSession implements AutoCloseable {
         }
     }
 
+    public int root() {
+        requireActive();
+        return proof.root().getSerialNr();
+    }
+
+    public NodeView node(int serial) {
+        return node(serial, true);
+    }
+
+    public int offsetOf(int serial, String text) {
+        String sequent = node(serial).sequent();
+        int offset = sequent.indexOf(text);
+        if (offset < 0) {
+            throw new IllegalArgumentException(
+                "\"" + text + "\" does not occur in node " + serial + ":\n" + sequent);
+        }
+        return offset;
+    }
+
+    public @Nullable Term termAt(int serial, String text) {
+        return termAt(serial, offsetOf(serial, text));
+    }
+
+    public List<RuleDiagnostic> ruleDiagnosticsAt(int serial, String text) {
+        return ruleDiagnosticsAt(serial, offsetOf(serial, text));
+    }
+
+    public Summary applyRule(int serial, int offset, String ruleName,
+            Map<String, String> instantiations) throws Exception {
+        List<RuleOption> rules = rulesAt(serial, offset).rules();
+        for (RuleOption rule : rules) {
+            if (rule.name().equals(ruleName) || rule.displayName().equals(ruleName)) {
+                return apply(serial, rule.index(), instantiations);
+            }
+        }
+        throw new IllegalArgumentException(ruleName + " is not applicable at node " + serial
+            + ", offset " + offset + "; candidates: "
+            + rules.stream().map(RuleOption::name).toList());
+    }
+
+    public Summary applyRule(int serial, String text, String ruleName,
+            Map<String, String> instantiations) throws Exception {
+        return applyRule(serial, offsetOf(serial, text), ruleName, instantiations);
+    }
+
+    public Summary applyRule(int serial, String text, String ruleName) throws Exception {
+        return applyRule(serial, text, ruleName, Map.of());
+    }
+
+    public Summary applyRule(int serial, String ruleName) throws Exception {
+        return applyRule(serial, -1, ruleName, Map.of());
+    }
+
     public RulesAt rulesAt(int serial, int offset) {
         Goal goal = requireGoal(serial);
         if (!tables.containsKey(serial)) {
@@ -456,7 +529,8 @@ public final class ProofSession implements AutoCloseable {
     public Summary apply(int serial, int index, Map<String, String> instantiations)
             throws Exception {
         if (serial != lastRulesSerial || index < 0 || index >= lastRules.size()) {
-            throw new IllegalArgumentException("list the rules at node " + serial + " first");
+            throw new IllegalArgumentException("list the rules at node " + serial
+                + " first (rulesAt or ruleDiagnosticsAt), or apply by name with applyRule");
         }
         Goal goal = requireGoal(serial);
         TacletApp toApply = place(lastRules.get(index), lastPosition, goal);

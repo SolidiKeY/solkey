@@ -75,15 +75,18 @@ and `ProofSession.start(...)` calls still work.
 | `SolidityVerifier.verifyDetailed(path, spec, options)` | Returns `DetailedOutcome`: ordinary `outcome()`, `search()`, and the original `exception()` |
 | `SolidityVerifier.verifyOrThrow(path, spec, options)` | Propagates load/serialization errors and throws a runtime exception with the original search exception as its cause |
 | `Outcome.status()` / `DetailedOutcome.status()` | `PROVED`, `OPEN`, or `ERROR`; an open proof does not establish that the property is false |
+| `ProofSession.Limits.steps(n)` / `defaults()` | Search limits; refine with `withTimeoutMillis(ms)`, `withMaxSteps(n)`, `withStrategy(option, value)` (`NO_TIMEOUT` is `-1`) |
 | `ProofSession.open(path, spec, limits)` | Loads a Solidity obligation **without running proof search** |
 | `ProofSession.load(path, limits, false)` | Loads/replays a `.key` or `.proof` without additional search; inspect `replayErrors()` |
 | `session.runAutoDetailed(null)` | Runs all open goals and returns a `SearchResult`; pass an open node serial to run only its subtree |
 | `session.lastSearch()` | Snapshot of the most recent search, or `null` before search/after manual apply or prune |
-| `session.ruleDiagnosticsAt(serial, offset)` | Matching taclet candidates, missing schema variables, current strategy cost and approval disposition, diagnostic exceptions |
-| `session.sequent(serial)` / `session.termAt(serial, offset)` | Actual logic objects; inspect `op()`, `sort()`, `subs()`, and bound/free variables |
+| `session.ruleDiagnosticsAt(serial, offset or text)` | Matching taclet candidates, missing schema variables, current strategy cost and approval disposition, diagnostic exceptions |
+| `session.sequent(serial)` / `session.termAt(serial, offset or text)` | Actual logic objects; inspect `op()`, `sort()`, `subs()`, and bound/free variables |
 | `session.proof().getServices().getNamespaces()` | Inspect registered sorts, functions and variables; open goals also expose `getOverlayServices()` |
-| `session.tree()` / `node(serial, true)` | Node serials, branches, printed sequents and applied rules |
-| `session.apply(serial, index, instantiations)` | Applies a candidate from the most recent `rulesAt`/`ruleDiagnosticsAt` call; instantiations map schema-variable names to KeY syntax |
+| `session.root()` / `tree()` / `node(serial)` | Root serial, node serials, branches, pretty-printed sequents and applied rules; `node(serial, false)` disables pretty syntax |
+| `session.offsetOf(serial, text)` | Offset of the first occurrence of `text` in the printed sequent; throws, showing the sequent, when absent |
+| `session.applyRule(serial, text, ruleName[, instantiations])` | Applies a rule by name at the first occurrence of `text`; `applyRule(serial, ruleName)` for a sequent-wide rule. Throws with the candidate names when it does not match |
+| `session.apply(serial, index, instantiations)` | Applies a candidate by index from the most recent `rulesAt`/`ruleDiagnosticsAt` call; instantiations map schema-variable names to KeY syntax |
 | `session.prune(serial)` / `save()` | Prune an inner node of an open branch, or serialize the current proof |
 | `session.close()` | Dispose the proof; use try-with-resources. `isClosed()` reports disposal, while `summary().closed()` reports proof closure |
 
@@ -92,6 +95,7 @@ Inline example, from the repository root (replace the JDK path if needed):
 ```bash
 ./gradlew :keyext.solidity.core:shadowJar
 /usr/lib/jvm/java-21-openjdk/bin/jshell \
+  -J-Djava.util.prefs.userRoot="$TMPDIR/jprefs" \
   --class-path keyext.solidity.core/build/libs/keyext.solidity.core-exe.jar \
   --feedback concise <<'JAVA'
 import java.nio.file.Path;
@@ -101,14 +105,13 @@ import org.key_project.solidity.proof.init.SolidityProblemSpec;
 
 var source = Path.of("keyext.solidity.examples/TestSuite.sol");
 var spec = SolidityProblemSpec.of("TestSuite", "storageRootReadWrite");
-try (var session = ProofSession.open(source, spec, new ProofSession.Limits(1, -1, Map.of()))) {
-    int root = session.tree().getFirst().serial();
-    var initial = session.node(root, true);
-    System.out.println(initial.sequent());
-    int offset = initial.sequent().indexOf("storageRootReadWrite");
-    var term = session.termAt(root, offset);
+try (var session = ProofSession.open(source, spec, ProofSession.Limits.steps(1))) {
+    int root = session.root();
+    System.out.println(session.node(root).sequent());
+    var term = session.termAt(root, "storageRootReadWrite");
     if (term != null) System.out.println(term.op() + " : " + term.sort());
-    session.ruleDiagnosticsAt(root, offset).forEach(System.out::println);
+    session.ruleDiagnosticsAt(root, "storageRootReadWrite").forEach(System.out::println);
+    System.out.println(session.applyRule(root, "storageRootReadWrite", "functionBodyExpand"));
     System.out.println(session.runAutoDetailed(null));
     session.openGoalTexts(3).forEach(System.out::println);
     session.configure(ProofSession.Limits.defaults());
@@ -123,7 +126,7 @@ For a one-shot result, with the same imports and `source`/`spec`:
 
 ```java
 var options = new SolidityVerifier.VerificationOptions(
-    new ProofSession.Limits(20000, 30000, Map.of()), 3, true);
+    ProofSession.Limits.steps(20000).withTimeoutMillis(30000), 3, true);
 var result = SolidityVerifier.verifyDetailed(source, spec, options);
 System.out.println(result.status());
 System.out.println(result.search());
@@ -145,7 +148,7 @@ Rule dispositions are `ACCEPTED`, `NEEDS_INSTANTIATION`, `INFINITE_COST`, `NOT_A
 `ERROR`. These describe matching candidates at the selected position, not every rule in the
 calculus or an explanation of every internal strategy feature. `ACCEPTED` is not a guarantee
 that the scheduler will choose that rule. Diagnostic calls do not apply rules. Offsets refer to
-the latest `node(serial, prettySyntax).sequent()` text; `-1` in a rule query means sequent-wide
+the latest `node(serial, prettySyntax).sequent()` text (the `text` overloads use the pretty one); `-1` in a rule query means sequent-wide
 rules. Rule indices expire after a new rule query or any apply/prune/search operation.
 
 For parser debugging, use existing `SolidityOutline.of(path)` (in `program.parser`) for

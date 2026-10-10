@@ -465,6 +465,27 @@ public class SolidityProblemSynthesizerTest {
     }
 
     @Test
+    void rulesAreAppliedByNameAtATextPosition() throws Exception {
+        assertEquals(new ProofSession.Limits(1, 500, Map.of("a", "b")),
+            ProofSession.Limits.steps(1).withTimeoutMillis(500).withStrategy("a", "b"));
+        try (var session =
+            ProofSession.open(inMemory("ByName"), spec(null, "holds"),
+                ProofSession.Limits.steps(1))) {
+            int root = session.root();
+            assertEquals(session.node(root, true).sequent(), session.node(root).sequent());
+            assertNotNull(session.termAt(root, "holds"));
+            assertFalse(session.ruleDiagnosticsAt(root, "holds").isEmpty());
+            assertThrows(IllegalArgumentException.class, () -> session.offsetOf(root, "absent"));
+            assertThrows(IllegalArgumentException.class,
+                () -> session.applyRule(root, "holds", "noSuchRule"));
+
+            var summary = session.applyRule(root, "holds", "functionBodyExpand");
+            assertEquals(2, summary.nodes());
+            assertEquals("functionBodyExpand", session.node(root).ruleName());
+        }
+    }
+
+    @Test
     void timeoutAndExhaustedSearchAreDistinctFromAnError() throws Exception {
         try (var session = ProofSession.open(inMemory("Timeout"), spec(null, "fails"),
             new ProofSession.Limits(10000, 0, Map.of()))) {
