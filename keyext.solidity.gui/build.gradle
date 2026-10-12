@@ -36,9 +36,6 @@ run {
 def graalJit = new org.gradle.process.CommandLineArgumentProvider() {
     @Override
     Iterable<String> asArguments() {
-        if (JavaVersion.current() != JavaVersion.VERSION_21) {
-            return []
-        }
         return ["-XX:+UnlockExperimentalVMOptions", "-XX:+EnableJVMCI",
                 "--upgrade-module-path="
                     + project(':keyext.solidity.core').configurations.graalCompiler.asPath]
@@ -54,6 +51,9 @@ tasks.register('solidityGui', JavaExec) {
     mainClass.set("org.key_project.solidity.gui.SolidityMain")
     classpath = sourceSets.main.runtimeClasspath
     workingDir = rootProject.projectDir
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
     jvmArgumentProviders.add(graalJit)
     def requested = project.findProperty('solFile') ?: project.findProperty('keyFile')
     if (requested) {
