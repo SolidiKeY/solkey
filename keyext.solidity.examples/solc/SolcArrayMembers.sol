@@ -6,6 +6,10 @@ pragma solidity ^0.8.0;
 /// and `smtCheckerTests/array_members/` and `out_of_bounds/`. Each function names the upstream file
 /// it comes from (see `README.md` for the adaptation rules).
 contract SolcArrayMembers {
+    uint[][] lhs2d;
+    uint[][][] lhs3d;
+    uint[][] lenArr;
+    uint[][] lenArr2;
     struct S { uint x; }
     struct B { int[] b; }
     struct TS { B[] s; }
@@ -171,6 +175,7 @@ contract SolcArrayMembers {
         assert(x10 == 44);
         assert(y10 == 88);
     }
+
     /// solc: semanticTests/array/create_memory_array.sol
     function memoryArrayOfFixed() public pure {
         uint[2][] memory y = new uint[2][](300);
@@ -360,8 +365,6 @@ contract SolcArrayMembers {
         require(nestedToMemory.length == 0);
         nestedToMemory.push();
         nestedToMemory.push();
-        require(nestedToMemory[0].length == 0);
-        require(nestedToMemory[1].length == 0);
         nestedToMemory[0].push(0);
         nestedToMemory[0].push(1);
         nestedToMemory[1].push(2);
@@ -586,10 +589,8 @@ contract SolcArrayMembers {
     }
 
     /// solc: smtCheckerTests/array_members/push_zero_2d_safe.sol
-    /// @custom:key box
     function pushZero2d() public {
         zero2d.push();
-        require(zero2d[zero2d.length - 1].length == 0);
         zero2d[zero2d.length - 1].push();
         uint r = zero2d[zero2d.length - 1][0];
         assert(r == 0);
@@ -858,7 +859,6 @@ contract SolcArrayMembers {
     function pushNested() public {
         require(nestedP.length == 0);
         nestedP.push();
-        require(nestedP[0].length == 0);
         assert(nestedP.length == 1);
         assert(nestedP[0].length == 0);
         nestedP[0].push();
@@ -907,4 +907,42 @@ contract SolcArrayMembers {
         assert(x == 8);
         assert(y == 0);
     }
+
+    /// solc: smtCheckerTests/array_members/push_as_lhs_2d.sol
+    function pushLhs2dLast() public {
+        lhs2d.push().push() = 2;
+        assert(lhs2d.length > 0);
+        assert(lhs2d[lhs2d.length - 1].length == 1);
+        assert(lhs2d[lhs2d.length - 1][lhs2d[lhs2d.length - 1].length - 1] == 2);
+    }
+
+    /// solc: smtCheckerTests/array_members/push_as_lhs_3d.sol
+    function pushLhs3dLast() public {
+        lhs3d.push().push().push() = 2;
+        uint length1 = lhs3d.length;
+        uint length2 = lhs3d[length1 - 1].length;
+        uint length3 = lhs3d[length1 - 1][length2 - 1].length;
+        assert(length1 > 0);
+        assert(length2 == 1);
+        assert(length3 == 1);
+        assert(lhs3d[length1 - 1][length2 - 1][length3 - 1] == 2);
+    }
+
+    /// solc: smtCheckerTests/array_members/length_1d_assignment_2d_storage_to_storage.sol
+    /// @custom:key box
+    function length2dStorageToStorage() public {
+        require(lenArr.length == 0);
+        require(lenArr2.length == 0);
+        lenArr.push();
+        lenArr.push();
+        lenArr2.push();
+        lenArr2.push();
+        uint a = lenArr2[0].length;
+        uint b = lenArr[0].length;
+        assert(a == b);
+        uint c = lenArr2.length;
+        uint d = lenArr.length;
+        assert(c == d);
+    }
+
 }

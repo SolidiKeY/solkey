@@ -52,12 +52,6 @@ event) is refused at load with a `SolidityParseException` naming it; those are i
 
 ## True facts that cannot be proved
 
-- **An empty push of a fixed-size array cannot establish its default elements.**
-  `uint[3][] dyn; uint n = dyn.length; dyn.push(); assert(dyn[n][0] == 0);`
-  stays open on symbolic entry storage, though its length is provably `3` and the
-  same read closes in a constructor. Reference-element push updates only the outer
-  length; `wellformed(storage)` constrains the element's shape but not the values
-  beyond the entry array length. `solc/open/FixedLengthsOpen.emptyPushFixedElementReadsZero`.
 - **A variable mentioned only in a loop invariant loses its value.** `\dropEffectlessElementaries`
   (`DropEffectlessElementariesCondition.searchTerm`) does not see a loop's `LoopSpec` bindings, so
   `simplifyUpdate*` drops the update before `whileInvariantBox`:

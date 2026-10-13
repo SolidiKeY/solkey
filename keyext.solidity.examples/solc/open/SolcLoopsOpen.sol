@@ -147,7 +147,7 @@ contract SolcLoopsOpen {
         assert(r == 70);
     }
 
-    // open: a pushed struct gets no empty array member, so the inner push loops start from an unknown length
+    // open: nested push loops exceed the suite budget of 50000 steps / 30 s
     /// solc: array/dynamic_multi_array_cleanup.sol
     /// @custom:key box
     function multiArrayFillByPushLoops() public {
@@ -166,7 +166,7 @@ contract SolcLoopsOpen {
         assert(l == 0);
     }
 
-    // open: a pushed inner array is not known to be empty, so its length after the loop is unknown
+    // open: unrolling 43 pushes exceeds the suite budget of 50000 steps / 30 s
     /// solc: array/push/push_no_args_2d.sol
     /// @custom:key box
     function pushNoArgs2dLoop(uint index, uint value) public {
@@ -184,14 +184,4 @@ contract SolcLoopsOpen {
         assert(a == 64);
     }
 
-    // open: a pushed inner array is not known to be empty, so the second push writes at an unknown index
-    /// solc: array/push/push_no_args_2d.sol
-    /// @custom:key box
-    function pushChainedAssign(uint value) public {
-        require(value == 512);
-        require(array2d.length == 0);
-        array2d.push().push() = value;
-        uint a = array2d[0][0];
-        assert(a == 512);
-    }
 }

@@ -680,22 +680,31 @@ Each array rule branches on bounds. Out-of-bounds goes to
                             sp · length, n + 1 ) }
 
 - `storagePushLengthSaveReferenceElement` (zero-arg push onto an array of structs or
-  arrays: only the length grows, the slot keeps what storage holds). solc does not write
-  zeroes on `push()`, it relies on unused storage being zero, and a write through a dangling
-  reference to a popped element breaks that (Solidity docs, "Dangling References to Storage
-  Array Elements"). Value-type elements cannot be referenced, so only this case can see it.
-  `pop()` and `delete` still clear, so after them the slot reads defaults.
+  arrays: reset the appended slot with `delAt`, then grow the length). The reset preserves
+  fixed lengths and nested mappings. This expresses Solidity's default-value guarantee
+  without assuming that symbolic entry storage already contains zeroed unused slots.
+
+      sp.push();
+      ⇝  { storage := save(delAt(storage, sp · at(n)), sp · length, n + 1) }
+
+- `storageLocalRootPushBind` (zero-arg push whose returned slot is
+  captured into a local reference; the reset and reference use the old length `n`)
+
+      lsv = sp.push();
+      ⇝  { storage := save(delAt(storage, sp · at(n)), sp · length, n + 1)
+           || lsv := sp · at(n) }
+
+- `storagePushLengthSaveMappingElement` and `storageLocalRootPushBindMappingElement`
+  grow mapping arrays without clearing their entries. A returned mapping reference uses
+  `atMap(n)`.
 
       sp.push();
       ⇝  { storage := save(storage, sp · length, n + 1) }
 
-- `storageLocalRootPushBind` (zero-arg push whose returned slot is
-  captured into a local reference; the element is a reference type, so the slot is not
-  cleared, as in `storagePushLengthSaveReferenceElement`)
-
-      lsv = sp.push();
-      ⇝  { storage := save(storage, sp · length, n + 1)
-           || lsv := sp · at(n) }
+The compiler's array/struct push helper only grows the length: it relies on unused ordinary
+data already being clear in defined executions. Writes through dangling references can
+violate that invariant, and Solidity leaves those executions undefined. Their current
+compiler behavior is recorded in `solc/open/StorageDanglingOpen.sol`.
 
 - `storagePopSave` (clears the popped slot with `delAt`, which is
   mapping-preserving in the same way `delete` is, so a mapping
@@ -866,7 +875,10 @@ node's base: `fixedSave`, `fixedStore`, `fixedDelNode`, `fixedDelAt` descend, `d
 and `fixedArr(…)` are fixed, `dynArr(…)` and `mtSt` are not, and
 `wfFixedIsFixed` / `wfDynIsNotFixed` decide it from the entry atom. This is what makes
 `uint[40] big = uint[20] small` keep `big.length == 40` and zero `big[30]`, and
-`dyn.pop()` keep the slot's `uint[3]` length. The other primitive reads through a leaf write or
+`dyn.pop()` keep the slot's `uint[3]` length. The deletion/pop terminals no longer refuse
+fixed-array elements. `selectStDelNodeIndexStruct` recursively resets a reference element
+without an old-length comparison; program-level bounds checks remain in place. Copy
+selectors still distinguish the source prefix and the old destination tail. The other primitive reads through a leaf write or
 a reset are split by selector (`selectOnSaveEmpty{IndexPrim,MapValue,Member}`,
 `selectStDelNode{Element,MapValue,Member}`) so that `size` is never defaulted.
 

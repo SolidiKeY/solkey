@@ -76,4 +76,59 @@ contract FixedLengths {
         assert(dyn[n].length == 3);
         assert(dyn[n][2] == 52);
     }
+
+    function popPushResetsFixedElement() public {
+        uint n = dyn.length;
+        dyn.push();
+        dyn[n][0] = 11;
+        dyn[n][2] = 22;
+        dyn.pop();
+        assert(dyn.length == n);
+        dyn.push();
+        assert(dyn[n].length == 3);
+        assert(dyn[n][0] == 0);
+        assert(dyn[n][2] == 0);
+    }
+
+    function deleteFixedElementKeepsLength() public {
+        uint n = dyn.length;
+        dyn.push();
+        dyn[n][1] = 17;
+        delete dyn[n];
+        assert(dyn.length == n + 1);
+        assert(dyn[n].length == 3);
+        assert(dyn[n][1] == 0);
+    }
+
+    function deleteDynamicThenPushFixedElement() public {
+        dyn.push();
+        dyn[0][2] = 23;
+        delete dyn;
+        assert(dyn.length == 0);
+        dyn.push();
+        assert(dyn.length == 1);
+        assert(dyn[0].length == 3);
+        assert(dyn[0][2] == 0);
+    }
+
+    function fixedElementStorageAlias() public {
+        uint n = dyn.length;
+        dyn.push();
+        uint[3] storage row = dyn[n];
+        assert(row.length == 3);
+        row[2] = 31;
+        assert(dyn[n][2] == 31);
+        delete dyn[n];
+        assert(row.length == 3);
+        assert(row[2] == 0);
+    }
+
+    function emptyPushFixedElementReadsZero() public {
+        uint n = dyn.length;
+        dyn.push();
+        assert(dyn.length == n + 1);
+        assert(dyn[n].length == 3);
+        assert(dyn[n][0] == 0);
+        assert(dyn[n][2] == 0);
+    }
 }

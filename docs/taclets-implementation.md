@@ -85,9 +85,12 @@ performance-only). Struct-sorted element reads
 `MapField` nor the `RefField` rule matches — get their own
 `selectStDelNodeIndexStruct`, which re-wraps the element exactly like the `RefField`
 rule (`delNode(selectSt(st, at(i)))`), so `delete arr` keeps the mapping members of
-struct elements. It re-wraps only the elements below the array's old length
-(`i < selectSt(st, size)`): `delete arr` clears no further, so data a dangling reference left
-past the length survives it (`testDeleteArrayLeavesDataPastLength`).
+struct elements.
+The reference reset selector clears logical children without a length comparison. The
+compiler still only clears its old valid range: the dangling-reference witness
+`StorageDanglingOpen.testDeleteArrayLeavesDataPastLength` is retained in `solc/open/`.
+Its current-compiler behavior is outside defined Solidity semantics and stays open under
+the canonical logical reset.
 
 `MapField` is the sub-sort that earns its place: it is the only case that reads
 *through* the delete marker (`selectSt(st, mf)`) instead of re-wrapping it
@@ -141,6 +144,12 @@ Notes that are not derivable from the rule names:
   selector-split defaults. The sizes come from the shape: a fixed-size target keeps its own
   length through `selectOnSaveEmptySize` and the `fixed` predicate, a dynamic one takes the
   source's (`d2 = d1` with `uint[9] d1` gives `d2.length == 9`), see `docs/storage.md` 8c.
+  `contracts/ArrayCopyShapes.sol` checks both dimensions of a shorter nested fixed-array
+  copy, dynamic tail reuse, struct members, source independence, and self-copy through a
+  storage alias. `docs/array-copy-shapes.md` proposes a structural-induction proof against
+  solc 0.8.34's generated copy/reset helpers and states the aliasing and clean-tail premises.
+  `docs/array-shape-coverage.md` indexes 76 matrix/cube examples built by breadth-first
+  expansion of fixed and dynamic dimensions and the memory/storage copy and alias edges.
 
 ### Increment / decrement (`++`/`--`, pre/post, plain and `result = …`)
 Direct storage updates (no program-level desugaring), e.g. `++age;` ⇝
@@ -298,21 +307,29 @@ rules needed. Terminals: `storagePushValueSave`, `storagePushValueCopySource`
 revert branch), `storagePushValue_unfold_rightSndArgument` (non-simple *primitive*
 argument capture on a simple receiver — a path-shaped argument stays for
 `storagePushValueCopySource`, which consumes `tokens.push(tok)` without an
-intervening alias), `storage{Push,…}_unfold_leftFstReceiver` (a complex
-receiver is aliased first, whatever the argument — `storagePushValue_unfold_leftFstReceiver`
-takes any `Expression`). Array bounds/length are read
+intervening alias). Indexed/member storage sources are captured by
+`storagePushValue_unfold_rightFstReferenceArgument` (a storage alias) or
+`storagePushValue_unfold_rightFstPrimitiveArgument` (a primitive local), so a source index
+with a side effect is evaluated once before the length update.
+`storage{Push,…}_unfold_leftFstReceiver` aliases a complex receiver first, whatever the
+argument; `storagePushValue_unfold_leftFstReceiver` takes any `Expression`. Array bounds/length are read
 from **post-update** storage (bound emitted inside `\replacewith`, not via `\add`).
 `storagePopSave`'s nonempty branch clears the popped slot with the mapping-preserving
 `delAt(storage, sp · at(ℓ-1))` (not eager `defaultValue`), reusing the `delNode`
 machinery of §Delete — so a mapping nested in the popped element survives `pop()` and a
 later `push()`, exactly like `storageRootDelete` / `storageFieldDelete`.
-`storagePushLengthSave` clears the appended slot the same way for a value-type element, which
-is what makes `arr.push(); assert(arr[0] == 0);` provable on unknown storage. A push onto an
-array of structs or arrays (`storagePushLengthSaveReferenceElement`, `storageLocalRootPushBind`)
-does not clear: solc writes no zeroes on `push()`, and a write through a dangling reference to a
-popped element survives it (`testDanglingReferenceSurvivesPush`,
-`testDanglingInnerArrayReappearsAfterPush`). See the `testDeepPopDoesNotResetMappingMember` end-to-end
-example. `delAt(st, p)` names `st` once where the equivalent `save`-of-deleted-value form
+`storagePushLengthSave`, `storagePushLengthSaveReferenceElement`, and
+`storageLocalRootPushBind` clear the appended nonmapping slot with `delAt` before saving
+its new length. Fixed-array lengths survive the reset through the existing `wf`/`fixed`
+rules, ordinary values become default, and nested mapping members survive. Standalone
+mapping-element pushes use `storagePushLengthSaveMappingElement`; the mapping-return bind
+also changes only the length and preserves the entries. The fixed-array, dynamic-array,
+and struct return-default regressions in `TestSuite` cover unknown entry storage.
+The compiler's implementation relies on unused ordinary storage being clear; the logical
+push expresses Solidity's default-value guarantee directly. Compiler-specific writes through
+dangling references are retained as open witnesses in `StorageDanglingOpen`, rather than
+passing claims of the portable push rules. See `testDeepPopDoesNotResetMappingMember`.
+`delAt(st, p)` names `st` once where the equivalent `save`-of-deleted-value form
 named it twice; reads commute through it with `selectOnDelAtCons`, and the reset still
 resolves on read through `delField<[alpha]>`.
 
@@ -392,17 +409,25 @@ copy independence, shorter-copy tail clearing before an empty push, and fixed-el
 storage-to-memory-to-storage copies. `TestSuite.sol` checks these tail/default cases on
 the EVM too, including pop/push of a mapping whose values are fixed arrays: the mapping
 entry survives and its fixed length remains `3`.
-`solc/open/FixedLengthsOpen.sol` keeps the counterexamples to current proof support:
-empty push of a fixed array on symbolic storage cannot establish zero elements, and
-pop/delete of fixed-array elements stop at the existing safety guard.
+All five former `FixedLengthsOpen` cases now close and live in
+`contracts/FixedLengths.sol` and `TestSuite.sol`. The open contract has been removed;
+empty push and its returned references now establish their default ordinary values on
+unknown entry storage.
+The same push rules close nine formerly open upstream functions in `SolcArrayMembers`,
+`SolcStructsMappings`, and `SolcLoops`, including chained two/three-dimensional pushes,
+struct defaults, and copies of freshly pushed nested arrays. The closing ports no longer
+assume the pushed row's length with an additional `require`.
 Memory objects carry a `Shape` in their identity (`shaped(idp, fixedArr(3, leaf))`), and
 `initSize` reads a fresh node's length off it (`testMemoryFixedArrayLength`,
 `testNewArrayOfFixedElementLength`).
 
-An array whose elements are fixed-size arrays (`uint[3][]`) is out of reach of `delete` and
-`pop()`: its elements are read through `at(i)`, which carries no field kind. So `delete` and `pop()` refuse to reset one:
-the Path flag `noFixedArrayElement` and the variable condition `\noFixedArrayElement(fld)`
-(`StorageDeleteTypes`) leave such a proof open instead of proving it wrong. This gives Solidity's
+Arrays whose elements are fixed-size arrays (`uint[3][]`) support `delete` and `pop()`.
+The terminal rules use the existing `delAt` marker without `noFixedArrayElement` guards;
+`wf` element facts identify fixed child nodes when `selectStDelNodeSize` preserves their
+length. `selectStDelNodeIndexStruct` recurses into the selected child without an old-length
+inequality, as `selectStDelNodeFixedElement` already did. The copy selectors retain their
+source/target length comparisons to distinguish copied values from the cleared tail.
+This gives Solidity's
 `delete` semantics on structs: value/reference members reset, but **mapping members
 are preserved**. On read, `selectSt` on a `delNode` reads a mapping member
 (`MapField`) through to the original struct, recurses into a reference member
@@ -837,7 +862,7 @@ closes where `nested.recursive[4].z` does not).
   read (see "Sort-free clearing and copying").
 - `storagePushLengthSave` clears the appended slot of a value-type array as well as bumping
   `size`, mirroring `storagePopSave` (arrays of structs or arrays use
-  `storagePushLengthSaveReferenceElement`, which does not clear). It writes the lazy delete marker rather than an eager `defaultValue`, so the
+  `storagePushLengthSaveReferenceElement`, which preserves fixed lengths and mapping members). It writes the lazy delete marker rather than an eager `defaultValue`, so the
   reset resolves by sort: a primitive element becomes 0 (which is what makes
   `arr.push(); assert(arr[0] == 0);` provable), while a struct element becomes a
   `delNode` whose mapping members still read through — so

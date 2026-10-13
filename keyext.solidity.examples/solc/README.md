@@ -176,6 +176,7 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `smtCheckerTests/loops/for_loop_bmc_iterations_break_5.sol` | `forSecondBreakUnreachable` |
 | `smtCheckerTests/loops/for_loop_bmc_iterations_continue_4.sol` | `forContinueRunsUpdateAfterReassign` |
 | `smtCheckerTests/loops/for_loop_bmc_iterations_shallow_unroll.sol` | `forShallowUnrollAssertIsFalse` |
+| `semanticTests/array/push/push_no_args_2d.sol` | `pushChainedAssign` |
 
 ### `SolcArrayMembers.sol`
 
@@ -240,6 +241,9 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `semanticTests/array/push/array_push_nested.sol` | `pushNested` |
 | `semanticTests/array/copying/array_copy_storage_storage_static_dynamic.sol` | `copyStaticToDynamic` |
 | `semanticTests/array/copying/array_copy_storage_storage_static_static.sol` | `copyStaticToLargerStatic` |
+| `smtCheckerTests/array_members/push_as_lhs_2d.sol` | `pushLhs2dLast` |
+| `smtCheckerTests/array_members/push_as_lhs_3d.sol` | `pushLhs3dLast` |
+| `smtCheckerTests/array_members/length_1d_assignment_2d_storage_to_storage.sol` | `length2dStorageToStorage` |
 
 ### `SolcFunctionCalls.sol`
 
@@ -327,6 +331,8 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `semanticTests/storage/accessors_mapping_for_array.sol` | `mappingOfArrays` |
 | `smtCheckerTests/types/mapping_aliasing_2.sol` | `mappingParametersMayAlias` |
 | `smtCheckerTests/types/array_mapping_aliasing_1.sol` | `arrayOfMappingsElementAlias` |
+| `semanticTests/structs/struct_storage_push_zero_value.sol` | `pushedStructIsZero` |
+| `semanticTests/structs/copy_struct_array_from_storage.sol` | `copyStructArrayIntoNestedArray` |
 
 ### `SolcConstructors.sol`
 
@@ -632,19 +638,19 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 
 ## Provenance of `open/`
 
-### `open/FixedLengthsOpen.sol`
+### `open/StorageDanglingOpen.sol`
 
-These are local semantic probes of the storage-shape design in `docs/storage.md` section
-8c and `contracts/FixedLengths.sol`, rather than upstream solc ports. They compile without
-warnings and execute on the EVM without failing assertions.
+These local compiler-behavior probes write through aliases after their array elements have
+been popped. Solidity defines dangling-reference executions as undefined. The current
+compiler can preserve the out-of-range data during deletion, copying, or a later empty push;
+the canonical reset and push rules establish default ordinary values.
 
 | Function | Why the proof stays open |
 |---|---|
-| `emptyPushFixedElementReadsZero` | Symbolic storage has shape facts but no zero values beyond the entry length |
-| `popPushResetsFixedElement` | `pop` refuses fixed-array elements |
-| `deleteFixedElementKeepsLength` | Element deletion refuses fixed-array elements |
-| `deleteDynamicThenPushFixedElement` | Whole-array deletion refuses fixed-array elements |
-| `fixedElementStorageAlias` | Element deletion refuses fixed-array elements; the alias observes the reset |
+| `testDeleteArrayLeavesDataPastLength` | Compiler-specific dangling data survives deletion, while the logical reset clears it |
+| `testDanglingReferenceSurvivesPush` | A popped alias writes outside the array; portable push resets the appended slot |
+| `testArrayCopyKeepsDestinationTail` | A dangling write survives the compiler copy/push sequence; portable push resets the appended slot |
+| `testDanglingInnerArrayReappearsAfterPush` | A dangling inner-array write survives compiler push; portable push resets the appended slot |
 
 ### `open/SolcLoopsOpen.sol`
 
@@ -656,22 +662,16 @@ warnings and execute on the EVM without failing assertions.
 | `nestedWhileContinue` | `smtCheckerTests/loops/while_nested_continue.sol` | the invariant cannot name the lowered break flag of the inner loop |
 | `binomialFaithfulRowsSmall` | `semanticTests/array/memory_arrays_of_various_sizes.sol` | new uint256[][](n + 1) with a non-simple length is stuck on the program text |
 | `binomialRowsNine` | `semanticTests/array/memory_arrays_of_various_sizes.sol` | nested memory rows: does not close within the default budget, nor with -m 1000000 |
-| `multiArrayFillByPushLoops` | `semanticTests/array/dynamic_multi_array_cleanup.sol` | a pushed struct gets no empty array member, so the inner push loops start from an unknown length |
-| `pushNoArgs2dLoop` | `semanticTests/array/push/push_no_args_2d.sol` | a pushed inner array is not known to be empty, so its length after the loop is unknown |
-| `pushChainedAssign` | `semanticTests/array/push/push_no_args_2d.sol` | a pushed inner array is not known to be empty, so the second push writes at an unknown index |
+| `multiArrayFillByPushLoops` | `semanticTests/array/dynamic_multi_array_cleanup.sol` | nested push loops exceed the suite budget of 50000 steps / 30 s |
+| `pushNoArgs2dLoop` | `semanticTests/array/push/push_no_args_2d.sol` | unrolling 43 pushes exceeds the suite budget of 50000 steps / 30 s |
 
 ### `open/SolcArrayMembersOpen.sol`
 
 | Function | Upstream (`test/libsolidity/`) | Why it stays open |
 |---|---|---|
 | `pushNoArgs1d` | `semanticTests/array/push/push_no_args_1d.sol` | push() used as an rvalue (uint y = arr.push();) is stuck on the program text |
-| `pushNested` | `semanticTests/array/push/array_push_nested.sol` | push() onto an array of arrays leaves the new element's length unknown, so nested[0].length == 0 does not follow |
 | `pushNestedFromMemory` | `semanticTests/array/push/array_push_nested_from_memory.sol` | push(m) of a memory array onto a storage array of arrays is stuck on the program text |
 | `copyStorageStorageDynDyn` | `semanticTests/array/copying/array_copy_storage_storage_dyn_dyn.sol` | assigning new uint[](n) directly to a storage array is stuck on the program text |
-| `copyNestedStorageToMemory` | `semanticTests/array/copying/array_copy_storage_to_memory_nested.sol` | the pushed inner arrays start from an unknown length, so the pushed values land at unknown indices |
-| `pushZero2d` | `smtCheckerTests/array_members/push_zero_2d_safe.sol` | the pushed inner array starts from an unknown length, so index 0 is not the slot the second push cleared |
-| `pushLhs2dLast` | `smtCheckerTests/array_members/push_as_lhs_2d.sol` | c.push().push() = 2 appends to an inner array of unknown length, so its length is not known to be 1 |
-| `pushLhs3dLast` | `smtCheckerTests/array_members/push_as_lhs_3d.sol` | same as pushLhs2dLast one level deeper |
 | `pushLhsAndRhs1d` | `smtCheckerTests/array_members/push_as_lhs_and_rhs_1d.sol` | a.push() = a.push() is desugared to a.push(a.push()), whose push() argument is stuck on the program text |
 | `pushLhsCompound` | `smtCheckerTests/array_members/push_as_lhs_compound_assignment.sol` | a compound assignment to push() (u.push() -= 1) is stuck on the program text |
 | `pushLhsStruct` | `smtCheckerTests/array_members/push_as_lhs_struct.sol` | same as pushLhsAndRhs1d through struct members |
@@ -679,7 +679,6 @@ warnings and execute on the EVM without failing assertions.
 | `storagePointerPush` | `smtCheckerTests/array_members/storage_pointer_push_1.sol` | push() on the storage reference an internal call returns (f().push()) is stuck on the program text |
 | `popIsolated` | `semanticTests/array/pop/array_pop_isolated.sol` | the bare member access popIso.pop; as a statement is stuck on the program text |
 | `pushStructFromMemory` | `semanticTests/array/push/array_push_struct.sol` | push(s) of a memory struct onto a storage array of structs is stuck on the program text |
-| `length2dStorageToStorage` | `smtCheckerTests/array_members/length_1d_assignment_2d_storage_to_storage.sol` | the pushed inner arrays start from an unknown length, so the two row lengths are unrelated |
 
 ### `open/SolcFunctionCallsOpen.sol`
 
@@ -695,8 +694,6 @@ warnings and execute on the EVM without failing assertions.
 
 | Function | Upstream (`test/libsolidity/`) | Why it stays open |
 |---|---|---|
-| `pushedStructIsZero` | `semanticTests/structs/struct_storage_push_zero_value.sol` | push() on a storage array of structs does not zero the appended element; every field of pushZero[0] stays symbolic |
-| `copyStructArrayIntoNestedArray` | `semanticTests/structs/copy_struct_array_from_storage.sol` | va.push() and va[0].push() leave the appended inner array and struct symbolic (push does not zero non-primitive elements), so va[0].length == 3 is unprovable |
 | `copyStructArraysIntoMemoryRows` | `semanticTests/structs/copy_struct_array_from_storage.sol` | temp[0] = va[0] (storage array copied into an element of a memory array of arrays) has no rule: symbolic execution stops on the statement |
 | `storageNestedStructArrays` | `smtCheckerTests/types/struct/struct_array_struct_array_storage_safe.sol` | closes only with -m 300000 (~130 s); exceeds the suite budget of 50000 steps / 30 s |
 | `storageArrayOfNestedStructArrays` | `smtCheckerTests/types/struct/array_struct_array_struct_storage_safe.sol` | closes only with -m 300000 (~340 s); exceeds the suite budget of 50000 steps / 30 s |

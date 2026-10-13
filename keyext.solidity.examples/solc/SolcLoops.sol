@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 contract SolcLoops {
+    uint[][] array2d;
     struct Data {
         uint x;
         uint y;
@@ -756,4 +757,15 @@ contract SolcLoops {
         }
         assert(x != 3);
     }
+
+    /// solc: array/push/push_no_args_2d.sol
+    /// @custom:key box
+    function pushChainedAssign(uint value) public {
+        require(value == 512);
+        require(array2d.length == 0);
+        array2d.push().push() = value;
+        uint a = array2d[0][0];
+        assert(a == 512);
+    }
+
 }

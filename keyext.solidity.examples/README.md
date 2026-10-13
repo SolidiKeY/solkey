@@ -291,6 +291,16 @@ list every row.
 
 ### The contracts
 
+- **`ArrayMatrix*.sol` / `ArrayCube*.sol`** — 76 examples covering all four fixed/dynamic
+  matrix shapes, two mixed cube shapes, aliases, deep copies across memory and storage,
+  row sharing, deletion, push/pop, and shape-changing copies. `docs/array-shape-coverage.md`
+  records the breadth-first construction and the legal operation edges.
+- **`ArrayMappingShapes.sol`** — four boundary cases distinguishing deletion of a
+  fixed-array mapping value from pop/delete of its containing mapping array.
+- **`ArrayCopyShapes.sol`** — compiler-backed copy examples: fixed and dynamic target
+  lengths, nested tail clearing, struct members, independent copies, and storage aliases.
+  `docs/array-copy-shapes.md` gives the proposed mathematical proof and compiler inspection
+  commands.
 - **`Escrow.sol`** — escrow-v2 with its `State` enum and all three functions, the course
   invariant (`sender != receiver`, `amountInEscrow == net(sender) + net(receiver)`, the two
   state conditionals) and the original `only_if`/`on_success` clauses. All close; the

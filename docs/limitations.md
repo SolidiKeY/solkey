@@ -92,12 +92,12 @@ Choices the calculus makes on purpose, each of which makes some Solidity behavio
   `block.*`/`tx.*`/`gasleft`, and contract-typed parameters get no obligation. Specs use a
   `timeNow` state variable for time.
 - **Storage starts arbitrary.** Every obligation ranges over any reachable storage, so a fact
-  that holds only from a fresh deployment needs a `require` under a box. In particular,
-  `push()` of a reference-typed element (inner array, struct with array member) does not clear
-  the slot, on purpose: a dangling reference can leave data there, and the EVM agrees
-  (`r = a[0]; a.pop(); r.push(7); a.push(); assert(a[0].length == 0)` fails with
-  `Panic(0x01)`; `docs/storage.md`). Blocks `push_no_args_2d`, `dynamic_multi_array_cleanup`,
-  `struct_storage_push_zero_value` and 6 array ports in their faithful form.
+  that holds only from a fresh deployment needs a `require` under a box. Empty push now
+  establishes default ordinary values for array and struct elements, including fixed-array
+  children, on symbolic entry storage. Nine formerly open upstream cases close with this
+  rule. The compiler's length-only push agrees for defined executions with clear unused data;
+  four compiler-specific dangling-reference witnesses remain in `StorageDanglingOpen`.
+  Larger push loops can still exceed the proof budget (`docs/storage.md`).
 - **Immutables are storage.** An immutable is read from storage, so outside the constructor
   it is unconstrained. Constants are inlined at their reads.
 - **Every internal call is inlined.** Recursion unfolds without end (`functions_recursive.sol`
@@ -165,15 +165,16 @@ each one blocks (lower bounds: whole families are counted once where a report sa
 
 ## (e) The port, theme by theme
 
-solc themes (closing file / `open/` file). "Not ported" counts the upstream groups each report
-listed as outside the fragment or duplicated.
+solc themes (closing file / `open/` file). The counts record the porting snapshot; current
+functions and open reasons are listed in `keyext.solidity.examples/solc/README.md`.
+"Not ported" counts the upstream groups each report listed as outside the fragment or duplicated.
 
 | Theme | File | Closed | Open | Not-ported groups | Main reasons for open |
 |---|---|---|---|---|---|
-| Loops | `SolcLoops` | 49 | 9 | 6 | break flag in invariants, pushed inner array not empty, `new T[](n+1)`, cost |
-| Array members | `SolcArrayMembers` | 61 | 19 | 10 | push forms, pushed inner array not empty, static copies |
+| Loops | `SolcLoops` | 49 | 9 | 6 | break flag in invariants, `new T[](n+1)`, cost |
+| Array members | `SolcArrayMembers` | 61 | 19 | 10 | push forms, allocation directly into storage |
 | Function calls | `SolcFunctionCalls` | 29 | 7 | 11 | named args (proves false), `&`, assignment as value, conditional callee |
-| Structs and mappings | `SolcStructsMappings` | 50 | 5 | 9 | pushed struct not zero, cost |
+| Structs and mappings | `SolcStructsMappings` | 50 | 5 | 9 | storage-to-memory row copy, cost |
 | Constructors | `SolcConstructors` | 38 | 8 (1 closes) | 11 | `delete v`, `msg.value` |
 | Payments, reverts, try | `SolcPayments` | 35 | 14 (2 close: proves-false witnesses) | 11 | `msg.*` ranges, `try` callee havocked, noCallback unsound |
 | Modifiers | `SolcModifiers` | 34 | 13 | 9 | `return`/two `_;`, `for` in modifier, shared locals (proves false) |

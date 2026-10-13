@@ -2032,16 +2032,6 @@ contract TestSuite {
         assert(tokens[0].value == 99);
     }
 
-    function testDanglingReferenceSurvivesPush() public {
-        delete tokens;
-        tokens.push();
-        Token storage r = tokens[0];
-        tokens.pop();
-        r.value = 5;
-        tokens.push();
-        assert(tokens[0].value == 5);
-    }
-
     function testArrayCopyClearsOldElements() public {
         delete tokens;
         tokens.push();
@@ -2054,18 +2044,6 @@ contract TestSuite {
         bucket.tokens = tokens;
         bucket.tokens.push();
         assert(bucket.tokens[0].value == 0);
-    }
-
-    function testArrayCopyKeepsDestinationTail() public {
-        delete bucket.tokens;
-        delete tokens;
-        tokens.push();
-        Token storage r = tokens[0];
-        tokens.pop();
-        r.value = 5;
-        tokens = bucket.tokens;
-        tokens.push();
-        assert(tokens[0].value == 5);
     }
 
     /// @custom:key box
@@ -2180,17 +2158,6 @@ contract TestSuite {
         assert(fixedMaps[1][2] == 5);
     }
 
-    function testDeleteArrayLeavesDataPastLength() public {
-        delete tokens;
-        tokens.push();
-        Token storage r = tokens[0];
-        tokens.pop();
-        r.value = 5;
-        delete tokens;
-        tokens.push();
-        assert(tokens[0].value == 5);
-    }
-
     function testPopKeepsMappingElementEntries() public {
         delete mapArray;
         mapArray.push();
@@ -2214,17 +2181,6 @@ contract TestSuite {
         mapping(uint => uint) storage m = mapArray.push();
         m[1] = 4;
         assert(mapArray[0][1] == 4);
-    }
-
-    function testDanglingInnerArrayReappearsAfterPush() public {
-        delete matrix;
-        matrix.push();
-        uint[] storage ptr = matrix[0];
-        matrix.pop();
-        ptr.push(66);
-        matrix.push();
-        assert(matrix[0].length == 1);
-        assert(matrix[0][0] == 66);
     }
 
     function testStorageRootDeepCopy() public {
@@ -4316,6 +4272,51 @@ contract TestSuite {
         assert(dynMapsOfFixed[0][7][2] == 19);
     }
 
+    function testShapeCopyFixedTailAndSourceIndependence() public {
+        copySmall[0] = 11;
+        copySmall[19] = 12;
+        copyBig[20] = 93;
+        copyBig[39] = 94;
+        copyBig = copySmall;
+        assert(copySmall.length == 20);
+        assert(copyBig.length == 40);
+        assert(copyBig[0] == 11);
+        assert(copyBig[19] == 12);
+        assert(copyBig[20] == 0);
+        assert(copyBig[39] == 0);
+        copySmall[0] = 99;
+        assert(copyBig[0] == 11);
+    }
+
+    function testShapeCopyDynamicShrinkClearsReusedSlot() public {
+        delete a;
+        delete values;
+        a.push(11);
+        a.push(12);
+        values.push(91);
+        values.push(92);
+        values.push(93);
+        values = a;
+        assert(values.length == 2);
+        assert(values[0] == 11);
+        assert(values[1] == 12);
+        values.push();
+        assert(values[2] == 0);
+        values[0] = 99;
+        assert(a[0] == 11);
+    }
+
+    function testShapeCopyNestedSelfAliasPreservesValues() public {
+        fixedGrid[0][2] = 11;
+        fixedGrid[1][2] = 12;
+        uint[3][2] storage same = fixedGrid;
+        fixedGrid = same;
+        assert(fixedGrid.length == 2);
+        assert(fixedGrid[0].length == 3);
+        assert(fixedGrid[0][2] == 11);
+        assert(fixedGrid[1][2] == 12);
+    }
+
     function testFixedArrayOfMappingsOfFixedArraysLength() public view {
         assert(fixedMapsOfFixed[1][7].length == 3);
     }
@@ -4324,5 +4325,103 @@ contract TestSuite {
     function testDynamicArrayOfMappingsOfFixedArraysLength() public view {
         require(0 < dynMapsOfFixed.length);
         assert(dynMapsOfFixed[0][7].length == 3);
+    }
+
+    function testPushIndexedPrimitiveSourceOnce() public {
+        delete values;
+        values.push(11);
+        uint i = 0;
+        values.push(values[i++]);
+        assert(i == 1);
+        assert(values.length == 2);
+        assert(values[0] == 11);
+        assert(values[1] == 11);
+    }
+
+    function testPushIndexedFixedArraySourceOnce() public {
+        delete rows;
+        rows.push();
+        rows[0][0] = 11;
+        uint i = 0;
+        rows.push(rows[i++]);
+        assert(i == 1);
+        assert(rows.length == 2);
+        rows[0][0] = 99;
+        assert(rows[1].length == 3);
+        assert(rows[1][0] == 11);
+    }
+
+    function testFixedShapePopPushResetsFixedElement() public {
+        uint n = rows.length;
+        rows.push();
+        rows[n][0] = 11;
+        rows[n][2] = 22;
+        rows.pop();
+        assert(rows.length == n);
+        rows.push();
+        assert(rows[n].length == 3);
+        assert(rows[n][0] == 0);
+        assert(rows[n][2] == 0);
+    }
+
+    function testFixedShapeDeleteFixedElementKeepsLength() public {
+        uint n = rows.length;
+        rows.push();
+        rows[n][1] = 17;
+        delete rows[n];
+        assert(rows.length == n + 1);
+        assert(rows[n].length == 3);
+        assert(rows[n][1] == 0);
+    }
+
+    function testFixedShapeDeleteDynamicThenPushFixedElement() public {
+        rows.push();
+        rows[0][2] = 23;
+        delete rows;
+        assert(rows.length == 0);
+        rows.push();
+        assert(rows.length == 1);
+        assert(rows[0].length == 3);
+        assert(rows[0][2] == 0);
+    }
+
+    function testFixedShapeFixedElementStorageAlias() public {
+        uint n = rows.length;
+        rows.push();
+        uint[3] storage row = rows[n];
+        assert(row.length == 3);
+        row[2] = 31;
+        assert(rows[n][2] == 31);
+        delete rows[n];
+        assert(row.length == 3);
+        assert(row[2] == 0);
+    }
+
+    function testFixedShapeEmptyPushFixedElementReadsZero() public {
+        uint n = rows.length;
+        rows.push();
+        assert(rows.length == n + 1);
+        assert(rows[n].length == 3);
+        assert(rows[n][0] == 0);
+        assert(rows[n][2] == 0);
+    }
+
+    function testEmptyPushFixedArrayReturnReadsZero() public {
+        uint[3] storage row = rows.push();
+        assert(row.length == 3);
+        assert(row[0] == 0);
+        assert(row[2] == 0);
+    }
+
+    function testEmptyPushDynamicArrayReturnReadsZero() public {
+        uint[] storage row = matrix.push();
+        assert(row.length == 0);
+        row.push();
+        assert(row[0] == 0);
+    }
+
+    function testEmptyPushStructReturnReadsZero() public {
+        Token storage token = tokens.push();
+        assert(token.value == 0);
     }
 }

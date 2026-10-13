@@ -49,19 +49,6 @@ contract SolcArrayMembersOpen {
         assert(noArgs1d[1] == 0);
     }
 
-    // open: push() onto an array of arrays leaves the new element's length unknown, so nested[0].length == 0 does not follow
-    /// solc: semanticTests/array/push/array_push_nested.sol
-    /// @custom:key box
-    function pushNested() public {
-        require(nested.length == 0);
-        nested.push();
-        assert(nested.length == 1);
-        assert(nested[0].length == 0);
-        nested[0].push();
-        assert(nested[0].length == 1);
-        assert(nested[0][0] == 0);
-    }
-
     // open: push(m) of a memory array onto a storage array of arrays is stuck on the program text
     /// solc: semanticTests/array/push/array_push_nested_from_memory.sol
     function pushNestedFromMemory() public {
@@ -86,59 +73,6 @@ contract SolcArrayMembersOpen {
         uint val = dyn2[5];
         assert(len == 10);
         assert(val == 4);
-    }
-
-    // open: the pushed inner arrays start from an unknown length, so the pushed values land at unknown indices
-    /// solc: semanticTests/array/copying/array_copy_storage_to_memory_nested.sol
-    /// @custom:key box
-    function copyNestedStorageToMemory() public {
-        require(nestedToMemory.length == 0);
-        nestedToMemory.push();
-        nestedToMemory.push();
-        nestedToMemory[0].push(0);
-        nestedToMemory[0].push(1);
-        nestedToMemory[1].push(2);
-        nestedToMemory[1].push(3);
-        uint[][] memory m = nestedToMemory;
-        uint l = m.length;
-        uint a = m[0][1];
-        uint b = m[1][0];
-        uint c = m[1][1];
-        assert(l == 2);
-        assert(a == 1);
-        assert(b == 2);
-        assert(c == 3);
-    }
-
-    // open: the pushed inner array starts from an unknown length, so index 0 is not the slot the second push cleared
-    /// solc: smtCheckerTests/array_members/push_zero_2d_safe.sol
-    function pushZero2d() public {
-        zero2d.push();
-        zero2d[zero2d.length - 1].push();
-        uint r = zero2d[zero2d.length - 1][0];
-        assert(r == 0);
-    }
-
-    // open: c.push().push() = 2 appends to an inner array of unknown length, so its length is not known to be 1
-    /// solc: smtCheckerTests/array_members/push_as_lhs_2d.sol
-    function pushLhs2dLast() public {
-        lhs2d.push().push() = 2;
-        assert(lhs2d.length > 0);
-        assert(lhs2d[lhs2d.length - 1].length == 1);
-        assert(lhs2d[lhs2d.length - 1][lhs2d[lhs2d.length - 1].length - 1] == 2);
-    }
-
-    // open: same as pushLhs2dLast one level deeper
-    /// solc: smtCheckerTests/array_members/push_as_lhs_3d.sol
-    function pushLhs3dLast() public {
-        lhs3d.push().push().push() = 2;
-        uint length1 = lhs3d.length;
-        uint length2 = lhs3d[length1 - 1].length;
-        uint length3 = lhs3d[length1 - 1][length2 - 1].length;
-        assert(length1 > 0);
-        assert(length2 == 1);
-        assert(length3 == 1);
-        assert(lhs3d[length1 - 1][length2 - 1][length3 - 1] == 2);
     }
 
     // open: a.push() = a.push() is desugared to a.push(a.push()), whose push() argument is stuck on the program text
@@ -215,24 +149,6 @@ contract SolcArrayMembersOpen {
         assert(b == 3);
         assert(c == 4);
         assert(d == 5);
-    }
-
-    // open: the pushed inner arrays start from an unknown length, so the two row lengths are unrelated
-    /// solc: smtCheckerTests/array_members/length_1d_assignment_2d_storage_to_storage.sol
-    /// @custom:key box
-    function length2dStorageToStorage() public {
-        require(lenArr.length == 0);
-        require(lenArr2.length == 0);
-        lenArr.push();
-        lenArr.push();
-        lenArr2.push();
-        lenArr2.push();
-        uint a = lenArr2[0].length;
-        uint b = lenArr[0].length;
-        assert(a == b);
-        uint c = lenArr2.length;
-        uint d = lenArr.length;
-        assert(c == d);
     }
 
 }
