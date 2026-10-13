@@ -4268,6 +4268,54 @@ contract TestSuite {
         assert(fixedGrid[1].length == 3);
     }
 
+    function testEmptyPushReadsDefaultValue() public {
+        uint n = values.length;
+        values.push();
+        assert(values.length == n + 1);
+        assert(values[n] == 0);
+    }
+
+    function testPopPushValueResetsValue() public {
+        uint n = values.length;
+        values.push(73);
+        values.pop();
+        assert(values.length == n);
+        values.push();
+        assert(values.length == n + 1);
+        assert(values[n] == 0);
+    }
+
+    function testFixedCopyThenEmptyPushReadsZero() public {
+        copySource9[8] = 41;
+        copyTargetDyn = copySource9;
+        copySource9[8] = 42;
+        copyTargetDyn.push();
+        assert(copySource9.length == 9);
+        assert(copyTargetDyn.length == 10);
+        assert(copyTargetDyn[8] == 41);
+        assert(copyTargetDyn[9] == 0);
+    }
+
+    function testShorterCopyThenEmptyPushClearsTail() public {
+        copyTargetDyn = copySource9;
+        copyTargetDyn.push(99);
+        copyTargetDyn = copySource9;
+        assert(copyTargetDyn.length == 9);
+        copyTargetDyn.push();
+        assert(copyTargetDyn[9] == 0);
+    }
+
+    function testPushMappingOfFixedArrayPreservesEntries() public {
+        delete dynMapsOfFixed;
+        dynMapsOfFixed.push();
+        dynMapsOfFixed[0][7][2] = 19;
+        dynMapsOfFixed.pop();
+        dynMapsOfFixed.push();
+        assert(dynMapsOfFixed.length == 1);
+        assert(dynMapsOfFixed[0][7].length == 3);
+        assert(dynMapsOfFixed[0][7][2] == 19);
+    }
+
     function testFixedArrayOfMappingsOfFixedArraysLength() public view {
         assert(fixedMapsOfFixed[1][7].length == 3);
     }

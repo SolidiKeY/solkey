@@ -16,6 +16,8 @@ contract FixedLengths {
         assert(d1.length == 9);
         dyn.push();
         assert(dyn[dyn.length - 1].length == 3);
+        assert(dyn[0][0] == 0);
+        assert(dyn[0][2] == 0);
     }
 
     function f() public {
@@ -29,5 +31,49 @@ contract FixedLengths {
         assert(d1.length == 9);
         dyn.push();
         assert(dyn[dyn.length - 1].length == 3);
+    }
+
+    function emptyPushReadsZero() public {
+        uint n = d2.length;
+        d2.push();
+        assert(d2.length == n + 1);
+        assert(d2[n] == 0);
+    }
+
+    function fixedCopyIsIndependent() public {
+        d1[8] = 41;
+        d2 = d1;
+        d1[8] = 42;
+        assert(d1.length == 9);
+        assert(d2.length == 9);
+        assert(d2[8] == 41);
+        d2.push();
+        assert(d2.length == 10);
+        assert(d2[8] == 41);
+        assert(d2[9] == 0);
+    }
+
+    function shorterCopyClearsTailBeforePush() public {
+        d2 = d1;
+        d2.push(99);
+        d2 = d1;
+        assert(d2.length == 9);
+        d2.push();
+        assert(d2[9] == 0);
+    }
+
+    function fixedElementMemoryCopyIsIndependent() public {
+        uint n = dyn.length;
+        dyn.push();
+        dyn[n][2] = 51;
+        uint[3] memory row = dyn[n];
+        assert(row.length == 3);
+        assert(row[2] == 51);
+        row[2] = 52;
+        assert(dyn[n][2] == 51);
+        dyn[n] = row;
+        row[2] = 53;
+        assert(dyn[n].length == 3);
+        assert(dyn[n][2] == 52);
     }
 }

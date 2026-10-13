@@ -387,6 +387,14 @@ assumes the generated `wellformed(storage)`, whose `wf(shape, node)` atoms the `
 taclets consume at each stuck `size` read and whose exit obligation the `wf*Right` taclets
 discharge (`StorageShapes`, `docs/storage.md` section 8c; `contracts/FixedLengths.sol`,
 `testFixedArrayLength`, `testFixedElementOfDynamicArrayLength`, `storageShorterStaticCopyClearsTail`).
+`FixedLengths` also checks constructor default reads, primitive empty-push reads,
+copy independence, shorter-copy tail clearing before an empty push, and fixed-element
+storage-to-memory-to-storage copies. `TestSuite.sol` checks these tail/default cases on
+the EVM too, including pop/push of a mapping whose values are fixed arrays: the mapping
+entry survives and its fixed length remains `3`.
+`solc/open/FixedLengthsOpen.sol` keeps the counterexamples to current proof support:
+empty push of a fixed array on symbolic storage cannot establish zero elements, and
+pop/delete of fixed-array elements stop at the existing safety guard.
 Memory objects carry a `Shape` in their identity (`shaped(idp, fixedArr(3, leaf))`), and
 `initSize` reads a fresh node's length off it (`testMemoryFixedArrayLength`,
 `testNewArrayOfFixedElementLength`).

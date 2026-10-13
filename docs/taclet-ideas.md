@@ -42,6 +42,11 @@ and the `net` payment model.
 
 ## Tier 4 — Calls, types, events
 
+- **Reset fixed-array elements on `delete` and `pop`.** The current
+  `noFixedArrayElement` guard refuses `delete rows[i]`, `delete rows`, and
+  `rows.pop()` for `uint[3][] rows`. A reset must preserve each fixed length while
+  clearing ordinary values and retaining mapping entries. Executable cases are in
+  `solc/open/FixedLengthsOpen.sol`, including a storage alias after element deletion.
 - **`emitStatement`** (`emit E(args);`): no state effect in the core memory
   model — likely a skip rule that evaluates args and continues. Needed so
   bodies that emit events don't get stuck.

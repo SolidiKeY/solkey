@@ -632,6 +632,20 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 
 ## Provenance of `open/`
 
+### `open/FixedLengthsOpen.sol`
+
+These are local semantic probes of the storage-shape design in `docs/storage.md` section
+8c and `contracts/FixedLengths.sol`, rather than upstream solc ports. They compile without
+warnings and execute on the EVM without failing assertions.
+
+| Function | Why the proof stays open |
+|---|---|
+| `emptyPushFixedElementReadsZero` | Symbolic storage has shape facts but no zero values beyond the entry length |
+| `popPushResetsFixedElement` | `pop` refuses fixed-array elements |
+| `deleteFixedElementKeepsLength` | Element deletion refuses fixed-array elements |
+| `deleteDynamicThenPushFixedElement` | Whole-array deletion refuses fixed-array elements |
+| `fixedElementStorageAlias` | Element deletion refuses fixed-array elements; the alias observes the reset |
+
 ### `open/SolcLoopsOpen.sol`
 
 | Function | Upstream (`test/libsolidity/`) | Why it stays open |
