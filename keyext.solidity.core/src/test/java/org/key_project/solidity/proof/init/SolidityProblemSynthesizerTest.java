@@ -3,18 +3,25 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.proof.init;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
 import org.key_project.prover.strategy.costbased.NumberRuleAppCost;
 import org.key_project.prover.strategy.costbased.RuleAppCost;
 import org.key_project.prover.strategy.costbased.TopRuleAppCost;
+import org.key_project.solidity.CLI;
+import org.key_project.solidity.control.GoalExplanation;
+import org.key_project.solidity.control.ProofScript;
 import org.key_project.solidity.control.ProofSession;
+import org.key_project.solidity.control.StepBudget;
 import org.key_project.solidity.control.SolidityVerifier;
 import org.key_project.solidity.program.parser.SolidityOutline;
 import org.key_project.solidity.program.parser.SoliditySources;
@@ -483,6 +490,116 @@ public class SolidityProblemSynthesizerTest {
             assertEquals(2, summary.nodes());
             assertEquals("functionBodyExpand", session.node(root).ruleName());
         }
+    }
+
+    @Test
+    void aScriptAppliesRulesByNameAndRunsTheStrategy() throws Exception {
+        try (var session = ProofSession.open(inMemory("Script"), spec(null, "holds"),
+            ProofSession.Limits.defaults())) {
+            var out = new ByteArrayOutputStream();
+            new ProofScript(session, new PrintStream(out, true)).run("""
+                    rules on "holds"; rule functionBodyExpand on "holds"
+                    auto 5; auto""");
+            String text = out.toString();
+            assertTrue(text.contains("functionBodyExpand"), text);
+            assertTrue(text.contains("applied functionBodyExpand"), text);
+            assertTrue(text.contains("STEP_LIMIT, 5 rules applied"), text);
+            assertTrue(session.summary().closed(), text);
+            assertThrows(IllegalArgumentException.class,
+                () -> new ProofScript(session, new PrintStream(out)).run("frobnicate"));
+        }
+    }
+
+    @Test
+    void whyNamesTheStatementNoRuleExecutes() throws Exception {
+        Path file = Path.of("/nonexistent-solkey-dir/Stuck.sol");
+        SoliditySources.register(file, """
+                // SPDX-License-Identifier: GPL-2.0-only
+                pragma solidity ^0.8.0;
+                contract Stuck {
+                    uint[] dyn;
+                    function assignNew() public {
+                        dyn = new uint[](10);
+                    }
+                }""");
+        try (var session = ProofSession.open(file, spec(null, "assignNew"),
+            ProofSession.Limits.defaults())) {
+            session.runAutoDetailed(null);
+            var why = GoalExplanation.explain(session.proof(), 3);
+            assertEquals(1, why.size());
+            assertFalse(why.get(0).lastRules().isEmpty());
+            var stuck = why.get(0).stuck().get(0);
+            assertEquals(GoalExplanation.Kind.PROGRAM, stuck.kind());
+            assertTrue(stuck.term().contains("new uint[](10)"), stuck.term());
+        }
+    }
+
+    @Test
+    void theCliReportsJsonBaselinesAndOneLineErrors(@TempDir Path dir) throws IOException {
+        Path file = dir.resolve("Cli.sol");
+        Files.writeString(file, """
+                // SPDX-License-Identifier: GPL-2.0-only
+                pragma solidity ^0.8.0;
+                contract Cli {
+                    function holds() public pure {
+                        uint8 x = 1;
+                        assert(x == 1);
+                    }
+                    function fails() public pure {
+                        uint8 x = 1;
+                        assert(x == 2);
+                    }
+                }""");
+        String json = cli(1, file.toString(), "--json", "--why");
+        List<String> lines = json.lines().toList();
+        assertEquals(3, lines.size(), json);
+        assertTrue(lines.get(0).contains("\"status\":\"PROVED\""), json);
+        assertTrue(lines.get(1).contains("\"stopReason\":\"NO_APPLICABLE_RULE\""), json);
+        assertTrue(lines.get(1).contains("\"why\""), json);
+        assertTrue(lines.get(2).contains("\"closed\":1"), json);
+
+        Path baseline = dir.resolve("baseline.txt");
+        cli(0, file.toString(), "--quiet", "--baseline", baseline.toString());
+        StepBudget recorded = StepBudget.load(baseline);
+        StepBudget.Entry holds = recorded.entry("Cli", "holds");
+        assertEquals("PROVED", holds.status());
+        assertTrue(holds.steps() > 0);
+        assertEquals("NO_APPLICABLE_RULE", recorded.entry(null, "Cli.fails").stopReason());
+        assertEquals(holds.steps() + holds.steps() / 2 + StepBudget.FLOOR, holds.budget());
+        assertTrue(cli(0, file.toString(), "--quiet", "--baseline", baseline.toString())
+                .contains("baseline: 0 changed, 0 regressed"));
+        assertTrue(cli(1, file.toString(), "--json", "--budget", baseline.toString())
+                .contains("\"budget\":" + holds.budget()));
+        Files.write(baseline, List.of("Cli.holds PROVED 3 STEP_LIMIT", "Cli.fails PROVED"));
+        assertTrue(cli(1, file.toString(), "--quiet", "--baseline", baseline.toString())
+                .contains("REGRESSED fails: PROVED -> OPEN"));
+        assertTrue(cli(1, file.toString(), "-f", "holds", "--json", "--budget",
+            baseline.toString()).contains("\"stopReason\":\"STEP_LIMIT\""));
+        assertEquals(StepBudget.MIN_ESTIMATE, StepBudget.estimate(10));
+        assertEquals(25 * 1000, StepBudget.estimate(1000));
+
+        Path broken = dir.resolve("Broken.sol");
+        Files.writeString(broken, "contract Broken { function f() public { uint x = ; } }");
+        String error = cli(1, broken.toString());
+        assertTrue(error.startsWith("Error: " + broken + ":1:"), error);
+        assertTrue(error.contains("ParserError: "), error);
+        assertEquals(2, error.lines().count(), error);
+    }
+
+    private static String cli(int expectedExit, String... args) {
+        PrintStream out = System.out;
+        PrintStream err = System.err;
+        var buffer = new ByteArrayOutputStream();
+        var stream = new PrintStream(buffer, true);
+        System.setOut(stream);
+        System.setErr(stream);
+        try {
+            assertEquals(expectedExit, CLI.execute(args), buffer::toString);
+        } finally {
+            System.setOut(out);
+            System.setErr(err);
+        }
+        return buffer.toString();
     }
 
     @Test

@@ -29,6 +29,18 @@ a range). Three kinds of case are skipped rather than failed:
 - entries of the test's `KNOWN_DIVERGENT` set: examples proved with KeY's unbounded
   integers that panic under the EVM's checked arithmetic (currently none).
 
+## Step budgets (`steps.txt`)
+
+`contracts/`, `real-world/`, `solc/`, `solc/open/` and `real-world/open/` each carry a
+`steps.txt`: one `Contract.function STATUS STEPS STOP_REASON` line per obligation, the rule
+applications its proof took. The example tests prove each function with that budget and no
+timeout, so a result never depends on the machine: the budget is `STEPS * 1.5 + 1000`, or
+exactly `STEPS` when the recorded run was cut at a limit (an `open/` function that loops).
+A function without a line fails its test with the command that records it. After adding a
+contract, or after a change that makes proofs legitimately longer, run
+`scripts/record-steps.sh DIR/Contract.sol` (or a directory, or nothing for all five) and commit
+the `steps.txt` diff — it shows exactly which proofs grew.
+
 ## Writing an example
 
 Every function is `public` and returns nothing. Mark it `pure` or `view` when it touches no

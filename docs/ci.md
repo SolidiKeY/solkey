@@ -27,6 +27,12 @@ the local gate stays fast, and the GUI module has its own job.
 | `Solidity / rule-generalization` | `./gradlew :keyext.solidity.core:testRuleGeneralization` | `RuleGeneralizationTest` |
 | `Solidity / gui` | `./gradlew :keyext.solidity.gui:test` | the `keyext.solidity.gui` tests (headless) |
 
+`SolcSemanticsExamplesTest`, `ContractExamplesTest` and `OpenExamplesStayOpenTest` prove with
+the step budget recorded in each directory's `steps.txt` and no timeout, so their outcome is
+the same on every machine. A failure that ends in `STEP_LIMIT` on a function that should
+close means its proof grew: re-record with `scripts/record-steps.sh DIR/Contract.sol` and
+review the `steps.txt` diff (keyext.solidity.examples/README.md, "Step budgets").
+
 A `--tests` filter naming a class of a CI-only group must go on **that group's
 task** — on `test` the tag exclusion leaves zero matches and Gradle fails with
 "No tests found".

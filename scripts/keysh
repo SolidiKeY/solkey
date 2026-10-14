@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# JShell on the solkey Java API (docs/debug-api.md) with the fat jar on the class path.
+#
+# Usage: scripts/keysh                 interactive
+#        scripts/keysh FILE.jsh        run a snippet file
+#        scripts/keysh <<'JAVA'        run snippets from stdin, without prompts
+#        var s = ProofSession.open(Path.of("keyext.solidity.examples/TestSuite.sol"),
+#            SolidityProblemSpec.of("TestSuite", "storageRootReadWrite"), ProofSession.Limits.defaults());
+#        JAVA
+#
+# It rebuilds the jar when the sources are newer, uses JDK 21's jshell, keeps the Java prefs in
+# $TMPDIR (a sandbox cannot lock the default ones, which hangs jshell), imports the API, and
+# runs from the repository root.
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+JAR="$ROOT/keyext.solidity.core/build/libs/keyext.solidity.core-exe.jar"
+JAVA="$("$ROOT/run-key.sh" --java-path)"
+JSHELL="$(dirname "$JAVA")/jshell"
+PREFS="${TMPDIR:-/tmp}/solkey-jshell-prefs"
+mkdir -p "$PREFS"
+
+STARTUP="$PREFS/imports.jsh"
+cat >"$STARTUP" <<'JAVA'
+import java.nio.file.*;
+import java.util.*;
+import org.key_project.solidity.control.*;
+import org.key_project.solidity.proof.init.SolidityProblemSpec;
+JAVA
+
+ARGS=(-J-Djava.util.prefs.userRoot="$PREFS" -J-Djava.util.prefs.systemRoot="$PREFS"
+      -J-Dorg.key_project.stdTacletDirectory="$ROOT/keyext.solidity.core/src/main/resources/org/key_project/solidity/proof/rules"
+      -R-Dorg.key_project.stdTacletDirectory="$ROOT/keyext.solidity.core/src/main/resources/org/key_project/solidity/proof/rules"
+      --class-path "$JAR" --startup DEFAULT --startup "$STARTUP" --feedback concise)
+if [ -n "${JAVA_TOOL_OPTIONS:-}" ]; then
+    for option in $JAVA_TOOL_OPTIONS; do ARGS+=("-J$option" "-R$option"); done
+    unset JAVA_TOOL_OPTIONS
+fi
+
+cd "$ROOT"
+if [ $# -gt 0 ]; then
+    exec "$JSHELL" "${ARGS[@]}" "$@"
+fi
+if [ -t 0 ]; then
+    exec "$JSHELL" "${ARGS[@]}"
+fi
+SNIPPETS="$(mktemp "${TMPDIR:-/tmp}/keysh.XXXXXX.jsh")"
+trap 'rm -f "$SNIPPETS"' EXIT
+cat >"$SNIPPETS"
+printf '\n/exit\n' >>"$SNIPPETS"
+"$JSHELL" "${ARGS[@]}" "$SNIPPETS"

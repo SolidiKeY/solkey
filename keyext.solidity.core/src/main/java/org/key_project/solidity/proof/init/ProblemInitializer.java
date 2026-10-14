@@ -74,6 +74,10 @@ public final class ProblemInitializer {
     // --------------------------------------------------------------------------
 
 
+    public static void resetBaseConfig() {
+        baseConfig = null;
+    }
+
     public void setFileRepo(FileRepo fileRepo) {
         this.fileRepo = fileRepo;
     }

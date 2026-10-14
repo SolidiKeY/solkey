@@ -16,9 +16,8 @@ total_closed=0
 total_obligations=0
 
 load_error() {
-    grep -v '^\s*$' <<<"$1" | grep -A2 -m1 'Error while' | tail -n +2 \
-        | sed 's/^ *//' | grep -v -e '^Not possible to compile' -e '^(run with' | head -1 \
-        | sed 's/^ParserError: //; s#"/[^"]*/#"#' | cut -c1-90
+    grep -m1 '^Error: ' <<<"$1" | sed 's/^Error: //; s/ (while [a-z ]*)$//; s#^[^ ]*/##' \
+        | sed 's/^ParserError: //' | cut -c1-90
 }
 
 report() {

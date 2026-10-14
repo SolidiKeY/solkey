@@ -201,7 +201,7 @@ Verify individual examples with the Solidity CLI:
 
 ```bash
 ./run-key.sh keyext.solidity.examples/TestSuite.sol <function>
-./run-key.sh keyext.solidity.examples/TestSuite.sol -f <function> --open-goals
+./run-key.sh keyext.solidity.examples/TestSuite.sol -f <function> --why  # then --open-goals
 ```
 
 To read an existing rule without opening the whole file, use

@@ -15,8 +15,11 @@ Cost is dominated by round-trips, not output size. So:
 - **Never read a rules `.key` file whole** (`solidityProgramRules.key` is 4 800 lines). Use
   `scripts/taclet.sh NAME` for one taclet, `--index` for the section banners, `--list` for every
   rule name with its `file:line`.
-- **Prove with `./run-key.sh`**, not with Gradle: it runs the fat jar, so there is no Gradle
-  banner and no startup cost, and `--open-goals` prints the remaining sequents in the same run.
+- **Prove with `./run-key.sh`**, not Gradle. First launch `./run-key.sh --serve` as a background
+  command (timeout 7200000): later calls reuse its warm JVM, ~0.1 s instead of 10 s. Taclets are
+  read from the source tree, so a rule edit needs no rebuild.
+- **On an open proof, run `--why` first** (the stuck statement, or the read with no rule), then
+  `--open-goals` if needed. Prove a whole file in one call, never one call per function.
 - **Batch independent shell commands** into one call.
 
 ## Build and run
@@ -28,33 +31,42 @@ Cost is dominated by round-trips, not output size. So:
 ./gradlew spotlessApply              # Apply formatting
 
 ./run-key.sh FILE.sol                          # prove every function
-./run-key.sh FILE.sol -f fnName --open-goals   # one function, and why it did not close
+./run-key.sh --serve                           # background: keep a warm prover for later calls
+./run-key.sh FILE.sol -f fnName --why          # one function; if open, what is stuck and where
+./run-key.sh FILE.sol -f fn --script 'auto 50; rules on "x.push"; rule NAME on "x.push"; show'
+./run-key.sh FILE.sol --baseline B.txt         # only status changes vs. B.txt (written if absent)
+./run-key.sh FILE.sol --budget B.txt           # deterministic step budget from B.txt's counts
 ./run-key.sh FILE.key -m 20000 --no-prove      # a .key problem; any CLI option works
 ./run-key.sh FILE.sol -O transferSemantics:withCallback   # a non-default taclet option
 ./run-key.sh FILE.sol --solc [-f fnName]       # compile, then run on an EVM: failing asserts
 ./run-key.sh FILE.sol -f fnName --print-problem # print the generated .key problem instead
-./run-key.sh --help                            # every CLI option
+./run-key.sh --help                            # every CLI option; --script help: script commands
 
 scripts/taclet.sh --index|--list|NAME   # rule banners | every rule's file:line | one taclet
 scripts/benchmark.sh                 # published contracts as published: N/M closed each
 scripts/open-check.sh                # open/ functions whose status changed (now close: move them)
+scripts/keysh <<'JAVA' ... JAVA      # JShell on the Java API, imports and jar preset (docs/debug-api.md)
+scripts/record-steps.sh [DIR/C.sol]   # re-record the example tests' steps.txt budgets
 
-./gradlew :keyext.solidity.gui:solidityGui     # KeYther, the Swing GUI
+./gradlew :keyext.solidity.gui:solidityGui     # KeYther, the Swing GUI (web build: docs/web.md)
 ./gradlew :key.ui:shadowJar                    # fat JAR
-./gradlew :keyext.solidity.web:site            # browser build (needs GRAALVM_HOME, docs/web.md)
-./gradlew :keyext.solidity.web:browserTest     # ... and its headless-Chromium test
 ```
 
-`run-key.sh` rebuilds `keyext.solidity.core-exe.jar` only when the sources are newer;
-`SOLKEY_REBUILD=1` forces it. The Gradle task `:keyext.solidity.core:solidityCli` still exists
-for CI and the IDE — note that its `--args` **replaces** the whole argument list.
+`run-key.sh` rebuilds `keyext.solidity.core-exe.jar` only when the Java sources are newer;
+`SOLKEY_REBUILD=1` forces it; the server follows the new jar. `SOLKEY_SERVER=0` bypasses it,
+`--stop-server` stops it. The Gradle task
+`:keyext.solidity.core:solidityCli` still exists for CI and the IDE — note that its `--args` **replaces** the whole argument list.
 
 Without `-f`, every function is proved and a `N/M closed` summary plus a `FAILED (k): …` recap
 is printed; `--quiet` drops the per-function progress lines. With `-f`, a function that has no
 obligation (it returns a value, or takes a parameter with no `.key` sort) fails with the reason.
+Errors are one line, `file:line:col: category: message` (`--trace`: stack trace); `--json`
+prints one object per obligation. For regressions, record `--baseline` before a change and
+compare after: only a closed proof that stops closing fails the run. Prefer step budgets to
+`-t`: a timeout depends on the machine, a step count does not.
 
-To inspect live terms, applicable rules, strategy decisions or a resumable proof session, use
-the JShell API in **`docs/debug-api.md`**.
+To step through a proof use `--script`; for live terms, the JShell API in
+**`docs/debug-api.md`** through `scripts/keysh`.
 
 ## Default scope
 

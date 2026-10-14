@@ -42,14 +42,15 @@ public class ContractExamplesTest {
     @MethodSource("examples")
     void contractExampleCloses(String directory, String contract, String function)
             throws Exception {
-        Path sol = contractSource(directory, contract);
-        Proof proof = SolidityExampleTests.proveFunction(sol, contract, function, 20000, 60000);
+        Proof proof =
+            SolidityExampleTests.proveWithRecordedBudget(directory, contract, function);
         if (KNOWN_OPEN.contains(contract + "." + function)) {
             assertFalse(proof.closed(), contract + "." + function
                 + " closed; remove it from KNOWN_OPEN");
         } else {
             assertTrue(proof.closed(),
-                () -> SolidityExampleTests.describeOpenGoals(contract + "." + function, proof));
+                () -> SolidityExampleTests.describeOpenGoals(contract + "." + function, proof)
+                        + SolidityExampleTests.budgetHint(directory, contract));
         }
     }
 

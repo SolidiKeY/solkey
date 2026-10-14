@@ -4,9 +4,17 @@ Read this when a task needs live terms, applicable rules, strategy decisions, or
 proof session. For ordinary proof runs use `./run-key.sh`; for builds and regression tests use
 Gradle.
 
-Use inline Java through **JDK 21 JShell** to inspect prover objects or experiment with one
-proof. Rebuild the fat jar after source edits: JShell does not perform `run-key.sh`'s
-freshness check.
+Before writing Java, check whether the CLI already answers the question:
+`./run-key.sh F.sol -f fn --why` names what is stuck, and `--script` applies rules by name, runs
+bounded searches and lists the strategy's verdict on each candidate rule
+(`./run-key.sh F.sol -f fn --script help`). Its commands map onto the `ProofSession` methods
+below.
+
+Otherwise use inline Java through JShell with **`scripts/keysh`**: it rebuilds the jar when the
+sources are newer, picks JDK 21's `jshell`, keeps the Java prefs in `$TMPDIR` (the default ones
+cannot be locked in a sandbox, which hangs JShell), puts the jar on the class path, imports
+`java.nio.file.*`, `java.util.*`, `org.key_project.solidity.control.*` and `SolidityProblemSpec`,
+and runs snippets from stdin without prompt noise.
 
 The API lives in `org.key_project.solidity.control`. Existing `SolidityVerifier.verify(...)`
 and `ProofSession.start(...)` calls still work.
@@ -22,6 +30,9 @@ and `ProofSession.start(...)` calls still work.
 | `ProofSession.load(path, limits, false)` | Loads/replays a `.key` or `.proof` without additional search; inspect `replayErrors()` |
 | `session.runAutoDetailed(null)` | Runs all open goals and returns a `SearchResult`; pass an open node serial to run only its subtree |
 | `session.lastSearch()` | Snapshot of the most recent search, or `null` before search/after manual apply or prune |
+| `GoalExplanation.explain(session.proof(), maxGoals)` | What `--why` prints, as records: per open goal its last rules and the stuck terms (`PROGRAM`: an active statement no rule executes; `NO_RULE`: a read on a constructor the calculus has no rule for; `REFUSED`: a matching rule the strategy refuses); `format(...)` renders them |
+| `new ProofScript(session, out).run(text)` | What `--script` runs; `ProofScript.HELP` lists the commands |
+| `StepBudget.load(path)` / `recordedBudget(contract, function)` / `estimate(sourceBytes)` | The `--baseline`/`steps.txt` format and the budget derived from it; pass the result to `Limits.steps(n)` with no timeout for a deterministic run |
 | `session.ruleDiagnosticsAt(serial, offset or text)` | Matching taclet candidates, missing schema variables, current strategy cost and approval disposition, diagnostic exceptions |
 | `session.sequent(serial)` / `session.termAt(serial, offset or text)` | Actual logic objects; inspect `op()`, `sort()`, `subs()`, and bound/free variables |
 | `session.proof().getServices().getNamespaces()` | Inspect registered sorts, functions and variables; open goals also expose `getOverlayServices()` |
@@ -32,19 +43,10 @@ and `ProofSession.start(...)` calls still work.
 | `session.prune(serial)` / `save()` | Prune an inner node of an open branch, or serialize the current proof |
 | `session.close()` | Dispose the proof; use try-with-resources. `isClosed()` reports disposal, while `summary().closed()` reports proof closure |
 
-Inline example, from the repository root (replace the JDK path if needed):
+Inline example, from the repository root:
 
 ```bash
-./gradlew :keyext.solidity.core:shadowJar
-/usr/lib/jvm/java-21-openjdk/bin/jshell \
-  -J-Djava.util.prefs.userRoot="$TMPDIR/jprefs" \
-  --class-path keyext.solidity.core/build/libs/keyext.solidity.core-exe.jar \
-  --feedback concise <<'JAVA'
-import java.nio.file.Path;
-import java.util.Map;
-import org.key_project.solidity.control.*;
-import org.key_project.solidity.proof.init.SolidityProblemSpec;
-
+scripts/keysh <<'JAVA'
 var source = Path.of("keyext.solidity.examples/TestSuite.sol");
 var spec = SolidityProblemSpec.of("TestSuite", "storageRootReadWrite");
 try (var session = ProofSession.open(source, spec, ProofSession.Limits.steps(1))) {
@@ -60,11 +62,10 @@ try (var session = ProofSession.open(source, spec, ProofSession.Limits.steps(1))
     System.out.println(session.runAutoDetailed(null));
     System.out.println(session.summary());
 }
-/exit
 JAVA
 ```
 
-For a one-shot result, with the same imports and `source`/`spec`:
+For a one-shot result, with the same `source`/`spec`:
 
 ```java
 var options = new SolidityVerifier.VerificationOptions(

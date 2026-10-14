@@ -4,7 +4,6 @@
 package org.key_project.solidity.taclets;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.stream.Stream;
 
 import org.key_project.solidity.proof.Proof;
@@ -36,10 +35,11 @@ public class SolcSemanticsExamplesTest {
     @ParameterizedTest(name = "{0}.{1}")
     @MethodSource("examples")
     void solcSemanticsExampleCloses(String contract, String function) throws Exception {
-        Path sol = SolidityExampleTests.example(DIRECTORY + "/" + contract + ".sol");
-        Proof proof = SolidityExampleTests.proveFunction(sol, contract, function, 50000, 120000);
+        Proof proof =
+            SolidityExampleTests.proveWithRecordedBudget(DIRECTORY, contract, function);
         assertTrue(proof.closed(),
-            () -> SolidityExampleTests.describeOpenGoals(contract + "." + function, proof));
+            () -> SolidityExampleTests.describeOpenGoals(contract + "." + function, proof)
+                    + SolidityExampleTests.budgetHint(DIRECTORY, contract));
     }
 
     static Stream<Arguments> examples() throws IOException {
