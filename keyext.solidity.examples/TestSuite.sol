@@ -1374,6 +1374,15 @@ contract TestSuite {
         assert(values.length == 3);
     }
 
+    /// @custom:key box
+    function storagePushReturnPrimitiveBind() public {
+        require(values.length == 2);
+        uint y = values.push();
+        assert(y == 0);
+        assert(values.length == 3);
+        assert(values[2] == 0);
+    }
+
     function storageRootAddAssign() public {
         age = 10;
         age += 5;

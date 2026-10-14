@@ -320,7 +320,9 @@ machinery of §Delete — so a mapping nested in the popped element survives `po
 later `push()`, exactly like `storageRootDelete` / `storageFieldDelete`.
 `storagePushLengthSave`, `storagePushLengthSaveReferenceElement`, and
 `storageLocalRootPushBind` clear the appended nonmapping slot with `delAt` before saving
-its new length. Fixed-array lengths survive the reset through the existing `wf`/`fixed`
+its new length. `storageLocalPrimitivePushBind` does the same for `v = sp.push()` with a
+primitive local `v`, binding it to the cleared slot's value (`\hasElementSort` picks the
+sort); `a.push() = a.push()` reaches it after the primitive-argument unfold. Fixed-array lengths survive the reset through the existing `wf`/`fixed`
 rules, ordinary values become default, and nested mapping members survive. Standalone
 mapping-element pushes use `storagePushLengthSaveMappingElement`; the mapping-return bind
 also changes only the length and preserves the entries. The fixed-array, dynamic-array,

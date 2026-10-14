@@ -223,7 +223,7 @@ many upstream tests and contracts each blocks; defects in supported constructs a
 - **`super.f()` and `Base.f()`** (the latter is lowered to `address.f()`), and **virtual
   dispatch from base functions** (resolve against the most-derived contract).
 - **Struct constructors** `S(..)`, `S({..})` in every position (extends `ObjectInit`, Tier 4).
-- **Push forms.** `x = a.push()`, `a.push(memArr)`, `a.push(memStruct)`, `a.push() -= 1`,
+- **Push forms.** `a.push(memArr)`, `a.push(memStruct)`, `a.push() -= 1`,
   `++a.push()`, `f().push()` on a returned storage reference.
 - **Assignment and compound assignment as values** beyond indices: `a = (b = c)`,
   `a += b += c`, `a[0] = a[1] = 1`, `(m = m2)[2] = 21`, modifier arguments `m(r = 2)`.

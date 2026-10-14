@@ -6,7 +6,6 @@ contract SolcArrayMembersOpen {
     struct T { B s; }
     struct PS { uint a; uint b; uint[3] c; uint[] d; }
 
-    uint[] noArgs1d;
     uint[][] nested;
     uint[][] nestedFromMemory;
     uint[] dyn1;
@@ -15,7 +14,6 @@ contract SolcArrayMembersOpen {
     uint[][] zero2d;
     uint[][] lhs2d;
     uint[][][] lhs3d;
-    uint[] lhsRhs1d;
     int[] compound;
     B sb;
     T tsb;
@@ -35,18 +33,6 @@ contract SolcArrayMembersOpen {
         pointer2d.push();
         pointer2d.push();
         return pointer2d[2];
-    }
-
-    // open: push() used as an rvalue (uint y = arr.push();) is stuck on the program text
-    /// solc: semanticTests/array/push/push_no_args_1d.sol
-    /// @custom:key box
-    function pushNoArgs1d() public {
-        require(noArgs1d.length == 0);
-        noArgs1d.push() = 42;
-        uint y = noArgs1d.push();
-        assert(y == 0);
-        assert(noArgs1d.length == 2);
-        assert(noArgs1d[1] == 0);
     }
 
     // open: push(m) of a memory array onto a storage array of arrays is stuck on the program text
@@ -73,16 +59,6 @@ contract SolcArrayMembersOpen {
         uint val = dyn2[5];
         assert(len == 10);
         assert(val == 4);
-    }
-
-    // open: a.push() = a.push() is desugared to a.push(a.push()), whose push() argument is stuck on the program text
-    /// solc: smtCheckerTests/array_members/push_as_lhs_and_rhs_1d.sol
-    function pushLhsAndRhs1d() public {
-        lhsRhs1d.push() = lhsRhs1d.push();
-        uint length = lhsRhs1d.length;
-        assert(length >= 2);
-        assert(lhsRhs1d[length - 1] == 0);
-        assert(lhsRhs1d[length - 1] == lhsRhs1d[length - 2]);
     }
 
     // open: a compound assignment to push() (u.push() -= 1) is stuck on the program text

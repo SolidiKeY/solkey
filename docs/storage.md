@@ -694,6 +694,14 @@ Each array rule branches on bounds. Out-of-bounds goes to
       ⇝  { storage := save(delAt(storage, sp · at(n)), sp · length, n + 1)
            || lsv := sp · at(n) }
 
+- `storageLocalPrimitivePushBind` (zero-arg push on a value-type array whose returned
+  slot is read into a primitive local: the slot is cleared as above and the local reads
+  the cleared slot, so it holds the element type's default)
+
+      v = sp.push();
+      ⇝  { storage := save(delAt(storage, sp · at(n)), sp · length, n + 1)
+           || v := find(delAt(storage, sp · at(n)), sp · at(n)) }
+
 - `storagePushLengthSaveMappingElement` and `storageLocalRootPushBindMappingElement`
   grow mapping arrays without clearing their entries. A returned mapping reference uses
   `atMap(n)`.

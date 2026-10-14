@@ -22,6 +22,7 @@ contract SolcArrayMembers {
     uint[] popEmpty;
     int[] parenData;
     uint[] noArgs1d;
+    uint[] lhsRhs1d;
     S[] noArgsStruct;
     uint[] deleted;
     uint[] cleared;
@@ -258,6 +259,17 @@ contract SolcArrayMembers {
         noArgs1d.push() = 111;
         assert(noArgs1d.length == 3);
         assert(noArgs1d[2] == 111);
+    }
+
+    /// solc: semanticTests/array/push/push_no_args_1d.sol
+    /// @custom:key box
+    function pushNoArgs1d() public {
+        require(noArgs1d.length == 0);
+        noArgs1d.push() = 42;
+        uint y = noArgs1d.push();
+        assert(y == 0);
+        assert(noArgs1d.length == 2);
+        assert(noArgs1d[1] == 0);
     }
 
     /// solc: semanticTests/array/push/push_no_args_struct.sol
@@ -651,6 +663,15 @@ contract SolcArrayMembers {
         b[0] = 32;
         uint r = refAlias2[0][0];
         assert(r == 32);
+    }
+
+    /// solc: smtCheckerTests/array_members/push_as_lhs_and_rhs_1d.sol
+    function pushLhsAndRhs1d() public {
+        lhsRhs1d.push() = lhsRhs1d.push();
+        uint length = lhsRhs1d.length;
+        assert(length >= 2);
+        assert(lhsRhs1d[length - 1] == 0);
+        assert(lhsRhs1d[length - 1] == lhsRhs1d[length - 2]);
     }
 
     /// solc: smtCheckerTests/array_members/storage_pointer_push_1_safe.sol

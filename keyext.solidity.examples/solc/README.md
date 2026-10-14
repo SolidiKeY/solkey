@@ -195,7 +195,7 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `semanticTests/array/push/array_push.sol` | `pushReadsBack` |
 | `semanticTests/array/pop/array_pop_storage_empty.sol` | `pushPopLeavesEmpty` |
 | `semanticTests/array/pop/parenthesized.sol` | `parenthesizedPop` |
-| `semanticTests/array/push/push_no_args_1d.sol` | `pushNoArgs1dLvalue` |
+| `semanticTests/array/push/push_no_args_1d.sol` | `pushNoArgs1dLvalue`, `pushNoArgs1d` |
 | `semanticTests/array/push/push_no_args_struct.sol` | `pushNoArgsStructLvalue`, `pushNoArgsStruct` |
 | `semanticTests/array/delete/delete_storage_array.sol` | `deleteStorageArray` |
 | `semanticTests/array/copying/array_copy_clear_storage.sol` | `copyShrinksStorage` |
@@ -669,10 +669,8 @@ the canonical reset and push rules establish default ordinary values.
 
 | Function | Upstream (`test/libsolidity/`) | Why it stays open |
 |---|---|---|
-| `pushNoArgs1d` | `semanticTests/array/push/push_no_args_1d.sol` | push() used as an rvalue (uint y = arr.push();) is stuck on the program text |
 | `pushNestedFromMemory` | `semanticTests/array/push/array_push_nested_from_memory.sol` | push(m) of a memory array onto a storage array of arrays is stuck on the program text |
 | `copyStorageStorageDynDyn` | `semanticTests/array/copying/array_copy_storage_storage_dyn_dyn.sol` | assigning new uint[](n) directly to a storage array is stuck on the program text |
-| `pushLhsAndRhs1d` | `smtCheckerTests/array_members/push_as_lhs_and_rhs_1d.sol` | a.push() = a.push() is desugared to a.push(a.push()), whose push() argument is stuck on the program text |
 | `pushLhsCompound` | `smtCheckerTests/array_members/push_as_lhs_compound_assignment.sol` | a compound assignment to push() (u.push() -= 1) is stuck on the program text |
 | `pushLhsStruct` | `smtCheckerTests/array_members/push_as_lhs_struct.sol` | same as pushLhsAndRhs1d through struct members |
 | `pushMemoryRowThenValue` | `smtCheckerTests/array_members/push_2d_arg_1_safe.sol` | push(x) of a memory array onto a storage array of arrays is stuck on the program text |
