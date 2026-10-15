@@ -348,6 +348,88 @@ contract TestSuite {
         assert(values[0] == 0);
     }
 
+    function storageArrayMethodReferences() public {
+        delete values;
+        values.pop;
+        assert(values.length == 0);
+        values.push(42);
+        values.pop;
+        assert(values.length == 1);
+        assert(values[0] == 42);
+    }
+
+    function storageArrayMethodReferencesComplexReceiver() public {
+        delete matrix;
+        matrix.push();
+        matrix.push();
+        matrix[0].push(42);
+        uint i = 0;
+        matrix[i++].pop;
+        matrix[i++].pop;
+        assert(i == 2);
+        assert(matrix[0].length == 1);
+        assert(matrix[0][0] == 42);
+        assert(matrix[1].length == 0);
+        delete basketA.items;
+        basketA.items.pop;
+        assert(basketA.items.length == 0);
+    }
+
+    function valuesRefWithEffect() internal returns (uint[] storage) {
+        values.push(7);
+        return values;
+    }
+
+    function matrixRefWithEffect() internal returns (uint[][] storage) {
+        matrix.push();
+        return matrix;
+    }
+
+    function basketRefWithEffect() internal returns (Basket storage) {
+        basketA.items.push(9);
+        return basketA;
+    }
+
+    function storageArrayMethodReferencesComposedCallReceiver() public {
+        delete matrix;
+        uint i = 0;
+        matrixRefWithEffect()[i++].pop;
+        assert(i == 1);
+        assert(matrix.length == 1);
+        assert(matrix[0].length == 0);
+        matrixRefWithEffect().push().pop;
+        assert(matrix.length == 3);
+        assert(matrix[1].length == 0);
+        assert(matrix[2].length == 0);
+        delete basketA;
+        basketRefWithEffect().items.pop;
+        assert(basketA.items.length == 1);
+        assert(basketA.items[0] == 9);
+    }
+
+    function storageArrayMethodReferencesCallReceiver() public {
+        delete values;
+        valuesRef().pop;
+        assert(values.length == 0);
+        valuesRefWithEffect().pop;
+        assert(values.length == 1);
+        assert(values[0] == 7);
+    }
+
+    /// @custom:key box
+    function storagePopReferenceOutOfBounds() public {
+        delete matrix;
+        matrix[0].pop;
+        assert(false);
+    }
+
+    /// @custom:key box
+    function storagePopReferenceCallOutOfBounds() public {
+        delete matrix;
+        matrixRefWithEffect()[1].pop;
+        assert(false);
+    }
+
     function newArrayCaptureStorageRoot() public {
         values = new uint[](3);
         assert(values.length == 3);

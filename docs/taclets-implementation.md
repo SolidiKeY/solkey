@@ -298,6 +298,18 @@ non-integer key crash is in `bugs.md` and the other is in `taclet-ideas.md` ("Ra
 mapping-index probe").
 
 ### Push / pop
+Bare `sp.pop;` discards an unused built-in method reference without changing storage
+(`storagePopReferenceDiscard`). Complex field/index receivers and internal-call
+receivers are evaluated into a fresh storage alias first
+(`storagePopReference_unfold_leftFstReceiver`,
+`storagePopReference_unfold_leftCallReceiver`), preserving side effects and bounds checks.
+Paths may also start at a storage-returning internal call, as in `matrixRef()[i++].pop;`
+or `basketRef().items.pop;`. Their source reads capture the call before the index or field
+(`storageIndexRead_unfold_rightCallReceiver`,
+`storageFieldRead_unfold_rightCallReceiver`).
+The returned slot of `matrixRef().push().pop;` uses
+`storageLocalRootPush_unfold_leftCallReceiver` to evaluate the call before the push.
+
 Push-lvalue `sp.push() = se` is desugared to `sp.push(se)` at **parse time**
 (`ParserUtils.parseAssignmentMaybe`), so it never reaches the prover. A compound target
 `sp.push() op= se` is `storagePush{Add,Sub,Mul,Div,Mod}Assign`, and `++sp.push()`,

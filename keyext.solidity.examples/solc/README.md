@@ -192,6 +192,7 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `semanticTests/array/create_memory_array.sol` | `memoryArrayOfFixed` |
 | `semanticTests/array/delete/delete_memory_array.sol` | `deleteMemoryArray` |
 | `semanticTests/array/pop/array_pop.sol` | `popTracksLength` |
+| `semanticTests/array/pop/array_pop_isolated.sol` | `popIsolated` |
 | `semanticTests/array/push/array_push.sol` | `pushReadsBack` |
 | `semanticTests/array/pop/array_pop_storage_empty.sol` | `pushPopLeavesEmpty` |
 | `semanticTests/array/pop/parenthesized.sol` | `parenthesizedPop` |
@@ -671,12 +672,6 @@ the canonical reset and push rules establish default ordinary values.
 | `binomialRowsNine` | `semanticTests/array/memory_arrays_of_various_sizes.sol` | nested memory rows: does not close within the default budget, nor with -m 1000000 |
 | `multiArrayFillByPushLoops` | `semanticTests/array/dynamic_multi_array_cleanup.sol` | nested push loops exceed the suite budget of 50000 steps / 30 s |
 | `pushNoArgs2dLoop` | `semanticTests/array/push/push_no_args_2d.sol` | unrolling 43 pushes exceeds the suite budget of 50000 steps / 30 s |
-
-### `open/SolcArrayMembersOpen.sol`
-
-| Function | Upstream (`test/libsolidity/`) | Why it stays open |
-|---|---|---|
-| `popIsolated` | `semanticTests/array/pop/array_pop_isolated.sol` | the bare member access popIso.pop; as a statement is stuck on the program text |
 
 ### `open/SolcFunctionCallsOpen.sol`
 

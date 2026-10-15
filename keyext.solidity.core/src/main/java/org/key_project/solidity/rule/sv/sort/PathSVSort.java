@@ -178,14 +178,14 @@ final class PathSVSort extends ProgramSVSort {
             return new PathInfo(DataArea.ANY, true, Origin.LOCAL, typeCategoryOf(pe));
         }
         if (pe instanceof MemberExp member) {
-            PathInfo base = classify(member.getLeftExp(), services);
+            PathInfo base = classifyReceiver(member.getLeftExp(), services);
             if (base == null) {
                 return null;
             }
             return new PathInfo(base.dataArea(), false, base.origin(), typeCategoryOf(pe));
         }
         if (pe instanceof IndexExpression index) {
-            PathInfo base = classify(index.getLeftExp(), services);
+            PathInfo base = classifyReceiver(index.getLeftExp(), services);
             if (base == null) {
                 return null;
             }
@@ -196,13 +196,20 @@ final class PathSVSort extends ProgramSVSort {
         // it as a complex path lets the ordinary complex-receiver unfold rules capture it.
         if (pe instanceof FunctionCallExpression call && call.isNoArgPush()) {
             PathInfo base =
-                classify(((MemberExp) call.getFunctionExp()).getLeftExp(), services);
+                classifyReceiver(((MemberExp) call.getFunctionExp()).getLeftExp(), services);
             if (base == null) {
                 return null;
             }
             return new PathInfo(base.dataArea(), false, base.origin(), typeCategoryOf(pe));
         }
         return null;
+    }
+
+    private static PathInfo classifyReceiver(SolidityProgramElement pe, Services services) {
+        if (INTERNAL_CALL_EXPRESSION.canStandFor(pe, services)) {
+            return new PathInfo(DataArea.STORAGE, false, Origin.LOCAL, typeCategoryOf(pe));
+        }
+        return classify(pe, services);
     }
 
     private static TypeKind typeKindOf(SolidityProgramElement pe) {
