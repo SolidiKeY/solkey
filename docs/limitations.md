@@ -66,7 +66,7 @@ it.
 | Gap | Reproducer (open goal) | Reports |
 |---|---|---|
 | A variable mentioned only in a loop invariant loses its value (`DropEffectlessElementaries` does not see `LoopSpec` bindings) | `uint i = 7; /// invariant j <= n && i == 7` → `==> i = 7` | 2; `dynamic_arrays_in_storage.sol`, `ArrayRemoveByShifting` |
-| `sdiv`/`smod` on symbolic operands get no bounds (default arithmetic mode `NON_LIN_ARITH_NONE`; `smod_*` lemmas have no heuristics) | `require(b >= 1); assert(a % b < b);` → `geq(smod(a,b), b) ==>` | 2; `mod_n`, `mod_signed`, `mod_even`, OZ `Math.tryDiv/tryMod/ceilDiv` |
+| Symbolic `sdiv` bounds remain incomplete | Quotient expansion is restricted in the default arithmetic mode | Remainder sign, positive-divisor bounds and divisibility now automate |
 | Parameters carry no type range (`uint >= 0`, `uintN < 2^N`, enum `< #members`) | `function g(uint x) { assert(x >= 0); }` → `leq(x, -1) ==>` | 4; known (Tier 3/5 of `taclet-ideas.md`) |
 | `msg.value`/`msg.sender` carry no range; the non-payable `msg.value == 0` is assumed only in specified obligations | `function u() payable { assert(msg.value >= 0); }` → `leq(msgValue, -1) ==>` | 3; `msg_value_*`, `range_check.sol`, `payable_1.sol` |
 | *(fixed)* Static → dynamic storage array copy loses the length | `uint[9] d1; uint[] d2; d2 = d1; assert(d2.length == 9)` | `array_copy_storage_storage_static_dynamic.sol` |

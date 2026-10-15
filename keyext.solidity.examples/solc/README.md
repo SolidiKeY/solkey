@@ -287,6 +287,10 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `semanticTests/functionCall/named_args.sol` | `namedArgsUnordered` |
 | `semanticTests/functionCall/disordered_named_args.sol` | `disorderedNamedArgs` |
 
+| `smtCheckerTests/functions/functions_storage_var_1.sol` | `functionsStorageVar1` |
+
+| `smtCheckerTests/functions/functions_storage_var_2.sol` | `functionsStorageVar2` |
+
 ### `SolcStructsMappings.sol`
 
 | Upstream (`test/libsolidity/`) | Functions |
@@ -455,6 +459,8 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `semanticTests/modifiers/function_modifier_library.sol` | `storageModifierParameter` |
 | `semanticTests/modifiers/function_modifier_multiple_times_local_vars.sol` | `modifierMultipleTimesLocalVars` |
 
+| `semanticTests/modifiers/function_modifier_return_reference.sol` | `modifierArgumentAssignsReturn` |
+
 ### `SolcSmtControlFlow.sol`
 
 | Upstream (`test/libsolidity/`) | Functions |
@@ -574,6 +580,16 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `smtCheckerTests/operators/constant_evaluation_unary_minus_chc.sol` | `constantUnaryMinus` |
 | `smtCheckerTests/operators/unary_add_array_push_1.sol` | `unaryAddOnPush` |
 
+| `smtCheckerTests/operators/mod_signed.sol` | `modSignFollowsDividend` |
+
+| `smtCheckerTests/operators/mod_n.sol` | `modBelowDivisor` |
+
+| `smtCheckerTests/operators/mod_even.sol` | `modOfDoubleIsZero` |
+
+| `smtCheckerTests/operators/compound_add_chain.sol` | `compoundAddChain` |
+
+| `semanticTests/arithmetics/checked_modifier_called_by_unchecked.sol` | `checkedModifierCalledByUnchecked` |
+
 ### `SolcHigherLevel.sol`
 
 | Upstream (`test/libsolidity/`) | Functions |
@@ -679,8 +695,6 @@ the canonical reset and push rules establish default ordinary values.
 |---|---|---|
 | `freeFunctionRecursionBitAnd` | `semanticTests/freeFunctions/recursion.sol` | no rule for the bitwise `&` |
 | `conditionalWithArguments` | `semanticTests/functionCall/conditional_with_arguments.sol` | a call whose callee is a conditional expression is read as `false ? g : h(2, 1)` and gets stuck |
-| `functionsStorageVar1` | `smtCheckerTests/functions/functions_storage_var_1.sol` | no rule for an assignment used as a value, `a = (y = v)` |
-| `functionsStorageVar2` | `smtCheckerTests/functions/functions_storage_var_2.sol` | no rule for an assignment used as a value, `a = (y = v)` |
 | `functionsRecursiveUnbounded` | `smtCheckerTests/functions/functions_recursive.sol` | a uint state variable is not known to be non-negative, and the recursion unfolds without end |
 
 ### `open/SolcStructsMappingsOpen.sol`
@@ -728,7 +742,6 @@ the canonical reset and push rules establish default ordinary values.
 | Function | Upstream (`test/libsolidity/`) | Why it stays open |
 |---|---|---|
 | `modifierArgumentEvaluationOrder` | `semanticTests/modifiers/evaluation_order.sol` | a function call as a modifier argument stays stuck as an unresolved fn#id(...) declaration |
-| `modifierArgumentAssignsReturn` | `semanticTests/modifiers/function_modifier_return_reference.sol` | an assignment expression used as a modifier argument has no rule |
 | `breakInModifier` | `semanticTests/modifiers/break_in_modifier.sol` | a for loop in a modifier body is not lowered, so no loop rule matches it |
 | `continueInModifier` | `semanticTests/modifiers/continue_in_modifier.sol` | a for loop in a modifier body is not lowered, so no loop rule matches it |
 | `modifierLoop` | `semanticTests/modifiers/function_modifier_loop.sol` | a for loop in a modifier body is not lowered, so no loop rule matches it |
@@ -756,14 +769,9 @@ the canonical reset and push rules establish default ordinary values.
 
 | Function | Upstream (`test/libsolidity/`) | Why it stays open |
 |---|---|---|
-| `modSignFollowsDividend` | `smtCheckerTests/operators/mod_signed.sol` | true-fact-unprovable: smod(42, y) has no sign lemma, goal leq(smod(42, y), -1) ==> y = 0 |
-| `modBelowDivisor` | `smtCheckerTests/operators/mod_n.sol` | true-fact-unprovable: smod(x, y) < y is not derived, goal geq(smod(x, y), y), geq(y, 1) ==> |
-| `modOfDoubleIsZero` | `smtCheckerTests/operators/mod_even.sol` | true-fact-unprovable: goal leq(x, 9999) ==> smod(mul(x, 2), 2) = 0 |
 | `compoundSubSelfReference` | `smtCheckerTests/operators/compound_sub.sol` | true-fact-unprovable: a uint parameter carries no 0 <= x fact, goal leq(x, -1) ==> |
 | `compoundSubMapping` | `smtCheckerTests/operators/compound_sub_mapping.sol` | true-fact-unprovable: a uint parameter carries no 0 <= x fact, goal leq(x, -1) ==> |
 | `compoundSubArrayIndex` | `smtCheckerTests/operators/compound_sub_array_index.sol` | true-fact-unprovable: a uint parameter carries no 0 <= x fact, goal leq(x, -1) ==> |
-| `compoundAddChain` | `smtCheckerTests/operators/compound_add_chain.sol` | unsupported-construct: a compound assignment used as a value (u = (b += c);) has no rule |
-| `checkedModifierCalledByUnchecked` | `semanticTests/arithmetics/checked_modifier_called_by_unchecked.sol` | unsupported-construct: an expression statement (a + b;) in the modifier has no rule |
 | `uncheckedCalledByCheckedWraps` | `semanticTests/arithmetics/unchecked_called_by_checked.sol` | design-limitation: unbounded integers, uint16 0xffff + 0x100 does not wrap to 0xff |
 | `checkedCalledByUncheckedWraps` | `semanticTests/arithmetics/checked_called_by_unchecked.sol` | design-limitation: unbounded integers, the unchecked uint16 sum 0x10000 does not wrap to 0 |
 | `blockInsideUnchecked` | `semanticTests/arithmetics/block_inside_unchecked.sol` | design-limitation: unbounded integers, 2**256 - 1 + 1 does not wrap to 0 |

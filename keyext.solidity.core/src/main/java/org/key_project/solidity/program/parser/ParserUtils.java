@@ -165,7 +165,8 @@ public class ParserUtils {
 
     static public Optional<Expression> parseBinaryOperationMaybe(Expression left, Expression right,
             String operator) {
-        return findOperator(operator, op -> !Operator.isAssignmentOperator(op))
+        return findOperator(operator, op -> !Operator.isAssignmentOperator(op)
+                && !op.isPrefix() && !op.isPostfix())
                 .map(op -> new BinaryExpression(op, left, right));
     }
 

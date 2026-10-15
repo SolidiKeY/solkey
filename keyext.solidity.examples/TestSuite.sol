@@ -4598,4 +4598,52 @@ contract TestSuite {
         Token storage token = tokens.push();
         assert(token.value == 0);
     }
+
+    function arithmeticAssignmentValues() public pure {
+        uint left = 28;
+        left += left += left;
+        assert(left == 112);
+        uint result = (left = 24);
+        assert(result == 24 && left == 24);
+        result = (left -= 4);
+        assert(result == 20 && left == 20);
+        result = (left *= 3);
+        assert(result == 60 && left == 60);
+        result = (left /= 4);
+        assert(result == 15 && left == 15);
+        result = (left %= 4);
+        assert(result == 3 && left == 3);
+    }
+
+    function arithmeticDiscardKeepsSideEffects() public pure {
+        uint ix = 0;
+        ix++ + ix++;
+        assert(ix == 2);
+        ix++ - ix++;
+        assert(ix == 4);
+        ix++ * ix++;
+        assert(ix == 6);
+        ix++ / ix++;
+        assert(ix == 8);
+        ix++ % ix++;
+        assert(ix == 10);
+        ix++ ** 2;
+        assert(ix == 11);
+    }
+
+    /// @custom:key box
+    function arithmeticDiscardKeepsZeroDivisorRevert() public pure {
+        uint numerator = 1;
+        uint denominator = 0;
+        numerator / denominator;
+        assert(false);
+    }
+
+    /// @custom:key box
+    function arithmeticRemainderBoundAllSigns(int numerator, int denominator) public pure {
+        require(denominator > 0);
+        int result = numerator % denominator;
+        assert(result < denominator);
+    }
+
 }

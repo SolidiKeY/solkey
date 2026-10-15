@@ -65,6 +65,36 @@ public class SolidityProblemSynthesizerTest {
     }
 
     @Test
+    void discardedArithmeticStillRequiresNormalCompletion(@TempDir Path dir) throws IOException {
+        Path file = dir.resolve("Discard.sol");
+        Files.writeString(file, """
+                pragma solidity ^0.8.0;
+                contract Discard {
+                    function divide() public pure {
+                        uint numerator = 1;
+                        uint denominator = 0;
+                        numerator / denominator;
+                    }
+                    function modulo() public pure {
+                        uint numerator = 1;
+                        uint denominator = 0;
+                        numerator % denominator;
+                    }
+                    function compound() public pure {
+                        uint value = 1;
+                        uint denominator = 0;
+                        uint result = (value /= denominator);
+                        assert(result == value);
+                    }
+                }
+                """);
+        for (String function : List.of("divide", "modulo", "compound")) {
+            var outcome = SolidityVerifier.verify(file, spec("Discard", function), 10000, -1, 3);
+            assertEquals(SolidityVerifier.Status.OPEN, outcome.status(), function);
+        }
+    }
+
+    @Test
     void aParameterWithoutAKeySortIsRefusedWithItsReason(@TempDir Path dir) throws IOException {
         Path file = stringParameter(dir);
 

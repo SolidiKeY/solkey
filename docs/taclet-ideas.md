@@ -223,8 +223,8 @@ many upstream tests and contracts each blocks; defects in supported constructs a
 - **`super.f()` and `Base.f()`** (the latter is lowered to `address.f()`), and **virtual
   dispatch from base functions** (resolve against the most-derived contract).
 - **Struct constructors** `S(..)`, `S({..})` in every position (extends `ObjectInit`, Tier 4).
-- **Assignment and compound assignment as values** beyond indices: `a = (b = c)`,
-  `a += b += c`, `a[0] = a[1] = 1`, `(m = m2)[2] = 21`, modifier arguments `m(r = 2)`.
+- **Heap-target assignment values**: `a[0] = a[1] = 1`, `(m = m2)[2] = 21`.
+  Local assignment/compound values and local modifier-argument assignments now execute.
 - **Tuple targets**: nested `(((a, ), )) = …` and parenthesized `((a, b)) = …`.
 - **Integer → enum conversion** `E(x)` (revert when `x` is out of range).
 - **Function types** (`FunctionTypeName`): internal pointers, `(c ? g : h)(..)` callees.
@@ -233,7 +233,8 @@ many upstream tests and contracts each blocks; defects in supported constructs a
 - **`new T[](e)` with a non-simple length** (today stuck; bind the length to a local first).
 - **`delete` on a local** (`delete v;`).
 - **`for` loops inside modifier bodies** (lower them after `ModifierInlining`; `while` works).
-- **Effect-free expression statements**: `a + b;`, `arr.pop;`, `S[7][];` (evaluate and drop).
+- **Other discarded expression statements**: `arr.pop;`, `S[7][];`.
+  Binary arithmetic expression statements now evaluate and discard their results.
 - **A compound target `push()` on a complex receiver**: `s.b.push() += 1`, `++m[k].push()`
   (`storagePush*Assign` / `*crement` take a root or an alias; needs receiver unfolds).
 - **Calls**: an external call as a statement outside `try`, a `try` argument with side
@@ -246,5 +247,5 @@ many upstream tests and contracts each blocks; defects in supported constructs a
 - **Spec language**: name a loop's lowered `break` flag in its invariant; `\old` inside loop
   invariants; ether/time units and `block` in clauses; signed `/` and `%` matching the program's
   `sdiv`/`smod`; library struct members.
-- **Strategy**: heuristics for the `smod`/`sdiv` bound lemmas (or a selectable arithmetic mode
+- **Strategy**: heuristics for the remaining `sdiv` bound lemmas (or a selectable arithmetic mode
   on the `.sol` path), and `\heuristics(pullOutQuantifierEx)` on `ex_pull_out*`.

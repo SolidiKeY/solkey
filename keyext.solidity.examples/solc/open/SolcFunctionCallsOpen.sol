@@ -48,21 +48,6 @@ contract SolcFunctionCallsOpen {
         a = (y = v);
     }
 
-    /// solc: smtCheckerTests/functions/functions_storage_var_1.sol
-    // open: no rule for an assignment used as a value, `a = (y = v)`
-    function functionsStorageVar1() public {
-        setA(1);
-        assert(a > 0);
-    }
-
-    /// solc: smtCheckerTests/functions/functions_storage_var_2.sol
-    // open: no rule for an assignment used as a value, `a = (y = v)`
-    function functionsStorageVar2() public {
-        setA(1);
-        setA(42);
-        assert(a > 1);
-    }
-
     /// solc: smtCheckerTests/functions/functions_recursive.sol
     // open: a uint state variable is not known to be non-negative, and the recursion unfolds without end
     function functionsRecursiveUnbounded() public {

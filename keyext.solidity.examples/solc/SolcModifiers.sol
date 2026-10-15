@@ -596,4 +596,19 @@ contract SolcModifiers is SolcModifiersB, SolcModifiersC {
         assert(r == 10);
         assert(a == 0);
     }
+
+    modifier namedArg1(uint value) { _; }
+    modifier namedArg2(uint value) { _; }
+
+    function returnsAssigned() internal pure namedArg1(r1 = 2) namedArg2(r2 = 3)
+        returns (uint r1, uint r2)
+    {
+    }
+
+    /// solc: semanticTests/modifiers/function_modifier_return_reference.sol
+    function modifierArgumentAssignsReturn() public pure {
+        (uint r1, uint r2) = returnsAssigned();
+        assert(r1 == 2);
+        assert(r2 == 3);
+    }
 }

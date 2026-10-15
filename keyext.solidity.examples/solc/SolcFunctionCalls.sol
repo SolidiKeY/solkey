@@ -516,4 +516,22 @@ contract SolcFunctionCalls {
         uint r = publicFunction({s: 3, p: 1, q: 2});
         assert(r == 123);
     }
+
+    function setA(uint v) internal {
+        uint assignedValue;
+        a = (assignedValue = v);
+    }
+
+    /// solc: smtCheckerTests/functions/functions_storage_var_1.sol
+    function functionsStorageVar1() public {
+        setA(1);
+        assert(a > 0);
+    }
+
+    /// solc: smtCheckerTests/functions/functions_storage_var_2.sol
+    function functionsStorageVar2() public {
+        setA(1);
+        setA(42);
+        assert(a > 1);
+    }
 }

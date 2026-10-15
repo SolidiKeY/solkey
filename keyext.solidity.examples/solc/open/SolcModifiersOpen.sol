@@ -144,14 +144,6 @@ contract SolcModifiersOpen {
         assert(order[3] == 7);
     }
 
-    // open: an assignment expression used as a modifier argument has no rule
-    /// solc: semanticTests/modifiers/function_modifier_return_reference.sol
-    function modifierArgumentAssignsReturn() public pure {
-        (uint r1, uint r2) = returnsAssigned();
-        assert(r1 == 2);
-        assert(r2 == 3);
-    }
-
     // open: a for loop in a modifier body is not lowered, so no loop rule matches it
     /// solc: semanticTests/modifiers/break_in_modifier.sol
     function breakInModifier() public {

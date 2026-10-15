@@ -22,6 +22,7 @@ import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.rule.BuiltInRule;
 import org.key_project.solidity.strategy.feature.DiffFindAndIfFeature;
 import org.key_project.solidity.strategy.feature.MatchedAssumesFeature;
+import org.key_project.solidity.strategy.feature.NonDuplicateAppModPositionFeature;
 import org.key_project.solidity.strategy.feature.RuleSetDispatchFeature;
 import org.key_project.solidity.strategy.feature.findprefix.FindPrefixRestrictionFeature;
 import org.key_project.solidity.strategy.termProjection.TermBuffer;
@@ -91,6 +92,8 @@ public class SymExStrategy extends AbstractFeatureStrategy implements ComponentS
         bindRuleSet(d, "simplify_prog_subset", longConst(-4000));
 
         bindRuleSet(d, "simplify_expression", -100);
+        bindRuleSet(d, "solidity_remainder_bounds",
+            add(NonDuplicateAppModPositionFeature.INSTANCE, longConst(1000)));
 
         bindRuleSet(d, "simplify_solidity", -4500);
 

@@ -58,11 +58,10 @@ event) is refused at load with a `SolidityParseException` naming it; those are i
   `uint i = 7; uint j = 0; /// @custom:key invariant j <= n && i == 7` `while (j < n) j = j + 1;`
   leaves `==> i = 7`. A parameter alike (`for (uint i = n; i < 100; i++)` with invariant
   `n <= i`). Workaround: mention the variable after the loop, or use a literal.
-- **`sdiv`/`smod` on symbolic operands get no bounds.** The default `NON_LIN_ARITH_NONE`
-  gives `defOps_div`/`defOps_sdiv` infinite cost and binds `defOps_mod` only for literals, and
-  `smod_NumPos`/`smod_geZero` (`intDiv.key`) have no heuristics:
-  `require(a >= 0 && b >= 1); assert(a % b < b);` leaves `geq(smod(a, b), b) ==>`;
-  `assert(a / b >= 0)` and `(2*x) % 2 == 0` alike. The `.sol` path cannot pick another mode.
+- **Symbolic `sdiv` bounds remain incomplete.** The default `NON_LIN_ARITH_NONE`
+  gives `defOps_div`/`defOps_sdiv` infinite cost, so `assert(a / b >= 0)` can
+  remain open. Remainder sign, positive-divisor upper bounds and divisibility
+  now have automatic taclets; division expansion is unchanged.
 - **Parameters, `msg.value` and `msg.sender` carry no type range.** `function g(uint x) public
   pure { assert(x >= 0); }` leaves `leq(x, -1) ==>`; `uint8`, enum parameters and
   `assert(msg.value >= 0)` alike. A non-payable function's `msg.value == 0` is assumed only when

@@ -174,6 +174,12 @@ pair of `storageIndexWriteArraySave`). `/=` and `%=` guard with
 integers, so there is no overflow guard. Bitwise `&= |= ^= <<= >>=` parse but
 are deferred (no bitwise LDT). Listed under `// generalization:` comments.
 
+Local assignment values (`v = (lv = e)`, and `+= -= *= /= %=`) execute
+through `local*AssignmentValue`: first perform the inner assignment, then
+copy its written value into the outer result. Existing RHS capture rules
+handle nested chains and preserve the outer target read after RHS evaluation.
+Division/modulo retain their existing zero-divisor reverts. Assignment values whose inner target is a heap location remain unsupported.
+
 ### Memory arithmetic
 Each memory arithmetic rule is its storage counterpart with
 `find<[int]>(storage, path)` / `save(storage, path, v)` replaced by
@@ -264,6 +270,14 @@ from the EVM's checked arithmetic); `/` and `%` revert on a zero denominator.
   disagree on identity (the `.key` path builds a fresh instance, the `.sol`
   path returns the `TRUE`/`FALSE` singletons) — so `BoolLiteral` overrides
   `equals`/`hashCode` like `Uint256Literal` does.
+- Discarded binary arithmetic (`+ - * / % **`) evaluates into a fresh local
+  through `discard*Expression`, then uses the existing execution rules. Operand
+  side effects and zero-divisor reverts are preserved; results are discarded
+  only after evaluation. Other discarded expression forms remain deferred.
+- Remainder sign and bound lemmas use `solidity_remainder_bounds` with duplicate
+  protection, after normal simplification. `smod_lessPositiveDenom` applies
+  for either dividend sign; `smodMultiple` reduces a multiple of its nonzero
+  divisor to zero. These facts use mathematical integers and no type ranges.
 - Deferred: bitwise (`& | ^ << >> ~`), unary `+` (removed in Solidity ≥0.5).
   Overflow is not modeled: integers are unbounded, and examples that depend on
   the EVM's checked-arithmetic revert live in
