@@ -106,6 +106,7 @@ contract TestSuite {
     Ledger ledger;
     Token tok;
     Token[] tokens;
+    Token[] emptyTokens;
     TokenBucket bucket;
     TokenBucket[] buckets;
     Basket basketA;
@@ -4646,4 +4647,73 @@ contract TestSuite {
         assert(result < denominator);
     }
 
+    function testDeleteArrayLeavesDataPastLength() public {
+        delete tokens;
+        tokens.push();
+        Token storage r = tokens[0];
+        tokens.pop();
+        r.value = 5;
+        delete tokens;
+        tokens.push();
+        assert(tokens[0].value == 5);
+    }
+
+    function testDanglingReferenceSurvivesPush() public {
+        delete tokens;
+        tokens.push();
+        Token storage r = tokens[0];
+        tokens.pop();
+        r.value = 5;
+        tokens.push();
+        assert(tokens[0].value == 5);
+    }
+
+    function testArrayCopyKeepsDestinationTail() public {
+        delete emptyTokens;
+        delete tokens;
+        tokens.push();
+        Token storage r = tokens[0];
+        tokens.pop();
+        r.value = 5;
+        tokens = emptyTokens;
+        tokens.push();
+        assert(tokens[0].value == 5);
+    }
+
+    function testDanglingInnerArrayReappearsAfterPush() public {
+        delete matrix;
+        matrix.push();
+        uint[] storage ptr = matrix[0];
+        matrix.pop();
+        ptr.push(66);
+        matrix.push();
+        assert(matrix[0].length == 1);
+        assert(matrix[0][0] == 66);
+    }
+
+    function testShiftRightNegativeRoundsDown() public pure {
+        int x = -4267;
+        int r = x >> 1;
+        assert(r == -2134);
+        x >>= 256;
+        assert(x == -1);
+    }
+
+    function testShiftLeftFitsUint8() public pure {
+        uint8 x = 3;
+        x <<= 6;
+        assert(x == 192);
+    }
+
+    function testShiftOperandEvaluation() public pure {
+        uint x = 8;
+        uint r = x >> (x = 2);
+        assert(r == 0 && x == 2);
+        r = (x + 1) << (x + 2);
+        assert(r == 48);
+    }
+
+    function testUnsignedParameterNonnegative(uint x) public pure {
+        assert(x >= 0);
+    }
 }

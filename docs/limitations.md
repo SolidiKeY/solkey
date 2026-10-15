@@ -67,7 +67,7 @@ it.
 |---|---|---|
 | A variable mentioned only in a loop invariant loses its value (`DropEffectlessElementaries` does not see `LoopSpec` bindings) | `uint i = 7; /// invariant j <= n && i == 7` → `==> i = 7` | 2; `dynamic_arrays_in_storage.sol`, `ArrayRemoveByShifting` |
 | Symbolic `sdiv` bounds remain incomplete | Quotient expansion is restricted in the default arithmetic mode | Remainder sign, positive-divisor bounds and divisibility now automate |
-| Parameters carry no type range (`uint >= 0`, `uintN < 2^N`, enum `< #members`) | `function g(uint x) { assert(x >= 0); }` → `leq(x, -1) ==>` | 4; known (Tier 3/5 of `taclet-ideas.md`) |
+| Parameter upper bounds and enum ranges are missing; unsigned input non-negativity is assumed | `function g(uint8 x) { assert(x <= 255); }` stays open | Full ranges deferred (Tier 3/5 of `taclet-ideas.md`) |
 | `msg.value`/`msg.sender` carry no range; the non-payable `msg.value == 0` is assumed only in specified obligations | `function u() payable { assert(msg.value >= 0); }` → `leq(msgValue, -1) ==>` | 3; `msg_value_*`, `range_check.sol`, `payable_1.sol` |
 | *(fixed)* Static → dynamic storage array copy loses the length | `uint[9] d1; uint[] d2; d2 = d1; assert(d2.length == 9)` | `array_copy_storage_storage_static_dynamic.sol` |
 | *(fixed)* A shorter static array copied into a longer one leaves the tail | `big[30] = 4; big = small; assert(big[30] == 0)` | `array_copy_storage_storage_static_static.sol` |
@@ -82,21 +82,23 @@ Choices the calculus makes on purpose, each of which makes some Solidity behavio
   (`uint8 0 - 1 == 255`, `int8 127 + 1 == -128`, `int8 100 * 2 == -56`, `++max == 0`, …); the
   reverse direction proves false (above). Ports must `require` both bounds by hand; OZ
   `tryAdd`/`tryMul` and `Nonces`/`Counters` are specified only on their non-wrapping case.
-- **No bitwise LDT.** `&`, `|`, `^`, `~`, `<<`, `>>` and their compound forms are stuck on the
-  program text. Blocks OZ `Math.average`, `AccessRestriction.forceOwnerChange`, every
-  `operators/shifts/` and `bitwise_*` test, and `exponent & 1` in `freeFunctions/recursion.sol`.
+- **General bitwise operations remain unsupported.** `&`, `|`, `^`, `~` and their
+  compound forms stay as program text. `<<`, `>>`, and local `<<=`/`>>=` now have
+  arithmetic taclets. Left shift uses unbounded multiplication, so truncation is
+  not modeled; storage/memory compound shifts remain unsupported.
+
 - **No `bytes`, `bytesN`, `string` values.** No `KeYSolidityType` for `bytes32`/`bytes`, string
   literals fail with "Not yet supported literal", `string` parameters get no obligation. With
   them go `keccak256`, `abi.encode*`, `msg.data`, `require(c, "msg")`.
 - **Addresses are integers without an environment.** No `this`, no `<address>.balance`, no
   `block.*`/`tx.*`/`gasleft`, and contract-typed parameters get no obligation. Specs use a
   `timeNow` state variable for time.
-- **Storage starts arbitrary.** Every obligation ranges over any reachable storage, so a fact
-  that holds only from a fresh deployment needs a `require` under a box. Empty push now
-  establishes default ordinary values for array and struct elements, including fixed-array
-  children, on symbolic entry storage. Nine formerly open upstream cases close with this
-  rule. The compiler's length-only push agrees for defined executions with clear unused data;
-  four compiler-specific dangling-reference witnesses remain in `StorageDanglingOpen`.
+- **Storage starts arbitrary.** Function obligations start with symbolic wellformed storage,
+  including unconstrained data beyond dynamic-array lengths. Empty push changes only the
+  length and preserves that data; it does not establish zero values or empty nested arrays.
+  A default-value assertion needs an explicit earlier clear/write or a suitable precondition.
+  No clean-tail invariant is assumed. Compiler-specific dangling-reference examples are in
+  `solc/StorageDangling.sol`; Solidity leaves those executions undefined.
   Larger push loops can still exceed the proof budget (`docs/storage.md`).
 - **Immutables are storage.** An immutable is read from storage, so outside the constructor
   it is unconstrained. Constants are inlined at their reads.
@@ -178,7 +180,7 @@ functions and open reasons are listed in `keyext.solidity.examples/solc/README.m
 | Payments, reverts, try | `SolcPayments` | 35 | 14 (2 close: proves-false witnesses) | 11 | `msg.*` ranges, `try` callee havocked, noCallback unsound |
 | Modifiers | `SolcModifiers` | 34 | 13 | 9 | `return`/two `_;`, `for` in modifier, shared locals (proves false) |
 | smtChecker control flow | `SolcSmtControlFlow` | 86 | 7 | 11 | `msg.value`, modifier `return` |
-| Arithmetic | `SolcArithmetic` | 46 | 20 | 10 | wrapping, shifts, `smod` lemmas |
+| Arithmetic | `SolcArithmetic` | 58 | 8 (1 in closing file) | 10 | wrapping; `unaryAddOnPush` needs known appended contents |
 | Inheritance, getters | `SolcHigherLevel` | 19 | 7 | 13 | virtual dispatch (proves false), `Base.f()` |
 | Types, enums, tuples, literals | `SolcTypes` | 39 | 17 (1 closes: proves false) | 11 | identity casts (proves false), `E(x)`, enum ranges |
 | **Total** | 11 files | **486** | **126** | | |

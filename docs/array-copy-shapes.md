@@ -1,12 +1,12 @@
 # Shape-directed copy and reset: a compiler-based proof proposal
 
 `keyext.solidity.examples/contracts/ArrayCopyShapes.sol` contains executable witnesses.
-All seven functions close with the existing SolKey rules and pass on the EVM with solc
-`0.8.34+commit.80d5c536`. Three related regressions are in `TestSuite.sol`. These support a
+The copy/reset observations have corresponding regressions in `TestSuite.sol`; a default-value
+assertion after empty push additionally needs known tail data. These examples support a
 generalization of the copy/reset model. The implementation keeps `save`, `delAt`,
 `delNode`, and `delNodeFixed`; `C_T` and `R_T` below are mathematical notation rather than
-new constructors. Fixed-array reset guards and the reference reset selector's old-length
-comparison have been removed; complex storage push sources are captured before the update.
+new constructors. Fixed-array reset guards are removed; array reset selectors use the old
+length to preserve out-of-range data. Complex push sources are captured before the update.
 The argument below is a mathematical proof outline, not a machine-checked compiler theorem.
 
 ## What the compiler generates
@@ -156,19 +156,17 @@ storage having been initialized or cleared by previous operations. The reset/cop
 explains that guarantee for defined executions
 starting from the constructor's empty storage; mapping contents are exempt.
 
-The implemented logical push makes the default-value guarantee explicit: it resets the
-appended nonmapping node with `delAt`, then saves the incremented length. The returned-reference
-push uses the same update, so fixed lengths and nested mappings are preserved. A whole mapping
-element is not reset. This proves the formerly open fixed-element zero read on symbolic entry
-storage and also proves defaults through returned struct and dynamic-array references.
+The logical push also changes only the length. Its appended slot retains the old storage
+value, including symbolic data and explicit dangling-reference writes. The reference returned
+by push names that slot, and primitive captures read its existing value. No clean-tail
+invariant is assumed at function entry, so zero/empty assertions about unknown appended nodes
+remain open. Pop, deletion, and shortening copies still clear their old valid ranges.
 
-For a clean unused node `x`, resetting it is observationally the identity. Under that premise,
-the logical update refines the compiler's length-only implementation. The concrete compiler
-also allows dangling writes that break this premise; Solidity documents those executions as
+`StorageDangling` contains four compiler-specific witnesses that now close under these rules.
+Solidity documents dangling-reference executions as
 [undefined behavior](https://docs.soliditylang.org/en/latest/types.html#dangling-references-to-storage-array-elements).
-`StorageDanglingOpen` retains four current-compiler witnesses that intentionally stay open
-under the portable reset/push rules. The refinement claim is for defined Solidity execution,
-not for preserving compiler-specific dangling-reference data.
+Closing those probes models the observed storage operations; it does not turn their results
+into portable Solidity guarantees.
 
 ## Reproduce the observations
 

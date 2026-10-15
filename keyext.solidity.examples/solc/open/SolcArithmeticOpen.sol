@@ -22,38 +22,9 @@ contract SolcArithmeticOpen {
         return a + b;
     }
 
-    // open: true-fact-unprovable: a uint parameter carries no 0 <= x fact, goal leq(x, -1) ==>
-    /// solc: smtCheckerTests/operators/compound_sub.sol
-    /// @custom:key box
-    function compoundSubSelfReference(uint x) public pure {
-        require(x < 100);
-        uint y = 200;
-        y -= y - x;
-        assert(y >= 0);
-    }
 
-    // open: true-fact-unprovable: a uint parameter carries no 0 <= x fact, goal leq(x, -1) ==>
-    /// solc: smtCheckerTests/operators/compound_sub_mapping.sol
-    /// @custom:key box
-    function compoundSubMapping(uint x, uint p) public {
-        require(x < 100);
-        map[p] = 200;
-        map[p] -= map[p] - x;
-        uint r = map[p];
-        assert(r >= 0);
-    }
 
-    // open: true-fact-unprovable: a uint parameter carries no 0 <= x fact, goal leq(x, -1) ==>
-    /// solc: smtCheckerTests/operators/compound_sub_array_index.sol
-    /// @custom:key box
-    function compoundSubArrayIndex(uint x, uint p) public {
-        require(p < array.length);
-        require(x < 100);
-        array[p] = 200;
-        array[p] -= array[p] - x;
-        uint r = array[p];
-        assert(r >= 0);
-    }
+
 
     // open: design-limitation: unbounded integers, uint16 0xffff + 0x100 does not wrap to 0xff
     /// solc: semanticTests/arithmetics/unchecked_called_by_checked.sol
@@ -147,37 +118,8 @@ contract SolcArithmeticOpen {
         assert(y == e);
     }
 
-    // open: unsupported-construct: << has no rule, stuck on r = a_0 << b_0;
-    /// solc: semanticTests/operators/shifts/shift_left.sol
-    /// @custom:key box
-    function shiftLeftParam(uint a, uint b) public pure {
-        require(a == 0x4266 && b == 8);
-        uint r = a << b;
-        assert(r == 0x426600);
-    }
 
-    // open: unsupported-construct: >> has no rule, stuck on r = a_0 >> b_0;
-    /// solc: semanticTests/operators/shifts/shift_right.sol
-    /// @custom:key box
-    function shiftRightParam(uint a, uint b) public pure {
-        require(a == 0x4266 && b == 8);
-        uint r = a >> b;
-        assert(r == 0x42);
-    }
 
-    // open: unsupported-construct: >>= has no rule, stuck on a >>= 8;
-    /// solc: semanticTests/operators/shifts/shift_constant_right_assignment.sol
-    function shiftRightAssign() public pure {
-        uint a = 0x4200;
-        a >>= 8;
-        assert(a == 0x42);
-    }
 
-    // open: unsupported-construct: >> has no rule, stuck on r = -4266 >> 1;
-    /// solc: semanticTests/operators/shifts/shift_right_negative_literal.sol
-    function shiftRightNegativeLiteral() public pure {
-        int r = -4266 >> 1;
-        int e = -2133;
-        assert(r == e);
-    }
+
 }

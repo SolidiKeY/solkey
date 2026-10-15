@@ -62,11 +62,12 @@ event) is refused at load with a `SolidityParseException` naming it; those are i
   gives `defOps_div`/`defOps_sdiv` infinite cost, so `assert(a / b >= 0)` can
   remain open. Remainder sign, positive-divisor upper bounds and divisibility
   now have automatic taclets; division expansion is unchanged.
-- **Parameters, `msg.value` and `msg.sender` carry no type range.** `function g(uint x) public
-  pure { assert(x >= 0); }` leaves `leq(x, -1) ==>`; `uint8`, enum parameters and
-  `assert(msg.value >= 0)` alike. A non-payable function's `msg.value == 0` is assumed only when
-  the function has a `@custom:key` clause (`SolidityProblemSynthesizer`, unspecified branch).
-  Known in Tier 3/5 of `docs/taclet-ideas.md`. Not planned now (10A; 10C is a quick win).
+- **Parameter upper bounds, enum ranges and environment ranges are missing.** Generated
+  obligations now assume `uint`/`uintN` inputs are non-negative, closing the three
+  compound-subtraction ports. `assert(y <= 255)` for a `uint8` parameter and enum
+  parameter bounds remain unprovable. `msg.value >= 0` and non-payable `msg.value == 0`
+  are still assumed only for specified functions; `msg.sender` lacks its address range.
+  Full range support remains deferred (10A/10B; 10C fixes unspecified `msg.value`).
 - **A succedent `\exists` whose body has a nested quantifier is never instantiated.**
   `ex_pull_out0..3` (`formulaNormalizationRules.key`) lack `\heuristics(pullOutQuantifierEx)`,
   unlike Java KeY: `requires \forall uint i; i < vals.length -> vals[i] <= vals[k]`,

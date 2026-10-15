@@ -21,7 +21,7 @@ Solidity writes its outermost dimension last.
 
 The memory functions of `ArrayCubeDFD` are a separate contract so each file compiles without
 the EVM contract-size warning. Three-dimensional cases initialize only the leaves needed by their observations,
-such as the first and last leaves; other leaves keep their default values. This exercises depth and identity without
+such as the first and last leaves; untouched storage tails remain symbolic. This exercises depth and identity without
 making the proof spend its budget on redundant element writes.
 
 ## Edges checked for each matrix shape
@@ -37,8 +37,8 @@ making the proof spend its budget on redundant element writes.
 | Assignment of one memory row to another | The rows share identity |
 | Memory rows sharing identity, then copied to storage | The destination rows occupy independent storage locations |
 | Delete one row | Outer length remains; fixed child lengths remain and dynamic children empty |
-| Delete the root | Dynamic length becomes zero; fixed lengths remain; rebuilt elements read zero |
-| Pop followed by empty push | The reused element has its declared shape and default ordinary values |
+| Delete the root | Dynamic length becomes zero; fixed lengths remain; only old valid elements are reset |
+| Pop followed by empty push | The removed valid data is cleared; nested tail data can remain symbolic |
 | Push with an indexed reference source | The appended element is an independent copy |
 | Bind the reference returned by push | Writes through it affect the appended element |
 
@@ -58,26 +58,25 @@ the containing mapping array preserves its mapping entries and fixed value lengt
 `TestSuite.testPushIndexedPrimitiveSourceOnce` and
 `TestSuite.testPushIndexedFixedArraySourceOnce` check that an indexed source with `i++`
 is evaluated once before the push changes the destination length. The four former fixed-array
-reset open cases now have `TestSuite.testFixedShape*` regressions and closing functions in
-`FixedLengths`.
+reset cases have `TestSuite.testFixedShape*` regressions and functions in `FixedLengths`.
+Default-value assertions without known tail data are checked to remain open.
 
 ## Semantic boundary
 
-The implementation retains `save`, `delAt`, `delNode`, and `delNodeFixed`. It removes the
-fixed-element reset guards and the inequality in the reference reset selector. The statement
-rules still enforce Solidity's array bounds. Copy selectors retain the source/target length
-comparisons because those identify the copied prefix and cleared destination tail.
+The implementation retains `save`, `delAt`, `delNode`, and `delNodeFixed`. Statement
+rules enforce array bounds. Array reset selectors clear the old valid range and preserve
+out-of-range data. Copy selectors distinguish the copied source prefix, the cleared old
+destination suffix, and the untouched tail beyond both lengths.
 
-The default-read regressions also cover arbitrary entry storage. The formerly open
-`emptyPushFixedElementReadsZero` now closes in `FixedLengths`; `TestSuite` checks fixed-array,
-dynamic-array, and struct defaults through the reference returned by push. Nonmapping push
-resets its appended slot with `delAt`, preserving fixed lengths and nested mappings.
+Empty push changes only the array length. Appended primitive, struct, and array values retain
+their previous symbolic contents; returned references name those existing locations. No
+clean-tail invariant is assumed. Assertions requiring an unknown appended value to be zero
+or an unknown nested array to be empty stay open.
 
-`StorageDanglingOpen` records four current-compiler behaviors after out-of-range
-dangling-reference writes. Data can survive deletion of an empty array, copying, or an empty
-push; the canonical rules establish default ordinary values. Solidity does not guarantee
-the behavior of dangling references, so these witnesses remain open with their EVM assertions
-unchanged.
+`StorageDangling` records four compiler-specific behaviors after writes through popped
+aliases. Data survives deletion of an empty array, copying, and empty push under these rules.
+The four assertions close and pass on the bundled EVM runner, although Solidity leaves
+dangling-reference executions undefined.
 
 ## Verification
 

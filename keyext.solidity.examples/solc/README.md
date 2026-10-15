@@ -11,8 +11,8 @@ The point is a cross-check against a description of Solidity semantics that SolK
 write. `TestSuite.sol` exercises one taclet each; these exercise what the language says. What the
 ports could not prove, and why, is summarised in `docs/limitations.md`.
 
-Seventeen contracts, one per upstream theme. Every function of a file here closes and runs on the
-EVM without a failing `assert`:
+Contracts are grouped by upstream theme. Runtime assertions are cross-checked on the EVM;
+proofs that require default values in an unconstrained storage tail are checked to stay open:
 
 | File | Upstream | Functions |
 |---|---|---|
@@ -30,7 +30,7 @@ EVM without a failing `assert`:
 | `SolcPayments.sol` | `payable/`, `receive/`, `fallback/`, `reverts/`, `errors/`, `tryCatch/`; smt `special/`, `blockchain_state/`, `try_catch/` | 35 |
 | `SolcModifiers.sol` | `modifiers/`; smt `modifiers/` | 34 |
 | `SolcSmtControlFlow.sol` | smt `control_flow/`, `bmc_coverage/`, `verification_target/`, `invariants/`, `complex/slither/` | 85 |
-| `SolcArithmetic.sol` | `arithmetics/`, `exponentiation/`, `integer/`, `operators/`; smt `operators/`, `overflow/` | 47 |
+| `SolcArithmetic.sol` | `arithmetics/`, `exponentiation/`, `integer/`, `operators/`; smt `operators/`, `overflow/` | 59 |
 | `SolcHigherLevel.sol` | `inheritance/`, `virtualFunctions/`, `getters/`; smt `inheritance/` | 19 |
 | `SolcTypes.sol` | `enums/`, `literals/`, `types/`; smt `types/`, `typecast/` | 39 |
 
@@ -44,7 +44,7 @@ The function counts are obligations (helpers included). `solc/open/` holds what 
 ./run-key.sh keyext.solidity.examples/solc/SolcArrays.sol pushWithArgument   # one function
 ./run-key.sh keyext.solidity.examples/solc/SolcModifiers.sol -c SolcModifiers  # file with base contracts
 ./run-key.sh keyext.solidity.examples/solc/SolcArrays.sol --solc             # the EVM cross-check
-./gradlew :keyext.solidity.core:test --tests "*SolcSemanticsExamplesTest"
+./gradlew :keyext.solidity.core:testSolidityExamples --tests "*SolcSemanticsExamplesTest"
 ```
 
 `SolcSemanticsExamplesTest` and the `solc/*.sol` half of `SolidityRuntimeExecutionTest` enumerate
@@ -538,6 +538,8 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `smtCheckerTests/control_flow/branches_with_return/constructor_state_variable_init_chain_alternate.sol` | `constructorStateVariableInitChainAlternate` |
 | `smtCheckerTests/complex/slither/const_state_variables.sol` | `constStateVariable` |
 
+| `smtCheckerTests/bmc_coverage/assert.sol` | `bmcRequireAlwaysTrue` |
+
 ### `SolcArithmetic.sol`
 
 | Upstream (`test/libsolidity/`) | Functions |
@@ -589,6 +591,14 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `smtCheckerTests/operators/compound_add_chain.sol` | `compoundAddChain` |
 
 | `semanticTests/arithmetics/checked_modifier_called_by_unchecked.sol` | `checkedModifierCalledByUnchecked` |
+
+| `smtCheckerTests/operators/compound_sub.sol` | `compoundSubSelfReference` |
+| `smtCheckerTests/operators/compound_sub_mapping.sol` | `compoundSubMapping` |
+| `smtCheckerTests/operators/compound_sub_array_index.sol` | `compoundSubArrayIndex` |
+| `semanticTests/operators/shifts/shift_left.sol` | `shiftLeftParam` |
+| `semanticTests/operators/shifts/shift_right.sol` | `shiftRightParam` |
+| `semanticTests/operators/shifts/shift_constant_right_assignment.sol` | `shiftRightAssign` |
+| `semanticTests/operators/shifts/shift_right_negative_literal.sol` | `shiftRightNegativeLiteral` |
 
 ### `SolcHigherLevel.sol`
 
@@ -660,21 +670,15 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `smtCheckerTests/typecast/upcast.sol` | `upcastPreserving` |
 | `semanticTests/enums/using_contract_enums_with_explicit_contract_name.sol` | `enumExplicitContractName` |
 
+## Compiler-specific storage-tail examples
+
+`StorageDangling.sol` contains four local probes that write through aliases after their
+array elements have been popped. Solidity defines these executions as undefined. They close
+under the compiler-style model: empty push changes only length, deletion clears the old valid
+range, and copying preserves destination data beyond both lengths. This does not establish a
+portable Solidity guarantee. No clean-tail invariant is assumed.
+
 ## Provenance of `open/`
-
-### `open/StorageDanglingOpen.sol`
-
-These local compiler-behavior probes write through aliases after their array elements have
-been popped. Solidity defines dangling-reference executions as undefined. The current
-compiler can preserve the out-of-range data during deletion, copying, or a later empty push;
-the canonical reset and push rules establish default ordinary values.
-
-| Function | Why the proof stays open |
-|---|---|
-| `testDeleteArrayLeavesDataPastLength` | Compiler-specific dangling data survives deletion, while the logical reset clears it |
-| `testDanglingReferenceSurvivesPush` | A popped alias writes outside the array; portable push resets the appended slot |
-| `testArrayCopyKeepsDestinationTail` | A dangling write survives the compiler copy/push sequence; portable push resets the appended slot |
-| `testDanglingInnerArrayReappearsAfterPush` | A dangling inner-array write survives compiler push; portable push resets the appended slot |
 
 ### `open/SolcLoopsOpen.sol`
 
@@ -759,7 +763,6 @@ the canonical reset and push rules establish default ordinary values.
 |---|---|---|
 | `shortCircuitAndTouched` | `smtCheckerTests/control_flow/short_circuit_and_touched.sol` | an assignment used as an operand, `b = (flag = false)`, is stuck on the program text |
 | `shortCircuitOrTouched` | `smtCheckerTests/control_flow/short_circuit_or_touched.sol` | an assignment used as an operand, `b = (flag = true)`, is stuck on the program text |
-| `bmcRequireAlwaysTrue` | `smtCheckerTests/bmc_coverage/assert.sol` | a uint parameter is not known to be non-negative, so the diamond leaves leq(x, -1) open |
 | `msgValueZeroWhenNonPayable` | `smtCheckerTests/bmc_coverage/msg_value_4.sol` | a non-payable function does not fix msg.value to 0 |
 | `msgValueNonNegative` | `smtCheckerTests/bmc_coverage/range_check.sol` | msg.value is not known to be non-negative |
 | `branchesInModifiers` | `smtCheckerTests/control_flow/branches_with_return/branches_in_modifiers.sol` | a modifier containing `return` is not inlined, so the obligation stays open |
@@ -769,9 +772,6 @@ the canonical reset and push rules establish default ordinary values.
 
 | Function | Upstream (`test/libsolidity/`) | Why it stays open |
 |---|---|---|
-| `compoundSubSelfReference` | `smtCheckerTests/operators/compound_sub.sol` | true-fact-unprovable: a uint parameter carries no 0 <= x fact, goal leq(x, -1) ==> |
-| `compoundSubMapping` | `smtCheckerTests/operators/compound_sub_mapping.sol` | true-fact-unprovable: a uint parameter carries no 0 <= x fact, goal leq(x, -1) ==> |
-| `compoundSubArrayIndex` | `smtCheckerTests/operators/compound_sub_array_index.sol` | true-fact-unprovable: a uint parameter carries no 0 <= x fact, goal leq(x, -1) ==> |
 | `uncheckedCalledByCheckedWraps` | `semanticTests/arithmetics/unchecked_called_by_checked.sol` | design-limitation: unbounded integers, uint16 0xffff + 0x100 does not wrap to 0xff |
 | `checkedCalledByUncheckedWraps` | `semanticTests/arithmetics/checked_called_by_unchecked.sol` | design-limitation: unbounded integers, the unchecked uint16 sum 0x10000 does not wrap to 0 |
 | `blockInsideUnchecked` | `semanticTests/arithmetics/block_inside_unchecked.sol` | design-limitation: unbounded integers, 2**256 - 1 + 1 does not wrap to 0 |
@@ -779,10 +779,6 @@ the canonical reset and push rules establish default ordinary values.
 | `uncheckedUint8SubWraps` | `smtCheckerTests/overflow/underflow_sub.sol` | design-limitation: unbounded integers, uint8 0 - 1 does not wrap to 255 |
 | `uncheckedInt8SumWraps` | `smtCheckerTests/overflow/overflow_sum_signed.sol` | design-limitation: unbounded integers, int8 127 + 1 does not wrap to -128 |
 | `uncheckedInt8MulWraps` | `smtCheckerTests/overflow/overflow_mul_signed.sol` | design-limitation: unbounded integers, int8 100 * 2 does not wrap to -56 |
-| `shiftLeftParam` | `semanticTests/operators/shifts/shift_left.sol` | unsupported-construct: << has no rule, stuck on r = a_0 << b_0; |
-| `shiftRightParam` | `semanticTests/operators/shifts/shift_right.sol` | unsupported-construct: >> has no rule, stuck on r = a_0 >> b_0; |
-| `shiftRightAssign` | `semanticTests/operators/shifts/shift_constant_right_assignment.sol` | unsupported-construct: >>= has no rule, stuck on a >>= 8; |
-| `shiftRightNegativeLiteral` | `semanticTests/operators/shifts/shift_right_negative_literal.sol` | unsupported-construct: >> has no rule, stuck on r = -4266 >> 1; |
 
 ### `open/SolcHigherLevelOpen.sol`
 
@@ -817,12 +813,13 @@ the canonical reset and push rules establish default ordinary values.
 
 ## Gaps the first port found
 
-Every example closes. Seven were red when first written; the port is what found them, and they
-stay in the suite as regression tests.
+Seven examples were red when first written; the port is what found them, and they stay in
+the suite as regression tests. Default-value claims that need known tail data stay open under
+length-only push.
 
 | Function | Was | Fix |
 |---|---|---|
-| `SolcArrays.pushedSlotIsZeroed` | `storagePushLengthSave` bumped `size` without touching the new slot, so a freshly pushed slot stayed symbolic rather than zero | `push` now clears the appended slot with the same lazy `delAt` marker `pop` uses, which resolves by sort: a primitive element becomes `defaultValue`, a struct becomes a `delNode` that preserves mapping members (`TestSuite.testDeepPopDoesNotResetMappingMember`) |
+| `SolcArrays.pushedSlotIsZeroed` | A freshly pushed slot stays symbolic | Length-only push intentionally preserves the previous slot; the zero assertion needs a clear-tail precondition and remains open |
 | `SolcExpressions.bareIncrementOnLocal` | `i++;` as a statement had rules for storage paths but not for a local | added `local{Pre,Post}{in,de}crement` |
 | `SolcExpressions.compoundAssignOnLocal` | `r += e;` existed for storage paths only, and a non-simple RHS had no capture at any location | added `local{Add,Sub,Mul,Div,Mod}Assign` and the location-neutral `*AssignValueRhsCapture` family |
 | `SolcArrays.storageArrayAliasWritesThrough` | the array index rules split on `global` vs `complex`, so a `simple`+`local` alias root matched neither | dropped `global` from `storageIndex{Read,Write}Array*_root`, matching their `BindLocalRoot`/`StoreRoot`/`CopySource` siblings |
@@ -861,7 +858,7 @@ rather than an oversight. `docs/limitations.md` ranks them by how many tests eac
 - **Width, cleanup and wrapping** (`cleanup/`, most of `integer/`, `array/copying/*_uint40|uint128|packed`,
   checked-overflow reverts): the calculus uses unbounded integers. The value-preserving cases are
   in `SolcTypes`/`SolcArithmetic`, the rest in `open/`.
-- **Bitwise and shifts**, `bytes`, `bytesN`, `string`, `keccak256`, `abi.*`
+- **General bitwise operations and truncating shifts**, `bytes`, `bytesN`, `string`, `keccak256`, `abi.*`
   (`expressions/bit_operators.sol`, `strings/`, `abicoder/`, `crypto/`, `abi/`): no LDT.
 - **Reverting behaviour as the expectation** (`array/pop/array_pop_empty_exception.sol`,
   `array/dynamic_out_of_bounds_array_access.sol`, checked-revert tests): "this always reverts"

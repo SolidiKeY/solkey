@@ -1020,4 +1020,9 @@ contract SolcSmtControlFlow {
         uint e = 32**22 + 8;
         assert(r == e);
     }
+
+    /// solc: smtCheckerTests/bmc_coverage/assert.sol
+    function bmcRequireAlwaysTrue(uint x) public pure {
+        require(x >= 0);
+    }
 }

@@ -577,4 +577,64 @@ contract SolcArithmetic {
         uint r = b + c;
         assert(r == 58626);
     }
+
+    /// solc: smtCheckerTests/operators/compound_sub.sol
+    /// @custom:key box
+    function compoundSubSelfReference(uint x) public pure {
+        require(x < 100);
+        uint y = 200;
+        y -= y - x;
+        assert(y >= 0);
+    }
+
+    /// solc: smtCheckerTests/operators/compound_sub_mapping.sol
+    /// @custom:key box
+    function compoundSubMapping(uint x, uint p) public {
+        require(x < 100);
+        map[p] = 200;
+        map[p] -= map[p] - x;
+        uint r = map[p];
+        assert(r >= 0);
+    }
+
+    /// solc: smtCheckerTests/operators/compound_sub_array_index.sol
+    /// @custom:key box
+    function compoundSubArrayIndex(uint x, uint p) public {
+        require(p < array.length);
+        require(x < 100);
+        array[p] = 200;
+        array[p] -= array[p] - x;
+        uint r = array[p];
+        assert(r >= 0);
+    }
+
+    /// solc: semanticTests/operators/shifts/shift_left.sol
+    /// @custom:key box
+    function shiftLeftParam(uint a, uint b) public pure {
+        require(a == 0x4266 && b == 8);
+        uint r = a << b;
+        assert(r == 0x426600);
+    }
+
+    /// solc: semanticTests/operators/shifts/shift_right.sol
+    /// @custom:key box
+    function shiftRightParam(uint a, uint b) public pure {
+        require(a == 0x4266 && b == 8);
+        uint r = a >> b;
+        assert(r == 0x42);
+    }
+
+    /// solc: semanticTests/operators/shifts/shift_constant_right_assignment.sol
+    function shiftRightAssign() public pure {
+        uint a = 0x4200;
+        a >>= 8;
+        assert(a == 0x42);
+    }
+
+    /// solc: semanticTests/operators/shifts/shift_right_negative_literal.sol
+    function shiftRightNegativeLiteral() public pure {
+        int r = -4266 >> 1;
+        int e = -2133;
+        assert(r == e);
+    }
 }

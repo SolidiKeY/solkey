@@ -8,20 +8,22 @@ in `docs/key-taclets.md`; storage/memory shapes follow `docs/storage.md`.
 
 What is already implemented is **not** listed here — see
 `docs/taclets-implementation.md` for that, and do not re-add it. In short: all
-pure expression evaluation except bitwise, all arithmetic compound assignments
+pure expression evaluation except general bitwise, all arithmetic compound assignments
 at storage/local/memory targets, `++`/`--`, `delete`, `if`/`if`-`else`, the
 storage and memory read/write/copy/push/pop families, the capture partition,
 and the `net` payment model.
 
 ## Tier 1 — Pure expression evaluation
 
-- **Bitwise** (`BinaryOp`): `&`, `|`, `^`, `<<`, `>>` (and `~x`). Deferred —
-  needs bitwise LDT operators; lower priority until int bit-ops are modelled.
+- **Bitwise** (`BinaryOp`): `&`, `|`, `^` and `~x` remain deferred.
+  `<<` and `>>` now have arithmetic taclets under the unbounded integer model;
+  left-shift truncation remains deferred with bounded integer semantics.
   `+x` is skipped for good (Solidity ≥0.5 removed it; Java KeY has no rule).
 
 ## Tier 2 — Remaining compound assignments
 
-- `&=`, `|=`, `^=`, `<<=`, `>>=`. Deferred — gated on Tier-1 bitwise support.
+- `&=`, `|=`, `^=` remain deferred. `<<=` and `>>=` work on local values;
+  storage/memory targets remain unsupported.
 
 ## Tier 3 — Control flow
 
@@ -33,10 +35,9 @@ and the `net` payment model.
 - **Loop invariants, what is left.** `whileInvariantBox`/`whileInvariantDiamond` are in
   (`docs/taclets-implementation.md`, "Loops"). Open: a body that writes memory gets no rule
   (anonymising the memory heap needs its well-formedness facts); a diamond loop without
-  `decreases` silently falls back to unwinding instead of failing with a message; a `uint`
-  parameter is not known to be non-negative, so an invariant over `n` needs `require(n >= 0)`
-  under a box and cannot be assumed under a diamond (an obligation could assume `0 <= p` for
-  every unsigned parameter). `MultiAuction.closeAuction` stays skipped: its loops transfer, so
+  `decreases` silently falls back to unwinding instead of failing with a message. Generated
+  obligations supply unsigned parameter non-negativity; values from arbitrary storage or
+  arithmetic still lack type ranges. `MultiAuction.closeAuction` stays skipped: its loops transfer, so
   their invariants must re-establish the contract's `\exists`/`\forall` ledger invariant at
   every callback.
 

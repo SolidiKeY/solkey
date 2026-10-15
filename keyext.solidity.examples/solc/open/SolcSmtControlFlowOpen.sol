@@ -73,12 +73,6 @@ contract SolcSmtControlFlowOpen {
         assert(!c5);
     }
 
-    // open: a uint parameter is not known to be non-negative, so the diamond leaves leq(x, -1) open
-    /// solc: smtCheckerTests/bmc_coverage/assert.sol
-    function bmcRequireAlwaysTrue(uint x) public pure {
-        require(x >= 0);
-    }
-
     // open: a non-payable function does not fix msg.value to 0
     /// solc: smtCheckerTests/bmc_coverage/msg_value_4.sol
     function msgValueZeroWhenNonPayable() public view {

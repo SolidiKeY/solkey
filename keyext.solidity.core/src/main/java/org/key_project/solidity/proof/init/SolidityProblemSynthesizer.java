@@ -32,7 +32,8 @@ import org.key_project.solidity.speclang.natspec.SpecType;
 /// select the box modality with a `/// @key box` natspec comment, which turns its leading
 /// `require` statements into assumptions instead of obligations (see `docs/require-assert.md`).
 ///
-/// Function parameters are declared as unconstrained program variables and passed to the call,
+/// Function parameters are declared as program variables and passed to the call; unsigned
+/// integer parameters are constrained to be non-negative,
 /// so a parameterized function is normally box-tagged and assumes the values its asserts rely
 /// on with a leading `require(x == 5 && y == 7)`.
 public final class SolidityProblemSynthesizer {
@@ -135,10 +136,24 @@ public final class SolidityProblemSynthesizer {
                 obligation = Key.implies(WELLFORMED, obligation);
             }
             return new KeyProblem(solFile.toAbsolutePath(), spec.choices(),
-                shapes.declarations(), variables, shapes.rules(), obligation);
+                shapes.declarations(), variables, shapes.rules(),
+                withParameterFacts(function, obligation));
         }
         return specifiedProblem(solFile, contract, function, contractSpec, functionSpec,
             spec.choices(), variables, call, where, shapes);
+    }
+
+    private static KeyFormula withParameterFacts(SolidityOutline.Function function,
+            KeyFormula obligation) {
+        KeyFormula facts = parameterFacts(function);
+        return facts.equals(Key.TRUE) ? obligation : Key.implies(facts, obligation);
+    }
+
+    private static KeyFormula parameterFacts(SolidityOutline.Function function) {
+        return Key.and(function.parameters().stream()
+                .filter(parameter -> parameter.type().matches("uint\\d*"))
+                .map(parameter -> Key.predicate("geq", Key.constant(parameter.name()), Key.num(0)))
+                .toList());
     }
 
     private static final KeyTerm STORAGE = Key.constant("storage");
@@ -176,6 +191,10 @@ public final class SolidityProblemSynthesizer {
                 : Key.labeled("msg.value == 0", Key.eq(MSG_VALUE, Key.num(0))));
         precondition.add(Key.labeled("msg.sender != this",
             Key.not(Key.eq(MSG_SENDER, Key.constant("self")))));
+        KeyFormula facts = parameterFacts(function);
+        if (!facts.equals(Key.TRUE)) {
+            precondition.add(facts);
+        }
         precondition.addAll(labeledClauses(functionSpec.requires(),
             text -> compiler.formula(text, SpecCompiler.Context.requires(parameters),
                 where + " requires")));

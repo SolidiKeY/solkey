@@ -17,7 +17,7 @@ Already fixed, and so removed: 1 (named arguments bind by position, 1B), 2 (modi
 | 4 | Type conversions are the identity | Not now | — |
 | 5 | `try` / `call{value}` keep storage | Later | 5A + 5D |
 | 6 | Unbounded integers | Not now | — |
-| 10 | No type range on parameters, `msg.value` | Not now | — |
+| 10 | Missing upper, enum and environment ranges | Partial | Unsigned input non-negativity implemented; remaining ranges deferred |
 
 ## Bugs that prove something false
 
@@ -82,13 +82,15 @@ function f() public pure {
 
 Bug 10 shares one need with bug 4: a per-type table of value ranges.
 
-### 10. Parameters, `msg.value` and `msg.sender` carry no type range
+### 10. Missing upper, enum and environment ranges
 
-`function g(uint x) public pure { assert(x >= 0); }` stays open. `SolidityProblemSynthesizer` adds `msg.value == 0` only when the function has a `@custom:key` clause.
+Generated obligations now assume non-negativity for `uint`/`uintN` inputs, in both
+modalities. Upper bounds, enum ranges and environment ranges remain missing.
+`SolidityProblemSynthesizer` adds `msg.value == 0` only when the function has a
+`@custom:key` clause.
 
 ```solidity
 enum Choice { A, B, C }
-function g(uint x) public pure { assert(x >= 0); }               // SolKey: open. EVM: holds
 function h(uint8 y) public pure { assert(y <= 255); }            // SolKey: open. EVM: holds
 function k(Choice c) public pure { assert(uint(c) < 3); }        // SolKey: open. EVM: holds
 function v() public payable { assert(msg.value >= 0); }          // SolKey: open. EVM: holds

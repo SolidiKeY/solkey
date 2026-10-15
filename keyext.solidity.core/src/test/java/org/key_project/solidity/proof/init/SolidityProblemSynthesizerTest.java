@@ -65,6 +65,34 @@ public class SolidityProblemSynthesizerTest {
     }
 
     @Test
+    void unsignedParameterFactsPreserveSignedInputs(@TempDir Path dir) throws IOException {
+        Path file = dir.resolve("ParameterFacts.sol");
+        Files.writeString(file, """
+                pragma solidity ^0.8.0;
+                contract ParameterFacts {
+                    function signedInput(int x) public pure {
+                        assert(x >= 0);
+                    }
+                    /// @custom:key box
+                    function unsignedInput(uint8 x) public pure {
+                        assert(x >= 0);
+                    }
+                    function unsignedDiamond(uint x) public pure {
+                        assert(x >= 0);
+                    }
+                }
+                """);
+        var signed = SolidityVerifier.verify(file, spec("ParameterFacts", "signedInput"),
+            10000, -1, 3);
+        assertEquals(SolidityVerifier.Status.OPEN, signed.status());
+        for (String function : List.of("unsignedInput", "unsignedDiamond")) {
+            var outcome =
+                SolidityVerifier.verify(file, spec("ParameterFacts", function), 10000, -1, 3);
+            assertEquals(SolidityVerifier.Status.PROVED, outcome.status(), function);
+        }
+    }
+
+    @Test
     void discardedArithmeticStillRequiresNormalCompletion(@TempDir Path dir) throws IOException {
         Path file = dir.resolve("Discard.sol");
         Files.writeString(file, """

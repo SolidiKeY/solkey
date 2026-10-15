@@ -86,11 +86,9 @@ performance-only). Struct-sorted element reads
 `selectStDelNodeIndexStruct`, which re-wraps the element exactly like the `RefField`
 rule (`delNode(selectSt(st, at(i)))`), so `delete arr` keeps the mapping members of
 struct elements.
-The reference reset selector clears logical children without a length comparison. The
-compiler still only clears its old valid range: the dangling-reference witness
-`StorageDanglingOpen.testDeleteArrayLeavesDataPastLength` is retained in `solc/open/`.
-Its current-compiler behavior is outside defined Solidity semantics and stays open under
-the canonical logical reset.
+Array reset selectors compare each index with the original length: valid elements are reset,
+while out-of-range data is preserved. The marker remains lazy, resolving only on reads.
+`StorageDangling.testDeleteArrayLeavesDataPastLength` exercises the preserved tail.
 
 `MapField` is the sub-sort that earns its place: it is the only case that reads
 *through* the delete marker (`selectSt(st, mf)`) instead of re-wrapping it
@@ -171,7 +169,7 @@ mapping member.
 `_unfold_leftFst` for complex receivers (the array form carrying the bounds goal
 pair of `storageIndexWriteArraySave`). `/=` and `%=` guard with
 `\if(se != 0)\then(…)\else(revert)`; integers are unbounded mathematical
-integers, so there is no overflow guard. Bitwise `&= |= ^= <<= >>=` parse but
+integers, so there is no overflow guard. Bitwise `&= |= ^=` and storage/memory `<<= >>=` parse but
 are deferred (no bitwise LDT). Listed under `// generalization:` comments.
 
 Local assignment values (`v = (lv = e)`, and `+= -= *= /= %=`) execute
@@ -179,6 +177,23 @@ through `local*AssignmentValue`: first perform the inner assignment, then
 copy its written value into the outer result. Existing RHS capture rules
 handle nested chains and preserve the outer target read after RHS evaluation.
 Division/modulo retain their existing zero-divisor reverts. Assignment values whose inner target is a heap location remain unsupported.
+
+### Shifts and unsigned parameters
+
+`shiftLeftAssignment` and `shiftRightAssignment` execute `<<` and `>>` into a
+local value. Both require a non-negative shift count. Left shift uses
+`mul(x, pow(2, n))`; right shift uses floor division `div(x, pow(2, n))`,
+including negative signed operands. Operand capture preserves the original
+operand types and evaluates the right operand before the left, matching the
+existing arithmetic calculus. `localShiftLeftAssign` and
+`localShiftRightAssign` handle `<<=` and `>>=` on local values through those
+expression taclets. Left-shift truncation is not modeled under the existing
+unbounded integer semantics. Storage/memory compound shifts and other bitwise
+operators remain unsupported.
+
+Generated function obligations assume non-negativity for `uint`/`uintN` inputs
+in both box and diamond modes. This does not add upper bounds or change the
+unbounded arithmetic operators, internal-call rules, or storage value ranges.
 
 ### Memory arithmetic
 Each memory arithmetic rule is its storage counterpart with
@@ -356,18 +371,15 @@ from **post-update** storage (bound emitted inside `\replacewith`, not via `\add
 machinery of §Delete — so a mapping nested in the popped element survives `pop()` and a
 later `push()`, exactly like `storageRootDelete` / `storageFieldDelete`.
 `storagePushLengthSave`, `storagePushLengthSaveReferenceElement`, and
-`storageLocalRootPushBind` clear the appended nonmapping slot with `delAt` before saving
-its new length. `storageLocalPrimitivePushBind` does the same for `v = sp.push()` with a
-primitive local `v`, binding it to the cleared slot's value (`\hasElementSort` picks the
-sort); `a.push() = a.push()` reaches it after the primitive-argument unfold. Fixed-array lengths survive the reset through the existing `wf`/`fixed`
-rules, ordinary values become default, and nested mapping members survive. Standalone
-mapping-element pushes use `storagePushLengthSaveMappingElement`; the mapping-return bind
-also changes only the length and preserves the entries. The fixed-array, dynamic-array,
-and struct return-default regressions in `TestSuite` cover unknown entry storage.
-The compiler's implementation relies on unused ordinary storage being clear; the logical
-push expresses Solidity's default-value guarantee directly. Compiler-specific writes through
-dangling references are retained as open witnesses in `StorageDanglingOpen`, rather than
-passing claims of the portable push rules. See `testDeepPopDoesNotResetMappingMember`.
+`storageLocalRootPushBind` update only the array length. A returned storage reference binds
+to the old-length index; `storageLocalPrimitivePushBind` reads that slot's existing value.
+Compound push assignments and increments also preserve the slot before applying their
+operator. Mapping-element pushes retain the same length-only behavior.
+No clean-tail invariant is assumed: unknown appended values stay symbolic, and explicit
+writes through popped aliases remain visible after a push. The four `StorageDangling`
+examples close under these compiler-style rules, although Solidity leaves dangling-reference
+executions undefined. Default-value examples without a justified clear or precondition stay
+open; pop/delete and shorter-copy clears still establish defaults in their valid ranges.
 `delAt(st, p)` names `st` once where the equivalent `save`-of-deleted-value form
 named it twice; reads commute through it with `selectOnDelAtCons`, and the reset still
 resolves on read through `delField<[alpha]>`.
@@ -817,10 +829,10 @@ fires, against the variables' current names.
   `revert` in it closes the goal through `revertBox`/`revertDiamond`.
 - The variant must decrease only when the loop goes on, i.e. when the condition holds again
   after the body: the iteration a `break` ends need not decrease it. `0 <= dec` is checked
-  because a `uint` is not known to be non-negative.
-- Integers are unbounded, so anonymised locals need no range facts; but neither is a `uint`
-  parameter non-negative, so a box example states `require(n >= 0)` and the diamond examples
-  loop over `values.length`, which `sizeNotNegative` bounds.
+  because an arbitrary arithmetic result is not known to be non-negative.
+- Integers are unbounded, so anonymised locals need no range facts. Generated obligations
+  assume unsigned input parameters are non-negative; array lengths are bounded by
+  `sizeNotNegative`.
 
 Examples: the `Loop invariants` section of `TestSuite.sol`, including a `\forall` over the
 written prefix of a storage array. That one needed `cnf_orComm` to get KeY-Java's guards back
@@ -859,9 +871,9 @@ by `SolcSemanticsExamplesTest` — an external cross-check of the calculus again
 of the language SolKey did not write. Provenance table, adaptation rules and the not-ported
 families are in `keyext.solidity.examples/solc/README.md`.
 
-All 72 functions close. The port found seven gaps no `TestSuite.sol` example reached; all were
-fixed, and their examples are now regression tests. See "Rules added or corrected by the solc
-port" below:
+The initial port found seven gaps no `TestSuite.sol` example reached. Its examples remain
+regression tests, including expected-open default-value assertions under symbolic tail storage.
+See "Rules added or corrected by the solc port" below:
 
 - `++`/`--` and `+=` **as a statement on a local variable**; and a **non-simple RHS in a
   compound assignment** at any location (`total += a * 16;` was open for storage too).
@@ -870,8 +882,8 @@ port" below:
 - **Whole-value copy into an array or mapping element** (`pairs2[0] = src;`,
   `arrayMap[0] = row;`), which raised a `TermCreationException`.
 - **`?:` over memory references assigned into a storage target**, a `SolJSONParser` typing bug.
-- **A freshly pushed slot was not known to be zero** — `push` bumped `size` without touching
-  the appended slot.
+- **A freshly pushed slot stays symbolic** — length-only `push` intentionally leaves its
+  previous contents unchanged; zero assertions need a justified clear or precondition.
 
 Two more are worked around in the examples rather than fixed: `SolJSONParser` throws on a
 **self-recursive struct type** (`struct s2 { mapping(k => s2) recursive; }`), and a **mapping
@@ -900,18 +912,9 @@ closes where `nested.recursive[4].z` does not).
 - `storageIndexWrite{Array,Mapping}CopySource` carry the copied value sort-free, as
   `find<[StValue]>`, instead of hard-coding `int` / `Struct` — the sort arrives with the
   read (see "Sort-free clearing and copying").
-- `storagePushLengthSave` clears the appended slot of a value-type array as well as bumping
-  `size`, mirroring `storagePopSave` (arrays of structs or arrays use
-  `storagePushLengthSaveReferenceElement`, which preserves fixed lengths and mapping members). It writes the lazy delete marker rather than an eager `defaultValue`, so the
-  reset resolves by sort: a primitive element becomes 0 (which is what makes
-  `arr.push(); assert(arr[0] == 0);` provable), while a struct element becomes a
-  `delNode` whose mapping members still read through — so
-  `testDeepPopDoesNotResetMappingMember`, where a bare `push` is asserted *not* to install an
-  empty element, keeps closing. Both rules carry the marker as `delAt(storage, path)`, which names
-  `storage` once rather than twice, so the term grows
-  linearly in the number of push/pop operations instead of doubling at each one — peak term size
-  for `SolcArrays.pushThenPopRestoresLength` fell from 6183 to 589, and its proof from 4.1s to
-  1.1s.
+- Empty-push rules change only `size` and preserve the appended slot. `storagePopSave`
+  still clears the removed slot with `delAt`, so pop-then-push defaults and nested mapping
+  preservation remain provable. Array deletion clears only the original valid range.
 - `SolJSONParser.parseConditional` types a `?:` from its branches instead of always `bool`,
   matching `SolidityToKeyConverter`. The wrong type made a reference-valued ternary look
   primitive, so it was captured into a `bool` temp and symbolic execution stalled.
