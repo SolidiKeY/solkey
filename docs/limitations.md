@@ -127,23 +127,22 @@ each one blocks (lower bounds: whole families are counted once where a report sa
 | 3 | String literals (`require`/`revert` messages, string arguments) | `Not yet supported literal` | `revertStrings/*`, `strings/*`; every Solidity by Example and OZ contract (messages dropped); 5 benchmark contracts |
 | 4 | Struct constructors `S(..)`, `S({..})` | `Unexpected reference declaration S expected a state variable.` | 17 tests (`simple_struct_allocation`, `struct_named_constructor`, `struct_temporary`, …); Todos, Ballot, BlindAuction |
 | 5 | `bytes32`/`bytes`, `keccak256`, `abi.*` | `No KeYSolidityType for bytes32` | `crypto/*`, `abi/*`, `abicoder/*`; Ballot, BlindAuction, Ownable |
-| 6 | Push forms: `a.push(memArr)`, `a.push(memStruct)`, `a.push() -= 1`, `++a.push()`, `f().push()` | stuck | 9 tests (`push_as_lhs_compound_assignment`, `push_as_lhs_struct`, `array_push_nested_from_memory`, `array_push_struct`, …) |
-| 7 | An assignment or compound assignment used as a value: `a = (b = c)`, `a += b += c`, `a[0] = a[1] = 1`, `(m = m2)[2] = 21`, modifier argument `m(r = 2)` | stuck | 10 tests (`functions_storage_var_*`, `compound_add_chain`, `short_circuit_*_touched`, `multiple_initializations`, …) |
-| 8 | Function types | `Type FunctionTypeName not covered` | 10 tests (`functionTypes/*`, `*_via_pointer`, `store_function_in_constructor*`, …) |
-| 9 | Modifiers with `return` or two `_;` | not inlined, the obligation stays open | 8 tests (`return_in_modifier`, `stacked_return_with_modifiers`, `function_modifier_multi_invocation`, `modifier_two_placeholders`, …) |
-| 10 | Inline array literals `[uint(1), 2, 3]` | `Not yet supported expression type` | 7 tests; Solidity by Example array contracts (rewritten with `push`) |
-| 11 | Contract creation `new D()` | stuck; multi-contract file needs `--contract` | `deployment/*`, `new_operator.sol`, `multi_creation.sol` |
-| 12 | Inline assembly | `Statement does not have type InlineAssembly` | `inlineAssembly/*` |
-| 13 | Nested or parenthesized tuple targets `(((a, ), )) = …`, `((a, b)) = …` | load error / stuck | 5 tests |
-| 14 | Integer → enum conversion `E(x)` | stuck | 4 tests; docs `StateMachine.nextStage` |
-| 15 | `super.f()`, base-qualified `Base.f()` (lowered to `address.f()`) | refused at load / stuck | 9 tests (`super_overload`, `diamond_super_*`, `explicit_base_class`, `inherited_function`, …) |
-| 16 | `for` loop in a modifier body (not lowered; `while` is) | stuck | 3 tests (`break_in_modifier`, `continue_in_modifier`, `function_modifier_loop`) |
-| 17 | `new T[](e)` with a non-simple length; `storageArr = new T[](n)` | stuck | 4 tests |
-| 18 | External call statement outside `try`; `try` argument with a side effect; `c.f{value: v}()`; `(bool, bytes memory) = a.call(..)` | stuck / load error | 5 tests; SbE `DenialOfService` attack |
-| 19 | Constant (expression) as a fixed array length `uint[LEN]` | `Array length LEN is not supported` | 2 tests |
-| 20 | `delete` on a local | stuck | 2 tests (`delete_local`, `delete_locals`) |
-| 21 | Effect-free expression statements `a + b;`, `arr.pop;`, `S[7][];`; a conditional callee `(c ? g : h)(..)` | stuck / load error | 4 tests |
-| 22 | Imports; pragma `^0.4` | `Source not found`; compiler version | ERC20 (inlined), Ownable; WETH9 |
+| 6 | An assignment or compound assignment used as a value: `a = (b = c)`, `a += b += c`, `a[0] = a[1] = 1`, `(m = m2)[2] = 21`, modifier argument `m(r = 2)` | stuck | 10 tests (`functions_storage_var_*`, `compound_add_chain`, `short_circuit_*_touched`, `multiple_initializations`, …) |
+| 7 | Function types | `Type FunctionTypeName not covered` | 10 tests (`functionTypes/*`, `*_via_pointer`, `store_function_in_constructor*`, …) |
+| 8 | Modifiers with `return` or two `_;` | not inlined, the obligation stays open | 8 tests (`return_in_modifier`, `stacked_return_with_modifiers`, `function_modifier_multi_invocation`, `modifier_two_placeholders`, …) |
+| 9 | Inline array literals `[uint(1), 2, 3]` | `Not yet supported expression type` | 7 tests; Solidity by Example array contracts (rewritten with `push`) |
+| 10 | Contract creation `new D()` | stuck; multi-contract file needs `--contract` | `deployment/*`, `new_operator.sol`, `multi_creation.sol` |
+| 11 | Inline assembly | `Statement does not have type InlineAssembly` | `inlineAssembly/*` |
+| 12 | Nested or parenthesized tuple targets `(((a, ), )) = …`, `((a, b)) = …` | load error / stuck | 5 tests |
+| 13 | Integer → enum conversion `E(x)` | stuck | 4 tests; docs `StateMachine.nextStage` |
+| 14 | `super.f()`, base-qualified `Base.f()` (lowered to `address.f()`) | refused at load / stuck | 9 tests (`super_overload`, `diamond_super_*`, `explicit_base_class`, `inherited_function`, …) |
+| 15 | `for` loop in a modifier body (not lowered; `while` is) | stuck | 3 tests (`break_in_modifier`, `continue_in_modifier`, `function_modifier_loop`) |
+| 16 | `new T[](e)` with a non-simple length | stuck | 3 tests |
+| 17 | External call statement outside `try`; `try` argument with a side effect; `c.f{value: v}()`; `(bool, bytes memory) = a.call(..)` | stuck / load error | 5 tests; SbE `DenialOfService` attack |
+| 18 | Constant (expression) as a fixed array length `uint[LEN]` | `Array length LEN is not supported` | 2 tests |
+| 19 | `delete` on a local | stuck | 2 tests (`delete_local`, `delete_locals`) |
+| 20 | Effect-free expression statements `a + b;`, `arr.pop;`, `S[7][];`; a conditional callee `(c ? g : h)(..)` | stuck / load error | 4 tests |
+| 21 | Imports; pragma `^0.4` | `Source not found`; compiler version | ERC20 (inlined), Ownable; WETH9 |
 
 ## (d) Spec-language gaps
 

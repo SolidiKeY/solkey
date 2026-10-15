@@ -299,7 +299,13 @@ mapping-index probe").
 
 ### Push / pop
 Push-lvalue `sp.push() = se` is desugared to `sp.push(se)` at **parse time**
-(`ParserUtils.parseAssignmentMaybe`), so it never reaches the prover. A no-arg
+(`ParserUtils.parseAssignmentMaybe`), so it never reaches the prover. A compound target
+`sp.push() op= se` is `storagePush{Add,Sub,Mul,Div,Mod}Assign`, and `++sp.push()`,
+`sp.push()--`, … are `storagePush{Pre,Post}{in,de}crement`: the push's update, then the
+operator's on the appended slot, as `storageIndexArray*Assign` write it with the bounds
+branch dropped (the slot is in bounds). A non-simple right side is captured first by
+`⟨name⟩AssignValueRhsCapture`, so it is evaluated before the push, as solc does. The receiver
+is simple (a root or an alias): `s.b.push() += 1` is stuck. A no-arg
 `arr.push()` is classified as a **complex storage path**, so the ordinary
 complex-receiver unfold rules capture its return slot — no dedicated push-field
 rules needed. Terminals: `storagePushValueSave`, `storagePushValueCopySource`
@@ -312,7 +318,12 @@ intervening alias). Indexed/member storage sources are captured by
 `storagePushValue_unfold_rightFstPrimitiveArgument` (a primitive local), so a source index
 with a side effect is evaluated once before the length update.
 `storage{Push,…}_unfold_leftFstReceiver` aliases a complex receiver first, whatever the
-argument; `storagePushValue_unfold_leftFstReceiver` takes any `Expression`. Array bounds/length are read
+argument; `storagePushValue_unfold_leftFstReceiver` takes any `Expression`.
+`storage{Push,PushValue,Pop}_unfold_leftCallReceiver` alias a receiver that is a call of a
+function of this contract returning a storage reference (`f().push()`, the
+`InternalCallExpression` sort), and `localValuePush_unfold_leftFstReceiver` a complex receiver
+of `v = nsp.push()`. `storagePushMemoryCopySource` takes a memory local `sp.push(mv)`,
+writing `copyMem(mtSt, memory, mv)` as `memoryToStorage*` do. Array bounds/length are read
 from **post-update** storage (bound emitted inside `\replacewith`, not via `\add`).
 `storagePopSave`'s nonempty branch clears the popped slot with the mapping-preserving
 `delAt(storage, sp · at(ℓ-1))` (not eager `defaultValue`), reusing the `delNode`
@@ -359,7 +370,8 @@ Source-level memory family covers heap field/index read & write, root aliasing,
 fresh allocation (`memoryReferenceDeclFreshAlloc`, with a `new(memory, r)` skolem
 branch), fixed-length array allocation (`memoryArrayFreshAlloc`, assignment form
 `mv = new T(len);`; `newArrayCapture` first binds a `new` written to a field or index path,
-memory or storage, to a fresh memory local), primitive-default vs. reference-slot
+memory or storage, to a fresh memory local, and `newArrayCaptureStorageRoot` one written to a
+state variable), primitive-default vs. reference-slot
 delete (`memoryRootDeleteFreshRebind` and field/index delete), and lazy
 storage↔memory copies via `copySt` / `copyMem` (`memoryStorageCopy` for
 `m = <simple storage path>;`, `memoryStorageCopyUnfold` captures a complex
@@ -891,7 +903,10 @@ anywhere in the program (`c# … #c`), via the `ExpandFunctionBody` transformer:
   declaration with a body whose modifiers can all be inlined, so `require`/`assert` do not
   match). A declaration `uint y = f(a);` reaches it through `localValueDeclInitDrop`, and a
   call nested in an expression (`f() + 1`, `a[f()] = g()`) through the operator unfolds, which
-  capture it into a temporary first.
+  capture it into a temporary first. The receiver of a push or pop, `f(a).push()`, is the
+  `InternalCallExpression` sort: the same callee, returning one storage reference;
+  `storage{Push,PushValue,Pop}_unfold_leftCallReceiver` bind it to a storage alias, which
+  `internalCallExpand` then fills.
 
 The transformer emits
 

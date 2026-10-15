@@ -32,7 +32,7 @@ and `ProofSession.start(...)` calls still work.
 | `session.lastSearch()` | Snapshot of the most recent search, or `null` before search/after manual apply or prune |
 | `GoalExplanation.explain(session.proof(), maxGoals)` | What `--why` prints, as records: per open goal its last rules and the stuck terms (`PROGRAM`: an active statement no rule executes; `NO_RULE`: a read on a constructor the calculus has no rule for; `REFUSED`: a matching rule the strategy refuses); `format(...)` renders them |
 | `new ProofScript(session, out).run(text)` | What `--script` runs; `ProofScript.HELP` lists the commands |
-| `StepBudget.load(path)` / `recordedBudget(contract, function)` / `estimate(sourceBytes)` | The `--baseline`/`steps.txt` format and the budget derived from it; pass the result to `Limits.steps(n)` with no timeout for a deterministic run |
+| `StepBudget.estimate(solFile, contract, function)` / `load(path).recordedBudget(contract, function)` | A deterministic step budget from the function's source size, or from a `--baseline` file's count; pass it to `Limits.steps(n)` with no timeout |
 | `session.ruleDiagnosticsAt(serial, offset or text)` | Matching taclet candidates, missing schema variables, current strategy cost and approval disposition, diagnostic exceptions |
 | `session.sequent(serial)` / `session.termAt(serial, offset or text)` | Actual logic objects; inspect `op()`, `sort()`, `subs()`, and bound/free variables |
 | `session.proof().getServices().getNamespaces()` | Inspect registered sorts, functions and variables; open goals also expose `getOverlayServices()` |

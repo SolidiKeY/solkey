@@ -8,6 +8,7 @@ contract SolcArithmetic {
     uint value2;
     mapping(uint => uint) map;
     uint[] array;
+    uint[] pushed;
     uint constant DEPTH = 32;
     uint constant MAX_COUNT = 2**DEPTH - 1;
     uint constant CX = 7;
@@ -513,5 +514,16 @@ contract SolcArithmetic {
         int r = -SIGNED_CONSTANT;
         int expected = -42;
         assert(r == expected);
+    }
+
+    /// solc: smtCheckerTests/operators/unary_add_array_push_1.sol
+    /// @custom:key box
+    function unaryAddOnPush() public {
+        require(pushed.length == 0);
+        ++pushed.push();
+        uint len = pushed.length;
+        uint r = pushed[0];
+        assert(len == 1);
+        assert(r == 1);
     }
 }

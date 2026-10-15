@@ -23,14 +23,14 @@ EVM without a failing `assert`:
 | `SolcMappings.sol` | `structs/*mapping*`, `array/copying/array_elements_to_mapping.sol` | 9 |
 | `SolcControlFlow.sol` | `statements/`, `various/`, `expressions/conditional_expression_storage_memory_*` | 10 |
 | `SolcLoops.sol` | `statements/`, `viaYul/loops/`, loop-heavy `array/`; smt `loops/` | 49 |
-| `SolcArrayMembers.sol` | `array/` push, pop, delete, copying, allocation; `storage/`; smt `array_members/` | 61 |
+| `SolcArrayMembers.sol` | `array/` push, pop, delete, copying, allocation; `storage/`; smt `array_members/` | 74 |
 | `SolcFunctionCalls.sol` | `functionCall/`, `freeFunctions/`; smt `functions/` | 29 |
 | `SolcStructsMappings.sol` | remaining `structs/`, mapping tests of `functionCall/`, `variables/`, `types/`, `storage/`, `viaYul/storage/`; smt `types/struct*`, `mapping*` | 50 |
 | `SolcConstructors.sol` | `constructor/`, `immutable/`, `constants/`, `scoping/`; smt constructor, `inheritance/constructor_*`, `file_level/` | 35 |
 | `SolcPayments.sol` | `payable/`, `receive/`, `fallback/`, `reverts/`, `errors/`, `tryCatch/`; smt `special/`, `blockchain_state/`, `try_catch/` | 35 |
 | `SolcModifiers.sol` | `modifiers/`; smt `modifiers/` | 34 |
 | `SolcSmtControlFlow.sol` | smt `control_flow/`, `bmc_coverage/`, `verification_target/`, `invariants/`, `complex/slither/` | 85 |
-| `SolcArithmetic.sol` | `arithmetics/`, `exponentiation/`, `integer/`, `operators/`; smt `operators/`, `overflow/` | 46 |
+| `SolcArithmetic.sol` | `arithmetics/`, `exponentiation/`, `integer/`, `operators/`; smt `operators/`, `overflow/` | 47 |
 | `SolcHigherLevel.sol` | `inheritance/`, `virtualFunctions/`, `getters/`; smt `inheritance/` | 19 |
 | `SolcTypes.sol` | `enums/`, `literals/`, `types/`; smt `types/`, `typecast/` | 39 |
 
@@ -244,6 +244,12 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `smtCheckerTests/array_members/push_as_lhs_2d.sol` | `pushLhs2dLast` |
 | `smtCheckerTests/array_members/push_as_lhs_3d.sol` | `pushLhs3dLast` |
 | `smtCheckerTests/array_members/length_1d_assignment_2d_storage_to_storage.sol` | `length2dStorageToStorage` |
+| `semanticTests/array/push/array_push_nested_from_memory.sol` | `pushNestedFromMemory` |
+| `smtCheckerTests/array_members/push_as_lhs_compound_assignment.sol` | `pushLhsCompound` |
+| `smtCheckerTests/array_members/push_as_lhs_struct.sol` | `pushLhsStruct` |
+| `smtCheckerTests/array_members/push_2d_arg_1_safe.sol` | `pushMemoryRowThenValue` |
+| `smtCheckerTests/array_members/storage_pointer_push_1.sol` | `storagePointerPush` |
+| `semanticTests/array/push/array_push_struct.sol` | `pushStructFromMemory` |
 
 ### `SolcFunctionCalls.sol`
 
@@ -565,6 +571,7 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `smtCheckerTests/operators/constant_propagation_2.sol` | `constantPropagationDivision` |
 | `smtCheckerTests/operators/const_exp_1.sol` | `constantExponent` |
 | `smtCheckerTests/operators/constant_evaluation_unary_minus_chc.sol` | `constantUnaryMinus` |
+| `smtCheckerTests/operators/unary_add_array_push_1.sol` | `unaryAddOnPush` |
 
 ### `SolcHigherLevel.sol`
 
@@ -669,14 +676,7 @@ the canonical reset and push rules establish default ordinary values.
 
 | Function | Upstream (`test/libsolidity/`) | Why it stays open |
 |---|---|---|
-| `pushNestedFromMemory` | `semanticTests/array/push/array_push_nested_from_memory.sol` | push(m) of a memory array onto a storage array of arrays is stuck on the program text |
-| `copyStorageStorageDynDyn` | `semanticTests/array/copying/array_copy_storage_storage_dyn_dyn.sol` | assigning new uint[](n) directly to a storage array is stuck on the program text |
-| `pushLhsCompound` | `smtCheckerTests/array_members/push_as_lhs_compound_assignment.sol` | a compound assignment to push() (u.push() -= 1) is stuck on the program text |
-| `pushLhsStruct` | `smtCheckerTests/array_members/push_as_lhs_struct.sol` | same as pushLhsAndRhs1d through struct members |
-| `pushMemoryRowThenValue` | `smtCheckerTests/array_members/push_2d_arg_1_safe.sol` | push(x) of a memory array onto a storage array of arrays is stuck on the program text |
-| `storagePointerPush` | `smtCheckerTests/array_members/storage_pointer_push_1.sol` | push() on the storage reference an internal call returns (f().push()) is stuck on the program text |
 | `popIsolated` | `semanticTests/array/pop/array_pop_isolated.sol` | the bare member access popIso.pop; as a statement is stuck on the program text |
-| `pushStructFromMemory` | `semanticTests/array/push/array_push_struct.sol` | push(s) of a memory struct onto a storage array of structs is stuck on the program text |
 
 ### `open/SolcFunctionCallsOpen.sol`
 
@@ -768,7 +768,6 @@ the canonical reset and push rules establish default ordinary values.
 | `compoundSubMapping` | `smtCheckerTests/operators/compound_sub_mapping.sol` | true-fact-unprovable: a uint parameter carries no 0 <= x fact, goal leq(x, -1) ==> |
 | `compoundSubArrayIndex` | `smtCheckerTests/operators/compound_sub_array_index.sol` | true-fact-unprovable: a uint parameter carries no 0 <= x fact, goal leq(x, -1) ==> |
 | `compoundAddChain` | `smtCheckerTests/operators/compound_add_chain.sol` | unsupported-construct: a compound assignment used as a value (u = (b += c);) has no rule |
-| `unaryAddOnPush` | `smtCheckerTests/operators/unary_add_array_push_1.sol` | unsupported-construct: ++pushed.push() has no rule |
 | `checkedModifierCalledByUnchecked` | `semanticTests/arithmetics/checked_modifier_called_by_unchecked.sol` | unsupported-construct: an expression statement (a + b;) in the modifier has no rule |
 | `uncheckedCalledByCheckedWraps` | `semanticTests/arithmetics/unchecked_called_by_checked.sol` | design-limitation: unbounded integers, uint16 0xffff + 0x100 does not wrap to 0xff |
 | `checkedCalledByUncheckedWraps` | `semanticTests/arithmetics/checked_called_by_unchecked.sol` | design-limitation: unbounded integers, the unchecked uint16 sum 0x10000 does not wrap to 0 |

@@ -43,7 +43,7 @@ public class ContractExamplesTest {
     void contractExampleCloses(String directory, String contract, String function)
             throws Exception {
         Proof proof =
-            SolidityExampleTests.proveWithRecordedBudget(directory, contract, function);
+            SolidityExampleTests.proveWithEstimatedBudget(directory, contract, function);
         if (KNOWN_OPEN.contains(contract + "." + function)) {
             assertFalse(proof.closed(), contract + "." + function
                 + " closed; remove it from KNOWN_OPEN");

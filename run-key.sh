@@ -56,7 +56,7 @@ else
             --baseline|--budget|--script-file|-o|--output)
                 ARGS+=("$1")
                 shift
-                if [ $# -gt 0 ]; then
+                if [ $# -gt 0 ] && [ "${1#-}" = "$1" ]; then
                     case "$1" in /*) ARGS+=("$1") ;; *) ARGS+=("$PWD/$1") ;; esac
                     shift
                 fi

@@ -19,7 +19,6 @@ import org.key_project.solidity.control.ProofSession;
 import org.key_project.solidity.control.StepBudget;
 import org.key_project.solidity.control.TacletChoices;
 import org.key_project.solidity.program.parser.SolcWrapper;
-import org.key_project.solidity.program.parser.SolidityOutline;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.init.SolidityProblemSpec;
@@ -142,13 +141,14 @@ public class CLI {
         description = "like --script, reading the script from FILE")
     File scriptFile;
 
-    @Option(names = "--budget", paramLabel = "FILE",
-        description = "a deterministic step budget per function instead of -m: the step count "
-            + "FILE records (a --baseline file) times 1.5 plus " + StepBudget.FLOOR
-            + ", or exactly "
-            + "the recorded count when that run was cut at a limit; an unrecorded function gets "
-            + "an estimate from its source size")
-    File budget;
+    @Option(names = "--budget", arity = "0..1", fallbackValue = "", paramLabel = "FILE",
+        description = "a deterministic step budget per function instead of -m and -t: "
+            + StepBudget.STEPS_PER_SOURCE_BYTE + " steps per byte of the function's source, "
+            + "clamped to " + StepBudget.MIN_ESTIMATE + ".." + StepBudget.MAX_ESTIMATE
+            + "; with FILE (a --baseline file, keep it in /tmp) a recorded count wins: it times "
+            + "1.5 plus " + StepBudget.FLOOR + ", or exactly the count when that run was cut at "
+            + "a limit")
+    String budget;
 
     private boolean hintPrinted;
     private StepBudget budgets;
@@ -301,23 +301,26 @@ public class CLI {
             throws IOException {
         Path file = cli.baseline.toPath();
         String prefix = cli.contractName() + ".";
-        boolean existed = Files.exists(file);
-        StepBudget previous = StepBudget.loadIfExists(file);
-        if (!existed || cli.baselineUpdate) {
-            StepBudget updated = StepBudget.empty();
-            previous.entries().forEach((key, entry) -> {
-                if (cli.function != null || !key.startsWith(prefix)) {
-                    updated.put(key, entry);
+        if (!Files.exists(file) || cli.baselineUpdate) {
+            StepBudget.locked(file, () -> {
+                StepBudget previous = StepBudget.loadIfExists(file);
+                StepBudget updated = StepBudget.empty();
+                previous.entries().forEach((key, entry) -> {
+                    if (cli.function != null || !key.startsWith(prefix)) {
+                        updated.put(key, entry);
+                    }
+                });
+                for (Outcome outcome : outcomes) {
+                    updated.put(prefix + outcome.name(), outcome.entry());
                 }
+                updated.write(file);
+                return null;
             });
-            for (Outcome outcome : outcomes) {
-                updated.put(prefix + outcome.name(), outcome.entry());
-            }
-            updated.write(file);
             System.out.println("baseline: recorded " + outcomes.size() + " statuses and step "
                 + "counts in " + file);
             return true;
         }
+        StepBudget previous = StepBudget.load(file);
         int regressions = 0;
         int changes = 0;
         for (Outcome outcome : outcomes) {
@@ -470,27 +473,13 @@ public class CLI {
             return limits();
         }
         if (budgets == null) {
-            budgets = StepBudget.loadIfExists(budget.toPath());
+            budgets = budget.isEmpty() ? StepBudget.empty()
+                    : StepBudget.loadIfExists(Path.of(budget));
         }
         Integer recorded = budgets.recordedBudget(contractName(), function);
-        int steps = recorded != null ? recorded : StepBudget.estimate(sourceBytes(function));
+        int steps =
+            recorded != null ? recorded : StepBudget.estimate(file.toPath(), contract, function);
         return ProofSession.Limits.steps(steps).withTimeoutMillis(timeout);
-    }
-
-    private int sourceBytes(String function) {
-        try {
-            for (var contract : SolidityOutline.of(file.toPath()).contracts()) {
-                if (this.contract == null || contract.name().equals(this.contract)) {
-                    var found = contract.function(function);
-                    if (found.isPresent()) {
-                        return found.get().source().byteLength();
-                    }
-                }
-            }
-        } catch (IOException | RuntimeException e) {
-            return 0;
-        }
-        return 0;
     }
 
     private String contractName() {

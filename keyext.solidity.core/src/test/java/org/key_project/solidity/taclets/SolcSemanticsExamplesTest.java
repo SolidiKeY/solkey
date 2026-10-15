@@ -36,7 +36,7 @@ public class SolcSemanticsExamplesTest {
     @MethodSource("examples")
     void solcSemanticsExampleCloses(String contract, String function) throws Exception {
         Proof proof =
-            SolidityExampleTests.proveWithRecordedBudget(DIRECTORY, contract, function);
+            SolidityExampleTests.proveWithEstimatedBudget(DIRECTORY, contract, function);
         assertTrue(proof.closed(),
             () -> SolidityExampleTests.describeOpenGoals(contract + "." + function, proof)
                     + SolidityExampleTests.budgetHint(DIRECTORY, contract));

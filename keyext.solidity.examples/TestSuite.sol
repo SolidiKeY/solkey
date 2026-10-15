@@ -72,6 +72,7 @@ contract TestSuite {
     bool flag2;
 
     uint[] values;
+    int[] signedValues;
     uint[] a;
     uint[][] matrix;
     uint[3] fixedValues;
@@ -269,6 +270,88 @@ contract TestSuite {
         tok.value = 7;
         tokens.push(tok);
         assert(tokens[0].value == 7);
+    }
+
+    /// @custom:key box
+    function storagePushMemoryCopySource() public {
+        require(matrix.length == 0);
+        uint[] memory row = new uint[](2);
+        row[1] = 7;
+        matrix.push(row);
+        uint r = matrix[0][1];
+        assert(r == 7);
+        assert(matrix[0].length == 2);
+    }
+
+    /// @custom:key box
+    function storagePushMemoryStructCopySource() public {
+        require(tokens.length == 0);
+        Token memory t;
+        t.value = 7;
+        tokens.push(t);
+        t.value = 8;
+        assert(tokens[0].value == 7);
+    }
+
+    function storagePushReturnPrimitiveBindComplexReceiver() public {
+        delete matrix;
+        matrix.push();
+        matrix[0].push(4);
+        uint y = matrix[0].push();
+        assert(y == 0);
+        assert(matrix[0].length == 2);
+    }
+
+    function storagePushCompoundTarget() public {
+        delete values;
+        values.push() += 5;
+        values.push() *= 3;
+        assert(values[0] == 5 && values[1] == 0);
+        assert(values.length == 2);
+    }
+
+    function storagePushDivModTarget() public {
+        delete values;
+        values.push() /= 2;
+        values.push() %= 2;
+        assert(values[0] == 0 && values[1] == 0);
+        assert(values.length == 2);
+    }
+
+    function storagePushIncrementTarget() public {
+        delete values;
+        ++values.push();
+        values.push()++;
+        assert(values[0] == 1 && values[1] == 1);
+        assert(values.length == 2);
+    }
+
+    function storagePushCompoundSigned() public {
+        delete signedValues;
+        signedValues.push() -= 4;
+        --signedValues.push();
+        signedValues.push()--;
+        assert(signedValues[0] == -4 && signedValues[1] == -1 && signedValues[2] == -1);
+        assert(signedValues.length == 3);
+    }
+
+    function valuesRef() internal view returns (uint[] storage) {
+        return values;
+    }
+
+    function storagePushPopCallReceiver() public {
+        delete values;
+        valuesRef().push();
+        valuesRef().push(42);
+        valuesRef().pop();
+        assert(values.length == 1);
+        assert(values[0] == 0);
+    }
+
+    function newArrayCaptureStorageRoot() public {
+        values = new uint[](3);
+        assert(values.length == 3);
+        assert(values[2] == 0);
     }
 
     // ── Require / assert: literal operand ──

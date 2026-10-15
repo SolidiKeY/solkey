@@ -53,6 +53,8 @@ public abstract class ProgramSVSort extends SortImpl {
     public static final ProgramSVSort STATEMENT = new ClassSVSort("Statement", Statement.class);
     public static final ProgramSVSort EXTERNAL_CALL = new ExternalCallSVSort();
     public static final ProgramSVSort INTERNAL_CALL = new InternalCallSVSort("InternalCall", false);
+    public static final ProgramSVSort INTERNAL_CALL_EXPRESSION =
+        new InternalCallExpressionSVSort();
 
 
     @SuppressWarnings("argument.type.incompatible")

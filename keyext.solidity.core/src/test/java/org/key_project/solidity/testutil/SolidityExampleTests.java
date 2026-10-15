@@ -12,9 +12,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -177,9 +175,10 @@ public final class SolidityExampleTests {
     }
 
     public static String budgetHint(String directory, String contract) {
-        return "\nIf the proof only needs more steps than recorded, re-record the budget with "
-            + "`scripts/record-steps.sh " + directory + "/" + contract + ".sol` and commit "
-            + directory + "/" + StepBudget.FILE_NAME;
+        return "\nThe proof ran with no timeout and " + StepBudget.STEPS_PER_SOURCE_BYTE
+            + " steps per byte of the function's source (StepBudget.estimate); if it only "
+            + "needs more steps, `./run-key.sh " + directory + "/" + contract + ".sol --json` "
+            + "shows how many";
     }
 
     public static String describeOpenGoals(String name, Proof proof, int maxGoals, int maxChars) {
@@ -225,23 +224,11 @@ public final class SolidityExampleTests {
         return prove(load(solFile, contract, function), maxSteps, timeout);
     }
 
-    private static final Map<String, StepBudget> BUDGETS = new ConcurrentHashMap<>();
-
-    public static Proof proveWithRecordedBudget(String directory, String contract,
-            String function) throws ProblemLoaderException, IOException {
-        StepBudget budgets = BUDGETS.computeIfAbsent(directory, d -> {
-            try {
-                return StepBudget.loadIfExists(examplesDir(d).resolve(StepBudget.FILE_NAME));
-            } catch (IOException e) {
-                throw new java.io.UncheckedIOException(e);
-            }
-        });
-        Integer steps = budgets.recordedBudget(contract, function);
-        assertTrue(steps != null, () -> directory + "/" + contract + "." + function
-            + " has no recorded step count in " + directory + "/" + StepBudget.FILE_NAME
-            + "; record it with `scripts/record-steps.sh " + directory + "/" + contract + ".sol`");
-        return proveFunction(example(directory + "/" + contract + ".sol"), contract, function,
-            steps, -1);
+    public static Proof proveWithEstimatedBudget(String directory, String contract,
+            String function) throws ProblemLoaderException {
+        Path sol = example(directory + "/" + contract + ".sol");
+        return proveFunction(sol, contract, function,
+            StepBudget.estimate(sol, contract, function), -1);
     }
 
     /// Run automode on the environment's loaded proof, optionally overriding the strategy's step

@@ -519,7 +519,7 @@ public class SolidityProblemSynthesizerTest {
                 contract Stuck {
                     uint[] dyn;
                     function assignNew() public {
-                        dyn = new uint[](10);
+                        dyn = new uint[](10 + 1);
                     }
                 }""");
         try (var session = ProofSession.open(file, spec(null, "assignNew"),
@@ -530,7 +530,7 @@ public class SolidityProblemSynthesizerTest {
             assertFalse(why.get(0).lastRules().isEmpty());
             var stuck = why.get(0).stuck().get(0);
             assertEquals(GoalExplanation.Kind.PROGRAM, stuck.kind());
-            assertTrue(stuck.term().contains("new uint[](10)"), stuck.term());
+            assertTrue(stuck.term().contains("new uint[](10 + 1)"), stuck.term());
         }
     }
 
@@ -576,7 +576,10 @@ public class SolidityProblemSynthesizerTest {
         assertTrue(cli(1, file.toString(), "-f", "holds", "--json", "--budget",
             baseline.toString()).contains("\"stopReason\":\"STEP_LIMIT\""));
         assertEquals(StepBudget.MIN_ESTIMATE, StepBudget.estimate(10));
-        assertEquals(25 * 1000, StepBudget.estimate(1000));
+        assertEquals(StepBudget.STEPS_PER_SOURCE_BYTE * 1000, StepBudget.estimate(1000));
+        assertEquals(StepBudget.MAX_ESTIMATE, StepBudget.estimate(1_000_000));
+        assertTrue(cli(1, file.toString(), "--json", "--budget").contains(
+            "\"budget\":" + StepBudget.estimate(file, "Cli", "holds")));
 
         Path broken = dir.resolve("Broken.sol");
         Files.writeString(broken, "contract Broken { function f() public { uint x = ; } }");

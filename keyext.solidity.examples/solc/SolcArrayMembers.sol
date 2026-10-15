@@ -16,6 +16,8 @@ contract SolcArrayMembers {
     struct Data { uint x; uint y; }
     struct St { uint a; uint[] finalArray; }
     struct SA { uint[][] arr; }
+    struct T { B s; }
+    struct PS { uint a; uint b; uint[3] c; uint[] d; }
 
     uint[] popData;
     uint[] pushData;
@@ -28,6 +30,12 @@ contract SolcArrayMembers {
     uint[] cleared;
     uint[] fromMemory;
     uint[][] nestedFromMem;
+    uint[][] nestedFromMemory;
+    int[] compound;
+    B sb;
+    T tsb;
+    uint[][] push2dArg;
+    PS[] structData;
     uint[] pushArg;
     uint[] zero1d;
     int[][] pushPush2;
@@ -361,8 +369,7 @@ contract SolcArrayMembers {
 
     /// solc: semanticTests/array/copying/array_copy_storage_storage_dyn_dyn.sol
     function copyStorageStorageDynDyn() public {
-        uint[] memory t = new uint[](10);
-        dyn1 = t;
+        dyn1 = new uint[](10);
         dyn1[5] = 4;
         dyn2 = dyn1;
         uint len = dyn2.length;
@@ -964,6 +971,71 @@ contract SolcArrayMembers {
         uint c = lenArr2.length;
         uint d = lenArr.length;
         assert(c == d);
+    }
+
+    /// solc: semanticTests/array/push/array_push_nested_from_memory.sol
+    function pushNestedFromMemory() public {
+        delete nestedFromMemory;
+        uint[] memory m = new uint[](3);
+        m[0] = 1;
+        nestedFromMemory.push(m);
+        assert(nestedFromMemory.length == 1);
+        assert(nestedFromMemory[0].length == m.length);
+        assert(nestedFromMemory[0].length > 0);
+        uint r = nestedFromMemory[0][0];
+        assert(r == 1);
+    }
+
+    /// solc: smtCheckerTests/array_members/push_as_lhs_compound_assignment.sol
+    /// @custom:key box
+    function pushLhsCompound() public {
+        require(compound.length == 0);
+        compound.push() -= 1;
+        assert(compound[0] < 0);
+    }
+
+    /// solc: smtCheckerTests/array_members/push_as_lhs_struct.sol
+    function pushLhsStruct() public {
+        sb.b.push() = tsb.s.b.push();
+        int l = sb.b[sb.b.length - 1];
+        int r = tsb.s.b[tsb.s.b.length - 1];
+        assert(l == r);
+    }
+
+    /// solc: smtCheckerTests/array_members/push_2d_arg_1_safe.sol
+    function pushMemoryRowThenValue() public {
+        uint[] memory x = new uint[](2);
+        uint y = 9;
+        push2dArg.push(x);
+        push2dArg[0].push(y);
+        assert(push2dArg[0][push2dArg[0].length - 1] == y);
+    }
+
+    /// solc: smtCheckerTests/array_members/storage_pointer_push_1.sol
+    function storagePointerPush() public {
+        threeRows().push();
+        assert(pointer2d[2].length > 0);
+    }
+
+    /// solc: semanticTests/array/push/array_push_struct.sol
+    /// @custom:key box
+    function pushStructFromMemory() public {
+        require(structData.length == 0);
+        PS memory s;
+        s.a = 2;
+        s.b = 3;
+        s.c[2] = 4;
+        s.d = new uint[](4);
+        s.d[2] = 5;
+        structData.push(s);
+        uint a = structData[0].a;
+        uint b = structData[0].b;
+        uint c = structData[0].c[2];
+        uint d = structData[0].d[2];
+        assert(a == 2);
+        assert(b == 3);
+        assert(c == 4);
+        assert(d == 5);
     }
 
 }

@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 contract SolcArithmeticOpen {
     uint[] array;
-    uint[] pushed;
     mapping(uint => uint) map;
 
     modifier addUnchecked(uint a, uint b) {
@@ -96,18 +95,6 @@ contract SolcArithmeticOpen {
         assert(b == 17 && a == 28);
         a += a += a;
         assert(a == 112);
-    }
-
-    // open: unsupported-construct: ++pushed.push() has no rule
-    /// solc: smtCheckerTests/operators/unary_add_array_push_1.sol
-    /// @custom:key box
-    function unaryAddOnPush() public {
-        require(pushed.length == 0);
-        ++pushed.push();
-        uint len = pushed.length;
-        uint r = pushed[0];
-        assert(len == 1);
-        assert(r == 1);
     }
 
     // open: unsupported-construct: an expression statement (a + b;) in the modifier has no rule

@@ -34,8 +34,8 @@ Cost is dominated by round-trips, not output size. So:
 ./run-key.sh --serve                           # background: keep a warm prover for later calls
 ./run-key.sh FILE.sol -f fnName --why          # one function; if open, what is stuck and where
 ./run-key.sh FILE.sol -f fn --script 'auto 50; rules on "x.push"; rule NAME on "x.push"; show'
-./run-key.sh FILE.sol --baseline B.txt         # only status changes vs. B.txt (written if absent)
-./run-key.sh FILE.sol --budget B.txt           # deterministic step budget from B.txt's counts
+./run-key.sh FILE.sol --baseline /tmp/B.txt    # only status changes vs. B.txt (written if absent)
+./run-key.sh FILE.sol --budget                 # step budget from source size, no timeout
 ./run-key.sh FILE.key -m 20000 --no-prove      # a .key problem; any CLI option works
 ./run-key.sh FILE.sol -O transferSemantics:withCallback   # a non-default taclet option
 ./run-key.sh FILE.sol --solc [-f fnName]       # compile, then run on an EVM: failing asserts
@@ -46,7 +46,6 @@ scripts/taclet.sh --index|--list|NAME   # rule banners | every rule's file:line 
 scripts/benchmark.sh                 # published contracts as published: N/M closed each
 scripts/open-check.sh                # open/ functions whose status changed (now close: move them)
 scripts/keysh <<'JAVA' ... JAVA      # JShell on the Java API, imports and jar preset (docs/debug-api.md)
-scripts/record-steps.sh [DIR/C.sol]   # re-record the example tests' steps.txt budgets
 
 ./gradlew :keyext.solidity.gui:solidityGui     # KeYther, the Swing GUI (web build: docs/web.md)
 ./gradlew :key.ui:shadowJar                    # fat JAR
@@ -128,6 +127,14 @@ comments untouched unless the change makes them wrong.
 **When planning a new taclet:** begin with a plain-English statement of the precondition (what
 must hold before the rule fires), the transformation (what sequent change it performs) and the
 postcondition. Write that before any KeY syntax.
+
+**A new construct gets taclets, never a lowering in the parser** (`SolJSONParser`,
+`ParserUtils`): no statement rewritten into other statements before the prover sees it. When
+the taclets differ only by operator (`+=`, `-=`, …, `++`, `--`), write one per operator and
+state the group once in a `// generalization:` comment (`docs/rule-generalizations.md`).
+
+**Do not write generated files into the source tree** (step budgets, baselines, scratch
+contracts): use `/tmp`.
 
 Add new taclet examples as functions of `keyext.solidity.examples/TestSuite.sol`, and
 scenario/invariant examples as contracts plus `.key` obligations in

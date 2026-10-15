@@ -223,8 +223,6 @@ many upstream tests and contracts each blocks; defects in supported constructs a
 - **`super.f()` and `Base.f()`** (the latter is lowered to `address.f()`), and **virtual
   dispatch from base functions** (resolve against the most-derived contract).
 - **Struct constructors** `S(..)`, `S({..})` in every position (extends `ObjectInit`, Tier 4).
-- **Push forms.** `a.push(memArr)`, `a.push(memStruct)`, `a.push() -= 1`,
-  `++a.push()`, `f().push()` on a returned storage reference.
 - **Assignment and compound assignment as values** beyond indices: `a = (b = c)`,
   `a += b += c`, `a[0] = a[1] = 1`, `(m = m2)[2] = 21`, modifier arguments `m(r = 2)`.
 - **Tuple targets**: nested `(((a, ), )) = …` and parenthesized `((a, b)) = …`.
@@ -232,11 +230,12 @@ many upstream tests and contracts each blocks; defects in supported constructs a
 - **Function types** (`FunctionTypeName`): internal pointers, `(c ? g : h)(..)` callees.
 - **Inline array literals** `[uint(1), 2, 3]`, and constant expressions as fixed array lengths
   (`uint[LEN]`, `uint[(a / b) * b]`).
-- **`new T[](e)` with a non-simple length**, and `storageArr = new T[](n)` (today both stuck;
-  bind the length / the array to a local first).
+- **`new T[](e)` with a non-simple length** (today stuck; bind the length to a local first).
 - **`delete` on a local** (`delete v;`).
 - **`for` loops inside modifier bodies** (lower them after `ModifierInlining`; `while` works).
 - **Effect-free expression statements**: `a + b;`, `arr.pop;`, `S[7][];` (evaluate and drop).
+- **A compound target `push()` on a complex receiver**: `s.b.push() += 1`, `++m[k].push()`
+  (`storagePush*Assign` / `*crement` take a root or an alias; needs receiver unfolds).
 - **Calls**: an external call as a statement outside `try`, a `try` argument with side
   effects, `c.f{value: v}()`, `(bool, bytes memory) = a.call(..)`, contract creation
   `new D()`, and executing the `try` callee instead of havocking it.
