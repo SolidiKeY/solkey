@@ -207,7 +207,9 @@ final class LoopLowering {
             before.add(declare(flags.of(Abrupt.RETURN), BoolLiteral.FALSE));
         }
 
-        Statement whileLoop = new WhileStatement(condition, new Block(iteration), loop.getSpec());
+        var spec = loop.getSpec();
+        Statement whileLoop = new WhileStatement(condition, new Block(iteration),
+            spec == null ? null : spec.withBreakFlag(flags.brk));
         if (before.isEmpty() && !(returns && outer == null)) {
             return new Lowered(whileLoop, returns ? EnumSet.of(Abrupt.RETURN) : Set.of());
         }

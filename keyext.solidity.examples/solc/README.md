@@ -22,7 +22,7 @@ proofs that require default values in an unconstrained storage tail are checked 
 | `SolcMemory.sol` | `structs/memory_*`, `array/copying`, `array/delete` | 11 |
 | `SolcMappings.sol` | `structs/*mapping*`, `array/copying/array_elements_to_mapping.sol` | 9 |
 | `SolcControlFlow.sol` | `statements/`, `various/`, `expressions/conditional_expression_storage_memory_*` | 10 |
-| `SolcLoops.sol` | `statements/`, `viaYul/loops/`, loop-heavy `array/`; smt `loops/` | 49 |
+| `SolcLoops.sol` | `statements/`, `viaYul/loops/`, loop-heavy `array/`; smt `loops/` | 54 |
 | `SolcArrayMembers.sol` | `array/` push, pop, delete, copying, allocation; `storage/`; smt `array_members/` | 74 |
 | `SolcFunctionCalls.sol` | `functionCall/`, `freeFunctions/`; smt `functions/` | 35 |
 | `SolcStructsMappings.sol` | remaining `structs/`, mapping tests of `functionCall/`, `variables/`, `types/`, `storage/`, `viaYul/storage/`; smt `types/struct*`, `mapping*` | 53 |
@@ -30,7 +30,7 @@ proofs that require default values in an unconstrained storage tail are checked 
 | `SolcConstructors.sol` | `constructor/`, `immutable/`, `constants/`, `scoping/`; smt constructor, `inheritance/constructor_*`, `file_level/` | 35 |
 | `SolcPayments.sol` | `payable/`, `receive/`, `fallback/`, `reverts/`, `errors/`, `tryCatch/`; smt `special/`, `blockchain_state/`, `try_catch/` | 35 |
 | `SolcModifiers.sol` | `modifiers/`; smt `modifiers/` | 47 |
-| `SolcSmtControlFlow.sol` | smt `control_flow/`, `bmc_coverage/`, `verification_target/`, `invariants/`, `complex/slither/` | 89 |
+| `SolcSmtControlFlow.sol` | smt `control_flow/`, `bmc_coverage/`, `verification_target/`, `invariants/`, `complex/slither/` | 91 |
 | `SolcArithmetic.sol` | `arithmetics/`, `exponentiation/`, `integer/`, `operators/`; smt `operators/`, `overflow/` | 59 |
 | `SolcHigherLevel.sol` | `inheritance/`, `virtualFunctions/`, `getters/`; smt `inheritance/` | 19 |
 | `SolcTypes.sol` | `enums/`, `literals/`, `types/`; smt `types/`, `typecast/` | 39 |
@@ -124,7 +124,7 @@ and `SolcTypesOpen.ternaryLiteralOverflow` (false on the EVM: soundness witnesse
 `docs/bugs.md`).
 
 ```bash
-./run-key.sh keyext.solidity.examples/solc/open/SolcLoopsOpen.sol -f forBreakOrIncrement --open-goals
+./run-key.sh keyext.solidity.examples/solc/open/SolcLoopsOpen.sol -f binomialFaithfulRowsSmall --open-goals
 ```
 
 ## Provenance
@@ -178,6 +178,10 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `smtCheckerTests/loops/for_loop_bmc_iterations_continue_4.sol` | `forContinueRunsUpdateAfterReassign` |
 | `smtCheckerTests/loops/for_loop_bmc_iterations_shallow_unroll.sol` | `forShallowUnrollAssertIsFalse` |
 | `semanticTests/array/push/push_no_args_2d.sol` | `pushChainedAssign` |
+| `smtCheckerTests/loops/for_1_break.sol` | `forBreakOrIncrement` |
+| `smtCheckerTests/loops/while_1_break.sol` | `whileBreakOrIncrement` |
+| `smtCheckerTests/loops/while_nested_break.sol` | `nestedWhileBreak` |
+| `smtCheckerTests/loops/while_nested_continue.sol` | `nestedWhileContinue` |
 
 ### `SolcArrayMembers.sol`
 
@@ -515,6 +519,8 @@ let them close under the normal source-size budgets, without a clean-tail invari
 | `smtCheckerTests/control_flow/short_circuit_or_need_both.sol` | `shortCircuitOrNeedBoth` |
 | `smtCheckerTests/control_flow/short_circuit_or_inside_branch.sol` | `shortCircuitOrInsideBranch` |
 | `smtCheckerTests/control_flow/short_circuit_and_inside_branch.sol` | `shortCircuitAndInsideBranch` |
+| `smtCheckerTests/control_flow/short_circuit_and_touched.sol` | `shortCircuitAndTouched` |
+| `smtCheckerTests/control_flow/short_circuit_or_touched.sol` | `shortCircuitOrTouched` |
 | `smtCheckerTests/control_flow/short_circuit_and_touched_function.sol` | `shortCircuitAndTouchedFunction` |
 | `smtCheckerTests/control_flow/short_circuit_or_touched_function.sol` | `shortCircuitOrTouchedFunction` |
 | `smtCheckerTests/control_flow/side_effects_inside_if_1.sol` | `sideEffectsInsideIf1` |
@@ -707,10 +713,6 @@ portable Solidity guarantee. No clean-tail invariant is assumed.
 
 | Function | Upstream (`test/libsolidity/`) | Why it stays open |
 |---|---|---|
-| `forBreakOrIncrement` | `smtCheckerTests/loops/for_1_break.sol` | the invariant cannot name the lowered break flag, so the exit by break keeps x in [0, 10) |
-| `whileBreakOrIncrement` | `smtCheckerTests/loops/while_1_break.sol` | the invariant cannot name the lowered break flag, so the exit by break keeps x in [0, 10) |
-| `nestedWhileBreak` | `smtCheckerTests/loops/while_nested_break.sol` | the invariant cannot name the lowered break flag of the inner loop |
-| `nestedWhileContinue` | `smtCheckerTests/loops/while_nested_continue.sol` | the invariant cannot name the lowered break flag of the inner loop |
 | `binomialFaithfulRowsSmall` | `semanticTests/array/memory_arrays_of_various_sizes.sol` | new uint256[][](n + 1) with a non-simple length is stuck on the program text |
 | `binomialRowsNine` | `semanticTests/array/memory_arrays_of_various_sizes.sol` | nested memory rows: does not close within the default budget, nor with -m 1000000 |
 | `multiArrayFillByPushLoops` | `semanticTests/array/dynamic_multi_array_cleanup.sol` | nested push loops exceed the suite budget of 50000 steps / 30 s |
@@ -758,8 +760,6 @@ portable Solidity guarantee. No clean-tail invariant is assumed.
 
 | Function | Upstream (`test/libsolidity/`) | Why it stays open |
 |---|---|---|
-| `shortCircuitAndTouched` | `smtCheckerTests/control_flow/short_circuit_and_touched.sol` | an assignment used as an operand, `b = (flag = false)`, is stuck on the program text |
-| `shortCircuitOrTouched` | `smtCheckerTests/control_flow/short_circuit_or_touched.sol` | an assignment used as an operand, `b = (flag = true)`, is stuck on the program text |
 | `msgValueZeroWhenNonPayable` | `smtCheckerTests/bmc_coverage/msg_value_4.sol` | a non-payable function does not fix msg.value to 0 |
 | `msgValueNonNegative` | `smtCheckerTests/bmc_coverage/range_check.sol` | msg.value is not known to be non-negative |
 

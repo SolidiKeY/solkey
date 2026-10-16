@@ -13,6 +13,7 @@ import org.key_project.solidity.testutil.SolidityExampleTests;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -50,6 +51,21 @@ public class TacletStarterExamplesTest {
             assertTrue(proof.closed(),
                 () -> SolidityExampleTests.describeOpenGoals(function, proof));
         }
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = { "unprovableInvariantBreakPostcondition",
+        "unprovableInvariantForContinueUpdate" })
+    void loopInvariantRejectsFalsePostcondition(String function) throws Exception {
+        Proof proof = proveTestSuiteFunction(function, 10000, SolidityExampleTests.KEEP_TIMEOUT);
+        assertFalse(proof.closed(), function + " unexpectedly proved a false assertion");
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = { "unprovableStorageShortCircuitMutation" })
+    void shortCircuitRejectsSkippedMutation(String function) throws Exception {
+        Proof proof = proveTestSuiteFunction(function, 10000, SolidityExampleTests.KEEP_TIMEOUT);
+        assertFalse(proof.closed(), function + " unexpectedly proved a skipped storage write");
     }
 
     static Stream<Arguments> examples() throws IOException {

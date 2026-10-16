@@ -26,17 +26,27 @@ import org.jspecify.annotations.Nullable;
 /// conjunction of the clauses. `\getVariant(cond, body, dec)` binds `dec` to its `decreases`
 /// term and fails when there is none.
 public class LoopInvariantCondition implements VariableCondition {
+    public enum Kind {
+        INVARIANT("\\getInvariant"), VARIANT("\\getVariant"), BREAK("\\getLoopBreak");
+
+        private final String command;
+
+        Kind(String command) {
+            this.command = command;
+        }
+    }
+
     private final ProgramSV conditionSV;
     private final ProgramSV bodySV;
     private final SchemaVariable resultSV;
-    private final boolean variant;
+    private final Kind kind;
 
     public LoopInvariantCondition(ProgramSV conditionSV, ProgramSV bodySV,
-            SchemaVariable resultSV, boolean variant) {
+            SchemaVariable resultSV, Kind kind) {
         this.conditionSV = conditionSV;
         this.bodySV = bodySV;
         this.resultSV = resultSV;
-        this.variant = variant;
+        this.kind = kind;
     }
 
     @Override
@@ -59,9 +69,16 @@ public class LoopInvariantCondition implements VariableCondition {
                 || LoopFrame.of(loop.getBody()).memory()) {
             return null;
         }
-        Term result = variant ? LoopSpecCompiler.variant(spec, services)
-                : withWellformedStorage(LoopSpecCompiler.invariant(spec, services), loop,
-                    services);
+        Term result = switch (kind) {
+            case VARIANT -> LoopSpecCompiler.variant(spec, services);
+            case INVARIANT -> withWellformedStorage(LoopSpecCompiler.invariant(spec, services),
+                loop, services);
+            case BREAK -> spec.breakFlag() == null ? services.getTermBuilder().ff()
+                    : services.getTermBuilder().equals(
+                        services.getTermBuilder().var(spec.breakFlag()),
+                        services.getTermBuilder().func(
+                            services.getNamespaces().requireFunction("TRUE")));
+        };
         return result == null ? null
                 : matchCond.setInstantiations(svInst.add(resultSV, result, services));
     }
@@ -94,7 +111,7 @@ public class LoopInvariantCondition implements VariableCondition {
 
     @Override
     public String toString() {
-        return (variant ? "\\getVariant(" : "\\getInvariant(") + conditionSV.name() + ", "
+        return kind.command + "(" + conditionSV.name() + ", "
             + bodySV.name() + ", " + resultSV.name() + ")";
     }
 }

@@ -596,6 +596,67 @@ contract TestSuite {
         assert(r);
     }
 
+    function logicalAndStorageAssignment(bool left) public {
+        flag = false;
+        bool r = left && (flag = true);
+        assert(r == left);
+        assert(flag == left);
+    }
+
+    function logicalOrStorageAssignment(bool left) public {
+        flag = true;
+        bool r = left || (flag = false);
+        assert(r == left);
+        assert(flag == left);
+    }
+
+    function storageAssignmentValueNested() public {
+        bool r = (flag = (flag2 = true));
+        assert(r && flag && flag2);
+        uint n = (total = 7);
+        assert(n == 7 && total == 7);
+        bool m = (toggle.on = false);
+        assert(!m && !toggle.on);
+    }
+
+    function storageAssignmentValueIndexOnce() public {
+        uint i = 0;
+        flags[0] = false;
+        flags[1] = false;
+        bool r = (flags[i++] = true);
+        assert(r && flags[0]);
+        assert(!flags[1] && i == 1);
+    }
+
+    function storageAssignmentValueRhsBeforeIndex() public {
+        uint i = 0;
+        flags[0] = false;
+        bool r = (flags[i++] = ((i = 2) == 2));
+        assert(r && flags[2]);
+        assert(!flags[0] && i == 3);
+    }
+
+    function logicalAndStorageAssignmentSkipsIndex() public {
+        uint i = 0;
+        flags[0] = false;
+        bool r = false && (flags[i++] = true);
+        assert(!r && !flags[0] && i == 0);
+    }
+
+    function logicalOrStorageAssignmentSkipsIndex() public {
+        uint i = 0;
+        flags[0] = true;
+        bool r = true || (flags[i++] = false);
+        assert(r && flags[0] && i == 0);
+    }
+
+    function unprovableStorageShortCircuitMutation() public {
+        flag = false;
+        bool r = false && (flag = true);
+        assert(!r);
+        assert(flag);
+    }
+
     function logicalNotSimple() public pure {
         bool r = !false;
         assert(r);
@@ -4332,6 +4393,67 @@ contract TestSuite {
             i = i + 1;
         }
         assert(s == 2 * values.length);
+    }
+
+    /// @custom:key box
+    function invariantBreakLeavesInvariantRange(uint n) public pure {
+        require(n > 0);
+        uint i = 0;
+        /// @custom:key invariant i == 0
+        while (i < n) {
+            i = n + 1;
+            break;
+        }
+        assert(i == n + 1);
+    }
+
+    /// @custom:key box
+    function invariantForContinueRunsUpdate(uint n) public pure {
+        uint count = 0;
+        /// @custom:key invariant 0 <= i && i <= n && count == i
+        for (uint i = 0; i < n; ++i) {
+            ++count;
+            continue;
+        }
+        assert(count == n);
+    }
+
+    /// @custom:key box
+    function invariantForBreakSkipsUpdate(uint n) public pure {
+        require(n > 0);
+        uint i = 0;
+        /// @custom:key invariant i == 0
+        for (; i < n; ++i) {
+            if (i == 0) {
+                i = n + 1;
+                break;
+            }
+        }
+        assert(i == n + 1);
+    }
+
+    /// @custom:key box
+    function unprovableInvariantBreakPostcondition(uint n) public pure {
+        require(n > 0);
+        uint i = 0;
+        /// @custom:key invariant i == 0
+        while (i < n) {
+            i = n + 1;
+            break;
+        }
+        assert(i <= n);
+    }
+
+    /// @custom:key box
+    function unprovableInvariantForContinueUpdate(uint n) public pure {
+        require(n > 0);
+        uint count = 0;
+        /// @custom:key invariant 0 <= i && i <= n && count == i
+        for (uint i = 0; i < n; ++i) {
+            ++count;
+            continue;
+        }
+        assert(count == n + 1);
     }
 
     function invariantVariantSkipsBreakIteration(uint n) public pure {

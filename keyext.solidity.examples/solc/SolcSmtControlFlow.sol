@@ -539,6 +539,34 @@ contract SolcSmtControlFlow {
         assert(b);
     }
 
+    /// solc: smtCheckerTests/control_flow/short_circuit_and_touched.sol
+    function shortCircuitAndTouched() public {
+        bool c1 = (flag = false) && (flag == true);
+        assert(!c1);
+        bool c2 = (flag == false) && (flag = true);
+        assert(c2);
+        bool c3 = (flag = false) && (flag = true);
+        assert(!c3);
+        bool c4 = (flag == false) && (flag == true);
+        assert(!c4);
+        bool c5 = (flag = true) && flag;
+        assert(c5);
+    }
+
+    /// solc: smtCheckerTests/control_flow/short_circuit_or_touched.sol
+    function shortCircuitOrTouched() public {
+        bool c1 = (flag = true) || (flag == false);
+        assert(c1);
+        bool c2 = (flag == true) || (flag = false);
+        assert(c2);
+        bool c3 = (flag = true) || (flag = false);
+        assert(c3);
+        bool c4 = (flag == true) || (flag == false);
+        assert(c4);
+        bool c5 = (flag = false) || flag;
+        assert(!c5);
+    }
+
     /// solc: smtCheckerTests/control_flow/short_circuit_and_touched_function.sol
     function shortCircuitAndTouchedFunction() public {
         bool c1 = setFlag(false) && (flag == true);

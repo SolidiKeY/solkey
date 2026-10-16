@@ -14,7 +14,17 @@ import org.jspecify.annotations.Nullable;
 
 public record LoopSpec(List<String> invariants, @Nullable String decreases,
         Map<String, Binding> bindings, SolidityOutline.Contract contract,
-        SolidityOutline.Function function) {
+        SolidityOutline.Function function, @Nullable ProgramVariable breakFlag) {
+
+    public LoopSpec(List<String> invariants, @Nullable String decreases,
+            Map<String, Binding> bindings, SolidityOutline.Contract contract,
+            SolidityOutline.Function function) {
+        this(invariants, decreases, bindings, contract, function, null);
+    }
+
+    public LoopSpec withBreakFlag(@Nullable ProgramVariable variable) {
+        return new LoopSpec(invariants, decreases, bindings, contract, function, variable);
+    }
 
     public record Binding(ProgramVariable variable, String type) {
     }
@@ -31,6 +41,10 @@ public record LoopSpec(List<String> invariants, @Nullable String decreases,
             }
             renamed.put(entry.getKey(), binding);
         }
-        return changed ? new LoopSpec(invariants, decreases, renamed, contract, function) : this;
+        ProgramVariable renamedBreak = breakFlag == null ? null
+                : replacements.getOrDefault(breakFlag, breakFlag);
+        return changed || renamedBreak != breakFlag
+                ? new LoopSpec(invariants, decreases, renamed, contract, function, renamedBreak)
+                : this;
     }
 }

@@ -34,7 +34,8 @@ and the `net` payment model.
   (see the Tier-5 entry below).
 - **Loop invariants, what is left.** `whileInvariantBox`/`whileInvariantDiamond` are in
   (`docs/taclets-implementation.md`, "Loops"). Open: a body that writes memory gets no rule
-  (anonymising the memory heap needs its well-formedness facts); a diamond loop without
+  (anonymising the memory heap needs its well-formedness facts); completion-sensitive break
+  exits for diamond loops and direct return dispatch for invariant rules; a diamond loop without
   `decreases` silently falls back to unwinding instead of failing with a message. Generated
   obligations supply unsigned parameter non-negativity; values from arbitrary storage or
   arithmetic still lack type ranges. `MultiAuction.closeAuction` stays skipped: its loops transfer, so
@@ -240,8 +241,7 @@ many upstream tests and contracts each blocks; defects in supported constructs a
   antecedents for every parameter's type and for `msg.value`/`msg.sender` (also in unspecified
   obligations, with `msg.value == 0` for non-payable functions).
 - **Immutables** as values, not storage slots (constants are inlined at reads).
-- **Spec language**: name a loop's lowered `break` flag in its invariant; `\old` inside loop
-  invariants; ether/time units and `block` in clauses; signed `/` and `%` matching the program's
-  `sdiv`/`smod`; library struct members.
+- **Spec language**: `\old` inside loop invariants; ether/time units and `block` in clauses;
+  signed `/` and `%` matching the program's `sdiv`/`smod`; library struct members.
 - **Strategy**: heuristics for the remaining `sdiv` bound lemmas (or a selectable arithmetic mode
   on the `.sol` path), and `\heuristics(pullOutQuantifierEx)` on `ex_pull_out*`.

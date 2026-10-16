@@ -5,6 +5,7 @@ package org.key_project.solidity.program.ast.visitor;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -20,6 +21,8 @@ import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocat
 import org.key_project.solidity.program.ast.expressions.*;
 import org.key_project.solidity.program.ast.expressions.operators.*;
 import org.key_project.solidity.program.ast.statement.*;
+import org.key_project.solidity.program.parser.SolidityOutline;
+import org.key_project.solidity.speclang.LoopSpec;
 import org.key_project.util.collection.ImmutableArray;
 
 import org.junit.jupiter.api.Disabled;
@@ -170,6 +173,34 @@ public class ProgVarReplaceVisitorTest {
         assertSame(replacement,
             ((UnaryExpression) Objects.requireNonNull(((ForStatement) forLoop).getUpdate())
                     .getUpdate()).getExp());
+    }
+
+    @Test
+    void testLoopBreakFlagRenamedWithBindings() {
+        Block body =
+            parseBlock("{ bool original = false; while (!original) { original = true; } }");
+        ProgramVariable original = getDeclaredVar(body);
+        ProgramVariable renamed = new ProgramVariable(new Name("renamedBreak"),
+            original.getKeYSolidityType(), original.getDataLocation());
+        map.put(original, renamed);
+        SolidityOutline.Function function = new SolidityOutline.Function("f", List.of(), 0,
+            "", SolidityOutline.Span.NONE);
+        SolidityOutline.Contract contract = new SolidityOutline.Contract("C", List.of(function));
+        LoopSpec spec = new LoopSpec(List.of("true"), null,
+            Map.of("original", new LoopSpec.Binding(original, "bool")), contract, function)
+                .withBreakFlag(original);
+        assertSame(spec, spec.rename(Map.of()));
+        WhileStatement loop = (WhileStatement) body.getStatements().get(1);
+        WhileStatement specified = new WhileStatement(Objects.requireNonNull(loop.getCondition()),
+            loop.getBody(), spec);
+
+        WhileStatement result = (WhileStatement) runOn(specified);
+        LoopSpec resultSpec = Objects.requireNonNull(result.getSpec());
+        assertSame(renamed, Objects.requireNonNull(resultSpec.breakFlag()));
+        assertSame(renamed,
+            Objects.requireNonNull(resultSpec.bindings().get("original")).variable());
+        assertSame(renamed,
+            ((UnaryExpression) Objects.requireNonNull(result.getCondition())).getExp());
     }
 
     @Test

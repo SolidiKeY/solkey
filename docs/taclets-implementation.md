@@ -184,7 +184,14 @@ Local assignment values (`v = (lv = e)`, and `+= -= *= /= %=`) execute
 through `local*AssignmentValue`: first perform the inner assignment, then
 copy its written value into the outer result. Existing RHS capture rules
 handle nested chains and preserve the outer target read after RHS evaluation.
-Division/modulo retain their existing zero-divisor reverts. Assignment values whose inner target is a heap location remain unsupported.
+Division/modulo retain their existing zero-divisor reverts.
+`storageCopyAssignmentValue` handles primitive storage assignment values, including
+roots, members and indexed locations. It evaluates the RHS into a fresh temporary
+of the target's type, writes that temporary through the existing storage rules,
+then returns the temporary. Receivers and indices are evaluated only by the write,
+after the RHS, so side effects are not repeated. The existing `&&`/`||` rules
+execute this sequence only on the branch that reaches the operand. Compound
+assignment values targeting storage, and memory assignment values, remain deferred.
 
 ### Shifts and unsigned parameters
 
@@ -844,18 +851,27 @@ which reads the `///` lines above the loop's `src` offset into a `LoopSpec` on t
 `LoopStatement`. The spec binds each source name to the program variable it denotes;
 `CreatingASTVisitor` carries it through rebuilds, `ProgVarReplaceVisitor` renames its bindings
 (inlining, clashing declarations), and `LoopLowering` moves it to the `while` it produces, so
-the invariant of a `for` or `do … while` holds at the head of that `while` — also on the
-iteration a `break` or `return` ends. `LoopSpecCompiler` compiles the clauses when the rule
-fires, against the variables' current names.
+the invariant of a `for` or `do … while` holds at the head of that `while`. For box
+loops, a `break` exit proves the continuation directly; diamond loops retain the existing
+requirement to establish the invariant on abrupt exits. `LoopSpecCompiler` compiles the clauses
+when the rule fires, against the variables' current names.
 
 | Rule | Goals |
 |---|---|
-| `whileInvariantBox` | `inv`; `#loopAnon(body, inv -> [bool b = c;]((b = TRUE -> [body] inv) & (b = FALSE -> [c# #c] post)))` |
-| `whileInvariantDiamond` | `inv`; the same under `<>` with `inv & dec = v ->` and, after the body, `inv & <b = c;>(b = TRUE -> 0 <= dec & dec < v)` |
+| `whileInvariantBox` | `inv`; `#loopAnon(body, (inv & !broke) -> [bool b = c;]((b = TRUE -> [body]((!broke -> inv) & (broke -> [c# #c] post))) & (b = FALSE -> [c# #c] post)))` |
+| `whileInvariantDiamond` | `inv`; `#loopAnon(body, (inv & dec = v) -> <bool b = c;>((b = TRUE -> <body>(inv & <b = c;>(b = TRUE -> 0 <= dec & dec < v))) & (b = FALSE -> <c# #c> post)))` |
 
 - `\getInvariant(cond, body, inv)` / `\getVariant(cond, body, dec)` find the matched loop in
   the context program by its condition and body, and fail when it has no clause, so a loop
   without `invariant` (or, under the diamond, without `decreases`) is unwound instead.
+- `\getLoopBreak(cond, body, broke)` binds `broke` to this loop's generated break flag
+  being `TRUE`, or `false` when it has none. `LoopSpec` carries the flag through AST rebuilding
+  and variable renaming. The box rule assumes `!broke` only at an arbitrary normal loop head;
+  after executing the body it requires the invariant for normal/continue completion and the
+  original continuation for a break. Break paths need not preserve the invariant. Nested
+  loops keep separate flags, and the existing lowering runs a `for` update after `continue`
+  but skips it after `break`. This follows Java KeY's traditional invariant rule's completion
+  split. Return handling and diamond termination obligations are unchanged.
 - `#loopAnon` (`LoopAnonTransformer`) gives a fresh constant to what `LoopFrame` says the body
   may change: the locals it assigns or declares (the lowering's flags included), `storage` when
   it writes a non-local, and `net` when it calls anything but `require`/`assert`/`revert`
@@ -871,7 +887,8 @@ fires, against the variables' current names.
   assume unsigned input parameters are non-negative; array lengths are bounded by
   `sizeNotNegative`.
 
-Examples: the `Loop invariants` section of `TestSuite.sol`, including a `\forall` over the
+Examples: the `Loop invariants` section of `TestSuite.sol`, including break exits outside the
+invariant, `for` updates after continue, false postconditions, and a `\forall` over the
 written prefix of a storage array. That one needed `cnf_orComm` to get KeY-Java's guards back
 (`FOLStrategy`): bound only by `termSmallerThan`, it cycled with `shift_paren_or` on a
 three-literal clause under a quantifier.

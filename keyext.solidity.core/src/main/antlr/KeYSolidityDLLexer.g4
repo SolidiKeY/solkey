@@ -18,6 +18,7 @@ STORE_EXPR_IN : '\\storeExprIn';
 HAS_INVARIANT : '\\hasInvariant';
 GET_INVARIANT : '\\getInvariant';
 GET_VARIANT   : '\\getVariant';
+GET_LOOP_BREAK : '\\getLoopBreak';
 IS_LABELED    : '\\isLabeled';
 DIFFERENT     : '\\different';
 NO_FREE_VAR_IN : '\\noFreeVarIn';

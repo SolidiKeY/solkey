@@ -136,7 +136,8 @@ public class SolidityRuntimeExecutionTest {
 
     static Stream<Arguments> testSuiteExamples() throws IOException {
         return SolidityExampleTests.contractFunctions(SolidityExampleTests.testSuite(),
-            SolidityExampleTests.TEST_SUITE_CONTRACT);
+            SolidityExampleTests.TEST_SUITE_CONTRACT)
+                .filter(arguments -> !arguments.get()[1].toString().startsWith("unprovable"));
     }
 
     static Stream<Arguments> solcExamples() throws IOException {

@@ -149,9 +149,9 @@ each one blocks (lower bounds: whole families are counted once where a report sa
 
 ## (d) Spec-language gaps
 
-- **Loop invariants cannot name the lowered `break` flag**, so a fact established on the break
-  exit is lost: `for_1_break`, `while_1_break`, `while_nested_break`, `while_nested_continue`
-  stay open (the anonymised state pairs `brk = TRUE` with any invariant-allowed `x`).
+- **Diamond loop invariants still require the invariant on break exits.** Box loops dispatch
+  breaks directly to the continuation, so their invariants need no generated flags:
+  `for_1_break`, `while_1_break`, `while_nested_break`, and `while_nested_continue` close.
 - **Loop invariants cannot use `\old`** (`SpecException: \old is only allowed in ensures`), and
   the loop rule anonymises all of storage, so the full spec of `ArrayRemoveByShifting.remove`
   (length − 1, prefix kept, suffix shifted) stays open.

@@ -106,7 +106,8 @@ public class TacletBuilderManipulators {
             public VariableCondition build(Object[] arguments, List<String> parameters,
                     boolean negated) {
                 return new LoopInvariantCondition((ProgramSV) arguments[0],
-                    (ProgramSV) arguments[1], (SchemaVariable) arguments[2], false);
+                    (ProgramSV) arguments[1], (SchemaVariable) arguments[2],
+                    LoopInvariantCondition.Kind.INVARIANT);
             }
         };
     public static final AbstractConditionBuilder GET_VARIANT =
@@ -115,7 +116,19 @@ public class TacletBuilderManipulators {
             public VariableCondition build(Object[] arguments, List<String> parameters,
                     boolean negated) {
                 return new LoopInvariantCondition((ProgramSV) arguments[0],
-                    (ProgramSV) arguments[1], (SchemaVariable) arguments[2], true);
+                    (ProgramSV) arguments[1], (SchemaVariable) arguments[2],
+                    LoopInvariantCondition.Kind.VARIANT);
+            }
+        };
+
+    public static final AbstractConditionBuilder GET_LOOP_BREAK =
+        new AbstractConditionBuilder("\\getLoopBreak", PV, PV, SV) {
+            @Override
+            public VariableCondition build(Object[] arguments, List<String> parameters,
+                    boolean negated) {
+                return new LoopInvariantCondition((ProgramSV) arguments[0],
+                    (ProgramSV) arguments[1], (SchemaVariable) arguments[2],
+                    LoopInvariantCondition.Kind.BREAK);
             }
         };
 
@@ -276,7 +289,7 @@ public class TacletBuilderManipulators {
             NEW_TYPE_OF, NEW_SOLIDITY_TYPE,
             IS_SUBTYPE, SAME, HAS_SORT, HAS_FIELD_SORT, HAS_MEMORY_FIELD_SORT, HAS_ELEMENT_SORT,
             HAS_MEMORY_ELEMENT_SORT,
-            NEW_LOCAL_VARS, GET_INVARIANT, GET_VARIANT, SAME_AS_TERM,
+            NEW_LOCAL_VARS, GET_INVARIANT, GET_VARIANT, GET_LOOP_BREAK, SAME_AS_TERM,
             NO_FIXED_ARRAY_ELEMENT);
     }
 
