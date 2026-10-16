@@ -25,7 +25,7 @@ proofs that require default values in an unconstrained storage tail are checked 
 | `SolcLoops.sol` | `statements/`, `viaYul/loops/`, loop-heavy `array/`; smt `loops/` | 49 |
 | `SolcArrayMembers.sol` | `array/` push, pop, delete, copying, allocation; `storage/`; smt `array_members/` | 74 |
 | `SolcFunctionCalls.sol` | `functionCall/`, `freeFunctions/`; smt `functions/` | 35 |
-| `SolcStructsMappings.sol` | remaining `structs/`, mapping tests of `functionCall/`, `variables/`, `types/`, `storage/`, `viaYul/storage/`; smt `types/struct*`, `mapping*` | 50 |
+| `SolcStructsMappings.sol` | remaining `structs/`, mapping tests of `functionCall/`, `variables/`, `types/`, `storage/`, `viaYul/storage/`; smt `types/struct*`, `mapping*` | 53 |
 | `SolcStructArrays.sol` | smt `types/struct/` nested storage arrays | 2 |
 | `SolcConstructors.sol` | `constructor/`, `immutable/`, `constants/`, `scoping/`; smt constructor, `inheritance/constructor_*`, `file_level/` | 35 |
 | `SolcPayments.sol` | `payable/`, `receive/`, `fallback/`, `reverts/`, `errors/`, `tryCatch/`; smt `special/`, `blockchain_state/`, `try_catch/` | 35 |
@@ -345,7 +345,7 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `smtCheckerTests/types/mapping_aliasing_2.sol` | `mappingParametersMayAlias` |
 | `smtCheckerTests/types/array_mapping_aliasing_1.sol` | `arrayOfMappingsElementAlias` |
 | `semanticTests/structs/struct_storage_push_zero_value.sol` | `pushedStructIsZero` |
-| `semanticTests/structs/copy_struct_array_from_storage.sol` | `copyStructArrayIntoNestedArray` |
+| `semanticTests/structs/copy_struct_array_from_storage.sol` | `copyStructArrayIntoNestedArray`, `copyStructArraysIntoMemoryRows` |
 
 ### `SolcStructArrays.sol`
 
@@ -721,12 +721,6 @@ portable Solidity guarantee. No clean-tail invariant is assumed.
 | Function | Upstream (`test/libsolidity/`) | Why it stays open |
 |---|---|---|
 | `functionsRecursiveUnbounded` | `smtCheckerTests/functions/functions_recursive.sol` | a uint state variable is not known to be non-negative, and the recursion unfolds without end |
-
-### `open/SolcStructsMappingsOpen.sol`
-
-| Function | Upstream (`test/libsolidity/`) | Why it stays open |
-|---|---|---|
-| `copyStructArraysIntoMemoryRows` | `semanticTests/structs/copy_struct_array_from_storage.sol` | temp[0] = va[0] (storage array copied into an element of a memory array of arrays) has no rule: symbolic execution stops on the statement |
 
 ### `open/SolcConstructorsOpen.sol`
 

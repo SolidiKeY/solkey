@@ -3037,6 +3037,67 @@ contract TestSuite {
         assert(r == 5);
     }
 
+    function memoryIndexWriteStorageRefRhsCapture() public {
+        values = new uint[](1);
+        values[0] = 7;
+        uint[][] memory xs = new uint[][](2);
+        xs[0] = values;
+        xs[1] = values;
+        values[0] = 9;
+        xs[0][0] = 11;
+        assert(xs[0].length == 1);
+        assert(xs[1].length == 1);
+        assert(xs[0][0] == 11);
+        assert(xs[1][0] == 7);
+        assert(values[0] == 9);
+        uint[] memory fresh = new uint[](1);
+        assert(fresh[0] == 0);
+        assert(xs[1][0] == 7);
+    }
+
+    function memoryIndexWriteStorageStructCopy() public {
+        persons.push();
+        persons[0].account.balance = 7;
+        Person[] memory xs = new Person[](2);
+        xs[0] = persons[0];
+        xs[1] = persons[0];
+        persons[0].account.balance = 9;
+        xs[0].account.balance = 11;
+        assert(xs[0].account.balance == 11);
+        assert(xs[1].account.balance == 7);
+        assert(persons[0].account.balance == 9);
+    }
+
+    function mutateStorageCopySource() internal returns (uint) {
+        values[0] = 9;
+        return 0;
+    }
+
+    function memoryIndexWriteStorageRefImpureIndex() public {
+        values = new uint[](1);
+        values[0] = 7;
+        uint[][][] memory xs = new uint[][][](1);
+        xs[0] = new uint[][](1);
+        xs[0][mutateStorageCopySource()] = values;
+        assert(xs[0][0][0] == 7);
+        assert(values[0] == 9);
+    }
+
+    /// @custom:key box
+    function memoryIndexWriteStorageRefOutOfBoundsReverts() public view {
+        uint[][] memory xs = new uint[][](0);
+        xs[0] = values;
+        assert(false);
+    }
+
+    /// @custom:key box
+    function memoryIndexWriteStorageRefSourceOutOfBoundsReverts() public view {
+        require(matrix.length == 0);
+        uint[][] memory xs = new uint[][](1);
+        xs[0] = matrix[0];
+        assert(false);
+    }
+
     function memoryIndexWriteMemRefRhsCapture() public pure {
         Token[] memory ts = new Token[](2);
         Person memory carol;

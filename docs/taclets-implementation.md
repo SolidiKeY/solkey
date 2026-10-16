@@ -432,13 +432,19 @@ branch), fixed-length array allocation (`memoryArrayFreshAlloc`, assignment form
 memory or storage, to a fresh memory local, and `newArrayCaptureStorageRoot` one written to a
 state variable), primitive-default vs. reference-slot
 delete (`memoryRootDeleteFreshRebind` and field/index delete), and lazy
-storage↔memory copies via `copySt` / `copyMem` (`memoryStorageCopy` for
+storage↔memory copies via `copySt` / `copyMem`. `memoryIndexWriteStorageRefRhsCapture`
+captures a storage reference into a fresh memory local before evaluating an indexed
+memory destination; the existing write rules retain bounds checks and receiver/index
+capture. `newFromCopySt` propagates freshness through the copy view, whose allocation
+is already recorded by `addM`. Tests check independent array/struct snapshots, allocation
+after copies, an impure destination index, and source/destination bounds.
+`memoryStorageCopy` handles
 `m = <simple storage path>;`, `memoryStorageCopyUnfold` captures a complex
 storage RHS in a local storage pointer first; in the other direction
 `memoryToStorage{StoreRoot,FieldCopyRoot,FieldCopyField}` and the indexed
 terminals `memoryToStorageIndex{Mapping,Array}CopyRoot` — the array form
 with the `inBounds`/`outOfBounds` goal pair — save
-`copyMem(mtSt, memory, ·)` at the target path). Declarations with initializer
+`copyMem(mtSt, memory, ·)` at the target path. Declarations with initializer
 never reach these rules: `memoryLocalDeclInitDrop` (memory-only, the `memory`
 keyword in the pattern is matched) rewrites `T memory m = x;`
 to `m = x;` (registering `m` as a program variable), so all memory terminals
