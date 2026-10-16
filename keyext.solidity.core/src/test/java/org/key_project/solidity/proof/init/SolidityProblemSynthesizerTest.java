@@ -446,6 +446,49 @@ public class SolidityProblemSynthesizerTest {
             String.valueOf(saved.proof()));
     }
 
+    @Test
+    void modifierContinuationsDoNotProveFalseAssertions(@TempDir Path dir) throws IOException {
+        Path file = dir.resolve("ModifierReturns.sol");
+        Files.writeString(file, """
+                pragma solidity ^0.8.0;
+                contract ModifierReturns {
+                    uint x;
+                    modifier twice() { _; _; }
+                    modifier outer() { _; x += 100; }
+                    modifier inner() { _; x += 10; if (x == 11) return; x = 999; }
+                    modifier repeated() {
+                        for (uint i; i < 3; ++i) { _; x += 10; }
+                    }
+                    function body() internal pure twice returns (uint r) {
+                        r += 1;
+                        return r;
+                    }
+                    function framed() internal outer inner { x = 1; return; }
+                    function looped() internal repeated returns (uint r) {
+                        r += 1;
+                        return r;
+                    }
+                    function twiceTrue() public pure { uint r = body(); assert(r == 2); }
+                    function twiceFalse() public pure { uint r = body(); assert(r == 1); }
+                    function frameTrue() public { framed(); assert(x == 111); }
+                    function frameFalse() public { framed(); assert(x == 11); }
+                    function loopTrue() public {
+                        x = 0; uint r = looped(); assert(r == 3); assert(x == 30);
+                    }
+                    function loopFalse() public {
+                        x = 0; uint r = looped(); assert(r == 1);
+                    }
+                }
+                """);
+        for (String prefix : List.of("twice", "frame", "loop")) {
+            var holds = SolidityVerifier.verify(file, spec(null, prefix + "True"), 10000, -1, 3);
+            var fails = SolidityVerifier.verify(file, spec(null, prefix + "False"), 10000, -1, 3);
+            assertTrue(holds.closed(), String.valueOf(holds));
+            assertEquals(SolidityVerifier.Status.OPEN, fails.status(), String.valueOf(fails));
+            assertNull(fails.error());
+        }
+    }
+
     private static Path inMemory(String name) {
         Path file = Path.of("/nonexistent-solkey-dir/" + name + ".sol");
         SoliditySources.register(file, """

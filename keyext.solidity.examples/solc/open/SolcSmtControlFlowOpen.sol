@@ -5,34 +5,6 @@ contract SolcSmtControlFlowOpen {
     uint counter;
     bool flag;
 
-    modifier check() {
-        require(counter == 0);
-        _;
-        assert(counter == 0);
-    }
-
-    modifier incM() {
-        if (counter == 0) {
-            return;
-        }
-        counter = counter + 1;
-        _;
-    }
-
-    modifier postinc() {
-        if (counter == 0) {
-            return;
-        }
-        _;
-        counter = counter + 1;
-    }
-
-    function resetIfOverflow() internal postinc {
-        if (counter < 10)
-            return;
-        counter = 0;
-    }
-
     function gAddr() internal pure returns (address) {
         address a;
         a = address(0);
@@ -87,25 +59,4 @@ contract SolcSmtControlFlowOpen {
         assert(v >= 0);
     }
 
-    // open: a modifier containing `return` is not inlined
-    /// solc: smtCheckerTests/control_flow/branches_with_return/branches_in_modifiers.sol
-    /// @custom:key box
-    function branchesInModifiers() public check incM {
-    }
-
-    // open: a modifier containing `return` is not inlined
-    /// solc: smtCheckerTests/control_flow/branches_with_return/branches_in_modifiers_2.sol
-    function branchesInModifiers2() public {
-        if (counter == 0) {
-            resetIfOverflow();
-            assert(counter == 0);
-            return;
-        }
-        if (counter < 10) {
-            resetIfOverflow();
-            return;
-        }
-        resetIfOverflow();
-        assert(counter == 1);
-    }
 }

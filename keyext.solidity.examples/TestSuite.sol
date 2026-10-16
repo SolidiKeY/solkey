@@ -4445,6 +4445,167 @@ contract TestSuite {
         assert(r == 2);
     }
 
+    modifier twiceContinuation() {
+        _;
+        _;
+    }
+
+    modifier continuationArgument(uint v) {
+        assert(v == localOut);
+        _;
+    }
+
+    function repeatedContinuationBody() internal twiceContinuation returns (uint r) {
+        uint v;
+        v += 1;
+        assert(v == 1);
+        localOut += v;
+        r += 1;
+        if (r == 1) return r;
+        r += 10;
+    }
+
+    function modifierRepeatedReturnAndLocals() public {
+        localOut = 0;
+        uint r = repeatedContinuationBody();
+        assert(localOut == 2);
+        assert(r == 12);
+    }
+
+    function nextContinuationArgument() internal returns (uint) {
+        localOut += 1;
+        return localOut;
+    }
+
+    function reenteredArgumentBody() internal twiceContinuation
+        continuationArgument(nextContinuationArgument()) returns (uint r)
+    {
+        uint value = localOut;
+        r += value;
+    }
+
+    function modifierReentersArguments() public {
+        localOut = 0;
+        uint r = reenteredArgumentBody();
+        assert(localOut == 2);
+        assert(r == 3);
+    }
+
+    modifier conditionalContinuation(bool run) {
+        if (run) {
+            _;
+        } else {
+            return;
+        }
+        localOut += 10;
+    }
+
+    function conditionalContinuationBody(bool run) internal
+        conditionalContinuation(run) returns (uint r)
+    {
+        r = 1;
+        return r;
+    }
+
+    function modifierSkippedPlaceholder() public {
+        localOut = 0;
+        uint r = conditionalContinuationBody(false);
+        assert(r == 0);
+        assert(localOut == 0);
+    }
+
+    function modifierTakenPlaceholder() public {
+        localOut = 0;
+        uint r = conditionalContinuationBody(true);
+        assert(r == 1);
+        assert(localOut == 10);
+    }
+
+    modifier enclosingContinuation() {
+        _;
+        localOut += 1000;
+    }
+
+    modifier returningContinuation() {
+        _;
+        localOut += 10;
+        if (localOut == 11) return;
+        localOut = 100;
+    }
+
+    function nestedReturningContinuation() internal
+        enclosingContinuation returningContinuation returns (uint r)
+    {
+        localOut = 1;
+        return 7;
+    }
+
+    function modifierReturnResumesOuterSuffix() public {
+        localOut = 0;
+        uint r = nestedReturningContinuation();
+        assert(r == 7);
+        assert(localOut == 1011);
+    }
+
+    modifier loopContinuation() {
+        for (uint i = 0; i < 3; ++i) {
+            _;
+            localOut += 10;
+        }
+    }
+
+    function loopContinuationBody() internal loopContinuation returns (uint r) {
+        r += 1;
+        return r;
+    }
+
+    function modifierLoopBodyReturnStaysInFrame() public {
+        localOut = 0;
+        uint r = loopContinuationBody();
+        assert(r == 3);
+        assert(localOut == 30);
+    }
+
+    modifier whileContinuation() {
+        uint i;
+        while (i < 4) {
+            ++i;
+            if (i == 2) continue;
+            _;
+            if (i == 3) break;
+        }
+    }
+
+    modifier doWhileContinuation() {
+        uint i;
+        do {
+            ++i;
+            if (i == 2) continue;
+            _;
+            if (i == 3) break;
+        } while (i < 4);
+    }
+
+    function whileContinuationBody() internal pure whileContinuation returns (uint r) {
+        r += 1;
+        return r;
+    }
+
+    function doWhileContinuationBody() internal pure doWhileContinuation returns (uint r) {
+        r += 1;
+        return r;
+    }
+
+    function modifierWhileJumps() public pure {
+        uint r = whileContinuationBody();
+        assert(r == 2);
+    }
+
+    function modifierDoWhileJumps() public pure {
+        uint r = doWhileContinuationBody();
+        assert(r == 2);
+    }
+
     function uninitialisedLocalsAreDefault() public pure {
         uint x;
         bool b;

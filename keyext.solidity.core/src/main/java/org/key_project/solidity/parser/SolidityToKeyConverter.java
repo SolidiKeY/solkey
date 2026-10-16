@@ -43,6 +43,7 @@ import org.key_project.solidity.program.ext.ContextStatementBlock;
 import org.key_project.solidity.program.parser.ParserUtils;
 import org.key_project.solidity.program.parser.SolidityParseException;
 import org.key_project.solidity.rule.metaconstruct.ExpandFunctionBody;
+import org.key_project.solidity.rule.metaconstruct.NormalizeLoop;
 import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.util.collection.ImmutableArray;
 import org.key_project.util.collection.ImmutableList;
@@ -143,6 +144,15 @@ public class SolidityToKeyConverter extends KeYSolidityDLParserBaseVisitor<Synta
                 + "its ProgramSVSort.", ctx.start);
         }
         return new ExpandFunctionBody((ProgramSV) sv);
+    }
+
+    @Override
+    public SyntaxElement visitNormalizeLoopTransformer(NormalizeLoopTransformerContext ctx) {
+        SchemaVariable sv = requireSchemaVariable(ctx.schemaVariable(), ctx.start);
+        if (!(sv instanceof ProgramSV)) {
+            reportError("s#normalize_loop requires a program schema variable", ctx.start);
+        }
+        return new NormalizeLoop((ProgramSV) sv);
     }
 
     private void reportError(String errorMsg, Token tokenWithPos)

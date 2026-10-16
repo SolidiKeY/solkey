@@ -784,11 +784,21 @@ calls (see "Function-body inlining"). Examples:
 
 ### Loops (`while`, `for`, `do … while`, `break`, `continue`)
 
-One taclet runs loops; a source pass reduces every loop to its shape first.
+`whileUnwind` executes normalized loops. Normalization is performed by the function-body
+expansion metaconstruct or by the `loopNormalize` execution taclet.
 
 `LoopLowering` runs in `ExpandFunctionBody` right after `ReturnLowering`, so it sees only bare
 `return;`. It leaves a `while` whose body has no `break`, `continue` or `return`, recording the
-abrupt completion in fresh `bool` flags as solidity-lean's `docs/loops.md` does:
+abrupt completion in fresh `bool` flags as solidity-lean's `docs/loops.md` does.
+
+`loopNormalize` also invokes `s#normalize_loop` during proof execution. Its precondition is
+an active `for`, `do … while`, or `while` containing an unhandled `break`, `continue`, or
+`return` outside nested function frames (`NormalizableLoop`, a program schema-variable sort).
+It replaces that loop by the same flag-based normalization below, preserving its loop spec.
+This executes loops introduced by modifier expansion without parser lowering. A normalized
+`while` no longer matches, so normalization terminates. Nested function/modifier frames are
+return boundaries: a body return inside a modifier loop completes the body invocation and
+then resumes the modifier's loop iteration. A modifier return instead exits its own frame.
 
 | Source | Lowered |
 |---|---|
@@ -981,18 +991,50 @@ variable therefore returns the default (`returnInThenBranchElseIsDefault` and it
 `f() m1(a) m2` becomes
 
 ```
-{ T q = a; <m1 body, with _; replaced by> { <m2 body, with _; replaced by> function-frame { <body> } } }
+{
+    T q = a;
+    function-frame {
+        <m1 prefix>
+        function-frame {
+            <m2 prefix>
+            function-frame { <body> }
+            <m2 suffix>
+        }
+        <m1 suffix>
+    }
+}
 ```
 
 Each application declares the modifier's parameters fresh at its entry, so its arguments are
-evaluated when it is entered, after the code of the modifiers outside it. A `return` in the body
-completes the frame only, and the modifier code after `_;` still runs. A modifier is inlined
-when it is resolved (a `ModifierDefinition` of the same contract), has exactly one `_;`
-(anywhere, nested blocks included) and no `return`; a call of a function with any other
-modifier matches neither `FunctionBody` nor `InternalCall`, so its obligation stays open. Top-level obligations go through the same
-transformer, so a public function is proved with its modifiers. The rules follow
-solidity-lean's `wrapMods`, except that solidity-lean also rejects a `_;` inside a block and a
-reference-typed modifier parameter.
+evaluated when it is entered, after the code of the modifiers outside it. Modifier argument
+expressions are AST children of `ModifierReference`, so reference completion resolves calls
+inside them and visitors can rename their variable references.
+
+Each modifier body runs inside its own `function-frame`, nested outside the frames of the
+remaining modifiers and the function body. The existing `functionFrameReturn` and
+`functionFrameEmpty` taclets therefore handle modifier completion too: a body return resumes
+its modifier suffix, and a modifier return resumes the enclosing modifier suffix.
+
+Every `_;` receives a separate copy of the remaining continuation. Its declared locals are
+freshened per copy; the enclosing function's parameters and return variables remain shared.
+Consequently, a return from the first body invocation does not suppress a later placeholder,
+and accumulated named returns survive subsequent invocations. An inner modifier's arguments
+are evaluated again whenever an outer placeholder enters it. A conditional placeholder may
+be skipped entirely, leaving the function's return defaults intact.
+
+A modifier is inlinable when its declaration resolves, argument arity matches, and its body
+contains at least one placeholder. Multiple placeholders and bare modifier returns are
+supported. A bodiless modifier remains unsupported. Top-level obligations use the same
+transformer as internal calls. No modifier expansion occurs in the parser.
+
+Modifier loops remain in the expanded AST until the `loopNormalize` taclet executes them;
+see "Loops". Examples include `modifierRepeatedReturnAndLocals`, `modifierReentersArguments`,
+`modifierSkippedPlaceholder`, `modifierTakenPlaceholder`, `modifierReturnResumesOuterSuffix`,
+`modifierLoopBodyReturnStaysInFrame`, `modifierWhileJumps`, and `modifierDoWhileJumps` in
+`TestSuite.sol`. The eleven former `SolcModifiersOpen` obligations now live in
+`solc/SolcModifiers.sol`, including argument evaluation order and stacked modifier returns.
+The two modifier-return branch examples from `SolcSmtControlFlowOpen` now live in
+`solc/SolcSmtControlFlow.sol`.
 
 **Tuples are never terms.** A tuple of `n` values is `n` program variables, each of its own
 sort, so no tuple sort exists and every component is handled by the ordinary rules.
@@ -1063,7 +1105,7 @@ every library before the contracts:
   (`ParserUtils.inParameterOrder`), from the parameter names `SolJSONParser` records per
   function.
 - Every inlining declares fresh copies of the locals of the inlined body
-  (`ModifierInlining.freshenLocals`), for a function body and for each modifier application, so
+  (`FreshVariables.addLocalsOf`), for a function body and for each modifier application, so
   `h() m(2) m(5)` keeps two copies of `m`'s locals.
 - A local of value type declared without an initializer gets its default (`0`, `false`,
   `address(0)`, the first enum member) as initializer in `SolJSONParser`

@@ -50,6 +50,7 @@ public abstract class ProgramSVSort extends SortImpl {
         new PathSVSort("ComplexMemoryPath", PathSVSort.DataArea.MEMORY,
             PathSVSort.Simplicity.COMPLEX);
     public static final ProgramSVSort TYPE = new ClassSVSort("Type", Type.class);
+    public static final ProgramSVSort NORMALIZABLE_LOOP = new NormalizableLoopSVSort();
     public static final ProgramSVSort STATEMENT = new ClassSVSort("Statement", Statement.class);
     public static final ProgramSVSort EXTERNAL_CALL = new ExternalCallSVSort();
     public static final ProgramSVSort INTERNAL_CALL = new InternalCallSVSort("InternalCall", false);

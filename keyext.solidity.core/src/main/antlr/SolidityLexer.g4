@@ -213,6 +213,9 @@ SOL_COMMENT
 LINE_COMMENT
   : '//' ~[\r\n]* -> channel(HIDDEN) ;
 
+NormalizeLoop
+   : 's#normalize_loop' ;
+
 ExpandFunctionBody
    : 's#expand_function_body' ;
 

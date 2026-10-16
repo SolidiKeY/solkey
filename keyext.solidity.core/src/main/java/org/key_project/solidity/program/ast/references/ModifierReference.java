@@ -6,7 +6,8 @@ package org.key_project.solidity.program.ast.references;
 
 import java.util.List;
 
-import org.key_project.solidity.program.ast.LeafProgramElement;
+import org.key_project.logic.SyntaxElement;
+import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.declarations.ModifierDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.visitor.Visitor;
@@ -15,7 +16,7 @@ import org.key_project.util.collection.ImmutableArray;
 import org.jspecify.annotations.Nullable;
 
 
-public class ModifierReference implements LeafProgramElement {
+public class ModifierReference implements SolidityProgramElement {
 
     public final String name;
     private final @Nullable ModifierDeclaration declaration;
@@ -38,6 +39,16 @@ public class ModifierReference implements LeafProgramElement {
 
     public ImmutableArray<Expression> getArguments() {
         return arguments;
+    }
+
+    @Override
+    public SyntaxElement getChild(int n) {
+        return arguments.get(n);
+    }
+
+    @Override
+    public int getChildCount() {
+        return arguments.size();
     }
 
     @Override

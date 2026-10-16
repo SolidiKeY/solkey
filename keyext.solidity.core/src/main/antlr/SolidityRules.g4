@@ -232,6 +232,7 @@ schemaVariable
 // program transformers (meta constructs) appearing in the replacewith of taclets
 programTransformer
    : ExpandFunctionBody SOL_LPAREN schemaVariable SOL_RPAREN   # ExpandFunctionBodyTransformer
+   | NormalizeLoop SOL_LPAREN schemaVariable SOL_RPAREN         # NormalizeLoopTransformer
    ;
 
 // a call annotated with the declaring contract, standing for the (not yet inlined)

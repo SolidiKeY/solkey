@@ -29,8 +29,8 @@ proofs that require default values in an unconstrained storage tail are checked 
 | `SolcStructArrays.sol` | smt `types/struct/` nested storage arrays | 2 |
 | `SolcConstructors.sol` | `constructor/`, `immutable/`, `constants/`, `scoping/`; smt constructor, `inheritance/constructor_*`, `file_level/` | 35 |
 | `SolcPayments.sol` | `payable/`, `receive/`, `fallback/`, `reverts/`, `errors/`, `tryCatch/`; smt `special/`, `blockchain_state/`, `try_catch/` | 35 |
-| `SolcModifiers.sol` | `modifiers/`; smt `modifiers/` | 34 |
-| `SolcSmtControlFlow.sol` | smt `control_flow/`, `bmc_coverage/`, `verification_target/`, `invariants/`, `complex/slither/` | 85 |
+| `SolcModifiers.sol` | `modifiers/`; smt `modifiers/` | 47 |
+| `SolcSmtControlFlow.sol` | smt `control_flow/`, `bmc_coverage/`, `verification_target/`, `invariants/`, `complex/slither/` | 89 |
 | `SolcArithmetic.sol` | `arithmetics/`, `exponentiation/`, `integer/`, `operators/`; smt `operators/`, `overflow/` | 59 |
 | `SolcHigherLevel.sol` | `inheritance/`, `virtualFunctions/`, `getters/`; smt `inheritance/` | 19 |
 | `SolcTypes.sol` | `enums/`, `literals/`, `types/`; smt `types/`, `typecast/` | 39 |
@@ -470,8 +470,18 @@ let them close under the normal source-size budgets, without a clean-tail invari
 | `smtCheckerTests/modifiers/modifier_code_after_placeholder.sol` | `smtCodeAfterPlaceholder` |
 | `semanticTests/modifiers/function_modifier_library.sol` | `storageModifierParameter` |
 | `semanticTests/modifiers/function_modifier_multiple_times_local_vars.sol` | `modifierMultipleTimesLocalVars` |
-
 | `semanticTests/modifiers/function_modifier_return_reference.sol` | `modifierArgumentAssignsReturn` |
+| `semanticTests/modifiers/evaluation_order.sol` | `modifierArgumentEvaluationOrder` |
+| `semanticTests/modifiers/break_in_modifier.sol` | `breakInModifier` |
+| `semanticTests/modifiers/continue_in_modifier.sol` | `continueInModifier` |
+| `semanticTests/modifiers/function_modifier_loop.sol` | `modifierLoop` |
+| `semanticTests/modifiers/return_in_modifier.sol` | `returnInModifier` |
+| `semanticTests/modifiers/stacked_return_with_modifiers.sol` | `stackedReturnWithModifiers` |
+| `semanticTests/modifiers/function_modifier_multi_invocation.sol` | `multiInvocationOnce` |
+| `semanticTests/modifiers/function_modifier_multi_invocation.sol` | `multiInvocationTwice` |
+| `semanticTests/modifiers/function_modifier_multi_with_return.sol` | `multiWithReturnTwice` |
+| `smtCheckerTests/modifiers/modifier_return.sol` | `smtModifierReturn` |
+| `smtCheckerTests/modifiers/modifier_two_placeholders.sol` | `smtTwoPlaceholders` |
 
 ### `SolcSmtControlFlow.sol`
 
@@ -549,8 +559,9 @@ let them close under the normal source-size budgets, without a clean-tail invari
 | `smtCheckerTests/control_flow/branches_with_return/constructor_state_variable_init.sol` | `constructorStateVariableInit` |
 | `smtCheckerTests/control_flow/branches_with_return/constructor_state_variable_init_chain_alternate.sol` | `constructorStateVariableInitChainAlternate` |
 | `smtCheckerTests/complex/slither/const_state_variables.sol` | `constStateVariable` |
-
 | `smtCheckerTests/bmc_coverage/assert.sol` | `bmcRequireAlwaysTrue` |
+| `smtCheckerTests/control_flow/branches_with_return/branches_in_modifiers.sol` | `branchesInModifiers` |
+| `smtCheckerTests/control_flow/branches_with_return/branches_in_modifiers_2.sol` | `branchesInModifiers2` |
 
 ### `SolcArithmetic.sol`
 
@@ -749,22 +760,6 @@ portable Solidity guarantee. No clean-tail invariant is assumed.
 | `callRunsReceive` | `semanticTests/receive/empty_calldata_calls_receive.sol` | under noCallback a call keeps the caller's storage, so the receive increment is not seen |
 | `callKeepsStorageUnsound` | `semanticTests/receive/empty_calldata_calls_receive.sol` | closes in KeY but fails on the EVM: under noCallback a call keeps the caller's storage, though the empty-calldata call to the contract itself runs receive |
 
-### `open/SolcModifiersOpen.sol`
-
-| Function | Upstream (`test/libsolidity/`) | Why it stays open |
-|---|---|---|
-| `modifierArgumentEvaluationOrder` | `semanticTests/modifiers/evaluation_order.sol` | a function call as a modifier argument stays stuck as an unresolved fn#id(...) declaration |
-| `breakInModifier` | `semanticTests/modifiers/break_in_modifier.sol` | a for loop in a modifier body is not lowered, so no loop rule matches it |
-| `continueInModifier` | `semanticTests/modifiers/continue_in_modifier.sol` | a for loop in a modifier body is not lowered, so no loop rule matches it |
-| `modifierLoop` | `semanticTests/modifiers/function_modifier_loop.sol` | a for loop in a modifier body is not lowered, so no loop rule matches it |
-| `returnInModifier` | `semanticTests/modifiers/return_in_modifier.sol` | a modifier containing return is not inlined |
-| `stackedReturnWithModifiers` | `semanticTests/modifiers/stacked_return_with_modifiers.sol` | a modifier containing return is not inlined |
-| `multiInvocationOnce` | `semanticTests/modifiers/function_modifier_multi_invocation.sol` | a modifier with two placeholders is not inlined |
-| `multiInvocationTwice` | `semanticTests/modifiers/function_modifier_multi_invocation.sol` | a modifier with two placeholders is not inlined |
-| `multiWithReturnTwice` | `semanticTests/modifiers/function_modifier_multi_with_return.sol` | a modifier with two placeholders is not inlined |
-| `smtModifierReturn` | `smtCheckerTests/modifiers/modifier_return.sol` | a modifier containing return is not inlined |
-| `smtTwoPlaceholders` | `smtCheckerTests/modifiers/modifier_two_placeholders.sol` | a modifier with two placeholders is not inlined |
-
 ### `open/SolcSmtControlFlowOpen.sol`
 
 | Function | Upstream (`test/libsolidity/`) | Why it stays open |
@@ -773,8 +768,6 @@ portable Solidity guarantee. No clean-tail invariant is assumed.
 | `shortCircuitOrTouched` | `smtCheckerTests/control_flow/short_circuit_or_touched.sol` | an assignment used as an operand, `b = (flag = true)`, is stuck on the program text |
 | `msgValueZeroWhenNonPayable` | `smtCheckerTests/bmc_coverage/msg_value_4.sol` | a non-payable function does not fix msg.value to 0 |
 | `msgValueNonNegative` | `smtCheckerTests/bmc_coverage/range_check.sol` | msg.value is not known to be non-negative |
-| `branchesInModifiers` | `smtCheckerTests/control_flow/branches_with_return/branches_in_modifiers.sol` | a modifier containing `return` is not inlined, so the obligation stays open |
-| `branchesInModifiers2` | `smtCheckerTests/control_flow/branches_with_return/branches_in_modifiers_2.sol` | a modifier containing `return` is not inlined, so the obligation stays open |
 
 ### `open/SolcArithmeticOpen.sol`
 

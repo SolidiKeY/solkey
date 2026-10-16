@@ -134,14 +134,12 @@ each one blocks (lower bounds: whole families are counted once where a report sa
 | 5 | `bytes32`/`bytes`, `keccak256`, `abi.*` | `No KeYSolidityType for bytes32` | `crypto/*`, `abi/*`, `abicoder/*`; Ballot, BlindAuction, Ownable |
 | 6 | An assignment or compound assignment used as a value: `a = (b = c)`, `a += b += c`, `a[0] = a[1] = 1`, `(m = m2)[2] = 21`, modifier argument `m(r = 2)` | stuck | 10 tests (`functions_storage_var_*`, `compound_add_chain`, `short_circuit_*_touched`, `multiple_initializations`, …) |
 | 7 | Function types | `Type FunctionTypeName not covered` | 10 tests (`functionTypes/*`, `*_via_pointer`, `store_function_in_constructor*`, …) |
-| 8 | Modifiers with `return` or two `_;` | not inlined, the obligation stays open | 8 tests (`return_in_modifier`, `stacked_return_with_modifiers`, `function_modifier_multi_invocation`, `modifier_two_placeholders`, …) |
 | 9 | Inline array literals `[uint(1), 2, 3]` | `Not yet supported expression type` | 7 tests; Solidity by Example array contracts (rewritten with `push`) |
 | 10 | Contract creation `new D()` | stuck; multi-contract file needs `--contract` | `deployment/*`, `new_operator.sol`, `multi_creation.sol` |
 | 11 | Inline assembly | `Statement does not have type InlineAssembly` | `inlineAssembly/*` |
 | 12 | Nested or parenthesized tuple targets `(((a, ), )) = …`, `((a, b)) = …` | load error / stuck | 5 tests |
 | 13 | Integer → enum conversion `E(x)` | stuck | 4 tests; docs `StateMachine.nextStage` |
 | 14 | `super.f()`, base-qualified `Base.f()` (lowered to `address.f()`) | refused at load / stuck | 9 tests (`super_overload`, `diamond_super_*`, `explicit_base_class`, `inherited_function`, …) |
-| 15 | `for` loop in a modifier body (not lowered; `while` is) | stuck | 3 tests (`break_in_modifier`, `continue_in_modifier`, `function_modifier_loop`) |
 | 16 | `new T[](e)` with a non-simple length | stuck | 3 tests |
 | 17 | External call statement outside `try`; `try` argument with a side effect; `c.f{value: v}()`; `(bool, bytes memory) = a.call(..)` | stuck / load error | 5 tests; SbE `DenialOfService` attack |
 | 18 | Constant (expression) as a fixed array length `uint[LEN]` | `Array length LEN is not supported` | 2 tests |
@@ -181,12 +179,12 @@ functions and open reasons are listed in `keyext.solidity.examples/solc/README.m
 | Structs and mappings | `SolcStructsMappings` | 50 | 5 | 9 | storage-to-memory row copy, cost |
 | Constructors | `SolcConstructors` | 38 | 8 (1 closes) | 11 | `delete v`, `msg.value` |
 | Payments, reverts, try | `SolcPayments` | 35 | 14 (2 close: proves-false witnesses) | 11 | `msg.*` ranges, `try` callee havocked, noCallback unsound |
-| Modifiers | `SolcModifiers` | 34 | 13 | 9 | `return`/two `_;`, `for` in modifier, shared locals (proves false) |
-| smtChecker control flow | `SolcSmtControlFlow` | 86 | 7 | 11 | `msg.value`, modifier `return` |
+| Modifiers | `SolcModifiers` | 47 | 0 | 9 | argument calls, modifier returns, multiple placeholders and modifier loops now close; modifier locals are fresh |
+| smtChecker control flow | `SolcSmtControlFlow` | 89 | 4 | 11 | `msg.value`, storage assignment expressions |
 | Arithmetic | `SolcArithmetic` | 58 | 8 (1 in closing file) | 10 | wrapping; `unaryAddOnPush` needs known appended contents |
 | Inheritance, getters | `SolcHigherLevel` | 19 | 7 | 13 | virtual dispatch (proves false), `Base.f()` |
 | Types, enums, tuples, literals | `SolcTypes` | 39 | 17 (1 closes: proves false) | 11 | identity casts (proves false), `E(x)`, enum ranges |
-| **Total** | 11 files | **486** | **126** | | |
+| **Total** | 11 files | **514** | **98** | | |
 
 Real-world and benchmark:
 

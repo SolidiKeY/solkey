@@ -14,8 +14,8 @@ import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.declarations.ModifierDeclaration;
 import org.key_project.solidity.program.ast.references.ModifierReference;
 import org.key_project.solidity.program.ast.statement.Block;
+import org.key_project.solidity.program.ast.statement.FunctionFrame;
 import org.key_project.solidity.program.ast.statement.PlaceholdStatement;
-import org.key_project.solidity.program.ast.statement.ReturnStatement;
 import org.key_project.solidity.program.ast.statement.Statement;
 import org.key_project.solidity.program.ast.visitor.CreatingASTVisitor;
 import org.key_project.util.ExtList;
@@ -37,8 +37,7 @@ final class ModifierInlining extends CreatingASTVisitor {
         ModifierDeclaration declaration = modifier.getDeclaration();
         return declaration != null
                 && declaration.getInputParameters().size() == modifier.getArguments().size()
-                && count(declaration.getBody(), PlaceholdStatement.class) == 1
-                && count(declaration.getBody(), ReturnStatement.class) == 0;
+                && hasPlaceholder(declaration.getBody());
     }
 
     static Statement wrap(ImmutableArray<ModifierReference> modifiers, Statement body,
@@ -66,17 +65,21 @@ final class ModifierInlining extends CreatingASTVisitor {
         ModifierInlining inlining =
             new ModifierInlining(renamed, inner, services);
         inlining.start();
-        statements.addAll(((Block) Objects.requireNonNull(inlining.result)).getStatements()
-                .toList());
+        statements.add(new FunctionFrame(
+            ((Block) Objects.requireNonNull(inlining.result)).getStatements()));
         return new Block(statements);
     }
 
-    private static int count(SyntaxElement element, Class<?> kind) {
-        int n = kind.isInstance(element) ? 1 : 0;
-        for (int i = 0; i < element.getChildCount(); i++) {
-            n += count(element.getChild(i), kind);
+    private static boolean hasPlaceholder(SyntaxElement element) {
+        if (element instanceof PlaceholdStatement) {
+            return true;
         }
-        return n;
+        for (int i = 0; i < element.getChildCount(); i++) {
+            if (hasPlaceholder(element.getChild(i))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -93,7 +96,9 @@ final class ModifierInlining extends CreatingASTVisitor {
 
     @Override
     public void performActionOnPlaceholdStatement(PlaceholdStatement x) {
-        addChild(replacement);
+        FreshVariables fresh = new FreshVariables();
+        fresh.addLocalsOf(replacement);
+        addChild(fresh.rename(replacement, null, services));
         changed();
     }
 }

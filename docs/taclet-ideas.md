@@ -124,10 +124,6 @@ non-integer key crash in `docs/bugs.md` and the gap below.
 
 ## Raised by `return` and tuple support
 
-- **Modifiers beyond one `_;`.** A modifier with two `_;` or with a `return` is not inlined,
-  so the obligation of a function using one stays open.
-  The first needs the body's locals renamed per copy; the second needs a frame around the
-  modifier, so that its `return` skips the rest of it.
 - **Function contracts at call sites.** Every internal call is inlined, so recursion does not
   terminate and large callees are re-executed at each call. A `useFunctionContract` rule would
   prove the callee's `requires`, anonymise what it may change (storage, `net`, memory reachable
@@ -233,7 +229,6 @@ many upstream tests and contracts each blocks; defects in supported constructs a
   (`uint[LEN]`, `uint[(a / b) * b]`).
 - **`new T[](e)` with a non-simple length** (today stuck; bind the length to a local first).
 - **`delete` on a local** (`delete v;`).
-- **`for` loops inside modifier bodies** (lower them after `ModifierInlining`; `while` works).
 - **Other discarded expression statements**: `arr.pop;`, `S[7][];`.
   Binary arithmetic expression statements now evaluate and discard their results.
 - **A compound target `push()` on a complex receiver**: `s.b.push() += 1`, `++m[k].push()`

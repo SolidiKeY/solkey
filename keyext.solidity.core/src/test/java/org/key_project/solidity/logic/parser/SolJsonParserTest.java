@@ -1390,6 +1390,28 @@ public class SolJsonParserTest {
     }
 
     @Test
+    void modifierArgumentCallsAreResolvedAsChildren() throws IOException {
+        ContractDeclaration contract = getDeclStr("""
+                contract ModifierArguments {
+                    modifier m(uint v) { require(v == 7); _; }
+                    function f() public pure m(value()) {}
+                    function value() internal pure returns (uint) { return 7; }
+                }
+                """, services);
+        FunctionDeclaration f = contract.getFunctions().get(0);
+        FunctionDeclaration value = contract.getFunctions().get(1);
+        ModifierReference modifier = f.getModifiers().get(0);
+        assertEquals(1, modifier.getChildCount());
+        assertSame(modifier.getArguments().get(0), modifier.getChild(0));
+        FunctionCallExpression call = assertInstanceOf(FunctionCallExpression.class,
+            modifier.getChild(0));
+        FunctionReference reference = assertInstanceOf(FunctionReference.class,
+            call.getFunctionExp());
+        assertSame(value, reference.getReferencedDeclaration());
+        assertThrows(IndexOutOfBoundsException.class, () -> modifier.getChild(1));
+    }
+
+    @Test
     void modifierWithParameters() throws IOException {
         // language=solidity
         String contract = """

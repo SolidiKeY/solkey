@@ -4,7 +4,9 @@
 package org.key_project.solidity.program.ast.visitor;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -214,8 +216,15 @@ public class CreatingASTVisitor extends SolidityASTVisitor {
 
     @Override
     public void performActionOnModifierReference(ModifierReference x) {
-        rebuild(x, changeList -> new ModifierReference(x.name, x.getDeclaration(),
-            x.getArguments().toList()));
+        rebuild(x, changeList -> {
+            List<Expression> arguments = new ArrayList<>();
+            for (Object child : changeList) {
+                if (child instanceof Expression expression) {
+                    arguments.add(expression);
+                }
+            }
+            return new ModifierReference(x.name, x.getDeclaration(), arguments);
+        });
     }
 
     @Override
