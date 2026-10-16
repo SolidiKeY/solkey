@@ -602,7 +602,14 @@ public class PrettyPrinter implements Visitor {
 
     @Override
     public void performActionOnFunctionCallExpression(FunctionCallExpression x) {
+        boolean conditional = x.getFunctionExp() instanceof TernaryExpression;
+        if (conditional) {
+            layouter.print("(");
+        }
         x.getFunctionExp().visit(this);
+        if (conditional) {
+            layouter.print(")");
+        }
         layouter.print("(");
         for (int i = 0; i < x.getArguments().size(); i++) {
             final Expression arg = x.getArguments().get(i);

@@ -87,7 +87,15 @@ performance-only). Struct-sorted element reads
 rule (`delNode(selectSt(st, at(i)))`), so `delete arr` keeps the mapping members of
 struct elements.
 Array reset selectors compare each index with the original length: valid elements are reset,
-while out-of-range data is preserved. The marker remains lazy, resolving only on reads.
+while out-of-range data is preserved. Reference-element selection produces `delNodeIndex(st, i)`;
+its field selectors resolve the range test only when the child is read. The marker retains
+array-kind and wellformedness information from the original child. This avoids expanding
+conditional struct values that later writes overwrite; `ArrayCubeFDF.storageAssignmentCopiesDeeply`
+closes in 12,000 steps under its original 29,700-step budget.
+The term comparator short-circuits identical term objects, avoiding recursive self-comparisons
+of the shared symbolic storage prefixes without changing the ordering result.
+Its comparison cache evicts individual old entries at the existing 100,000-entry limit,
+preventing repeated cache-wide recomputation of those symbolic terms.
 `StorageDangling.testDeleteArrayLeavesDataPastLength` exercises the preserved tail.
 
 `MapField` is the sub-sort that earns its place: it is the only case that reads
@@ -170,7 +178,7 @@ mapping member.
 pair of `storageIndexWriteArraySave`). `/=` and `%=` guard with
 `\if(se != 0)\then(…)\else(revert)`; integers are unbounded mathematical
 integers, so there is no overflow guard. Bitwise `&= |= ^=` and storage/memory `<<= >>=` parse but
-are deferred (no bitwise LDT). Listed under `// generalization:` comments.
+are deferred. Listed under `// generalization:` comments.
 
 Local assignment values (`v = (lv = e)`, and `+= -= *= /= %=`) execute
 through `local*AssignmentValue`: first perform the inner assignment, then
@@ -188,8 +196,8 @@ operand types and evaluates the right operand before the left, matching the
 existing arithmetic calculus. `localShiftLeftAssign` and
 `localShiftRightAssign` handle `<<=` and `>>=` on local values through those
 expression taclets. Left-shift truncation is not modeled under the existing
-unbounded integer semantics. Storage/memory compound shifts and other bitwise
-operators remain unsupported.
+unbounded integer semantics. Storage/memory compound shifts and `|`, `^`, `~`
+remain unsupported.
 
 Generated function obligations assume non-negativity for `uint`/`uintN` inputs
 in both box and diamond modes. This does not add upper bounds or change the
@@ -218,6 +226,16 @@ No new capture rules were needed: `addAssignValueRhsCapture` and its siblings
 take a plain `Expression` target and so already cover a memory left-hand side.
 A non-simple index under a compound assignment has no capture rule on either
 side and stays unsupported.
+
+`bitAndAssignment` translates general integer `x & y` to `binaryAnd(x, y)`, following
+Java KeY's separation of program execution and logical simplification. Operand captures
+preserve their types and evaluate the right operand before the left, including storage
+reads and calls. `binaryLemmas.key` evaluates literal operands through the existing
+`#BinaryAnd` / `BigInteger.and` evaluator and simplifies zero, identical operands and
+`x & 1` (on either side) to a zero/one test of mathematical remainder modulo two.
+The current unbounded integer model is unchanged: no Java-width wrappers or Solidity-width truncation are added.
+General symbolic masks may remain as `binaryAnd` terms. Examples: `bitAndOneValues`,
+`bitAndGeneralValues`, `bitAndSymbolic`, and `bitAndOperandEvaluation`.
 
 ### Tier-1 expression operators
 Mirror the `+`/`==` families: terminal assigns the logic-level result, non-simple
@@ -293,7 +311,8 @@ from the EVM's checked arithmetic); `/` and `%` revert on a zero denominator.
   protection, after normal simplification. `smod_lessPositiveDenom` applies
   for either dividend sign; `smodMultiple` reduces a multiple of its nonzero
   divisor to zero. These facts use mathematical integers and no type ranges.
-- Deferred: bitwise (`& | ^ << >> ~`), unary `+` (removed in Solidity ≥0.5).
+- Deferred: `| ^ ~`, and unary `+` (removed in Solidity ≥0.5).
+  General `&` execution and arithmetic shifts are supported as described above.
   Overflow is not modeled: integers are unbounded, and examples that depend on
   the EVM's checked-arithmetic revert live in
   `keyext.solidity.examples/unprovable/`.
@@ -380,6 +399,8 @@ writes through popped aliases remain visible after a push. The four `StorageDang
 examples close under these compiler-style rules, although Solidity leaves dangling-reference
 executions undefined. Default-value examples without a justified clear or precondition stay
 open; pop/delete and shorter-copy clears still establish defaults in their valid ranges.
+A newly exposed inner array also keeps its symbolic length: `push(v)` appends after that
+length, so assuming the first inner append uses index zero needs an empty-inner precondition.
 `delAt(st, p)` names `st` once where the equivalent `save`-of-deleted-value form
 named it twice; reads commute through it with `selectOnDelAtCons`, and the reset still
 resolves on read through `delField<[alpha]>`.
@@ -936,6 +957,11 @@ anywhere in the program (`c# … #c`), via the `ExpandFunctionBody` transformer:
   `InternalCallExpression` sort: the same callee, returning one storage reference;
   `storage{Push,PushValue,Pop}_unfold_leftCallReceiver` bind it to a storage alias, which
   `internalCallExpand` then fills.
+
+For a conditional callee `(condition ? f : g)(args)`, `internalCallExpand` first emits
+an `if` selecting `f(args)` or `g(args)`, preserving the assignment target when present.
+Only the selected call executes; ordinary body expansion then handles it. The parser
+preserves the conditional-call AST. Examples: `conditionalCallee` and `conditionalCalleeEffects`.
 
 The transformer emits
 

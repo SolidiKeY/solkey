@@ -21,6 +21,7 @@ final class InternalCallSVSort extends ProgramSVSort {
     @Override
     public boolean canStandFor(SolidityProgramElement pe, Services services) {
         return pe instanceof FunctionBodyStatement == bodyStatement
-                && ExpandFunctionBody.asFunctionBody(pe) != null;
+                && (ExpandFunctionBody.asFunctionBody(pe) != null
+                        || !bodyStatement && ExpandFunctionBody.conditionalCall(pe) != null);
     }
 }

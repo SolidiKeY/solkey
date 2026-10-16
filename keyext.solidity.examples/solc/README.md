@@ -24,8 +24,9 @@ proofs that require default values in an unconstrained storage tail are checked 
 | `SolcControlFlow.sol` | `statements/`, `various/`, `expressions/conditional_expression_storage_memory_*` | 10 |
 | `SolcLoops.sol` | `statements/`, `viaYul/loops/`, loop-heavy `array/`; smt `loops/` | 49 |
 | `SolcArrayMembers.sol` | `array/` push, pop, delete, copying, allocation; `storage/`; smt `array_members/` | 74 |
-| `SolcFunctionCalls.sol` | `functionCall/`, `freeFunctions/`; smt `functions/` | 29 |
+| `SolcFunctionCalls.sol` | `functionCall/`, `freeFunctions/`; smt `functions/` | 35 |
 | `SolcStructsMappings.sol` | remaining `structs/`, mapping tests of `functionCall/`, `variables/`, `types/`, `storage/`, `viaYul/storage/`; smt `types/struct*`, `mapping*` | 50 |
+| `SolcStructArrays.sol` | smt `types/struct/` nested storage arrays | 2 |
 | `SolcConstructors.sol` | `constructor/`, `immutable/`, `constants/`, `scoping/`; smt constructor, `inheritance/constructor_*`, `file_level/` | 35 |
 | `SolcPayments.sol` | `payable/`, `receive/`, `fallback/`, `reverts/`, `errors/`, `tryCatch/`; smt `special/`, `blockchain_state/`, `try_catch/` | 35 |
 | `SolcModifiers.sol` | `modifiers/`; smt `modifiers/` | 34 |
@@ -256,12 +257,13 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 
 | Upstream (`test/libsolidity/`) | Functions |
 |---|---|
+| `semanticTests/functionCall/conditional_with_arguments.sol` | `conditionalWithArguments` |
 | `semanticTests/functionCall/named_args.sol` | `namedArgsOrdered` |
 | `semanticTests/functionCall/named_args_overload.sol` | `namedArgsOverload` |
 | `semanticTests/functionCall/multiple_return_values.sol` | `multipleReturnValues` |
 | `semanticTests/functionCall/multiple_functions.sol` | `multipleFunctions` |
 | `semanticTests/functionCall/array_multiple_local_vars.sol` | `arrayMultipleLocalVars`, `arrayMultipleLocalVarsBreak` |
-| `semanticTests/freeFunctions/recursion.sol` | `freeFunctionRecursion` |
+| `semanticTests/freeFunctions/recursion.sol` | `freeFunctionRecursion`, `freeFunctionRecursionBitAnd` |
 | `semanticTests/freeFunctions/easy.sol` | `freeFunctionEasy` |
 | `smtCheckerTests/functions/free_function_multiple_contracts.sol` | `freeFunctionMultipleContracts` |
 | `semanticTests/freeFunctions/storage_calldata_refs.sol` | `storageCalldataRefs` |
@@ -344,6 +346,16 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `smtCheckerTests/types/array_mapping_aliasing_1.sol` | `arrayOfMappingsElementAlias` |
 | `semanticTests/structs/struct_storage_push_zero_value.sol` | `pushedStructIsZero` |
 | `semanticTests/structs/copy_struct_array_from_storage.sol` | `copyStructArrayIntoNestedArray` |
+
+### `SolcStructArrays.sol`
+
+| Upstream (`test/libsolidity/`) | Function |
+|---|---|
+| `smtCheckerTests/types/struct/struct_array_struct_array_storage_safe.sol` | `storageNestedStructArrays` |
+| `smtCheckerTests/types/struct/array_struct_array_struct_storage_safe.sol` | `storageArrayOfNestedStructArrays` |
+
+These formerly exceeded the proof budget. Length-only push and bounded comparison caching
+let them close under the normal source-size budgets, without a clean-tail invariant.
 
 ### `SolcConstructors.sol`
 
@@ -697,8 +709,6 @@ portable Solidity guarantee. No clean-tail invariant is assumed.
 
 | Function | Upstream (`test/libsolidity/`) | Why it stays open |
 |---|---|---|
-| `freeFunctionRecursionBitAnd` | `semanticTests/freeFunctions/recursion.sol` | no rule for the bitwise `&` |
-| `conditionalWithArguments` | `semanticTests/functionCall/conditional_with_arguments.sol` | a call whose callee is a conditional expression is read as `false ? g : h(2, 1)` and gets stuck |
 | `functionsRecursiveUnbounded` | `smtCheckerTests/functions/functions_recursive.sol` | a uint state variable is not known to be non-negative, and the recursion unfolds without end |
 
 ### `open/SolcStructsMappingsOpen.sol`
@@ -706,8 +716,6 @@ portable Solidity guarantee. No clean-tail invariant is assumed.
 | Function | Upstream (`test/libsolidity/`) | Why it stays open |
 |---|---|---|
 | `copyStructArraysIntoMemoryRows` | `semanticTests/structs/copy_struct_array_from_storage.sol` | temp[0] = va[0] (storage array copied into an element of a memory array of arrays) has no rule: symbolic execution stops on the statement |
-| `storageNestedStructArrays` | `smtCheckerTests/types/struct/struct_array_struct_array_storage_safe.sol` | closes only with -m 300000 (~130 s); exceeds the suite budget of 50000 steps / 30 s |
-| `storageArrayOfNestedStructArrays` | `smtCheckerTests/types/struct/array_struct_array_struct_storage_safe.sol` | closes only with -m 300000 (~340 s); exceeds the suite budget of 50000 steps / 30 s |
 
 ### `open/SolcConstructorsOpen.sol`
 

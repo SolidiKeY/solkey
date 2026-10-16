@@ -64,16 +64,21 @@ public class LexPathOrdering implements TermOrdering {
     private record CacheKey(Term left, Term right) {
     }
 
-    private final HashMap<CacheKey, CompRes> cache = new LinkedHashMap<>();
+    private final HashMap<CacheKey, CompRes> cache = new LinkedHashMap<>(16, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(java.util.Map.Entry<CacheKey, CompRes> eldest) {
+            return size() > 100000;
+        }
+    };
 
     private CompRes compareHelp(Term p_a, Term p_b) {
+        if (p_a == p_b) {
+            return EQUALS;
+        }
         final CacheKey key = new CacheKey(p_a, p_b);
         CompRes res = cache.get(key);
         if (res == null) {
             res = compareHelp2(p_a, p_b);
-            if (cache.size() > 100000) {
-                cache.clear();
-            }
             cache.put(key, res);
         }
         return res;

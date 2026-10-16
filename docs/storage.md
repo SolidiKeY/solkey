@@ -134,6 +134,13 @@ for `delAt` through `delField<[alpha]>` on the select:
   sort-parametric family at a smaller sort is that family's smaller-sort
   instance — and it leaves the `Struct` rules and `delFieldDefault` disjoint. Pinned by `storage{Field,Root}DeleteThenCopy` and
   `storageFieldDeleteThenCopyDeep`.
+- `delNodeIndex(st, i)` — the pending reset of reference element `i` of array `st`.
+  Selecting a reference element under `delNode` creates this marker without branching.
+  A subsequent field read checks `0 <= i < oldLength(st)`: it reads through a reset child
+  inside that range and through the unchanged child outside it. Overwritten fields can
+  therefore simplify before the old-length condition is expanded. `fixedDelNodeIndex`
+  retains the child's array kind, and `wfDelNodeIndexRight` reduces shape preservation to
+  the original child's wellformedness; neither assumes zero tail data.
 - `save(st, nil, v)` — **the leaf of a write, left as a term.** A struct
   written over a location keeps the location's mapping members: Solidity
   never copies a mapping. So `save` never collapses its leaf (there is no
@@ -864,7 +871,8 @@ does with `wellFormed(heap)`.
 - *Succedent atoms are peeled off writes, then unfolded.* `wfSaveRight` turns
   `wf(sh, save(st, p, v))` into `wf(sh, st) & wf(shapeAt(sh, p), save(find<[Struct]>(st, p), nil, v))`
   (the written node is a merge, so the leaf keeps the target's own fixed length);
-  `wfDelAtRight`, `wfDelNodeRight`, `wfDelNodeFixedRight` drop a reset; `wfLeaf` and
+  `wfDelAtRight`, `wfDelNodeRight`, `wfDelNodeFixedRight` drop a reset;
+  `wfDelNodeIndexRight` checks the original selected child; `wfLeaf` and
   `wfShape` close; `wf{Fixed,Dyn,Map}Right` (ruleset `wfUnfold`, costed above the
   triggers so an atom that reduces to an entry atom closes first) unfold a leaf-of-a-write by
   definition with a `\skolemTerm` element index.
@@ -874,7 +882,8 @@ fixed-size array (keeps its declared length) or a dynamic one (reset to `0`, or 
 length): `|delNode(st)| ⇝ \if(fixed(st)) \then(|st|) \else(0)` (`selectStDelNodeSize`) and
 `|save(st, nil, v)| ⇝ \if(fixed(st)) \then(|st|) \else(|cast<[Struct]>(v)|)`
 (`selectOnSaveEmptySize`). A write never changes the kind, so `fixed` reads it off the
-node's base: `fixedSave`, `fixedStore`, `fixedDelNode`, `fixedDelAt` descend, `delNodeFixed`
+node's base: `fixedSave`, `fixedStore`, `fixedDelNode`, `fixedDelAt` descend;
+`fixedDelNodeIndex` reads the original child's kind. `delNodeFixed`
 and `fixedArr(…)` are fixed, `dynArr(…)` and `mtSt` are not, and
 `wfFixedIsFixed` / `wfDynIsNotFixed` decide it from the entry atom. This is what makes
 `uint[40] big = uint[20] small` keep `big.length == 40` and zero `big[30]`, and

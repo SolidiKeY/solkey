@@ -38,6 +38,9 @@ closing proof measured so far needs about 36 steps per byte (`ArrayCubeFDF`), so
 leaves headroom; a proof that closes only with more steps fails with `STEP_LIMIT`, and
 `./run-key.sh FILE.sol --json` shows the count it needs.
 
+Default-value assertions about unknown storage tails are checked to stay open, without adding
+a clean-tail invariant or changing the assertions.
+
 ## Writing an example
 
 Every function is `public` and returns nothing. Mark it `pure` or `view` when it touches no

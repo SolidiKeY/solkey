@@ -3757,6 +3757,85 @@ contract TestSuite {
         return (lo, hi, x + y + z, x == y && y == z);
     }
 
+    function bitAndOneValues() public pure {
+        uint odd = 7;
+        uint even = 8;
+        int negative = -3;
+        assert((odd & 1) == 1);
+        assert((even & 1) == 0);
+        assert((negative & 1) == 1);
+        assert(((odd + even) & 1) == 1);
+        assert((returnOne() & 1) == 1);
+    }
+
+    function bitAndGeneralValues() public pure {
+        uint x = 13;
+        uint y = 10;
+        int negative = -3;
+        int otherNegative = -6;
+        assert((x & y) == 8);
+        assert((x & 7) == 5);
+        assert((negative & 6) == 4);
+        assert((negative & otherNegative) == -8);
+        assert(((x + 2) & (y - 1)) == 9);
+        assert((returnOne() & returnOne()) == 1);
+        uint256 high = 0x100000000000000000000000000000000;
+        assert((high & (high + 7)) == high);
+    }
+
+    function bitAndSymbolic(int x) public pure {
+        assert((x & 0) == 0);
+        assert((0 & x) == 0);
+        assert((x & x) == x);
+        int parity = x & 1;
+        int reversed = 1 & x;
+        assert(parity == reversed);
+        assert(parity >= 0 && parity < 2);
+    }
+
+    function bitAndOperandEvaluation() public {
+        total = 12;
+        uint r = bitAndSetTotal() & total;
+        assert(r == 4);
+        assert(total == 7);
+        total = 12;
+        r = total & bitAndSetTotal();
+        assert(r == 7);
+        assert(total == 7);
+    }
+
+    function bitAndSetTotal() internal returns (uint) {
+        total = 7;
+        return 7;
+    }
+
+    function conditionalCallee(bool choose) public pure {
+        int r = (choose ? returnSign : returnSign)(-3);
+        assert(r < 0);
+        uint v = (choose ? returnOne : retConditionalTwo)() + 1;
+        assert(choose ? v == 2 : v == 3);
+    }
+
+    function retConditionalTwo() internal pure returns (uint) {
+        return 2;
+    }
+
+    function conditionalCalleeEffects() public {
+        total = 0;
+        (true ? conditionalSetOne : conditionalSetTwo)();
+        assert(total == 1);
+        (false ? conditionalSetOne : conditionalSetTwo)();
+        assert(total == 2);
+    }
+
+    function conditionalSetOne() internal {
+        total = 1;
+    }
+
+    function conditionalSetTwo() internal {
+        total = 2;
+    }
+
     function internalCallDeclaration() public pure {
         uint r = returnOne();
         assert(r == 1);

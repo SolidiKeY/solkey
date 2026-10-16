@@ -50,6 +50,12 @@ same path (or basename) under `key.core/src/main/java/de/uka/ilkd/key/` before e
   receiver-capture taclets (`…_unfold_leftFst`, which introduce two or three fresh program
   variables, some of them location-qualified) from ever applying.
 
+- **`logic/LexPathOrdering.compareHelp` returns equality immediately for identical term
+  objects.** The ordering is unchanged; the fast path avoids recursive self-comparisons of
+  shared symbolic storage terms after length-only push stopped resetting unknown tails.
+  Its 100,000-entry comparison cache evicts the least recently used pair instead of clearing
+  the whole cache, retaining useful comparisons without increasing the entry limit.
+
 ## Known future work (out of scope for the readability pass)
 
 - Merge `SolJSONParser`'s parser-local type caches with the `SolidityInfo` registry — a semantic

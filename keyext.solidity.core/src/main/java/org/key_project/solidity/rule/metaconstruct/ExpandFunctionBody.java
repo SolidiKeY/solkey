@@ -18,8 +18,10 @@ import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
 import org.key_project.solidity.program.ast.expressions.operators.AssignExpression;
 import org.key_project.solidity.program.ast.expressions.operators.Operator;
+import org.key_project.solidity.program.ast.expressions.operators.TernaryExpression;
 import org.key_project.solidity.program.ast.references.FieldReference;
 import org.key_project.solidity.program.ast.references.FunctionReference;
+import org.key_project.solidity.program.ast.statement.ConditionStatement;
 import org.key_project.solidity.program.ast.statement.ExpressionStatement;
 import org.key_project.solidity.program.ast.statement.FunctionBodyStatement;
 import org.key_project.solidity.program.ast.statement.FunctionFrame;
@@ -84,6 +86,29 @@ public class ExpandFunctionBody extends ProgramTransformer {
             reference.getDispatchContract());
     }
 
+    public static @Nullable FunctionCallExpression conditionalCall(SolidityProgramElement pe) {
+        if (!(pe instanceof ExpressionStatement statement)) {
+            return null;
+        }
+        Expression expression = statement.getExpression();
+        if (expression instanceof AssignExpression assign
+                && assign.getOperator() == Operator.COPY_ASSIGN) {
+            expression = assign.getRight();
+        }
+        return expression instanceof FunctionCallExpression call
+                && call.getFunctionExp() instanceof TernaryExpression ? call : null;
+    }
+
+    private static ExpressionStatement selectedCall(ExpressionStatement statement,
+            FunctionCallExpression call, Expression callee) {
+        Expression selected =
+            new FunctionCallExpression(call.getType(), callee, call.getArguments());
+        if (statement.getExpression() instanceof AssignExpression assign) {
+            selected = new AssignExpression(Operator.COPY_ASSIGN, assign.getLeft(), selected);
+        }
+        return new ExpressionStatement(selected);
+    }
+
     public static boolean inlinable(FunctionDeclaration function) {
         return function.hasBody()
                 && function.getModifiers().stream().allMatch(ModifierInlining::inlinable);
@@ -92,6 +117,14 @@ public class ExpandFunctionBody extends ProgramTransformer {
     @Override
     public SolidityProgramElement[] transform(SolidityProgramElement pe, Services services,
             SVInstantiations svInst) {
+        FunctionCallExpression conditional = conditionalCall(pe);
+        if (conditional != null) {
+            TernaryExpression callee = (TernaryExpression) conditional.getFunctionExp();
+            ExpressionStatement statement = (ExpressionStatement) pe;
+            return new SolidityProgramElement[] { new ConditionStatement(callee.getCondition(),
+                selectedCall(statement, conditional, callee.getTrueExpression()),
+                selectedCall(statement, conditional, callee.getFalseExpression())) };
+        }
         final FunctionBodyStatement call = Objects.requireNonNull(asFunctionBody(pe),
             () -> "not a call of a function with a body: " + pe);
         final FunctionDeclaration fn = dispatch(call, services);

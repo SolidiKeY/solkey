@@ -21,22 +21,37 @@ import org.junit.jupiter.params.provider.MethodSource;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/// Proves the contracts of `keyext.solidity.examples/contracts/`, the solidiKeY example
+/// Checks the contracts of `keyext.solidity.examples/contracts/`, the solidiKeY example
 /// contracts with their specification carried in `@custom:key` natspec tags, and of
 /// `keyext.solidity.examples/real-world/`, published contracts specified the same way.
 ///
 /// Every `.sol` in the directories is enumerated and every function an obligation can be
-/// generated for is proved, so a new contract joins the suite by being written — the contract
-/// name is taken from the file name. The functions in [#KNOWN_OPEN] state an invariant
-/// automode cannot establish yet (MultiAuction's quantified one); they are checked to load and
-/// to leave the proof open, so a calculus improvement that closes one turns the entry stale.
+/// generated for is checked, so a new contract joins the suite by being written — the contract
+/// name is taken from the file name. The functions in [#KNOWN_OPEN] need an invariant
+/// automode cannot establish, including quantified invariants and known storage tails. Each case
+/// must load and leave its proof open, so an improvement that closes one turns the entry stale.
 @Tag("solidityExamples")
 public class ContractExamplesTest {
 
     private static final List<String> DIRECTORIES = List.of("contracts", "real-world");
 
-    private static final Set<String> KNOWN_OPEN =
-        Set.of("MultiAuction.placeOrIncreaseBid", "MultiAuction.withdraw", "MultiAuction.myTest");
+    private static final Set<String> KNOWN_OPEN = Set.of(
+        "MultiAuction.placeOrIncreaseBid",
+        "MultiAuction.withdraw",
+        "MultiAuction.myTest",
+        "ArrayCopyShapes.fixedToDynamicCopyTakesSourceLength",
+        "ArrayCubeDFD.popPushAtDepth1ResetsRemovedElement",
+        "ArrayCubeDFD.popPushAtDepth3ResetsRemovedElement",
+        "ArrayCubeDFD.pushReturnAliasSharesWrites",
+        "ArrayCubeDFD.storageAssignmentCopiesDeeply",
+        "ArrayMatrixConversions.dynamicDynamicShrinkClearsReusedRow",
+        "ArrayMatrixConversions.fixedRowsToDynamicInner",
+        "ArrayMatrixDD.popPushAtDepth2ResetsRemovedElement",
+        "ArrayMatrixDD.pushReturnAliasSharesWrites",
+        "ArrayMatrixDF.pushReturnAliasSharesWrites",
+        "FixedLengths.emptyPushFixedElementReadsZero",
+        "FixedLengths.emptyPushReadsZero",
+        "FixedLengths.fixedCopyIsIndependent");
 
     @ParameterizedTest(name = "{0}/{1}.{2}")
     @MethodSource("examples")

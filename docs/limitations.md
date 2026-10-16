@@ -82,8 +82,11 @@ Choices the calculus makes on purpose, each of which makes some Solidity behavio
   (`uint8 0 - 1 == 255`, `int8 127 + 1 == -128`, `int8 100 * 2 == -56`, `++max == 0`, …); the
   reverse direction proves false (above). Ports must `require` both bounds by hand; OZ
   `tryAdd`/`tryMul` and `Nonces`/`Counters` are specified only on their non-wrapping case.
-- **General bitwise operations remain unsupported.** `&`, `|`, `^`, `~` and their
-  compound forms stay as program text. `<<`, `>>`, and local `<<=`/`>>=` now have
+- **Bitwise support is partial.** General integer `&` executes through `binaryAnd`;
+  literal operands evaluate exactly, with symbolic zero, identity and parity simplifications.
+  Other symbolic masks may remain unresolved. `|`, `^`, `~` and bitwise compound forms
+  stay as program text.
+  `<<`, `>>`, and local `<<=`/`>>=` now have
   arithmetic taclets. Left shift uses unbounded multiplication, so truncation is
   not modeled; storage/memory compound shifts remain unsupported.
 

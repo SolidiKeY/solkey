@@ -534,4 +534,33 @@ contract SolcFunctionCalls {
         setA(42);
         assert(a > 1);
     }
+
+    function expBitAnd(uint base, uint exponent) internal pure returns (uint power) {
+        if (exponent == 0)
+            return 1;
+        power = expBitAnd(base, exponent / 2);
+        power *= power;
+        if (exponent & 1 == 1)
+            power *= base;
+    }
+
+    /// solc: semanticTests/freeFunctions/recursion.sol
+    function freeFunctionRecursionBitAnd() public pure {
+        uint e23 = expBitAnd(2, 3);
+        assert(e23 == 8);
+    }
+
+    function conditionalG(int p, int q) internal pure returns (int) {
+        return p - q;
+    }
+
+    function conditionalH(int q, int p) internal pure returns (int) {
+        return q - p;
+    }
+
+    /// solc: semanticTests/functionCall/conditional_with_arguments.sol
+    function conditionalWithArguments() public pure {
+        int r = (false ? conditionalG : conditionalH)(2, 1);
+        assert(r == 1);
+    }
 }
