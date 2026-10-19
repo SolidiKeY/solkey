@@ -77,16 +77,12 @@ public class SolidityOutlineTest {
 
     @Test
     void aNamedReturnIsProvableAnUnnamedOneIsNot(@TempDir Path dir) throws IOException {
-        var named = SolidityOutline.of(SolidityExampleTests.example("functionBody/C.sol"))
-                .contract("C").orElseThrow().function("expFctBdy").orElseThrow();
-        assertTrue(named.isProvable(), named.unsupportedReason().orElse(""));
-        assertEquals("r", named.returns().get(0).name());
-
         Path sol = dir.resolve("R.sol");
         Files.writeString(sol, """
                 // SPDX-License-Identifier: GPL-2.0-only
                 pragma solidity ^0.8.0;
                 contract R {
+                    function named(uint x) public returns (uint r) { r = x; }
                     function unnamed() public pure returns (uint) { return 1; }
                     function two() public pure returns (uint a, uint b) { a = 1; b = 2; }
                     function pair() public pure returns (uint, uint) { return (1, 2); }
@@ -94,6 +90,10 @@ public class SolidityOutlineTest {
                     function skipped() public {}
                 }""");
         var contract = SolidityOutline.of(sol).contract("R").orElseThrow();
+
+        var named = contract.function("named").orElseThrow();
+        assertTrue(named.isProvable(), named.unsupportedReason().orElse(""));
+        assertEquals("r", named.returns().get(0).name());
 
         Optional<String> reason = contract.function("unnamed").orElseThrow().unsupportedReason();
         assertTrue(reason.isPresent());
@@ -103,7 +103,7 @@ public class SolidityOutlineTest {
                 .contains("returns a value"));
         assertTrue(contract.function("skipped").orElseThrow().unsupportedReason().orElseThrow()
                 .contains("skip"));
-        assertEquals(List.of("two"),
+        assertEquals(List.of("named", "two"),
             contract.provableFunctions().stream().map(SolidityOutline.Function::name).toList());
     }
 

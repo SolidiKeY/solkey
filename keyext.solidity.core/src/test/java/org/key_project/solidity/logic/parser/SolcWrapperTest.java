@@ -139,7 +139,7 @@ public class SolcWrapperTest {
             List<Arguments> contracts = files
                     .filter(p -> p.getFileName().toString().endsWith(".sol"))
                     .map(p -> dir.relativize(p).toString().replace('\\', '/'))
-                    .filter(p -> !p.startsWith("illegal/") && !p.startsWith("functionBody/"))
+                    .filter(p -> !p.startsWith("illegal/"))
                     .sorted()
                     .map(p -> Arguments.of(p, dir.resolve(p)))
                     .toList();

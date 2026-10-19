@@ -105,28 +105,6 @@ contract SolcConstructorsOpen {
         assert(ra == address(0));
     }
 
-    /// solc: semanticTests/variables/delete_local.sol
-    // open: no rule for delete on a local variable
-    function deleteLocal() public pure {
-        uint v = 5;
-        delete v;
-        uint res = v;
-        assert(res == 0);
-    }
-
-    /// solc: semanticTests/variables/delete_locals.sol
-    // open: no rule for delete on a local variable
-    function deleteLocals() public pure {
-        uint v = 5;
-        uint w2 = 6;
-        uint x = 7;
-        delete v;
-        uint res1 = w2;
-        uint res2 = x;
-        assert(res1 == 6);
-        assert(res2 == 7);
-    }
-
     /// solc: semanticTests/state/msg_value.sol
     // open: a non-payable function does not assume msg.value == 0
     function msgValueZero() public view {

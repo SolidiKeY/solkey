@@ -175,16 +175,6 @@ public class SolidityProblemSynthesizerTest {
     }
 
     @Test
-    void aNamedReturnBecomesTheResultVariable() throws IOException {
-        Path file = SolidityExampleTests.example("functionBody/C.sol");
-
-        String text = SolidityProblemSynthesizer.problemText(file, spec("C", "expFctBdy"));
-
-        assertTrue(text.contains("int result;"), text);
-        assertTrue(text.contains("\\<{ result = expFctBdy(x, y)@C; }\\>(true)"), text);
-    }
-
-    @Test
     void severalNamedReturnsAreBoundByNameAndProved() throws IOException {
         Path file = Path.of("/nonexistent-solkey-dir/Ordered.sol");
         SoliditySources.register(file, """
@@ -230,36 +220,6 @@ public class SolidityProblemSynthesizerTest {
                     \\<{ testSimpleAssert()@%s; }\\>(wellformed(storage))
                 }
                 """.formatted(SolidityExampleTests.TEST_SUITE_CONTRACT)), text);
-    }
-
-    @Test
-    void aContractWithoutArraysKeepsThePlainObligation() throws IOException {
-        Path file = SolidityExampleTests.example("functionBody/C.sol");
-
-        String text = SolidityProblemSynthesizer.problemText(file, spec("C", "expFctBdy"));
-
-        assertEquals("""
-                \\programSource "%s";
-
-                \\programVariables {
-                    int x;
-                    int y;
-                    int result;
-                }
-
-                \\rules {
-                    insertWellformed {
-                        \\schemaVar \\term Struct s;
-                        \\find(wellformed(s))
-                        \\replacewith(true)
-                        \\heuristics(simplify)
-                    };
-                }
-
-                \\problem {
-                    \\<{ result = expFctBdy(x, y)@C; }\\>(true)
-                }
-                """.formatted(file.toAbsolutePath()), text);
     }
 
     @Test

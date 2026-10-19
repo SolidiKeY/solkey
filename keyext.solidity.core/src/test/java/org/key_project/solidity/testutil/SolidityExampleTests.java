@@ -65,7 +65,7 @@ public final class SolidityExampleTests {
     /// directories the suite may run from (the module dir or the repo root), and assert it exists.
     ///
     /// @param relativePath path relative to `keyext.solidity.examples/`, e.g.
-    /// `"functionBody/archive.key"`
+    /// `"contracts/Escrow.sol"`
     public static Path example(String relativePath) {
         Path p = Path.of("keyext.solidity.examples").resolve(relativePath);
         Path resolved =

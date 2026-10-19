@@ -143,7 +143,6 @@ each one blocks (lower bounds: whole families are counted once where a report sa
 | 16 | `new T[](e)` with a non-simple length | stuck | 3 tests |
 | 17 | External call statement outside `try`; `try` argument with a side effect; `c.f{value: v}()`; `(bool, bytes memory) = a.call(..)` | stuck / load error | 5 tests; SbE `DenialOfService` attack |
 | 18 | Constant (expression) as a fixed array length `uint[LEN]` | `Array length LEN is not supported` | 2 tests |
-| 19 | `delete` on a local | stuck | 2 tests (`delete_local`, `delete_locals`) |
 | 20 | Effect-free expression statements `a + b;`, `arr.pop;`, `S[7][];`; a conditional callee `(c ? g : h)(..)` | stuck / load error | 4 tests |
 | 21 | Imports; pragma `^0.4` | `Source not found`; compiler version | ERC20 (inlined), Ownable; WETH9 |
 
@@ -177,7 +176,7 @@ functions and open reasons are listed in `keyext.solidity.examples/solc/README.m
 | Array members | `SolcArrayMembers` | 61 | 19 | 10 | push forms, allocation directly into storage |
 | Function calls | `SolcFunctionCalls` | 29 | 7 | 11 | named args (proves false), `&`, assignment as value, conditional callee |
 | Structs and mappings | `SolcStructsMappings` | 50 | 5 | 9 | storage-to-memory row copy, cost |
-| Constructors | `SolcConstructors` | 38 | 8 (1 closes) | 11 | `delete v`, `msg.value` |
+| Constructors | `SolcConstructors` | 40 | 6 (1 closes) | 11 | `msg.value`, compound assignment as expression |
 | Payments, reverts, try | `SolcPayments` | 35 | 14 (2 close: proves-false witnesses) | 11 | `msg.*` ranges, `try` callee havocked, noCallback unsound |
 | Modifiers | `SolcModifiers` | 47 | 0 | 9 | argument calls, modifier returns, multiple placeholders and modifier loops now close; modifier locals are fresh |
 | smtChecker control flow | `SolcSmtControlFlow` | 89 | 4 | 11 | `msg.value`, storage assignment expressions |

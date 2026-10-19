@@ -229,7 +229,6 @@ many upstream tests and contracts each blocks; defects in supported constructs a
 - **Inline array literals** `[uint(1), 2, 3]`, and constant expressions as fixed array lengths
   (`uint[LEN]`, `uint[(a / b) * b]`).
 - **`new T[](e)` with a non-simple length** (today stuck; bind the length to a local first).
-- **`delete` on a local** (`delete v;`).
 - **Other discarded expression statements**: `arr.pop;`, `S[7][];`.
   Binary arithmetic expression statements now evaluate and discard their results.
 - **A compound target `push()` on a complex receiver**: `s.b.push() += 1`, `++m[k].push()`

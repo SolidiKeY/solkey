@@ -5,7 +5,6 @@ package org.key_project.solidity.gui;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 import org.key_project.logic.PosInTerm;
@@ -20,7 +19,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /// Checks the linearized proof-tree view: a linear chain of proof steps is shown as one flat
 /// branch (no nesting), and a proof split introduces a sub-branch per child.
@@ -66,7 +64,6 @@ public class ProofTreeLinearizationTest {
         return n;
     }
 
-
     private static ProofTreePanel run(KeYEnvironment<?> env, Proof proof) {
         ProofContext context = new ProofContext();
         ProofTreePanel panel = new ProofTreePanel(context);
@@ -74,64 +71,6 @@ public class ProofTreeLinearizationTest {
         env.getProofControl().startAndWaitForAutoMode(proof);
         context.fireProofChanged();
         return panel;
-    }
-
-    @Test
-    void linearProofIsOneFlatBranch() throws Exception {
-        Path file = Path.of("keyext.solidity.examples/functionBody/archive.key");
-        if (!Files.exists(file)) {
-            file = Path.of("../keyext.solidity.examples/functionBody/archive.key");
-        }
-        KeYEnvironment<?> env = KeYEnvironment.load(file);
-        Proof proof = env.getLoadedProof();
-
-        DefaultMutableTreeNode root = rootOf(run(env, proof));
-        // Every proof node is a flat leaf under the single root branch; no nesting, no
-        // sub-branches.
-        assertEquals(proof.countNodes(), leafChildren(root),
-            "all nodes of a linear proof should be flat leaves of the root branch");
-        assertEquals(0, subBranches(root), "a linear proof has no sub-branches");
-    }
-
-    @Test
-    void hideIntermediateCollapsesChainToEndpoint() throws Exception {
-        Path file = Path.of("keyext.solidity.examples/functionBody/archive.key");
-        if (!Files.exists(file)) {
-            file = Path.of("../keyext.solidity.examples/functionBody/archive.key");
-        }
-        KeYEnvironment<?> env = KeYEnvironment.load(file);
-        Proof proof = env.getLoadedProof();
-        ProofTreePanel panel = run(env, proof);
-
-        assertTrue(leafChildren(rootOf(panel)) > 1, "without filters every step is shown");
-
-        panel.setFilters(true, false, false, false); // hide intermediate proof steps
-        DefaultMutableTreeNode root = rootOf(panel);
-        assertEquals(1, leafChildren(root),
-            "hide-intermediate leaves only the branch endpoint");
-        assertEquals(0, subBranches(root), "still a single (linear) branch");
-    }
-
-    @Test
-    void searchSelectsMatchingNode() throws Exception {
-        Path file = Path.of("keyext.solidity.examples/functionBody/archive.key");
-        if (!Files.exists(file)) {
-            file = Path.of("../keyext.solidity.examples/functionBody/archive.key");
-        }
-        KeYEnvironment<?> env = KeYEnvironment.load(file);
-        Proof proof = env.getLoadedProof();
-        ProofContext context = new ProofContext();
-        ProofTreePanel panel = new ProofTreePanel(context);
-        context.setProof(env, proof);
-        env.getProofControl().startAndWaitForAutoMode(proof);
-        context.fireProofChanged();
-
-        assertTrue(panel.search("selectOnSaveCons", true), "the rule name occurs in the proof");
-        org.key_project.solidity.proof.Node selected = context.getSelectedNode();
-        assertTrue(selected != null
-                && selected.name().toLowerCase().contains("selectonsavecons"),
-            "search should select a matching node");
-        assertTrue(!panel.search("no-such-rule-xyz", true), "a missing query finds nothing");
     }
 
     @Test

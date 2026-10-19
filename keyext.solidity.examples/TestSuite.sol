@@ -1792,6 +1792,15 @@ contract TestSuite {
         assert(ledgerUses[0].ledger.balances[1] == 10);
     }
 
+    function testDeleteLocalValue() public pure {
+        uint v = 5;
+        bool b = true;
+        delete v;
+        delete b;
+        assert(v == 0);
+        assert(!b);
+    }
+
     function testMemoryAliasing() public pure {
         Person memory carol;
         Account memory carolAcc = carol.account;
@@ -5134,6 +5143,15 @@ contract TestSuite {
         assert(r == 0 && x == 2);
         r = (x + 1) << (x + 2);
         assert(r == 48);
+    }
+
+    function testShiftNonSimpleLeftOperand() public pure {
+        uint x = 3;
+        uint r;
+        r = (x + 1) << 2;
+        assert(r == 16);
+        r = (x * 4) >> 1;
+        assert(r == 6);
     }
 
     function testUnsignedParameterNonnegative(uint x) public pure {

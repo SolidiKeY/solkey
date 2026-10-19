@@ -524,6 +524,9 @@ parse time (`SolJSONParser#fieldSortFor`, keyed off the member's Solidity type):
 field constant — value members, `size`, `at(i)` — carries the base `Field` sort
 and is reset by the Field-generic default rule.
 
+`localValueDelete` resets a value-typed local (`delete v;`) to `defaultValue<[alphaPrim]>`;
+a memory local is rebound by `memoryRootDeleteFreshRebind` instead (`testDeleteLocalValue`).
+
 `selectStDelNodeMap` and `selectStDelNodeRef` match their sub-sorts directly;
 `selectStDelNodeDefault` stays Field-generic (because `size` and `at(i)` are
 plain `Field`) but is Prim-bounded on the read sort (`alphaPrim`), which keeps

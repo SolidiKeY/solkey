@@ -514,4 +514,24 @@ contract SolcConstructors {
         uint r = X;
         assert(r == 56);
     }
+
+    /// solc: semanticTests/variables/delete_local.sol
+    function deleteLocal() public pure {
+        uint v = 5;
+        delete v;
+        uint res = v;
+        assert(res == 0);
+    }
+
+    /// solc: semanticTests/variables/delete_locals.sol
+    function deleteLocals() public pure {
+        uint v = 5;
+        uint w2 = 6;
+        uint x = 7;
+        delete v;
+        uint res1 = w2;
+        uint res2 = x;
+        assert(res1 == 6);
+        assert(res2 == 7);
+    }
 }

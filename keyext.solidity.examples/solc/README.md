@@ -27,7 +27,7 @@ proofs that require default values in an unconstrained storage tail are checked 
 | `SolcFunctionCalls.sol` | `functionCall/`, `freeFunctions/`; smt `functions/` | 35 |
 | `SolcStructsMappings.sol` | remaining `structs/`, mapping tests of `functionCall/`, `variables/`, `types/`, `storage/`, `viaYul/storage/`; smt `types/struct*`, `mapping*` | 53 |
 | `SolcStructArrays.sol` | smt `types/struct/` nested storage arrays | 2 |
-| `SolcConstructors.sol` | `constructor/`, `immutable/`, `constants/`, `scoping/`; smt constructor, `inheritance/constructor_*`, `file_level/` | 35 |
+| `SolcConstructors.sol` | `constructor/`, `immutable/`, `constants/`, `scoping/`; smt constructor, `inheritance/constructor_*`, `file_level/` | 37 |
 | `SolcPayments.sol` | `payable/`, `receive/`, `fallback/`, `reverts/`, `errors/`, `tryCatch/`; smt `special/`, `blockchain_state/`, `try_catch/` | 35 |
 | `SolcModifiers.sol` | `modifiers/`; smt `modifiers/` | 47 |
 | `SolcSmtControlFlow.sol` | smt `control_flow/`, `bmc_coverage/`, `verification_target/`, `invariants/`, `complex/slither/` | 91 |
@@ -400,6 +400,8 @@ let them close under the normal source-size budgets, without a clean-tail invari
 | `smtCheckerTests/file_level/struct.sol` | `fileLevelStruct` |
 | `semanticTests/variables/public_state_overridding.sol` | `publicStateOverridding` |
 | `semanticTests/constants/simple_constant_variables_test.sol` | `simpleConstantVariables` |
+| `semanticTests/variables/delete_local.sol` | `deleteLocal` |
+| `semanticTests/variables/delete_locals.sol` | `deleteLocals` |
 
 ### `SolcPayments.sol`
 
@@ -730,8 +732,6 @@ portable Solidity guarantee. No clean-tail invariant is assumed.
 |---|---|---|
 | `constructor` | `semanticTests/constructor/state_variable_initialization.sol` | closes in KeY, but SolidityRuntimeCheck skips a contract with a constructor or an initialized state variable, so no EVM cross-check |
 | `immutableUninitialized` | `semanticTests/immutable/uninitialized.sol` | an immutable is plain storage, so outside the constructor a never-assigned one is unconstrained instead of zero |
-| `deleteLocal` | `semanticTests/variables/delete_local.sol` | no rule for delete on a local variable |
-| `deleteLocals` | `semanticTests/variables/delete_locals.sol` | no rule for delete on a local variable |
 | `msgValueZero` | `semanticTests/state/msg_value.sol` | a non-payable function does not assume msg.value == 0 |
 | `multipleInitializationsAssignExpr` | `semanticTests/immutable/multiple_initializations.sol` | no rule for a compound assignment used as an expression |
 | `mappingLocalCompoundAssignment` | `semanticTests/variables/mapping_local_compound_assignment.sol` | a parenthesized assignment as index base, (m = m2)[2] = 21, gets stuck |

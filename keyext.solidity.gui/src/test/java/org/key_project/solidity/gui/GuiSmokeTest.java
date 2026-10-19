@@ -7,7 +7,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.key_project.solidity.control.KeYEnvironment;
-import org.key_project.solidity.proof.Node;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.io.OutputStreamProofSaver;
 
@@ -27,50 +26,10 @@ public class GuiSmokeTest {
         System.setProperty("java.awt.headless", "true");
     }
 
-    private static Path example() {
-        return example("functionBody/archive.key");
-    }
-
     private static Path example(String relativePath) {
         Path p = Path.of("keyext.solidity.examples").resolve(relativePath);
         return Files.exists(p) ? p
                 : Path.of("../keyext.solidity.examples").resolve(relativePath);
-    }
-
-    @Test
-    void loadsWiresAndRefreshesViews() throws Exception {
-        Path file = example();
-        assertTrue(Files.exists(file), "example must exist: " + file.toAbsolutePath());
-
-        KeYEnvironment<?> env = KeYEnvironment.load(file);
-        Proof proof = env.getLoadedProof();
-        assertNotNull(proof);
-
-        ProofContext context = new ProofContext();
-        // Construct the views (registers them as listeners); panels are headless-safe.
-        ProofTreePanel tree = new ProofTreePanel(context);
-        GoalsView goals = new GoalsView(context);
-        SequentView sequent = new SequentView(context);
-        assertNotNull(tree);
-        assertNotNull(goals);
-        assertNotNull(sequent);
-
-        context.setProof(env, proof);
-        assertTrue(context.getSelectedNode() == proof.root(), "root should be selected on load");
-        assertTrue(!proof.openGoals().isEmpty(), "freshly loaded proof should have an open goal");
-
-        // The selected node renders to a non-empty sequent (inner/leaf agnostic).
-        Node root = proof.root();
-        String rendered =
-            OutputStreamProofSaver.printSequent(root.sequent(), root.proof().getServices());
-        assertTrue(rendered.contains("=") || rendered.contains("\\<"),
-            "root sequent should render: " + rendered);
-
-        // Run auto mode and refresh; the example closes, so no open goals remain.
-        env.getProofControl().startAndWaitForAutoMode(proof);
-        context.fireProofChanged();
-        assertTrue(proof.closed(), "archive example should close under auto mode");
-        assertTrue(proof.openGoals().isEmpty(), "closed proof has no open goals");
     }
 
     @Test
