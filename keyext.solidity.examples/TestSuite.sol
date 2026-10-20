@@ -3948,6 +3948,7 @@ contract TestSuite {
         assert((x ^ 7) == 10);
         assert((negative ^ 6) == -5);
         assert(((x + 2) ^ (y - 1)) == 6);
+        assert(((x + 2) ^ y) == 5);
         assert((returnOne() ^ returnOne()) == 0);
     }
 
