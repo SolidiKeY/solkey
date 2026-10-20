@@ -59,9 +59,9 @@ event) is refused at load with a `SolidityParseException` naming it; those are i
   leaves `==> i = 7`. A parameter alike (`for (uint i = n; i < 100; i++)` with invariant
   `n <= i`). Workaround: mention the variable after the loop, or use a literal.
 - **Symbolic `sdiv` bounds remain incomplete.** The default `NON_LIN_ARITH_NONE`
-  gives `defOps_div`/`defOps_sdiv` infinite cost, so `assert(a / b >= 0)` can
-  remain open. Remainder sign, positive-divisor upper bounds and divisibility
-  now have automatic taclets; division expansion is unchanged.
+  gives `defOps_div`/`defOps_sdiv` infinite cost. For a non-negative dividend,
+  `sdiv`/`smod` now equal `div`/`mod` and positive-divisor quotient bounds automate;
+  a negative dividend or divisor still gets no quotient bound.
 - **Parameter upper bounds, enum ranges and environment ranges are missing.** Generated
   obligations now assume `uint`/`uintN` inputs are non-negative, closing the three
   compound-subtraction ports. `assert(y <= 255)` for a `uint8` parameter and enum

@@ -244,6 +244,12 @@ The current unbounded integer model is unchanged: no Java-width wrappers or Soli
 General symbolic masks may remain as `binaryAnd` terms. Examples: `bitAndOneValues`,
 `bitAndGeneralValues`, `bitAndSymbolic`, and `bitAndOperandEvaluation`.
 
+`bitXor_unfold_left`, `bitXor_unfold_right` and `bitXorAssignment` mirror the `&` rules and
+produce `binaryXor(x, y)`. `binaryXorAsAnd` rewrites it to `x + y - 2 * binaryAnd(x, y)`, exact
+for all integers in two's complement, so `^` reuses the `&` simplifications. `binaryAndBounds`
+adds `0 <= binaryAnd(i, j) <= min(i, j)` for non-negative operands (`solidity_remainder_bounds`).
+Examples: `bitXorGeneralValues`, `bitXorSymbolic`, `bitXorAverage`, `bitXorOperandEvaluation`.
+
 ### Tier-1 expression operators
 Mirror the `+`/`==` families: terminal assigns the logic-level result, non-simple
 operands are captured by `_unfold_left/right` (arith) or `…CaptureLhs/Rhs`
@@ -318,8 +324,12 @@ from the EVM's checked arithmetic); `/` and `%` revert on a zero denominator.
   protection, after normal simplification. `smod_lessPositiveDenom` applies
   for either dividend sign; `smodMultiple` reduces a multiple of its nonzero
   divisor to zero. These facts use mathematical integers and no type ranges.
-- Deferred: `| ^ ~`, and unary `+` (removed in Solidity ≥0.5).
-  General `&` execution and arithmetic shifts are supported as described above.
+  In the same rule set, `sdivNonNegNum` and `smodNonNegNum` add `sdiv = div` and
+  `smod = mod` for a non-negative dividend (so program `/ %` meet spec `/ %`), and
+  `sdivBoundsPositive` / `divBoundsPositive` add the quotient bounds
+  `q * d <= n < q * d + d` for a positive divisor, without the infinite-cost `div_axiom`.
+- Deferred: `| ~`, and unary `+` (removed in Solidity ≥0.5).
+  General `&` and `^` execution and arithmetic shifts are supported as described above.
   Overflow is not modeled: integers are unbounded, and examples that depend on
   the EVM's checked-arithmetic revert live in
   `keyext.solidity.examples/unprovable/`.

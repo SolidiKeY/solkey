@@ -396,7 +396,7 @@ proves that the code's own checks keep everyone else out.
 - **`OZOwnable2Step.sol`** — two-step ownership: `transferOwnership` only sets the pending
   owner; `acceptOwnership` succeeds only for it, makes it owner and clears the slot.
 - **`OZMath.sol`** — `tryAdd`/`trySub`/`tryMul` (success implies the exact result; `trySub`
-  succeeds iff `b <= a`), `max`, `min`.
+  succeeds iff `b <= a`), `tryDiv`, `tryMod`, `average`, `ceilDiv`, `max`, `min`.
 - **`OZCounters.sol`** — the v4.9.0 `Counters` library inlined into a contract.
 - **`SolmateOwned.sol`** — solmate v7 `Owned`.
 - **`DocsBallot.sol`** — the docs' `Ballot` (`voting.rst`): `delegate` follows the delegation
@@ -416,7 +416,6 @@ proves that the code's own checks keep everyone else out.
 Every clause was checked for vacuity: changing it to something false leaves the proof open.
 
 `real-world/open/` holds specifications that load but do not close, with the reason in the file:
-`OZMath.sol` (`tryDiv`, `tryMod`, `ceilDiv`: no bounds for `sdiv`/`smod`; `average`: bitwise),
 `DocsBallot.sol` (`winnerName` with one `\exists` over a nested `\forall`) and
 `ArrayRemoveByShifting.sol` (the full functional spec of `remove`: a loop invariant cannot use
 `\old`). `OpenExamplesStayOpenTest` fails when one of them starts to close. `docs/limitations.md` explains each.

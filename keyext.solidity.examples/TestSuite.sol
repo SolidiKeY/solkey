@@ -3940,6 +3940,38 @@ contract TestSuite {
         return 7;
     }
 
+    function bitXorGeneralValues() public pure {
+        uint x = 13;
+        uint y = 10;
+        int negative = -3;
+        assert((x ^ y) == 7);
+        assert((x ^ 7) == 10);
+        assert((negative ^ 6) == -5);
+        assert(((x + 2) ^ (y - 1)) == 6);
+        assert((returnOne() ^ returnOne()) == 0);
+    }
+
+    function bitXorSymbolic(int x) public pure {
+        assert((x ^ 0) == x);
+        assert((0 ^ x) == x);
+        assert((x ^ x) == 0);
+    }
+
+    function bitXorAverage(uint x, uint y) public pure {
+        assert((x & y) + (x ^ y) / 2 == (x + y) / 2);
+    }
+
+    function bitXorOperandEvaluation() public {
+        total = 12;
+        uint r = bitAndSetTotal() ^ total;
+        assert(r == 11);
+        assert(total == 7);
+        total = 12;
+        r = total ^ bitAndSetTotal();
+        assert(r == 0);
+        assert(total == 7);
+    }
+
     function conditionalCallee(bool choose) public pure {
         int r = (choose ? returnSign : returnSign)(-3);
         assert(r < 0);

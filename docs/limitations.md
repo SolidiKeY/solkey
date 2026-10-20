@@ -66,7 +66,7 @@ it.
 | Gap | Reproducer (open goal) | Reports |
 |---|---|---|
 | A variable mentioned only in a loop invariant loses its value (`DropEffectlessElementaries` does not see `LoopSpec` bindings) | `uint i = 7; /// invariant j <= n && i == 7` → `==> i = 7` | 2; `dynamic_arrays_in_storage.sol`, `ArrayRemoveByShifting` |
-| Symbolic `sdiv` bounds remain incomplete | Quotient expansion is restricted in the default arithmetic mode | Remainder sign, positive-divisor bounds and divisibility now automate |
+| Symbolic `sdiv` bounds remain incomplete for negative operands | Quotient expansion is restricted in the default arithmetic mode | Non-negative dividends: `sdiv = div`, `smod = mod` and positive-divisor quotient bounds automate |
 | Parameter upper bounds and enum ranges are missing; unsigned input non-negativity is assumed | `function g(uint8 x) { assert(x <= 255); }` stays open | Full ranges deferred (Tier 3/5 of `taclet-ideas.md`) |
 | `msg.value`/`msg.sender` carry no range; the non-payable `msg.value == 0` is assumed only in specified obligations | `function u() payable { assert(msg.value >= 0); }` → `leq(msgValue, -1) ==>` | 3; `msg_value_*`, `range_check.sol`, `payable_1.sol` |
 | *(fixed)* Static → dynamic storage array copy loses the length | `uint[9] d1; uint[] d2; d2 = d1; assert(d2.length == 9)` | `array_copy_storage_storage_static_dynamic.sol` |
@@ -84,7 +84,7 @@ Choices the calculus makes on purpose, each of which makes some Solidity behavio
   `tryAdd`/`tryMul` and `Nonces`/`Counters` are specified only on their non-wrapping case.
 - **Bitwise support is partial.** General integer `&` executes through `binaryAnd`;
   literal operands evaluate exactly, with symbolic zero, identity and parity simplifications.
-  Other symbolic masks may remain unresolved. `|`, `^`, `~` and bitwise compound forms
+  Other symbolic masks may remain unresolved. `^` executes as `a + b - 2 * (a & b)`. `|`, `~` and bitwise compound forms
   stay as program text.
   `<<`, `>>`, and local `<<=`/`>>=` now have
   arithmetic taclets. Left shift uses unbounded multiplication, so truncation is
@@ -189,7 +189,7 @@ Real-world and benchmark:
 
 | Source | Files | Closed | Open |
 |---|---|---|---|
-| OpenZeppelin v5.0.0/v4.9.0, solmate v7, docs `voting.rst` | `OZPausable`, `OZReentrancyGuard`, `OZNonces`, `OZOwnable2Step`, `OZMath`, `OZCounters`, `SolmateOwned`, `DocsBallot` | 36 | `open/OZMath.sol` (`tryDiv`, `tryMod`, `average`, `ceilDiv`), `open/DocsBallot.sol` (`winnerName`, strong spec) |
+| OpenZeppelin v5.0.0/v4.9.0, solmate v7, docs `voting.rst` | `OZPausable`, `OZReentrancyGuard`, `OZNonces`, `OZOwnable2Step`, `OZMath`, `OZCounters`, `SolmateOwned`, `DocsBallot` | 40 | `open/DocsBallot.sol` (`winnerName`, strong spec) |
 | Solidity by Example | `ArrayReplaceFromEnd`, `Enum`, `FunctionModifier`, `ArrayRemoveByShifting`, `Counter`, `Mapping`, `NestedMapping`, `KingOfEther`, `EtherGame`, `EtherStore`, `Account`, `IterableMapping`, `SendEther`, `TimeLock` | 39 | `open/ArrayRemoveByShifting.sol` (`remove`, full spec); `EtherStore.withdraw` under `-O transferSemantics:withCallback` (the re-entrancy, as intended) |
 | benchmark | 14 files (6 new) | 37/39 | `WithdrawalContract.becomeRichest` (`m[storageKey] += e`), `AccessRestriction.forceOwnerChange` (`&`) |
 

@@ -15,7 +15,7 @@ and the `net` payment model.
 
 ## Tier 1 — Pure expression evaluation
 
-- **Bitwise** (`BinaryOp`): `&`, `|`, `^` and `~x` remain deferred.
+- **Bitwise** (`BinaryOp`): `|` and `~x` remain deferred (`&` and `^` are implemented).
   `<<` and `>>` now have arithmetic taclets under the unbounded integer model;
   left-shift truncation remains deferred with bounded integer semantics.
   `+x` is skipped for good (Solidity ≥0.5 removed it; Java KeY has no rule).
@@ -242,5 +242,5 @@ many upstream tests and contracts each blocks; defects in supported constructs a
 - **Immutables** as values, not storage slots (constants are inlined at reads).
 - **Spec language**: `\old` inside loop invariants; ether/time units and `block` in clauses;
   signed `/` and `%` matching the program's `sdiv`/`smod`; library struct members.
-- **Strategy**: heuristics for the remaining `sdiv` bound lemmas (or a selectable arithmetic mode
-  on the `.sol` path), and `\heuristics(pullOutQuantifierEx)` on `ex_pull_out*`.
+- **Strategy**: `sdiv` bounds for a negative dividend or divisor (non-negative dividends with a
+  positive divisor automate), and `\heuristics(pullOutQuantifierEx)` on `ex_pull_out*`.

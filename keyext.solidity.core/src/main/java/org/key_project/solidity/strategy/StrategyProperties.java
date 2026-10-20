@@ -82,7 +82,7 @@ public final class StrategyProperties extends Properties {
         DEFAULT_MAP.setProperty(SPLITTING_OPTIONS_KEY, SPLITTING_DELAYED);
         DEFAULT_MAP.setProperty(LOOP_OPTIONS_KEY, LOOP_INVARIANT);
         DEFAULT_MAP.setProperty(FUNCTION_OPTIONS_KEY, FUNCTION_CONTRACT);
-        DEFAULT_MAP.setProperty(NON_LIN_ARITH_OPTIONS_KEY, NON_LIN_ARITH_NONE);
+        DEFAULT_MAP.setProperty(NON_LIN_ARITH_OPTIONS_KEY, NON_LIN_ARITH_DEF_OPS);
         DEFAULT_MAP.setProperty(QUANTIFIERS_OPTIONS_KEY, QUANTIFIERS_NON_SPLITTING_WITH_PROGS);
         for (int i = 1; i <= USER_TACLETS_NUM; ++i) {
             DEFAULT_MAP.setProperty(userTacletsOptionsKey(i), USER_TACLETS_OFF);
