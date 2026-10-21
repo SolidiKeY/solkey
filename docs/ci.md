@@ -15,6 +15,10 @@ The module tests include `SolcWrapperTest.exampleCompilesWithoutWarnings`: every
 warning. Only the `transfer`/`send` deprecation is tolerated, since those are the constructs the
 prover models. `./run-key.sh FILE.sol --solc` prints the warnings.
 
+`CodeQuality / antlrWarnings` is a reminder, not a gate: `scripts/antlr-warnings.sh` regenerates
+every grammar and turns each ANTLR warning into a PR annotation and a job-summary line, without
+failing. Run it locally to see the list.
+
 ## CI-only test groups
 
 Not part of `ciGates` — the three slow proof suites are split off by JUnit tag so

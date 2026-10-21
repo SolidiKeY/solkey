@@ -426,6 +426,10 @@ PROBLEM
    : '\\problem'
    ;
 
+CHOOSECONTRACT
+   : '\\chooseContract'
+   ;
+
 PROOFOBLIGATION
    : '\\proofObligation'
    ;
@@ -436,6 +440,14 @@ PROOF
 
 PROOFSCRIPT
    : '\\proofScript'
+   ;
+
+CONTRACTS
+   : '\\contracts'
+   ;
+
+INVARIANTS
+   : '\\invariants'
    ;
    // Taclet annotations (see TacletAnnotations.java for more details)
    
