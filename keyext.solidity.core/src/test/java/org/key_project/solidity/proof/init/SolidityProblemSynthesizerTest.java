@@ -211,19 +211,19 @@ public class SolidityProblemSynthesizerTest {
         String text = SolidityProblemSynthesizer.problemText(file,
             spec(SolidityExampleTests.TEST_SUITE_CONTRACT, "testSimpleAssert"));
 
-        assertTrue(text.contains("\\find(wellformed(s))"), text);
+        assertTrue(text.contains("\\find(layoutInv(s))"), text);
         assertTrue(text.contains(
-            "wf(fixedArr(9, leaf), selectSt<[Struct]>(s, TestSuite$copySource9))"), text);
+            "shapeInv(fixedArr(9, leaf), selectSt<[Struct]>(s, TestSuite$copySource9))"), text);
         assertTrue(text.endsWith("""
                 \\problem {
-                    wellformed(storage) ->
-                    \\<{ testSimpleAssert()@%s; }\\>(wellformed(storage))
+                    layoutInv(storage) ->
+                    \\<{ testSimpleAssert()@%s; }\\>(layoutInv(storage))
                 }
                 """.formatted(SolidityExampleTests.TEST_SUITE_CONTRACT)), text);
     }
 
     @Test
-    void aConstructorStartsFromTheShapedEmptyStorageAndEstablishesWellformedness()
+    void aConstructorStartsFromTheShapedEmptyStorageAndEstablishesTheLayoutInvariant()
             throws IOException {
         Path file = SolidityExampleTests.example("contracts/FixedLengths.sol");
 
@@ -233,8 +233,8 @@ public class SolidityProblemSynthesizerTest {
         assertTrue(text.contains("{storage := storeSt(storeSt(storeSt(mtSt, FixedLengths$d1, "
             + "fixedArr(9, leaf)), FixedLengths$d2, dynArr(leaf)), "
             + "FixedLengths$dyn, dynArr(fixedArr(3, leaf)))\n     || net := mtSt}\n    "
-            + "\\<{ constructor()@FixedLengths; }\\>(wellformed(storage))"), text);
-        assertTrue(text.contains("wf(dynArr(fixedArr(3, leaf)), selectSt<[Struct]>(s, "
+            + "\\<{ constructor()@FixedLengths; }\\>(layoutInv(storage))"), text);
+        assertTrue(text.contains("shapeInv(dynArr(fixedArr(3, leaf)), selectSt<[Struct]>(s, "
             + "FixedLengths$dyn))"), text);
     }
 
@@ -263,9 +263,9 @@ public class SolidityProblemSynthesizerTest {
                                 & ((find<[int]>(s, cons1(Escrow$state)) = 1) | (find<[int]>(s, cons1(Escrow$amountInEscrow)) = 0)))
                             \\heuristics(simplify)
                         };
-                        insertWellformed {
+                        insertLayoutInv {
                             \\schemaVar \\term Struct s;
-                            \\find(wellformed(s))
+                            \\find(layoutInv(s))
                             \\replacewith(true)
                             \\heuristics(simplify)
                         };

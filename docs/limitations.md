@@ -96,7 +96,7 @@ Choices the calculus makes on purpose, each of which makes some Solidity behavio
 - **Addresses are integers without an environment.** No `this`, no `<address>.balance`, no
   `block.*`/`tx.*`/`gasleft`, and contract-typed parameters get no obligation. Specs use a
   `timeNow` state variable for time.
-- **Storage starts arbitrary.** Function obligations start with symbolic wellformed storage,
+- **Storage starts arbitrary.** Function obligations start with symbolic storage satisfying the layout invariant,
   including unconstrained data beyond dynamic-array lengths. Empty push changes only the
   length and preserves that data; it does not establish zero values or empty nested arrays.
   A default-value assertion needs an explicit earlier clear/write or a suitable precondition.
@@ -148,9 +148,6 @@ each one blocks (lower bounds: whole families are counted once where a report sa
 
 ## (d) Spec-language gaps
 
-- **Diamond loop invariants still require the invariant on break exits.** Box loops dispatch
-  breaks directly to the continuation, so their invariants need no generated flags:
-  `for_1_break`, `while_1_break`, `while_nested_break`, and `while_nested_continue` close.
 - **Loop invariants cannot use `\old`** (`SpecException: \old is only allowed in ensures`), and
   the loop rule anonymises all of storage, so the full spec of `ArrayRemoveByShifting.remove`
   (length − 1, prefix kept, suffix shifted) stays open.

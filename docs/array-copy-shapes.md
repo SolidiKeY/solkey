@@ -138,15 +138,15 @@ comes from decoding the destination shape; tail clearing comes from the reset le
 Shape preservation follows from the same induction:
 
 ```text
-wf(T, D0) and wf(U, A0) and compatible(U, T)
-    imply wf(T, C_T(D0, A0))
+shapeInv(T, D0) and shapeInv(U, A0) and compatible(U, T)
+    imply shapeInv(T, C_T(D0, A0))
 ```
 
 For fixed arrays, the result length is the target's declared length. Copied children satisfy
 the target element shape by the copy induction hypothesis, and reset children satisfy it by
 the reset lemma. For dynamic arrays, the source length is nonnegative and the same child
 arguments apply. Structs follow member by member. This is the property a generalized copy
-taclet must establish at the function's `wellformed(storage)` postcondition.
+taclet must establish at the function's `layoutInv(storage)` postcondition.
 
 ## What this establishes about empty push
 

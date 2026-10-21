@@ -18,11 +18,15 @@ import org.key_project.solidity.proof.io.ProofSaver;
 
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.key_project.solidity.testutil.SolidityExampleTests.appliedRuleNames;
 import static org.key_project.solidity.testutil.SolidityExampleTests.assertSameProofTree;
 import static org.key_project.solidity.testutil.SolidityExampleTests.describeOpenGoals;
 import static org.key_project.solidity.testutil.SolidityExampleTests.keyFiles;
@@ -40,6 +44,8 @@ public class RulesTest {
     /// of failing the suite, so genuine regressions in the other examples stay visible. Once an
     /// example here starts closing, remove it from this set.
     private static final Set<String> KNOWN_UNSUPPORTED = Set.of();
+
+    private static final String UNSOUND_RESOURCE = EXAMPLES_RESOURCE + "/unsound";
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("exampleFiles")
@@ -120,5 +126,32 @@ public class RulesTest {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("unsoundFiles")
+    public void unsoundWfProblemStaysOpen(String exampleName, Path exampleFile)
+            throws ProblemLoaderException {
+        Proof proof = loadAndProve(exampleFile, 10000, -1);
+        assertFalse(proof.closed(), exampleName + " proves a false shape-invariant claim");
+    }
+
+    static Stream<Arguments> unsoundFiles() throws Exception {
+        return keyFiles(resource(UNSOUND_RESOURCE)).stream()
+                .map(path -> Arguments.of(path.getFileName().toString(), path));
+    }
+
+    /// shapeInvMapElem assumes conformance at every Prim key, so shapeInvMapRight must unfold at a
+    /// fresh
+    /// Prim key; unsound/shapeInvMapRightIntKeysOnly.key is the counterexample to an int one.
+    @Test
+    public void shapeInvMapRightUnfoldsAtAPrimKey() throws ProblemLoaderException {
+        Proof proof =
+            loadAndProve(resource(EXAMPLES_RESOURCE + "/unfold/shapeInvMapRightPrimKey.key"), 1,
+                -1);
+        assertEquals(Set.of("shapeInvMapRight"), appliedRuleNames(proof));
+        var unfolded = proof.openGoals().head().sequent().succedent().getFirst().formula();
+        var key = unfolded.sub(1).sub(1).sub(0);
+        assertEquals("Prim", key.sort().name().toString(), unfolded.toString());
     }
 }

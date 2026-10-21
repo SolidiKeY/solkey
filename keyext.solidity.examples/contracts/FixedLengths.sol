@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 /// The running contract of the storage-shape design (`docs/storage.md`, section 8c): a
 /// fixed-size array has no length cell, so its length comes from the shaped empty storage in
-/// the constructor and from `wellformed(storage)` in a function.
+/// the constructor and from `layoutInv(storage)` in a function.
 contract FixedLengths {
     uint[9] d1;
     uint[] d2;

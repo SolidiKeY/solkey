@@ -68,32 +68,27 @@ public class HeuristicInstantiation implements TermGenerator<Goal> {
     private static class HIIterator implements Iterator<Term> {
         private final Iterator<Term> instances;
 
-        // private final Sort quantifiedVarSort;
-        // private final Function quantifiedVarSortCast;
+        private final Sort quantifiedVarSort;
 
         private Term nextInst = null;
-        // private final Services services;
 
         private HIIterator(Iterator<Term> it, QuantifiableVariable var, Services services) {
             this.instances = it;
-            // this.services = services;
-            // quantifiedVarSort = var.sort();
-            // quantifiedVarSortCast =
-            // services.getJavaDLTheory().getCastSymbol(quantifiedVarSort, services);
+            quantifiedVarSort = var.sort();
             findNextInst();
         }
 
+        /// Skips a candidate whose sort is not a subsort of the quantified variable's: the
+        /// triggers match across sorts (an `int` variable under `at(_)` meets the `Prim` and
+        /// `bool` keys of the same pattern), and instantiating with such a term is an illegal
+        /// instantiation that aborts the proof. Dropping it loses no applicable instance. (KeY
+        /// casts a supersort candidate down instead; this port does not.)
         private void findNextInst() {
             while (nextInst == null && instances.hasNext()) {
                 nextInst = instances.next();
-                // if (!nextInst.sort().extendsTrans(quantifiedVarSort)) {
-                // if (!quantifiedVarSort.extendsTrans(nextInst.sort())) {
-                // nextInst = null;
-                // continue;
-                // }
-                // nextInst = services.getTermBuilder().func(quantifiedVarSortCast,
-                // nextInst);
-                // }
+                if (!nextInst.sort().extendsTrans(quantifiedVarSort)) {
+                    nextInst = null;
+                }
             }
         }
 

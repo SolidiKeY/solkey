@@ -22,9 +22,9 @@ import org.key_project.solidity.speclang.natspec.LoopSpecCompiler;
 import org.jspecify.annotations.Nullable;
 
 /// `\getInvariant(cond, body, inv)` matches a `while (cond) body` whose loop carries
-/// `@custom:key invariant` clauses and whose body does not touch memory, and binds `inv` to the
-/// conjunction of the clauses. `\getVariant(cond, body, dec)` binds `dec` to its `decreases`
-/// term and fails when there is none.
+/// `@custom:key invariant` clauses and whose condition and body do not touch memory, and binds
+/// `inv` to the conjunction of the clauses. `\getVariant(cond, body, dec)` binds `dec` to its
+/// `decreases` term and fails when there is none.
 public class LoopInvariantCondition implements VariableCondition {
     public enum Kind {
         INVARIANT("\\getInvariant"), VARIANT("\\getVariant"), BREAK("\\getLoopBreak");
@@ -66,12 +66,12 @@ public class LoopInvariantCondition implements VariableCondition {
             find(svInst.getContextInstantiation().contextProgram(), condition, body);
         LoopSpec spec = loop == null ? null : loop.getSpec();
         if (spec == null || spec.invariants().isEmpty()
-                || LoopFrame.of(loop.getBody()).memory()) {
+                || LoopFrame.of(loop).memory()) {
             return null;
         }
         Term result = switch (kind) {
             case VARIANT -> LoopSpecCompiler.variant(spec, services);
-            case INVARIANT -> withWellformedStorage(LoopSpecCompiler.invariant(spec, services),
+            case INVARIANT -> withLayoutInv(LoopSpecCompiler.invariant(spec, services),
                 loop, services);
             case BREAK -> spec.breakFlag() == null ? services.getTermBuilder().ff()
                     : services.getTermBuilder().equals(
@@ -83,14 +83,14 @@ public class LoopInvariantCondition implements VariableCondition {
                 : matchCond.setInstantiations(svInst.add(resultSV, result, services));
     }
 
-    private static @Nullable Term withWellformedStorage(@Nullable Term invariant,
+    private static @Nullable Term withLayoutInv(@Nullable Term invariant,
             LoopStatement loop, Services services) {
-        if (invariant == null || !LoopFrame.of(loop.getBody()).storage()) {
+        if (invariant == null || !LoopFrame.of(loop).storage()) {
             return invariant;
         }
         TermBuilder tb = services.getTermBuilder();
         NamespaceSet namespaces = services.getNamespaces();
-        return tb.and(invariant, tb.func(namespaces.requireFunction("wellformed"),
+        return tb.and(invariant, tb.func(namespaces.requireFunction("layoutInv"),
             tb.var(namespaces.programVariables().lookup("storage"))));
     }
 

@@ -127,13 +127,13 @@ public final class SolidityProblemSynthesizer {
         Call call = Key.call(results, spec.function(), arguments, spec.contract());
         StorageShapes shapes = new StorageShapes(contract);
         if (!contractSpec.isSpecified() && !functionSpec.isSpecified()) {
-            KeyFormula post = shapes.isEmpty() ? Key.TRUE : WELLFORMED;
+            KeyFormula post = shapes.isEmpty() ? Key.TRUE : LAYOUT_INV;
             KeyFormula obligation = Key.modality(functionSpec.box(), call, post);
             if (function.isConstructor()) {
                 obligation = Key.update(List.of(Key.assign("storage", shapes.emptyStorage()),
                     Key.assign("net", MT_ST)), obligation);
             } else if (!shapes.isEmpty()) {
-                obligation = Key.implies(WELLFORMED, obligation);
+                obligation = Key.implies(LAYOUT_INV, obligation);
             }
             return new KeyProblem(solFile.toAbsolutePath(), spec.choices(),
                 shapes.declarations(), variables, shapes.rules(),
@@ -162,7 +162,7 @@ public final class SolidityProblemSynthesizer {
     private static final KeyTerm MSG_SENDER = Key.constant("msgSender");
     private static final KeyTerm MSG_VALUE = Key.constant("msgValue");
     private static final KeyTerm SELF_BALANCE = Key.constant("selfBalance");
-    private static final KeyFormula WELLFORMED = Key.predicate("wellformed", STORAGE);
+    private static final KeyFormula LAYOUT_INV = Key.predicate("layoutInv", STORAGE);
     private static final KeyFormula INVARIANT = Key.predicate("CInv", STORAGE, NET);
 
     private static KeyProblem specifiedProblem(Path solFile, SolidityOutline.Contract contract,
@@ -200,14 +200,14 @@ public final class SolidityProblemSynthesizer {
                 where + " requires")));
         if (!constructor) {
             if (!shapes.isEmpty()) {
-                precondition.add(WELLFORMED);
+                precondition.add(LAYOUT_INV);
             }
             precondition.add(INVARIANT);
         }
 
         List<KeyFormula> postcondition = new ArrayList<>();
         if (!shapes.isEmpty()) {
-            postcondition.add(WELLFORMED);
+            postcondition.add(LAYOUT_INV);
         }
         postcondition.add(INVARIANT);
         postcondition.addAll(labeledClauses(functionSpec.ensures(),

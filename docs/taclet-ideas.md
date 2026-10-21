@@ -34,8 +34,8 @@ and the `net` payment model.
   (see the Tier-5 entry below).
 - **Loop invariants, what is left.** `whileInvariantBox`/`whileInvariantDiamond` are in
   (`docs/taclets-implementation.md`, "Loops"). Open: a body that writes memory gets no rule
-  (anonymising the memory heap needs its well-formedness facts); completion-sensitive break
-  exits for diamond loops and direct return dispatch for invariant rules; a diamond loop without
+  (anonymising the memory heap needs its well-formedness facts); direct return dispatch for
+  invariant rules; a diamond loop without
   `decreases` silently falls back to unwinding instead of failing with a message. Generated
   obligations supply unsigned parameter non-negativity; values from arbitrary storage or
   arithmetic still lack type ranges. `MultiAuction.closeAuction` stays skipped: its loops transfer, so
@@ -77,8 +77,8 @@ and the `net` payment model.
   per-type range check that reverts out of range (Java KeY's
   `inInt`/`expandInInt` structure), plus in-range PO antecedents for
   parameters and storage reads so examples need not `require` both bounds by
-  hand. Done for array lengths: `sizeNotNegative` gives every storage
-  length cell `0 <=` unconditionally (`docs/storage.md` §8b). Still open:
+  hand. Done for array lengths: the `shapeInv` atoms of `layoutInv(storage)`
+  give every reachable length cell `0 <=` (`docs/storage.md` §8b). Still open:
   `0 <=` for `uint` value cells (needs per-contract layout knowledge the
   calculus does not have), upper bounds (`< 2^256`), and parameters.
 - **Address/payable builtins & globals** (`msg.sender`, `msg.value`,

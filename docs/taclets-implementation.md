@@ -89,7 +89,7 @@ struct elements.
 Array reset selectors compare each index with the original length: valid elements are reset,
 while out-of-range data is preserved. Reference-element selection produces `delNodeIndex(st, i)`;
 its field selectors resolve the range test only when the child is read. The marker retains
-array-kind and wellformedness information from the original child. This avoids expanding
+array-kind and shape invariant information from the original child. This avoids expanding
 conditional struct values that later writes overwrite; `ArrayCubeFDF.storageAssignmentCopiesDeeply`
 closes in 12,000 steps under its original 29,700-step budget.
 The term comparator short-circuits identical term objects, avoiding recursive self-comparisons
@@ -422,23 +422,17 @@ length, so assuming the first inner append uses index zero needs an empty-inner 
 named it twice; reads commute through it with `selectOnDelAtCons`, and the reset still
 resolves on read through `delField<[alpha]>`.
 
-### Array length non-negativity (`sizeNotNegative`)
-`sizeNotNegative` (`structRules.key`) is the SolKey twin of Java KeY's
-`arrayLengthNotNegative`: `\find(selectSt<[int]>(st, size)) \sameUpdateLevel`
-adds `0 <= selectSt<[int]>(st, size)` to the antecedent, in ruleset
-`inReachableStateImplication` (declared in `ruleSetDeclarations.key`; cost +100
-and `NonDuplicateAppModPositionFeature` bound in `SolidityDLStrategy`'s cost and
-approval dispatchers, so the add-only rule fires once per length term and cannot
-loop when formulas move). One static rule suffices because every length read the
-program rules emit — `find<[int]>(storage, consr(sp, size))` — normalizes to a
-`selectSt<[int]>(st, size)` leaf via the `consr` eliminators and
-`findDefinitionCons`. Sound by the external invariant that `size` cells are only
-written by push (`n+1`) and pop (`n-1` under `0 < n`); see `docs/storage.md`
-§8b. It is what closes `storagePopUnknownLength`, `storagePushLengthPositive`
-and `storagePushReadBack` without a `require` on the length. Landing it also
-required order-guarding the `cnf_andComm`/`cnf_orComm` sorting rules in
-`FOLStrategy` (`termSmallerThan`, mirroring `key.core`'s `JFOLStrategy`) —
-unguarded, `commute_and` ping-pongs on a succedent conjunction and starves
+### Array length non-negativity (layout invariant)
+A length is non-negative because the node conforms to a shape: `shapeInvDynSize` adds `0 <= |st|`
+under `shapeInv(dynArr(s), st) ==>`, and `shapeInvFixedSize` rewrites `|st|` to `n` under
+`shapeInv(fixedArr(n, s), st) ==>` (see "Storage shapes" below and `docs/storage.md` §8b). This is what
+closes `storagePopUnknownLength`, `storagePushLengthPositive` and `storagePushReadBack` without a
+`require` on the length. The former axiom `sizeNotNegative` (`0 <= selectSt<[int]>(st, size)`
+for every `st`) was removed: `save(st, cons(size, nil), -1)` has length `-1`, so it proved
+`!(selectSt<[int]>(st, size) = -1)` (`unsound/sizeNotNegativeAnyStruct.key`); no closed proof of
+`TestSuite.sol`, `contracts/` or the benchmark depended on it. The `cnf_andComm`/`cnf_orComm`
+order guards in `FOLStrategy` (`termSmallerThan`, mirroring `key.core`'s `JFOLStrategy`) that
+landed with it stay: unguarded, `commute_and` ping-pongs on a succedent conjunction and starves
 every positive-cost rule.
 
 ### Memory
@@ -496,10 +490,41 @@ Every field constant is a `TypedField` carrying its declared Solidity type, expo
 calculus as the `Shape` term `fieldShape(m)`. Lengths of fixed-size arrays are not read off an
 annotation: a constructor starts from the shaped storage
 (`storeSt(mtSt, C$d1, fixedArr(9, leaf))`: `Shape \extends Struct`, read by `selectOnShape*`), and a function
-assumes the generated `wellformed(storage)`, whose `wf(shape, node)` atoms the `wf*` trigger
-taclets consume at each stuck `size` read and whose exit obligation the `wf*Right` taclets
+assumes the generated `layoutInv(storage)`, whose `shapeInv(shape, node)` atoms the `shapeInv*` trigger
+taclets consume at each stuck `size` read and whose exit obligation the `shapeInv*Right` taclets
 discharge (`StorageShapes`, `docs/storage.md` section 8c; `contracts/FixedLengths.sol`,
 `testFixedArrayLength`, `testFixedElementOfDynamicArrayLength`, `storageShorterStaticCopyClearsTail`).
+The `shapeInv` taclets in `structRules.key`, with `|st|` for `selectSt<[int]>(st, size)` and `st[a]`
+for `selectSt<[Struct]>(st, a)`:
+
+| Rule | Where | Effect |
+|---|---|---|
+| `shapeInvLeaf`, `shapeInvSelf` | anywhere | `shapeInv(leaf, st)` and `shapeInv(sh, sh)` are `true` |
+| `shapeInvFixedSize` | `shapeInv(fixedArr(n, s), st) ==>` | `\|st\| ⇝ n` |
+| `shapeInvDynSize` | `shapeInv(dynArr(s), st) ==>` | adds `0 <= \|st\|` |
+| `shapeInvFixedIsFixed`, `shapeInvDynIsNotFixed` | `shapeInv(fixedArr(n, s), st) ==>` / `shapeInv(dynArr(s), st) ==>` | `fixed(st) ⇝ true` / `false` |
+| `shapeInvFixedElem`, `shapeInvDynElem` | array atom `==>`, `st[at(i)]` with `i : int` | adds `shapeInv(s, st[at(i)])` |
+| `shapeInvFixedElemMap`, `shapeInvDynElemMap` | array atom `==>`, `st[atMap(i)]` (`atMap : int`) | adds `shapeInv(s, st[atMap(i)])` |
+| `shapeInvMapElem` | `shapeInv(mapOf(s), st) ==>`, `st[at(k)]` with `k : Prim` | adds `shapeInv(s, st[at(k)])` |
+| `shapeInvSaveRight` | `==> shapeInv(sh, save(st, p, v))`, `p = cons(a, fs)` | `shapeInv(sh, st) & shapeInvSaveAt(sh, st, p, v, last(p))` |
+| `shapeInvSaveAtSize` | `shapeInvSaveAt(sh, st, p, v, size)` | `0 <= cast<[int]>(v) & !fixed(find<[Struct]>(st, firsts(p)))` |
+| `shapeInvSaveAtIndex`, `shapeInvSaveAtMapIndex`, `shapeInvSaveAtMember` | `shapeInvSaveAt(sh, st, p, v, x)`, `x` = `at(k)` / `atMap(i)` / a member field | `shapeInv(shapeAt(sh, p), save(find<[Struct]>(st, p), nil, v))` |
+| `shapeInvSaveLengthRight` | `==> shapeInv(dynArr(s), save(st, cons(size, nil), n))` | `shapeInv(dynArr(s), st) & 0 <= n` |
+| `shapeInvStoreRight` | `==> shapeInv(sh, storeSt(st, a, v))` | `!(a = size) & shapeInv(sh, st) & shapeInv(shapeAt(sh, cons(a, nil)), cast<[Struct]>(v))` |
+| `shapeInvDelAtRight` | `==> shapeInv(sh, delAt(st, p))`, `p = cons(a, fs)` | `shapeInv(sh, st) &` (path ends in `size`: `!fixed(find<[Struct]>(st, firsts(p)))`) |
+| `shapeInvDelNodeRight` | `==> shapeInv(sh, delNode(st))` | `shapeInv(sh, st)` |
+| `shapeInvDelNodeFixedRight` | `==> shapeInv(fixedArr(n, s), delNodeFixed(st))` | `shapeInv(fixedArr(n, s), st)` |
+| `shapeInvDelNodeIndexRight` | `==> shapeInv(sh, delNodeIndex(st, i))` | `shapeInv(sh, st[at(i)])` |
+| `shapeInvFixedRight` | `==> shapeInv(fixedArr(n, s), st)` | `fixed(st) & \|st\| = n & shapeInv(s, st[at(skx)]) & shapeInv(s, st[atMap(skx)])`, `skx` a fresh `int` |
+| `shapeInvDynRight` | `==> shapeInv(dynArr(s), st)` | `!fixed(st) & 0 <= \|st\| & shapeInv(s, st[at(skx)]) & shapeInv(s, st[atMap(skx)])`, `skx` a fresh `int` |
+| `shapeInvMapRight` | `==> shapeInv(mapOf(s), st)` | `shapeInv(s, st[at(skp)])`, `skp` a fresh `Prim` |
+
+Each antecedent taclet hands out only what the matching `*Right` unfolding proves: array
+elements at `int` indices, mapping values at every `Prim` key. The `unsound/` problems of
+`RulesTest#unsoundWfProblemStaysOpen` are the counterexamples to each weaker form
+(`docs/storage.md` section 8c). `shapeInvMapRightIntKeysOnly` needs the quantifier heuristic to skip
+ill-sorted instances (`HeuristicInstantiation.HIIterator`): instantiating an `int` variable
+with a `Prim` term found under `at(_)` used to abort the proof with an illegal instantiation.
 `FixedLengths` also checks constructor default reads, primitive empty-push reads,
 copy independence, shorter-copy tail clearing before an empty push, and fixed-element
 storage-to-memory-to-storage copies. `TestSuite.sol` checks these tail/default cases on
@@ -519,7 +544,7 @@ Memory objects carry a `Shape` in their identity (`shaped(idp, fixedArr(3, leaf)
 
 Arrays whose elements are fixed-size arrays (`uint[3][]`) support `delete` and `pop()`.
 The terminal rules use the existing `delAt` marker without `noFixedArrayElement` guards;
-`wf` element facts identify fixed child nodes when `selectStDelNodeSize` preserves their
+`shapeInv` element facts identify fixed child nodes when `selectStDelNodeSize` preserves their
 length. `selectStDelNodeIndexStruct` recurses into the selected child without an old-length
 inequality, as `selectStDelNodeFixedElement` already did. The copy selectors retain their
 source/target length comparisons to distinguish copied values from the cleared tail.
@@ -864,41 +889,53 @@ which reads the `///` lines above the loop's `src` offset into a `LoopSpec` on t
 `LoopStatement`. The spec binds each source name to the program variable it denotes;
 `CreatingASTVisitor` carries it through rebuilds, `ProgVarReplaceVisitor` renames its bindings
 (inlining, clashing declarations), and `LoopLowering` moves it to the `while` it produces, so
-the invariant of a `for` or `do … while` holds at the head of that `while`. For box
-loops, a `break` exit proves the continuation directly; diamond loops retain the existing
-requirement to establish the invariant on abrupt exits. `LoopSpecCompiler` compiles the clauses
+the invariant of a `for` or `do … while` holds at the head of that `while`. A `break` exit
+proves the continuation directly, under the box and the diamond alike. `LoopSpecCompiler` compiles the clauses
 when the rule fires, against the variables' current names.
 
 | Rule | Goals |
 |---|---|
-| `whileInvariantBox` | `inv`; `#loopAnon(body, (inv & !broke) -> [bool b = c;]((b = TRUE -> [body]((!broke -> inv) & (broke -> [c# #c] post))) & (b = FALSE -> [c# #c] post)))` |
-| `whileInvariantDiamond` | `inv`; `#loopAnon(body, (inv & dec = v) -> <bool b = c;>((b = TRUE -> <body>(inv & <b = c;>(b = TRUE -> 0 <= dec & dec < v))) & (b = FALSE -> <c# #c> post)))` |
+| `whileInvariantBox` | `inv`; `#loopAnon(while (c) body, (inv & !broke) -> [bool b = c;]((b = TRUE -> [body]((!broke -> inv) & (broke -> [c# #c] post))) & (b = FALSE -> [c# #c] post)))` |
+| `whileInvariantDiamond` | `inv`; `#loopAnon(while (c) body, (inv & !broke) -> <bool b = c;>((b = TRUE & dec = v -> <body>((!broke -> inv & <b = c;>(b = TRUE -> 0 <= dec & dec < v)) & (broke -> <c# #c> post))) & (b = FALSE -> <c# #c> post)))` |
 
 - `\getInvariant(cond, body, inv)` / `\getVariant(cond, body, dec)` find the matched loop in
   the context program by its condition and body, and fail when it has no clause, so a loop
   without `invariant` (or, under the diamond, without `decreases`) is unwound instead.
 - `\getLoopBreak(cond, body, broke)` binds `broke` to this loop's generated break flag
   being `TRUE`, or `false` when it has none. `LoopSpec` carries the flag through AST rebuilding
-  and variable renaming. The box rule assumes `!broke` only at an arbitrary normal loop head;
-  after executing the body it requires the invariant for normal/continue completion and the
-  original continuation for a break. Break paths need not preserve the invariant. Nested
-  loops keep separate flags, and the existing lowering runs a `for` update after `continue`
-  but skips it after `break`. This follows Java KeY's traditional invariant rule's completion
-  split. Return handling and diamond termination obligations are unchanged.
-- `#loopAnon` (`LoopAnonTransformer`) gives a fresh constant to what `LoopFrame` says the body
-  may change: the locals it assigns or declares (the lowering's flags included), `storage` when
-  it writes a non-local, and `net` when it calls anything but `require`/`assert`/`revert`
-  (calls also make it write storage). A loop that only reads storage keeps every storage fact.
-- A body that allocates or writes memory gets no invariant rule (`LoopFrame.memory`): the
-  memory heap is not anonymised.
+  and variable renaming. Both rules assume `!broke` only at an arbitrary normal loop head
+  (the lowering declares the flag `false` just before the loop and re-enters only after an
+  iteration without a break); after executing the body they require the invariant (and, under
+  the diamond, the decrease) for normal/continue completion and the original continuation for
+  a break. Break paths need not preserve the invariant nor decrease the variant. Nested loops
+  keep separate flags, and the existing lowering runs a `for` update after `continue` but
+  skips it after `break`. This follows Java KeY's traditional invariant rule's completion
+  split. Return handling is unchanged.
+- `#loopAnon` (`LoopAnonTransformer`) gives a fresh constant to what `LoopFrame` says the
+  condition and the body may change: the locals they assign or declare (the lowering's flags
+  included), `storage` when they write a non-local, and `net` when they call anything but
+  `require`/`assert`/`revert` (calls also make them write storage). A loop that only reads
+  storage keeps every storage fact. The condition runs in every iteration, so it is framed
+  too: framing the body alone proved `assert(i == 0)` after `while (i++ < 3) {}` with
+  `invariant true` (`unprovableInvariantConditionSideEffect` in `TestSuite.sol`).
+- A loop whose condition or body allocates or writes memory gets no invariant rule
+  (`LoopFrame.memory`, checked on the whole loop): the memory heap is not anonymised.
 - The lowered body has no `break`/`continue`/`return`, so it runs without its context; a
   `revert` in it closes the goal through `revertBox`/`revertDiamond`.
-- The variant must decrease only when the loop goes on, i.e. when the condition holds again
-  after the body: the iteration a `break` ends need not decrease it. `0 <= dec` is checked
-  because an arbitrary arithmetic result is not known to be non-negative.
+- The variant is measured at one point of every iteration: just after the condition has run
+  and held. `v` fixes it there, inside the `b = TRUE` branch, and it is compared at the same
+  point of the next iteration, after the body and the next run of the condition. So it must
+  decrease only when the loop goes on: the iteration a `break` ends need not decrease it, and
+  the last iteration may leave it negative. `0 <= dec` is checked because an arbitrary
+  arithmetic result is not known to be non-negative. Fixing `v` at the head, before the
+  condition, compared two different points: a condition that lowers the measure and a body
+  that restores it passed every check, and `assert(false)` after a loop that never ends
+  closed (`unprovableVariantConditionLowersBodyRestores` in `TestSuite.sol`, which runs out of
+  gas on the EVM). Measuring at the head on both ends instead would make the `break`
+  iteration decrease the variant (`invariantVariantSkipsBreakIteration` stays open then).
 - Integers are unbounded, so anonymised locals need no range facts. Generated obligations
-  assume unsigned input parameters are non-negative; array lengths are bounded by
-  `sizeNotNegative`.
+  assume unsigned input parameters are non-negative; array lengths are bounded by the
+  `layoutInv(storage)` conjunct of every storage-writing loop's invariant.
 
 Examples: the `Loop invariants` section of `TestSuite.sol`, including break exits outside the
 invariant, `for` updates after continue, false postconditions, and a `\forall` over the

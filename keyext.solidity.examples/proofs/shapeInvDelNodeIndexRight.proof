@@ -28,7 +28,7 @@
 
 
 \problem {
-  wf(fixedArr(3, leaf),
+  shapeInv(fixedArr(3, leaf),
      delNodeIndex(storeSt(storeSt(storeSt(dynArr(fixedArr(3,
                                                           leaf)),
                                           at(1),
@@ -78,7 +78,7 @@
                                  1),
                     at(2))
   = 0
-& wf(fixedArr(3, leaf),
+& shapeInv(fixedArr(3, leaf),
      delNodeIndex(storeSt(storeSt(storeSt(dynArr(fixedArr(3,
                                                           leaf)),
                                           at(1),
@@ -273,7 +273,7 @@
 (rule "cut_direct" (formula "1") (term "0"))
 (branch
    (rule "concrete_and_1" (formula "2"))
-   (rule "wfDelNodeIndexRight" (formula "2"))
+   (rule "shapeInvDelNodeIndexRight" (formula "2"))
    (rule "selectOnStore" (formula "2") (term "1"))
    (rule "equalUnique" (formula "2") (term "0,1"))
    (rule "ifthenelse_false" (formula "2") (term "1"))
@@ -281,16 +281,19 @@
    (rule "eqClose" (formula "2") (term "0,1"))
    (rule "ifthenelse_true" (formula "2") (term "1"))
    (rule "castDel" (formula "2") (term "1"))
-   (rule "wfStoreRight" (formula "2"))
-   (rule "wfShape" (formula "2") (term "0"))
+   (rule "shapeInvStoreRight" (formula "2"))
+   (rule "shapeInvSelf" (formula "2") (term "1,0"))
+   (rule "concrete_and_3" (formula "2") (term "0"))
+   (rule "equalUnique" (formula "2") (term "0,0"))
+   (rule "concrete_not_2" (formula "2") (term "0"))
    (rule "concrete_and_1" (formula "2"))
    (rule "shapeAtFixed" (formula "2") (term "0"))
    (rule "shapeAtNil" (formula "2") (term "0"))
-   (rule "wfLeaf" (formula "2"))
+   (rule "shapeInvLeaf" (formula "2"))
    (rule "closeTrue" (formula "2"))
 )
 (branch
-   (rule "wfDelNodeIndexRight" (formula "1"))
+   (rule "shapeInvDelNodeIndexRight" (formula "1"))
    (rule "concrete_and_2" (formula "2"))
    (rule "false_right" (formula "2"))
    (rule "selectOnStore" (formula "1") (term "1"))
@@ -304,12 +307,15 @@
    (rule "eqClose" (formula "1") (term "0,1"))
    (rule "ifthenelse_true" (formula "1") (term "1"))
    (rule "castDel" (formula "1") (term "1"))
-   (rule "wfStoreRight" (formula "1"))
-   (rule "wfShape" (formula "1") (term "0"))
+   (rule "shapeInvStoreRight" (formula "1"))
+   (rule "shapeInvSelf" (formula "1") (term "1,0"))
+   (rule "concrete_and_3" (formula "1") (term "0"))
+   (rule "equalUnique" (formula "1") (term "0,0"))
+   (rule "concrete_not_2" (formula "1") (term "0"))
    (rule "concrete_and_1" (formula "1"))
    (rule "shapeAtFixed" (formula "1") (term "0"))
    (rule "shapeAtNil" (formula "1") (term "0"))
-   (rule "wfLeaf" (formula "1"))
+   (rule "shapeInvLeaf" (formula "1"))
    (rule "closeTrue" (formula "1"))
 )
 )

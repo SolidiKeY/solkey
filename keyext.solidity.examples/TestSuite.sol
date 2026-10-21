@@ -3334,6 +3334,20 @@ contract TestSuite {
         assert(r == 8);
     }
 
+    function powerUnfoldLeftNarrowExponent() public pure {
+        uint256 x = 1;
+        uint8 y = 3;
+        uint256 r = (x + 1) ** y;
+        assert(r == 8);
+    }
+
+    function powerUnfoldRightNarrowExponent() public pure {
+        uint256 x = 2;
+        uint8 y = 2;
+        uint256 r = x ** (y + 1);
+        assert(r == 8);
+    }
+
     function subtractionUnfoldRight() public pure {
         uint x = 40;
         uint y = 1;
@@ -4498,6 +4512,42 @@ contract TestSuite {
         assert(count == n + 1);
     }
 
+    /// @custom:key box
+    function invariantConditionSideEffect() public pure {
+        uint i = 0;
+        /// @custom:key invariant i <= 3
+        while (i++ < 3) {
+        }
+        assert(i == 4);
+    }
+
+    /// @custom:key box
+    function invariantConditionStorageSideEffect() public {
+        total = 0;
+        /// @custom:key invariant total <= 2
+        while (++total < 3) {
+        }
+        assert(total == 3);
+    }
+
+    /// @custom:key box
+    function unprovableInvariantConditionSideEffect() public pure {
+        uint i = 0;
+        /// @custom:key invariant true
+        while (i++ < 3) {
+        }
+        assert(i == 0);
+    }
+
+    /// @custom:key box
+    function unprovableInvariantConditionStorageSideEffect() public {
+        total = 0;
+        /// @custom:key invariant true
+        while (++total < 3) {
+        }
+        assert(total == 0);
+    }
+
     function invariantVariantSkipsBreakIteration(uint n) public pure {
         uint i = 0;
         /// @custom:key invariant 0 <= i && i <= 10
@@ -4507,6 +4557,90 @@ contract TestSuite {
             i = i + 1;
         }
         assert(i <= 10);
+    }
+
+    function invariantVariantConditionSideEffect() public pure {
+        uint i = 0;
+        /// @custom:key invariant i <= 3
+        /// @custom:key decreases 3 - i
+        while (i++ < 3) {
+        }
+        assert(i == 4);
+    }
+
+    function invariantVariantNegativeAtExit() public pure {
+        int i = 5;
+        /// @custom:key invariant -1 <= i && i <= 5
+        /// @custom:key decreases i
+        while (i > 0) {
+            i = i - 2;
+        }
+        assert(i <= 0);
+    }
+
+    // The condition lowers the measure and the body restores it, so the loop never ends.
+    function unprovableVariantConditionLowersBodyRestores() public pure {
+        uint i = 1;
+        /// @custom:key invariant i == 1
+        /// @custom:key decreases i
+        while (--i == 0) {
+            i = i + 1;
+        }
+        assert(false);
+    }
+
+    function invariantDiamondBreakOutsideInvariant(uint n) public pure {
+        uint i = 0;
+        /// @custom:key invariant i <= n && (n == 0 || i < n)
+        /// @custom:key decreases n - i
+        while (i < n) {
+            if (i + 1 == n) {
+                i = n + 1;
+                break;
+            }
+            i = i + 1;
+        }
+        assert(n == 0 || i == n + 1);
+    }
+
+    function invariantDiamondForBreakOutsideInvariant(uint n) public pure {
+        uint i = 0;
+        /// @custom:key invariant i <= n && (n == 0 || i < n)
+        /// @custom:key decreases n - i
+        for (; i < n; ++i) {
+            if (i + 1 == n) {
+                i = n + 1;
+                break;
+            }
+        }
+        assert(n == 0 || i == n + 1);
+    }
+
+    function unprovableInvariantDiamondBreakPostcondition(uint n) public pure {
+        uint i = 0;
+        /// @custom:key invariant i <= n && (n == 0 || i < n)
+        /// @custom:key decreases n - i
+        while (i < n) {
+            if (i + 1 == n) {
+                i = n + 1;
+                break;
+            }
+            i = i + 1;
+        }
+        assert(i <= n);
+    }
+
+
+
+    // The break is unreachable, so the loop never ends.
+    function unprovableVariantUnreachableBreak(uint n) public pure {
+        uint i = 0;
+        /// @custom:key invariant i == 0
+        /// @custom:key decreases 1
+        while (i == 0) {
+            if (n != n) break;
+        }
+        assert(false);
     }
 
     /// @custom:key box

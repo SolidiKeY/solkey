@@ -66,11 +66,11 @@ public final class StorageShapes {
                 .toList();
     }
 
-    /// The rules unfolding `wellformed(s)` into one `wf` atom per non-trivial root and each
+    /// The rules unfolding `layoutInv(s)` into one `shapeInv` atom per non-trivial root and each
     /// struct shape into the atoms of its members.
     public List<KeyProblem.Taclet> rules() {
         List<KeyProblem.Taclet> rules = new ArrayList<>();
-        rules.add(rule("insertWellformed", Key.predicate("wellformed", S), conjunction(roots)));
+        rules.add(rule("insertLayoutInv", Key.predicate("layoutInv", S), conjunction(roots)));
         for (Map.Entry<String, Shape> struct : structShapes.entrySet()) {
             Map<String, KeyTerm> members = new LinkedHashMap<>();
             for (SolidityOutline.Variable member : contract.structs().get(struct.getKey())) {
@@ -82,8 +82,8 @@ public final class StorageShapes {
                         shape.render(contract.name()));
                 }
             }
-            rules.add(rule("wfStruct_" + struct.getKey(),
-                Key.predicate("wf", Key.constant(shapeConstant(struct.getKey())), S),
+            rules.add(rule("shapeInvStruct_" + struct.getKey(),
+                Key.predicate("shapeInv", Key.constant(shapeConstant(struct.getKey())), S),
                 conjunction(members)));
         }
         return rules;
@@ -99,7 +99,7 @@ public final class StorageShapes {
     private static KeyFormula conjunction(Map<String, KeyTerm> atoms) {
         List<KeyFormula> parts = new ArrayList<>();
         for (Map.Entry<String, KeyTerm> atom : atoms.entrySet()) {
-            parts.add(Key.predicate("wf", atom.getValue(),
+            parts.add(Key.predicate("shapeInv", atom.getValue(),
                 Key.typed("selectSt", "Struct", S, Key.constant(atom.getKey()))));
         }
         return Key.and(parts);

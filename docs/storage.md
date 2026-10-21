@@ -139,8 +139,8 @@ for `delAt` through `delField<[alpha]>` on the select:
   A subsequent field read checks `0 <= i < oldLength(st)`: it reads through a reset child
   inside that range and through the unchanged child outside it. Overwritten fields can
   therefore simplify before the old-length condition is expanded. `fixedDelNodeIndex`
-  retains the child's array kind, and `wfDelNodeIndexRight` reduces shape preservation to
-  the original child's wellformedness; neither assumes zero tail data.
+  retains the child's array kind, and `shapeInvDelNodeIndexRight` reduces shape preservation to
+  the original child's shape invariant; neither assumes zero tail data.
 - `save(st, nil, v)` — **the leaf of a write, left as a term.** A struct
   written over a location keeps the location's mapping members: Solidity
   never copies a mapping. So `save` never collapses its leaf (there is no
@@ -748,72 +748,43 @@ modalities:
 - `revertDiamond`:   `=> ⟨ π revert(); ω ⟩ φ`   ⇝  `=> ⊥`
 - `revertBox`:       `=> [ π revert(); ω ] φ`   ⇝  `=> ⊤`
 
-## 8b. Array lengths are non-negative (`sizeNotNegative`)
+## 8b. Array lengths are non-negative (the layout invariant, not an axiom)
 
-Symbolic execution starts from an unconstrained `storage`, so nothing
-is known about a cell the proof has not written — in particular a
-dynamic array's length could be negative. `sizeNotNegative`
-(`structRules.key`) closes exactly that gap, mirroring Java KeY's
-`arrayLengthNotNegative` (`heapRules.key` in `key.core`):
+Symbolic execution starts from an unconstrained `storage`, so nothing is known about a cell the
+proof has not written — in particular a dynamic array's length could be negative. That gap is
+closed by the shape-invariant atoms of §8c, not by an axiom: `shapeInv(dynArr(s), st) ==>` gives
+`0 <= |st|` through `shapeInvDynSize`, and `shapeInv(fixedArr(n, s), st) ==>` rewrites `|st|` to `n` through
+`shapeInvFixedSize`. Every generated obligation of a contract with an array assumes
+`layoutInv(storage)`, and a loop that writes storage carries it in its invariant, so each
+length the push/pop/index rules read is reached by one of these triggers.
 
-    sizeNotNegative {
-        \find(selectSt<[int]>(st, size))
-        \sameUpdateLevel
-        \add(0 <= selectSt<[int]>(st, size) ==>)
-        \heuristics(inReachableStateImplication)
-    };
+An earlier axiom, `sizeNotNegative`, added `0 <= selectSt<[int]>(st, size)` for every `st`,
+after Java KeY's `arrayLengthNotNegative`. It was inconsistent: `save(st, cons(size, nil), -1)`
+is a struct whose length is `-1`, so `!(selectSt<[int]>(st, size) = -1)` was provable
+(`unsound/sizeNotNegativeAnyStruct.key`). Java KeY's rule is sound because `length` is a
+function of the object, not a heap cell. Removing the axiom changed no closed proof in
+`TestSuite.sol`, `contracts/` or the benchmark.
 
-One static rule suffices even though a schematic trigger on paths does
-not exist: `consr` is a defined function, so a `\find` on
-`find<[int]>(storage, consr(xs, size))` never matches — but
-normalization does not stop at `cons`-normal paths. `findDefinitionCons`
-peels every `find<[alpha]>(st, cons(a, flds))` down to a
-`selectSt<[alpha]>(st, a)` leaf, so each length read the push/pop/index
-rules emit reaches the stable form `selectSt<[int]>(st, size)` with the
-global `\unique Field size` in matchable position — for a root array,
-a struct member, or a mapping value alike. The normalization rules all
-cost far less than the taclet's +100, so the trigger form is always
-reached before the rule is selected.
+The motivating case is `values.push(); values.pop();` (`storagePopUnknownLength`):
+`storagePopSave`'s `"empty"` branch is `!(0 < n+1) -> ⟨revert⟩false` with
+`n = |storage[C$values]|` over the entry storage, which `shapeInvDynSize` closes. Array examples
+need not open with `require(arr.length == N)` unless they assert an exact length.
 
-**Soundness** is an external-invariant argument: `size` cells are
-written only by the push/pop rules — `n+1`, and `n-1` guarded by
-`0 < n`; `.length` is not assignable in Solidity — so in every
-reachable storage a length cell is non-negative (the Lean
-formalization's `wellTypedStorageB`, preserved by
-`TypeSoundness.execBlock_preserves_wellTyped`). The axiom is also
-consistent inside the calculus: `selectSt<[int]>(mtSt, size)` and the
-`delNode`/`delAt` reads reduce to `defaultValue<[int]> = 0`.
+Nothing bounds the value of a `uint` cell (that needs per-contract layout knowledge the calculus
+does not have — a field constant like `C$total : Field` carries no declared type), and no upper
+bound (`< 2^256`) is stated.
 
-The rule is always on. Its ruleset `inReachableStateImplication`
-(declared in `ruleSetDeclarations.key`) is costed at +100 and filtered
-by `NonDuplicateAppModPositionFeature` in `SolidityDLStrategy`'s cost
-and approval dispatchers, so the add-only rule fires once per distinct
-length term and cannot loop when formulas move.
-
-The motivating case is `values.push(); values.pop();`
-(`storagePopUnknownLength`): `storagePopSave`'s `"empty"` branch is
-`!(0 < n+1) -> ⟨revert⟩false` with
-`n = selectSt<[int]>(selectSt<[Struct]>(storage, C$values), size)`
-over the original storage, which only `0 <= n` closes. Because of this
-rule, array examples no longer have to open with
-`require(arr.length == N)` unless they assert an exact length.
-
-The rule covers lengths only: nothing bounds the value of a `uint`
-cell (that needs per-contract layout knowledge the calculus does not
-have — a field constant like `C$total : Field` carries no declared
-type), and no upper bound (`< 2^256`) is stated.
-
-## 8c. Fixed-size arrays have their declared length (`wellformed`, shapes as nodes)
+## 8c. Fixed-size arrays have their declared length (`layoutInv`, shapes as nodes)
 
 A fixed-size array has no length cell in the EVM; its length is a property of the declaration.
 The calculus keeps that knowledge in two places, neither of which touches a read or a write:
-the **shaped storage** a constructor starts from, and the **well-formedness predicate**
+the **shaped storage** a constructor starts from, and the **layout invariant**
 a function assumes on entry and establishes on exit. The vocabulary (`structHeader.key`):
 
     Shape \extends Struct:  leaf | fixedArr(int, Shape) | dynArr(Shape) | mapOf(Shape) | C$S$shape
                                    -- a shape is also the empty node of its own type
-    wf(Shape, Struct)              -- "this node conforms to this shape"
-    wellformed(Struct)             -- wf of every declared root, generated per contract
+    shapeInv(Shape, Struct)        -- "this node conforms to this shape"
+    layoutInv(Struct)              -- shapeInv of every declared root, generated per contract
     fixed(Struct)                  -- "this node is a fixed-size array", decided by its shape
     Shape fieldShape(MemberField)  -- the shape of a declared member, = #shapeOf(m)
 
@@ -823,35 +794,43 @@ members carry a non-trivial shape gets a `\unique Shape C$S$shape` constant decl
 generated problem; `#shapeOf` returns it when it is declared and `leaf` otherwise, so a
 hand-written `.key` problem loses a length but never invents one.
 
-**The predicate.** `wf` is defined only through `selectSt`; `save`, `delAt` and `delNode` are
+**The predicate.** `shapeInv` is defined only through `selectSt`; `save`, `delAt` and `delNode` are
 untouched. With `|st|` for `selectSt<[int]>(st, size)` and `st[a]` for `selectSt<[Struct]>(st, a)`:
 
-    wf(leaf,          st)  =  true
-    wf(fixedArr(n,s), st)  =  |st| = n    &  forall i. wf(s, st[at(i)]) & wf(s, st[atMap(i)])
-    wf(dynArr(s),     st)  =  0 <= |st|   &  forall i. wf(s, st[at(i)]) & wf(s, st[atMap(i)])
-    wf(mapOf(s),      st)  =                 forall k. wf(s, st[at(k)]) & wf(s, st[atMap(k)])
-    wf(C$S$shape,     st)  =  /\ over the members m of S : wf(fieldShape(m), st[m])
-    wellformed(s)          =  /\ over the roots m of C    : wf(fieldShape(m), s[m])
+    shapeInv(leaf,          st)  =  true
+    shapeInv(fixedArr(n,s), st)  =   fixed(st) & |st| = n
+                                     & forall int i.  shapeInv(s, st[at(i)]) & shapeInv(s, st[atMap(i)])
+    shapeInv(dynArr(s),     st)  =  !fixed(st) & 0 <= |st|
+                                     & forall int i.  shapeInv(s, st[at(i)]) & shapeInv(s, st[atMap(i)])
+    shapeInv(mapOf(s),      st)  =    forall Prim k.  shapeInv(s, st[at(k)])
+    shapeInv(C$S$shape,     st)  =  /\ over the members m of S : shapeInv(fieldShape(m), st[m])
+    layoutInv(s)                 =  /\ over the roots m of C    : shapeInv(fieldShape(m), s[m])
 
 (An array element that is a mapping is selected with `atMap`, everything else with `at`, so
-both selectors count as elements.) The last two lines are finite and per contract, so
-`SolidityProblemSynthesizer` emits them as the rules `insertWellformed` and `wfStruct_S`, next
+both selectors count as array elements; a mapping value is always `at(k)`.) The node kind is
+part of conformance: a length alone does not tell a dynamic node from a fixed one. An array
+index is an `int` and a mapping key any `Prim` (`at : Prim -> Field`, `atMap : int -> MapField`),
+and every rule below keeps to that range, in both directions: an antecedent atom hands out
+only what the succedent unfolding proves. Under an array atom the node at a key of another
+sort, such as `at(TRUE)`, is unconstrained. The `C$S$shape` and `layoutInv` lines are finite
+and per contract, so
+`SolidityProblemSynthesizer` emits them as the rules `insertLayoutInv` and `shapeInvStruct_S`, next
 to `insertCInv`; roots and members whose shape is trivial (`leaf`, `mapOf(leaf)`, a struct of
-such) are left out, and `insertWellformed` of a contract without arrays is `true`.
+such) are left out, and `insertLayoutInv` of a contract without arrays is `true`.
 
 **The obligations** (`StorageShapes` builds both pieces):
 
     constructor:  ==> {storage := storeSt(…storeSt(mtSt, C$d1, fixedArr(9, leaf)) …, C$dyn, dynArr(fixedArr(3, leaf)))}
-                      [ ctor ] (wellformed(storage) & CInv & ensures)
-    function:     wellformed(storage) & CInv & requires  ==>  [ f ] (wellformed(storage) & CInv & ensures)
+                      [ ctor ] (layoutInv(storage) & CInv & ensures)
+    function:     layoutInv(storage) & CInv & requires  ==>  [ f ] (layoutInv(storage) & CInv & ensures)
 
 Nothing is assumed before the constructor; its start term is closed in its structure, so the
-exit `wellformed` is decided by unfolding. A function's exit obligation is what justifies the
+exit `layoutInv` is decided by unfolding. A function's exit obligation is what justifies the
 next function's entry assumption. A loop that writes storage anonymises it, so
-`LoopInvariantCondition` conjoins `wellformed(storage)` to every such loop invariant, as KeY
+`LoopInvariantCondition` conjoins `layoutInv(storage)` to every such loop invariant, as KeY
 does with `wellFormed(heap)`.
 
-**How the rules use it.** Three families, by where a `wf` atom sits:
+**How the rules use it.** Three families, by where a `shapeInv` atom sits:
 
 - *A shape as a node* (`selectOnShape*`): `|sh| ⇝ sizeOf(sh)`,
   `sh[a] ⇝ shapeAt(sh, cons(a, nil))`, a primitive read is its default. The shape
@@ -860,22 +839,53 @@ does with `wellFormed(heap)`.
   Root reads on the `storeSt` chain need nothing new (`selectOnStore`).
 - *Antecedent atoms are consumed by triggers, never unfolded.* A read on symbolic storage
   normalises to a `selectSt` chain rooted at `storage` and stops; the atom on exactly that
-  chain answers it. `wfFixedSize` rewrites `|st|` to `n` under `wf(fixedArr(n, s), st) ==>`;
-  `wfDynSize` adds `0 <= |st|`; `wf{Fixed,Dyn,Map}Elem[Map]` add the element's atom when
-  `st[at(i)]` or `st[atMap(i)]` appears, so a nested length such as `rows[i].length` for
+  chain answers it. `shapeInvFixedSize` rewrites `|st|` to `n` under `shapeInv(fixedArr(n, s), st) ==>`;
+  `shapeInvDynSize` adds `0 <= |st|`; `shapeInv{Fixed,Dyn}Elem[Map]` add the element's atom when
+  `st[at(i)]` or `st[atMap(i)]` appears for an `int` index `i`, and `shapeInvMapElem` when `st[at(k)]`
+  appears for any `Prim` key `k`; `shapeInvFixedIsFixed` / `shapeInvDynIsNotFixed` rewrite `fixed(st)`.
+  So a nested length such as `rows[i].length` for
   `uint[3][] rows` is two trigger steps. They are `\assumes` rewrite taclets with
-  `\sameUpdateLevel`, the add-only ones costed in `inReachableStateImplication` like
-  `sizeNotNegative`, and they match syntactically: after `d2 = d1` the read `|storage'[d2]|`
+  `\sameUpdateLevel`, the add-only ones costed in `inReachableStateImplication`, and they match syntactically: after `d2 = d1` the read `|storage'[d2]|`
   goes through `selectOnSaveCons`, `saveOnEmptyPrim` and `findStValueCast` to `|storage[d1]|`,
   a select on the *entry* storage, which laziness keeps in the atom's normal form.
-- *Succedent atoms are peeled off writes, then unfolded.* `wfSaveRight` turns
-  `wf(sh, save(st, p, v))` into `wf(sh, st) & wf(shapeAt(sh, p), save(find<[Struct]>(st, p), nil, v))`
-  (the written node is a merge, so the leaf keeps the target's own fixed length);
-  `wfDelAtRight`, `wfDelNodeRight`, `wfDelNodeFixedRight` drop a reset;
-  `wfDelNodeIndexRight` checks the original selected child; `wfLeaf` and
-  `wfShape` close; `wf{Fixed,Dyn,Map}Right` (ruleset `wfUnfold`, costed above the
-  triggers so an atom that reduces to an entry atom closes first) unfold a leaf-of-a-write by
-  definition with a `\skolemTerm` element index.
+- *Succedent atoms are peeled off writes, then unfolded.* `shapeInvSaveRight` turns
+  `shapeInv(sh, save(st, p, v))` into `shapeInv(sh, st) & shapeInvSaveAt(sh, st, p, v, last(p))`, and
+  `shapeInvSaveAt{Size,Index,MapIndex,Member}` dispatch on the evaluated last selector of `p`
+  (`size`, `at(k)`, `atMap(i)`, a member field; a concrete path ends in one of them), so the
+  length branch's `firsts(p)` is built only for a length write:
+  - `p` ends in `size` (a length write, at any depth): `0 <= cast<[int]>(v)` and
+    `!fixed(find<[Struct]>(st, firsts(p)))`: the written node is a dynamic array, and the
+    write changes no element and no node kind;
+  - otherwise `shapeInv(shapeAt(sh, p), save(find<[Struct]>(st, p), nil, v))` (the written node is a
+    merge, so the leaf keeps the target's own fixed length).
+
+  The length branch is needed because `shapeAt` of a path ending in `size` is `leaf`, which
+  would drop the bound and prove `shapeInv(dynArr(leaf), save(st, cons(size, nil), -1))`.
+  `shapeInvSaveLengthRight` (ruleset `concrete`, so it wins over `shapeInvSaveRight`) is the root-length
+  case at a dynamic shape, `shapeInv(dynArr(s), save(st, cons(size, nil), n)) ⇝ shapeInv(dynArr(s), st) & 0 <= n`,
+  where the kind follows from `shapeInv(dynArr(s), st)` itself. `shapeInvStoreRight` turns
+  `shapeInv(sh, storeSt(st, a, v))` into `!(a = size) & shapeInv(sh, st) & shapeInv(shapeAt(sh, cons(a, nil)), cast<[Struct]>(v))`:
+  a store never writes a length. `shapeInvDelAtRight` drops a reset, owing `!fixed` of the node
+  whose length it resets when the path ends in `size` (the length becomes 0 and the node keeps
+  its kind, so only a dynamic array still conforms); `shapeInvDelNodeRight` drops a reset;
+  `shapeInvDelNodeFixedRight` drops one only at a `fixedArr(n, s)` shape (a fixed-node reset is
+  `fixed`, so it does not conform to `dynArr`); `shapeInvDelNodeIndexRight` checks the original
+  selected child; `shapeInvLeaf` and `shapeInvSelf` close. `shapeInv{Fixed,Dyn,Map}Right` (ruleset `shapeInvUnfold`,
+  costed above the triggers so an atom that reduces to an entry atom closes first) unfold a
+  leaf-of-a-write by the definition above: `shapeInvFixedRight` owes `fixed(st)`, `|st| = n` and the
+  element atoms at `at(skx)` and `atMap(skx)`, `shapeInvDynRight` owes `!fixed(st)`, `0 <= |st|` and
+  the same, with `skx` a fresh `int` (`\skolemTerm int`), and `shapeInvMapRight` owes the value atom
+  at `at(skp)` with `skp` a fresh `Prim` (`\skolemTerm Prim`), since `shapeInvMapElem` answers at
+  every `Prim` key, `bool` ones included.
+
+  Each counterexample to a weaker form stays open in
+  `keyext.solidity.core/src/test/resources/org/key_project/solidity/examples/unsound/`
+  (`RulesTest#unsoundWfProblemStaysOpen`): a node of the other kind
+  (`shapeInv{Fixed,Dyn}Right*Node`, `shapeInvDelNodeFixedRightDynamicShape`), a negative length
+  (`shapeInv{Save,Store}RightNegative*Length`), a mapping proved at `int` keys only
+  (`shapeInvMapRightIntKeysOnly`), and an array element read at a `bool` key
+  (`shapeInv{Fixed,Dyn}ElemBoolIndex`). `layoutInvLengthWrites.key` and
+  `layoutInvArrayElements.key` are the closing counterparts.
 
 **The kind of a node.** The size of a reset or copied-over node depends on whether it is a
 fixed-size array (keeps its declared length) or a dynamic one (reset to `0`, or to the copied
@@ -885,7 +895,7 @@ length): `|delNode(st)| ⇝ \if(fixed(st)) \then(|st|) \else(0)` (`selectStDelNo
 node's base: `fixedSave`, `fixedStore`, `fixedDelNode`, `fixedDelAt` descend;
 `fixedDelNodeIndex` reads the original child's kind. `delNodeFixed`
 and `fixedArr(…)` are fixed, `dynArr(…)` and `mtSt` are not, and
-`wfFixedIsFixed` / `wfDynIsNotFixed` decide it from the entry atom. This is what makes
+`shapeInvFixedIsFixed` / `shapeInvDynIsNotFixed` decide it from the entry atom. This is what makes
 `uint[40] big = uint[20] small` keep `big.length == 40` and zero `big[30]`, and
 `dyn.pop()` keep the slot's `uint[3]` length. The deletion/pop terminals no longer refuse
 fixed-array elements. `selectStDelNodeIndexStruct` recursively resets a reference element
@@ -894,8 +904,8 @@ selectors still distinguish the source prefix and the old destination tail. The 
 a reset are split by selector (`selectOnSaveEmpty{IndexPrim,MapValue,Member}`,
 `selectStDelNode{Element,MapValue,Member}`) so that `size` is never defaulted.
 
-`sizeNotNegative` (8b) stays for problems that state no `wellformed`; under `wellformed` it is
-the `dynArr` clause. The design and its worked examples are also in the pre-licentiate paper
+A length is non-negative only where a `shapeInv` atom says so (8b); a hand-written problem that
+states no `layoutInv` knows nothing about its lengths. The design and its worked examples are also in the pre-licentiate paper
 (`sections/fixed-length.tex`); `contracts/FixedLengths.sol` runs them.
 
 ### Memory objects carry their shape

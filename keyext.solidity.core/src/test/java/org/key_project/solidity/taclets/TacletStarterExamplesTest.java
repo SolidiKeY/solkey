@@ -55,10 +55,18 @@ public class TacletStarterExamplesTest {
 
     @ParameterizedTest(name = "{0}")
     @ValueSource(strings = { "unprovableInvariantBreakPostcondition",
-        "unprovableInvariantForContinueUpdate" })
+        "unprovableInvariantForContinueUpdate", "unprovableInvariantConditionSideEffect",
+        "unprovableInvariantConditionStorageSideEffect" })
     void loopInvariantRejectsFalsePostcondition(String function) throws Exception {
         Proof proof = proveTestSuiteFunction(function, 10000, SolidityExampleTests.KEEP_TIMEOUT);
         assertFalse(proof.closed(), function + " unexpectedly proved a false assertion");
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = { "unprovableVariantConditionLowersBodyRestores" })
+    void loopVariantRejectsNonTermination(String function) throws Exception {
+        Proof proof = proveTestSuiteFunction(function, 10000, SolidityExampleTests.KEEP_TIMEOUT);
+        assertFalse(proof.closed(), function + " unexpectedly proved a loop that never ends");
     }
 
     @ParameterizedTest(name = "{0}")
