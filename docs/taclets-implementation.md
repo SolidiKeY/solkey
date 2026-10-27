@@ -423,9 +423,9 @@ named it twice; reads commute through it with `selectOnDelAtCons`, and the reset
 resolves on read through `delField<[alpha]>`.
 
 ### Array length non-negativity (layout invariant)
-A length is non-negative because the node conforms to a shape: `shapeInvDynSize` adds `0 <= |st|`
-under `shapeInv(dynArr(s), st) ==>`, and `shapeInvFixedSize` rewrites `|st|` to `n` under
-`shapeInv(fixedArr(n, s), st) ==>` (see "Storage shapes" below and `docs/storage.md` §8b). This is what
+A length is non-negative because the node conforms to its type: `conformsDynSize` adds `0 <= |st|`
+under `conforms(⟦T[]⟧, st) ==>`, and `conformsFixedSize` rewrites `|st|` to `n` under
+`conforms(⟦T[n]⟧, st) ==>` (see the layout table below and `docs/storage.md` §8b). This is what
 closes `storagePopUnknownLength`, `storagePushLengthPositive` and `storagePushReadBack` without a
 `require` on the length. The former axiom `sizeNotNegative` (`0 <= selectSt<[int]>(st, size)`
 for every `st`) was removed: `save(st, cons(size, nil), -1)` has length `-1`, so it proved
@@ -486,43 +486,51 @@ a lazy `delNode` marker, a `FixedField` a `delNodeFixed` marker whose `size` rea
 at `StValue` itself is routed by `delFieldStValueCast` (below). `pop()` on an array of mappings
 only shortens it (`storagePopSaveMappingElement`, `testPopKeepsMappingElementEntries`).
 
-Every field constant is a `TypedField` carrying its declared Solidity type, exposed to the
-calculus as the `Shape` term `fieldShape(m)`. Lengths of fixed-size arrays are not read off an
-annotation: a constructor starts from the shaped storage
-(`storeSt(mtSt, C$d1, fixedArr(9, leaf))`: `Shape \extends Struct`, read by `selectOnShape*`), and a function
-assumes the generated `layoutInv(storage)`, whose `shapeInv(shape, node)` atoms the `shapeInv*` trigger
-taclets consume at each stuck `size` read and whose exit obligation the `shapeInv*Right` taclets
-discharge (`StorageShapes`, `docs/storage.md` section 8c; `contracts/FixedLengths.sol`,
+Every field constant is a `TypedField` carrying its declared Solidity type. Storage types are
+sorts: `T[n]`, `T[]`, `mapping<[K, V]>` and one `C$S` per struct, below the markers `FixedArray`,
+`DynamicArray`, `Mapping` and `StructType` (`TypeSorts`), and `⟦T⟧`, written
+`emptyOf<[T]>`, is the empty node of `T` (`mtSt` for a trivial type; `\unique`, so the empty
+nodes of two types differ, as the shape constructors they replace did). `fieldType(m)` is
+the empty node of a member's type (`fieldTypeDef`, `#typeOf`). Lengths of fixed-size arrays are
+not read off an annotation: a constructor starts from the typed storage
+(`storeSt(mtSt, C$d1, fieldType(C$d1))`, read by `selectOnType*`), and a function
+assumes the generated `layoutInv(storage)`, whose `conforms(⟦T⟧, node)` atoms the `conforms*` trigger
+taclets consume at each stuck `size` read and whose exit obligation the `conforms*Right` taclets
+discharge (`StorageLayout`, `docs/storage.md` section 8c; `contracts/FixedLengths.sol`,
 `testFixedArrayLength`, `testFixedElementOfDynamicArrayLength`, `storageShorterStaticCopyClearsTail`).
-The `shapeInv` taclets in `structRules.key`, with `|st|` for `selectSt<[int]>(st, size)` and `st[a]`
-for `selectSt<[Struct]>(st, a)`:
+The rules pick the case by the sort of the empty node, through generic sorts bounded by the
+markers (`alphaFix`, `alphaDyn`, `alphaMap`, `alphaStr`), and step through it with `#elemOf`,
+`#memberOf`, `#lengthOf` and `#structConforms`. The `conforms` taclets in `structRules.key`, with
+`|st|` for `selectSt<[int]>(st, size)`, `st[a]` for `selectSt<[Struct]>(st, a)` and `⟦e⟧` for the
+element's empty node (`#elemOf`):
 
 | Rule | Where | Effect |
 |---|---|---|
-| `shapeInvLeaf`, `shapeInvSelf` | anywhere | `shapeInv(leaf, st)` and `shapeInv(sh, sh)` are `true` |
-| `shapeInvFixedSize` | `shapeInv(fixedArr(n, s), st) ==>` | `\|st\| ⇝ n` |
-| `shapeInvDynSize` | `shapeInv(dynArr(s), st) ==>` | adds `0 <= \|st\|` |
-| `shapeInvFixedIsFixed`, `shapeInvDynIsNotFixed` | `shapeInv(fixedArr(n, s), st) ==>` / `shapeInv(dynArr(s), st) ==>` | `fixed(st) ⇝ true` / `false` |
-| `shapeInvFixedElem`, `shapeInvDynElem` | array atom `==>`, `st[at(i)]` with `i : int` | adds `shapeInv(s, st[at(i)])` |
-| `shapeInvFixedElemMap`, `shapeInvDynElemMap` | array atom `==>`, `st[atMap(i)]` (`atMap : int`) | adds `shapeInv(s, st[atMap(i)])` |
-| `shapeInvMapElem` | `shapeInv(mapOf(s), st) ==>`, `st[at(k)]` with `k : Prim` | adds `shapeInv(s, st[at(k)])` |
-| `shapeInvSaveRight` | `==> shapeInv(sh, save(st, p, v))`, `p = cons(a, fs)` | `shapeInv(sh, st) & shapeInvSaveAt(sh, st, p, v, last(p))` |
-| `shapeInvSaveAtSize` | `shapeInvSaveAt(sh, st, p, v, size)` | `0 <= cast<[int]>(v) & !fixed(find<[Struct]>(st, firsts(p)))` |
-| `shapeInvSaveAtIndex`, `shapeInvSaveAtMapIndex`, `shapeInvSaveAtMember` | `shapeInvSaveAt(sh, st, p, v, x)`, `x` = `at(k)` / `atMap(i)` / a member field | `shapeInv(shapeAt(sh, p), save(find<[Struct]>(st, p), nil, v))` |
-| `shapeInvSaveLengthRight` | `==> shapeInv(dynArr(s), save(st, cons(size, nil), n))` | `shapeInv(dynArr(s), st) & 0 <= n` |
-| `shapeInvStoreRight` | `==> shapeInv(sh, storeSt(st, a, v))` | `!(a = size) & shapeInv(sh, st) & shapeInv(shapeAt(sh, cons(a, nil)), cast<[Struct]>(v))` |
-| `shapeInvDelAtRight` | `==> shapeInv(sh, delAt(st, p))`, `p = cons(a, fs)` | `shapeInv(sh, st) &` (path ends in `size`: `!fixed(find<[Struct]>(st, firsts(p)))`) |
-| `shapeInvDelNodeRight` | `==> shapeInv(sh, delNode(st))` | `shapeInv(sh, st)` |
-| `shapeInvDelNodeFixedRight` | `==> shapeInv(fixedArr(n, s), delNodeFixed(st))` | `shapeInv(fixedArr(n, s), st)` |
-| `shapeInvDelNodeIndexRight` | `==> shapeInv(sh, delNodeIndex(st, i))` | `shapeInv(sh, st[at(i)])` |
-| `shapeInvFixedRight` | `==> shapeInv(fixedArr(n, s), st)` | `fixed(st) & \|st\| = n & shapeInv(s, st[at(skx)]) & shapeInv(s, st[atMap(skx)])`, `skx` a fresh `int` |
-| `shapeInvDynRight` | `==> shapeInv(dynArr(s), st)` | `!fixed(st) & 0 <= \|st\| & shapeInv(s, st[at(skx)]) & shapeInv(s, st[atMap(skx)])`, `skx` a fresh `int` |
-| `shapeInvMapRight` | `==> shapeInv(mapOf(s), st)` | `shapeInv(s, st[at(skp)])`, `skp` a fresh `Prim` |
+| `conformsEmpty`, `conformsSelf` | anywhere | `conforms(mtSt, st)` and `conforms(t, t)` are `true` |
+| `conformsStruct` | anywhere | `conforms(⟦C$S⟧, st)` ⇝ one atom per non-trivial member (`#structConforms`) |
+| `conformsFixedSize` | `conforms(⟦T[n]⟧, st) ==>` | `\|st\| ⇝ n` |
+| `conformsDynSize` | `conforms(⟦T[]⟧, st) ==>` | adds `0 <= \|st\|` |
+| `conformsFixedIsFixed`, `conformsDynIsNotFixed` | `conforms(⟦T[n]⟧, st) ==>` / `conforms(⟦T[]⟧, st) ==>` | `fixed(st) ⇝ true` / `false` |
+| `conformsFixedElem`, `conformsDynElem` | array atom `==>`, `st[at(i)]` with `i : int` | adds `conforms(⟦e⟧, st[at(i)])` |
+| `conformsFixedElemMap`, `conformsDynElemMap` | array atom `==>`, `st[atMap(i)]` (`atMap : int`) | adds `conforms(⟦e⟧, st[atMap(i)])` |
+| `conformsMapElem` | `conforms(⟦mapping<[K, V]>⟧, st) ==>`, `st[at(k)]` with `k : Prim` | adds `conforms(⟦V⟧, st[at(k)])` |
+| `conformsSaveRight` | `==> conforms(t, save(st, p, v))`, `p = cons(a, fs)` | `conforms(t, st) & conformsSaveAt(t, st, p, v, last(p))` |
+| `conformsSaveAtSize` | `conformsSaveAt(t, st, p, v, size)` | `0 <= cast<[int]>(v) & !fixed(find<[Struct]>(st, firsts(p)))` |
+| `conformsSaveAtIndex`, `conformsSaveAtMapIndex`, `conformsSaveAtMember` | `conformsSaveAt(t, st, p, v, x)`, `x` = `at(k)` / `atMap(i)` / a member field | `conforms(find<[Struct]>(t, p), save(find<[Struct]>(st, p), nil, v))` |
+| `conformsSaveLengthRight` | `==> conforms(⟦T[]⟧, save(st, cons(size, nil), n))` | `conforms(⟦T[]⟧, st) & 0 <= n` |
+| `conformsStoreRight` | `==> conforms(t, storeSt(st, a, v))` | `!(a = size) & conforms(t, st) & conforms(t[a], cast<[Struct]>(v))` |
+| `conformsDelAtRight` | `==> conforms(t, delAt(st, p))`, `p = cons(a, fs)` | `conforms(t, st) &` (path ends in `size`: `!fixed(find<[Struct]>(st, firsts(p)))`) |
+| `conformsDelNodeRight` | `==> conforms(t, delNode(st))` | `conforms(t, st)` |
+| `conformsDelNodeFixedRight` | `==> conforms(⟦T[n]⟧, delNodeFixed(st))` | `conforms(⟦T[n]⟧, st)` |
+| `conformsDelNodeIndexRight` | `==> conforms(t, delNodeIndex(st, i))` | `conforms(t, st[at(i)])` |
+| `conformsFixedRight` | `==> conforms(⟦T[n]⟧, st)` | `fixed(st) & \|st\| = n & conforms(⟦e⟧, st[at(skx)]) & conforms(⟦e⟧, st[atMap(skx)])`, `skx` a fresh `int` |
+| `conformsDynRight` | `==> conforms(⟦T[]⟧, st)` | `!fixed(st) & 0 <= \|st\| & conforms(⟦e⟧, st[at(skx)]) & conforms(⟦e⟧, st[atMap(skx)])`, `skx` a fresh `int` |
+| `conformsMapRight` | `==> conforms(⟦mapping<[K, V]>⟧, st)` | `conforms(⟦V⟧, st[at(skp)])`, `skp` a fresh `Prim` |
 
 Each antecedent taclet hands out only what the matching `*Right` unfolding proves: array
 elements at `int` indices, mapping values at every `Prim` key. The `unsound/` problems of
 `RulesTest#unsoundWfProblemStaysOpen` are the counterexamples to each weaker form
-(`docs/storage.md` section 8c). `shapeInvMapRightIntKeysOnly` needs the quantifier heuristic to skip
+(`docs/storage.md` section 8c). `conformsMapRightIntKeysOnly` needs the quantifier heuristic to skip
 ill-sorted instances (`HeuristicInstantiation.HIIterator`): instantiating an `int` variable
 with a `Prim` term found under `at(_)` used to abort the proof with an illegal instantiation.
 `FixedLengths` also checks constructor default reads, primitive empty-push reads,
@@ -538,13 +546,13 @@ The same push rules close nine formerly open upstream functions in `SolcArrayMem
 `SolcStructsMappings`, and `SolcLoops`, including chained two/three-dimensional pushes,
 struct defaults, and copies of freshly pushed nested arrays. The closing ports no longer
 assume the pushed row's length with an additional `require`.
-Memory objects carry a `Shape` in their identity (`shaped(idp, fixedArr(3, leaf))`), and
+Memory objects carry their type in their identity's sort (`typedId<[int[3]]>(idp)`), and
 `initSize` reads a fresh node's length off it (`testMemoryFixedArrayLength`,
 `testNewArrayOfFixedElementLength`).
 
 Arrays whose elements are fixed-size arrays (`uint[3][]`) support `delete` and `pop()`.
 The terminal rules use the existing `delAt` marker without `noFixedArrayElement` guards;
-`shapeInv` element facts identify fixed child nodes when `selectStDelNodeSize` preserves their
+`conforms` element facts identify fixed child nodes when `selectStDelNodeSize` preserves their
 length. `selectStDelNodeIndexStruct` recurses into the selected child without an old-length
 inequality, as `selectStDelNodeFixedElement` already did. The copy selectors retain their
 source/target length comparisons to distinguish copied values from the cleared tail.

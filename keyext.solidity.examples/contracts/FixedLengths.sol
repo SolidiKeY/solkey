@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 pragma solidity ^0.8.0;
 
-/// The running contract of the storage-shape design (`docs/storage.md`, section 8c): a
-/// fixed-size array has no length cell, so its length comes from the shaped empty storage in
+/// The running contract of the typed-storage design (`docs/storage.md`, section 8c): a
+/// fixed-size array has no length cell, so its length comes from the typed empty storage in
 /// the constructor and from `layoutInv(storage)` in a function.
 contract FixedLengths {
     uint[9] d1;

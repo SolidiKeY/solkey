@@ -25,6 +25,7 @@ import org.key_project.solidity.logic.sort.ArraySort;
 import org.key_project.solidity.logic.sort.DynamicArraySort;
 import org.key_project.solidity.logic.sort.MappingSort;
 import org.key_project.solidity.logic.sort.SortImpl;
+import org.key_project.solidity.logic.sort.TypeSorts;
 import org.key_project.solidity.program.ast.Resolver;
 import org.key_project.solidity.program.ast.SolidityInfo;
 import org.key_project.solidity.program.ast.StaticTypes;
@@ -137,6 +138,9 @@ public class SolJSONParser {
         dynamicArrayKSTs.values().forEach(info::put);
         arrayKSTs.values().forEach(info::put);
         mappingKSTs.values().forEach(info::put);
+        Stream.of(dynamicArrayKSTs, arrayKSTs, mappingKSTs)
+                .flatMap(ksts -> ksts.values().stream())
+                .forEach(kst -> TypeSorts.of(kst.getSolidityType(), services));
     }
 
     private List<SyntaxElement> parseSourceUnit(List<JsonNode> nodes) {
@@ -444,6 +448,7 @@ public class SolJSONParser {
             structNode.get("members").valueStream().map(m -> parseField(m, fieldPrefix)).toList();
         fields.forEach(f -> f.setContainingStruct(stDecl));
         stDecl.setFields(fields);
+        TypeSorts.struct(stDecl, contractName, services);
     }
 
     private FieldDeclaration parseField(JsonNode fieldNode, String fieldPrefix) {
@@ -1497,20 +1502,20 @@ public class SolJSONParser {
         return getOrCreateKST(dynamicArrayKSTs, dynamicArrayType,
             () -> new DynamicArraySort(
                 getComponentSort(dynamicArrayType, dynamicArrayType.getElementType()),
-                valueSupersort("Struct")));
+                valueSupersort("DynamicArray")));
     }
 
     private KeYSolidityType getOrCreateArrayKeYSolidityType(ArrayType arrayType) {
         return getOrCreateKST(arrayKSTs, arrayType,
             () -> new ArraySort(getComponentSort(arrayType, arrayType.getElementType()),
-                arrayType.length(), valueSupersort("Struct")));
+                arrayType.length(), valueSupersort("FixedArray")));
     }
 
     private KeYSolidityType getOrCreateMappingKeYSolidityType(MappingType mappingType) {
         return getOrCreateKST(mappingKSTs, mappingType,
             () -> new MappingSort(getComponentSort(mappingType, mappingType.keyType()),
                 getComponentSort(mappingType, mappingType.valueType()),
-                valueSupersort("Struct")));
+                valueSupersort("Mapping")));
     }
 
     private Sort getComponentSort(Type owner, Type componentType) {

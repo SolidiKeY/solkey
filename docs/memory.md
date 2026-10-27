@@ -264,7 +264,7 @@ Effect:
 ## 11. Memory Arrays
 
 Memory arrays have fixed length after allocation. A fresh fixed-size array, local or
-member, has its declared length: every object's identity carries its `Shape`
+member, has its declared length: every object's identity carries its type
 (`docs/storage.md` section 8c).
 
     uint[] memory xs = new uint[](4);

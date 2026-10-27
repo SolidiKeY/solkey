@@ -19,4 +19,8 @@ public class DynamicArraySort extends SortImpl {
     public DynamicArraySort(Sort sort) {
         this(sort, ImmutableSet.empty());
     }
+
+    public Sort elementSort() {
+        return sort;
+    }
 }

@@ -138,8 +138,8 @@ comes from decoding the destination shape; tail clearing comes from the reset le
 Shape preservation follows from the same induction:
 
 ```text
-shapeInv(T, D0) and shapeInv(U, A0) and compatible(U, T)
-    imply shapeInv(T, C_T(D0, A0))
+conforms(T, D0) and conforms(U, A0) and compatible(U, T)
+    imply conforms(T, C_T(D0, A0))
 ```
 
 For fixed arrays, the result length is the target's declared length. Copied children satisfy

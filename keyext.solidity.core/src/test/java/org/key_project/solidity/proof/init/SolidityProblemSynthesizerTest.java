@@ -213,7 +213,9 @@ public class SolidityProblemSynthesizerTest {
 
         assertTrue(text.contains("\\find(layoutInv(s))"), text);
         assertTrue(text.contains(
-            "shapeInv(fixedArr(9, leaf), selectSt<[Struct]>(s, TestSuite$copySource9))"), text);
+            "conforms(fieldType(TestSuite$copySource9), "
+                + "selectSt<[Struct]>(s, TestSuite$copySource9))"),
+            text);
         assertTrue(text.endsWith("""
                 \\problem {
                     layoutInv(storage) ->
@@ -223,7 +225,7 @@ public class SolidityProblemSynthesizerTest {
     }
 
     @Test
-    void aConstructorStartsFromTheShapedEmptyStorageAndEstablishesTheLayoutInvariant()
+    void aConstructorStartsFromTheTypedEmptyStorageAndEstablishesTheLayoutInvariant()
             throws IOException {
         Path file = SolidityExampleTests.example("contracts/FixedLengths.sol");
 
@@ -231,10 +233,10 @@ public class SolidityProblemSynthesizerTest {
             SolidityProblemSynthesizer.problemText(file, spec("FixedLengths", "constructor"));
 
         assertTrue(text.contains("{storage := storeSt(storeSt(storeSt(mtSt, FixedLengths$d1, "
-            + "fixedArr(9, leaf)), FixedLengths$d2, dynArr(leaf)), "
-            + "FixedLengths$dyn, dynArr(fixedArr(3, leaf)))\n     || net := mtSt}\n    "
+            + "fieldType(FixedLengths$d1)), FixedLengths$d2, fieldType(FixedLengths$d2)), "
+            + "FixedLengths$dyn, fieldType(FixedLengths$dyn))\n     || net := mtSt}\n    "
             + "\\<{ constructor()@FixedLengths; }\\>(layoutInv(storage))"), text);
-        assertTrue(text.contains("shapeInv(dynArr(fixedArr(3, leaf)), selectSt<[Struct]>(s, "
+        assertTrue(text.contains("conforms(fieldType(FixedLengths$dyn), selectSt<[Struct]>(s, "
             + "FixedLengths$dyn))"), text);
     }
 

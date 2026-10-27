@@ -125,22 +125,22 @@ public final class SolidityProblemSynthesizer {
             results.add(variable);
         }
         Call call = Key.call(results, spec.function(), arguments, spec.contract());
-        StorageShapes shapes = new StorageShapes(contract);
+        StorageLayout layout = new StorageLayout(contract);
         if (!contractSpec.isSpecified() && !functionSpec.isSpecified()) {
-            KeyFormula post = shapes.isEmpty() ? Key.TRUE : LAYOUT_INV;
+            KeyFormula post = layout.isEmpty() ? Key.TRUE : LAYOUT_INV;
             KeyFormula obligation = Key.modality(functionSpec.box(), call, post);
             if (function.isConstructor()) {
-                obligation = Key.update(List.of(Key.assign("storage", shapes.emptyStorage()),
+                obligation = Key.update(List.of(Key.assign("storage", layout.emptyStorage()),
                     Key.assign("net", MT_ST)), obligation);
-            } else if (!shapes.isEmpty()) {
+            } else if (!layout.isEmpty()) {
                 obligation = Key.implies(LAYOUT_INV, obligation);
             }
             return new KeyProblem(solFile.toAbsolutePath(), spec.choices(),
-                shapes.declarations(), variables, shapes.rules(),
+                List.of(), variables, layout.rules(),
                 withParameterFacts(function, obligation));
         }
         return specifiedProblem(solFile, contract, function, contractSpec, functionSpec,
-            spec.choices(), variables, call, where, shapes);
+            spec.choices(), variables, call, where, layout);
     }
 
     private static KeyFormula withParameterFacts(SolidityOutline.Function function,
@@ -168,7 +168,7 @@ public final class SolidityProblemSynthesizer {
     private static KeyProblem specifiedProblem(Path solFile, SolidityOutline.Contract contract,
             SolidityOutline.Function function, KeyNatspec contractSpec, KeyNatspec functionSpec,
             List<String> options, List<KeyProblem.Variable> variables, Call call, String where,
-            StorageShapes shapes) {
+            StorageLayout layout) {
         SpecCompiler compiler = new SpecCompiler(contract, function);
         Map<String, SpecType> parameters = SpecCompiler.parameterTypes(function);
         boolean usesOld = functionSpec.ensures().stream()
@@ -199,14 +199,14 @@ public final class SolidityProblemSynthesizer {
             text -> compiler.formula(text, SpecCompiler.Context.requires(parameters),
                 where + " requires")));
         if (!constructor) {
-            if (!shapes.isEmpty()) {
+            if (!layout.isEmpty()) {
                 precondition.add(LAYOUT_INV);
             }
             precondition.add(INVARIANT);
         }
 
         List<KeyFormula> postcondition = new ArrayList<>();
-        if (!shapes.isEmpty()) {
+        if (!layout.isEmpty()) {
             postcondition.add(LAYOUT_INV);
         }
         postcondition.add(INVARIANT);
@@ -218,7 +218,7 @@ public final class SolidityProblemSynthesizer {
         KeyTerm ledger = constructor ? MT_ST : NET;
         List<Assignment> update = new ArrayList<>();
         if (constructor) {
-            update.add(Key.assign("storage", shapes.emptyStorage()));
+            update.add(Key.assign("storage", layout.emptyStorage()));
         }
         if (usesOld) {
             update.add(Key.assign("old", storage));
@@ -235,11 +235,11 @@ public final class SolidityProblemSynthesizer {
             Key.predicate("CInv", Key.constant("s"), Key.constant("n")), invariant, "simplify");
         List<KeyProblem.Taclet> rules = new ArrayList<>();
         rules.add(insertInvariant);
-        rules.addAll(shapes.rules());
+        rules.addAll(layout.rules());
 
         KeyFormula obligation = Key.implies(Key.and(precondition),
             Key.update(update, Key.modality(true, call, Key.and(postcondition))));
-        return new KeyProblem(solFile.toAbsolutePath(), options, shapes.declarations(),
+        return new KeyProblem(solFile.toAbsolutePath(), options, List.of(),
             declared, rules, obligation);
     }
 

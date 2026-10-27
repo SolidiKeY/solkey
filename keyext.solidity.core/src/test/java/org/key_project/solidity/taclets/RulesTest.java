@@ -133,7 +133,7 @@ public class RulesTest {
     public void unsoundWfProblemStaysOpen(String exampleName, Path exampleFile)
             throws ProblemLoaderException {
         Proof proof = loadAndProve(exampleFile, 10000, -1);
-        assertFalse(proof.closed(), exampleName + " proves a false shape-invariant claim");
+        assertFalse(proof.closed(), exampleName + " proves a false layout-invariant claim");
     }
 
     static Stream<Arguments> unsoundFiles() throws Exception {
@@ -141,15 +141,15 @@ public class RulesTest {
                 .map(path -> Arguments.of(path.getFileName().toString(), path));
     }
 
-    /// shapeInvMapElem assumes conformance at every Prim key, so shapeInvMapRight must unfold at a
+    /// conformsMapElem assumes conformance at every Prim key, so conformsMapRight must unfold at a
     /// fresh
-    /// Prim key; unsound/shapeInvMapRightIntKeysOnly.key is the counterexample to an int one.
+    /// Prim key; unsound/conformsMapRightIntKeysOnly.key is the counterexample to an int one.
     @Test
-    public void shapeInvMapRightUnfoldsAtAPrimKey() throws ProblemLoaderException {
+    public void conformsMapRightUnfoldsAtAPrimKey() throws ProblemLoaderException {
         Proof proof =
-            loadAndProve(resource(EXAMPLES_RESOURCE + "/unfold/shapeInvMapRightPrimKey.key"), 1,
+            loadAndProve(resource(EXAMPLES_RESOURCE + "/unfold/conformsMapRightPrimKey.key"), 1,
                 -1);
-        assertEquals(Set.of("shapeInvMapRight"), appliedRuleNames(proof));
+        assertEquals(Set.of("conformsMapRight"), appliedRuleNames(proof));
         var unfolded = proof.openGoals().head().sequent().succedent().getFirst().formula();
         var key = unfolded.sub(1).sub(1).sub(0);
         assertEquals("Prim", key.sort().name().toString(), unfolded.toString());

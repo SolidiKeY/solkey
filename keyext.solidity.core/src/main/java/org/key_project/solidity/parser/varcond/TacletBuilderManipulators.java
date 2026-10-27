@@ -256,6 +256,14 @@ public class TacletBuilderManipulators {
         new SortBindingConditionBuilder("hasMemoryElementSort", false,
             (sv, gs) -> new IndexedExpressionTypeToSortCondition(sv, gs, true));
 
+    public static final AbstractConditionBuilder HAS_TYPE_SORT =
+        new SortBindingConditionBuilder("hasTypeSort", false,
+            (sv, gs) -> new TypeSortCondition(sv, gs, false));
+
+    public static final AbstractConditionBuilder HAS_ELEMENT_TYPE_SORT =
+        new SortBindingConditionBuilder("hasElementTypeSort", false,
+            (sv, gs) -> new TypeSortCondition(sv, gs, true));
+
     public static final TacletBuilderCommand NEW_LOCAL_VARS =
         new ConstructorBasedBuilder("newLocalVars", NewLocalVarsCondition.class, SV, SV, SV, SV);
 
@@ -288,7 +296,7 @@ public class TacletBuilderManipulators {
             DROP_EFFECTLESS_ELEMENTARIES, SIMPLIFY_ITE_UPDATE,
             NEW_TYPE_OF, NEW_SOLIDITY_TYPE,
             IS_SUBTYPE, SAME, HAS_SORT, HAS_FIELD_SORT, HAS_MEMORY_FIELD_SORT, HAS_ELEMENT_SORT,
-            HAS_MEMORY_ELEMENT_SORT,
+            HAS_MEMORY_ELEMENT_SORT, HAS_TYPE_SORT, HAS_ELEMENT_TYPE_SORT,
             NEW_LOCAL_VARS, GET_INVARIANT, GET_VARIANT, GET_LOOP_BREAK, SAME_AS_TERM,
             NO_FIXED_ARRAY_ELEMENT);
     }

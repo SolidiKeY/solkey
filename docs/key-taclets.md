@@ -146,8 +146,10 @@ stated with sorts only (`Path[…,complex]` + `Expression`, and `Path[…,simple
 Declared members have the sort `MemberField` (`m` in the rule files), while
 `at(i)`, `atMap(i)` and `size` are plain `Field`s, so a rule that must treat a
 member differently from an index or from `size` matches on the sort instead
-of using a varcond. `#shapeOf(x)` is the `Shape` term of the declared type of
-a memory program variable or a member constant (`docs/storage.md` section 8c).
+of using a varcond. `#typeOf(x)` is the empty node `emptyOf<[T]>` of the declared type `T`
+of a memory program variable or a member constant; a rule that depends on the kind of `T`
+matches the empty node with a generic sort bounded by `FixedArray`, `DynamicArray`, `Mapping`
+or `StructType` (`docs/storage.md` section 8c).
 
 ## Storage Rule Pattern
 

@@ -52,7 +52,18 @@ public abstract class AbstractTermTransformer extends AbstractSortedOperator
     public static final AbstractTermTransformer DIVIDE_LCR_MONOMIALS = new DivideLCRMonomials();
 
     public static final AbstractTermTransformer LOGIC_SHIFT = new ShiftTransformer();
-    public static final AbstractTermTransformer SHAPE_OF = new ShapeTransformer();
+    public static final AbstractTermTransformer TYPE_OF =
+        new TypeSortTransformer(TypeSortTransformer.Kind.TYPE_OF);
+    public static final AbstractTermTransformer ELEM_OF =
+        new TypeSortTransformer(TypeSortTransformer.Kind.ELEM_OF);
+    public static final AbstractTermTransformer MEMBER_OF =
+        new TypeSortTransformer(TypeSortTransformer.Kind.MEMBER_OF);
+    public static final AbstractTermTransformer LENGTH_OF =
+        new TypeSortTransformer(TypeSortTransformer.Kind.LENGTH_OF);
+    public static final AbstractTermTransformer STRUCT_CONFORMS =
+        new TypeSortTransformer(TypeSortTransformer.Kind.STRUCT_CONFORMS);
+    public static final AbstractTermTransformer NODE_OF =
+        new TypeSortTransformer(TypeSortTransformer.Kind.NODE_OF);
     public static final AbstractTermTransformer LOOP_ANON = new LoopAnonTransformer();
 
     @SuppressWarnings("argument.type.incompatible")

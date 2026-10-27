@@ -13,8 +13,16 @@ public class MappingSort extends SortImpl {
     private final Sort valueSort;
 
     public MappingSort(Sort keySort, Sort valueSort, ImmutableSet<Sort> ext) {
-        super(new Name("mapping(" + keySort + " => " + valueSort + ")"), false, ext);
+        super(new Name("mapping<[" + keySort + ", " + valueSort + "]>"), false, ext);
         this.keySort = keySort;
         this.valueSort = valueSort;
+    }
+
+    public Sort keySort() {
+        return keySort;
+    }
+
+    public Sort valueSort() {
+        return valueSort;
     }
 }

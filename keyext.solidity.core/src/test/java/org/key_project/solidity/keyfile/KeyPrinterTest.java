@@ -50,7 +50,7 @@ public class KeyPrinterTest {
     @Test
     void malformedNamesAreRejectedWhenBuilt() {
         assertThrows(IllegalArgumentException.class, () -> constant("a b"));
-        assertThrows(IllegalArgumentException.class, () -> predicate("shapeInv("));
+        assertThrows(IllegalArgumentException.class, () -> predicate("conforms("));
         assertThrows(IllegalArgumentException.class, () -> num("1e3"));
         assertThrows(IllegalArgumentException.class, () -> new KeyProblem.Variable(null, "x"));
         assertThrows(IllegalArgumentException.class, () -> new KeyProblem(Path.of("/a/A.sol"),

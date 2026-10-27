@@ -34,6 +34,8 @@ varexpId
  | HAS_MEMORY_FIELD_SORT
  | HAS_ELEMENT_SORT
  | HAS_MEMORY_ELEMENT_SORT
+ | HAS_TYPE_SORT
+ | HAS_ELEMENT_TYPE_SORT
  | NO_FREE_VAR_IN
  | NO_FIXED_ARRAY_ELEMENT
  ;
@@ -94,7 +96,13 @@ const_param_decl: CONST simple_ident COLON sortId ;
 
 sortId
 :
-    id=simple_ident_dots formal_sort_args?
+    id=simple_ident_dots formal_sort_args? sort_dim*
+;
+
+sort_dim
+:
+    EMPTYBRACKETS
+  | LBRACKET length=INT_LITERAL RBRACKET
 ;
 
 formal_sort_args

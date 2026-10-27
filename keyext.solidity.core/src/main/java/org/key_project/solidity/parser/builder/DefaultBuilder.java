@@ -274,8 +274,27 @@ public class DefaultBuilder extends AbstractBuilder<@Nullable Object> {
 
     @Override
     public Sort visitSortId(KeYSolidityDLParser.SortIdContext ctx) {
+        Sort sort = baseSort(ctx);
+        for (KeYSolidityDLParser.Sort_dimContext dim : ctx.sort_dim()) {
+            sort = dim.length == null ? TypeSorts.dynamicArray(sort, services)
+                    : TypeSorts.fixedArray(sort, Integer.parseInt(dim.length.getText()),
+                        services);
+        }
+        return sort;
+    }
+
+    private Sort baseSort(KeYSolidityDLParser.SortIdContext ctx) {
         String name = ctx.id.getText();
         if (ctx.formal_sort_args() != null) {
+            if (MAPPING_SORT.equals(name) && nss.parametricSorts().lookup(name) == null) {
+                List<KeYSolidityDLParser.SortIdContext> args = ctx.formal_sort_args().sortId();
+                if (args.size() != 2) {
+                    semanticError(ctx, "A mapping sort takes a key and a value sort: %s",
+                        ctx.getText());
+                }
+                return TypeSorts.mapping(visitSortId(args.get(0)), visitSortId(args.get(1)),
+                    services);
+            }
             // parametric sorts should be instantiated
             ParametricSortDecl sortDecl = nss.parametricSorts().lookup(name);
             if (sortDecl == null) {
@@ -292,6 +311,8 @@ public class DefaultBuilder extends AbstractBuilder<@Nullable Object> {
             return s;
         }
     }
+
+    private static final String MAPPING_SORT = "mapping";
 
     @Override
     public KeYSolidityType visitTypemapping(KeYSolidityDLParser.TypemappingContext ctx) {

@@ -139,8 +139,8 @@ for `delAt` through `delField<[alpha]>` on the select:
   A subsequent field read checks `0 <= i < oldLength(st)`: it reads through a reset child
   inside that range and through the unchanged child outside it. Overwritten fields can
   therefore simplify before the old-length condition is expanded. `fixedDelNodeIndex`
-  retains the child's array kind, and `shapeInvDelNodeIndexRight` reduces shape preservation to
-  the original child's shape invariant; neither assumes zero tail data.
+  retains the child's array kind, and `conformsDelNodeIndexRight` reduces type preservation to
+  the original child's layout atom; neither assumes zero tail data.
 - `save(st, nil, v)` — **the leaf of a write, left as a term.** A struct
   written over a location keeps the location's mapping members: Solidity
   never copies a mapping. So `save` never collapses its leaf (there is no
@@ -752,9 +752,9 @@ modalities:
 
 Symbolic execution starts from an unconstrained `storage`, so nothing is known about a cell the
 proof has not written — in particular a dynamic array's length could be negative. That gap is
-closed by the shape-invariant atoms of §8c, not by an axiom: `shapeInv(dynArr(s), st) ==>` gives
-`0 <= |st|` through `shapeInvDynSize`, and `shapeInv(fixedArr(n, s), st) ==>` rewrites `|st|` to `n` through
-`shapeInvFixedSize`. Every generated obligation of a contract with an array assumes
+closed by the layout atoms of §8c, not by an axiom: `conforms(emptyOf<[T[]]>, st) ==>` gives
+`0 <= |st|` through `conformsDynSize`, and `conforms(emptyOf<[T[n]]>, st) ==>` rewrites `|st|` to
+`n` through `conformsFixedSize`. Every generated obligation of a contract with an array assumes
 `layoutInv(storage)`, and a loop that writes storage carries it in its invariant, so each
 length the push/pop/index rules read is reached by one of these triggers.
 
@@ -767,44 +767,67 @@ function of the object, not a heap cell. Removing the axiom changed no closed pr
 
 The motivating case is `values.push(); values.pop();` (`storagePopUnknownLength`):
 `storagePopSave`'s `"empty"` branch is `!(0 < n+1) -> ⟨revert⟩false` with
-`n = |storage[C$values]|` over the entry storage, which `shapeInvDynSize` closes. Array examples
+`n = |storage[C$values]|` over the entry storage, which `conformsDynSize` closes. Array examples
 need not open with `require(arr.length == N)` unless they assert an exact length.
 
 Nothing bounds the value of a `uint` cell (that needs per-contract layout knowledge the calculus
 does not have — a field constant like `C$total : Field` carries no declared type), and no upper
 bound (`< 2^256`) is stated.
 
-## 8c. Fixed-size arrays have their declared length (`layoutInv`, shapes as nodes)
+## 8c. Fixed-size arrays have their declared length (`layoutInv`, types as sorts)
 
 A fixed-size array has no length cell in the EVM; its length is a property of the declaration.
 The calculus keeps that knowledge in two places, neither of which touches a read or a write:
-the **shaped storage** a constructor starts from, and the **layout invariant**
-a function assumes on entry and establishes on exit. The vocabulary (`structHeader.key`):
+the **typed storage** a constructor starts from, and the **layout invariant**
+a function assumes on entry and establishes on exit.
 
-    Shape \extends Struct:  leaf | fixedArr(int, Shape) | dynArr(Shape) | mapOf(Shape) | C$S$shape
-                                   -- a shape is also the empty node of its own type
-    shapeInv(Shape, Struct)        -- "this node conforms to this shape"
-    layoutInv(Struct)              -- shapeInv of every declared root, generated per contract
-    fixed(Struct)                  -- "this node is a fixed-size array", decided by its shape
-    Shape fieldShape(MemberField)  -- the shape of a declared member, = #shapeOf(m)
+**Types are sorts.** Every storage type with structure has a sort, a subsort of one of four
+markers below `Struct` (`structHeader.key`):
+
+| Solidity type | Sort | Marker |
+|---|---|---|
+| `T[n]` | `T[n]` (`ArraySort`, element sort and length) | `FixedArray` |
+| `T[]` | `T[]` (`DynamicArraySort`) | `DynamicArray` |
+| `mapping(K => V)` | `mapping<[K, V]>` (`MappingSort`) | `Mapping` |
+| `struct S` of contract `C` | `C$S` (`StructSort`, the declaration) | `StructType` |
+
+A Solidity type reads outside-in, so `uint[2][3]` is three `uint[2]` rows, the sort `int[2][3]`.
+Any other type is a leaf. `TypeSorts` maps a type to its sort; the parser registers each struct's
+sort when it defines the struct, and builds an array or mapping sort on first mention, so a
+`.key` problem or a saved proof can write `emptyOf<[int[2][]]>` or
+`emptyOf<[mapping<[int, int[3]]>]>` directly (`sortId` takes `[n]` and `[]` suffixes).
+
+**The empty node of a type**, `emptyOf<[T]>`, is the value that carries `T`: it is what a
+constructor's storage starts from, what a memory identity holds, and the first argument of the
+layout predicate. A type is *trivial* when every node conforms to it whatever it holds: a leaf, a
+mapping of trivial values, a struct of trivial members. The node of a trivial type is `mtSt`.
+`emptyOf` is `\unique`, as the shape constructors it replaces were: the empty nodes of two
+types are different values, and different from `mtSt`. Without that, a case split on
+`emptyOf<[int[]]> = emptyOf<[int[][]]>` assumes one node has both types. The vocabulary:
+
+    \unique alpha emptyOf<[alpha]> -- the empty node of the type alpha
+    conforms(Struct, Struct)       -- "this node holds a value of the type of this empty node"
+    layoutInv(Struct)              -- conforms of every declared root, generated per contract
+    fixed(Struct)                  -- "this node is a fixed-size array", decided by its type
+    Struct fieldType(MemberField)  -- the empty node of a member's declared type, = #typeOf(m)
 
 Every field constant is a `TypedField` that remembers the member's resolved type, and
-`fieldShapeDef` turns it into a shape through the transformer `#shapeOf`. A struct type whose
-members carry a non-trivial shape gets a `\unique Shape C$S$shape` constant declared in the
-generated problem; `#shapeOf` returns it when it is declared and `leaf` otherwise, so a
-hand-written `.key` problem loses a length but never invents one.
+`fieldTypeDef` turns it into its empty node through the transformer `#typeOf`. Four more
+transformers step through a sort: `#elemOf` (element or value), `#memberOf(t, m)` (the member
+`m`), `#lengthOf` (the `n` of `T[n]`) and `#structConforms` (one atom per non-trivial member).
 
-**The predicate.** `shapeInv` is defined only through `selectSt`; `save`, `delAt` and `delNode` are
-untouched. With `|st|` for `selectSt<[int]>(st, size)` and `st[a]` for `selectSt<[Struct]>(st, a)`:
+**The predicate.** `conforms` is defined only through `selectSt`; `save`, `delAt` and `delNode` are
+untouched. With `|st|` for `selectSt<[int]>(st, size)`, `st[a]` for `selectSt<[Struct]>(st, a)` and
+`⟦T⟧` for the empty node of `T`:
 
-    shapeInv(leaf,          st)  =  true
-    shapeInv(fixedArr(n,s), st)  =   fixed(st) & |st| = n
-                                     & forall int i.  shapeInv(s, st[at(i)]) & shapeInv(s, st[atMap(i)])
-    shapeInv(dynArr(s),     st)  =  !fixed(st) & 0 <= |st|
-                                     & forall int i.  shapeInv(s, st[at(i)]) & shapeInv(s, st[atMap(i)])
-    shapeInv(mapOf(s),      st)  =    forall Prim k.  shapeInv(s, st[at(k)])
-    shapeInv(C$S$shape,     st)  =  /\ over the members m of S : shapeInv(fieldShape(m), st[m])
-    layoutInv(s)                 =  /\ over the roots m of C    : shapeInv(fieldShape(m), s[m])
+    conforms(mtSt,        st)  =  true
+    conforms(⟦T[n]⟧,      st)  =   fixed(st) & |st| = n
+                                   & forall int i.  conforms(⟦T⟧, st[at(i)]) & conforms(⟦T⟧, st[atMap(i)])
+    conforms(⟦T[]⟧,       st)  =  !fixed(st) & 0 <= |st|
+                                   & forall int i.  conforms(⟦T⟧, st[at(i)]) & conforms(⟦T⟧, st[atMap(i)])
+    conforms(⟦mapping(K => V)⟧, st)  =  forall Prim k.  conforms(⟦V⟧, st[at(k)])
+    conforms(⟦C$S⟧,       st)  =  /\ over the members m of S : conforms(fieldType(m), st[m])
+    layoutInv(s)               =  /\ over the roots m of C    : conforms(fieldType(m), s[m])
 
 (An array element that is a mapping is selected with `atMap`, everything else with `at`, so
 both selectors count as array elements; a mapping value is always `at(k)`.) The node kind is
@@ -812,15 +835,20 @@ part of conformance: a length alone does not tell a dynamic node from a fixed on
 index is an `int` and a mapping key any `Prim` (`at : Prim -> Field`, `atMap : int -> MapField`),
 and every rule below keeps to that range, in both directions: an antecedent atom hands out
 only what the succedent unfolding proves. Under an array atom the node at a key of another
-sort, such as `at(TRUE)`, is unconstrained. The `C$S$shape` and `layoutInv` lines are finite
-and per contract, so
-`SolidityProblemSynthesizer` emits them as the rules `insertLayoutInv` and `shapeInvStruct_S`, next
-to `insertCInv`; roots and members whose shape is trivial (`leaf`, `mapOf(leaf)`, a struct of
-such) are left out, and `insertLayoutInv` of a contract without arrays is `true`.
+sort, such as `at(TRUE)`, is unconstrained. The struct line is one generic rule,
+`conformsStruct`, whose `#structConforms` reads the members off the struct's sort. The
+`layoutInv` line is finite and per contract, so `SolidityProblemSynthesizer` emits it as the rule
+`insertLayoutInv`, next to `insertCInv`; roots of a trivial type are left out, and
+`insertLayoutInv` of a contract without arrays is `true`.
 
-**The obligations** (`StorageShapes` builds both pieces):
+`conforms` takes the empty node rather than a sort argument (`conforms<[T]>(st)`) on purpose:
+each sort instance of a parametric predicate is a distinct operator, and the term order then
+cycles on a conjunction of atoms of different types (`commute_and` and `shift_paren_and`
+reorder it forever). With one operator, atoms compare by their arguments, as before.
 
-    constructor:  ==> {storage := storeSt(…storeSt(mtSt, C$d1, fixedArr(9, leaf)) …, C$dyn, dynArr(fixedArr(3, leaf)))}
+**The obligations** (`StorageLayout` builds both pieces):
+
+    constructor:  ==> {storage := storeSt(…storeSt(mtSt, C$d1, fieldType(C$d1)) …, C$dyn, fieldType(C$dyn))}
                       [ ctor ] (layoutInv(storage) & CInv & ensures)
     function:     layoutInv(storage) & CInv & requires  ==>  [ f ] (layoutInv(storage) & CInv & ensures)
 
@@ -830,61 +858,65 @@ next function's entry assumption. A loop that writes storage anonymises it, so
 `LoopInvariantCondition` conjoins `layoutInv(storage)` to every such loop invariant, as KeY
 does with `wellFormed(heap)`.
 
-**How the rules use it.** Three families, by where a `shapeInv` atom sits:
+**How the rules use it.** Three families, by where a `conforms` atom sits:
 
-- *A shape as a node* (`selectOnShape*`): `|sh| ⇝ sizeOf(sh)`,
-  `sh[a] ⇝ shapeAt(sh, cons(a, nil))`, a primitive read is its default. The shape
-  constructors are `\unique`, so `leaf`, `dynArr(leaf)`, `mapOf(leaf)` and `mt` are distinct
-  though they read alike; this is sound because `Struct` has no extensionality rule.
-  Root reads on the `storeSt` chain need nothing new (`selectOnStore`).
+- *An empty node read* (`selectOnType*`): `|⟦T[n]⟧| ⇝ n`, `|⟦T[]⟧| ⇝ 0`, `|⟦mapping⟧| ⇝ 0`,
+  an element or mapping value is `#elemOf` of the node, a struct member `#memberOf`, and a
+  primitive read is its default. The type at a path `p` is `find<[Struct]>(t, p)`, read one
+  selector at a time (`findOnEmptyOf`, no `isEmpty` split), and anything below a leaf is
+  `mtSt` (`findOnEmptyStorage`). The empty nodes of different types are distinct constants,
+  sound because `Struct` has no extensionality rule. Root reads on the `storeSt` chain need
+  nothing new (`selectOnStore`).
 - *Antecedent atoms are consumed by triggers, never unfolded.* A read on symbolic storage
   normalises to a `selectSt` chain rooted at `storage` and stops; the atom on exactly that
-  chain answers it. `shapeInvFixedSize` rewrites `|st|` to `n` under `shapeInv(fixedArr(n, s), st) ==>`;
-  `shapeInvDynSize` adds `0 <= |st|`; `shapeInv{Fixed,Dyn}Elem[Map]` add the element's atom when
-  `st[at(i)]` or `st[atMap(i)]` appears for an `int` index `i`, and `shapeInvMapElem` when `st[at(k)]`
-  appears for any `Prim` key `k`; `shapeInvFixedIsFixed` / `shapeInvDynIsNotFixed` rewrite `fixed(st)`.
-  So a nested length such as `rows[i].length` for
+  chain answers it. `conformsFixedSize` rewrites `|st|` to `n` under `conforms(⟦T[n]⟧, st) ==>`;
+  `conformsDynSize` adds `0 <= |st|`; `conforms{Fixed,Dyn}Elem[Map]` add the element's atom when
+  `st[at(i)]` or `st[atMap(i)]` appears for an `int` index `i`, and `conformsMapElem` when `st[at(k)]`
+  appears for any `Prim` key `k`; `conformsFixedIsFixed` / `conformsDynIsNotFixed` rewrite `fixed(st)`.
+  The generic sorts `alphaFix`, `alphaDyn`, `alphaMap`, `alphaStr` (bounded by the markers) pick
+  the rule by the sort of the atom's empty node. So a nested length such as `rows[i].length` for
   `uint[3][] rows` is two trigger steps. They are `\assumes` rewrite taclets with
   `\sameUpdateLevel`, the add-only ones costed in `inReachableStateImplication`, and they match syntactically: after `d2 = d1` the read `|storage'[d2]|`
   goes through `selectOnSaveCons`, `saveOnEmptyPrim` and `findStValueCast` to `|storage[d1]|`,
   a select on the *entry* storage, which laziness keeps in the atom's normal form.
-- *Succedent atoms are peeled off writes, then unfolded.* `shapeInvSaveRight` turns
-  `shapeInv(sh, save(st, p, v))` into `shapeInv(sh, st) & shapeInvSaveAt(sh, st, p, v, last(p))`, and
-  `shapeInvSaveAt{Size,Index,MapIndex,Member}` dispatch on the evaluated last selector of `p`
+- *Succedent atoms are peeled off writes, then unfolded.* `conformsSaveRight` turns
+  `conforms(t, save(st, p, v))` into `conforms(t, st) & conformsSaveAt(t, st, p, v, last(p))`, and
+  `conformsSaveAt{Size,Index,MapIndex,Member}` dispatch on the evaluated last selector of `p`
   (`size`, `at(k)`, `atMap(i)`, a member field; a concrete path ends in one of them), so the
   length branch's `firsts(p)` is built only for a length write:
   - `p` ends in `size` (a length write, at any depth): `0 <= cast<[int]>(v)` and
     `!fixed(find<[Struct]>(st, firsts(p)))`: the written node is a dynamic array, and the
     write changes no element and no node kind;
-  - otherwise `shapeInv(shapeAt(sh, p), save(find<[Struct]>(st, p), nil, v))` (the written node is a
-    merge, so the leaf keeps the target's own fixed length).
+  - otherwise `conforms(find<[Struct]>(t, p), save(find<[Struct]>(st, p), nil, v))`: the type at
+    `p` is a read of the empty node `t` along `p`, and the written node is a merge, so the leaf
+    keeps the target's own fixed length.
 
-  The length branch is needed because `shapeAt` of a path ending in `size` is `leaf`, which
-  would drop the bound and prove `shapeInv(dynArr(leaf), save(st, cons(size, nil), -1))`.
-  `shapeInvSaveLengthRight` (ruleset `concrete`, so it wins over `shapeInvSaveRight`) is the root-length
-  case at a dynamic shape, `shapeInv(dynArr(s), save(st, cons(size, nil), n)) ⇝ shapeInv(dynArr(s), st) & 0 <= n`,
-  where the kind follows from `shapeInv(dynArr(s), st)` itself. `shapeInvStoreRight` turns
-  `shapeInv(sh, storeSt(st, a, v))` into `!(a = size) & shapeInv(sh, st) & shapeInv(shapeAt(sh, cons(a, nil)), cast<[Struct]>(v))`:
-  a store never writes a length. `shapeInvDelAtRight` drops a reset, owing `!fixed` of the node
+  The length branch is needed because the type at a path ending in `size` is a leaf, which
+  would drop the bound and prove `conforms(⟦T[]⟧, save(st, cons(size, nil), -1))`.
+  `conformsSaveLengthRight` (ruleset `concrete`, so it wins over `conformsSaveRight`) is the root-length
+  case at a dynamic type, `conforms(⟦T[]⟧, save(st, cons(size, nil), n)) ⇝ conforms(⟦T[]⟧, st) & 0 <= n`,
+  where the kind follows from the atom itself. `conformsStoreRight` turns
+  `conforms(t, storeSt(st, a, v))` into `!(a = size) & conforms(t, st) & conforms(t[a], cast<[Struct]>(v))`:
+  a store never writes a length. `conformsDelAtRight` drops a reset, owing `!fixed` of the node
   whose length it resets when the path ends in `size` (the length becomes 0 and the node keeps
-  its kind, so only a dynamic array still conforms); `shapeInvDelNodeRight` drops a reset;
-  `shapeInvDelNodeFixedRight` drops one only at a `fixedArr(n, s)` shape (a fixed-node reset is
-  `fixed`, so it does not conform to `dynArr`); `shapeInvDelNodeIndexRight` checks the original
-  selected child; `shapeInvLeaf` and `shapeInvSelf` close. `shapeInv{Fixed,Dyn,Map}Right` (ruleset `shapeInvUnfold`,
+  its kind, so only a dynamic array still conforms); `conformsDelNodeRight` drops a reset;
+  `conformsDelNodeFixedRight` drops one only at a `T[n]` type (a fixed-node reset is
+  `fixed`, so it does not conform to `T[]`); `conformsDelNodeIndexRight` checks the original
+  selected child; `conformsEmpty` and `conformsSelf` close. `conforms{Fixed,Dyn,Map}Right` (ruleset `conformsUnfold`,
   costed above the triggers so an atom that reduces to an entry atom closes first) unfold a
-  leaf-of-a-write by the definition above: `shapeInvFixedRight` owes `fixed(st)`, `|st| = n` and the
-  element atoms at `at(skx)` and `atMap(skx)`, `shapeInvDynRight` owes `!fixed(st)`, `0 <= |st|` and
-  the same, with `skx` a fresh `int` (`\skolemTerm int`), and `shapeInvMapRight` owes the value atom
-  at `at(skp)` with `skp` a fresh `Prim` (`\skolemTerm Prim`), since `shapeInvMapElem` answers at
+  leaf-of-a-write by the definition above: `conformsFixedRight` owes `fixed(st)`, `|st| = n` and the
+  element atoms at `at(skx)` and `atMap(skx)`, `conformsDynRight` owes `!fixed(st)`, `0 <= |st|` and
+  the same, with `skx` a fresh `int` (`\skolemTerm int`), and `conformsMapRight` owes the value atom
+  at `at(skp)` with `skp` a fresh `Prim` (`\skolemTerm Prim`), since `conformsMapElem` answers at
   every `Prim` key, `bool` ones included.
 
   Each counterexample to a weaker form stays open in
   `keyext.solidity.core/src/test/resources/org/key_project/solidity/examples/unsound/`
   (`RulesTest#unsoundWfProblemStaysOpen`): a node of the other kind
-  (`shapeInv{Fixed,Dyn}Right*Node`, `shapeInvDelNodeFixedRightDynamicShape`), a negative length
-  (`shapeInv{Save,Store}RightNegative*Length`), a mapping proved at `int` keys only
-  (`shapeInvMapRightIntKeysOnly`), and an array element read at a `bool` key
-  (`shapeInv{Fixed,Dyn}ElemBoolIndex`). `layoutInvLengthWrites.key` and
+  (`conforms{Fixed,Dyn}Right*Node`, `conformsDelNodeFixedRightDynamicType`), a negative length
+  (`conforms{Save,Store}RightNegative*Length`), a mapping proved at `int` keys only
+  (`conformsMapRightIntKeysOnly`), and an array element read at a `bool` key
+  (`conforms{Fixed,Dyn}ElemBoolIndex`). `layoutInvLengthWrites.key` and
   `layoutInvArrayElements.key` are the closing counterparts.
 
 **The kind of a node.** The size of a reset or copied-over node depends on whether it is a
@@ -894,8 +926,8 @@ length): `|delNode(st)| ⇝ \if(fixed(st)) \then(|st|) \else(0)` (`selectStDelNo
 (`selectOnSaveEmptySize`). A write never changes the kind, so `fixed` reads it off the
 node's base: `fixedSave`, `fixedStore`, `fixedDelNode`, `fixedDelAt` descend;
 `fixedDelNodeIndex` reads the original child's kind. `delNodeFixed`
-and `fixedArr(…)` are fixed, `dynArr(…)` and `mtSt` are not, and
-`shapeInvFixedIsFixed` / `shapeInvDynIsNotFixed` decide it from the entry atom. This is what makes
+and `⟦T[n]⟧` are fixed (`fixedTypeFixed`), `⟦T[]⟧` (`fixedTypeDyn`) and `mtSt` are not, and
+`conformsFixedIsFixed` / `conformsDynIsNotFixed` decide it from the entry atom. This is what makes
 `uint[40] big = uint[20] small` keep `big.length == 40` and zero `big[30]`, and
 `dyn.pop()` keep the slot's `uint[3]` length. The deletion/pop terminals no longer refuse
 fixed-array elements. `selectStDelNodeIndexStruct` recursively resets a reference element
@@ -904,35 +936,37 @@ selectors still distinguish the source prefix and the old destination tail. The 
 a reset are split by selector (`selectOnSaveEmpty{IndexPrim,MapValue,Member}`,
 `selectStDelNode{Element,MapValue,Member}`) so that `size` is never defaulted.
 
-A length is non-negative only where a `shapeInv` atom says so (8b); a hand-written problem that
+A length is non-negative only where a `conforms` atom says so (8b); a hand-written problem that
 states no `layoutInv` knows nothing about its lengths. The design and its worked examples are also in the pre-licentiate paper
 (`sections/fixed-length.tex`); `contracts/FixedLengths.sol` runs them.
 
-### Memory objects carry their shape
+### Memory objects carry their type
 
-In memory the shape sits in the identity: `shaped(idp, s)` is an `IdentityPrim`, and every
-allocation rule builds `idC(shaped(freshIdp, s), nil)` with `s = #shapeOf(mv)` from the
-variable's declared type, so the shape survives every write, copy and delete:
+In memory the type sits in the identity's sort argument: `typedId<[T]>(idp)` is a `\unique`
+`IdentityPrim`, and every allocation rule builds `idC(typedId<[T]>(freshIdp), nil)` with `T` bound
+by `\hasTypeSort(x, \sort(alphaType))` to the sort of the declared type of `x` (a memory
+variable or a member), or by `\hasElementTypeSort` to that of its element, so the type survives
+every write, copy and delete. Two identities of different types are different (`equalUnique`):
 
 | Declaration | Identity |
 |---|---|
-| `uint[3] memory x` | `idC(shaped(idp, fixedArr(3, leaf)), nil)` |
-| `uint[2][3] memory y` | `idC(shaped(idp, fixedArr(3, fixedArr(2, leaf))), nil)` |
-| `new uint[2][](n)` | `idC(shaped(idp, dynArr(fixedArr(2, leaf))), nil)` |
-| `Triple memory t` | `idC(shaped(idp, leaf), nil)` |
+| `uint[3] memory x` | `idC(typedId<[int[3]]>(idp), nil)` |
+| `uint[2][3] memory y` | `idC(typedId<[int[2][3]]>(idp), nil)` |
+| `new uint[2][](n)` | `idC(typedId<[int[2][]]>(idp), nil)` |
+| `Triple memory t` (`uint[3] items; uint tag`) | `idC(typedId<[C$Triple]>(idp), nil)` |
 
 A fresh node's length is `initSize`:
-`init<[int]>(idC(shaped(idp, sh), flds), size) ⇝ sizeOf(shapeAt(sh, flds))`, with
-`sizeOf` reading `n` from `fixedArr(n, s)` and `0` otherwise; `initElement` and
-`initMember` give the other fields their defaults and, being matched on `at(pk)` and
-`m`, never touch `size`. `idShape(idC(shaped(idp, s), flds)) = shapeAt(s, flds)` is the
-shape of any node: `delete x` keeps `idShape(x)`, a freshened member is allocated with
-`#shapeOf(fld)`, a freshened element with `shapeAt(idShape(z), cons(at(i), nil))`. This
+`init<[int]>(idC(typedId<[T]>(idp), flds), size) ⇝ |find<[Struct]>(#nodeOf(typedId<[T]>(idp)), flds)|`,
+the length of the empty node of `T` at that path (`#nodeOf` is `emptyOf<[T]>`, or `mtSt` for a
+trivial type), so `n` for a `T[n]` and `0` otherwise; `initElement` and `initMember` give the
+other fields their defaults and, being matched on `at(pk)` and `m`, never touch `size`. `delete x`
+reallocates at the declared type of `x`, a freshened member at that of the member, a freshened
+element at the element type of the array. This
 closes `x.length == 3`, `y[0].length == 2` and `z[i].length == 2` for the table above
 (`testMemoryFixedArrayLength`, `testMemoryNestedFixedArrayLength`,
 `testNewArrayOfFixedElementLength`, all EVM-checked). An identity whose prim is not
-`shaped`, as in a hand-written `.key` problem, has an unknown `size`.
+`typedId`, as in a hand-written `.key` problem, has an unknown `size`.
 
-An unconstrained memory, such as a `uint[3] memory p` parameter, is still unshaped: its
-identity is a bare program variable rather than an `idC(shaped(…), …)`, so no rule can
-read its shape. Giving parameters a shaped identity is the natural next step.
+An unconstrained memory, such as a `uint[3] memory p` parameter, is still untyped: its
+identity is a bare program variable rather than an `idC(typedId<[T]>(…), …)`, so no rule can
+read its type. Giving parameters a typed identity is the natural next step.
