@@ -36,8 +36,8 @@
 
 \proof {
 (branch "dummy ID"
-(rule "selectOnTypeFixedElement" (formula "1") (term "0,0"))
-(rule "selectOnTypeFixedSize" (formula "1") (term "0"))
+(rule "selectOnTypeElement" (formula "1") (term "0,0"))
+(rule "selectOnTypeSize" (formula "1") (term "0"))
 (rule "eqClose" (formula "1"))
 (rule "closeTrue" (formula "1"))
 )

@@ -28,16 +28,16 @@
 
 
 \problem {
-  selectSt<[int]>(selectSt<[Struct]>(emptyOf<[mapping<[int, int[3]]>]>,
-                                     at(5)),
+  selectSt<[int]>(selectSt<[Struct]>(emptyOf<[int[2][3]]>,
+                                     atMap(0)),
                   size)
-= 3
+= 2
 }
 
 \proof {
 (branch "dummy ID"
-(rule "selectOnTypeMapElement" (formula "1") (term "0,0"))
-(rule "selectOnTypeFixedSize" (formula "1") (term "0"))
+(rule "selectOnTypeElementMap" (formula "1") (term "0,0"))
+(rule "selectOnTypeSize" (formula "1") (term "0"))
 (rule "eqClose" (formula "1"))
 (rule "closeTrue" (formula "1"))
 )

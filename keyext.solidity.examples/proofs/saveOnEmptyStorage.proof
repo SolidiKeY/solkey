@@ -15,7 +15,7 @@
             "AUTO_INDUCTION_OPTIONS_KEY": "AUTO_INDUCTION_OFF",
             "FUNCTION_OPTIONS_KEY": "FUNCTION_CONTRACT",
             "LOOP_OPTIONS_KEY": "LOOP_INVARIANT",
-            "NON_LIN_ARITH_OPTIONS_KEY": "NON_LIN_ARITH_NONE",
+            "NON_LIN_ARITH_OPTIONS_KEY": "NON_LIN_ARITH_DEF_OPS",
             "QUANTIFIERS_OPTIONS_KEY": "QUANTIFIERS_NON_SPLITTING_WITH_PROGS",
             "SPLITTING_OPTIONS_KEY": "SPLITTING_DELAYED",
             "STOPMODE_OPTIONS_KEY": "STOPMODE_DEFAULT",
@@ -37,16 +37,26 @@
     \unique MapMemberField mf;
 }
 \problem {
-selectSt<[int]>(save(mtSt, cons(f, nil), 5), f) = 5
+  selectSt<[int]>(selectSt<[Struct]>(save(mtSt,
+                                          cons(f,
+                                               cons(g,
+                                                    nil)),
+                                          5),
+                                     f),
+                  g)
+= 5
 }
 
 \proof {
 (branch "dummy ID"
-(rule "saveOnEmptyStorage" (formula "1") (term "0,0"))
-(rule "selectOnStore" (formula "1") (term "0"))
+(rule "saveOnEmptyStorage" (formula "1") (term "0,0,0"))
+(rule "selectOnStore" (formula "1") (term "0,0"))
+(rule "eqClose" (formula "1") (term "0,0,0"))
+(rule "ifthenelse_true" (formula "1") (term "0,0"))
+(rule "castDel" (formula "1") (term "0,0"))
+(rule "selectOnSaveLastPrim" (formula "1") (term "0"))
 (rule "eqClose" (formula "1") (term "0,0"))
 (rule "ifthenelse_true" (formula "1") (term "0"))
-(rule "saveOnEmptyPrim" (formula "1") (term "0"))
 (rule "castDel" (formula "1") (term "0"))
 (rule "eqClose" (formula "1"))
 (rule "closeTrue" (formula "1"))

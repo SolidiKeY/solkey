@@ -85,10 +85,7 @@ public final class TypeSorts {
     }
 
     public static int lengthOf(Sort sort) {
-        if (sort instanceof ArraySort array) {
-            return array.length();
-        }
-        throw new IllegalArgumentException("Not a fixed-size array sort: " + sort);
+        return sort instanceof ArraySort array ? array.length() : 0;
     }
 
     public static List<TypedField> membersOf(Sort sort, Services services) {
