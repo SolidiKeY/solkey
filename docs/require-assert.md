@@ -1,122 +1,98 @@
-# Require and Assert Rules — Summary for LLM Consumption
-
-A flat-Markdown distillation of the "Require and Assert" subsection of
-`main.tex` / `main.pdf`. Self-contained; no LaTeX macros.
+# Require and Assert Rules
 
 ## 1. Overview
 
-`require(c)` and `assert(c)` both evaluate a Boolean condition `c`
-before deciding whether normal execution may continue. They look
-identical in Solidity source, but their proof rules differ on the
-false branch — and that difference is the entire point of having two
-keywords.
+At runtime `require(c)` and `assert(c)` behave the same way: if `c` is false, the transaction
+reverts. Proofs treat the two failures differently:
 
-- `require` models a **recoverable guard**: if the condition fails,
-  the transaction aborts via an explicit `revert();`.
-- `assert` models a **verification obligation**: the condition must
-  be discharged by the proof; failure is a bug, not a graceful abort.
+- `require` is a **recoverable guard**. Its failure is an accepted way for the
+  transaction to end: it reverts and the state is unchanged.
+- `assert` is a **verification obligation**. Its failure is a bug, so the proof must
+  show it cannot happen.
 
-This mirrors Solidity's intent: `require` is for input/state
-validation that may legitimately fail at runtime; `assert` is for
-invariants that should never fail.
+## 2. Outcomes and modalities
 
-## 2. Two-Step Strategy
+A statement ends in one of three outcomes, and the modality decides which ones it accepts:
 
-For both keywords:
+```
+                       ┌──────────┬───────────┬───────────┐
+                       │  normal  │  revert   │   panic   │
+                       │ (ends ok)│ (require) │ (assert)  │
+  ┌────────────────────┼──────────┼───────────┼───────────┤
+  │ [p]φ   box         │    φ     │     ⊤     │     ⊥     │
+  │ ⟨p⟩φ   diamond     │    φ     │     ⊥     │     ⊥     │
+  └────────────────────┴──────────┴───────────┴───────────┘
 
-1. **Capture.** If the condition is nonsimple (`nse`), first lift it
-   into a Boolean stack temporary `bool pv = nse;`.
-2. **Decide.** Once the condition is a simple Boolean (`se`), split
-   into a true and a false branch.
+  box     = "reverts are fine, panics never, φ if it ends normally"
+  diamond = "it must end normally, and then φ"
+```
 
-The true branch is the same for both: drop the statement and continue
-with `⟨ π ω ⟩ φ`. The false branch is where they diverge.
+Reading the table for each keyword:
 
-## 3. Capture Rules
+```
+  require(c)  :=  if ¬c then REVERT          assert(c)  :=  if ¬c then PANIC
 
-Both capture rules are structural: they just hoist the nonsimple
-sub-expression into a temporary so the simple rule can fire next.
+  [require(c)]φ  ≡  c → φ                    [assert(c)]φ  ≡  c ∧ φ
+  ⟨require(c)⟩φ  ≡  c ∧ φ                    ⟨assert(c)⟩φ  ≡  c ∧ φ
+```
 
-- `requireConditionCapture`
+**`require` differs from `assert` only in box, where its false branch is dropped.**
 
-      require(nse);
-      ⇝  ⟨ π  bool pv = nse; require(pv);  ω ⟩ φ
+## 3. Capture rules
 
-- `assertConditionCapture`
+If the condition is nonsimple (`nse`), it is first lifted into a fresh Boolean temporary so
+the rules of §4 only ever see a simple condition `se` (a Boolean variable or literal):
 
-      assert(nse);
-      ⇝  ⟨ π  bool pv = nse; assert(pv);  ω ⟩ φ
+```
+  requireConditionCapture   {π require(nse); ω}φ  ⇝  {π bool pv = nse; require(pv); ω}φ
+  assertConditionCapture    {π assert(nse);  ω}φ  ⇝  {π bool pv = nse; assert(pv);  ω}φ
+```
 
-Schema variable `nse` is any nonsimple expression. The result `pv` is
-a fresh simple Boolean. The capture rules carry no condition: the
-Boolean type is fixed by the substitution.
+## 4. Simple rules
 
-## 4. Simple Rules — The Modality-Sensitive Step
+All three put the condition into the antecedent of the continuing goal:
 
-Both simple rules split on the Boolean value `se`, a
-`SimpleExpression[primitive]`: a Boolean variable or a literal
-(`require(true)`, `assert(false)`). The true branch drops the
-statement. The false branch differs.
+```
+(requireBox)              Γ, c ⊢ [π ω]φ
+                 ─────────────────────────────────          one goal
+                   Γ ⊢ [π require(c); ω]φ
 
-- `requireSimple`
 
-      require(se);
-      ⇝  se      : ⟨ π ω ⟩ φ
-         ¬se     : ⟨ π revert(); ω ⟩ φ
+(requireDiamond)     Γ ⊢ c        Γ, c ⊢ ⟨π ω⟩φ
+                 ─────────────────────────────────          "Reverts" / "Holds"
+                   Γ ⊢ ⟨π require(c); ω⟩φ
 
-- `assertSimple`
 
-      assert(se);
-      ⇝  se      : ⟨ π ω ⟩ φ
-         ¬se     : ⊥
+(assertSimple)       Γ ⊢ c        Γ, c ⊢ {π ω}φ             {·} ∈ { [·], ⟨·⟩ }
+                 ─────────────────────────────────          "Violated" / "Holds"
+                   Γ ⊢ {π assert(c); ω}φ
+```
 
-The `require` false branch reduces to `revert();`. The `assert` false
-branch closes with `⊥` directly, without going through `revert();`.
+- `requireBox`: a failed `require` reverts, which box accepts, so nothing is proved for it.
+  The rule matches only in the succedent (`\find(==> …)`). In the antecedent, dropping the
+  `¬c` case would be unsound.
+- `requireDiamond` and `assertSimple` have the same shape. Both match anywhere with
+  `\sameUpdateLevel`, so the added `c` is read in the state the statement runs in.
+  In the antecedent they are still sound, since `⟨require(c)⟩φ` and `{assert(c)}φ` both imply
+  `c ∧ {…}φ`.
 
-## 5. Why the Branches Differ
+`require` does not go through `revert();`. An explicit `revert();` statement keeps its own
+two rules (`docs/storage.md` §8): `revertBox` ⇝ `⊤`, `revertDiamond` ⇝ `⊥`.
 
-The two `revert();` rules close the proof differently in box vs
-diamond (see the storage doc, §8):
+## 5. Discipline
 
-- `revertDiamond`:  `⟨ π revert(); ω ⟩ φ`  ⇝  `⊥`
-- `revertBox`:      `[ π revert(); ω ] φ`  ⇝  `⊤`
+**Pairwise disjointness.** Capture matches a nonsimple operand, the simple rules a simple one.
+`requireBox` and `requireDiamond` are split by modality, so exactly one rule applies.
 
-Combining these with the simple rules gives the effective semantics:
+**Termination.** Capture decreases the complex-expression count (component 2 of the storage
+termination measure); each simple rule removes the statement (component 4).
 
-| Statement     | Diamond `⟨·⟩`   | Box `[·]`        |
-| ------------- | --------------- | ---------------- |
-| `require(c)`  | `c ∧ φ`         | `c → φ`          |
-| `assert(c)`   | `c ∧ φ`         | `c ∧ φ`          |
+## 6. Quick reference
 
-- For `require` in box, the false branch is vacuously true (`¬c →
-  ⊤`), so the rule degenerates to `c → φ`. That is exactly the
-  recoverable-guard reading: the proof only cares about executions
-  that actually continue.
-- For `assert` in box, the false branch must instead close with `⊥`
-  to keep the obligation alive. Routing through `revert();` would
-  vacuously discharge it (`¬c → ⊤`), which would silently weaken
-  every box-modality assert — the bug `assert` is supposed to flag.
-
-So `assert` is the same in both modalities; only `require` inherits
-the box / diamond split from the `revert();` rules.
-
-## 6. Discipline
-
-**Pairwise disjointness.** `requireConditionCapture` matches when the
-operand is nonsimple; `requireSimple` matches when it is simple. Same
-for `assert`. Exactly one rule applies to any well-typed call.
-
-**Termination.** Capture decreases the complex-expression count
-(component 2 of the storage termination measure). The simple rules
-decrease the statement count (component 4), either by dropping the
-statement (true branch) or by replacing it with `revert();`, which
-`revertDiamond` / `revertBox` immediately consume.
-
-## 7. Quick Reference
-
-| Rule                       | Trigger              | Effect on the false branch |
-| -------------------------- | -------------------- | -------------------------- |
-| `requireConditionCapture`  | `require(nse);`      | (n/a — capture)            |
-| `assertConditionCapture`   | `assert(nse);`       | (n/a — capture)            |
-| `requireSimple`            | `require(se);`       | `⟨ π revert(); ω ⟩ φ`      |
-| `assertSimple`             | `assert(se);`        | `⊥`                        |
+| Rule                       | Trigger                   | Goals                          |
+| -------------------------- | ------------------------- | ------------------------------ |
+| `requireConditionCapture`  | `require(nse);`           | 1 (capture)                    |
+| `assertConditionCapture`   | `assert(nse);`            | 1 (capture)                    |
+| `requireBox`               | `⊢ [… require(se); …]φ`   | 1: `se` assumed                |
+| `requireDiamond`           | `⟨… require(se); …⟩φ`     | 2: prove `se`; `se` assumed    |
+| `assertSimple`             | `{… assert(se); …}φ`      | 2: prove `se`; `se` assumed    |

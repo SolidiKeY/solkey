@@ -99,7 +99,7 @@ coexist and examples pin the variant they need.
 
 **POs use the box modality.** The paper proves partial correctness
 (reverting runs are trivially correct). `require` already degenerates to
-`c → φ` in box (`require-assert.md` §5), which is exactly the paper's
+`c → φ` in box (`require-assert.md` §2), which is exactly the paper's
 `require` rule. The transfer rules are split by modality along the same
 line: the box rules carry no guard at all — the debit is booked
 unconditionally, exactly the paper's rule — while the diamond rules owe
