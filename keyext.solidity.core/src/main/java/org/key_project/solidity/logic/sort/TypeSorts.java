@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Set;
 
 import org.key_project.logic.Name;
+import org.key_project.logic.Term;
+import org.key_project.logic.op.Function;
 import org.key_project.logic.sort.Sort;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.logic.op.TypedField;
@@ -111,7 +113,8 @@ public final class TypeSorts {
 
     private static boolean isTrivial(Sort sort, Services services, Set<Sort> visiting) {
         return switch (sort) {
-            case ArraySort ignored -> false;
+            case ArraySort array -> isTrivial(node(array.elementSort(), services), services,
+                visiting);
             case DynamicArraySort ignored -> false;
             case MappingSort mapping -> isTrivial(node(mapping.valueSort(), services), services,
                 visiting);
@@ -122,15 +125,50 @@ public final class TypeSorts {
         };
     }
 
+    public static boolean containsFixed(Sort sort, Services services) {
+        return containsFixed(sort, services, new HashSet<>());
+    }
+
+    private static boolean containsFixed(Sort sort, Services services, Set<Sort> visiting) {
+        return switch (sort) {
+            case ArraySort ignored -> true;
+            case DynamicArraySort array -> containsFixed(node(array.elementSort(), services),
+                services, visiting);
+            case MappingSort mapping -> containsFixed(node(mapping.valueSort(), services),
+                services, visiting);
+            case StructSort struct -> visiting.add(struct)
+                    && membersOf(struct, services).stream()
+                            .anyMatch(m -> containsFixed(memberOf(m, services), services,
+                                visiting));
+            default -> false;
+        };
+    }
+
+    public static Sort childOf(Sort sort, Term selector, Services services) {
+        Sort child = switch (selector.op()) {
+            case TypedField member -> memberOf(member, services);
+            case Function f when "at".equals(f.name().toString())
+                    || "atMap".equals(f.name().toString()) ->
+                elementOf(sort, services);
+            default -> null;
+        };
+        return child == null ? structSort(services) : child;
+    }
+
     private static Sort node(Sort sort, Services services) {
         Sort struct = structSort(services);
         return sort.extendsTrans(struct) ? sort : struct;
     }
 
+    public static boolean isStructured(@Nullable Type type) {
+        Type unwrapped = StaticTypes.unwrap(type);
+        return unwrapped instanceof ArrayType || unwrapped instanceof DynamicArrayType
+                || unwrapped instanceof MappingType || unwrapped instanceof StructDeclaration;
+    }
+
     private static Sort componentOf(Type type, Services services) {
         Type unwrapped = StaticTypes.unwrap(type);
-        if (unwrapped instanceof ArrayType || unwrapped instanceof DynamicArrayType
-                || unwrapped instanceof MappingType || unwrapped instanceof StructDeclaration) {
+        if (isStructured(unwrapped)) {
             return of(unwrapped, services);
         }
         KeYSolidityType kst =

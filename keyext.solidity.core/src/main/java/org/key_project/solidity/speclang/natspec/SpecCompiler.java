@@ -232,6 +232,10 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
                 return integer(Key.num(ordinal));
             }
         }
+        if (member.equals("length") && path(node.expr()).type() instanceof SpecType.Array array
+                && array.length() != SpecType.Array.DYNAMIC) {
+            return integer(Key.num(array.length()));
+        }
         return read(path(node));
     }
 

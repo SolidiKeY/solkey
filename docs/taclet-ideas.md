@@ -77,8 +77,8 @@ and the `net` payment model.
   per-type range check that reverts out of range (Java KeY's
   `inInt`/`expandInInt` structure), plus in-range PO antecedents for
   parameters and storage reads so examples need not `require` both bounds by
-  hand. Done for array lengths: the `conforms` atoms of `layoutInv(storage)`
-  give every reachable length cell `0 <=` (`docs/storage.md` §8b). Still open:
+  hand. Done for array lengths: the `conforms` atoms of `lenInv(storage)`
+  give every reachable dynamic length `0 <=` (`docs/storage.md` §8b). Still open:
   `0 <=` for `uint` value cells (needs per-contract layout knowledge the
   calculus does not have), upper bounds (`< 2^256`), and parameters.
 - **Address/payable builtins & globals** (`msg.sender`, `msg.value`,

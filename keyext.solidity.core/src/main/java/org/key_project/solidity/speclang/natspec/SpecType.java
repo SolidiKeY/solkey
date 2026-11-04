@@ -19,7 +19,8 @@ public sealed interface SpecType {
     record Mapping(SpecType key, SpecType value) implements SpecType {
     }
 
-    record Array(SpecType element) implements SpecType {
+    record Array(SpecType element, int length) implements SpecType {
+        static final int DYNAMIC = -1;
     }
 
     record Struct(String name) implements SpecType {
@@ -46,7 +47,9 @@ public sealed interface SpecType {
             return new Mapping(of(inner.substring(0, arrow)), of(inner.substring(arrow + 4)));
         }
         if (type.endsWith("]")) {
-            return new Array(of(type.substring(0, type.lastIndexOf('['))));
+            String dimension = type.substring(type.lastIndexOf('[') + 1, type.length() - 1).trim();
+            return new Array(of(type.substring(0, type.lastIndexOf('['))),
+                dimension.isEmpty() ? Array.DYNAMIC : Integer.parseInt(dimension));
         }
         if (type.startsWith("struct ")) {
             String name = type.substring("struct ".length());

@@ -32,25 +32,21 @@ public final class StorageLayout {
         return roots.isEmpty();
     }
 
-    /// The constructor's starting storage: every non-trivial root holds the empty node of its
-    /// declared type, stored into `mtSt`.
+    /// The constructor's starting storage: the empty storage, as on the EVM.
     public KeyTerm emptyStorage() {
-        KeyTerm storage = Key.constant("mtSt");
-        for (String root : roots) {
-            storage = Key.apply("storeSt", storage, Key.constant(root), fieldType(root));
-        }
-        return storage;
+        return Key.constant("mtSt");
     }
 
-    /// The rule unfolding `layoutInv(s)` into one `conforms` atom per non-trivial root.
+    /// The rule unfolding `lenInv(s)` into one `conforms` atom per root that reaches a dynamic
+    /// array.
     public List<KeyProblem.Taclet> rules() {
         List<KeyFormula> atoms = new ArrayList<>();
         for (String root : roots) {
             atoms.add(Key.predicate("conforms", fieldType(root),
                 Key.typed("selectSt", "Struct", S, Key.constant(root))));
         }
-        return List.of(new KeyProblem.Taclet("insertLayoutInv", "Struct", List.of("s"), false,
-            Key.predicate("layoutInv", S), Key.and(atoms), "simplify"));
+        return List.of(new KeyProblem.Taclet("insertLenInv", "Struct", List.of("s"), false,
+            Key.predicate("lenInv", S), Key.and(atoms), "simplify"));
     }
 
     private static final KeyTerm S = Key.constant("s");
@@ -68,8 +64,11 @@ public final class StorageLayout {
                 type = type.substring(0, type.length() - location.length()).strip();
             }
         }
-        if (type.endsWith("]")) {
+        if (type.endsWith("[]")) {
             return false;
+        }
+        if (type.endsWith("]")) {
+            return isTrivial(contract, type.substring(0, type.lastIndexOf('[')), visiting);
         }
         if (type.startsWith("mapping(") && type.endsWith(")")) {
             String inner = type.substring("mapping(".length(), type.length() - 1);

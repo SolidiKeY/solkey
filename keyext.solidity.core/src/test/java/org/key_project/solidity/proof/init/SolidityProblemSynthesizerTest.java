@@ -211,33 +211,33 @@ public class SolidityProblemSynthesizerTest {
         String text = SolidityProblemSynthesizer.problemText(file,
             spec(SolidityExampleTests.TEST_SUITE_CONTRACT, "testSimpleAssert"));
 
-        assertTrue(text.contains("\\find(layoutInv(s))"), text);
+        assertTrue(text.contains("\\find(lenInv(s))"), text);
         assertTrue(text.contains(
-            "conforms(fieldType(TestSuite$copySource9), "
-                + "selectSt<[Struct]>(s, TestSuite$copySource9))"),
+            "conforms(fieldType(TestSuite$copyTargetDyn), "
+                + "selectSt<[Struct]>(s, TestSuite$copyTargetDyn))"),
             text);
+        assertFalse(text.contains("conforms(fieldType(TestSuite$copySource9)"), text);
         assertTrue(text.endsWith("""
                 \\problem {
-                    layoutInv(storage) ->
-                    \\<{ testSimpleAssert()@%s; }\\>(layoutInv(storage))
+                    lenInv(storage) ->
+                    \\<{ testSimpleAssert()@%s; }\\>(lenInv(storage))
                 }
                 """.formatted(SolidityExampleTests.TEST_SUITE_CONTRACT)), text);
     }
 
     @Test
-    void aConstructorStartsFromTheTypedEmptyStorageAndEstablishesTheLayoutInvariant()
+    void aConstructorStartsFromTheEmptyStorageAndEstablishesTheLengthInvariant()
             throws IOException {
         Path file = SolidityExampleTests.example("contracts/FixedLengths.sol");
 
         String text =
             SolidityProblemSynthesizer.problemText(file, spec("FixedLengths", "constructor"));
 
-        assertTrue(text.contains("{storage := storeSt(storeSt(storeSt(mtSt, FixedLengths$d1, "
-            + "fieldType(FixedLengths$d1)), FixedLengths$d2, fieldType(FixedLengths$d2)), "
-            + "FixedLengths$dyn, fieldType(FixedLengths$dyn))\n     || net := mtSt}\n    "
-            + "\\<{ constructor()@FixedLengths; }\\>(layoutInv(storage))"), text);
+        assertTrue(text.contains("{storage := mtSt\n     || net := mtSt}\n    "
+            + "\\<{ constructor()@FixedLengths; }\\>(lenInv(storage))"), text);
         assertTrue(text.contains("conforms(fieldType(FixedLengths$dyn), selectSt<[Struct]>(s, "
             + "FixedLengths$dyn))"), text);
+        assertFalse(text.contains("conforms(fieldType(FixedLengths$d1)"), text);
     }
 
     @Test
@@ -265,9 +265,9 @@ public class SolidityProblemSynthesizerTest {
                                 & ((find<[int]>(s, cons1(Escrow$state)) = 1) | (find<[int]>(s, cons1(Escrow$amountInEscrow)) = 0)))
                             \\heuristics(simplify)
                         };
-                        insertLayoutInv {
+                        insertLenInv {
                             \\schemaVar \\term Struct s;
-                            \\find(layoutInv(s))
+                            \\find(lenInv(s))
                             \\replacewith(true)
                             \\heuristics(simplify)
                         };

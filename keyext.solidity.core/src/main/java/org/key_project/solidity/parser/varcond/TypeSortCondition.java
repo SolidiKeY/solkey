@@ -17,11 +17,21 @@ import org.key_project.solidity.rule.sv.ProgramSV;
 import org.jspecify.annotations.Nullable;
 
 public final class TypeSortCondition extends TypeToSortCondition {
-    private final boolean element;
+    public enum Mode {
+        TYPE("\\hasTypeSort"), ELEMENT("\\hasElementTypeSort"), STATIC("\\hasStaticSort");
 
-    public TypeSortCondition(ProgramSV sv, GenericSort sort, boolean element) {
+        private final String keyword;
+
+        Mode(String keyword) {
+            this.keyword = keyword;
+        }
+    }
+
+    private final Mode mode;
+
+    public TypeSortCondition(ProgramSV sv, GenericSort sort, Mode mode) {
         super(sv, sort);
-        this.element = element;
+        this.mode = mode;
     }
 
     @Override
@@ -32,14 +42,24 @@ public final class TypeSortCondition extends TypeToSortCondition {
             default -> null;
         };
         type = StaticTypes.unwrap(type);
-        if (element) {
+        if (mode == Mode.ELEMENT) {
             type = StaticTypes.elementTypeOf(type);
         }
-        return type == null ? null : TypeSorts.of(type, services);
+        if (type == null) {
+            return null;
+        }
+        if (mode != Mode.STATIC) {
+            return TypeSorts.of(type, services);
+        }
+        if (!TypeSorts.isStructured(type)) {
+            return payloadSort(services, type, false);
+        }
+        Sort sort = TypeSorts.of(type, services);
+        return TypeSorts.containsFixed(sort, services) ? sort : TypeSorts.structSort(services);
     }
 
     @Override
     protected String keyword() {
-        return element ? "\\hasElementTypeSort" : "\\hasTypeSort";
+        return mode.keyword;
     }
 }

@@ -93,7 +93,7 @@ require(3 < matrix[2].length);
 
 Miss one and the proof closes on the out-of-bounds revert branch without checking anything.
 
-Array lengths themselves need no `require`: the `layoutInv(storage)` every
+Array lengths themselves need no `require`: the `lenInv(storage)` every
 obligation assumes makes `0 <= arr.length` available (`docs/storage.md` §8b), which
 is what proves the untagged `storagePopUnknownLength`, `storagePushLengthPositive`
 and `storagePushReadBack` on an otherwise unknown storage.

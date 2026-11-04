@@ -56,14 +56,18 @@ public abstract class AbstractTermTransformer extends AbstractSortedOperator
         new TypeSortTransformer(TypeSortTransformer.Kind.TYPE_OF);
     public static final AbstractTermTransformer ELEM_OF =
         new TypeSortTransformer(TypeSortTransformer.Kind.ELEM_OF);
-    public static final AbstractTermTransformer MEMBER_OF =
-        new TypeSortTransformer(TypeSortTransformer.Kind.MEMBER_OF);
-    public static final AbstractTermTransformer LENGTH_OF =
-        new TypeSortTransformer(TypeSortTransformer.Kind.LENGTH_OF);
     public static final AbstractTermTransformer STRUCT_CONFORMS =
         new TypeSortTransformer(TypeSortTransformer.Kind.STRUCT_CONFORMS);
-    public static final AbstractTermTransformer NODE_OF =
-        new TypeSortTransformer(TypeSortTransformer.Kind.NODE_OF);
+    public static final AbstractTermTransformer TYPED_SELECT =
+        new TypeSortTransformer(TypeSortTransformer.Kind.TYPED_SELECT);
+    public static final AbstractTermTransformer LENGTH_AT =
+        new TypeSortTransformer(TypeSortTransformer.Kind.LENGTH_AT);
+    public static final AbstractTermTransformer TYPE_AT =
+        new TypeSortTransformer(TypeSortTransformer.Kind.TYPE_AT);
+    public static final AbstractTermTransformer LENGTH =
+        new TypeSortTransformer(TypeSortTransformer.Kind.LENGTH);
+    public static final AbstractTermTransformer TYPED_CHILD =
+        new TypeSortTransformer(TypeSortTransformer.Kind.TYPED_CHILD);
     public static final AbstractTermTransformer LOOP_ANON = new LoopAnonTransformer();
 
     @SuppressWarnings("argument.type.incompatible")

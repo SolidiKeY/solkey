@@ -71,7 +71,7 @@ public class LoopInvariantCondition implements VariableCondition {
         }
         Term result = switch (kind) {
             case VARIANT -> LoopSpecCompiler.variant(spec, services);
-            case INVARIANT -> withLayoutInv(LoopSpecCompiler.invariant(spec, services),
+            case INVARIANT -> withLenInv(LoopSpecCompiler.invariant(spec, services),
                 loop, services);
             case BREAK -> spec.breakFlag() == null ? services.getTermBuilder().ff()
                     : services.getTermBuilder().equals(
@@ -83,14 +83,14 @@ public class LoopInvariantCondition implements VariableCondition {
                 : matchCond.setInstantiations(svInst.add(resultSV, result, services));
     }
 
-    private static @Nullable Term withLayoutInv(@Nullable Term invariant,
+    private static @Nullable Term withLenInv(@Nullable Term invariant,
             LoopStatement loop, Services services) {
         if (invariant == null || !LoopFrame.of(loop).storage()) {
             return invariant;
         }
         TermBuilder tb = services.getTermBuilder();
         NamespaceSet namespaces = services.getNamespaces();
-        return tb.and(invariant, tb.func(namespaces.requireFunction("layoutInv"),
+        return tb.and(invariant, tb.func(namespaces.requireFunction("lenInv"),
             tb.var(namespaces.programVariables().lookup("storage"))));
     }
 

@@ -147,9 +147,9 @@ Notes that are not derivable from the rule names:
   element of a copy in three cases, as `selectOnSaveEmptyIndexStruct` does for structs: below
   the source size the source element, below the target size the default, else the old element
   (`uint[40] big = uint[20] small` zeroes `big[30]`); it is in `concrete` so it fires before the
-  selector-split defaults. The sizes come from the shape: a fixed-size target keeps its own
-  length through `selectOnSaveEmptySize` and the `fixed` predicate, a dynamic one takes the
-  source's (`d2 = d1` with `uint[9] d1` gives `d2.length == 9`), see `docs/storage.md` 8c.
+  selector-split defaults. The sizes are static for a fixed-size target (its type), a dynamic one takes the
+  source's (`d2 = d1` with `uint[9] d1` gives `d2.length == 9`, the source read at its sort
+  `int[9]`), see `docs/storage.md` 8c.
   `contracts/ArrayCopyShapes.sol` checks both dimensions of a shorter nested fixed-array
   copy, dynamic tail reuse, struct members, source independence, and self-copy through a
   storage alias. `docs/array-copy-shapes.md` proposes a structural-induction proof against
@@ -422,10 +422,10 @@ length, so assuming the first inner append uses index zero needs an empty-inner 
 named it twice; reads commute through it with `selectOnDelAtCons`, and the reset still
 resolves on read through `delField<[alpha]>`.
 
-### Array length non-negativity (layout invariant)
-A length is non-negative because the node conforms to its type: `conformsDynSize` adds `0 <= |st|`
-under `conforms(⟦T[]⟧, st) ==>`, and `conformsFixedSize` rewrites `|st|` to `n` under
-`conforms(⟦T[n]⟧, st) ==>` (see the layout table below and `docs/storage.md` §8b). This is what
+### Array length non-negativity (length invariant)
+A dynamic length is non-negative because the node conforms to its type: `conformsDynSize` adds
+`0 <= |st|` under `conforms(⟦T[]⟧, st) ==>`; a fixed length is static (see the table below and
+`docs/storage.md` §8b). This is what
 closes `storagePopUnknownLength`, `storagePushLengthPositive` and `storagePushReadBack` without a
 `require` on the length. The former axiom `sizeNotNegative` (`0 <= selectSt<[int]>(st, size)`
 for every `st`) was removed: `save(st, cons(size, nil), -1)` has length `-1`, so it proved
@@ -481,51 +481,49 @@ any other deleted struct (`testDeleteArrayDoesNotResetElementMappingMember`).
 The last field of the path decides what is reset: `delField<[alpha]>(st, f)` is field `f` of
 `st` after the delete. A primitive sort (`alphaPrim \extends Prim`) collapses to
 `defaultValue<[alphaPrim]>` (`int→0`, `bool→FALSE`). A `RefField` or an `at(i)` element becomes
-a lazy `delNode` marker, a `FixedField` a `delNodeFixed` marker whose `size` reads through
-(`testFixedArrayDeleteKeepsLength`), and a `MapField` stays as it is (structRules.key). A read
+a lazy `delNode` marker, a `FixedField` too (its length is static,
+`testFixedArrayDeleteKeepsLength`), and a `MapField` stays as it is (structRules.key). A read
 at `StValue` itself is routed by `delFieldStValueCast` (below). `pop()` on an array of mappings
 only shortens it (`storagePopSaveMappingElement`, `testPopKeepsMappingElementEntries`).
 
 Every field constant is a `TypedField` carrying its declared Solidity type. Storage types are
 sorts: `T[n]`, `T[]`, `mapping<[K, V]>` and one `C$S` per struct, below the markers `FixedArray`,
-`DynamicArray`, `Mapping` and `StructType` (`TypeSorts`), and `⟦T⟧`, written
-`emptyOf<[T]>`, is the empty node of `T` (`mtSt` for a trivial type; `\unique`, so the empty
-nodes of two types differ, as the shape constructors they replace did). `fieldType(m)` is
-the empty node of a member's type (`fieldTypeDef`, `#typeOf`). Lengths of fixed-size arrays are
-not read off an annotation: a constructor starts from the typed storage
-(`storeSt(mtSt, C$d1, fieldType(C$d1))`, read by `selectOnType*`), and a function
-assumes the generated `layoutInv(storage)`, whose `conforms(⟦T⟧, node)` atoms the `conforms*` trigger
-taclets consume at each stuck `size` read and whose exit obligation the `conforms*Right` taclets
-discharge (`StorageLayout`, `docs/storage.md` section 8c; `contracts/FixedLengths.sol`,
-`testFixedArrayLength`, `testFixedElementOfDynamicArrayLength`, `storageShorterStaticCopyClearsTail`).
-The rules pick the case by the sort of the empty node, through generic sorts bounded by the
-markers (`alphaFix`, `alphaDyn`, `alphaMap`, `alphaStr`), and step through it with `#elemOf`,
-`#memberOf`, `#lengthOf` and `#structConforms`. The `conforms` taclets in `structRules.key`, with
-`|st|` for `selectSt<[int]>(st, size)`, `st[a]` for `selectSt<[Struct]>(st, a)` and `⟦e⟧` for the
-element's empty node (`#elemOf`):
+`DynamicArray`, `Mapping` and `StructType` (`TypeSorts`). Fixed lengths are static
+(`docs/storage.md` section 8c, the paper's chapter 13): index bounds come from `\staticLength`,
+`sp.length` on a `T[n]` from `storageFixedLengthRead`, and a copy whose source type contains a
+`T[n]` reads the source at its sort, `find<[T]>(storage, sp)` (`\hasStaticSort`), whose `size`
+`selectOnFixedSortLength` answers and whose children `selectOnFind{Fixed,Dynamic,Mapping,Struct}`
+read at their own sort (`#typedSelect`). The constructor starts from `mtSt`; a function assumes
+the generated `lenInv(storage)`, whose `conforms(⟦T⟧, node)` atoms (`⟦T⟧` the type tag
+`emptyOf<[T]>`, `mtSt` for a type without a dynamic array) state that every reachable dynamic
+length is non-negative (`StorageLayout`; `contracts/FixedLengths.sol`, `testFixedArrayLength`,
+`testFixedElementOfDynamicArrayLength`, `storageShorterStaticCopyClearsTail`). With `|st|` for
+`selectSt<[int]>(st, size)`, `st[a]` for `selectSt<[Struct]>(st, a)` and `⟦e⟧` for the element's
+tag (`#elemOf`):
 
 | Rule | Where | Effect |
 |---|---|---|
-| `conformsEmpty`, `conformsSelf` | anywhere | `conforms(mtSt, st)` and `conforms(t, t)` are `true` |
+| `conformsEmpty`, `conformsOnEmptyStorage` | anywhere | `conforms(mtSt, st)` and `conforms(t, mtSt)` are `true` |
 | `conformsStruct` | anywhere | `conforms(⟦C$S⟧, st)` ⇝ one atom per non-trivial member (`#structConforms`) |
-| `conformsFixedSize` | `conforms(⟦T[n]⟧, st) ==>` | `\|st\| ⇝ n` |
 | `conformsDynSize` | `conforms(⟦T[]⟧, st) ==>` | adds `0 <= \|st\|` |
-| `conformsFixedIsFixed`, `conformsDynIsNotFixed` | `conforms(⟦T[n]⟧, st) ==>` / `conforms(⟦T[]⟧, st) ==>` | `fixed(st) ⇝ true` / `false` |
 | `conformsFixedElem`, `conformsDynElem` | array atom `==>`, `st[at(i)]` with `i : int` | adds `conforms(⟦e⟧, st[at(i)])` |
 | `conformsFixedElemMap`, `conformsDynElemMap` | array atom `==>`, `st[atMap(i)]` (`atMap : int`) | adds `conforms(⟦e⟧, st[atMap(i)])` |
 | `conformsMapElem` | `conforms(⟦mapping<[K, V]>⟧, st) ==>`, `st[at(k)]` with `k : Prim` | adds `conforms(⟦V⟧, st[at(k)])` |
 | `conformsSaveRight` | `==> conforms(t, save(st, p, v))`, `p = cons(a, fs)` | `conforms(t, st) & conformsSaveAt(t, st, p, v, last(p))` |
-| `conformsSaveAtSize` | `conformsSaveAt(t, st, p, v, size)` | `0 <= cast<[int]>(v) & !fixed(find<[Struct]>(st, firsts(p)))` |
-| `conformsSaveAtIndex`, `conformsSaveAtMapIndex`, `conformsSaveAtMember` | `conformsSaveAt(t, st, p, v, x)`, `x` = `at(k)` / `atMap(i)` / a member field | `conforms(find<[Struct]>(t, p), save(find<[Struct]>(st, p), nil, v))` |
+| `conformsSaveAtSize` | `conformsSaveAt(t, st, p, v, size)` | `0 <= cast<[int]>(v)` |
+| `conformsSaveAtIndex`, `conformsSaveAtMapIndex`, `conformsSaveAtMember` | `conformsSaveAt(t, st, p, v, x)`, `x` = `at(k)` / `atMap(i)` / a member field | `conforms(#typeAt(t, p), assignSt(find<[Struct]>(st, p), v))`; a primitive `v`: `true` |
 | `conformsSaveLengthRight` | `==> conforms(⟦T[]⟧, save(st, cons(size, nil), n))` | `conforms(⟦T[]⟧, st) & 0 <= n` |
-| `conformsStoreRight` | `==> conforms(t, storeSt(st, a, v))` | `!(a = size) & conforms(t, st) & conforms(t[a], cast<[Struct]>(v))` |
-| `conformsDelAtRight` | `==> conforms(t, delAt(st, p))`, `p = cons(a, fs)` | `conforms(t, st) &` (path ends in `size`: `!fixed(find<[Struct]>(st, firsts(p)))`) |
-| `conformsDelNodeRight` | `==> conforms(t, delNode(st))` | `conforms(t, st)` |
-| `conformsDelNodeFixedRight` | `==> conforms(⟦T[n]⟧, delNodeFixed(st))` | `conforms(⟦T[n]⟧, st)` |
-| `conformsDelNodeIndexRight` | `==> conforms(t, delNodeIndex(st, i))` | `conforms(t, st[at(i)])` |
-| `conformsFixedRight` | `==> conforms(⟦T[n]⟧, st)` | `fixed(st) & \|st\| = n & conforms(⟦e⟧, st[at(skx)]) & conforms(⟦e⟧, st[atMap(skx)])`, `skx` a fresh `int` |
-| `conformsDynRight` | `==> conforms(⟦T[]⟧, st)` | `!fixed(st) & 0 <= \|st\| & conforms(⟦e⟧, st[at(skx)]) & conforms(⟦e⟧, st[atMap(skx)])`, `skx` a fresh `int` |
+| `conformsStoreRight` | `==> conforms(t, storeSt(st, a, v))` | `(a = size -> 0 <= v) & conforms(t, st) & conforms(#typeAt(t, cons(a, nil)), cast<[Struct]>(v))` |
+| `conformsDelAtRight`, `conformsDelNodeRight` | `==> conforms(t, delAt(st, p))` / `delNode(st)` | `conforms(t, st)` |
+| `conformsFixedRight` | `==> conforms(⟦T[n]⟧, st)` | `conforms(⟦e⟧, st[at(skx)]) & conforms(⟦e⟧, st[atMap(skx)])`, `skx` a fresh `int` |
+| `conformsDynRight` | `==> conforms(⟦T[]⟧, st)` | `0 <= \|st\| & conforms(⟦e⟧, st[at(skx)]) & conforms(⟦e⟧, st[atMap(skx)])`, `skx` a fresh `int` |
 | `conformsMapRight` | `==> conforms(⟦mapping<[K, V]>⟧, st)` | `conforms(⟦V⟧, st[at(skp)])`, `skp` a fresh `Prim` |
+
+Copies and resets need no node kind: `|assignSt(st, src)| ⇝ #len(src)`
+(`selectOnAssignStLength`), `|delNode(st)| ⇝ 0` (`selectStDelNodeLength`), and the element
+rules compare against `#len`, which is `n` for a node whose inferred sort is `T[n]` and the
+length cell otherwise; `#typedChild` keeps that sort on the targets the rules create
+(`docs/storage.md` section 8c).
 
 Each antecedent taclet hands out only what the matching `*Right` unfolding proves: array
 elements at `int` indices, mapping values at every `Prim` key. The `unsound/` problems of
@@ -533,75 +531,8 @@ elements at `int` indices, mapping values at every `Prim` key. The `unsound/` pr
 (`docs/storage.md` section 8c). `conformsMapRightIntKeysOnly` needs the quantifier heuristic to skip
 ill-sorted instances (`HeuristicInstantiation.HIIterator`): instantiating an `int` variable
 with a `Prim` term found under `at(_)` used to abort the proof with an illegal instantiation.
-`FixedLengths` also checks constructor default reads, primitive empty-push reads,
-copy independence, shorter-copy tail clearing before an empty push, and fixed-element
-storage-to-memory-to-storage copies. `TestSuite.sol` checks these tail/default cases on
-the EVM too, including pop/push of a mapping whose values are fixed arrays: the mapping
-entry survives and its fixed length remains `3`.
-All five former `FixedLengthsOpen` cases now close and live in
-`contracts/FixedLengths.sol` and `TestSuite.sol`. The open contract has been removed;
-empty push and its returned references now establish their default ordinary values on
-unknown entry storage.
-The same push rules close nine formerly open upstream functions in `SolcArrayMembers`,
-`SolcStructsMappings`, and `SolcLoops`, including chained two/three-dimensional pushes,
-struct defaults, and copies of freshly pushed nested arrays. The closing ports no longer
-assume the pushed row's length with an additional `require`.
-Memory objects carry their type in their identity's sort (`typedId<[int[3]]>(idp)`), and
-`initSize` reads a fresh node's length off it (`testMemoryFixedArrayLength`,
-`testNewArrayOfFixedElementLength`).
-
-Arrays whose elements are fixed-size arrays (`uint[3][]`) support `delete` and `pop()`.
-The terminal rules use the existing `delAt` marker without `noFixedArrayElement` guards;
-`conforms` element facts identify fixed child nodes when `selectStDelNodeSize` preserves their
-length. `selectStDelNodeIndexStruct` recurses into the selected child without an old-length
-inequality, as `selectStDelNodeFixedElement` already did. The copy selectors retain their
-source/target length comparisons to distinguish copied values from the cleared tail.
-This gives Solidity's
-`delete` semantics on structs: value/reference members reset, but **mapping members
-are preserved**. On read, `selectSt` on a `delNode` reads a mapping member
-(`MapField`) through to the original struct, recurses into a reference member
-(`RefField`, so nested structs' mappings also survive), and resets a primitive leaf.
-Member kinds are told apart by `Field` sub-sorts stamped on the field constants at
-parse time (`SolJSONParser#fieldSortFor`, keyed off the member's Solidity type):
-`MapField` for mappings and `RefField` for struct/array references. Every other
-field constant — value members, `size`, `at(i)` — carries the base `Field` sort
-and is reset by the Field-generic default rule.
-
-`localValueDelete` resets a value-typed local (`delete v;`) to `defaultValue<[alphaPrim]>`;
-a memory local is rebound by `memoryRootDeleteFreshRebind` instead (`testDeleteLocalValue`).
-
-`selectStDelNodeMap` and `selectStDelNodeRef` match their sub-sorts directly;
-`selectStDelNodeDefault` stays Field-generic (because `size` and `at(i)` are
-plain `Field`) but is Prim-bounded on the read sort (`alphaPrim`), which keeps
-it disjoint from the `<[Struct]>` rules by sort rather than by ranking; the
-struct-sorted `at(i)` element read has its own `selectStDelNodeIndexStruct`.
-(`delField` uses the same discipline — its `Struct` rules match the concrete
-`Struct` sort, and `delFieldDefault` is `alphaPrim`-bounded so a struct payload
-is a failed instantiation. The former `StValue` bounds made the default rules
-overlap the `Struct` rules, with only the `simplify`/`simplify_enlarging`
-ranking — strategy guidance, not a soundness gate — keeping the
-mapping-erasing rewrite away; both rules were applicable to the same term,
-an inconsistency in the rule set.) Complex receivers unfold first (`…_unfold_leftFst`). Storage and memory
-deletes stay separate by design.
-
-### Sort-free clearing and copying
-
-A rule that clears or copies a location needs no sort at all: the sort is resolved **on
-read**, using the cast that `selectOnStore` (and `readOnWrite` in memory) already inserts.
-The read rules are where a sort is genuinely needed, and they bind it at matching time with
-the sort-binding varconds (`\hasSort` / `\hasFieldSort` / `\hasElementSort` and their
-memory twins) — see "Stores can defer their sort; reads cannot" below.
-
-Four sort-free shapes carry the deferred value:
-
-| Symbol | Means | Resolved by |
-|---|---|---|
-| `delAt(Struct, List)` | the storage with a location reset — a struct keeps its mapping members | `delAtEmpty` / `selectOnDelAtCons` |
-| `find<[StValue]>(Struct, List)` | the value at a path, for copies (`find` at the top storage sort) | `findStValueCast` |
-| `delField<[StValue]>(Struct, Field)` | a reset field a sort-free copy carried out of a cleared location | `delFieldStValueCast` |
-| `save(Struct, nil, StValue)` | the leaf of a write, never collapsed — a struct written over a location keeps the location's mapping members; an array element is copied below the source's length, reset below the old length and kept past both | `selectOnSaveEmpty{Map,Ref,IndexStruct,Default}` / `saveOnEmptyPrim` |
-| `defVal` | a location reset outright, mapping members included | `defValResolve` |
-
+`FixedLengths` also checks constructor default reads, copy independence, shorter-copy tail
+clearing before an empty push, and fixed-element storage-to-memory-to-storage copies.
 `defVal` is declared `Prim`, so it is both an `StValue` and a `MemValue` and serves storage
 and memory alike — the same arrangement `defaultValue<[alpha]>` already has (declared once in
 `memoryRules.key`, resolved by `defaultValueInt`/`defaultValueBool` there and
@@ -609,7 +540,7 @@ and memory alike — the same arrangement `defaultValue<[alpha]>` already has (d
 
 `selectOnDelAtCons` defers to `delField<[alpha]>(st, f)` for the reset value, so it inherits
 the `delField` split: the concrete `Struct` cases choose by the kind of `f` (`RefField` and
-`at(i)` recurse via `delNode`, `FixedField` via `delNodeFixed`, `MapField` stays), the default
+`at(i)` and `FixedField` recurse via `delNode`, `MapField` stays), the default
 case is `alphaPrim`-bounded, and the two are disjoint by sort — their
 `simplify`/`simplify_enlarging` ranking is performance-only. `defVal` is deliberately distinct
 from `delAt`: it resets a location outright, mapping members included, and no delete rule
@@ -943,7 +874,7 @@ when the rule fires, against the variables' current names.
   iteration decrease the variant (`invariantVariantSkipsBreakIteration` stays open then).
 - Integers are unbounded, so anonymised locals need no range facts. Generated obligations
   assume unsigned input parameters are non-negative; array lengths are bounded by the
-  `layoutInv(storage)` conjunct of every storage-writing loop's invariant.
+  `lenInv(storage)` conjunct of every storage-writing loop's invariant.
 
 Examples: the `Loop invariants` section of `TestSuite.sol`, including break exits outside the
 invariant, `for` updates after continue, false postconditions, and a `\forall` over the

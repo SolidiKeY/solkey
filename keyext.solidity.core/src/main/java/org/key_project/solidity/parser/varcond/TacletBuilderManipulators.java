@@ -258,11 +258,22 @@ public class TacletBuilderManipulators {
 
     public static final AbstractConditionBuilder HAS_TYPE_SORT =
         new SortBindingConditionBuilder("hasTypeSort", false,
-            (sv, gs) -> new TypeSortCondition(sv, gs, false));
+            (sv, gs) -> new TypeSortCondition(sv, gs, TypeSortCondition.Mode.TYPE));
 
     public static final AbstractConditionBuilder HAS_ELEMENT_TYPE_SORT =
         new SortBindingConditionBuilder("hasElementTypeSort", false,
-            (sv, gs) -> new TypeSortCondition(sv, gs, true));
+            (sv, gs) -> new TypeSortCondition(sv, gs, TypeSortCondition.Mode.ELEMENT));
+
+    public static final AbstractConditionBuilder HAS_STATIC_SORT =
+        new SortBindingConditionBuilder("hasStaticSort", false,
+            (sv, gs) -> new TypeSortCondition(sv, gs, TypeSortCondition.Mode.STATIC));
+
+    public static final AbstractConditionBuilder STATIC_LENGTH =
+        new ConstructorBasedBuilder("staticLength", StaticLengthCondition.class, SV, SV);
+
+    public static final AbstractConditionBuilder FIXED_LENGTH_READ =
+        new ConstructorBasedBuilder("fixedLengthRead", FixedLengthReadCondition.class, SV, SV,
+            SV);
 
     public static final TacletBuilderCommand NEW_LOCAL_VARS =
         new ConstructorBasedBuilder("newLocalVars", NewLocalVarsCondition.class, SV, SV, SV, SV);
@@ -298,7 +309,7 @@ public class TacletBuilderManipulators {
             IS_SUBTYPE, SAME, HAS_SORT, HAS_FIELD_SORT, HAS_MEMORY_FIELD_SORT, HAS_ELEMENT_SORT,
             HAS_MEMORY_ELEMENT_SORT, HAS_TYPE_SORT, HAS_ELEMENT_TYPE_SORT,
             NEW_LOCAL_VARS, GET_INVARIANT, GET_VARIANT, GET_LOOP_BREAK, SAME_AS_TERM,
-            NO_FIXED_ARRAY_ELEMENT);
+            NO_FIXED_ARRAY_ELEMENT, HAS_STATIC_SORT, STATIC_LENGTH, FIXED_LENGTH_READ);
     }
 
     /// Announce a [TacletBuilderCommand] for the use during the interpretation of asts. This
