@@ -112,7 +112,7 @@ for `delAt` through `delField<[alpha]>` on the select:
   members survive (a fixed-size array's length is static, §8c); a mapping stays as it is; anything else collapses to its default. The
   choice is made on read, from the sort and the kind of the path's last field,
   through `delField<[alpha]>(st, f)` in `selectOnDelAtCons` (the counterpart of
-  `selectOnSaveCons`) — so the rules that write it stay sort-free. Used by `delete` on a root or field and by `pop` to clear
+  `selectOnSave`) — so the rules that write it stay sort-free. Used by `delete` on a root or field and by `pop` to clear
   the removed slot. Array deletion resets indices inside the old valid range (`#len`, §8c) and preserves
   the symbolic tail beyond the old length.
 
@@ -140,29 +140,24 @@ for `delAt` through `delField<[alpha]>` on the select:
   therefore simplify before the old-length condition is expanded. `fixedDelNodeIndex`
   retains the child's array kind, and `conformsDelNodeIndexRight` reduces type preservation to
   the original child's layout atom; neither assumes zero tail data.
-- `save(st, nil, v)` — **the leaf of a write, left as a term.** A struct
-  written over a location keeps the location's mapping members: Solidity
-  never copies a mapping. So `save` never collapses its leaf (there is no
-  `save(st, nil, v) ⇝ v`); the five rules that read through it decide by the
-  member's sort. A `MapField` member comes from the old value
-  (`selectOnSaveEmptyMap`), a `RefField` member is again a leaf one level
-  down (`selectOnSaveEmptyRef`), every primitive member comes from the
-  written value (`selectOnSaveEmptyDefault`), and an `at(i)` element follows
-  solc's array copy (`selectOnSaveEmptyIndexStruct`): below the written
-  value's `size` it is again a leaf one level down, below the old `size` it is
-  reset (`delNode`), and past both it keeps the old element — dangling data a
-  later `push()` exposes. A cast of the leaf to a primitive sort is
-  the cast of the written value (`saveOnEmptyPrim`, the shape
-  `selectOnSaveCons` leaves at the end of a path). Every storage-to-storage
-  copy therefore writes plain `save(storage, p1, find<[StValue]>(storage,
-  p2))`; a memory-to-storage copy (`save(storage, p, copyMem(…))`) keeps the
-  target's mappings the same way, and `selectOnCopyMem{Prim,Ref}` in
-  `structMemoryRules.key` read the memory struct one selector at a time under
-  that leaf. `selectStValueCast` collapses
-  `cast<[alphaSt]>(selectSt<[StValue]>(st, a))`, which a sort-free copy of a
-  written location reaches. Pinned by `storage/copyKeepsMapping.key` (the
-  mapping half, which no `.sol` can state) and the `testCopy*` group of
-  `TestSuite.sol`.
+- `save<[T]>(t, p, v)` — **`t` with `v` assigned at `p`, at the sort `T` of `t`.** A
+  storage write is `save<[Struct]>(storage, p, v)`. `selectOnSave` walks the path one
+  selector at a time and keeps the reader's sort, so at the end of the path the term is
+  `save<[T]>(<old value>, nil, <written value>)`, a node of the read sort: an assignment
+  of `v` over the old value. A primitive leaf is the written value (`saveNilPrim`). A
+  struct leaf follows solc's copy, read by the selector: a `MapField` member comes from
+  the old value (`selectOnSaveNilMap`, Solidity never copies a mapping), any other member
+  is again a leaf one level down (`selectOnSaveNilMember`), `size` is `#len(v)`
+  (`selectOnSaveNilLength`), and an element `at(i)` is a leaf below the written value's
+  length, reset (`delField`) below the old length, and the old element past both
+  (`selectOnSaveNilIndex`) — dangling data a later `push()` exposes. Every
+  storage-to-storage copy therefore writes plain `save<[Struct]>(storage, p1,
+  find<[T]>(storage, p2))`; a memory-to-storage copy (`save<[Struct]>(storage, p,
+  copyMem(…))`) keeps the target's mappings the same way, and `selectOnCopyMem{Prim,Ref}` in
+  `structMemoryRules.key` read the memory struct one selector at a time under that leaf.
+  `saveStValueCast` and `selectStValueCast` push a cast from `StValue` into the leaf.
+  Pinned by `storage/copyKeepsMapping.key` (the mapping half, which no `.sol` can state)
+  and the `testCopy*` group of `TestSuite.sol`.
 - `defVal` — a location reset outright, mapping members included. The
   sort-free twin of `default`. Used by the memory index delete; in storage
   every `delete` goes through `delAt`. Sorted `Prim`, so it is both an
@@ -824,14 +819,15 @@ a copy clears the old destination only below its old length and a reset only bel
 length, so both take the length of a node through `#len(t)`: `n` when the node's inferred sort is
 `T[n]`, else the cell `|t|`. The sort is inferred from the term (a typed read or cast gives its
 sort; a `selectSt` chain from a member constant gives the member's declared type, then the
-element types; `delNode`, `assignSt`, `save`, `storeSt`, `delAt` keep their first argument's).
+element types; `save<[T]>` has `T`, or its first argument's sort at `Struct`; `delNode`,
+`storeSt`, `delAt` keep their first argument's).
 Where a reset or copy target is created, `#typedChild(st, a, node)` wraps the child in
 `cast<[T]>(·)` when its type `T` contains a fixed-size array, so the type survives the later
 rewriting of the select:
 
-    |assignSt(st, src)|        ⇝  #len(src)                                         selectOnAssignStLength
-    assignSt(st, src)[at(i)]   ⇝  i < #len(src) ? src[at(i)] : i < #len(st) ? default : st[at(i)]
-                                   (a reference element: assignSt / delNode / st[at(i)])  selectOnAssignStIndex{Prim,Struct}
+    |save(st, nil, src)|       ⇝  #len(src)                                         selectOnSaveNilLength
+    save(st, nil, src)[at(i)]  ⇝  i < #len(src) ? save(st[at(i)], nil, src[at(i)])
+                                   : i < #len(st) ? delField(st, at(i)) : st[at(i)]   selectOnSaveNilIndex
     |delNode(st)|              ⇝  0                                                 selectStDelNodeLength
     delNode(st)[at(i)]         ⇝  0 <= i < #len(st) ? default : st[at(i)]           selectStDelNodeElement, …Index
 

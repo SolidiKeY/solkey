@@ -143,8 +143,8 @@ Notes that are not derivable from the rule names:
   `lsv = sp` stay legal), and both parsers reject `memory` declarations of
   mapping-carrying types (`StorageReferenceTypes.containsMapping`). The copy
   taclets themselves stay unconditional — the illegal shapes never reach them.
-- A whole-array copy keeps lengths and clears the tail. `selectOnSaveEmptyIndexPrim` reads an
-  element of a copy in three cases, as `selectOnSaveEmptyIndexStruct` does for structs: below
+- A whole-array copy keeps lengths and clears the tail. `selectOnSaveNilIndex` reads an
+  element of a copy in three cases, for primitive and struct elements alike: below
   the source size the source element, below the target size the default, else the old element
   (`uint[40] big = uint[20] small` zeroes `big[30]`); it is in `concrete` so it fires before the
   selector-split defaults. The sizes are static for a fixed-size target (its type), a dynamic one takes the
@@ -511,7 +511,7 @@ tag (`#elemOf`):
 | `conformsMapElem` | `conforms(⟦mapping<[K, V]>⟧, st) ==>`, `st[at(k)]` with `k : Prim` | adds `conforms(⟦V⟧, st[at(k)])` |
 | `conformsSaveRight` | `==> conforms(t, save(st, p, v))`, `p = cons(a, fs)` | `conforms(t, st) & conformsSaveAt(t, st, p, v, last(p))` |
 | `conformsSaveAtSize` | `conformsSaveAt(t, st, p, v, size)` | `0 <= cast<[int]>(v)` |
-| `conformsSaveAtIndex`, `conformsSaveAtMapIndex`, `conformsSaveAtMember` | `conformsSaveAt(t, st, p, v, x)`, `x` = `at(k)` / `atMap(i)` / a member field | `conforms(#typeAt(t, p), assignSt(find<[Struct]>(st, p), v))`; a primitive `v`: `true` |
+| `conformsSaveAtIndex`, `conformsSaveAtMapIndex`, `conformsSaveAtMember` | `conformsSaveAt(t, st, p, v, x)`, `x` = `at(k)` / `atMap(i)` / a member field | `conforms(#typeAt(t, p), save(find<[Struct]>(st, p), nil, v))`; a primitive `v`: `true` |
 | `conformsSaveLengthRight` | `==> conforms(⟦T[]⟧, save(st, cons(size, nil), n))` | `conforms(⟦T[]⟧, st) & 0 <= n` |
 | `conformsStoreRight` | `==> conforms(t, storeSt(st, a, v))` | `(a = size -> 0 <= v) & conforms(t, st) & conforms(#typeAt(t, cons(a, nil)), cast<[Struct]>(v))` |
 | `conformsDelAtRight`, `conformsDelNodeRight` | `==> conforms(t, delAt(st, p))` / `delNode(st)` | `conforms(t, st)` |
@@ -519,8 +519,8 @@ tag (`#elemOf`):
 | `conformsDynRight` | `==> conforms(⟦T[]⟧, st)` | `0 <= \|st\| & conforms(⟦e⟧, st[at(skx)]) & conforms(⟦e⟧, st[atMap(skx)])`, `skx` a fresh `int` |
 | `conformsMapRight` | `==> conforms(⟦mapping<[K, V]>⟧, st)` | `conforms(⟦V⟧, st[at(skp)])`, `skp` a fresh `Prim` |
 
-Copies and resets need no node kind: `|assignSt(st, src)| ⇝ #len(src)`
-(`selectOnAssignStLength`), `|delNode(st)| ⇝ 0` (`selectStDelNodeLength`), and the element
+Copies and resets need no node kind: `|save(st, nil, src)| ⇝ #len(src)`
+(`selectOnSaveNilLength`), `|delNode(st)| ⇝ 0` (`selectStDelNodeLength`), and the element
 rules compare against `#len`, which is `n` for a node whose inferred sort is `T[n]` and the
 length cell otherwise; `#typedChild` keeps that sort on the targets the rules create
 (`docs/storage.md` section 8c).
@@ -556,23 +556,24 @@ matches. Widening `delFieldDefault` to `StValue` would close the same gap by rei
 overlap the paragraph above records; pushing the cast keeps the split. The three
 `*DeleteThenCopy` examples all fail without it.
 
-`save` never collapses its leaf. Every storage-to-storage copy (`storageRootWriteCopySource`,
-`storageFieldWriteCopySource`, `storageIndexWrite{Array,Mapping}CopySource`,
-`storagePushValueCopySource` and the three `…StoreRoot` reads) writes
-`save(storage, target, find<[StValue]>(storage, source))`, and `find<[StValue]>` carries the
-source's mapping members with it — but Solidity never copies a mapping, so there is no
-`save(st, nil, v) ⇝ v`. `selectOnSaveCons` walks the target path like `selectOnDelAtCons` and,
-at the location itself, leaves `(alpha) save(<old value>, nil, <written value>)` at the reader's
-sort. The leaf is then resolved by what is read from it: a `MapField` member comes from the old
-value (`selectOnSaveEmptyMap`), a `RefField` member is again a leaf one level down
-(`selectOnSaveEmptyRef`, since a nested struct may carry a mapping), an element `at(i)` and every
-primitive member come from the written value (`selectOnSaveEmptyIndexStruct`,
-`selectOnSaveEmptyDefault`), and a leaf cast to a primitive sort *is* the written value
-(`saveOnEmptyPrim`). At `Struct` or `StValue` the cast is `castDel`, a `save` being
-`Struct`-sorted. `selectStValueCast` collapses `cast<[alphaSt]>(selectSt<[StValue]>(st, a))`,
-which the `.key` shape below reaches when `findDefinitionCons` unfolds the written value before
-the cast collapses. The same leaf sits under a memory-to-storage copy,
-`save(storage, p, copyMem(mtSt, memory, mv))`, so `structMemoryRules.key` reads `copyMem` one
+`save<[T]>(t, p, v)` is `t` with `v` assigned at `p`, and it has the sort `T` of `t`: a write
+is `save<[Struct]>(storage, p, v)`, and the leaf at the end of a path has the sort of what it
+replaces. That sort is what lets one symbol serve both the write and the copy. Before,
+`save(st, nil, v)` was `Struct`-sorted whatever `v` was, so a primitive leaf could not be the
+written value, and copies read through a second symbol, `assignSt(old, src)`. Every
+storage-to-storage copy (`storageRootWriteCopySource`, `storageFieldWriteCopySource`,
+`storageIndexWrite{Array,Mapping}CopySource`, `storagePushValueCopySource` and the three
+`…StoreRoot` reads) writes `save<[Struct]>(storage, target, find<[T]>(storage, source))`.
+`selectOnSave` walks the target path like `selectOnDelAtCons` and, at the location itself,
+leaves `save<[alpha]>(<old value>, nil, <written value>)` at the reader's sort. A primitive
+leaf is the written value (`saveNilPrim`); a struct leaf is resolved by what is read from it:
+a `MapField` member comes from the old value (`selectOnSaveNilMap`), any other member is again
+a leaf one level down (`selectOnSaveNilMember`), and an element `at(i)` takes solc's three
+cases (`selectOnSaveNilIndex`). `#typedSelect` re-sorts a `save` to `Struct` like `find` and
+`selectSt`, so a leaf of a fixed-array sort does not loop with `castDel`. `saveStValueCast`
+pushes a cast from `StValue` into the leaf, as `selectStValueCast` does for a select. The same
+leaf sits under a memory-to-storage copy, `save<[Struct]>(storage, p, copyMem(mtSt, memory,
+mv))`, so `structMemoryRules.key` reads `copyMem` one
 selector at a time (`selectOnCopyMemPrim`, `selectOnCopyMemRef`) beside the whole-path
 `findOnCopy`. No `.sol` example can exercise the mapping half — both front ends reject a copy
 whose type carries a mapping — so `keyext.solidity.examples/storage/copyKeepsMapping.key` pins it

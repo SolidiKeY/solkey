@@ -202,6 +202,7 @@ public class TacletCoverageTest {
             appliedTaclet = applyWhereApplicable(env, proof, taclet);
             if (!appliedTaclet) {
                 env.getProofControl().startAndWaitForAutoMode(proof);
+                appliedTaclet = SolidityExampleTests.appliedRuleNames(proof).contains(taclet);
             }
         }
         strategySettings.setMaxSteps(MAX_STEPS);

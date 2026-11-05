@@ -69,6 +69,7 @@ contract TestSuite {
     uint balance;
     int signedTotal;
     bool flag;
+    uint fixedLengthCopy;
     bool flag2;
 
     uint[] values;
@@ -490,6 +491,11 @@ contract TestSuite {
         flag = toggle.on;
         bool r = flag;
         assert(r);
+    }
+
+    function storageFixedLengthStoreRoot() public {
+        fixedLengthCopy = copySource9.length;
+        assert(fixedLengthCopy == 9);
     }
 
     // ── Memory ──

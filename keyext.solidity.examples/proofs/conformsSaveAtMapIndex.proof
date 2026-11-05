@@ -26,27 +26,26 @@
     }
 } 
 
-
+\functions {
+    Struct st;
+}
 \problem {
-conforms(emptyOf<[mapping<[int, int]>[]]>,
-         save(emptyOf<[mapping<[int, int]>[]]>,
-              cons(atMap(0), nil),
-              emptyOf<[mapping<[int, int]>]>))
+   conforms(emptyOf<[mapping<[int, int]>[]]>, st)
+-> conforms(emptyOf<[mapping<[int, int]>[]]>,
+            save<[Struct]>(st,
+                           cons(atMap(0), nil),
+                           mtSt))
 }
 
 \proof {
 (branch "dummy ID"
-(rule "conformsSaveRight" (formula "1"))
-(rule "conformsSelf" (formula "1") (term "0"))
-(rule "concrete_and_1" (formula "1"))
-(rule "lastConsNil" (formula "1") (term "4"))
-(rule "conformsSaveAtMapIndex" (formula "1"))
-(rule "findOnEmptyOf" (formula "1") (term "0"))
-(rule "findOnEmptyOf" (formula "1") (term "0,1"))
-(rule "selectOnTypeElementMap" (formula "1") (term "0,0"))
-(rule "selectOnTypeElementMap" (formula "1") (term "0,0,1"))
-(rule "findOnEmptyStorage" (formula "1") (term "0"))
-(rule "conformsEmpty" (formula "1"))
-(rule "closeTrue" (formula "1"))
+(rule "impRight" (formula "1"))
+(rule "conformsSaveRight" (formula "2"))
+(rule "replace_known_left" (formula "2") (term "0") (assumesSeqFormula "1"))
+(rule "concrete_and_1" (formula "2"))
+(rule "lastConsNil" (formula "2") (term "4"))
+(rule "conformsSaveAtMapIndex" (formula "2"))
+(rule "conformsEmpty" (formula "2"))
+(rule "closeTrue" (formula "2"))
 )
 }

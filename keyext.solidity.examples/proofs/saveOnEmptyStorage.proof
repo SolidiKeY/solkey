@@ -37,11 +37,11 @@
     \unique MapMemberField mf;
 }
 \problem {
-  selectSt<[int]>(selectSt<[Struct]>(save(mtSt,
-                                          cons(f,
-                                               cons(g,
-                                                    nil)),
-                                          5),
+  selectSt<[int]>(selectSt<[Struct]>(save<[Struct]>(mtSt,
+                                                    cons(f,
+                                                         cons(g,
+                                                              nil)),
+                                                    5),
                                      f),
                   g)
 = 5
@@ -54,9 +54,10 @@
 (rule "eqClose" (formula "1") (term "0,0,0"))
 (rule "ifthenelse_true" (formula "1") (term "0,0"))
 (rule "castDel" (formula "1") (term "0,0"))
-(rule "selectOnSaveLastPrim" (formula "1") (term "0"))
+(rule "selectOnSave" (formula "1") (term "0"))
 (rule "eqClose" (formula "1") (term "0,0"))
 (rule "ifthenelse_true" (formula "1") (term "0"))
+(rule "saveNilPrim" (formula "1") (term "0"))
 (rule "castDel" (formula "1") (term "0"))
 (rule "eqClose" (formula "1"))
 (rule "closeTrue" (formula "1"))

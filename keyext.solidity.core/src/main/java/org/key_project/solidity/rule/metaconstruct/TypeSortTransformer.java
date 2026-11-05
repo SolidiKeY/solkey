@@ -45,6 +45,7 @@ public final class TypeSortTransformer extends AbstractTermTransformer {
     private static final Name SELECT = new Name("selectSt");
     private static final Name FIND = new Name("find");
     private static final Name CAST = new Name("cast");
+    private static final Name SAVE = new Name("save");
     private static final Name DEFAULT_VALUE = new Name("defaultValue");
 
     private final Kind kind;
@@ -114,7 +115,7 @@ public final class TypeSortTransformer extends AbstractTermTransformer {
         if (view.op() instanceof ParametricFunctionInstance instance) {
             Name base = instance.getBase().name();
             Term[] subs = subs(view);
-            if (base.equals(FIND) || base.equals(SELECT)) {
+            if (base.equals(FIND) || base.equals(SELECT) || base.equals(SAVE)) {
                 return instance(base, struct, services, subs);
             }
             if (base.equals(DEFAULT_VALUE)) {
@@ -150,15 +151,14 @@ public final class TypeSortTransformer extends AbstractTermTransformer {
             if (base.equals(FIND) && isConcrete(term.sub(1))) {
                 return sortAt(inferSort(term.sub(0), services), term.sub(1), services);
             }
-            if (base.equals(CAST)) {
+            if (base.equals(CAST) || base.equals(SAVE)) {
                 return inferSort(term.sub(0), services);
             }
             return struct;
         }
         if (term.op() instanceof Function f && !(term.op() instanceof TypedField)) {
             return switch (f.name().toString()) {
-                case "delNode", "assignSt", "save", "storeSt", "delAt" -> inferSort(term.sub(0),
-                    services);
+                case "delNode", "storeSt", "delAt" -> inferSort(term.sub(0), services);
                 case "delNodeIndex" -> TypeSorts.childOf(inferSort(term.sub(0), services),
                     services.getTermBuilder().func(
                         services.getNamespaces().requireFunction("at"), term.sub(1)),

@@ -37,9 +37,11 @@
     \unique MapMemberField mf;
 }
 \problem {
-  selectSt<[Struct]>(save(storeSt(s, f, t),
-                          cons(g, cons(at(0), nil)),
-                          5),
+  selectSt<[Struct]>(save<[Struct]>(storeSt(s, f, t),
+                                    cons(g,
+                                         cons(at(0),
+                                              nil)),
+                                    5),
                      f)
 = t
 }
