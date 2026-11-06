@@ -635,6 +635,7 @@ contract TestSuite {
         assert(!flags[1] && i == 1);
     }
 
+    // import
     function storageAssignmentValueRhsBeforeIndex() public {
         uint i = 0;
         flags[0] = false;
@@ -1777,6 +1778,7 @@ contract TestSuite {
         assert(r == expected);
     }
 
+    // import
     /// @custom:key box
     function testDeepPopDoesNotResetMappingMember() public {
         require(ledgerUses.length == 0);
@@ -1787,6 +1789,7 @@ contract TestSuite {
         assert(ledgerUses[0].ledger.balances[1] == 10);
     }
 
+    // import
     /// @custom:key box
     function testDeleteArrayDoesNotResetElementMappingMember() public {
         require(ledgerUses.length == 0);
@@ -1815,6 +1818,7 @@ contract TestSuite {
         assert(carol.account.balance == 100);
     }
 
+    // import
     function testMemoryDeleteAlias() public pure {
         Person memory carol;
         Account memory carolAcc = carol.account;
@@ -1824,6 +1828,7 @@ contract TestSuite {
         assert(b == 0);
     }
 
+    // import
     function testMemoryDeleteIdentityFieldFreshensSlot() public pure {
         Person memory carol;
         Account memory carolAcc = carol.account;
@@ -1840,6 +1845,7 @@ contract TestSuite {
         assert(carol.age == 0);
     }
 
+    // import
     function testMemoryEvaluationOrder() public pure {
         uint[] memory xs = new uint[](3);
         uint i = 0;
@@ -1886,6 +1892,7 @@ contract TestSuite {
         assert(carol.age == 41);
     }
 
+    // import
     function testMemoryRootDeleteRebindsOnlyLocal() public pure {
         Person memory carol;
         Person memory carolAlias = carol;
@@ -1999,6 +2006,7 @@ contract TestSuite {
         assert(carolValues[0] == 0);
     }
 
+    // import
     /// @custom:key box
     function testNestedIndexWriteImpureIndexPrimitiveRhs() public {
         require(matrix.length == 0);
@@ -2011,6 +2019,7 @@ contract TestSuite {
         assert(matrix[1][0] == 1);
     }
 
+    // import
     /// @custom:key box
     function testNestedIndexReadImpureIndex() public {
         require(matrix.length == 0);
@@ -2024,6 +2033,7 @@ contract TestSuite {
         assert(v == 100);
     }
 
+    // import
     /// @custom:key box
     function testNestedIndexWriteImpureReceiverAndIndex() public {
         require(matrix.length == 0);
@@ -2042,6 +2052,7 @@ contract TestSuite {
         assert(matrix[1][0] == 0);
     }
 
+    // import
     /// @custom:key box
     function testNestedIndexReadImpureReceiverAndIndex() public {
         require(matrix.length == 0);
@@ -2101,6 +2112,7 @@ contract TestSuite {
         assert(toks[0].value == 0);
     }
 
+    // import
     /// @custom:key box
     function testIndexWriteReceiverReadsMutatedVar() public {
         require(matrix.length == 0);
@@ -2196,6 +2208,7 @@ contract TestSuite {
         assert(persons[0].age == 1);
     }
 
+    // import
     /// @custom:key box
     function testStorageEvaluationOrder() public {
         require(a.length == 0);
@@ -2284,6 +2297,7 @@ contract TestSuite {
         assert(tokens[0].value == 99);
     }
 
+    // import
     function testArrayCopyClearsOldElements() public {
         delete tokens;
         tokens.push();
@@ -2445,6 +2459,7 @@ contract TestSuite {
         assert(alice.account.balance == 11);
     }
 
+    // import
     function testStorageStructDeleteSkipsMappingMember() public {
         ledger.nonce = 5;
         ledger.balances[1] = 10;
@@ -2720,6 +2735,7 @@ contract TestSuite {
 
     // ── Binary operand evaluation order: solc evaluates the right operand first ──
 
+    // import
     function additionLeftImpureRightReadFirst() public pure {
         uint i = 1;
         uint x = i++ + i;
@@ -2727,6 +2743,7 @@ contract TestSuite {
         assert(i == 2);
     }
 
+    // import
     function additionRightImpure() public pure {
         uint i = 1;
         uint x = i + i++;
@@ -2734,6 +2751,7 @@ contract TestSuite {
         assert(i == 2);
     }
 
+    // import
     function additionBothOperandsImpure() public pure {
         uint i = 1;
         uint x = i++ + i++;
@@ -2741,6 +2759,7 @@ contract TestSuite {
         assert(i == 3);
     }
 
+    // import
     function subtractionLeftImpureRightReadFirst() public pure {
         uint i = 5;
         uint x = i++ - i;
@@ -2748,6 +2767,7 @@ contract TestSuite {
         assert(i == 6);
     }
 
+    // import
     function lessThanLeftImpureRightReadFirst() public pure {
         uint i = 1;
         bool b = i++ < i;
@@ -2838,6 +2858,7 @@ contract TestSuite {
 
     // ── Index writes whose receiver and index are both impure (docs/storage.md section 5) ──
 
+    // import
     /// @custom:key box
     function indexWriteBothImpureStorageRef() public {
         require(buckets.length == 0);
@@ -2856,6 +2877,7 @@ contract TestSuite {
         assert(buckets[1].tokens[0].value == 8);
     }
 
+    // import
     /// @custom:key box
     function indexWriteBothImpureMemToStorage() public {
         require(buckets.length == 0);
@@ -2874,6 +2896,7 @@ contract TestSuite {
         assert(buckets[1].tokens[0].value == 5);
     }
 
+    // import
     function indexWriteBothImpureMemoryValue() public pure {
         Basket[] memory bs = new Basket[](2);
         uint[] memory slots = new uint[](2);
@@ -2886,6 +2909,7 @@ contract TestSuite {
         assert(bs[1].items[0] == 42);
     }
 
+    // import
     function indexWriteBothImpureMemRef() public pure {
         TokenBucket[] memory tbs = new TokenBucket[](2);
         Token[] memory slots = new Token[](2);
@@ -3945,6 +3969,7 @@ contract TestSuite {
         assert(parity >= 0 && parity < 2);
     }
 
+    // import
     function bitAndOperandEvaluation() public {
         total = 12;
         uint r = bitAndSetTotal() & total;
@@ -3983,6 +4008,7 @@ contract TestSuite {
         assert((x & y) + (x ^ y) / 2 == (x + y) / 2);
     }
 
+    // import
     function bitXorOperandEvaluation() public {
         total = 12;
         uint r = bitAndSetTotal() ^ total;
@@ -5022,6 +5048,7 @@ contract TestSuite {
         assert(values[n] == 0);
     }
 
+    // import
     function testFixedCopyThenEmptyPushReadsZero() public {
         copySource9[8] = 41;
         copyTargetDyn = copySource9;
@@ -5033,6 +5060,7 @@ contract TestSuite {
         assert(copyTargetDyn[9] == 0);
     }
 
+    // import
     function testShorterCopyThenEmptyPushClearsTail() public {
         copyTargetDyn = copySource9;
         copyTargetDyn.push(99);
@@ -5069,6 +5097,7 @@ contract TestSuite {
         assert(copyBig[0] == 11);
     }
 
+    // import
     function testShapeCopyDynamicShrinkClearsReusedSlot() public {
         delete a;
         delete values;
@@ -5222,6 +5251,7 @@ contract TestSuite {
         assert(result == 3 && left == 3);
     }
 
+    // import
     function arithmeticDiscardKeepsSideEffects() public pure {
         uint ix = 0;
         ix++ + ix++;
@@ -5238,6 +5268,7 @@ contract TestSuite {
         assert(ix == 11);
     }
 
+    // import
     /// @custom:key box
     function arithmeticDiscardKeepsZeroDivisorRevert() public pure {
         uint numerator = 1;
@@ -5311,6 +5342,7 @@ contract TestSuite {
         assert(x == 192);
     }
 
+    // import
     function testShiftOperandEvaluation() public pure {
         uint x = 8;
         uint r = x >> (x = 2);
@@ -5384,6 +5416,7 @@ contract TestSuite {
         assert(values[3] == 0);
     }
 
+    // import
     function storageMatrixPopPushFreshRow() public {
         delete matrix;
         matrix.push().push(7);
