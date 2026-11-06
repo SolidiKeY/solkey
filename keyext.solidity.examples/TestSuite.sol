@@ -76,6 +76,7 @@ contract TestSuite {
     int[] signedValues;
     uint[] a;
     uint[][] matrix;
+    uint[][] matrixSource;
     uint[3] fixedValues;
     uint[3][] rows;
     uint[9] copySource9;
@@ -5329,5 +5330,71 @@ contract TestSuite {
 
     function testUnsignedParameterNonnegative(uint x) public pure {
         assert(x >= 0);
+    }
+
+    function storageArrayCopyLongerIntoShorter() public {
+        delete values;
+        delete a;
+        values.push(1);
+        values.push(2);
+        a.push(11);
+        a.push(12);
+        a.push(13);
+        a.push(14);
+        a.push(15);
+        values = a;
+        assert(values.length == 5);
+        assert(values[0] == 11 && values[1] == 12 && values[2] == 13);
+        assert(values[3] == 14 && values[4] == 15);
+        values.push();
+        assert(values.length == 6);
+        assert(values[5] == 0);
+    }
+
+    function storageMatrixCopyLongerIntoShorter() public {
+        delete matrix;
+        delete matrixSource;
+        matrix.push().push(1);
+        matrix.push().push(2);
+        matrixSource.push().push(11);
+        matrixSource.push().push(12);
+        matrixSource.push().push(13);
+        matrixSource.push().push(14);
+        matrixSource.push().push(15);
+        matrix = matrixSource;
+        assert(matrix.length == 5);
+        assert(matrix[0][0] == 11 && matrix[1][0] == 12 && matrix[2][0] == 13);
+        assert(matrix[3][0] == 14 && matrix[4][0] == 15);
+        matrix.push();
+        assert(matrix.length == 6);
+        assert(matrix[5].length == 0);
+    }
+
+    function storageArrayPopPushFreshElement() public {
+        delete values;
+        values.push(7);
+        values.push(8);
+        values.push(9);
+        values.pop();
+        values.push();
+        assert(values.length == 3);
+        assert(values[2] == 0);
+        values.push();
+        assert(values.length == 4);
+        assert(values[3] == 0);
+    }
+
+    function storageMatrixPopPushFreshRow() public {
+        delete matrix;
+        matrix.push().push(7);
+        matrix.push().push(8);
+        matrix.push().push(9);
+        matrix.pop();
+        matrix.push();
+        assert(matrix.length == 3);
+        assert(matrix[2].length == 0);
+        matrix.push();
+        assert(matrix.length == 4);
+        assert(matrix[3].length == 0);
     }
 }
