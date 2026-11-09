@@ -845,6 +845,42 @@ term now grows linearly. The reset value is still chosen on read, through the
 The one-operation timings are in the noise; the point is the slope. Peak term size at six
 operations fell 10×, and the duplicated storage copies are gone entirely.
 
+## Wrong semantics the ports do not catch
+
+The ports cross-check SolKey against upstream, but they are not complete: a wrong rule can
+keep every port closed. Found by mutating one rule family, proving every closing `solc/*.sol`
+with `--budget`, and comparing the failures with `SYMBOLIC_TAIL_OPENS` in
+`SolcSemanticsExamplesTest`.
+
+**Discarded arithmetic expressions as no-ops.** Replacing the six `discard*Expression` rules
+(`solidityProgramRules.key`) by `\replacewith(\modality{#mod}{c# #c}\endmodality(post))` drops
+an expression statement such as `x / y;` without evaluating it. Solidity evaluates it: operand
+side effects happen and a zero divisor panics. Every port still closes, since none has a bare
+arithmetic expression statement. Only `TestSuite.sol` catches it:
+
+| Function | Why it opens |
+|---|---|
+| `arithmeticDiscardKeepsZeroDivisorRevert` | `numerator / denominator;` no longer reverts, so `assert(false)` is reached |
+| `arithmeticDiscardKeepsSideEffects` | `ix++ + ix++;` no longer increments `ix` |
+
+**Checked and caught by the ports.** Making `delete` also reset mapping members
+(`selectStDelNodeMap` returning `delNode(selectSt<[Struct]>(st, mf))`) opens
+`deleteStructKeepsMappingMember`, `deleteStructKeepsNestedMappings`,
+`mappingsSurvivePopAndDelete` and `mappingArray2dPopRepush`.
+
+**Not counted.** `TestSuite.sol` also pins the operand evaluation order (right operand first,
+right-hand side before the left-hand index), which no port exercises. Solidity leaves that
+order unspecified, so a semantics that differs there is not wrong Solidity, only a different
+compiler choice.
+
+**Candidates not yet mutated.** `delete` on a memory local rebinds it to a fresh object and
+leaves aliases unchanged (`testMemoryRootDeleteRebindsOnlyLocal`,
+`testMemoryDeleteIdentityFieldFreshensSlot`); a storage copy or pop clears the old elements so
+a later `push()` reads zero (`testShapeCopyDynamicShrinkClearsReusedSlot`,
+`testShorterCopyThenEmptyPushClearsTail`, `storageMatrixPopPushFreshRow`). No port keeps an
+alias across a memory `delete` or pushes after a shrinking copy. In `TestSuite.sol`, a
+`// import` line marks every test considered here, the mapping-delete ones included.
+
 ## Not ported
 
 Whole upstream families that fall outside the fragment, listed so the omission is deliberate
