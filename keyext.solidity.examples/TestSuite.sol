@@ -79,6 +79,9 @@ contract TestSuite {
     uint[][] matrixSource;
     uint[3] fixedValues;
     uint[3][] rows;
+    uint[3][] rowsSource;
+    uint[][3] listTriple;
+    uint[][3] listTripleSource;
     uint[9] copySource9;
     uint[] copyTargetDyn;
     uint[3][2] fixedGrid;
@@ -109,8 +112,10 @@ contract TestSuite {
     Token tok;
     Token[] tokens;
     Token[] emptyTokens;
+    Token[] tokensSource;
     TokenBucket bucket;
     TokenBucket[] buckets;
+    Basket[] baskets;
     Basket basketA;
     Basket basketB;
     LedgerUse[] ledgerUses;
@@ -118,6 +123,8 @@ contract TestSuite {
     mapping(uint => mapping(uint => uint)) grid;
     mapping(uint => Ledger) ledgerMap;
     mapping(uint => uint)[] mapArray;
+    mapping(uint => uint[]) listsByKey;
+    mapping(uint => uint[][]) matricesByKey;
     mapping(bool => uint) boolKeyed;
     Tree tree;
     FileLevelPair pair;
@@ -5463,5 +5470,284 @@ contract TestSuite {
         // [[7],[8],[10]]
         assert(matrix.length == 3);
         assert(matrix[2].length == 0);
+    }
+
+    function mappingArrayCopyLongerIntoShorter() public {
+        delete listsByKey[1];
+        delete listsByKey[2];
+        listsByKey[1].push(1);
+        listsByKey[1].push(2);
+        listsByKey[2].push(11);
+        listsByKey[2].push(12);
+        listsByKey[2].push(13);
+        listsByKey[1] = listsByKey[2];
+        assert(listsByKey[1].length == 3);
+        assert(listsByKey[1][0] == 11 && listsByKey[1][1] == 12 && listsByKey[1][2] == 13);
+        listsByKey[1].push(14);
+        assert(listsByKey[1].length == 4);
+        assert(listsByKey[1][3] == 14);
+    }
+
+    function mappingArrayCopyShorterIntoLonger() public {
+        delete listsByKey[1];
+        delete listsByKey[2];
+        listsByKey[1].push(1);
+        listsByKey[1].push(2);
+        listsByKey[1].push(3);
+        listsByKey[2].push(11);
+        listsByKey[1] = listsByKey[2];
+        assert(listsByKey[1].length == 1);
+        assert(listsByKey[1][0] == 11);
+        listsByKey[1].push();
+        listsByKey[1].push();
+        assert(listsByKey[1][1] == 0 && listsByKey[1][2] == 0);
+    }
+
+    function mappingArrayPopPushFreshElement() public {
+        delete listsByKey[7];
+        listsByKey[7].push(7);
+        listsByKey[7].push(8);
+        listsByKey[7].pop();
+        listsByKey[7].push();
+        assert(listsByKey[7].length == 2);
+        assert(listsByKey[7][1] == 0);
+    }
+
+    function mappingMatrixCopyShorterIntoLonger() public {
+        delete matricesByKey[1];
+        delete matricesByKey[2];
+        matricesByKey[1].push().push(1);
+        matricesByKey[1].push().push(2);
+        matricesByKey[1].push().push(3);
+        matricesByKey[2].push().push(11);
+        matricesByKey[1] = matricesByKey[2];
+        assert(matricesByKey[1].length == 1);
+        assert(matricesByKey[1][0][matricesByKey[1][0].length - 1] == 11);
+        matricesByKey[1].push();
+        matricesByKey[1].push();
+        assert(matricesByKey[1][1].length == 0 && matricesByKey[1][2].length == 0);
+    }
+
+    function mappingMatrixPopPushFreshRow() public {
+        delete matricesByKey[3];
+        matricesByKey[3].push().push(7);
+        matricesByKey[3].push().push(8);
+        uint[] storage m = matricesByKey[3][1];
+        matricesByKey[3].pop();
+        assert(m.length == 0);
+        matricesByKey[3].push();
+        assert(matricesByKey[3].length == 2);
+        assert(matricesByKey[3][1].length == 0);
+    }
+
+    function fixedRowsCopyLongerIntoShorter() public {
+        delete rows;
+        delete rowsSource;
+        rows.push()[0] = 1;
+        rowsSource.push()[0] = 11;
+        rowsSource.push()[2] = 12;
+        rows = rowsSource;
+        assert(rows.length == 2);
+        assert(rows[0][0] == 11 && rows[1][2] == 12);
+    }
+
+    function fixedRowsCopyShorterIntoLonger() public {
+        delete rows;
+        delete rowsSource;
+        rows.push()[0] = 1;
+        rows.push()[1] = 2;
+        rows.push()[2] = 3;
+        rowsSource.push()[0] = 11;
+        rows = rowsSource;
+        assert(rows.length == 1);
+        assert(rows[0][0] == 11);
+        rows.push();
+        rows.push();
+        assert(rows[1][1] == 0 && rows[2][2] == 0);
+    }
+
+    function fixedRowsPopPushFreshRow() public {
+        delete rows;
+        rows.push()[0] = 7;
+        rows.push()[1] = 8;
+        uint[3] storage r = rows[1];
+        rows.pop();
+        assert(r[1] == 0);
+        rows.push();
+        assert(rows.length == 2);
+        assert(rows[1][1] == 0);
+    }
+
+    function listTripleCopyResizesRows() public {
+        delete listTriple;
+        delete listTripleSource;
+        listTriple[0].push(1);
+        listTriple[0].push(2);
+        listTriple[1].push(3);
+        listTripleSource[1].push(11);
+        listTripleSource[1].push(12);
+        listTripleSource[2].push(13);
+        listTriple = listTripleSource;
+        assert(listTriple[0].length == 0);
+        assert(listTriple[1].length == 2 && listTriple[2].length == 1);
+        assert(listTriple[1][0] == 11 && listTriple[1][1] == 12 && listTriple[2][0] == 13);
+        listTriple[0].push();
+        assert(listTriple[0][0] == 0);
+    }
+
+    function listTriplePopPushFreshElement() public {
+        delete listTriple;
+        listTriple[2].push(7);
+        listTriple[2].push(8);
+        listTriple[2].pop();
+        listTriple[2].push();
+        assert(listTriple[2].length == 2);
+        assert(listTriple[2][1] == 0);
+    }
+
+    function fixedArrayCopyFromMemory() public {
+        fixedValues[0] = 1;
+        fixedValues[1] = 2;
+        fixedValues[2] = 3;
+        uint[3] memory src;
+        src[1] = 11;
+        fixedValues = src;
+        assert(fixedValues[0] == 0 && fixedValues[1] == 11 && fixedValues[2] == 0);
+    }
+
+    function storageArrayCopyShorterFromMemory() public {
+        delete values;
+        values.push(1);
+        values.push(2);
+        values.push(3);
+        uint[] memory src = new uint[](1);
+        src[0] = 11;
+        values = src;
+        assert(values.length == 1);
+        assert(values[0] == 11);
+        values.push();
+        values.push();
+        assert(values[1] == 0 && values[2] == 0);
+    }
+
+    function storageBoolArrayPopPushFreshElement() public {
+        delete boolFlags;
+        boolFlags.push(true);
+        boolFlags.push(true);
+        boolFlags.pop();
+        boolFlags.push();
+        assert(boolFlags.length == 2);
+        assert(boolFlags[0] && !boolFlags[1]);
+    }
+
+    function storageSignedArrayCopyShorterIntoLonger() public {
+        delete signedValues;
+        signedValues.push(-1);
+        signedValues.push(-2);
+        int[] memory src = new int[](1);
+        src[0] = 5;
+        signedValues = src;
+        assert(signedValues.length == 1);
+        assert(signedValues[0] == 5);
+        signedValues.push();
+        assert(signedValues[1] == 0);
+    }
+
+    function structArrayFieldCopyLongerIntoShorter() public {
+        delete basketA;
+        delete basketB;
+        basketA.items.push(1);
+        basketB.items.push(11);
+        basketB.items.push(12);
+        basketB.items.push(13);
+        basketA = basketB;
+        assert(basketA.items.length == 3);
+        assert(basketA.items[0] == 11 && basketA.items[1] == 12 && basketA.items[2] == 13);
+        basketA.items.push(14);
+        assert(basketA.items.length == 4 && basketA.items[3] == 14);
+    }
+
+    function structArrayFieldCopyShorterIntoLonger() public {
+        delete basketA;
+        delete basketB;
+        basketA.items.push(1);
+        basketA.items.push(2);
+        basketA.items.push(3);
+        basketB.items.push(11);
+        basketA = basketB;
+        assert(basketA.items.length == 1);
+        assert(basketA.items[0] == 11);
+        basketA.items.push();
+        basketA.items.push();
+        assert(basketA.items[1] == 0 && basketA.items[2] == 0);
+    }
+
+    function structArrayCopyLongerIntoShorter() public {
+        delete tokens;
+        delete tokensSource;
+        tokens.push().value = 1;
+        tokensSource.push().value = 11;
+        tokensSource.push().value = 12;
+        tokensSource.push().value = 13;
+        tokens = tokensSource;
+        assert(tokens.length == 3);
+        assert(tokens[0].value == 11 && tokens[1].value == 12 && tokens[2].value == 13);
+    }
+
+    function structArrayCopyShorterIntoLonger() public {
+        delete tokens;
+        delete tokensSource;
+        tokens.push().value = 1;
+        tokens.push().value = 2;
+        tokens.push().value = 3;
+        tokensSource.push().value = 11;
+        tokens = tokensSource;
+        assert(tokens.length == 1);
+        assert(tokens[0].value == 11);
+        tokens.push();
+        tokens.push();
+        assert(tokens[1].value == 0 && tokens[2].value == 0);
+    }
+
+    function structArrayPopPushFreshElement() public {
+        delete tokens;
+        tokens.push().value = 7;
+        tokens.push().value = 8;
+        Token storage t = tokens[1];
+        tokens.pop();
+        assert(t.value == 0);
+        tokens.push();
+        assert(tokens.length == 2);
+        assert(tokens[1].value == 0);
+    }
+
+    function basketArrayElementCopyShorterIntoLonger() public {
+        delete baskets;
+        baskets.push();
+        baskets.push();
+        delete baskets[0];
+        delete baskets[1];
+        baskets[0].items.push(1);
+        baskets[0].items.push(2);
+        baskets[0].items.push(3);
+        baskets[1].items.push(11);
+        baskets[0] = baskets[1];
+        assert(baskets[0].items.length == 1);
+        assert(baskets[0].items[0] == 11);
+        baskets[0].items.push();
+        baskets[0].items.push();
+        assert(baskets[0].items[1] == 0 && baskets[0].items[2] == 0);
+    }
+
+    function basketArrayPopPushFreshElement() public {
+        delete baskets;
+        baskets.push().items.push(7);
+        baskets.push().items.push(8);
+        uint[] storage items = baskets[1].items;
+        baskets.pop();
+        assert(items.length == 0);
+        baskets.push();
+        assert(baskets.length == 2);
+        assert(baskets[1].items.length == 0);
     }
 }
