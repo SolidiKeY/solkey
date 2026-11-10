@@ -40,7 +40,10 @@ public final class LoopAnonTransformer extends AbstractTermTransformer {
         if (frame.net()) {
             updates.add(anonymise(namespaces.programVariables().lookup("net"), services));
         }
-        Term phi = term.sub(1);
+        Term phi = frame.storage()
+                ? tb.imp(tb.func(namespaces.requireFunction("lenInv"),
+                    tb.var(namespaces.programVariables().lookup("storage"))), term.sub(1))
+                : term.sub(1);
         return updates.isEmpty() ? phi
                 : tb.apply(tb.parallel(updates.toArray(new Term[0])), phi);
     }

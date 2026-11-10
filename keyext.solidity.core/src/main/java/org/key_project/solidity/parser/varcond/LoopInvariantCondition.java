@@ -10,8 +10,6 @@ import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.prover.rules.VariableCondition;
 import org.key_project.prover.rules.instantiation.MatchResultInfo;
 import org.key_project.solidity.common.Services;
-import org.key_project.solidity.logic.NamespaceSet;
-import org.key_project.solidity.logic.TermBuilder;
 import org.key_project.solidity.program.ast.statement.LoopStatement;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.solidity.rule.metaconstruct.LoopFrame;
@@ -71,8 +69,7 @@ public class LoopInvariantCondition implements VariableCondition {
         }
         Term result = switch (kind) {
             case VARIANT -> LoopSpecCompiler.variant(spec, services);
-            case INVARIANT -> withLenInv(LoopSpecCompiler.invariant(spec, services),
-                loop, services);
+            case INVARIANT -> LoopSpecCompiler.invariant(spec, services);
             case BREAK -> spec.breakFlag() == null ? services.getTermBuilder().ff()
                     : services.getTermBuilder().equals(
                         services.getTermBuilder().var(spec.breakFlag()),
@@ -83,16 +80,6 @@ public class LoopInvariantCondition implements VariableCondition {
                 : matchCond.setInstantiations(svInst.add(resultSV, result, services));
     }
 
-    private static @Nullable Term withLenInv(@Nullable Term invariant,
-            LoopStatement loop, Services services) {
-        if (invariant == null || !LoopFrame.of(loop).storage()) {
-            return invariant;
-        }
-        TermBuilder tb = services.getTermBuilder();
-        NamespaceSet namespaces = services.getNamespaces();
-        return tb.and(invariant, tb.func(namespaces.requireFunction("lenInv"),
-            tb.var(namespaces.programVariables().lookup("storage"))));
-    }
 
     private static @Nullable LoopStatement find(SyntaxElement element, Object condition,
             Object body) {

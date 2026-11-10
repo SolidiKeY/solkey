@@ -18,15 +18,12 @@ import org.key_project.solidity.proof.io.ProofSaver;
 
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.key_project.solidity.testutil.SolidityExampleTests.appliedRuleNames;
 import static org.key_project.solidity.testutil.SolidityExampleTests.assertSameProofTree;
 import static org.key_project.solidity.testutil.SolidityExampleTests.describeOpenGoals;
 import static org.key_project.solidity.testutil.SolidityExampleTests.keyFiles;
@@ -139,19 +136,5 @@ public class RulesTest {
     static Stream<Arguments> unsoundFiles() throws Exception {
         return keyFiles(resource(UNSOUND_RESOURCE)).stream()
                 .map(path -> Arguments.of(path.getFileName().toString(), path));
-    }
-
-    /// conformsMapElem assumes conformance at every Prim key, so conformsMapRight must unfold at a
-    /// fresh
-    /// Prim key; unsound/conformsMapRightIntKeysOnly.key is the counterexample to an int one.
-    @Test
-    public void conformsMapRightUnfoldsAtAPrimKey() throws ProblemLoaderException {
-        Proof proof =
-            loadAndProve(resource(EXAMPLES_RESOURCE + "/unfold/conformsMapRightPrimKey.key"), 1,
-                -1);
-        assertEquals(Set.of("conformsMapRight"), appliedRuleNames(proof));
-        var unfolded = proof.openGoals().head().sequent().succedent().getFirst().formula();
-        var key = unfolded.sub(1).sub(1).sub(0);
-        assertEquals("Prim", key.sort().name().toString(), unfolded.toString());
     }
 }

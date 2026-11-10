@@ -5415,6 +5415,24 @@ contract TestSuite {
         assert(matrix[0][0] == 11 && matrix[1][0] == 12 && matrix[2][0] == 13);
     }
 
+    function storageMatrixCopyShorterIntoLonger() public {
+        delete matrix;
+        delete matrixSource;
+        matrix.push().push(1);
+        matrix.push().push(2);
+        matrix.push().push(3);
+        matrix.push().push(4);
+        matrixSource.push().push(11);
+        matrixSource.push().push(12);
+        matrix = matrixSource;
+        assert(matrix.length == 2);
+        assert(matrix[1][matrix[1].length - 1] == 12);
+        matrix.push();
+        matrix.push();
+        matrix[3].push();
+        assert(matrix[3][0] == 0);
+    }
+
     function storageArrayPopPushFreshElement() public {
         delete values;
         values.push(7);

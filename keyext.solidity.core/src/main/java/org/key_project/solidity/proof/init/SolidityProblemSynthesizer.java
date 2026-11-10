@@ -127,8 +127,7 @@ public final class SolidityProblemSynthesizer {
         Call call = Key.call(results, spec.function(), arguments, spec.contract());
         StorageLayout layout = new StorageLayout(contract);
         if (!contractSpec.isSpecified() && !functionSpec.isSpecified()) {
-            KeyFormula post = layout.isEmpty() ? Key.TRUE : LEN_INV;
-            KeyFormula obligation = Key.modality(functionSpec.box(), call, post);
+            KeyFormula obligation = Key.modality(functionSpec.box(), call, Key.TRUE);
             if (function.isConstructor()) {
                 obligation = Key.update(List.of(Key.assign("storage", layout.emptyStorage()),
                     Key.assign("net", MT_ST)), obligation);
@@ -206,9 +205,6 @@ public final class SolidityProblemSynthesizer {
         }
 
         List<KeyFormula> postcondition = new ArrayList<>();
-        if (!layout.isEmpty()) {
-            postcondition.add(LEN_INV);
-        }
         postcondition.add(INVARIANT);
         postcondition.addAll(labeledClauses(functionSpec.ensures(),
             text -> compiler.formula(text, SpecCompiler.Context.ensures(parameters),

@@ -62,8 +62,6 @@ public abstract class AbstractTermTransformer extends AbstractSortedOperator
         new TypeSortTransformer(TypeSortTransformer.Kind.TYPED_SELECT);
     public static final AbstractTermTransformer LENGTH_AT =
         new TypeSortTransformer(TypeSortTransformer.Kind.LENGTH_AT);
-    public static final AbstractTermTransformer TYPE_AT =
-        new TypeSortTransformer(TypeSortTransformer.Kind.TYPE_AT);
     public static final AbstractTermTransformer LENGTH =
         new TypeSortTransformer(TypeSortTransformer.Kind.LENGTH);
     public static final AbstractTermTransformer TYPED_CHILD =

@@ -509,15 +509,6 @@ tag (`#elemOf`):
 | `conformsFixedElem`, `conformsDynElem` | array atom `==>`, `st[at(i)]` with `i : int` | adds `conforms(⟦e⟧, st[at(i)])` |
 | `conformsFixedElemMap`, `conformsDynElemMap` | array atom `==>`, `st[atMap(i)]` (`atMap : int`) | adds `conforms(⟦e⟧, st[atMap(i)])` |
 | `conformsMapElem` | `conforms(⟦mapping<[K, V]>⟧, st) ==>`, `st[at(k)]` with `k : Prim` | adds `conforms(⟦V⟧, st[at(k)])` |
-| `conformsSaveRight` | `==> conforms(t, save(st, p, v))`, `p = cons(a, fs)` | `conforms(t, st) & conformsSaveAt(t, st, p, v, last(p))` |
-| `conformsSaveAtSize` | `conformsSaveAt(t, st, p, v, size)` | `0 <= cast<[int]>(v)` |
-| `conformsSaveAtIndex`, `conformsSaveAtMapIndex`, `conformsSaveAtMember` | `conformsSaveAt(t, st, p, v, x)`, `x` = `at(k)` / `atMap(i)` / a member field | `conforms(#typeAt(t, p), save(find<[Struct]>(st, p), nil, v))`; a primitive `v`: `true` |
-| `conformsSaveLengthRight` | `==> conforms(⟦T[]⟧, save(st, cons(size, nil), n))` | `conforms(⟦T[]⟧, st) & 0 <= n` |
-| `conformsStoreRight` | `==> conforms(t, storeSt(st, a, v))` | `(a = size -> 0 <= v) & conforms(t, st) & conforms(#typeAt(t, cons(a, nil)), cast<[Struct]>(v))` |
-| `conformsDelAtRight`, `conformsDelNodeRight` | `==> conforms(t, delAt(st, p))` / `delNode(st)` | `conforms(t, st)` |
-| `conformsFixedRight` | `==> conforms(⟦T[n]⟧, st)` | `conforms(⟦e⟧, st[at(skx)]) & conforms(⟦e⟧, st[atMap(skx)])`, `skx` a fresh `int` |
-| `conformsDynRight` | `==> conforms(⟦T[]⟧, st)` | `0 <= \|st\| & conforms(⟦e⟧, st[at(skx)]) & conforms(⟦e⟧, st[atMap(skx)])`, `skx` a fresh `int` |
-| `conformsMapRight` | `==> conforms(⟦mapping<[K, V]>⟧, st)` | `conforms(⟦V⟧, st[at(skp)])`, `skp` a fresh `Prim` |
 
 Copies and resets need no node kind: `|save(st, nil, src)| ⇝ #len(src)`
 (`selectOnSaveNilLength`), `|delNode(st)| ⇝ 0` (`selectStDelNodeLength`), and the element
@@ -525,12 +516,9 @@ rules compare against `#len`, which is `n` for a node whose inferred sort is `T[
 length cell otherwise; `#typedChild` keeps that sort on the targets the rules create
 (`docs/storage.md` section 8c).
 
-Each antecedent taclet hands out only what the matching `*Right` unfolding proves: array
-elements at `int` indices, mapping values at every `Prim` key. The `unsound/` problems of
-`RulesTest#unsoundWfProblemStaysOpen` are the counterexamples to each weaker form
-(`docs/storage.md` section 8c). `conformsMapRightIntKeysOnly` needs the quantifier heuristic to skip
-ill-sorted instances (`HeuristicInstantiation.HIIterator`): instantiating an `int` variable
-with a `Prim` term found under `at(_)` used to abort the proof with an illegal instantiation.
+`lenInv` is assumed, never proved (`docs/storage.md` section 8c), so these are the only
+`conforms` rules. Array atoms hand out conformance at `int` indices only; the `unsound/`
+problems of `RulesTest#unsoundWfProblemStaysOpen` are the counterexamples at a `bool` key.
 `FixedLengths` also checks constructor default reads, copy independence, shorter-copy tail
 clearing before an empty push, and fixed-element storage-to-memory-to-storage copies.
 `defVal` is declared `Prim`, so it is both an `StValue` and a `MemValue` and serves storage
@@ -874,8 +862,9 @@ when the rule fires, against the variables' current names.
   gas on the EVM). Measuring at the head on both ends instead would make the `break`
   iteration decrease the variant (`invariantVariantSkipsBreakIteration` stays open then).
 - Integers are unbounded, so anonymised locals need no range facts. Generated obligations
-  assume unsigned input parameters are non-negative; array lengths are bounded by the
-  `lenInv(storage)` conjunct of every storage-writing loop's invariant.
+  assume unsigned input parameters are non-negative; array lengths are bounded by
+  `lenInv(storage)`, assumed for the anonymised state (`#loopAnon`) and not part of the
+  invariant to prove.
 
 Examples: the `Loop invariants` section of `TestSuite.sol`, including break exits outside the
 invariant, `for` updates after continue, false postconditions, and a `\forall` over the

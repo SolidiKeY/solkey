@@ -29,7 +29,7 @@ import org.jspecify.annotations.Nullable;
 public final class TypeSortTransformer extends AbstractTermTransformer {
     public enum Kind {
         TYPE_OF("#typeOf", 1), ELEM_OF("#elemOf", 1), STRUCT_CONFORMS("#structConforms", 2),
-        TYPED_SELECT("#typedSelect", 1), LENGTH_AT("#lengthAt", 2), TYPE_AT("#typeAt", 2),
+        TYPED_SELECT("#typedSelect", 1), LENGTH_AT("#lengthAt", 2),
         LENGTH("#len", 1), TYPED_CHILD("#typedChild", 3);
 
         private final String name;
@@ -68,7 +68,6 @@ public final class TypeSortTransformer extends AbstractTermTransformer {
             case TYPED_SELECT -> typedSelect(subject, services);
             case LENGTH_AT -> services.getTermBuilder()
                     .zTerm(TypeSorts.lengthOf(sortAt(sortOf(subject), term.sub(1), services)));
-            case TYPE_AT -> node(sortAt(sortOf(subject), term.sub(1), services), services);
             case TYPED_CHILD -> typedChild(subject, term.sub(1), term.sub(2), services);
             case LENGTH -> inferSort(subject, services) instanceof ArraySort array
                     ? services.getTermBuilder().zTerm(array.length())

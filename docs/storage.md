@@ -138,8 +138,7 @@ for `delAt` through `delField<[alpha]>` on the select:
   A subsequent field read checks `0 <= i < oldLength(st)`: it reads through a reset child
   inside that range and through the unchanged child outside it. Overwritten fields can
   therefore simplify before the old-length condition is expanded. `fixedDelNodeIndex`
-  retains the child's array kind, and `conformsDelNodeIndexRight` reduces type preservation to
-  the original child's layout atom; neither assumes zero tail data.
+  retains the child's array kind and assumes no zero tail data.
 - `save<[T]>(t, p, v)` — **`t` with `v` assigned at `p`, at the sort `T` of `t`.** A
   storage write is `save<[Struct]>(storage, p, v)`. `selectOnSave` walks the path one
   selector at a time and keeps the reader's sort, so at the end of the path the term is
@@ -748,8 +747,8 @@ Symbolic execution starts from an unconstrained `storage`, so nothing is known a
 proof has not written — in particular a dynamic array's length could be negative. That gap is
 closed by the length atoms of §8c, not by an axiom: `conforms(emptyOf<[T[]]>, st) ==>` gives
 `0 <= |st|` through `conformsDynSize`. Every generated obligation of a contract with a dynamic
-array assumes `lenInv(storage)`, and a loop that writes storage carries it in its invariant, so
-each dynamic length the push/pop/index rules read is reached by this trigger. A fixed length is
+array assumes `lenInv(storage)`, and so does the state after a storage-writing loop or a
+callback, so each dynamic length the push/pop/index rules read is reached by this trigger. A fixed length is
 never read from a cell (§8c).
 
 An earlier axiom, `sizeNotNegative`, added `0 <= selectSt<[int]>(st, size)` for every `st`,
@@ -848,27 +847,26 @@ under `T` is non-negative:
 
 It stays a recursive predicate so a struct that reaches itself through a dynamic array needs
 nothing special. `insertLenInv` is generated per contract (`StorageLayout`); a contract whose
-roots are all trivial gets `true`. In the antecedent atoms are consumed by triggers
-(`conformsDynSize`, `conforms{Fixed,Dyn}Elem[Map]`, `conformsMapElem`); in the succedent they are
-peeled off writes (`conformsSaveRight` / `conformsSaveAt*`, `conformsSaveLengthRight`,
-`conformsStoreRight`, `conformsDelAtRight`, `conformsDelNodeRight`) and unfolded
-(`conforms{Fixed,Dyn,Map}Right`). The type at a written path is `#typeAt(⟦T⟧, p)`; a length
-write owes `0 <= v`.
+roots are all trivial gets `true`. Atoms only ever occur in the antecedent, where they are
+consumed by triggers (`conformsDynSize`, `conforms{Fixed,Dyn}Elem[Map]`, `conformsMapElem`).
 
 **The obligations** (`StorageLayout`, `SolidityProblemSynthesizer`):
 
-    constructor:  ==> {storage := mtSt} [ ctor ] (lenInv(storage) & CInv & ensures)
-    function:     lenInv(storage) & CInv & requires  ==>  [ f ] (lenInv(storage) & CInv & ensures)
+    constructor:  ==> {storage := mtSt} [ ctor ] (CInv & ensures)
+    function:     lenInv(storage) & CInv & requires  ==>  [ f ] (CInv & ensures)
 
-`LoopInvariantCondition` conjoins `lenInv(storage)` to every storage-writing loop invariant.
+`lenInv` is a typing fact, assumed and never proved: on the EVM a length is a `uint256`, so every
+real state satisfies it. It is assumed wherever a state enters the proof — the function's entry,
+the anonymised state after a storage-writing loop (`#loopAnon`), and the state after a callback
+(`transferWithCallback*`, `sendWithCallback*`) — and no obligation re-proves it for the final
+state, so there are no succedent `conforms` rules. Re-proving it was the dominant cost of
+copy-heavy functions: a whole-array copy `save(st, nil, src)` was unfolded at a fresh index and
+split on every row (`storageMatrixCopyShorterIntoLonger`).
 
-Each counterexample to a weaker form stays open in
+Array atoms hand out conformance at `int` indices only: `conforms{Fixed,Dyn}ElemBoolIndex` in
 `keyext.solidity.core/src/test/resources/org/key_project/solidity/examples/unsound/`
-(`RulesTest#unsoundWfProblemStaysOpen`): a negative length
-(`conforms{Save,Store}RightNegative*Length`), a mapping proved at `int` keys only
-(`conformsMapRightIntKeysOnly`), and an array element read at a `bool` key
-(`conforms{Fixed,Dyn}ElemBoolIndex`). `lenInvLengthWrites.key` and `lenInvArrayElements.key` are
-the closing counterparts.
+(`RulesTest#unsoundWfProblemStaysOpen`) stay open, and `lenInvArrayElements.key` is the closing
+counterpart.
 
 ### Memory objects carry their type
 

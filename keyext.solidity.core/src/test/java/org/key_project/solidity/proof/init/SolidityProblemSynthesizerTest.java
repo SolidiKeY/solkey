@@ -220,13 +220,13 @@ public class SolidityProblemSynthesizerTest {
         assertTrue(text.endsWith("""
                 \\problem {
                     lenInv(storage) ->
-                    \\<{ testSimpleAssert()@%s; }\\>(lenInv(storage))
+                    \\<{ testSimpleAssert()@%s; }\\>(true)
                 }
                 """.formatted(SolidityExampleTests.TEST_SUITE_CONTRACT)), text);
     }
 
     @Test
-    void aConstructorStartsFromTheEmptyStorageAndEstablishesTheLengthInvariant()
+    void aConstructorStartsFromTheEmptyStorage()
             throws IOException {
         Path file = SolidityExampleTests.example("contracts/FixedLengths.sol");
 
@@ -234,7 +234,7 @@ public class SolidityProblemSynthesizerTest {
             SolidityProblemSynthesizer.problemText(file, spec("FixedLengths", "constructor"));
 
         assertTrue(text.contains("{storage := mtSt\n     || net := mtSt}\n    "
-            + "\\<{ constructor()@FixedLengths; }\\>(lenInv(storage))"), text);
+            + "\\<{ constructor()@FixedLengths; }\\>(true)"), text);
         assertTrue(text.contains("conforms(fieldType(FixedLengths$dyn), selectSt<[Struct]>(s, "
             + "FixedLengths$dyn))"), text);
         assertFalse(text.contains("conforms(fieldType(FixedLengths$d1)"), text);
