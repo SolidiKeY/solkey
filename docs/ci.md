@@ -55,6 +55,20 @@ things to know:
   `./gradlew -DENABLE_NULLNESS=true compileTestJava` that
   `CodeQuality / checkerFramework` runs.
 
+## `testFast`
+
+`./gradlew :keyext.solidity.core:testFast` runs exactly the tests of `test`, for local use:
+
+- Up to 8 forks (a quarter of the cores), each told it has `cores / forks` processors so that
+  GC, JIT and Truffle threads do not oversubscribe the machine. The prover is **not** thread
+  safe, so tests never run concurrently inside one JVM.
+- `TacletStarterExamplesTest` and `PaperTestExamplesTest` split their functions round-robin
+  over nested `Shard*` classes, the unit Gradle hands to a fork. A `--tests` filter on them
+  needs a trailing `*`.
+- solc output is cached in `keyext.solidity.core/build/solc-cache`, keyed by the soljson
+  digest and the Standard JSON input (`testutil/SolcCacheExtension`). The first run fills
+  it; `test` and CI never use it, so they still exercise the real compiler.
+
 ## Test output
 
 A local `test` run prints failures only. Pass `-PverboseTests` (or set `CI`) to

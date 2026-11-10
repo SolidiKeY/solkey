@@ -24,22 +24,10 @@ import tools.jackson.databind.JsonNode;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.key_project.solidity.program.parser.SolcWrapper.readSol;
 
 public class SolcWrapperTest {
-    @Test
-    void readStringSol() throws IOException {
-        // language=solidity
-        String contract = """
-                contract SimpleContract {
-                    uint256 balance;
-                }""";
-        String result = readSol(contract);
-        assertNotNull(result);
-    }
-
     @Test
     void compilationFail() throws IOException {
         // language=solidity

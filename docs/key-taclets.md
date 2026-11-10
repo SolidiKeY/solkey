@@ -215,9 +215,12 @@ rule name).
 For the taclet example set, use the focused harnesses:
 
 ```bash
-./gradlew :keyext.solidity.core:test --tests "org.key_project.solidity.taclets.TacletStarterExamplesTest"
-./gradlew :keyext.solidity.core:test --tests "org.key_project.solidity.taclets.PaperTestExamplesTest"
+./gradlew :keyext.solidity.core:testFast --tests "org.key_project.solidity.taclets.TacletStarterExamplesTest*"
+./gradlew :keyext.solidity.core:testFast --tests "org.key_project.solidity.taclets.PaperTestExamplesTest*"
 ```
+
+Both classes split their functions over nested `Shard*` classes, so the filter needs the
+trailing `*`; without it only the outer class (the `unprovable*` checks) runs.
 
 Avoid using the full legacy `RulesTest` suite as the first acceptance gate for
 new taclet examples; it can fail for unrelated older examples. It now lives in

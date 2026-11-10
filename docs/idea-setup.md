@@ -275,7 +275,7 @@ directory, not the project — which is why this is a script instead of a checke
 | **KeYther** | Gradle `:keyext.solidity.gui:solidityGui`, GUI with no file — pick one from `File → Open` |
 | **KeYther on current file** | Launches the GUI on the file open in the editor (`$FilePath$`) |
 | **SolidityCLI on current file** | Runs `org.key_project.solidity.CLI` on the file open in the editor |
-| **solkey [:keyext.solidity.core:test]** | Gradle task, the fast module test group |
+| **solkey [:keyext.solidity.core:test]** | Gradle `:keyext.solidity.core:testFast` — the `test` tests in parallel forks (the name is kept so the pre-push test check still finds it) |
 
 Verify the setup: open `keyext.solidity.examples/TestSuite.sol`, select **KeYther on current
 file** in the run-configuration dropdown and press **Run** (Shift+F10). The function picker opens

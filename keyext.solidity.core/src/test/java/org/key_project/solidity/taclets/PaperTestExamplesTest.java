@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.testutil.SolidityExampleTests;
 
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -35,20 +36,51 @@ public class PaperTestExamplesTest {
         "testEmptyPushDynamicArrayReturnReadsZero",
         "testEmptyPushStructReturnReadsZero");
 
-    @ParameterizedTest(name = "{0}")
-    @MethodSource("examples")
-    void paperTestExampleHasExpectedStatus(String function) throws Exception {
-        Proof proof = proveTestSuiteFunction(function, 50000, 30000);
-        if (SYMBOLIC_TAIL_OPENS.contains(function)) {
-            assertFalse(proof.closed(), function
-                + " unexpectedly closed without known storage-tail contents");
-        } else {
-            assertTrue(proof.closed(),
-                () -> SolidityExampleTests.describeOpenGoals(function, proof));
+    private static final int SHARDS = 3;
+
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    abstract static class Shard {
+        private final int index;
+
+        Shard(int index) {
+            this.index = index;
+        }
+
+        Stream<Arguments> examples() throws IOException {
+            return SolidityExampleTests.shard(
+                SolidityExampleTests.testSuiteFunctions(name -> name.startsWith("test")), index,
+                SHARDS);
+        }
+
+        @ParameterizedTest(name = "{0}")
+        @MethodSource("examples")
+        void paperTestExampleHasExpectedStatus(String function) throws Exception {
+            Proof proof = proveTestSuiteFunction(function, 50000, 30000);
+            if (SYMBOLIC_TAIL_OPENS.contains(function)) {
+                assertFalse(proof.closed(), function
+                    + " unexpectedly closed without known storage-tail contents");
+            } else {
+                assertTrue(proof.closed(),
+                    () -> SolidityExampleTests.describeOpenGoals(function, proof));
+            }
         }
     }
 
-    static Stream<Arguments> examples() throws IOException {
-        return SolidityExampleTests.testSuiteFunctions(name -> name.startsWith("test"));
+    static class Shard0 extends Shard {
+        Shard0() {
+            super(0);
+        }
+    }
+
+    static class Shard1 extends Shard {
+        Shard1() {
+            super(1);
+        }
+    }
+
+    static class Shard2 extends Shard {
+        Shard2() {
+            super(2);
+        }
     }
 }

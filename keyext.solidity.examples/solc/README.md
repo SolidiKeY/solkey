@@ -873,13 +873,25 @@ right-hand side before the left-hand index), which no port exercises. Solidity l
 order unspecified, so a semantics that differs there is not wrong Solidity, only a different
 compiler choice.
 
-**Candidates not yet mutated.** `delete` on a memory local rebinds it to a fresh object and
-leaves aliases unchanged (`testMemoryRootDeleteRebindsOnlyLocal`,
-`testMemoryDeleteIdentityFieldFreshensSlot`); a storage copy or pop clears the old elements so
-a later `push()` reads zero (`testShapeCopyDynamicShrinkClearsReusedSlot`,
-`testShorterCopyThenEmptyPushClearsTail`, `storageMatrixPopPushFreshRow`). No port keeps an
-alias across a memory `delete` or pushes after a shrinking copy. In `TestSuite.sol`, a
-`// import` line marks every test considered here, the mapping-delete ones included.
+**Pop that does not clear a fixed-size element.** Splitting `storagePopSave` so that an
+array whose elements are fixed-size arrays only shrinks its length (no `delAt` at the popped
+index) keeps every port closed, since no port pops such an array. A bare `push()` of a
+reference element is length-only, so the repushed element shows the old data:
+`testFixedShapePopPushResetsFixedElement` (`uint[3][] rows`) opens on `rows[n][0] == 0`, which
+reads 11. Dropping the clearing for every reference element is caught by
+`mappingArray2dPopRepush`. The `fixedArrayElementOnly` path flag this needs was a temporary
+two-line change to `PathSVSort`.
+
+**Memory `delete` in place.** Replacing `memoryRootDeleteFreshRebind` by
+`{memory := addM(memory, r)}` with `mv = idC(r, nil)`, which resets the object instead of
+rebinding `mv`, keeps every port closed: no port reads a second reference after a memory
+`delete`. `testMemoryRootDeleteRebindsOnlyLocal` opens on `carolAlias.age == 33`.
+
+Both programs are written up with their wrong rules in the paper
+(`Pre-licenciate-paper`, `sections/solc-gaps.tex`). **Not yet mutated:** a storage copy that
+shrinks without clearing the old tail (`testShapeCopyDynamicShrinkClearsReusedSlot`,
+`testShorterCopyThenEmptyPushClearsTail`). In `TestSuite.sol`, a `// import` line marks every
+test considered here, the mapping-delete ones included.
 
 ## Not ported
 

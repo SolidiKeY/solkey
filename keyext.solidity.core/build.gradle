@@ -134,9 +134,15 @@ test {
 }
 
 tasks.named('testFast', Test) {
+    description = "The tests of `test`, spread over parallel forks."
     useJUnitPlatform {
         excludeTags(*ciOnlyTestTags)
     }
+    def cores = Runtime.runtime.availableProcessors()
+    maxParallelForks = Math.min(8, Math.max(1, cores.intdiv(4)))
+    jvmArgs "-XX:ActiveProcessorCount=${Math.max(1, cores.intdiv(maxParallelForks))}"
+    systemProperty "org.key_project.solidity.solcCache",
+        layout.buildDirectory.dir("solc-cache").get().asFile.absolutePath
 }
 
 tasks.register('testSolidityExamples', Test) {

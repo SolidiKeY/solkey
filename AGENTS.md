@@ -25,7 +25,8 @@ Cost is dominated by round-trips, not output size. So:
 ## Build and run
 
 ```bash
-./gradlew :keyext.solidity.core:test # Module tests: unit + TestSuite.sol suites (~30 s)
+./gradlew :keyext.solidity.core:testFast # Same tests as `test`, parallel forks + solc cache (~1.5 min)
+./gradlew :keyext.solidity.core:test # Module tests: unit + TestSuite.sol suites, one JVM (~4.5 min)
 ./gradlew :keyext.solidity.core:test --tests "org.key_project.solidity.SomeTest.methodName"
 ./gradlew -DENABLE_NULLNESS=true ciGates   # All three CI gates (see docs/ci.md)
 ./gradlew spotlessApply              # Apply formatting

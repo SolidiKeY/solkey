@@ -10,7 +10,7 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value=":keyext.solidity.core:test" />
+          <option value=":keyext.solidity.core:testFast" />
         </list>
       </option>
       <option name="vmOptions" />

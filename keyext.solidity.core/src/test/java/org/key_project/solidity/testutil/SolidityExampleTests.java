@@ -14,6 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.key_project.logic.PosInTerm;
@@ -135,6 +136,11 @@ public final class SolidityExampleTests {
         assertTrue(!functions.isEmpty(),
             "no matching functions in " + testSuite().toAbsolutePath());
         return functions.stream().map(Arguments::of);
+    }
+
+    public static Stream<Arguments> shard(Stream<Arguments> arguments, int index, int count) {
+        List<Arguments> all = arguments.toList();
+        return IntStream.range(0, all.size()).filter(i -> i % count == index).mapToObj(all::get);
     }
 
     /// `(contract, function)` arguments for every provable function of one contract, sorted.
