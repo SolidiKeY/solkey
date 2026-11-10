@@ -114,6 +114,12 @@ Inside a checkout it also picks up the Graal compiler jars `shadowJar` stages be
 keeps solc compiled rather than interpreted — about ten times the speed, exactly as `run-key.sh`
 does. Outside one there is nowhere to find them, so solc is slower there, not broken.
 
+Both matter only when the WebAssembly solc runs. `shadowJar` also stages the pinned native `solc`
+beside each fat jar (`build/libs/solc-native/`), and the jar prefers it: **Compile and Run** on
+`TestSuite.sol` takes about a second instead of 23 s (97 s without the Graal flags). For a jar of
+your own outside a checkout, set `SOLKEY_SOLC` or put solc 0.8.34 on the `PATH`
+(`docs/solc-ast.md`).
+
 ### What a click actually runs, and why it matters
 
 The fat jar the tool needs — `keyext.solidity.gui-exe.jar` for KeYther,

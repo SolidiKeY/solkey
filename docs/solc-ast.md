@@ -9,10 +9,23 @@ The format itself is documented upstream and is not reproduced here:
 
 ## Where it comes from
 
-`SolcWrapper` produces it. solc is not forked: `WasmSolcCompiler` runs `soljson.js` — the
-compiler's official WebAssembly build, the one `solc-js` ships — on GraalJS with GraalWasm
-underneath, so the prover needs nothing but a JVM. `keyext.solidity.core/build.gradle` pins the
-version (`soljsonFile`) and downloads it into the jar as the resource `/soljson.js`.
+`SolcWrapper` produces it, with one of two compilers of the same pinned release
+(`solcLongVersion` in `keyext.solidity.core/build.gradle`, also written as the resource
+`/solc.version`):
+
+- **`NativeSolcCompiler`**, preferred: the native `solc`, forked with `--standard-json
+  --no-import-callback`. About fifty times faster: `TestSuite.sol` compiles to bytecode in 0.3 s
+  instead of 17 s, so `--solc` (the IDEA *Compile and Run* entry) takes about a second cold. It is
+  looked up as `-Dsolkey.solc=PATH` (`off` disables it), `SOLKEY_SOLC`, `solc-native/solc` beside
+  the jar, then `solc` on the `PATH`; a candidate whose `--version` is not the pinned release is
+  skipped. `shadowJar` stages it beside both fat jars (`downloadNativeSolc`, sha256-checked, for
+  linux-amd64, macOS and windows-amd64); offline it only warns.
+- **`WasmSolcCompiler`**, the fallback: runs `soljson.js` — the compiler's official WebAssembly
+  build, the one `solc-js` ships — on GraalJS with GraalWasm underneath, so the prover needs
+  nothing but a JVM. `downloadSoljson` puts it in the jar as the resource `/soljson.js`. Tests
+  always use it (`SolcCacheExtension`).
+
+Both produce the same AST for every example under `keyext.solidity.examples`.
 
 The request is Standard JSON asking for `ast`, whose nodes are the format `--ast-compact-json`
 prints, so anything written about that format still applies. Two details of the WebAssembly build
@@ -32,8 +45,9 @@ a factor of ten; `run-key.sh` and the Gradle tasks add `-XX:+EnableJVMCI` and th
 `engine.Mode=latency`: every run is a fresh JVM, and that mode cuts a cold compile of
 `TestSuite.sol` from ~40 s to ~26 s.
 
-Every JVM would still pay that cold compile, so `WasmSolcCompiler` keeps solc's outputs on disk
-(`SolcOutputCache`), keyed by the SHA-256 of `soljson.js` and of the exact Standard JSON input,
+Every JVM would still pay that cold compile, so both compilers keep solc's outputs on disk
+(`SolcOutputCache`), keyed by the compiler (the SHA-256 of `soljson.js`, or the native version
+string) and the SHA-256 of the exact Standard JSON input,
 in `$XDG_CACHE_HOME/solkey/solc` (else `~/.cache/solkey/solc`), newest 256 kept. A run on an
 unchanged file never starts solc. `-Dsolkey.solcCache=DIR` moves it; `-Dsolkey.solcCache=off`
 disables it. `--solc` makes one request (AST plus bytecode) that serves the diagnostics, the

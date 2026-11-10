@@ -105,13 +105,19 @@ tasks.register('stageGraalCompiler', Copy) {
     into layout.buildDirectory.dir("libs/${core.graalCompilerDir}")
 }
 
+tasks.register('stageNativeSolc', Copy) {
+    dependsOn ':keyext.solidity.core:downloadNativeSolc'
+    from project(':keyext.solidity.core').layout.buildDirectory.dir("libs/${core.nativeSolcDir}")
+    into layout.buildDirectory.dir("libs/${core.nativeSolcDir}")
+}
+
 shadowJar {
     archiveClassifier = "exe"
     archiveBaseName = "keyext.solidity.gui"
     // no version in the name, so that .run/ configurations can point at a stable path
     archiveVersion = ""
     dependsOn 'stageGraalRuntime'
-    finalizedBy 'stageGraalCompiler'
+    finalizedBy 'stageGraalCompiler', 'stageNativeSolc'
     dependencies {
         exclude { it.moduleGroup.startsWith("org.graalvm") }
     }

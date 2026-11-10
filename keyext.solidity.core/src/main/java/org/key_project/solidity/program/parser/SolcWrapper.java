@@ -16,10 +16,10 @@ import tools.jackson.databind.node.ObjectNode;
 
 /// The Solidity compiler, addressed through its Standard JSON interface.
 ///
-/// The compiler runs inside this JVM ([WasmSolcCompiler]); nothing is forked and no
-/// platform-specific executable is needed. The AST handed out is solc's own — the `ast` output of
-/// Standard JSON is the node format `--ast-compact-json` prints — so [SolJSONParser] sees exactly
-/// what it saw when solc was a child process.
+/// A native solc of the pinned version ([NativeSolcCompiler]) is used when one is found;
+/// otherwise the compiler runs inside this JVM ([WasmSolcCompiler]) and no platform-specific
+/// executable is needed. The AST handed out is solc's own — the `ast` output of Standard JSON is
+/// the node format `--ast-compact-json` prints — so [SolJSONParser] sees the same tree either way.
 public class SolcWrapper {
 
     /// A compilation request. The same source under the same unit name always yields the same
@@ -51,7 +51,8 @@ public class SolcWrapper {
 
     private static synchronized SolcCompiler compiler() {
         if (compiler == null) {
-            compiler = WasmSolcCompiler.get();
+            compiler = NativeSolcCompiler.find().<SolcCompiler>map(found -> found)
+                    .orElseGet(WasmSolcCompiler::get);
         }
         return compiler;
     }

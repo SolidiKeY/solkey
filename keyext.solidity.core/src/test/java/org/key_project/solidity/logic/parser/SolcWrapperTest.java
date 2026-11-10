@@ -11,7 +11,9 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import org.key_project.solidity.CLI;
+import org.key_project.solidity.program.parser.NativeSolcCompiler;
 import org.key_project.solidity.program.parser.SolcWrapper;
+import org.key_project.solidity.program.parser.WasmSolcCompiler;
 import org.key_project.solidity.testutil.SolidityExampleTests;
 
 import org.junit.jupiter.api.Assertions;
@@ -21,10 +23,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.key_project.solidity.program.parser.SolcWrapper.readSol;
 
 public class SolcWrapperTest {
@@ -40,6 +45,60 @@ public class SolcWrapperTest {
             Assertions.fail();
         } catch (RuntimeException exception) {
         } ;
+    }
+
+    @Test
+    void nativeSolcGivesTheWasmAst() throws IOException {
+        var nativeSolc = NativeSolcCompiler.find();
+        assumeTrue(nativeSolc.isPresent(), "no native solc of the pinned version");
+        String input = standardJsonAstInput(
+            Files.readString(SolidityExampleTests.example("contracts/ArrayMatrixDD.sol")));
+        assertEquals(astOf(WasmSolcCompiler.get().compile(input)),
+            astOf(nativeSolc.get().compile(input)));
+        assertTrue(nativeSolc.get().version().startsWith(
+            WasmSolcCompiler.get().version().replace(".Emscripten.clang", ".")));
+    }
+
+    private static String standardJsonAstInput(String source) {
+        ObjectNode input = (ObjectNode) SolcWrapper.readJson("{}");
+        input.put("language", "Solidity");
+        input.putObject("sources").putObject("C.sol").put("content", source);
+        input.putObject("settings").putObject("outputSelection").putObject("*")
+                .putArray("").add("ast");
+        return input.toString();
+    }
+
+    private static String astOf(String output) {
+        JsonNode ast = SolcWrapper.readJson(output).path("sources").path("C.sol").path("ast");
+        assertFalse(ast.isMissingNode());
+        return signedIds(ast).toString();
+    }
+
+    private static JsonNode signedIds(JsonNode node) {
+        if (node instanceof ObjectNode object) {
+            object.properties().forEach(property -> {
+                JsonNode value = property.getValue();
+                if (isUnsignedNegative(value)) {
+                    object.put(property.getKey(), value.asLong() - (1L << 32));
+                } else {
+                    signedIds(value);
+                }
+            });
+        } else if (node instanceof ArrayNode array) {
+            for (int i = 0; i < array.size(); i++) {
+                if (isUnsignedNegative(array.get(i))) {
+                    array.set(i, array.numberNode(array.get(i).asLong() - (1L << 32)));
+                } else {
+                    signedIds(array.get(i));
+                }
+            }
+        }
+        return node;
+    }
+
+    private static boolean isUnsignedNegative(JsonNode node) {
+        return node.isIntegralNumber() && node.asLong() > Integer.MAX_VALUE
+                && node.asLong() < (1L << 32);
     }
 
     @Test

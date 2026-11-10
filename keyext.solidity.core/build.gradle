@@ -14,8 +14,30 @@ ext.graalCompilerDir = "graal-compiler"
 
 // The solc build hosted on the JVM. Pinned: the AST shape the taclet examples were written
 // against must not shift underneath them. Metadata: https://binaries.soliditylang.org/wasm/list.json
-ext.soljsonFile = "soljson-v0.8.34+commit.80d5c536.js"
+ext.solcLongVersion = "0.8.34+commit.80d5c536"
+ext.soljsonFile = "soljson-v${solcLongVersion}.js"
 ext.soljsonSha256 = "c8649f8d57f81b3244c7d2dd662efc0620d1ae296f623b347a2c616a6cfd11d8"
+
+// The same release as a native executable, preferred over the WebAssembly build when present:
+// about fifty times faster. Metadata: https://binaries.soliditylang.org/<platform>/list.json
+ext.nativeSolcDir = "solc-native"
+ext.nativeSolcBuilds = [
+        "linux"  : [platform: "linux-amd64", file: "solc-linux-amd64-v${solcLongVersion}",
+                    sha256  : "d40adc6f9fdbb22a97d32a02fa05688bf2ee7886affc48c9851b0afd4a726b39"],
+        "mac"    : [platform: "macosx-amd64", file: "solc-macosx-amd64-v${solcLongVersion}",
+                    sha256  : "0a2829292697dda542e4e365bb63fbd6d3ed51537140222a880ab760cffa7746"],
+        "windows": [platform: "windows-amd64", file: "solc-windows-amd64-v${solcLongVersion}.exe",
+                    sha256  : "98657c736ca36c8baf6cedef028d0e74e6af3efcf32e08f16788d061350a0981"],
+]
+
+def hostOs = System.getProperty("os.name").toLowerCase()
+def hostArch = System.getProperty("os.arch").toLowerCase()
+ext.nativeSolcBuild = hostOs.startsWith("windows")
+        ? (hostArch in ["amd64", "x86_64"] ? nativeSolcBuilds["windows"] : null)
+        : hostOs.contains("mac") ? nativeSolcBuilds["mac"]
+        : hostOs.contains("linux") && hostArch in ["amd64", "x86_64"] ? nativeSolcBuilds["linux"]
+        : null
+ext.nativeSolcName = hostOs.startsWith("windows") ? "solc.exe" : "solc"
 
 configurations {
     antlr4
@@ -204,13 +226,19 @@ checkerFramework {
 
 def soljsonCache = layout.buildDirectory.file("soljson/${soljsonFile}")
 def soljsonResource = layout.buildDirectory.file("resources/main/soljson.js")
+def solcVersionResource = layout.buildDirectory.file("resources/main/solc.version")
 
 tasks.register("downloadSoljson") {
     inputs.property("file", soljsonFile)
     inputs.property("sha256", soljsonSha256)
     outputs.file(soljsonResource)
+    outputs.file(solcVersionResource)
 
     doLast {
+        solcVersionResource.get().asFile.with {
+            parentFile.mkdirs()
+            text = solcLongVersion
+        }
         def cached = soljsonCache.get().asFile
         if (!cached.exists() || digestOf(cached) != soljsonSha256) {
             cached.parentFile.mkdirs()
@@ -237,6 +265,45 @@ static String digestOf(File file) {
 }
 
 processResources.dependsOn("downloadSoljson")
+
+def nativeSolcCache = layout.buildDirectory.dir("solc-native-download")
+
+tasks.register("downloadNativeSolc") {
+    description = "Stages the pinned native solc beside the fat jar, when this platform has one"
+    def build = nativeSolcBuild
+    def name = nativeSolcName
+    def staged = layout.buildDirectory.file("libs/${nativeSolcDir}/${name}")
+    def cacheDir = nativeSolcCache
+    inputs.property("build", build == null ? "" : build.file)
+    inputs.property("sha256", build == null ? "" : build.sha256)
+    outputs.file(staged)
+    outputs.upToDateWhen { staged.get().asFile.exists() }
+    onlyIf { build != null }
+
+    doLast {
+        def cached = cacheDir.get().file(build.file).asFile
+        try {
+            if (!cached.exists() || digestOf(cached) != build.sha256) {
+                cached.parentFile.mkdirs()
+                new URL("https://binaries.soliditylang.org/${build.platform}/${build.file}")
+                        .withInputStream { input -> cached.withOutputStream { it << input } }
+                def actual = digestOf(cached)
+                if (actual != build.sha256) {
+                    cached.delete()
+                    throw new GradleException(
+                            "${build.file} has sha256 ${actual}, expected ${build.sha256}")
+                }
+            }
+        } catch (IOException e) {
+            logger.warn("native solc not downloaded (${e.message}); the WebAssembly solc is used")
+            return
+        }
+        def target = staged.get().asFile
+        target.parentFile.mkdirs()
+        target.bytes = cached.bytes
+        target.setExecutable(true)
+    }
+}
 
 task proguardAnalyze(dependsOn: jar) {
     group = 'verification'
@@ -363,6 +430,9 @@ def graalJit = new org.gradle.process.CommandLineArgumentProvider() {
 tasks.withType(Test).configureEach {
     javaLauncher = solcLauncher
     jvmArgumentProviders.add(graalJit)
+    dependsOn "downloadNativeSolc"
+    systemProperty "solkey.solc",
+        layout.buildDirectory.file("libs/${nativeSolcDir}/${nativeSolcName}").get().asFile.absolutePath
 }
 
 tasks.named('solidityCli', JavaExec) {
@@ -383,6 +453,6 @@ tasks.register('stageGraalCompiler', Copy) {
 }
 
 tasks.named('shadowJar') {
-    finalizedBy('stageGraalCompiler')
+    finalizedBy('stageGraalCompiler', 'downloadNativeSolc')
 }
 
