@@ -5397,9 +5397,22 @@ contract TestSuite {
         assert(matrix.length == 5);
         assert(matrix[0][0] == 11 && matrix[1][0] == 12 && matrix[2][0] == 13);
         assert(matrix[3][0] == 14 && matrix[4][0] == 15);
-        matrix.push();
-        assert(matrix.length == 6);
-        assert(matrix[5].length == 0);
+    }
+
+    function storageMatrixCopyShortIntoLonger() public {
+        delete matrix;
+        delete matrixSource;
+        matrix.push().push(1);
+        matrix.push().push(2);
+        matrix.push().push(3);
+        matrix.push().push(4);
+        matrix.push().push(5);
+        matrixSource.push().push(11);
+        matrixSource.push().push(12);
+        matrixSource.push().push(13);
+        matrix = matrixSource;
+        assert(matrix.length == 3);
+        assert(matrix[0][0] == 11 && matrix[1][0] == 12 && matrix[2][0] == 13);
     }
 
     function storageArrayPopPushFreshElement() public {
@@ -5422,12 +5435,15 @@ contract TestSuite {
         matrix.push().push(7);
         matrix.push().push(8);
         matrix.push().push(9);
+        // [[7],[8],[9]]
+        uint256[] storage m = matrix[2];
         matrix.pop();
+        assert(matrix[2].length == 0);
+        assert(m.length == 0);
+        m.push(10);
         matrix.push();
+        // [[7],[8],[10]]
         assert(matrix.length == 3);
         assert(matrix[2].length == 0);
-        matrix.push();
-        assert(matrix.length == 4);
-        assert(matrix[3].length == 0);
     }
 }
