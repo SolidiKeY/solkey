@@ -153,7 +153,8 @@ public class SolcWrapperTest {
         List.of("'transfer' is deprecated", "'send' is deprecated", "Contract code size is",
             "Contract initcode size is");
 
-    private static final List<String> FAITHFUL_PORT_DIRECTORIES = List.of("solc/", "real-world/");
+    private static final List<String> FAITHFUL_PORT_DIRECTORIES =
+        List.of("solc/", "real-world/", "real-world-plain/");
 
     private static final List<String> TOLERATED_IN_FAITHFUL_PORTS =
         List.of("Unreachable code", "Virtual modifiers are deprecated", "This declaration shadows",

@@ -5371,7 +5371,9 @@ contract TestSuite {
         assert(x >= 0);
     }
 
+    /// @custom:key box
     function storageArrayCopyLongerIntoShorter() public {
+        require(5 < values.length);
         delete values;
         delete a;
         values.push(1);
@@ -5390,7 +5392,10 @@ contract TestSuite {
         assert(values[5] == 0);
     }
 
+    /// @custom:key box
     function storageMatrixCopyLongerIntoShorter() public {
+        require(1 < matrix.length);
+        require(4 < matrixSource.length);
         delete matrix;
         delete matrixSource;
         matrix.push().push(1);
@@ -5406,7 +5411,10 @@ contract TestSuite {
         assert(matrix[3][0] == 14 && matrix[4][0] == 15);
     }
 
+    /// @custom:key box
     function storageMatrixCopyShortIntoLonger() public {
+        require(4 < matrix.length);
+        require(2 < matrixSource.length);
         delete matrix;
         delete matrixSource;
         matrix.push().push(1);
@@ -5440,7 +5448,9 @@ contract TestSuite {
         assert(matrix[3][0] == 0);
     }
 
+    /// @custom:key box
     function storageArrayPopPushFreshElement() public {
+        require(3 < values.length);
         delete values;
         values.push(7);
         values.push(8);
@@ -5455,7 +5465,7 @@ contract TestSuite {
     }
 
     // import
-    function storageMatrixPopPushFreshRow() public {
+    function storageMatrixPopPushDanglingRowReappears() public {
         delete matrix;
         matrix.push().push(7);
         matrix.push().push(8);
@@ -5463,13 +5473,13 @@ contract TestSuite {
         // [[7],[8],[9]]
         uint256[] storage m = matrix[2];
         matrix.pop();
-        assert(matrix[2].length == 0);
+        assert(matrix.length == 2);
         assert(m.length == 0);
         m.push(10);
         matrix.push();
         // [[7],[8],[10]]
         assert(matrix.length == 3);
-        assert(matrix[2].length == 0);
+        assert(matrix[2].length == 1 && matrix[2][0] == 10);
     }
 
     function mappingArrayCopyLongerIntoShorter() public {

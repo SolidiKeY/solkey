@@ -7,7 +7,11 @@ directory"); `real-world/` holds published contracts specified the same way (see
 `real-world/` directory"); `benchmark/` holds published contracts kept as published, to measure
 what SolKey verifies without a rewrite (see "The `benchmark/` directory"); `solc/` holds ports of the
 Solidity compiler's own tests (see "The `solc/` directory"). `solc/open/` and `real-world/open/`
-keep what does not close yet; `docs/limitations.md` explains why.
+keep what does not close yet; `docs/limitations.md` explains why. `real-world-plain/` mirrors
+`real-world/` with every `@custom:key` clause removed: only the code's own `require`s and
+`assert`s remain, and its `solidikey/` holds `Counter`, `Escrow`, `MultiAuction` and `PiggyBank`
+of `contracts/` stripped the same way. Without the `requires`, a function proves only if it
+can never revert; `ContractExamplesTest` lists the rest as known open.
 
 There are no `.key` problem files beside `TestSuite.sol`: the loader reads the contract and
 synthesizes one obligation per function, so the whole specification lives in the Solidity body
