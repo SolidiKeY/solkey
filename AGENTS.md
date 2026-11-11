@@ -26,7 +26,7 @@ Cost is dominated by round-trips, not output size. So:
 
 ```bash
 ./gradlew :keyext.solidity.core:testFast # Same tests as `test`, parallel forks + solc cache (~1.5 min)
-./gradlew :keyext.solidity.core:test # Module tests: unit + TestSuite.sol suites, one JVM (~4.5 min)
+./gradlew :keyext.solidity.core:test # Module tests: unit + taclets/ suites, one JVM (~4.5 min)
 ./gradlew :keyext.solidity.core:test --tests "org.key_project.solidity.SomeTest.methodName"
 ./gradlew -DENABLE_NULLNESS=true ciGates   # All three CI gates (see docs/ci.md)
 ./gradlew spotlessApply              # Apply formatting
@@ -77,8 +77,8 @@ outside if explicitly instructed. Module layout, package map and the ANTLR setup
 
 | Purpose | Location |
 |---|---|
-| **Taclet examples (`.sol`)** | `keyext.solidity.examples/TestSuite.sol` — see its `README.md` |
-| **Specified contracts (`.sol` + `@custom:key` clauses)** | `keyext.solidity.examples/contracts/`, published ones in `real-world/` — the spec language is in that `README.md` |
+| **Taclet examples (`.sol`)** | `keyext.solidity.examples/taclets/`, one file per theme — see its `README.md` |
+| **Specified contracts (`.sol` + `@custom:key` clauses)** | `keyext.solidity.examples/contracts/` (`solidikey/`, published ones in `real-world/`) — the spec language is in that `README.md` |
 | **Problem files (`.key`)** | `keyext.solidity.core/src/test/resources/org/key_project/solidity/examples/` |
 | **Proof rules (`.key`)** | `…/src/main/resources/org/key_project/solidity/proof/rules/` — `solidityProgramRules.key`, loaded via `standardSolidityRules.key` |
 
@@ -137,7 +137,7 @@ state the group once in a `// generalization:` comment (`docs/rule-generalizatio
 **Do not write generated files into the source tree** (step budgets, baselines, scratch
 contracts): use `/tmp`.
 
-Add new taclet examples as functions of `keyext.solidity.examples/TestSuite.sol`, and
+Add new taclet examples as functions of the matching `keyext.solidity.examples/taclets/` file, and
 scenario/invariant examples as contracts plus `.key` obligations in
 `keyext.solidity.examples/net/`; conventions for both are in that module's `README.md`. After
 changing a feature, update `docs/taclets-implementation.md` (implemented) or
@@ -145,6 +145,6 @@ changing a feature, update `docs/taclets-implementation.md` (implemented) or
 
 **When a change fixes a bug listed in `docs/bugs.md`, delete that entry in the same change,**
 its section in `docs/semantics-bugs-fix-ideas.md`, and move every function it fixes out of
-`solc/open/` and `real-world/open/` (into the closing file, dropping the `// open:` line and its
+`semantics/open/` and `contracts/real-world/open/` (into the closing file, dropping the `// open:` line and its
 provenance row). `scripts/open-check.sh` lists them; CI's `OpenExamplesStayOpenTest` fails while
 any is left. Record newly found bugs there.

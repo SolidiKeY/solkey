@@ -4,8 +4,8 @@
 # Usage: scripts/keysh                 interactive
 #        scripts/keysh FILE.jsh        run a snippet file
 #        scripts/keysh <<'JAVA'        run snippets from stdin, without prompts
-#        var s = ProofSession.open(Path.of("keyext.solidity.examples/TestSuite.sol"),
-#            SolidityProblemSpec.of("TestSuite", "storageRootReadWrite"), ProofSession.Limits.defaults());
+#        var s = ProofSession.open(Path.of("keyext.solidity.examples/taclets/Storage.sol"),
+#            SolidityProblemSpec.of("Storage", "storageRootReadWrite"), ProofSession.Limits.defaults());
 #        JAVA
 #
 # It rebuilds the jar when the sources are newer, uses JDK 21's jshell, keeps the Java prefs in

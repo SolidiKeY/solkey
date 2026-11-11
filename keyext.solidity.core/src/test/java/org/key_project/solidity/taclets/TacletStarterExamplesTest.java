@@ -18,10 +18,10 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.key_project.solidity.testutil.SolidityExampleTests.proveTestSuiteFunction;
+import static org.key_project.solidity.testutil.SolidityExampleTests.proveTacletFunction;
 
 /// Exercises the user-visible pre-licenciate-paper taclet starters: the focused, one-rule-each
-/// functions of `keyext.solidity.examples/TestSuite.sol`.
+/// functions of `keyext.solidity.examples/taclets/`.
 ///
 /// There are no `.key` problem files. The loader synthesizes the obligation for each function —
 /// a call in a modality with postcondition `true` — and the `assert` statements in the body carry
@@ -52,7 +52,7 @@ public class TacletStarterExamplesTest {
         }
 
         Stream<Arguments> examples() throws IOException {
-            return SolidityExampleTests.shard(SolidityExampleTests.testSuiteFunctions(
+            return SolidityExampleTests.shard(SolidityExampleTests.tacletFunctions(
                 name -> !name.startsWith("test") && !name.startsWith(KNOWN_STUCK_PREFIX)),
                 index, SHARDS);
         }
@@ -61,7 +61,7 @@ public class TacletStarterExamplesTest {
         @MethodSource("examples")
         void tacletStarterExampleHasExpectedStatus(String function) throws Exception {
             Proof proof =
-                proveTestSuiteFunction(function, 10000, SolidityExampleTests.KEEP_TIMEOUT);
+                proveTacletFunction(function, 10000, SolidityExampleTests.KEEP_TIMEOUT);
             if (SYMBOLIC_TAIL_OPENS.contains(function)) {
                 assertFalse(proof.closed(), function
                     + " unexpectedly closed without known storage-tail contents");
@@ -125,21 +125,21 @@ public class TacletStarterExamplesTest {
         "unprovableInvariantForContinueUpdate", "unprovableInvariantConditionSideEffect",
         "unprovableInvariantConditionStorageSideEffect" })
     void loopInvariantRejectsFalsePostcondition(String function) throws Exception {
-        Proof proof = proveTestSuiteFunction(function, 10000, SolidityExampleTests.KEEP_TIMEOUT);
+        Proof proof = proveTacletFunction(function, 10000, SolidityExampleTests.KEEP_TIMEOUT);
         assertFalse(proof.closed(), function + " unexpectedly proved a false assertion");
     }
 
     @ParameterizedTest(name = "{0}")
     @ValueSource(strings = { "unprovableVariantConditionLowersBodyRestores" })
     void loopVariantRejectsNonTermination(String function) throws Exception {
-        Proof proof = proveTestSuiteFunction(function, 10000, SolidityExampleTests.KEEP_TIMEOUT);
+        Proof proof = proveTacletFunction(function, 10000, SolidityExampleTests.KEEP_TIMEOUT);
         assertFalse(proof.closed(), function + " unexpectedly proved a loop that never ends");
     }
 
     @ParameterizedTest(name = "{0}")
     @ValueSource(strings = { "unprovableStorageShortCircuitMutation" })
     void shortCircuitRejectsSkippedMutation(String function) throws Exception {
-        Proof proof = proveTestSuiteFunction(function, 10000, SolidityExampleTests.KEEP_TIMEOUT);
+        Proof proof = proveTacletFunction(function, 10000, SolidityExampleTests.KEEP_TIMEOUT);
         assertFalse(proof.closed(), function + " unexpectedly proved a skipped storage write");
     }
 }

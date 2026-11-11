@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.key_project.solidity.testutil.ExampleDirs;
 import org.key_project.solidity.testutil.SolidityExampleTests;
 
 import org.junit.jupiter.params.ParameterizedTest;
@@ -52,7 +53,7 @@ public class IllegalExamplesCompileTest {
     }
 
     static Stream<Arguments> contracts() throws IOException {
-        Path dir = SolidityExampleTests.examplesDir("illegal/nocompile");
+        Path dir = SolidityExampleTests.examplesDir(ExampleDirs.ILLEGAL);
         assertTrue(Files.isDirectory(dir), () -> "missing directory: " + dir.toAbsolutePath());
         try (Stream<Path> files = Files.list(dir)) {
             List<Arguments> contracts =

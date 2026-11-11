@@ -14,7 +14,7 @@ The format itself is documented upstream and is not reproduced here:
 `/solc.version`):
 
 - **`NativeSolcCompiler`**, preferred: the native `solc`, forked with `--standard-json
-  --no-import-callback`. About fifty times faster: `TestSuite.sol` compiles to bytecode in 0.3 s
+  --no-import-callback`. About fifty times faster: a 5 800-line contract compiles to bytecode in 0.3 s
   instead of 17 s, so `--solc` (the IDEA *Compile and Run* entry) takes about a second cold. It is
   looked up as `-Dsolkey.solc=PATH` (`off` disables it), `SOLKEY_SOLC`, `solc-native/solc` beside
   the jar, then `solc` on the `PATH`; a candidate whose `--version` is not the pinned release is
@@ -43,7 +43,7 @@ Truffle interprets the compiler unless the Graal compiler is in the boot layer, 
 a factor of ten; `run-key.sh` and the Gradle tasks add `-XX:+EnableJVMCI` and the
 `--upgrade-module-path` for it when the JDK accepts them. The context runs Truffle with
 `engine.Mode=latency`: every run is a fresh JVM, and that mode cuts a cold compile of
-`TestSuite.sol` from ~40 s to ~26 s.
+a 5 800-line contract from ~40 s to ~26 s.
 
 Every JVM would still pay that cold compile, so both compilers keep solc's outputs on disk
 (`SolcOutputCache`), keyed by the compiler (the SHA-256 of `soljson.js`, or the native version

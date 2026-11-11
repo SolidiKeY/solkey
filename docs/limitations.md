@@ -1,7 +1,7 @@
 # Why SolKey's Solidity is incomplete or buggy
 
-What the second solc port (`keyext.solidity.examples/solc/`, `solc/open/`), the real-world ports
-(`real-world/`, `real-world/open/`) and the benchmark (`benchmark/`) could not prove, and why.
+What the second solc port (`keyext.solidity.examples/semantics/`, `semantics/open/`), the real-world ports
+(`contracts/real-world/`, `contracts/real-world/open/`) and the benchmark (`contracts/benchmark/`) could not prove, and why.
 Every claim below was reproduced with `./run-key.sh`, and every disputed fact was run on the EVM
 with `./run-key.sh FILE --solc` (solc 0.8.34, in-process Besu). Reproducers and root causes for
 the defects are in `docs/bugs.md`; the backlog items are in `docs/taclet-ideas.md`, "Raised by
@@ -78,7 +78,7 @@ it.
 Choices the calculus makes on purpose, each of which makes some Solidity behaviour diverge.
 
 - **Unbounded mathematical integers.** No checked-overflow revert, no `unchecked` wrapping, no
-  width. `SolcArithmeticOpen` keeps 7 wrap tests that hold on the EVM and stay open
+  width. `SolcArithmetic` keeps 7 wrap tests that hold on the EVM and stay open
   (`uint8 0 - 1 == 255`, `int8 127 + 1 == -128`, `int8 100 * 2 == -56`, `++max == 0`, …); the
   reverse direction proves false (above). Ports must `require` both bounds by hand; OZ
   `tryAdd`/`tryMul` and `Nonces`/`Counters` are specified only on their non-wrapping case.
@@ -101,7 +101,7 @@ Choices the calculus makes on purpose, each of which makes some Solidity behavio
   length and preserves that data; it does not establish zero values or empty nested arrays.
   A default-value assertion needs an explicit earlier clear/write or a suitable precondition.
   No clean-tail invariant is assumed. Compiler-specific dangling-reference examples are in
-  `solc/StorageDangling.sol`; Solidity leaves those executions undefined.
+  `semantics/StorageDangling.sol`; Solidity leaves those executions undefined.
   Larger push loops can still exceed the proof budget (`docs/storage.md`).
 - **Immutables are storage.** An immutable is read from storage, so outside the constructor
   it is unconstrained. Constants are inlined at their reads.
@@ -164,7 +164,7 @@ each one blocks (lower bounds: whole families are counted once where a report sa
 ## (e) The port, theme by theme
 
 solc themes (closing file / `open/` file). The counts record the porting snapshot; current
-functions and open reasons are listed in `keyext.solidity.examples/solc/README.md`.
+functions and open reasons are listed in `keyext.solidity.examples/semantics/README.md`.
 "Not ported" counts the upstream groups each report listed as outside the fragment or duplicated.
 
 | Theme | File | Closed | Open | Not-ported groups | Main reasons for open |

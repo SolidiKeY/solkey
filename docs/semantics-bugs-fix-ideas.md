@@ -108,5 +108,5 @@ function v() public payable { assert(msg.value >= 0); }          // SolKey: open
 
 ## Order of work
 
-1. Later: 5A plus 5D, with an example per call kind in `TestSuite.sol`.
+1. Later: 5A plus 5D, with an example per call kind in `taclets/`.
 2. Not now: 4, 6 and 10 (conversions, integer width, type ranges).

@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.stream.Stream;
 
 import org.key_project.solidity.proof.Proof;
+import org.key_project.solidity.testutil.ExampleDirs;
 import org.key_project.solidity.testutil.SolidityExampleTests;
 
 import org.junit.jupiter.api.Tag;
@@ -35,13 +36,14 @@ public class NetExamplesTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource("examples")
     void netExampleCloses(String name) throws Exception {
-        Path key = SolidityExampleTests.example("net/" + name);
+        Path key = SolidityExampleTests.example(ExampleDirs.NET_OBLIGATIONS + "/" + name);
         Proof proof = SolidityExampleTests.loadAndProve(key, 50000, 30000);
         assertTrue(proof.closed(), () -> SolidityExampleTests.describeOpenGoals(name, proof));
     }
 
     static Stream<Arguments> examples() throws IOException {
-        return SolidityExampleTests.keyFiles(SolidityExampleTests.examplesDir("net")).stream()
+        return SolidityExampleTests
+                .keyFiles(SolidityExampleTests.examplesDir(ExampleDirs.NET_OBLIGATIONS)).stream()
                 .map(p -> Arguments.of(p.getFileName().toString()));
     }
 

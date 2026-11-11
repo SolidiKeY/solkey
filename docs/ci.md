@@ -11,7 +11,7 @@ CI enforces three gates. **Two of them are off in a normal build**, so
 | Module tests | `Solidity / test` | `./gradlew :keyext.solidity.core:test` |
 
 The module tests include `SolcWrapperTest.exampleCompilesWithoutWarnings`: every `.sol` under
-`keyext.solidity.examples/` (except `illegal/` and `functionBody/`) must compile without a solc
+`keyext.solidity.examples/` (except `negative/illegal/`) must compile without a solc
 warning. Only the `transfer`/`send` deprecation is tolerated, since those are the constructs the
 prover models. `./run-key.sh FILE.sol --solc` prints the warnings.
 
@@ -26,8 +26,8 @@ the local gate stays fast, and the GUI module has its own job.
 
 | CI job | Local command | Content |
 |---|---|---|
-| `Solidity / examples` | `./gradlew :keyext.solidity.core:testSolidityExamples` | `RulesTest` (`.key` problems), `NetExamplesTest`, `SolcSemanticsExamplesTest`, `TacletCoverageTest`, the one-example showcases, the `solc/*.sol` half of `SolidityRuntimeExecutionTest` |
-| `Solidity / open-examples` | `./gradlew :keyext.solidity.core:testOpenExamples` | `OpenExamplesStayOpenTest`: every `solc/open/` and `real-world/open/` function stays open (a `// open: closes in KeY` one stays closed); `scripts/open-check.sh` is the fast CLI form |
+| `Solidity / examples` | `./gradlew :keyext.solidity.core:testSolidityExamples` | `RulesTest` (`.key` problems), `NetExamplesTest`, `SolcSemanticsExamplesTest`, `TacletCoverageTest`, the one-example showcases, the `semantics/*.sol` half of `SolidityRuntimeExecutionTest` |
+| `Solidity / open-examples` | `./gradlew :keyext.solidity.core:testOpenExamples` | `OpenExamplesStayOpenTest`: every `semantics/open/` and `contracts/real-world/open/` function stays open (a `// open: closes in KeY` one stays closed); `scripts/open-check.sh` is the fast CLI form |
 | `Solidity / rule-generalization` | `./gradlew :keyext.solidity.core:testRuleGeneralization` | `RuleGeneralizationTest` |
 | `Solidity / gui` | `./gradlew :keyext.solidity.gui:test` | the `keyext.solidity.gui` tests (headless) |
 

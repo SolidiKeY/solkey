@@ -4,14 +4,17 @@
 package org.key_project.solidity.testutil;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
@@ -66,7 +69,7 @@ public final class SolidityExampleTests {
     /// directories the suite may run from (the module dir or the repo root), and assert it exists.
     ///
     /// @param relativePath path relative to `keyext.solidity.examples/`, e.g.
-    /// `"contracts/Escrow.sol"`
+    /// `"contracts/solidikey/Escrow.sol"`
     public static Path example(String relativePath) {
         Path p = Path.of("keyext.solidity.examples").resolve(relativePath);
         Path resolved =
@@ -114,27 +117,48 @@ public final class SolidityExampleTests {
         }
     }
 
-    /// The single contract the taclet examples live in. It has no `.key` problems beside it: the
-    /// loader synthesizes one obligation per function.
-    public static Path testSuite() {
-        return example(TEST_SUITE_CONTRACT + ".sol");
+    /// The contract of the `taclets/` example declaring `function`. Each file there holds one
+    /// contract named after the file, and a provable function name is unique across them, so the
+    /// name alone identifies the example.
+    public static String tacletContract(String function) {
+        String contract = TacletIndex.CONTRACTS.get(function);
+        assertNotNull(contract, "no taclet example declares " + function);
+        return contract;
     }
 
-    public static final String TEST_SUITE_CONTRACT = "TestSuite";
+    public static Path tacletSource(String function) {
+        return example(ExampleDirs.TACLETS + "/" + tacletContract(function) + ".sol");
+    }
 
-    /// The functions of [#testSuite] an obligation can be generated for, matching `selector`, as
+    private static final class TacletIndex {
+        static final Map<String, String> CONTRACTS = build();
+
+        private static Map<String, String> build() {
+            Map<String, String> contracts = new HashMap<>();
+            try {
+                for (String contract : solContracts(ExampleDirs.TACLETS)) {
+                    Path file = example(ExampleDirs.TACLETS + "/" + contract + ".sol");
+                    for (String function : SolidityProblemSynthesizer.provableFunctions(file,
+                        contract)) {
+                        String previous = contracts.put(function, contract);
+                        assertTrue(previous == null,
+                            function + " is declared in both " + previous + " and " + contract);
+                    }
+                }
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+            return contracts;
+        }
+    }
+
+    /// The `taclets/` functions an obligation can be generated for, matching `selector`, as
     /// `(function)` arguments sorted by name. Enumerating beats a hand-maintained list: a new
     /// example is picked up automatically, and one cannot silently drop out of the suite.
-    public static Stream<Arguments> testSuiteFunctions(Predicate<String> selector)
-            throws IOException {
+    public static Stream<Arguments> tacletFunctions(Predicate<String> selector) {
         List<String> functions =
-            SolidityProblemSynthesizer.provableFunctions(testSuite(), TEST_SUITE_CONTRACT)
-                    .stream()
-                    .filter(selector)
-                    .sorted()
-                    .toList();
-        assertTrue(!functions.isEmpty(),
-            "no matching functions in " + testSuite().toAbsolutePath());
+            TacletIndex.CONTRACTS.keySet().stream().filter(selector).sorted().toList();
+        assertTrue(!functions.isEmpty(), "no matching functions in " + ExampleDirs.TACLETS);
         return functions.stream().map(Arguments::of);
     }
 
@@ -209,18 +233,18 @@ public final class SolidityExampleTests {
         return message.append('\n').append(proof.getStatistics()).toString();
     }
 
-    /// Load the obligation for one function of [#testSuite] and run automode on it.
-    public static Proof proveTestSuiteFunction(String function, int maxSteps, long timeout)
+    /// Load the obligation for one `taclets/` function and run automode on it.
+    public static Proof proveTacletFunction(String function, int maxSteps, long timeout)
             throws ProblemLoaderException {
-        return proveTestSuiteFunction(function, maxSteps, timeout, List.of());
+        return proveTacletFunction(function, maxSteps, timeout, List.of());
     }
 
-    /// Load the obligation for one function of [#testSuite] under the named taclet options
-    /// (each `category:choice`) and run automode on it.
-    public static Proof proveTestSuiteFunction(String function, int maxSteps, long timeout,
+    /// Load the obligation for one `taclets/` function under the named taclet options (each
+    /// `category:choice`) and run automode on it.
+    public static Proof proveTacletFunction(String function, int maxSteps, long timeout,
             List<String> choices) throws ProblemLoaderException {
-        KeYEnvironment<?> env = KeYEnvironment.load(testSuite(),
-            new SolidityProblemSpec(TEST_SUITE_CONTRACT, function, choices));
+        KeYEnvironment<?> env = KeYEnvironment.load(tacletSource(function),
+            new SolidityProblemSpec(tacletContract(function), function, choices));
         return prove(env, maxSteps, timeout);
     }
 

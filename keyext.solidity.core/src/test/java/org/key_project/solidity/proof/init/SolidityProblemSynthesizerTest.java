@@ -27,6 +27,7 @@ import org.key_project.solidity.program.parser.SolidityOutline;
 import org.key_project.solidity.program.parser.SoliditySources;
 import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.strategy.Strategy;
+import org.key_project.solidity.testutil.ExampleDirs;
 import org.key_project.solidity.testutil.SolidityExampleTests;
 
 import org.junit.jupiter.api.Test;
@@ -136,7 +137,7 @@ public class SolidityProblemSynthesizerTest {
 
     @Test
     void anAddressParameterIsDeclaredAsAnInt() throws IOException {
-        Path file = SolidityExampleTests.example("net/PiggyBankNet.sol");
+        Path file = SolidityExampleTests.example(ExampleDirs.NET + "/PiggyBankNet.sol");
 
         String text =
             SolidityProblemSynthesizer.problemText(file, spec("PiggyBankNet", "payToPlus"));
@@ -165,7 +166,7 @@ public class SolidityProblemSynthesizerTest {
 
     @Test
     void aConstructorStartsFromEmptyStorageAndAssumesNoInvariant() throws IOException {
-        Path file = SolidityExampleTests.example("contracts/Counter.sol");
+        Path file = SolidityExampleTests.example(ExampleDirs.SOLIDIKEY + "/Counter.sol");
 
         String text = SolidityProblemSynthesizer.problemText(file, spec("Counter", "constructor"));
 
@@ -206,29 +207,30 @@ public class SolidityProblemSynthesizerTest {
 
     @Test
     void anUnspecifiedFunctionKeepsThePlainObligation() throws IOException {
-        Path file = SolidityExampleTests.testSuite();
+        String function = "storagePushLengthPositive";
+        Path file = SolidityExampleTests.tacletSource(function);
+        String contract = SolidityExampleTests.tacletContract(function);
 
-        String text = SolidityProblemSynthesizer.problemText(file,
-            spec(SolidityExampleTests.TEST_SUITE_CONTRACT, "testSimpleAssert"));
+        String text = SolidityProblemSynthesizer.problemText(file, spec(contract, function));
 
         assertTrue(text.contains("\\find(lenInv(s))"), text);
         assertTrue(text.contains(
-            "conforms(fieldType(TestSuite$copyTargetDyn), "
-                + "selectSt<[Struct]>(s, TestSuite$copyTargetDyn))"),
+            "conforms(fieldType(%1$s$copyTargetDyn), selectSt<[Struct]>(s, %1$s$copyTargetDyn))"
+                    .formatted(contract)),
             text);
-        assertFalse(text.contains("conforms(fieldType(TestSuite$copySource9)"), text);
+        assertFalse(text.contains("conforms(fieldType(%s$copySource9)".formatted(contract)), text);
         assertTrue(text.endsWith("""
                 \\problem {
                     lenInv(storage) ->
-                    \\<{ testSimpleAssert()@%s; }\\>(true)
+                    \\<{ %s()@%s; }\\>(true)
                 }
-                """.formatted(SolidityExampleTests.TEST_SUITE_CONTRACT)), text);
+                """.formatted(function, contract)), text);
     }
 
     @Test
     void aConstructorStartsFromTheEmptyStorage()
             throws IOException {
-        Path file = SolidityExampleTests.example("contracts/FixedLengths.sol");
+        Path file = SolidityExampleTests.example(ExampleDirs.SOLIDIKEY + "/FixedLengths.sol");
 
         String text =
             SolidityProblemSynthesizer.problemText(file, spec("FixedLengths", "constructor"));
@@ -242,7 +244,7 @@ public class SolidityProblemSynthesizerTest {
 
     @Test
     void aSpecifiedFunctionGetsTheInvariantTacletAndTheLedgerObligation() throws IOException {
-        Path file = SolidityExampleTests.example("contracts/Escrow.sol");
+        Path file = SolidityExampleTests.example(ExampleDirs.SOLIDIKEY + "/Escrow.sol");
 
         String text = SolidityProblemSynthesizer.problemText(file, spec("Escrow", "placeInEscrow"));
 
@@ -295,7 +297,7 @@ public class SolidityProblemSynthesizerTest {
 
     @Test
     void oldAndQuantifiersDeclareWhatTheyNeed() throws IOException {
-        Path file = SolidityExampleTests.example("contracts/MultiAuction.sol");
+        Path file = SolidityExampleTests.example(ExampleDirs.SOLIDIKEY + "/MultiAuction.sol");
 
         String text = SolidityProblemSynthesizer.problemText(file,
             spec("MultiAuction", "placeOrIncreaseBid"));
@@ -336,10 +338,11 @@ public class SolidityProblemSynthesizerTest {
 
     @Test
     void anUnknownFunctionStillListsTheCandidates() {
-        Path file = SolidityExampleTests.testSuite();
+        Path file = SolidityExampleTests.tacletSource("testSimpleAssert");
+        String contract = SolidityExampleTests.tacletContract("testSimpleAssert");
 
-        var e = assertThrows(IllegalArgumentException.class, () -> SolidityProblemSynthesizer
-                .resolve(file, spec(SolidityExampleTests.TEST_SUITE_CONTRACT, "noSuchFunction")));
+        var e = assertThrows(IllegalArgumentException.class,
+            () -> SolidityProblemSynthesizer.resolve(file, spec(contract, "noSuchFunction")));
 
         assertTrue(e.getMessage().contains("has no public function noSuchFunction"),
             e.getMessage());
@@ -348,8 +351,8 @@ public class SolidityProblemSynthesizerTest {
 
     @Test
     void aProvableFunctionResolvesToItself() throws IOException {
-        Path file = SolidityExampleTests.testSuite();
-        String contract = SolidityExampleTests.TEST_SUITE_CONTRACT;
+        Path file = SolidityExampleTests.tacletSource("testSimpleAssert");
+        String contract = SolidityExampleTests.tacletContract("testSimpleAssert");
 
         assertEquals(spec(contract, "testSimpleAssert"),
             SolidityProblemSynthesizer.resolve(file, spec(contract, "testSimpleAssert")));
@@ -361,10 +364,10 @@ public class SolidityProblemSynthesizerTest {
     /// read, has to agree with the one that reads the file itself.
     @Test
     void theOutlineOverloadAgreesWithThePathOne(@TempDir Path dir) throws IOException {
-        Path file = SolidityExampleTests.testSuite();
+        Path file = SolidityExampleTests.tacletSource("testSimpleAssert");
         SolidityOutline outline = SolidityOutline.of(file);
         SolidityProblemSpec requested =
-            spec(SolidityExampleTests.TEST_SUITE_CONTRACT, "testSimpleAssert");
+            spec(SolidityExampleTests.tacletContract("testSimpleAssert"), "testSimpleAssert");
 
         assertEquals(SolidityProblemSynthesizer.resolve(file, requested),
             SolidityProblemSynthesizer.resolve(file, outline, requested));
@@ -881,13 +884,13 @@ public class SolidityProblemSynthesizerTest {
     }
 
     static Stream<Arguments> specifiedContractFunctions() throws IOException {
-        return SolidityExampleTests.contractFunctions("contracts");
+        return SolidityExampleTests.contractFunctions(ExampleDirs.SOLIDIKEY);
     }
 
     @ParameterizedTest(name = "{0}.{1}")
     @MethodSource("specifiedContractFunctions")
     void everyGeneratedProblemLoads(String contract, String function) {
-        Path file = SolidityExampleTests.example("contracts/" + contract + ".sol");
+        Path file = SolidityExampleTests.example(ExampleDirs.SOLIDIKEY + "/" + contract + ".sol");
 
         var outcome = SolidityVerifier.verify(file, spec(contract, function), 0, -1, 0);
 

@@ -2,7 +2,7 @@
 
 The examples use a breadth-first shape queue. Start with `uint`, then wrap each dequeued
 shape with `[2]` and `[]`. Enumerate both vectors and all four matrices before extending
-selected mixed matrices to depth three. Vector cases are already in `TestSuite.sol` and
+selected mixed matrices to depth three. Vector cases are already in `taclets/` and
 `ArrayCopyShapes.sol`; the new matrix/cube contracts contain 76 functions.
 
 Names list dimensions from outermost to innermost: `F` means fixed and `D` means dynamic.
@@ -55,10 +55,10 @@ dynamic row, and dynamic outer copies shrinking before a row is pushed again. Ex
 a key resets its fixed-array value and leaves other keys alone, while popping or deleting
 the containing mapping array preserves its mapping entries and fixed value lengths.
 
-`TestSuite.testPushIndexedPrimitiveSourceOnce` and
-`TestSuite.testPushIndexedFixedArraySourceOnce` check that an indexed source with `i++`
+`StorageArrays.testPushIndexedPrimitiveSourceOnce` and
+`StorageArrays.testPushIndexedFixedArraySourceOnce` check that an indexed source with `i++`
 is evaluated once before the push changes the destination length. The four former fixed-array
-reset cases have `TestSuite.testFixedShape*` regressions and functions in `FixedLengths`.
+reset cases have `StorageArrays.testFixedShape*` regressions and functions in `FixedLengths`.
 Default-value assertions without known tail data are checked to remain open.
 
 ## Semantic boundary
@@ -83,12 +83,12 @@ dangling-reference executions undefined.
 For each contract above:
 
 ```bash
-./run-key.sh keyext.solidity.examples/contracts/CONTRACT.sol -m 20000 -t 60000 --open-goals
-./run-key.sh keyext.solidity.examples/contracts/CONTRACT.sol --solc
+./run-key.sh keyext.solidity.examples/contracts/solidikey/CONTRACT.sol -m 20000 -t 60000 --open-goals
+./run-key.sh keyext.solidity.examples/contracts/solidikey/CONTRACT.sol --solc
 ```
 
 The existing `ContractExamplesTest` enumerates every function of these files. The compiler
-warning gate also enumerates the files. `TestSuite` regressions run through the normal proof
+warning gate also enumerates the files. `taclets/` regressions run through the normal proof
 and EVM test suites, and `OpenExamplesStayOpenTest` guards the compiler-specific dangling-reference witnesses.
 This is bounded coverage through all depth-two shapes and two representative depth-three
 shapes, not exhaustive coverage of arbitrary nesting or operation sequences.

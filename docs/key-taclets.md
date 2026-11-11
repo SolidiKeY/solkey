@@ -169,14 +169,14 @@ location.
 
 ## Examples and Verification
 
-Add runnable taclet examples as functions of:
+Add runnable taclet examples as functions of the file of their theme in:
 
 ```text
-keyext.solidity.examples/TestSuite.sol
+keyext.solidity.examples/taclets/
 ```
 
 There are no `.key` problem files — the loader synthesizes the obligation
-`\<{ f()@TestSuite; }\>(true)` for each function, so the specification is written in the body.
+`\<{ f()@C; }\>(true)` for each function `f` of contract `C`, so the specification is written in the body.
 Use small examples that force the new rule, for example:
 
 ```solidity
@@ -189,7 +189,7 @@ function storageRootReadWrite() public {
 
 An example that needs an assumption states it with `require` and is tagged `/// @custom:key
 box`, which makes `require` an assumption instead of an obligation. Full conventions:
-`keyext.solidity.examples/README.md`.
+`keyext.solidity.examples/taclets/README.md`.
 
 ## `\addprogvars` — common mistake
 
@@ -204,8 +204,8 @@ belongs only on the rules that consume the declaration statement itself:
 Verify individual examples with the Solidity CLI:
 
 ```bash
-./run-key.sh keyext.solidity.examples/TestSuite.sol <function>
-./run-key.sh keyext.solidity.examples/TestSuite.sol -f <function> --why  # then --open-goals
+./run-key.sh keyext.solidity.examples/taclets/FILE.sol <function>
+./run-key.sh keyext.solidity.examples/taclets/FILE.sol -f <function> --why  # then --open-goals
 ```
 
 To read an existing rule without opening the whole file, use

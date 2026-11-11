@@ -11,10 +11,13 @@ import java.util.List;
 import java.util.Optional;
 
 import org.key_project.solidity.program.parser.SolidityOutline.Span;
+import org.key_project.solidity.testutil.ExampleDirs;
 import org.key_project.solidity.testutil.SolidityExampleTests;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -25,19 +28,27 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /// the GUI's function picker renders.
 public class SolidityOutlineTest {
 
+    static List<String> tacletContracts() throws IOException {
+        return SolidityExampleTests.solContracts(ExampleDirs.TACLETS);
+    }
+
+    private static java.nio.file.Path tacletFile(String contract) {
+        return SolidityExampleTests.example(ExampleDirs.TACLETS + "/" + contract + ".sol");
+    }
+
     private static byte[] bytesOf(java.nio.file.Path file) throws IOException {
         return Files.readAllBytes(file);
     }
 
-    /// Every function of the example suite slices back to its own declaration. solc reports byte
-    /// offsets, and `TestSuite.sol` has non-ASCII section markers in its comments, so slicing the
-    /// file as a `String` drifts by one character per marker passed.
-    @Test
-    void everyFunctionSlicesBackToItsDeclaration() throws IOException {
-        var file = SolidityExampleTests.testSuite();
+    /// Every function of the taclet examples slices back to its own declaration. solc reports
+    /// byte offsets, and the `taclets/` files have non-ASCII section markers in their comments,
+    /// so slicing a file as a `String` drifts by one character per marker passed.
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("tacletContracts")
+    void everyFunctionSlicesBackToItsDeclaration(String name) throws IOException {
+        var file = tacletFile(name);
         byte[] source = bytesOf(file);
-        var contract = SolidityOutline.of(file)
-                .contract(SolidityExampleTests.TEST_SUITE_CONTRACT).orElseThrow();
+        var contract = SolidityOutline.of(file).contract(name).orElseThrow();
         assertFalse(contract.functions().isEmpty());
 
         for (var function : contract.functions()) {
@@ -54,10 +65,11 @@ public class SolidityOutlineTest {
     /// box or the diamond modality, so it has to be visible next to the code it applies to.
     @Test
     void spanCoversTheNatspecDirective() throws IOException {
-        var file = SolidityExampleTests.testSuite();
+        var file = SolidityExampleTests.tacletSource("additionStorageWrite");
         byte[] source = bytesOf(file);
         var function = SolidityOutline.of(file)
-                .contract(SolidityExampleTests.TEST_SUITE_CONTRACT).orElseThrow()
+                .contract(SolidityExampleTests.tacletContract("additionStorageWrite"))
+                .orElseThrow()
                 .function("additionStorageWrite").orElseThrow();
 
         String text = function.source().textIn(source);
@@ -65,10 +77,10 @@ public class SolidityOutlineTest {
         assertTrue(text.contains("function additionStorageWrite("), text);
     }
 
-    @Test
-    void provableFunctionsReportNoReason() throws IOException {
-        var contract = SolidityOutline.of(SolidityExampleTests.testSuite())
-                .contract(SolidityExampleTests.TEST_SUITE_CONTRACT).orElseThrow();
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("tacletContracts")
+    void provableFunctionsReportNoReason(String name) throws IOException {
+        var contract = SolidityOutline.of(tacletFile(name)).contract(name).orElseThrow();
         for (var function : contract.functions()) {
             assertEquals(function.unsupportedReason().isEmpty(), function.isProvable(),
                 function.name() + " disagrees about being provable");
@@ -109,8 +121,9 @@ public class SolidityOutlineTest {
 
     @Test
     void theOutlineRecordsWhatSpecificationsNeed() throws IOException {
-        var contract = SolidityOutline.of(SolidityExampleTests.example("contracts/Escrow.sol"))
-                .contract("Escrow").orElseThrow();
+        var contract =
+            SolidityOutline.of(SolidityExampleTests.example(ExampleDirs.SOLIDIKEY + "/Escrow.sol"))
+                    .contract("Escrow").orElseThrow();
 
         assertTrue(contract.documentation().contains("@custom:key invariant sender != receiver"),
             contract.documentation());

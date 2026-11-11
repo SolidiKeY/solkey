@@ -14,6 +14,7 @@ import org.key_project.solidity.CLI;
 import org.key_project.solidity.program.parser.NativeSolcCompiler;
 import org.key_project.solidity.program.parser.SolcWrapper;
 import org.key_project.solidity.program.parser.WasmSolcCompiler;
+import org.key_project.solidity.testutil.ExampleDirs;
 import org.key_project.solidity.testutil.SolidityExampleTests;
 
 import org.junit.jupiter.api.Assertions;
@@ -52,7 +53,8 @@ public class SolcWrapperTest {
         var nativeSolc = NativeSolcCompiler.find();
         assumeTrue(nativeSolc.isPresent(), "no native solc of the pinned version");
         String input = standardJsonAstInput(
-            Files.readString(SolidityExampleTests.example("contracts/ArrayMatrixDD.sol")));
+            Files.readString(
+                SolidityExampleTests.example(ExampleDirs.SOLIDIKEY + "/ArrayMatrixDD.sol")));
         assertEquals(astOf(WasmSolcCompiler.get().compile(input)),
             astOf(nativeSolc.get().compile(input)));
         assertTrue(nativeSolc.get().version().startsWith(
@@ -154,7 +156,8 @@ public class SolcWrapperTest {
             "Contract initcode size is");
 
     private static final List<String> FAITHFUL_PORT_DIRECTORIES =
-        List.of("solc/", "real-world/", "real-world-plain/");
+        List.of(ExampleDirs.SEMANTICS + "/", ExampleDirs.REAL_WORLD + "/",
+            ExampleDirs.REAL_WORLD_PLAIN + "/");
 
     private static final List<String> TOLERATED_IN_FAITHFUL_PORTS =
         List.of("Unreachable code", "Virtual modifiers are deprecated", "This declaration shadows",
@@ -187,7 +190,7 @@ public class SolcWrapperTest {
             List<Arguments> contracts = files
                     .filter(p -> p.getFileName().toString().endsWith(".sol"))
                     .map(p -> dir.relativize(p).toString().replace('\\', '/'))
-                    .filter(p -> !p.startsWith("illegal/"))
+                    .filter(p -> !p.startsWith(ExampleDirs.ILLEGAL + "/"))
                     .sorted()
                     .map(p -> Arguments.of(p, dir.resolve(p)))
                     .toList();

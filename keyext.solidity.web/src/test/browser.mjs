@@ -279,7 +279,7 @@ async function desktop() {
   await listed(page, 2);
   check(`choosing a contract lists its functions: ${await functions(page)}`, (await functions(page)).join() === 'two,three');
 
-  await page.selectOption('#example', 'examples/contracts/PiggyBank.sol');
+  await page.selectOption('#example', 'examples/contracts/solidikey/PiggyBank.sol');
   await page.waitForFunction(() => !document.getElementById('invariants').hidden, null, { timeout: 120000 });
   const spec = await page.textContent('tr[data-fn="addMoney"] .spec');
   check(`specifications are shown: ${spec.slice(0, 60)}…`, /requires/.test(spec) && /ensures/.test(spec)
@@ -304,7 +304,7 @@ async function desktop() {
   check('the contract is restored after a reload', (await editorText(page)).includes('contract Simple'));
   check('the divider position is restored after a reload', Math.abs(await widthOf(page, 'section.editor') - editorWidth) < 2);
 
-  await page.selectOption('#example', 'examples/TestSuite.sol');
+  await page.selectOption('#example', 'examples/taclets/StorageArrays.sol');
   await page.waitForFunction(() => document.querySelectorAll('#functions tbody tr[data-fn]').length > 100, null, { timeout: 180000 });
   await setOption(page, 'workers', '3');
   await page.click('#verify');

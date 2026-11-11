@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Prove every contract of keyext.solidity.examples/benchmark/ and print one line per contract.
+# Prove every contract of keyext.solidity.examples/contracts/benchmark/ and print one line per contract.
 #
 # Usage: scripts/benchmark.sh [FILE.sol ...]
 #
@@ -10,7 +10,8 @@ set -u
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RUN_KEY="$SCRIPT_DIR/../run-key.sh"
-BENCH_DIR="$SCRIPT_DIR/../keyext.solidity.examples/benchmark"
+. "$SCRIPT_DIR/examples-dirs.sh"
+BENCH_DIR="$BENCHMARK_DIR"
 
 total_closed=0
 total_obligations=0

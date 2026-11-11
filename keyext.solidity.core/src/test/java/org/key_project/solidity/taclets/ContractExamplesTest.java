@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.init.SolidityProblemSynthesizer;
+import org.key_project.solidity.testutil.ExampleDirs;
 import org.key_project.solidity.testutil.SolidityExampleTests;
 
 import org.junit.jupiter.api.Tag;
@@ -22,10 +23,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
-/// Checks the contracts of `keyext.solidity.examples/contracts/`, the solidiKeY example
+/// Checks the contracts of `keyext.solidity.examples/contracts/solidikey/`, the solidiKeY example
 /// contracts with their specification carried in `@custom:key` natspec tags, and of
-/// `keyext.solidity.examples/real-world/`, published contracts specified the same way, and of
-/// `real-world-plain/`, the same programs with only their own `require`s and `assert`s.
+/// `contracts/real-world/`, published contracts specified the same way, and of
+/// `contracts/real-world-plain/`, the same programs with only their own `require`s and `assert`s.
 ///
 /// Every `.sol` in the directories is enumerated and every function an obligation can be
 /// generated for is checked, so a new contract joins the suite by being written — the contract
@@ -39,90 +40,91 @@ import static org.junit.jupiter.api.Assumptions.assumeFalse;
 public class ContractExamplesTest {
 
     private static final List<String> DIRECTORIES =
-        List.of("contracts", "real-world", "real-world-plain",
-            "real-world-plain/open", "real-world-plain/solidikey");
+        List.of(ExampleDirs.SOLIDIKEY, ExampleDirs.REAL_WORLD, ExampleDirs.REAL_WORLD_PLAIN,
+            ExampleDirs.REAL_WORLD_PLAIN_OPEN, ExampleDirs.REAL_WORLD_PLAIN_SOLIDIKEY);
 
     private static final Set<String> KNOWN_OPEN = Set.of(
-        "contracts/MultiAuction.placeOrIncreaseBid",
-        "contracts/MultiAuction.withdraw",
-        "contracts/MultiAuction.myTest",
-        "contracts/ArrayCopyShapes.fixedToDynamicCopyTakesSourceLength",
-        "contracts/ArrayCubeDFD.popPushAtDepth1ResetsRemovedElement",
-        "contracts/ArrayCubeDFD.popPushAtDepth3ResetsRemovedElement",
-        "contracts/ArrayCubeDFD.pushReturnAliasSharesWrites",
-        "contracts/ArrayCubeDFD.storageAssignmentCopiesDeeply",
-        "contracts/ArrayMatrixConversions.dynamicDynamicShrinkClearsReusedRow",
-        "contracts/ArrayMatrixConversions.fixedRowsToDynamicInner",
-        "contracts/ArrayMatrixDD.popPushAtDepth2ResetsRemovedElement",
-        "contracts/ArrayMatrixDD.pushReturnAliasSharesWrites",
-        "contracts/ArrayMatrixDF.pushReturnAliasSharesWrites",
-        "contracts/FixedLengths.emptyPushFixedElementReadsZero",
-        "contracts/FixedLengths.emptyPushReadsZero",
-        "contracts/FixedLengths.fixedCopyIsIndependent",
-        "real-world-plain/Account.withdraw",
-        "real-world-plain/ArrayRemoveByShifting.remove",
-        "real-world-plain/ArrayReplaceFromEnd.remove",
-        "real-world-plain/DocsBallot.giveRightToVote",
-        "real-world-plain/DocsBallot.delegate",
-        "real-world-plain/DocsBallot.vote",
-        "real-world-plain/DocsBallot.winningProposal",
-        "real-world-plain/DocsBallot.winnerName",
-        "real-world-plain/EtherGame.deposit",
-        "real-world-plain/EtherGame.claimReward",
-        "real-world-plain/EtherStore.withdraw",
-        "real-world-plain/EtherWallet.withdraw",
-        "real-world-plain/FunctionModifier.changeOwner",
-        "real-world-plain/FunctionModifier.decrement",
-        "real-world-plain/IterableMapping.getKeyAtIndex",
-        "real-world-plain/IterableMapping.removeFromMapping",
-        "real-world-plain/KingOfEther.claimThrone",
-        "real-world-plain/KingOfEther.withdraw",
-        "real-world-plain/Ownable.constructor",
-        "real-world-plain/Ownable.renounceOwnership",
-        "real-world-plain/Ownable.transferOwnership",
-        "real-world-plain/OZCounters.decrement",
-        "real-world-plain/OZMath.ceilDiv",
-        "real-world-plain/OZNonces.useCheckedNonce",
-        "real-world-plain/OZOwnable2Step.constructor",
-        "real-world-plain/OZOwnable2Step.renounceOwnership",
-        "real-world-plain/OZOwnable2Step.transferOwnership",
-        "real-world-plain/OZOwnable2Step.acceptOwnership",
-        "real-world-plain/OZPausable.normalProcess",
-        "real-world-plain/OZPausable.drasticMeasure",
-        "real-world-plain/OZPausable.pause",
-        "real-world-plain/OZPausable.unpause",
-        "real-world-plain/OZReentrancyGuard.callback",
-        "real-world-plain/OZReentrancyGuard.countLocalRecursive",
-        "real-world-plain/OZReentrancyGuard.guardedCheckEntered",
-        "real-world-plain/OZReentrancyGuard.unguardedCheckNotEntered",
-        "real-world-plain/Purchase.constructor",
-        "real-world-plain/Purchase.abort",
-        "real-world-plain/Purchase.confirmPurchase",
-        "real-world-plain/Purchase.confirmReceived",
-        "real-world-plain/Purchase.refundSeller",
-        "real-world-plain/SendEther.sendViaTransfer",
-        "real-world-plain/SendEther.sendViaSend",
-        "real-world-plain/SendEther.sendViaCall",
-        "real-world-plain/SimpleAuction.bid",
-        "real-world-plain/SimpleAuction.auctionEnd",
-        "real-world-plain/SolmateOwned.setOwner",
-        "real-world-plain/TimeLock.withdraw",
-        "real-world-plain/WETH9.withdraw",
-        "real-world-plain/WETH9.transferFrom",
-        "real-world-plain/open/ArrayRemoveByShifting.remove",
-        "real-world-plain/open/DocsBallot.winningProposal",
-        "real-world-plain/open/DocsBallot.winnerName",
-        "real-world-plain/solidikey/Escrow.constructor",
-        "real-world-plain/solidikey/Escrow.placeInEscrow",
-        "real-world-plain/solidikey/Escrow.releaseEscrow",
-        "real-world-plain/solidikey/Escrow.withdrawFromEscrow",
-        "real-world-plain/solidikey/MultiAuction.placeOrIncreaseBid",
-        "real-world-plain/solidikey/MultiAuction.withdraw",
-        "real-world-plain/solidikey/MultiAuction.closeAuction",
-        "real-world-plain/solidikey/PiggyBank.addMoney",
-        "real-world-plain/solidikey/PiggyBank.breakPiggyBank");
+        "contracts/solidikey/MultiAuction.placeOrIncreaseBid",
+        "contracts/solidikey/MultiAuction.withdraw",
+        "contracts/solidikey/MultiAuction.myTest",
+        "contracts/solidikey/ArrayCopyShapes.fixedToDynamicCopyTakesSourceLength",
+        "contracts/solidikey/ArrayCubeDFD.popPushAtDepth1ResetsRemovedElement",
+        "contracts/solidikey/ArrayCubeDFD.popPushAtDepth3ResetsRemovedElement",
+        "contracts/solidikey/ArrayCubeDFD.pushReturnAliasSharesWrites",
+        "contracts/solidikey/ArrayCubeDFD.storageAssignmentCopiesDeeply",
+        "contracts/solidikey/ArrayMatrixConversions.dynamicDynamicShrinkClearsReusedRow",
+        "contracts/solidikey/ArrayMatrixConversions.fixedRowsToDynamicInner",
+        "contracts/solidikey/ArrayMatrixDD.popPushAtDepth2ResetsRemovedElement",
+        "contracts/solidikey/ArrayMatrixDD.pushReturnAliasSharesWrites",
+        "contracts/solidikey/ArrayMatrixDF.pushReturnAliasSharesWrites",
+        "contracts/solidikey/FixedLengths.emptyPushFixedElementReadsZero",
+        "contracts/solidikey/FixedLengths.emptyPushReadsZero",
+        "contracts/solidikey/FixedLengths.fixedCopyIsIndependent",
+        "contracts/real-world-plain/Account.withdraw",
+        "contracts/real-world-plain/ArrayRemoveByShifting.remove",
+        "contracts/real-world-plain/ArrayReplaceFromEnd.remove",
+        "contracts/real-world-plain/DocsBallot.giveRightToVote",
+        "contracts/real-world-plain/DocsBallot.delegate",
+        "contracts/real-world-plain/DocsBallot.vote",
+        "contracts/real-world-plain/DocsBallot.winningProposal",
+        "contracts/real-world-plain/DocsBallot.winnerName",
+        "contracts/real-world-plain/EtherGame.deposit",
+        "contracts/real-world-plain/EtherGame.claimReward",
+        "contracts/real-world-plain/EtherStore.withdraw",
+        "contracts/real-world-plain/EtherWallet.withdraw",
+        "contracts/real-world-plain/FunctionModifier.changeOwner",
+        "contracts/real-world-plain/FunctionModifier.decrement",
+        "contracts/real-world-plain/IterableMapping.getKeyAtIndex",
+        "contracts/real-world-plain/IterableMapping.removeFromMapping",
+        "contracts/real-world-plain/KingOfEther.claimThrone",
+        "contracts/real-world-plain/KingOfEther.withdraw",
+        "contracts/real-world-plain/Ownable.constructor",
+        "contracts/real-world-plain/Ownable.renounceOwnership",
+        "contracts/real-world-plain/Ownable.transferOwnership",
+        "contracts/real-world-plain/OZCounters.decrement",
+        "contracts/real-world-plain/OZMath.ceilDiv",
+        "contracts/real-world-plain/OZNonces.useCheckedNonce",
+        "contracts/real-world-plain/OZOwnable2Step.constructor",
+        "contracts/real-world-plain/OZOwnable2Step.renounceOwnership",
+        "contracts/real-world-plain/OZOwnable2Step.transferOwnership",
+        "contracts/real-world-plain/OZOwnable2Step.acceptOwnership",
+        "contracts/real-world-plain/OZPausable.normalProcess",
+        "contracts/real-world-plain/OZPausable.drasticMeasure",
+        "contracts/real-world-plain/OZPausable.pause",
+        "contracts/real-world-plain/OZPausable.unpause",
+        "contracts/real-world-plain/OZReentrancyGuard.callback",
+        "contracts/real-world-plain/OZReentrancyGuard.countLocalRecursive",
+        "contracts/real-world-plain/OZReentrancyGuard.guardedCheckEntered",
+        "contracts/real-world-plain/OZReentrancyGuard.unguardedCheckNotEntered",
+        "contracts/real-world-plain/Purchase.constructor",
+        "contracts/real-world-plain/Purchase.abort",
+        "contracts/real-world-plain/Purchase.confirmPurchase",
+        "contracts/real-world-plain/Purchase.confirmReceived",
+        "contracts/real-world-plain/Purchase.refundSeller",
+        "contracts/real-world-plain/SendEther.sendViaTransfer",
+        "contracts/real-world-plain/SendEther.sendViaSend",
+        "contracts/real-world-plain/SendEther.sendViaCall",
+        "contracts/real-world-plain/SimpleAuction.bid",
+        "contracts/real-world-plain/SimpleAuction.auctionEnd",
+        "contracts/real-world-plain/SolmateOwned.setOwner",
+        "contracts/real-world-plain/TimeLock.withdraw",
+        "contracts/real-world-plain/WETH9.withdraw",
+        "contracts/real-world-plain/WETH9.transferFrom",
+        "contracts/real-world-plain/open/ArrayRemoveByShifting.remove",
+        "contracts/real-world-plain/open/DocsBallot.winningProposal",
+        "contracts/real-world-plain/open/DocsBallot.winnerName",
+        "contracts/real-world-plain/solidikey/Escrow.constructor",
+        "contracts/real-world-plain/solidikey/Escrow.placeInEscrow",
+        "contracts/real-world-plain/solidikey/Escrow.releaseEscrow",
+        "contracts/real-world-plain/solidikey/Escrow.withdrawFromEscrow",
+        "contracts/real-world-plain/solidikey/MultiAuction.placeOrIncreaseBid",
+        "contracts/real-world-plain/solidikey/MultiAuction.withdraw",
+        "contracts/real-world-plain/solidikey/MultiAuction.closeAuction",
+        "contracts/real-world-plain/solidikey/PiggyBank.addMoney",
+        "contracts/real-world-plain/solidikey/PiggyBank.breakPiggyBank");
 
-    private static final Set<String> TOO_SLOW = Set.of("real-world-plain/DocsBallot.delegate");
+    private static final Set<String> TOO_SLOW =
+        Set.of("contracts/real-world-plain/DocsBallot.delegate");
 
     @ParameterizedTest(name = "{0}/{1}.{2}")
     @MethodSource("examples")

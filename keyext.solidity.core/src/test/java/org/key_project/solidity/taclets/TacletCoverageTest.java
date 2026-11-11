@@ -27,6 +27,7 @@ import org.key_project.solidity.proof.Goal;
 import org.key_project.solidity.proof.Proof;
 import org.key_project.solidity.proof.io.ProofSaver;
 import org.key_project.solidity.rule.TacletApp;
+import org.key_project.solidity.testutil.ExampleDirs;
 import org.key_project.solidity.testutil.SolidityExampleTests;
 
 import org.jspecify.annotations.Nullable;
@@ -40,11 +41,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /// Every taclet of the Solidity rule files must be applied by some example: a function of
-/// `keyext.solidity.examples/TestSuite.sol` proved in automode, or a saved proof in
-/// `keyext.solidity.examples/proofs/` for the taclets no TestSuite proof reaches.
+/// `keyext.solidity.examples/taclets/` proved in automode, or a saved proof in
+/// `keyext.solidity.examples/coverage/` for the taclets no `taclets/` proof reaches.
 ///
-/// Each `proofs/NAME.key` is a problem whose proof applies the taclet `NAME`: a logic lemma for
-/// the taclets the Solidity calculus never produces a term for, or a TestSuite obligation where
+/// Each `coverage/NAME.key` is a problem whose proof applies the taclet `NAME`: a logic lemma for
+/// the taclets the Solidity calculus never produces a term for, or a `taclets/` obligation where
 /// automode prefers a competing rule. Its `NAME.proof` beside it is replayed here. Regenerate
 /// the proofs with `-Dorg.key_project.solidity.taclets.TacletCoverageTest.update=true`: each
 /// problem is proved in automode one step at a time, applying `NAME` as soon as it is
@@ -73,7 +74,7 @@ public class TacletCoverageTest {
 
     private static final int MAX_STEPS = 10000;
 
-    private static final String PROOFS_DIR = "proofs";
+    private static final String PROOFS_DIR = ExampleDirs.COVERAGE;
 
     private static final String UPDATE_PROPERTY =
         "org.key_project.solidity.taclets.TacletCoverageTest.update";
@@ -90,12 +91,12 @@ public class TacletCoverageTest {
             }
         }
         List<String> functions = SolidityExampleTests
-                .testSuiteFunctions(name -> !name.startsWith("unprovable"))
+                .tacletFunctions(name -> !name.startsWith("unprovable"))
                 .map(arguments -> (String) arguments.get()[0]).toList();
         Set<String> optionGuarded = new HashSet<>();
         List<String> optionDependent = new ArrayList<>();
         for (String function : functions) {
-            Proof proof = SolidityExampleTests.proveTestSuiteFunction(function, MAX_STEPS,
+            Proof proof = SolidityExampleTests.proveTacletFunction(function, MAX_STEPS,
                 SolidityExampleTests.KEEP_TIMEOUT);
             if (loadedTaclets.isEmpty()) {
                 for (Taclet taclet : proof.getInitConfig().getTaclets()) {
@@ -113,7 +114,7 @@ public class TacletCoverageTest {
         }
         for (String function : optionDependent) {
             applied.addAll(SolidityExampleTests.appliedRuleNames(
-                SolidityExampleTests.proveTestSuiteFunction(function, MAX_STEPS,
+                SolidityExampleTests.proveTacletFunction(function, MAX_STEPS,
                     SolidityExampleTests.KEEP_TIMEOUT, ALTERNATIVE_CHOICES)));
         }
         for (Path problem : savedProofProblems()) {
@@ -140,7 +141,7 @@ public class TacletCoverageTest {
                 .sorted()
                 .toList();
         assertEquals(List.of(), uncovered,
-            "Solidity taclets no TestSuite.sol function or saved proof applies");
+            "Solidity taclets no taclets/ function or saved proof applies");
     }
 
     @Test

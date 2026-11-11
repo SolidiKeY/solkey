@@ -28,8 +28,8 @@ SPOOL="${SOLKEY_SPOOL:-${TMPDIR:-/tmp}/solkey-server-$(id -u)-$(printf %s "$SCRI
 
 if [ $# -eq 0 ]; then
     echo "Usage: $0 <file.key|file.sol> [function] [CLI options...]"
-    echo "Example: $0 keyext.solidity.examples/TestSuite.sol testSimpleAssert"
-    echo "         $0 keyext.solidity.examples/TestSuite.sol -f testSimpleAssert --open-goals"
+    echo "Example: $0 keyext.solidity.examples/taclets/RequireAssert.sol testSimpleAssert"
+    echo "         $0 keyext.solidity.examples/taclets/RequireAssert.sol -f testSimpleAssert --open-goals"
     exit 1
 fi
 

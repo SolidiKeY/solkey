@@ -3,8 +3,9 @@
 #
 # Usage: scripts/open-check.sh [-j JOBS] [FILE.sol ...]
 #
-# Defaults to keyext.solidity.examples/solc/open/*.sol and real-world/open/*.sol. Proves with the
-# budget of OpenExamplesStayOpenTest (50000 steps, 30 s), the CLI form of the same CI check.
+# Defaults to keyext.solidity.examples/semantics/open/*.sol and contracts/real-world/open/*.sol.
+# Proves with the budget of OpenExamplesStayOpenTest (50000 steps, 30 s), the CLI form of the
+# same CI check.
 # A function whose `// open:` line says "closes in KeY" is a known closer (a proves-false witness
 # or a true claim kept out for another reason); every other function is expected to stay open.
 #
@@ -17,11 +18,11 @@ set -u
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RUN_KEY="$SCRIPT_DIR/../run-key.sh"
-EXAMPLES="$SCRIPT_DIR/../keyext.solidity.examples"
+. "$SCRIPT_DIR/examples-dirs.sh"
 
 jobs=3
 if [ "${1:-}" = "-j" ]; then jobs="$2"; shift 2; fi
-if [ $# -gt 0 ]; then files=("$@"); else files=("$EXAMPLES"/solc/open/*.sol "$EXAMPLES"/real-world/open/*.sol); fi
+if [ $# -gt 0 ]; then files=("$@"); else files=("$SEMANTICS_OPEN_DIR"/*.sol "$REAL_WORLD_OPEN_DIR"/*.sol); fi
 
 "$RUN_KEY" --help >/dev/null 2>&1
 

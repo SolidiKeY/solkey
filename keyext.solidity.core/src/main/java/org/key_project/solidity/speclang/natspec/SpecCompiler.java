@@ -24,8 +24,9 @@ import org.key_project.solidity.theory.StructLDT;
 import org.jspecify.annotations.Nullable;
 
 /// Compiles a specification expression into a [KeyFormula] over the `storage` and
-/// `net` structs, the way the hand-written problems in `keyext.solidity.examples/net/` spell it:
-/// a state variable `x` is `find<[int]>(S, cons1(C$x))`, a mapping entry `m[k]` is
+/// `net` structs, the way the hand-written problems in
+/// `keyext.solidity.examples/net/obligations/` spell it: a state variable `x` is
+/// `find<[int]>(S, cons1(C$x))`, a mapping entry `m[k]` is
 /// `find<[int]>(S, cons2(C$m, at(k)))`, `net(a)` is `selectSt<[int]>(N, at(a))`, `msg.sender`
 /// and `msg.value` are the `msgSender` and `msgValue` program variables, `address(this)` is
 /// `self`.

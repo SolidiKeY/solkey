@@ -2,14 +2,14 @@
 
 What is runnable today vs. pending. Rules live in
 `keyext.solidity.core/src/main/resources/org/key_project/solidity/proof/rules/solidityProgramRules.key`
-(loaded via `standardSolidityRules.key`). Runnable examples are the functions of the single
-contract `keyext.solidity.examples/TestSuite.sol` — the focused, one-rule-each ones run in
+(loaded via `standardSolidityRules.key`). Runnable examples are the functions of the
+contracts in `keyext.solidity.examples/taclets/`, one file per theme — the focused, one-rule-each ones run in
 `TacletStarterExamplesTest`, the end-to-end `test*` ones in `PaperTestExamplesTest`. There are
 no `.key` problem files: the loader synthesizes one obligation per function,
 
 ```
-\programSource "<abs path>/TestSuite.sol";
-\problem { \<{ storageFieldWriteRead()@TestSuite; }\>(true) }
+\programSource "<abs path>/taclets/Storage.sol";
+\problem { \<{ storageFieldWriteRead()@Storage; }\>(true) }
 ```
 
 (a function with parameters additionally gets a `\programVariables` block declaring one
@@ -19,8 +19,9 @@ box-tagged and assumes its argument values with `require`)
 so the specification lives in the body as `assert`, and every test program is real Solidity
 that `solc` parses and type-checks. `TacletCoverageTest` checks that every taclet of the Solidity
 rule files is applied by one of these functions or by a saved proof in
-`keyext.solidity.examples/proofs/`. Authoring conventions, the `/// @custom:key` directives and
-the `proofs/` directory are described in `keyext.solidity.examples/README.md`. See "Function-body inlining" below for the shape
+`keyext.solidity.examples/coverage/`. Authoring conventions and the `/// @custom:key` directives
+are described in `keyext.solidity.examples/taclets/README.md`, the saved proofs in
+`coverage/README.md`. See "Function-body inlining" below for the shape
 constraints this imposes.
 
 - Authoring syntax → `key-taclets.md`
@@ -150,7 +151,7 @@ Notes that are not derivable from the rule names:
   selector-split defaults. The sizes are static for a fixed-size target (its type), a dynamic one takes the
   source's (`d2 = d1` with `uint[9] d1` gives `d2.length == 9`, the source read at its sort
   `int[9]`), see `docs/storage.md` 8c.
-  `contracts/ArrayCopyShapes.sol` checks both dimensions of a shorter nested fixed-array
+  `contracts/solidikey/ArrayCopyShapes.sol` checks both dimensions of a shorter nested fixed-array
   copy, dynamic tail reuse, struct members, source independence, and self-copy through a
   storage alias. `docs/array-copy-shapes.md` proposes a structural-induction proof against
   solc 0.8.34's generated copy/reset helpers and states the aliasing and clean-tail premises.
@@ -259,7 +260,7 @@ are gone — a non-simple write target is now served by the per-statement RHS
 captures (§Capture partition below), which also cover nested RHS like
 `total = x + y*z;`. Uses plain LDT ops (`sub`, `mul`, `div`, `mod`, `pow`,
 `neg`) over unbounded mathematical integers — overflow is not modeled
-(`keyext.solidity.examples/unprovable/Unprovable.sol` documents the divergence
+(`keyext.solidity.examples/negative/unprovable/Unprovable.sol` documents the divergence
 from the EVM's checked arithmetic); `/` and `%` revert on a zero denominator.
 - Arithmetic: `-`, `*`, `**` (`pow`), `/`, `%` — listed under `// generalization:`
   comments (`docs/rule-generalizations.md`).
@@ -332,7 +333,7 @@ from the EVM's checked arithmetic); `/` and `%` revert on a zero denominator.
   General `&` and `^` execution and arithmetic shifts are supported as described above.
   Overflow is not modeled: integers are unbounded, and examples that depend on
   the EVM's checked-arithmetic revert live in
-  `keyext.solidity.examples/unprovable/`.
+  `keyext.solidity.examples/negative/unprovable/`.
 
 ### Storage aliases
 `storageLocalDeclInitDrop` (decl-with-init decomposition) followed by
@@ -352,13 +353,13 @@ Nothing beyond the index families above was needed for the weirder mapping shape
 nested mappings, arrays of mappings, mappings of structs that themselves carry a mapping,
 mappings of arrays, storage pointers into a mapping or into one nested row, keys read out of
 another mapping, and keys or values crossing the memory border found no rule missing: every one
-closes. `TestSuite.sol`, section "Mapping indices: nesting, aliases and memory keys", keeps one
+closes. `taclets/Storage.sol`, section "Mapping indices: nesting, aliases and memory keys", keeps one
 example per shape that the older sections do not already cover —
 `mapping(k => mapping(k => v))`, `mapping(uint => uint)[]`, `mapping(uint => Ledger)`, a
 nested row bound as a storage pointer, a ternary choosing between two mappings,
 `balances[balances[1]]`, a memory field as the key, and a mapping entry copied to another
 through memory. The shapes Solidity refuses outright are recorded in
-`keyext.solidity.examples/illegal/IllegalMappings.sol`, and of the two gaps the sweep did find, the
+`keyext.solidity.examples/negative/illegal/`, and of the two gaps the sweep did find, the
 non-integer key crash is in `bugs.md` and the other is in `taclet-ideas.md` ("Raised by the
 mapping-index probe").
 
@@ -430,7 +431,7 @@ closes `storagePopUnknownLength`, `storagePushLengthPositive` and `storagePushRe
 `require` on the length. The former axiom `sizeNotNegative` (`0 <= selectSt<[int]>(st, size)`
 for every `st`) was removed: `save(st, cons(size, nil), -1)` has length `-1`, so it proved
 `!(selectSt<[int]>(st, size) = -1)` (`unsound/sizeNotNegativeAnyStruct.key`); no closed proof of
-`TestSuite.sol`, `contracts/` or the benchmark depended on it. The `cnf_andComm`/`cnf_orComm`
+`taclets/`, `contracts/` or the benchmark depended on it. The `cnf_andComm`/`cnf_orComm`
 order guards in `FOLStrategy` (`termSmallerThan`, mirroring `key.core`'s `JFOLStrategy`) that
 landed with it stay: unguarded, `commute_and` ping-pongs on a succedent conjunction and starves
 every positive-cost rule.
@@ -496,7 +497,7 @@ sorts: `T[n]`, `T[]`, `mapping<[K, V]>` and one `C$S` per struct, below the mark
 read at their own sort (`#typedSelect`). The constructor starts from `mtSt`; a function assumes
 the generated `lenInv(storage)`, whose `conforms(⟦T⟧, node)` atoms (`⟦T⟧` the type tag
 `emptyOf<[T]>`, `mtSt` for a type without a dynamic array) state that every reachable dynamic
-length is non-negative (`StorageLayout`; `contracts/FixedLengths.sol`, `testFixedArrayLength`,
+length is non-negative (`StorageLayout`; `contracts/solidikey/FixedLengths.sol`, `testFixedArrayLength`,
 `testFixedElementOfDynamicArrayLength`, `storageShorterStaticCopyClearsTail`). With `|st|` for
 `selectSt<[int]>(st, size)`, `st[a]` for `selectSt<[Struct]>(st, a)` and `⟦e⟧` for the element's
 tag (`#elemOf`):
@@ -565,7 +566,7 @@ mv))`, so `structMemoryRules.key` reads `copyMem` one
 selector at a time (`selectOnCopyMemPrim`, `selectOnCopyMemRef`) beside the whole-path
 `findOnCopy`. No `.sol` example can exercise the mapping half — both front ends reject a copy
 whose type carries a mapping — so `keyext.solidity.examples/storage/copyKeepsMapping.key` pins it
-and the `testCopy*` group of `TestSuite.sol` pins the mapping-free half of every leaf rule.
+and the `testCopy*` group of `taclets/` pins the mapping-free half of every leaf rule.
 
 `delAt` names its storage argument once, where the `save(st, p, <deleted value at p>)` form it
 replaced named it twice. That doubled the storage term at every `push`/`pop`, so a sequence of
@@ -734,7 +735,7 @@ have side effects.
 Only the **box** is covered. A call to an address without code, and return data that does
 not decode, revert in the caller, and no catch clause catches that; such a revert is vacuous
 in a box but would be an extra failing goal in a diamond. A diamond `try` therefore matches
-no rule. Examples: `tryCall*` in `TestSuite.sol`, which call `TestSuite(owner).tryCallee*`.
+no rule. Examples: `tryCall*` in `taclets/Payments.sol`, which call `Payments(owner).tryCallee*`.
 
 ### `send` and `call{value: v}("")`
 
@@ -758,8 +759,8 @@ the one supported shape, `(bool ok, ) = a.call{value: v}("")`, to `bool ok = a.s
 other `call` (a second option such as `gas`, non-empty data, a used `bytes` result, or no
 `{value: …}`) is a `SolidityParseException`: tuples are assigned only from tuples and internal
 calls (see "Function-body inlining"). Examples:
-`send*` and `callToSender` in `TestSuite.sol`, and `net/net-send-simple.key` and
-`net/net-call-withcallback-simple.key`.
+`send*` and `callToSender` in `taclets/Payments.sol`, and `net/obligations/net-send-simple.key` and
+`net/obligations/net-call-withcallback-simple.key`.
 
 ### Loops (`while`, `for`, `do … while`, `break`, `continue`)
 
@@ -798,8 +799,8 @@ the solc-JSON and the ANTLR path.
 copy (`ifUnfold` captures a non-simple one), and a local declared in `body` is declared again,
 as solc re-initialises it. The strategy unwinds under `LOOP_EXPAND` and `LOOP_INVARIANT` (the
 default) and never under `LOOP_NONE`, so a loop with a statically known trip count runs to its
-end. Examples: the `Loops` section of `TestSuite.sol`, and `doWhileFalseRunsBodyOnce` /
-`forLoopOverArray` in `solc/SolcControlFlow.sol`.
+end. Examples: `taclets/Loops.sol`, and `doWhileFalseRunsBodyOnce` /
+`forLoopOverArray` in `semantics/SolcControlFlow.sol`.
 
 **Loop invariants.** A loop with a symbolic bound needs `///` clauses directly above it:
 
@@ -845,7 +846,7 @@ when the rule fires, against the variables' current names.
   `require`/`assert`/`revert` (calls also make them write storage). A loop that only reads
   storage keeps every storage fact. The condition runs in every iteration, so it is framed
   too: framing the body alone proved `assert(i == 0)` after `while (i++ < 3) {}` with
-  `invariant true` (`unprovableInvariantConditionSideEffect` in `TestSuite.sol`).
+  `invariant true` (`unprovableInvariantConditionSideEffect` in `taclets/`).
 - A loop whose condition or body allocates or writes memory gets no invariant rule
   (`LoopFrame.memory`, checked on the whole loop): the memory heap is not anonymised.
 - The lowered body has no `break`/`continue`/`return`, so it runs without its context; a
@@ -858,7 +859,7 @@ when the rule fires, against the variables' current names.
   arithmetic result is not known to be non-negative. Fixing `v` at the head, before the
   condition, compared two different points: a condition that lowers the measure and a body
   that restores it passed every check, and `assert(false)` after a loop that never ends
-  closed (`unprovableVariantConditionLowersBodyRestores` in `TestSuite.sol`, which runs out of
+  closed (`unprovableVariantConditionLowersBodyRestores` in `taclets/`, which runs out of
   gas on the EVM). Measuring at the head on both ends instead would make the `break`
   iteration decrease the variant (`invariantVariantSkipsBreakIteration` stays open then).
 - Integers are unbounded, so anonymised locals need no range facts. Generated obligations
@@ -866,7 +867,7 @@ when the rule fires, against the variables' current names.
   `lenInv(storage)`, assumed for the anonymised state (`#loopAnon`) and not part of the
   invariant to prove.
 
-Examples: the `Loop invariants` section of `TestSuite.sol`, including break exits outside the
+Examples: the `Loop invariants` section of `taclets/Loops.sol`, including break exits outside the
 invariant, `for` updates after continue, false postconditions, and a `\forall` over the
 written prefix of a storage array. That one needed `cnf_orComm` to get KeY-Java's guards back
 (`FOLStrategy`): bound only by `termSmallerThan`, it cycled with `shift_paren_or` on a
@@ -874,7 +875,7 @@ three-literal clause under a quantifier.
 
 ## End-to-end examples (the `test*` functions)
 
-`TestSuite.sol` holds 64 end-to-end `test*` functions driven by `PaperTestExamplesTest.java`;
+`taclets/` holds 64 end-to-end `test*` functions driven by `PaperTestExamplesTest.java`;
 each is called with postcondition `true`, the obligations being carried by in-body `assert`s.
 The other 223 functions are the focused starters run by `TacletStarterExamplesTest`.
 
@@ -893,18 +894,18 @@ unconstrained symbolic storage.
 
 **Dropped — missing taclet support:**
 - `testStorageArrayPushPop` — `tokens.push(Token(42));`, struct-literal `Token(42)`
-  not parsed (no push-struct-value taclet). It had no `TestSuite.sol` function and was
+  not parsed (no push-struct-value taclet). It had no `taclets/` function and was
   removed with the `.key` files.
 
-## solc semantic-test ports (`keyext.solidity.examples/solc/`)
+## solc semantic-test ports (`keyext.solidity.examples/semantics/`)
 
 Six contracts porting the Solidity compiler's own semantic tests
 (`ethereum/solidity`, `test/libsolidity/semanticTests/`) into the `require`/`assert` style, run
 by `SolcSemanticsExamplesTest` — an external cross-check of the calculus against a description
 of the language SolKey did not write. Provenance table, adaptation rules and the not-ported
-families are in `keyext.solidity.examples/solc/README.md`.
+families are in `keyext.solidity.examples/semantics/README.md`.
 
-The initial port found seven gaps no `TestSuite.sol` example reached. Its examples remain
+The initial port found seven gaps no `taclets/` example reached. Its examples remain
 regression tests, including expected-open default-value assertions under symbolic tail storage.
 See "Rules added or corrected by the solc port" below:
 
@@ -1033,10 +1034,10 @@ Modifier loops remain in the expanded AST until the `loopNormalize` taclet execu
 see "Loops". Examples include `modifierRepeatedReturnAndLocals`, `modifierReentersArguments`,
 `modifierSkippedPlaceholder`, `modifierTakenPlaceholder`, `modifierReturnResumesOuterSuffix`,
 `modifierLoopBodyReturnStaysInFrame`, `modifierWhileJumps`, and `modifierDoWhileJumps` in
-`TestSuite.sol`. The eleven former `SolcModifiersOpen` obligations now live in
-`solc/SolcModifiers.sol`, including argument evaluation order and stacked modifier returns.
-The two modifier-return branch examples from `SolcSmtControlFlowOpen` now live in
-`solc/SolcSmtControlFlow.sol`.
+`taclets/`. The eleven obligations of the former `open/SolcModifiersOpen.sol` now live in
+`semantics/SolcModifiers.sol`, including argument evaluation order and stacked modifier returns.
+The two modifier-return branch examples of `open/SolcSmtControlFlow.sol` now live in
+`semantics/SolcSmtControlFlow.sol`.
 
 **Tuples are never terms.** A tuple of `n` values is `n` program variables, each of its own
 sort, so no tuple sort exists and every component is handled by the ordinary rules.
@@ -1082,7 +1083,7 @@ Remaining constraints:
 - **Returns of other types start unconstrained**: `R ri;` is skipped by `valueDeclSkip`.
 
 Examples: the `internalCall*`, `return*`, `tuple*`, `overload*` and `modifier*` functions in
-`TestSuite.sol`.
+`taclets/`.
 
 **Declarations outside the contract.** `SolJSONParser` reads the file-level declarations and
 every library before the contracts:
@@ -1118,8 +1119,8 @@ every library before the contracts:
   inlined body with that contract (`FunctionReference.getDispatchContract`), so a call from a
   base function reaches the derived override at any depth.
 
-Examples: the functions of the "Constants, file-level declarations and libraries" and
-"Parameters and modifiers" sections of `TestSuite.sol`.
+Examples: the "Constants, file-level declarations and libraries" section of `taclets/Calls.sol`,
+its parameter examples, and `taclets/Modifiers.sol`.
 
 Note that a `.sol` body is parsed by `SolJSONParser` (the solc-JSON path), not by
 `SolidityToKeyConverter` (the ANTLR path used for programs written inline in a modality). Both
@@ -1134,7 +1135,7 @@ A `.sol` function whose contract carries `@custom:key invariant` clauses, or whi
 compiles the clauses (`speclang/natspec/`: `KeyNatspec` splits the natspec text, `SpecParser`
 parses an expression with the ANTLR grammar `SolSpec.g4`, `SpecCompiler` — a visitor over
 that parse tree — emits the `.key` term text) into the same generated `.key`
-problem the `net/*.key` files spell out by hand — an `insertCInv` rewrite taclet defining
+problem the `net/obligations/*.key` files spell out by hand — an `insertCInv` rewrite taclet defining
 `CInv(s, n)` as the conjoined invariants, and the ISoLA 2020 eq.-4 problem: `msg.value` bound,
 requires, `CInv(storage, net)` in the antecedent; the ledger booking
 `net := storeSt(net, at(msgSender), …)` as update; the call in the **box** modality; `CInv`
@@ -1144,8 +1145,8 @@ several named returns `lo, hi` declare `int result_lo, result_hi` and call
 `(result_lo, result_hi) = f()@C;`. An `ensures` clause refers to a return value by its name
 (`SpecCompiler` maps it to the variable), or as `\result` when it is the only one. Every return
 value must be named and have a `.key` sort. A function
-without any clause keeps the plain `(true)` obligation byte for byte, so `TestSuite.sol` and
-the `solc/` ports are unaffected. `./run-key.sh F.sol -f fn --print-problem` prints the text.
+without any clause keeps the plain `(true)` obligation byte for byte, so `taclets/` and
+the `semantics/` ports are unaffected. `./run-key.sh F.sol -f fn --print-problem` prints the text.
 
 A parameter of type `uint`/`int`, `address`/`address payable` or an enum is declared `int`, a
 `bool` one `bool`; `public` and `external` functions both get an obligation.
@@ -1170,13 +1171,13 @@ from the empty state: the update is `storage := mtSt || net := storeSt(mtSt, at(
 selfBalance := msgValue` (a function without clauses gets `{storage := mtSt || net := mtSt}`), and
 `CInv(storage, net)` is *not* assumed — the constructor has to establish it. `ExpandFunctionBody`
 prepends `field = initializer;` for every state variable of the contract that has an initializer,
-in declaration order, before the constructor's `function-frame`. `contracts/Counter.sol` is the
+in declaration order, before the constructor's `function-frame`. `contracts/solidikey/Counter.sol` is the
 minimal example (`uint limit = 5;` establishes the invariant `limit == 5`).
 
 `trueNotFalse` / `falseNotTrue` (`formulaNormalizationRules.key`) rewrite `TRUE = FALSE` and
 `FALSE = TRUE` to `false`. The bool literals had no distinctness axiom, so an infeasible branch
 of `if (p != 0)` could end with `TRUE = FALSE` in the antecedent and stay open
-(`real-world/SimpleAuction.sol`'s `bid`).
+(`contracts/real-world/SimpleAuction.sol`'s `bid`).
 
 `boolNotTrue` / `boolNotFalse` (same file) move a succedent `b = TRUE` to the antecedent as
 `b = FALSE`, and vice versa, since `bool` has exactly the two values. `applyEq` then rewrites `b`,

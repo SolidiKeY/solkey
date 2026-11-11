@@ -1,7 +1,7 @@
 # Shape-directed copy and reset: a compiler-based proof proposal
 
-`keyext.solidity.examples/contracts/ArrayCopyShapes.sol` contains executable witnesses.
-The copy/reset observations have corresponding regressions in `TestSuite.sol`; a default-value
+`keyext.solidity.examples/contracts/solidikey/ArrayCopyShapes.sol` contains executable witnesses.
+The copy/reset observations have corresponding regressions in `taclets/`; a default-value
 assertion after empty push additionally needs known tail data. These examples support a
 generalization of the copy/reset model. The implementation keeps `save`, `delAt`,
 `delNode`, and `delNodeFixed`; `C_T` and `R_T` below are mathematical notation rather than
@@ -171,8 +171,8 @@ into portable Solidity guarantees.
 ## Reproduce the observations
 
 ```bash
-./run-key.sh keyext.solidity.examples/contracts/ArrayCopyShapes.sol --open-goals -m 20000
-./run-key.sh keyext.solidity.examples/contracts/ArrayCopyShapes.sol --solc
+./run-key.sh keyext.solidity.examples/contracts/solidikey/ArrayCopyShapes.sol --open-goals -m 20000
+./run-key.sh keyext.solidity.examples/contracts/solidikey/ArrayCopyShapes.sol --solc
 ```
 
 To inspect the project's pinned compiler output after its soljson has been downloaded:
@@ -182,7 +182,7 @@ node <<'JS'
 const fs = require('fs');
 const solc = require('./keyext.solidity.core/build/soljson/soljson-v0.8.34+commit.80d5c536.js');
 const compile = solc.cwrap('solidity_compile', 'string', ['string', 'number', 'number']);
-const file = 'keyext.solidity.examples/contracts/ArrayCopyShapes.sol';
+const file = 'keyext.solidity.examples/contracts/solidikey/ArrayCopyShapes.sol';
 const input = {
     language: 'Solidity',
     sources: { 'ArrayCopyShapes.sol': { content: fs.readFileSync(file, 'utf8') } },

@@ -313,7 +313,7 @@ no purity requirement on an index, because the capture order is what keeps the
 rule sound. The alias declaration is dropped by `memoryLocalDeclInitDrop`, so
 nesting recurses. Listed with their storage twins under a `// generalization:`
 comment; witnesses `memory{Field,Index}WriteMemRefImpureReceiver` and
-`testMemoryFieldWriteImpureReceiver` in `TestSuite.sol`.
+`testMemoryFieldWriteImpureReceiver` in `taclets/`.
 
 Arrays of structs still alias through identity-valued elements:
 

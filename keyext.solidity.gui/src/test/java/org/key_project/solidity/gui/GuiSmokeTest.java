@@ -34,13 +34,13 @@ public class GuiSmokeTest {
 
     @Test
     void loadsAChosenSolidityFunction() throws Exception {
-        Path file = example("TestSuite.sol");
+        Path file = example("taclets/RequireAssert.sol");
         assertTrue(Files.exists(file), "example must exist: " + file.toAbsolutePath());
 
-        KeYEnvironment<?> env = KeYEnvironment.load(file, "TestSuite", "testSimpleAssert");
+        KeYEnvironment<?> env = KeYEnvironment.load(file, "RequireAssert", "testSimpleAssert");
         Proof proof = env.getLoadedProof();
         assertNotNull(proof);
-        assertEquals("TestSuite.testSimpleAssert", proof.name().toString());
+        assertEquals("RequireAssert.testSimpleAssert", proof.name().toString());
         assertNotNull(proof.getSoliditySource());
 
         ProofContext context = new ProofContext();
@@ -56,7 +56,7 @@ public class GuiSmokeTest {
     /// carries the `insertCInv` taclet, and the ledger obligation closes under auto mode.
     @Test
     void loadsASpecifiedSolidityFunction() throws Exception {
-        Path file = example("contracts/Escrow.sol");
+        Path file = example("contracts/solidikey/Escrow.sol");
         assertTrue(Files.exists(file), "example must exist: " + file.toAbsolutePath());
 
         KeYEnvironment<?> env = KeYEnvironment.load(file, "Escrow", "placeInEscrow");
@@ -79,7 +79,7 @@ public class GuiSmokeTest {
     /// message instead of falling back to the picker.
     @Test
     void refusesAFunctionThatCannotBeProved() {
-        Path file = example("real-world/Ownable.sol");
+        Path file = example("contracts/real-world/Ownable.sol");
         assertTrue(Files.exists(file), "example must exist: " + file.toAbsolutePath());
 
         Exception e = assertThrows(Exception.class,

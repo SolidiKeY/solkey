@@ -78,12 +78,12 @@ const loaded = call('load', { main: 'Smoke.holds.proof',
   files: [{ name: 'Smoke.sol', text: source }, { name: 'Smoke.holds.proof', text: proof }] });
 expect('a saved proof loads and replays', loaded.closed === true && !(loaded.replayErrors || []).length, loaded);
 
-const suite = readFileSync(path.join(site, 'examples', 'TestSuite.sol'), 'utf8');
+const suite = readFileSync(path.join(site, 'examples', 'taclets', 'RequireAssert.sol'), 'utf8');
 const suiteFunctions = call('functions', { source: suite }).functions?.filter((f) => f.provable) || [];
-expect(`TestSuite.sol lists ${suiteFunctions.length} provable functions`, suiteFunctions.length > 0, suiteFunctions);
+expect(`RequireAssert.sol lists ${suiteFunctions.length} provable functions`, suiteFunctions.length > 0, suiteFunctions);
 for (const fn of suiteFunctions.slice(0, 5)) {
   const result = call('verify', { source: suite, function: fn.name });
-  expect(`TestSuite.${fn.name} closes (${result.millis} ms)`, result.closed === true, result);
+  expect(`RequireAssert.${fn.name} closes (${result.millis} ms)`, result.closed === true, result);
 }
 
 process.exit(failed ? 1 : 0);

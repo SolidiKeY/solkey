@@ -8,7 +8,7 @@ import org.key_project.solidity.proof.Proof;
 import org.junit.jupiter.api.Test;
 
 import static org.key_project.solidity.testutil.SolidityExampleTests.describeOpenGoals;
-import static org.key_project.solidity.testutil.SolidityExampleTests.proveTestSuiteFunction;
+import static org.key_project.solidity.testutil.SolidityExampleTests.proveTacletFunction;
 
 /// Diagnostic test: runs testStorageWriteAndRead with a small step limit and prints open goals.
 /// Not meant to close — used to inspect proof state.
@@ -16,7 +16,7 @@ public class ProofDiagnosticTest {
 
     @Test
     void diagnoseOpenGoals() throws Exception {
-        Proof proof = proveTestSuiteFunction("testStorageWriteAndRead", 30, -1);
+        Proof proof = proveTacletFunction("testStorageWriteAndRead", 30, -1);
         System.out.println(describeOpenGoals("testStorageWriteAndRead", proof,
             Integer.MAX_VALUE, Integer.MAX_VALUE));
     }

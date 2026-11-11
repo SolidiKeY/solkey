@@ -123,7 +123,7 @@ Mapped to this repository, roughly in order of usefulness:
    **done** — `ExpandFunctionBody` wraps the body in its modifiers when it
    inlines a call or an obligation (`docs/taclets-implementation.md`,
    "Function-body inlining"). No new taclets. The ported contracts of
-   `keyext.solidity.examples/contracts/` still inline them by hand.
+   `keyext.solidity.examples/contracts/solidikey/` still inline them by hand.
 3. **Enums**: **done** — `SolJSONParser` gives enum-typed declarations the
    `uint256` type and lowers `State.Open` to the member's ordinal, so the
    calculus never sees an enum; a specification writes `State.Open` too.
@@ -132,7 +132,7 @@ Mapped to this repository, roughly in order of usefulness:
    (`speclang/natspec/`, documented in
    `keyext.solidity.examples/README.md`). `SolidityProblemSynthesizer`
    compiles them into the generated `.key` text: the `insertCInv` taclet and
-   the eq.-4 problem, exactly the shape of the hand-written `net/*.key`.
+   the eq.-4 problem, exactly the shape of the hand-written `net/obligations/*.key`.
    `net(a)` lowers to `selectSt<[int]>(net, at(a))`, `\old(e)` against the
    `old`/`oldNet` variables. Not done: feeding the clauses into a
    `SpecificationRepository` so a callback varcond could look them up; the
@@ -173,12 +173,12 @@ for the no-callback variant (a callee can still be re-entered through
 `call`), and its Table-1 auction examples deliberately contain seeded bugs —
 open proofs there are the expected result, not a regression.
 
-## Why the `net-*` examples call `PiggyBankNet.sol` instead of `TestSuite.sol`
+## Why the `net-*` examples call `PiggyBankNet.sol` instead of a `taclets/` contract
 
-Every other example lives in `keyext.solidity.examples/TestSuite.sol` and is called as
-`f()@TestSuite`. The `net` examples call functions of the dedicated
+Every taclet example lives in `keyext.solidity.examples/taclets/` and is called as
+`f()@File`. The `net` examples call functions of the dedicated
 `keyext.solidity.examples/net/PiggyBankNet.sol` instead, because solc's typing rules would
-leak into the shared contract: `msg.value` is only allowed in a `payable` function, and
+leak into the taclet contracts: `msg.value` is only allowed in a `payable` function, and
 `.transfer` requires `address payable` receivers. `SolJSONParser` handles both forms since
 `parseMemberAccess` learned them (an identifier base named `msg` with a negative
 `referencedDeclaration` desugars to the `msgSender`/`msgValue` program variables of

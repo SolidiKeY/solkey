@@ -156,7 +156,7 @@ for `delAt` through `delField<[alpha]>` on the select:
   `structMemoryRules.key` read the memory struct one selector at a time under that leaf.
   `saveStValueCast` and `selectStValueCast` push a cast from `StValue` into the leaf.
   Pinned by `storage/copyKeepsMapping.key` (the mapping half, which no `.sol` can state)
-  and the `testCopy*` group of `TestSuite.sol`.
+  and the `testCopy*` group of `taclets/`.
 - `defVal` — a location reset outright, mapping members included. The
   sort-free twin of `default`. Used by the memory index delete; in storage
   every `delete` goes through `delAt`. Sorted `Prim`, so it is both an
@@ -383,7 +383,7 @@ The snapshot is what makes `xs[i++] = i;` write the *old* `i`. Dropping it
 closes
 a proof of `xs[0] == 1` where the EVM writes `0`; the witnesses are
 `testStorageIndexWriteImpureIndexPrimitiveRhs` and its memory and depth-2 twins
-in `TestSuite.sol`.
+in `taclets/`.
 
 **`storageIndexWriteStorageRefCaptureAll…`** — `p[ie] = src`, and likewise
 `memoryToStorageIndexCaptureAll…` and `memoryIndexWriteMemRefCaptureAll…`
@@ -706,7 +706,7 @@ Each array rule branches on bounds. Out-of-bounds goes to
 
 The model assumes no clean-tail invariant at function entry. Default-value assertions
 therefore need a justified clear/write or a precondition. The compiler-specific dangling
-examples in `solc/StorageDangling.sol` exercise preserved tail data; Solidity leaves these
+examples in `semantics/StorageDangling.sol` exercise preserved tail data; Solidity leaves these
 executions undefined.
 
 - `storagePopSave` (clears the popped slot with `delAt`, which is
@@ -771,7 +771,7 @@ The calculus takes it from the **static type** of the statement that needs it, n
 so `mtSt` answers only what is the same for every type (a value cell reads its default, a dynamic
 length `0`) and the constructor starts from plain `mtSt`, as the EVM does. The design and its
 worked examples are chapter 13 of the pre-licentiate paper (`sections/fixed-length-static.tex`);
-`contracts/FixedLengths.sol` runs them.
+`contracts/solidikey/FixedLengths.sol` runs them.
 
 **Types are sorts.** Every storage type with structure has a sort, a subsort of one of four
 markers below `Struct` (`structHeader.key`):

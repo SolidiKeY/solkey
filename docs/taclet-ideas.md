@@ -72,7 +72,7 @@ and the `net` payment model.
   needs new LDTs.
 - **Bounded/checked integer semantics** (solc ≥ 0.8 overflow reverts): the
   calculus treats integers as unbounded mathematical integers, so the
-  overflow-revert examples of `keyext.solidity.examples/unprovable/` are
+  overflow-revert examples of `keyext.solidity.examples/negative/unprovable/` are
   unprovable. A sound model would guard every arithmetic taclet with a
   per-type range check that reverts out of range (Java KeY's
   `inInt`/`expandInInt` structure), plus in-range PO antecedents for
@@ -106,7 +106,7 @@ Edge cases of already-supported constructs (see `docs/taclets-implementation.md`
 ## Raised by the solc semantic-test ports
 
 Found by porting the Solidity compiler's own semantic tests into
-`keyext.solidity.examples/solc/` (`taclets-implementation.md`, "solc semantic-test ports").
+`keyext.solidity.examples/semantics/` (`taclets-implementation.md`, "solc semantic-test ports").
 Each has a failing example in the suite naming it, so closing the gap is observable.
 
 - **Mapping members must be aliased before being indexed.** `nested.recursive[4].z` is open
@@ -193,7 +193,7 @@ shape. Two neighbouring statement forms are not yet as general:
 
 ## Raised by the benchmark
 
-Found by loading published contracts as published (`keyext.solidity.examples/benchmark/`, whose
+Found by loading published contracts as published (`keyext.solidity.examples/contracts/benchmark/`, whose
 README ranks every blocker by the number of contracts it stops). Parser gaps, not taclets, and
 the cheapest wins there:
 
@@ -210,10 +210,10 @@ the cheapest wins there:
 
 ## Raised by the second solc port and the real-world ports
 
-Found by the eleven `solc/` themes ported from `semanticTests/` and `smtCheckerTests/` and by the
+Found by the eleven `semantics/` themes ported from `semanticTests/` and `smtCheckerTests/` and by the
 OpenZeppelin, solmate and Solidity-by-Example ports. `docs/limitations.md` ranks these by how
 many upstream tests and contracts each blocks; defects in supported constructs are in
-`docs/bugs.md`. Each item has a faithful example in `solc/open/` or `real-world/open/`.
+`docs/bugs.md`. Each item has a faithful example in `semantics/open/` or `contracts/real-world/open/`.
 
 - **Parser: magic identifiers.** `this`, `super`, `block.*`, `tx.*`, `gasleft`, `abi.*`:
   today refused at load ("The built-in … is not supported"). `block.*` and `tx.*` need

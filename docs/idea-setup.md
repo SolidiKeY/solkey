@@ -116,7 +116,7 @@ does. Outside one there is nowhere to find them, so solc is slower there, not br
 
 Both matter only when the WebAssembly solc runs. `shadowJar` also stages the pinned native `solc`
 beside each fat jar (`build/libs/solc-native/`), and the jar prefers it: **Compile and Run** on
-`TestSuite.sol` takes about a second instead of 23 s (97 s without the Graal flags). For a jar of
+a 5 800-line contract takes about a second instead of 23 s (97 s without the Graal flags). For a jar of
 your own outside a checkout, set `SOLKEY_SOLC` or put solc 0.8.34 on the `PATH`
 (`docs/solc-ast.md`).
 
@@ -283,7 +283,7 @@ directory, not the project — which is why this is a script instead of a checke
 | **SolidityCLI on current file** | Runs `org.key_project.solidity.CLI` on the file open in the editor |
 | **solkey [:keyext.solidity.core:test]** | Gradle `:keyext.solidity.core:testFast` — the `test` tests in parallel forks (the name is kept so the pre-push test check still finds it) |
 
-Verify the setup: open `keyext.solidity.examples/TestSuite.sol`, select **KeYther on current
+Verify the setup: open `keyext.solidity.examples/taclets/RequireAssert.sol`, select **KeYther on current
 file** in the run-configuration dropdown and press **Run** (Shift+F10). The function picker opens
 listing the contract's functions; choose one and press **Start Proof**.
 
@@ -322,7 +322,7 @@ The configurations pass `$FilePath$`, the absolute path, rather than `$FileName$
 `solidityCli` task runs with its working directory set to
 `keyext.solidity.core/src/test/resources/org/key_project/solidity/examples`, so a bare file name
 resolves inside *that* directory and any file elsewhere fails with
-`Error: "…/examples/TestSuite.sol" is not found.`
+`Error: "…/examples/taclets/RequireAssert.sol" is not found.`
 
 ## Launching the GUI without the IDE
 
@@ -331,12 +331,12 @@ takes the same kind of file property:
 
 ```bash
 ./gradlew :keyext.solidity.gui:solidityGui                                          # empty GUI
-./gradlew :keyext.solidity.gui:solidityGui -PsolFile=keyext.solidity.examples/TestSuite.sol
+./gradlew :keyext.solidity.gui:solidityGui -PsolFile=keyext.solidity.examples/taclets/RequireAssert.sol
 ./gradlew :keyext.solidity.gui:solidityGui -PkeyFile=problem2.key                   # a .key problem
 
 # straight to one function's proof, no picker — what the ▶ gutter icon runs
-./gradlew :keyext.solidity.gui:solidityGui -PsolFile=keyext.solidity.examples/TestSuite.sol \
-    -Pcontract=TestSuite -Pfunction=testSimpleAssert
+./gradlew :keyext.solidity.gui:solidityGui -PsolFile=keyext.solidity.examples/taclets/RequireAssert.sol \
+    -Pcontract=RequireAssert -Pfunction=testSimpleAssert
 ```
 
 A relative name is looked up in the example directories and made absolute
@@ -348,7 +348,7 @@ exactly as `solidityCli` spells them; the fat jar takes the same flags:
 
 ```bash
 java -jar keyext.solidity.gui/build/libs/keyext.solidity.gui-exe.jar \
-    keyext.solidity.examples/TestSuite.sol --contract TestSuite --function testSimpleAssert
+    keyext.solidity.examples/taclets/RequireAssert.sol --contract RequireAssert --function testSimpleAssert
 ```
 
 `-Pcontract` is only meaningful with `-Pfunction` — without one the picker infers the contract

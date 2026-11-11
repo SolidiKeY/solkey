@@ -17,10 +17,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.key_project.solidity.testutil.SolidityExampleTests.proveTestSuiteFunction;
+import static org.key_project.solidity.testutil.SolidityExampleTests.proveTacletFunction;
 
 /// Runs the end-to-end showcase functions — the `test*` functions of
-/// `keyext.solidity.examples/TestSuite.sol`.
+/// `keyext.solidity.examples/taclets/`.
 ///
 /// There are no `.key` problem files. The loader synthesizes the obligation for each function —
 /// a call in a modality with postcondition `true` — and the in-body `assert(a == b)` statements
@@ -48,14 +48,14 @@ public class PaperTestExamplesTest {
 
         Stream<Arguments> examples() throws IOException {
             return SolidityExampleTests.shard(
-                SolidityExampleTests.testSuiteFunctions(name -> name.startsWith("test")), index,
+                SolidityExampleTests.tacletFunctions(name -> name.startsWith("test")), index,
                 SHARDS);
         }
 
         @ParameterizedTest(name = "{0}")
         @MethodSource("examples")
         void paperTestExampleHasExpectedStatus(String function) throws Exception {
-            Proof proof = proveTestSuiteFunction(function, 50000, 30000);
+            Proof proof = proveTacletFunction(function, 50000, 30000);
             if (SYMBOLIC_TAIL_OPENS.contains(function)) {
                 assertFalse(proof.closed(), function
                     + " unexpectedly closed without known storage-tail contents");

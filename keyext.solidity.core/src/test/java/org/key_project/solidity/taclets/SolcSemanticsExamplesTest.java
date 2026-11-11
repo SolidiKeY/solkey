@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import org.key_project.solidity.proof.Proof;
+import org.key_project.solidity.testutil.ExampleDirs;
 import org.key_project.solidity.testutil.SolidityExampleTests;
 
 import org.junit.jupiter.api.Tag;
@@ -19,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /// Runs the ports of the solc compiler's own semantic tests
-/// (`keyext.solidity.examples/solc/`), which cross-check the calculus against an externally
+/// (`keyext.solidity.examples/semantics/`), which cross-check the calculus against an externally
 /// authored description of Solidity semantics.
 ///
 /// Every `.sol` beside the directory is enumerated and every function an obligation can be
@@ -28,11 +29,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 ///
 /// Seven examples started out red and were fixed by the rule and parser changes the port
 /// prompted; they stay here as regression tests. The gaps they found are listed in
-/// `keyext.solidity.examples/solc/README.md`.
+/// `keyext.solidity.examples/semantics/README.md`.
 @Tag("solidityExamples")
 public class SolcSemanticsExamplesTest {
 
-    private static final String DIRECTORY = "solc";
+    private static final String DIRECTORY = ExampleDirs.SEMANTICS;
 
     private static final Set<String> SYMBOLIC_TAIL_OPENS = Set.of(
         "SolcArithmetic.unaryAddOnPush",

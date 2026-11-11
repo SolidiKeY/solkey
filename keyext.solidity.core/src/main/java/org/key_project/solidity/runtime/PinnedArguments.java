@@ -22,9 +22,9 @@ import static org.key_project.solidity.program.parser.SolcAst.text;
 /// Recovers concrete argument values for a parameterized example function from its leading
 /// `require` pins, so the function can be executed as well as proved.
 ///
-/// The example conventions (`keyext.solidity.examples/README.md`) demand that a parameterized
-/// function pin every parameter with leading requires — an equality pin, either direct
-/// (`require(x == 5 && y == 7);`) or through a literal-bound local
+/// The example conventions (`keyext.solidity.examples/taclets/README.md`) demand that a
+/// parameterized function pin every parameter with leading requires — an equality pin, either
+/// direct (`require(x == 5 && y == 7);`) or through a literal-bound local
 /// (`int minusTwo = -2; require(b == minusTwo);`), or a range pin
 /// (`require(x >= 1 && x <= 100);`). Walking the body's leading statements over exactly those
 /// shapes recovers an argument vector the proof talks about: the pinned value, or the tightest

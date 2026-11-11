@@ -5,6 +5,7 @@ package org.key_project.solidity.runtime;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import java.util.stream.Stream;
 
 import org.key_project.solidity.program.parser.SolidityOutline;
 import org.key_project.solidity.proof.init.SolidityProblemSynthesizer;
+import org.key_project.solidity.testutil.ExampleDirs;
 import org.key_project.solidity.testutil.SolidityExampleTests;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -28,8 +30,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /// Cross-checks the calculus against a real EVM: every provable example function of
-/// `TestSuite.sol` and `solc/*.sol` is compiled with solc, deployed on an in-process Besu EVM,
-/// and executed. A function whose proof closes must not hit a failing `assert` — Panic(0x01) —
+/// `taclets/*.sol` and `semantics/*.sol` is compiled with solc, deployed on an in-process Besu
+/// EVM, and executed. A function whose proof closes must not hit a failing `assert` — Panic(0x01) —
 /// when actually run.
 ///
 /// Runs and proofs do not agree everywhere, and the verdicts reflect that:
@@ -43,7 +45,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 /// - A parameterized function runs with the values its leading `require` pins, recovered by
 /// [PinnedArguments].
 ///
-/// The `TestSuite.sol` half runs in the common `test` task; the `solc/*.sol` half is tagged
+/// The `taclets/` half runs in the common `test` task; the `semantics/` half is tagged
 /// `solidityExamples` and runs in the CI-only `testSolidityExamples` task.
 public class SolidityRuntimeExecutionTest {
 
@@ -135,19 +137,19 @@ public class SolidityRuntimeExecutionTest {
     }
 
     static Stream<Arguments> testSuiteExamples() throws IOException {
-        return SolidityExampleTests.contractFunctions(SolidityExampleTests.testSuite(),
-            SolidityExampleTests.TEST_SUITE_CONTRACT)
+        return SolidityExampleTests.contractFunctions(ExampleDirs.TACLETS)
                 .filter(arguments -> !arguments.get()[1].toString().startsWith("unprovable"));
     }
 
     static Stream<Arguments> solcExamples() throws IOException {
-        return SolidityExampleTests.contractFunctions("solc");
+        return SolidityExampleTests.contractFunctions(ExampleDirs.SEMANTICS);
     }
 
     private static Path source(String contract) {
-        return contract.equals(SolidityExampleTests.TEST_SUITE_CONTRACT)
-                ? SolidityExampleTests.testSuite()
-                : SolidityExampleTests.example("solc/" + contract + ".sol");
+        Path taclets = SolidityExampleTests.examplesDir(ExampleDirs.TACLETS)
+                .resolve(contract + ".sol");
+        return Files.exists(taclets) ? taclets
+                : SolidityExampleTests.example(ExampleDirs.SEMANTICS + "/" + contract + ".sol");
     }
 
     private static Fixture fixture(String contract) {

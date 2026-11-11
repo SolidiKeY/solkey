@@ -110,7 +110,7 @@ def siteDir = layout.buildDirectory.dir('site')
 
 def examplesIndex = tasks.register('examplesIndex') {
     def index = layout.buildDirectory.file('examples/examples.json')
-    def sources = fileTree(examplesDir) { include 'TestSuite.sol', 'contracts/**/*.sol' }
+    def sources = fileTree(examplesDir) { include 'taclets/*.sol', 'contracts/solidikey/*.sol' }
     inputs.files sources
     outputs.file index
     doLast {
@@ -166,7 +166,7 @@ tasks.register('site', Sync) {
     from(project(':keyext.solidity.core').layout.buildDirectory.file('resources/main/soljson.js'))
     from(layout.buildDirectory.dir('examples'))
     into('examples') {
-        from(examplesDir) { include 'TestSuite.sol', 'contracts/**/*.sol' }
+        from(examplesDir) { include 'taclets/*.sol', 'contracts/solidikey/*.sol' }
     }
 }
 
@@ -184,7 +184,7 @@ tasks.register('singleFile', Exec) {
 
 tasks.register('smokeTest', Exec) {
     group = 'verification'
-    description = 'Loads the built site in Node and proves a few TestSuite.sol functions'
+    description = 'Loads the built site in Node and proves a few taclet example functions'
     dependsOn 'site'
     commandLine 'node', file('src/test/smoke.mjs').absolutePath, siteDir.get().asFile.absolutePath
 }

@@ -146,7 +146,7 @@ tasks.withType(Test) {
 
 
 // The tag groups CI runs as separate jobs. The common `test` task keeps the untagged unit
-// tests and the TestSuite.sol suites; the tagged groups only run locally on explicit request.
+// tests and the taclets/ suites; the tagged groups only run locally on explicit request.
 def ciOnlyTestTags = ["solidityExamples", "ruleGeneralization", "openExamples"]
 
 test {
@@ -170,8 +170,8 @@ tasks.named('testFast', Test) {
 tasks.register('testSolidityExamples', Test) {
     group = "verification"
     description = "CI test group: the proof example suites over keyext.solidity.examples " +
-        "(net/, solc/, the one-example showcases), the .key problems run by RulesTest and " +
-        "the taclet coverage of TestSuite.sol and proofs/."
+        "(net/, semantics/, the one-example showcases), the .key problems run by RulesTest and " +
+        "the taclet coverage of taclets/ and coverage/."
     useJUnitPlatform {
         includeTags "solidityExamples"
     }

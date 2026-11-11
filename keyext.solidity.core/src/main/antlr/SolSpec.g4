@@ -6,7 +6,7 @@ package org.key_project.solidity.parser;
 }
 
 // Specification expressions of the @custom:key natspec clauses (see
-// keyext.solidity.examples/README.md). Alternatives are listed from the tightest binding to
+// keyext.solidity.examples/contracts/README.md). Alternatives are listed from the tightest binding to
 // the loosest, so a quantifier's body extends as far to the right as possible.
 
 spec

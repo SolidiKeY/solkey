@@ -16,7 +16,7 @@ the ANTLR grammar setup.
 | `keyext.solidity.gui` | **KeYther**, the standalone Swing GUI for the Solidity prover |
 | `keyext.solidity.idea` | IntelliJ IDEA plugin — ▶ gutter icon on public functions and contracts; left click opens KeYther, right click also offers the headless prover and solc+EVM. Standalone Gradle build, deliberately **not** in `settings.gradle`. See `idea-setup.md` |
 | `keyext.solidity.web` | The prover compiled to WebAssembly by GraalVM Web Image, as a static page on GitHub Pages. Included only when `GRAALVM_HOME` has Web Image. See `web.md` |
-| `keyext.solidity.examples` | **Main taclet examples** (`TestSuite.sol`) |
+| `keyext.solidity.examples` | **Main taclet examples** (`taclets/`, one contract per theme) |
 
 Dependencies: `keyext.*` → `key.core` → `key.ncore` → `key.util`.
 

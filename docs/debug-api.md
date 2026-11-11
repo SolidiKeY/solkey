@@ -47,8 +47,8 @@ Inline example, from the repository root:
 
 ```bash
 scripts/keysh <<'JAVA'
-var source = Path.of("keyext.solidity.examples/TestSuite.sol");
-var spec = SolidityProblemSpec.of("TestSuite", "storageRootReadWrite");
+var source = Path.of("keyext.solidity.examples/taclets/Storage.sol");
+var spec = SolidityProblemSpec.of("Storage", "storageRootReadWrite");
 try (var session = ProofSession.open(source, spec, ProofSession.Limits.steps(1))) {
     int root = session.root();
     System.out.println(session.node(root).sequent());
