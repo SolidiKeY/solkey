@@ -7,14 +7,44 @@ by `ContractExamplesTest` (except `benchmark/`):
 |---|---|
 | `solidikey/` | the example contracts of solidiKeY |
 | `real-world/` | published contracts, rewritten until every function closes; `open/` keeps what does not close yet |
-| `real-world-plain/` | `real-world/` with every `@custom:key` clause removed (see below) |
+| `real-world-plain/` | `real-world/` with its specification written as `require` and `assert` (see below) |
 | `benchmark/` | published contracts kept as published, to measure what SolKey verifies without a rewrite (`benchmark/README.md`) |
 
-`real-world-plain/` mirrors `real-world/` with every `@custom:key` clause removed: only the
-code's own `require`s and `assert`s remain, and its `solidikey/` holds `Counter`, `Escrow`,
-`MultiAuction` and `PiggyBank` of `solidikey/` stripped the same way. Without the `requires`, a
-function proves only if it can never revert; `ContractExamplesTest` lists the rest as known
-open. The directives are listed in `../taclets/README.md`, "Directives".
+`real-world-plain/` mirrors `real-world/` with its specification written in the code: each
+`requires` becomes a `require` at entry and each `ensures` an `assert` at exit (`\old(e)` a local
+saved at entry, `->` written `!a || b`, `<->` written `==`); a contract `invariant` is a `require`
+at entry and an `assert` at exit of every specified function, and only an `assert` at the end
+of a constructor. Modifiers are inlined, `unchecked` blocks are removed (their code kept), and an
+early `return` becomes an assignment to the named return so the asserts run last. Each such
+function is tagged `/// @custom:key box`, so a `require` is assumed as the `requires` was, and a
+payable one that needs it gets the `require(msg.value >= 0)` a specified function assumes; loop
+invariants stay as `@custom:key` tags. Its `solidikey/` holds `Counter` of `solidikey/` written
+the same way.
+
+Quantifiers become parameters, since a proof holds for every argument:
+
+- `ensures \forall address a; P(a)` adds a parameter `a` and `assert(P(a))`; an `\old(…)` that
+  mentions `a` is a local saved at entry, guarded when it indexes an array (`j < arr.length ?
+  arr[j] : 0`).
+- `invariant \forall address a; P(a)` adds `a` too: `require(P(a))` at entry, plus `require`s of
+  `P` at the points the body touches (`msg.sender`, the last key, index `0`, …), and `assert(P(a))`
+  at exit. Each `require` is an instance of the invariant, and preserving `P` at an arbitrary `a`
+  proves it for all. `!(\exists …)` is the `\forall` of the negation.
+- `ensures \exists uint w; P(w)` names its witness: `winnerName` binds `winningProposal(…)` to a
+  local `w` and asserts `P(w)`.
+
+Two clauses still have no Solidity form: `net(a)`, the payment ledger, and `address(this)`,
+which the prover does not load in a body. `real-world-plain/` itself carries no `@custom:key`
+clause other than `box`, `skip` and loop invariants, so `real-world-plain/open/` holds the rest
+in two parts:
+
+| Directory | Holds |
+|---|---|
+| `open/key-spec/` | every function such a clause belongs to, with that clause kept as its `@custom:key` `requires`, `ensures`, `invariant` or `assignable` and the rest as `require`/`assert`; a contract invariant belongs to every function, so such a contract moves whole (`Escrow` and `PiggyBank` of `solidikey/` included), and its constructor keeps the `skip` of the specified source |
+| `open/unprovable/` | what does not close yet: `ArrayRemoveByShifting.sol` mirrors `real-world/open/`, whose loop invariant cannot state the shifted prefix, and `MultiAuction.sol` of `solidikey/`, whose quantified invariants (kept as `@custom:key` clauses, as in `key-spec/`) exhaust the step budget as in `solidikey/` |
+
+`ContractExamplesTest` lists the functions that do not close as known open. The directives are
+listed in `../taclets/README.md`, "Directives".
 
 ## `solidikey/`
 

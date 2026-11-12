@@ -17,6 +17,8 @@ public final class ExampleDirs {
     public static final String REAL_WORLD_OPEN = REAL_WORLD + "/open";
     public static final String REAL_WORLD_PLAIN = CONTRACTS + "/real-world-plain";
     public static final String REAL_WORLD_PLAIN_OPEN = REAL_WORLD_PLAIN + "/open";
+    public static final String REAL_WORLD_PLAIN_UNPROVABLE = REAL_WORLD_PLAIN_OPEN + "/unprovable";
+    public static final String REAL_WORLD_PLAIN_KEY_SPEC = REAL_WORLD_PLAIN_OPEN + "/key-spec";
     public static final String REAL_WORLD_PLAIN_SOLIDIKEY = REAL_WORLD_PLAIN + "/solidikey";
     public static final String BENCHMARK = CONTRACTS + "/benchmark";
     public static final String NET = "net";

@@ -2,34 +2,27 @@
 pragma solidity ^0.8.20;
 
 // Source: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v5.0.0/contracts/utils/Pausable.sol
-// The real-world/OZPausable.sol port with its @custom:key specification removed.
+// The real-world/OZPausable.sol port with its specification written as require and assert. The
+// modifiers are inlined.
 contract OZPausable {
     bool private _paused;
     bool public drasticMeasureTaken;
     uint256 public count;
 
+    /// @custom:key box
     constructor() {
         _paused = false;
         drasticMeasureTaken = false;
         count = 0;
+
+        assert(_paused == false && drasticMeasureTaken == false && count == 0);
     }
 
-    modifier whenNotPaused() {
-        if (_paused) {
-            revert();
-        }
-        _;
-    }
-
-    modifier whenPaused() {
-        if (!_paused) {
-            revert();
-        }
-        _;
-    }
-
+    /// @custom:key box
     function paused() public view virtual returns (bool p) {
-        return _paused;
+        p = _paused;
+
+        assert(p == _paused);
     }
 
     function _requireNotPaused() internal view virtual {
@@ -44,27 +37,60 @@ contract OZPausable {
         }
     }
 
-    function _pause() internal virtual whenNotPaused {
+    function _pause() internal virtual {
+        if (_paused) {
+            revert();
+        }
         _paused = true;
     }
 
-    function _unpause() internal virtual whenPaused {
+    function _unpause() internal virtual {
+        if (!_paused) {
+            revert();
+        }
         _paused = false;
     }
 
-    function normalProcess() external whenNotPaused {
+    /// @custom:key box
+    function normalProcess() external {
+        bool oldPaused = _paused;
+        uint256 oldCount = count;
+
+        if (_paused) {
+            revert();
+        }
         count++;
+
+        assert(oldPaused == false && count == oldCount + 1 && _paused == false);
     }
 
-    function drasticMeasure() external whenPaused {
+    /// @custom:key box
+    function drasticMeasure() external {
+        bool oldPaused = _paused;
+
+        if (!_paused) {
+            revert();
+        }
         drasticMeasureTaken = true;
+
+        assert(oldPaused == true && drasticMeasureTaken == true && _paused == true);
     }
 
+    /// @custom:key box
     function pause() external {
+        bool oldPaused = _paused;
+
         _pause();
+
+        assert(oldPaused == false && _paused == true);
     }
 
+    /// @custom:key box
     function unpause() external {
+        bool oldPaused = _paused;
+
         _unpause();
+
+        assert(oldPaused == true && _paused == false);
     }
 }
