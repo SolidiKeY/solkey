@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 // Source: https://github.com/Cyfrin/solidity-by-example.github.io/blob/5bcdca0239409d7336a07b66a6fca8d0bcc710e6/contracts/src/hacks/overflow/Overflow.sol
 // The real-world/TimeLock.sol port with its specification written as require and assert. withdraw
-// is in open/key-spec/TimeLock.sol.
+// is the .key problem open/key-spec/TimeLock-withdraw.key.
 contract TimeLock {
     mapping(address => uint256) public balances;
     mapping(address => uint256) public lockTime;

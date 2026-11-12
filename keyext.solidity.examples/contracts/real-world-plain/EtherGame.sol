@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 // Source: https://github.com/Cyfrin/solidity-by-example.github.io/blob/5bcdca0239409d7336a07b66a6fca8d0bcc710e6/contracts/src/hacks/self-destruct/PreventForceEther.sol
 // The real-world/EtherGame.sol port with its specification written as require and assert.
-// claimReward is in open/key-spec/EtherGame.sol.
+// claimReward is the .key problem open/key-spec/EtherGame-claimReward.key.
 contract EtherGame {
     uint256 public constant TARGET_AMOUNT = 7 ether;
     uint256 public balance;

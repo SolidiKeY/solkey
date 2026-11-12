@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 // Source: https://etherscan.io/address/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2#code
-// The real-world/WETH9.sol port with its specification written as require and assert. deposit,
-// receive and withdraw are in open/key-spec/WETH9.sol.
+// The real-world/WETH9.sol port with its specification written as require and assert. deposit and
+// withdraw are the .key problems open/key-spec/WETH9-deposit.key and WETH9-withdraw.key.
 contract WETH9 {
     uint8 public decimals = 18;
 

@@ -36,11 +36,11 @@ Quantifiers become parameters, since a proof holds for every argument:
 Two clauses still have no Solidity form: `net(a)`, the payment ledger, and `address(this)`,
 which the prover does not load in a body. `real-world-plain/` itself carries no `@custom:key`
 clause other than `box`, `skip` and loop invariants, so `real-world-plain/open/` holds the rest
-in two parts:
+in two parts, proved by `ContractExamplesTest`:
 
 | Directory | Holds |
 |---|---|
-| `open/key-spec/` | every function such a clause belongs to, with that clause kept as its `@custom:key` `requires`, `ensures`, `invariant` or `assignable` and the rest as `require`/`assert`; a contract invariant belongs to every function, so such a contract moves whole (`Escrow` and `PiggyBank` of `solidikey/` included), and its constructor keeps the `skip` of the specified source |
+| `open/key-spec/` | every function such a clause belongs to, as the `.key` problem `<Contract>-<function>.key` that `./run-key.sh <source> -f <function> --print-problem` generates from its specified source in `real-world/` (`Escrow` and `PiggyBank` from `solidikey/`), whose program it loads through `\programSource`; a contract invariant belongs to every function, so such a contract's functions all move, and a function the source marks `skip` has no problem. Regenerate a problem when its source's specification changes |
 | `open/unprovable/` | what does not close yet: `ArrayRemoveByShifting.sol` mirrors `real-world/open/`, whose loop invariant cannot state the shifted prefix, and `MultiAuction.sol` of `solidikey/`, whose quantified invariants (kept as `@custom:key` clauses, as in `key-spec/`) exhaust the step budget as in `solidikey/` |
 
 `ContractExamplesTest` lists the functions that do not close as known open. The directives are
