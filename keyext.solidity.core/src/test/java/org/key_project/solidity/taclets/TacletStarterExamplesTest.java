@@ -4,7 +4,6 @@
 package org.key_project.solidity.taclets;
 
 import java.io.IOException;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import org.key_project.solidity.proof.Proof;
@@ -30,17 +29,6 @@ public class TacletStarterExamplesTest {
 
     private static final int SHARDS = 8;
 
-    private static final Set<String> SYMBOLIC_TAIL_OPENS = Set.of(
-        "storagePushReturnPrimitiveBindComplexReceiver",
-        "storagePushCompoundTarget",
-        "storagePushDivModTarget",
-        "storagePushIncrementTarget",
-        "storagePushCompoundSigned",
-        "storagePushPopCallReceiver",
-        "storageArrayMethodReferencesComplexReceiver",
-        "storageArrayMethodReferencesComposedCallReceiver",
-        "storagePushReturnPrimitiveBind");
-
     private static final String KNOWN_STUCK_PREFIX = "unprovable";
 
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -62,13 +50,8 @@ public class TacletStarterExamplesTest {
         void tacletStarterExampleHasExpectedStatus(String function) throws Exception {
             Proof proof =
                 proveTacletFunction(function, 10000, SolidityExampleTests.KEEP_TIMEOUT);
-            if (SYMBOLIC_TAIL_OPENS.contains(function)) {
-                assertFalse(proof.closed(), function
-                    + " unexpectedly closed without known storage-tail contents");
-            } else {
-                assertTrue(proof.closed(),
-                    () -> SolidityExampleTests.describeOpenGoals(function, proof));
-            }
+            assertTrue(proof.closed(),
+                () -> SolidityExampleTests.describeOpenGoals(function, proof));
         }
     }
 

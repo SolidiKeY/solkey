@@ -60,6 +60,11 @@ contract StorageArrays {
     mapping(uint => uint)[] mapArray;
     mapping(uint => uint[]) listsByKey;
     mapping(uint => uint[][]) matricesByKey;
+    mapping(uint => Basket) basketsByKey;
+    mapping(uint => Token[]) tokensByKey;
+    Person[] personsSource;
+    TokenBucket bucketSource;
+    Token[3] fixedTokens3;
 
     function storageAssignmentValueIndexOnce() public {
         uint i = 0;
@@ -382,6 +387,8 @@ contract StorageArrays {
     /// @custom:key box
     function storagePushReturnPrimitiveBind() public {
         require(values.length == 2);
+        values.push();
+        values.pop();
         uint y = values.push();
         assert(y == 0);
         assert(values.length == 3);
@@ -1228,6 +1235,178 @@ contract StorageArrays {
         assert(baskets[1].items.length == 0);
     }
 
+    function structArrayFieldDeleteThenPushReadsZero() public {
+        basketA.items.push(5);
+        basketA.items.push(6);
+        delete basketA;
+        assert(basketA.items.length == 0);
+        basketA.items.push();
+        basketA.items.push();
+        assert(basketA.items[0] == 0 && basketA.items[1] == 0);
+    }
+
+    function basketArrayDeleteThenPushReadsZero() public {
+        delete baskets;
+        baskets.push().items.push(7);
+        baskets.push().items.push(8);
+        delete baskets;
+        assert(baskets.length == 0);
+        baskets.push();
+        assert(baskets[0].items.length == 0);
+        baskets[0].items.push();
+        assert(baskets[0].items[0] == 0);
+    }
+
+    function mappingStructArrayFieldDeleteThenPushReadsZero() public {
+        basketsByKey[1].items.push(5);
+        basketsByKey[1].items.push(6);
+        basketsByKey[2].items.push(9);
+        delete basketsByKey[1];
+        assert(basketsByKey[1].items.length == 0);
+        assert(basketsByKey[2].items[basketsByKey[2].items.length - 1] == 9);
+        basketsByKey[1].items.push();
+        basketsByKey[1].items.push();
+        assert(basketsByKey[1].items[0] == 0 && basketsByKey[1].items[1] == 0);
+    }
+
+    function structArrayDeleteThenPushReadsZero() public {
+        delete tokens;
+        tokens.push().value = 7;
+        tokens.push().value = 8;
+        delete tokens;
+        assert(tokens.length == 0);
+        tokens.push();
+        tokens.push();
+        assert(tokens[0].value == 0 && tokens[1].value == 0);
+    }
+
+    function structArrayElementDeleteReadsZero() public {
+        delete tokens;
+        tokens.push().value = 7;
+        tokens.push().value = 8;
+        delete tokens[0];
+        assert(tokens.length == 2);
+        assert(tokens[0].value == 0 && tokens[1].value == 8);
+    }
+
+    function nestedStructArrayDeleteThenPushReadsZero() public {
+        delete persons;
+        persons.push().account.token.value = 7;
+        persons[0].account.balance = 5;
+        persons[0].age = 3;
+        delete persons;
+        persons.push();
+        assert(persons[0].age == 0);
+        assert(persons[0].account.balance == 0);
+        assert(persons[0].account.token.value == 0);
+    }
+
+    function nestedStructArrayPopPushReadsZero() public {
+        delete persons;
+        persons.push().age = 1;
+        persons.push().account.token.value = 7;
+        persons[1].account.balance = 5;
+        persons.pop();
+        persons.push();
+        assert(persons.length == 2);
+        assert(persons[1].account.balance == 0);
+        assert(persons[1].account.token.value == 0);
+    }
+
+    function nestedStructArrayElementDeleteReadsZero() public {
+        delete persons;
+        persons.push().account.token.value = 7;
+        persons[0].age = 3;
+        delete persons[0].account;
+        assert(persons[0].age == 3);
+        assert(persons[0].account.token.value == 0);
+        delete persons[0];
+        assert(persons.length == 1 && persons[0].age == 0);
+    }
+
+    function nestedStructArrayCopyShorterIntoLonger() public {
+        delete persons;
+        delete personsSource;
+        persons.push().account.token.value = 1;
+        persons.push().account.token.value = 2;
+        persons.push().account.token.value = 3;
+        personsSource.push().account.token.value = 11;
+        persons = personsSource;
+        assert(persons.length == 1);
+        assert(persons[0].account.token.value == 11);
+        persons.push();
+        persons.push();
+        assert(persons[1].account.token.value == 0 && persons[2].account.token.value == 0);
+    }
+
+    function nestedStructArrayCopyLongerIntoShorter() public {
+        delete persons;
+        delete personsSource;
+        persons.push().age = 1;
+        personsSource.push().age = 11;
+        personsSource.push().age = 12;
+        personsSource.push().account.balance = 13;
+        persons = personsSource;
+        assert(persons.length == 3);
+        assert(persons[0].age == 11 && persons[1].age == 12);
+        assert(persons[2].account.balance == 13);
+    }
+
+    function structArrayMemberDeleteThenPushReadsZero() public {
+        delete bucket;
+        bucket.tokens.push().value = 7;
+        bucket.tokens.push().value = 8;
+        delete bucket;
+        assert(bucket.tokens.length == 0);
+        bucket.tokens.push();
+        bucket.tokens.push();
+        assert(bucket.tokens[0].value == 0 && bucket.tokens[1].value == 0);
+    }
+
+    function structArrayMemberCopyShorterIntoLonger() public {
+        delete bucket;
+        delete bucketSource;
+        bucket.tokens.push().value = 1;
+        bucket.tokens.push().value = 2;
+        bucketSource.tokens.push().value = 11;
+        bucket = bucketSource;
+        assert(bucket.tokens.length == 1);
+        assert(bucket.tokens[0].value == 11);
+        bucket.tokens.push();
+        assert(bucket.tokens[1].value == 0);
+    }
+
+    function mappingStructArrayPopDeletePushReadsZero() public {
+        delete tokensByKey[1];
+        tokensByKey[1].push().value = 7;
+        tokensByKey[1].push().value = 8;
+        tokensByKey[1].pop();
+        tokensByKey[1].push();
+        assert(tokensByKey[1].length == 2);
+        assert(tokensByKey[1][1].value == 0);
+        delete tokensByKey[1];
+        tokensByKey[1].push();
+        assert(tokensByKey[1][0].value == 0);
+    }
+
+    function fixedStructArrayCopyShorterIntoLonger() public {
+        fixedTokens3[2].value = 9;
+        fixedTokens[0].value = 11;
+        fixedTokens[1].value = 12;
+        fixedTokens3 = fixedTokens;
+        assert(fixedTokens3.length == 3);
+        assert(fixedTokens3[0].value == 11 && fixedTokens3[1].value == 12);
+        assert(fixedTokens3[2].value == 0);
+    }
+
+    function fixedStructArrayElementDeleteReadsZero() public {
+        fixedTokens[0].value = 7;
+        fixedTokens[1].value = 8;
+        delete fixedTokens[1];
+        assert(fixedTokens.length == 2);
+        assert(fixedTokens[0].value == 7 && fixedTokens[1].value == 0);
+    }
+
     // ── Storage: index ──
 
     function storageIndexRootMapping() public {
@@ -1351,6 +1530,9 @@ contract StorageArrays {
     function storagePushReturnPrimitiveBindComplexReceiver() public {
         delete matrix;
         matrix.push();
+        matrix[0].push();
+        matrix[0].push();
+        delete matrix[0];
         matrix[0].push(4);
         uint y = matrix[0].push();
         assert(y == 0);
@@ -1358,6 +1540,8 @@ contract StorageArrays {
     }
 
     function storagePushCompoundTarget() public {
+        values.push();
+        values.push();
         delete values;
         values.push() += 5;
         values.push() *= 3;
@@ -1366,6 +1550,8 @@ contract StorageArrays {
     }
 
     function storagePushDivModTarget() public {
+        values.push();
+        values.push();
         delete values;
         values.push() /= 2;
         values.push() %= 2;
@@ -1374,6 +1560,8 @@ contract StorageArrays {
     }
 
     function storagePushIncrementTarget() public {
+        values.push();
+        values.push();
         delete values;
         ++values.push();
         values.push()++;
@@ -1382,6 +1570,9 @@ contract StorageArrays {
     }
 
     function storagePushCompoundSigned() public {
+        signedValues.push();
+        signedValues.push();
+        signedValues.push();
         delete signedValues;
         signedValues.push() -= 4;
         --signedValues.push();
@@ -1395,6 +1586,7 @@ contract StorageArrays {
     }
 
     function storagePushPopCallReceiver() public {
+        values.push();
         delete values;
         valuesRef().push();
         valuesRef().push(42);
@@ -1414,6 +1606,8 @@ contract StorageArrays {
     }
 
     function storageArrayMethodReferencesComplexReceiver() public {
+        matrix.push();
+        matrix.push();
         delete matrix;
         matrix.push();
         matrix.push();
@@ -1441,6 +1635,9 @@ contract StorageArrays {
     }
 
     function storageArrayMethodReferencesComposedCallReceiver() public {
+        matrix.push();
+        matrix.push();
+        matrix.push();
         delete matrix;
         uint i = 0;
         matrixRefWithEffect()[i++].pop;

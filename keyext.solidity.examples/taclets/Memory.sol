@@ -569,6 +569,94 @@ contract Memory {
         assert(values[1] == 0 && values[2] == 0);
     }
 
+    function memoryStructArrayCopyShorterIntoLonger() public {
+        delete basketA;
+        basketA.items.push(1);
+        basketA.items.push(2);
+        basketA.items.push(3);
+        Basket memory b;
+        b.items = new uint[](1);
+        b.items[0] = 11;
+        basketA = b;
+        assert(basketA.items.length == 1);
+        assert(basketA.items[0] == 11);
+        basketA.items.push();
+        basketA.items.push();
+        assert(basketA.items[1] == 0 && basketA.items[2] == 0);
+    }
+
+    function storageArrayCopyToMemory() public {
+        delete values;
+        values.push(1);
+        values.push(2);
+        uint[] memory m = values;
+        values[0] = 9;
+        values.pop();
+        assert(m.length == 2);
+        assert(m[0] == 1 && m[1] == 2);
+    }
+
+    function storageMatrixCopyToMemory() public {
+        delete matrix;
+        matrix.push().push(7);
+        uint[][] memory m = matrix;
+        matrix[0][0] = 9;
+        matrix.pop();
+        assert(m.length == 1);
+        assert(m[0][m[0].length - 1] == 7);
+    }
+
+    function memoryDynamicArrayDeleteRebindsOnlyLocal() public pure {
+        uint[] memory xs = new uint[](3);
+        xs[1] = 5;
+        uint[] memory ys = xs;
+        delete xs;
+        assert(xs.length == 0);
+        assert(ys.length == 3 && ys[1] == 5);
+    }
+
+    function memoryFixedArrayDeleteReadsZero() public pure {
+        uint[3] memory xs;
+        xs[1] = 5;
+        delete xs;
+        assert(xs.length == 3);
+        assert(xs[1] == 0);
+    }
+
+    function memoryStructPushAfterPopReadsZero() public {
+        delete persons;
+        persons.push().account.token.value = 7;
+        persons[0].account.balance = 5;
+        persons.pop();
+        Person memory p;
+        p.age = 4;
+        persons.push(p);
+        assert(persons.length == 1);
+        assert(persons[0].age == 4);
+        assert(persons[0].account.balance == 0 && persons[0].account.token.value == 0);
+    }
+
+    function memoryStructCopyIntoStructArrayElementClearsOld() public {
+        delete persons;
+        persons.push().account.token.value = 7;
+        persons[0].account.balance = 5;
+        Person memory p;
+        p.age = 4;
+        persons[0] = p;
+        assert(persons[0].age == 4);
+        assert(persons[0].account.balance == 0 && persons[0].account.token.value == 0);
+    }
+
+    function memoryNestedStructArrayElementDeleteReadsZero() public pure {
+        Person[] memory ps = new Person[](2);
+        ps[1].account.token.value = 7;
+        ps[1].age = 3;
+        Person memory old = ps[1];
+        delete ps[1];
+        assert(ps[1].age == 0 && ps[1].account.token.value == 0);
+        assert(old.age == 3 && old.account.token.value == 7);
+    }
+
     // ── Memory ──
 
     function memoryDeclDefault() public pure {
