@@ -4,6 +4,7 @@
 package org.key_project.solidity.speclang.natspec;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -81,5 +82,19 @@ public class KeyNatspecTest {
         var argument = assertThrows(SpecException.class,
             () -> KeyNatspec.of("@custom:key box please"));
         assertTrue(argument.getMessage().contains("takes no argument"), argument.getMessage());
+    }
+
+    @Test
+    void aClauseOutsideItsPlaceIsRejectedWithThePlace() {
+        KeyNatspec spec = KeyNatspec.of("@custom:key ensures x == 0\n@custom:key invariant x == 1");
+
+        spec.allowOnly("function f", Set.of(KeyNatspec.Kind.ENSURES, KeyNatspec.Kind.INVARIANT));
+        var e = assertThrows(SpecException.class,
+            () -> spec.allowOnly("contract C", Set.of(KeyNatspec.Kind.INVARIANT)));
+        assertTrue(e.getMessage().contains("ensures is not allowed on contract C"), e.getMessage());
+        var none = assertThrows(SpecException.class,
+            () -> spec.allowOnly("modifier m", Set.of()));
+        assertTrue(none.getMessage().contains("modifier m, which takes no clause"),
+            none.getMessage());
     }
 }

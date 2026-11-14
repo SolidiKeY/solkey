@@ -17,7 +17,7 @@ Already fixed, and so removed: 1 (named arguments bind by position, 1B), 2 (modi
 | 4 | Type conversions are the identity | Not now | — |
 | 5 | `try` / `call{value}` keep storage | Later | 5A + 5D |
 | 6 | Unbounded integers | Not now | — |
-| 10 | Missing upper, enum and environment ranges | Partial | Unsigned input non-negativity implemented; remaining ranges deferred |
+| 10 | Missing ranges for stored values and `msg.value` | Partial | Parameter, `msg.sender`, length and quantifier ranges done (10A); 10C, 10B deferred |
 
 ## Bugs that prove something false
 
@@ -82,23 +82,21 @@ function f() public pure {
 
 Bug 10 shares one need with bug 4: a per-type table of value ranges.
 
-### 10. Missing upper, enum and environment ranges
+### 10. Missing ranges for stored values and `msg.value`
 
-Generated obligations now assume non-negativity for `uint`/`uintN` inputs, in both
-modalities. Upper bounds, enum ranges and environment ranges remain missing.
-`SolidityProblemSynthesizer` adds `msg.value == 0` only when the function has a
-`@custom:key` clause.
+Generated obligations assume every integer, address and enum parameter is in its type's range,
+specified obligations assume `msg.sender` is an address, spec quantifiers are range-guarded and
+`conformsDynSize` bounds dynamic lengths by `2^256-1` (10A, done). Values read from storage and
+`msg.value` in an unspecified function remain unbounded.
 
 ```solidity
-enum Choice { A, B, C }
-function h(uint8 y) public pure { assert(y <= 255); }            // SolKey: open. EVM: holds
-function k(Choice c) public pure { assert(uint(c) < 3); }        // SolKey: open. EVM: holds
+uint stored;
 function v() public payable { assert(msg.value >= 0); }          // SolKey: open. EVM: holds
+function w() public view { assert(stored <= type(uint).max); }  // SolKey: open. EVM: holds
 ```
 
-- **10A. Range preconditions in the synthesizer.** For each parameter add `inRange(x, T)` (uint8 ≤ 255, enum < member count, address < 2^160); always add `msgValue >= 0` and a non-payable `msgValue = 0`. Small, local change.
-- **10C. Only fix `msg.value` now.** Move the non-payable `msgValue = 0` out of the specified-only branch. A one-line quick win to take regardless.
-- **10B. A general `inType<[T]>(v)` predicate.** One predicate from `KeYSolidityType`, used for parameters, return values and every value read from storage (storage starts arbitrary, so state variables lack ranges too). Bigger; also serves 4A and 6A.
+- **10C. Only fix `msg.value` now.** Move `msgValue >= 0` and the non-payable `msgValue = 0` out of the specified-only branch. A one-line quick win to take regardless.
+- **10B. A general `inType<[T]>(v)` predicate.** One predicate from `KeYSolidityType`, used for return values and every value read from storage (storage starts arbitrary, so state variables lack ranges too). Bigger; also serves 4A and 6A.
 
 ## Cross-cutting ideas
 

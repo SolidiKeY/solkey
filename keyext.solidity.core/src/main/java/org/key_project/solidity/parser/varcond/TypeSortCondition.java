@@ -18,7 +18,8 @@ import org.jspecify.annotations.Nullable;
 
 public final class TypeSortCondition extends TypeToSortCondition {
     public enum Mode {
-        TYPE("\\hasTypeSort"), ELEMENT("\\hasElementTypeSort"), STATIC("\\hasStaticSort");
+        TYPE("\\hasTypeSort"), ELEMENT("\\hasElementTypeSort"), STATIC("\\hasStaticSort"),
+        STATIC_ELEMENT("\\hasStaticElementSort");
 
         private final String keyword;
 
@@ -42,13 +43,13 @@ public final class TypeSortCondition extends TypeToSortCondition {
             default -> null;
         };
         type = StaticTypes.unwrap(type);
-        if (mode == Mode.ELEMENT) {
-            type = StaticTypes.elementTypeOf(type);
+        if (mode == Mode.ELEMENT || mode == Mode.STATIC_ELEMENT) {
+            type = StaticTypes.unwrap(StaticTypes.elementTypeOf(type));
         }
         if (type == null) {
             return null;
         }
-        if (mode != Mode.STATIC) {
+        if (mode != Mode.STATIC && mode != Mode.STATIC_ELEMENT) {
             return TypeSorts.of(type, services);
         }
         if (!TypeSorts.isStructured(type)) {

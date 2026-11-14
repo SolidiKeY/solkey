@@ -95,7 +95,7 @@ final class FunctionSelectionPanel extends JPanel {
         if (entry == null || !entry.function().isProvable()) {
             return Optional.empty();
         }
-        return Optional.of(SolidityProblemSpec.of(entry.contract(), entry.function().name()));
+        return Optional.of(SolidityProblemSpec.of(entry.contract(), entry.id()));
     }
 
     /// Whether the selected function is proved against a specification (a contract invariant
@@ -116,7 +116,7 @@ final class FunctionSelectionPanel extends JPanel {
                     (DefaultMutableTreeNode) contractNode.getChildAt(f);
                 Entry entry = (Entry) node.getUserObject();
                 if (entry.contract().equals(contract)
-                        && entry.function().name().equals(function)) {
+                        && entry.id().equals(function)) {
                     tree.setSelectionPath(new TreePath(node.getPath()));
                     return;
                 }
@@ -274,6 +274,10 @@ final class FunctionSelectionPanel extends JPanel {
     private record Entry(SolidityOutline.Contract owner, SolidityOutline.Function function) {
         String contract() {
             return owner.name();
+        }
+
+        String id() {
+            return owner.id(function);
         }
 
         @Override

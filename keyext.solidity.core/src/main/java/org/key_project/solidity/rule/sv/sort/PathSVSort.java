@@ -65,15 +65,16 @@ final class PathSVSort extends ProgramSVSort {
     private final TypeKind elementKind;
     private final MappingElement mappingElement;
     private final boolean noFixedArrayElement;
+    private final boolean orCall;
 
     PathSVSort(String name, DataArea dataArea, Simplicity simplicity) {
         this(name, dataArea, simplicity, Origin.ANY, TypeCategory.ANY, TypeKind.ANY,
-            TypeKind.ANY, MappingElement.ANY, false);
+            TypeKind.ANY, MappingElement.ANY, false, false);
     }
 
     private PathSVSort(String name, DataArea dataArea, Simplicity simplicity, Origin origin,
             TypeCategory typeCategory, TypeKind typeKind, TypeKind elementKind,
-            MappingElement mappingElement, boolean noFixedArrayElement) {
+            MappingElement mappingElement, boolean noFixedArrayElement, boolean orCall) {
         super(new Name(name));
         this.dataArea = dataArea;
         this.simplicity = simplicity;
@@ -83,11 +84,12 @@ final class PathSVSort extends ProgramSVSort {
         this.elementKind = elementKind;
         this.mappingElement = mappingElement;
         this.noFixedArrayElement = noFixedArrayElement;
+        this.orCall = orCall;
     }
 
     @Override
     public boolean canStandFor(SolidityProgramElement pe, Services services) {
-        PathInfo info = classify(pe, services);
+        PathInfo info = orCall ? classifyReceiver(pe, services) : classify(pe, services);
         if (info == null) {
             return false;
         }
@@ -147,6 +149,7 @@ final class PathSVSort extends ProgramSVSort {
                 case "mappingelement" -> filters.mappingElement.set(MappingElement.YES, flag);
                 case "nonmappingelement" -> filters.mappingElement.set(MappingElement.NO, flag);
                 case "nofixedarrayelement" -> filters.noFixedArrayElement.set(true, flag);
+                case "orcall" -> filters.orCall.set(true, flag);
                 default -> throw new IllegalArgumentException(
                     "Unknown Path sort flag '" + rawFlag + "'");
             }
@@ -158,7 +161,7 @@ final class PathSVSort extends ProgramSVSort {
         ProgramSVSort result = new PathSVSort("Path[" + parameter + "]", filters.dataArea.value,
             filters.simplicity.value, filters.origin.value, filters.typeCategory.value,
             filters.typeKind.value, filters.elementKind.value, filters.mappingElement.value,
-            filters.noFixedArrayElement.value);
+            filters.noFixedArrayElement.value, filters.orCall.value);
         PARAMETERIZED_SORTS.put(parameter, result);
         return result;
     }
@@ -264,6 +267,7 @@ final class PathSVSort extends ProgramSVSort {
         private final Filter<TypeKind> elementKind = new Filter<>(TypeKind.ANY);
         private final Filter<MappingElement> mappingElement = new Filter<>(MappingElement.ANY);
         private final Filter<Boolean> noFixedArrayElement = new Filter<>(false);
+        private final Filter<Boolean> orCall = new Filter<>(false);
     }
 
     /** One filter axis: its value plus the flag that set it, so conflicts can be reported. */

@@ -4,6 +4,7 @@
 package org.key_project.solidity.logic.parser;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.List;
 
 import org.key_project.logic.Name;
@@ -390,16 +391,41 @@ public class SolJsonParserTest {
         // language=solidity
         String contract = """
                 contract SimpleContract {
-                   uint256 deposit = 5 ^ 5 + 100 % 4 - 1 * 3 / 3;
+                   uint256 x;
+                   uint256 deposit = x ^ 5 + 100 % 4 - 1 * 3 / 3;
+                   uint256 rational = 7 / 2 * 2;
                 }""";
         ContractDeclaration contractDeclaration = getDeclStr(contract, services);
-        assertEquals(1, contractDeclaration.getFieldDeclarations().size());
-        Expression expOpSynt = contractDeclaration.getFieldDeclarations().get(0).getInitializer();
+        assertEquals(3, contractDeclaration.getFieldDeclarations().size());
+        Expression expOpSynt = contractDeclaration.getFieldDeclarations().get(1).getInitializer();
 
         assertInstanceOf(BinaryExpression.class, expOpSynt);
         BinaryExpression expOp = (BinaryExpression) expOpSynt;
         assertSame(BITWISE_XOR, expOp.getOperator());
         assertEquals(UINT256, expOp.getType());
+        assertEquals(BigInteger.valueOf(4), ((Uint256Literal) expOp.getRight()).getValue());
+        assertEquals(BigInteger.valueOf(7), ((Uint256Literal) contractDeclaration
+                .getFieldDeclarations().get(2).getInitializer()).getValue());
+    }
+
+    @Test
+    void forwardReferencesInInitializersResolve() throws IOException {
+        // language=solidity
+        String contract = """
+                contract SimpleContract {
+                   uint a = b + LATER;
+                   uint b = twice();
+                   uint constant LATER = 3;
+                   function twice() internal view returns (uint) { return 2 * a; }
+                }""";
+        ContractDeclaration contractDeclaration = getDeclStr(contract, services);
+        var fields = contractDeclaration.getFieldDeclarations();
+        assertEquals(List.of("a", "b", "LATER"),
+            fields.stream().map(f -> f.getName().toString()).toList());
+        BinaryExpression sum = (BinaryExpression) fields.get(0).getInitializer();
+        assertSame(fields.get(1), ((FieldReference) sum.getLeft()).mainProgramElement());
+        assertSame(fields.get(2).getInitializer(), sum.getRight());
+        assertInstanceOf(FunctionCallExpression.class, fields.get(1).getInitializer());
     }
 
     @Test
@@ -664,7 +690,7 @@ public class SolJsonParserTest {
                     }
                 }""";
         ContractDeclaration contractDec = getDeclStr(contract, services);
-        assertTrue(contractDec.toString().contains("v[1 + 1]"));
+        assertTrue(contractDec.toString().contains("v[2]"), contractDec.toString());
         Type vType = contractDec.getFieldDeclarations().get(0).getType();
         assertInstanceOf(DynamicArrayType.class, vType);
         DynamicArrayType arrayType = (DynamicArrayType) vType;
@@ -676,8 +702,7 @@ public class SolJsonParserTest {
         assertEquals(2, idxExp.getChildCount());
         assertInstanceOf(FieldReference.class, idxExp.getChild(0)); // v
 
-        assertInstanceOf(BinaryExpression.class, idxExp.getChild(1)); // 1+1
-        assertSame(Operator.ADD, ((BinaryExpression) idxExp.getChild(1)).getOperator());
+        assertEquals(BigInteger.TWO, ((Uint256Literal) idxExp.getChild(1)).getValue());
         assertThrows(IndexOutOfBoundsException.class, () -> idxExp.getChild(2));
     }
 
@@ -1768,5 +1793,23 @@ public class SolJsonParserTest {
             assertThrows(SolidityParseException.class, () -> getDeclStr(contract, services),
                 statement);
         }
+    }
+
+    @Test
+    void userDefinedOperatorsAreRejected() {
+        String source = """
+                // SPDX-License-Identifier: GPL-3.0
+                pragma solidity ^0.8.19;
+                type Int is int256;
+                using {sub as -} for Int global;
+                function sub(Int a, Int b) pure returns (Int) {
+                    return Int.wrap(Int.unwrap(a) - Int.unwrap(b));
+                }
+                contract SimpleContract {
+                    function f(Int a) public pure returns (Int) { return a - a; }
+                }""";
+        SolidityParseException error =
+            assertThrows(SolidityParseException.class, () -> getDeclStr(source, services));
+        assertTrue(error.getMessage().contains("user-defined operator -"), error.getMessage());
     }
 }

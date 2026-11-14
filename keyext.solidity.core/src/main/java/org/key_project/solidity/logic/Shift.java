@@ -4,78 +4,40 @@
 package org.key_project.solidity.logic;
 
 import org.key_project.logic.Term;
-import org.key_project.logic.op.QuantifiableVariable;
 import org.key_project.solidity.logic.op.LogicVariable;
-import org.key_project.util.collection.ImmutableArray;
-
-import org.jspecify.annotations.Nullable;
 
 public class Shift {
     private final TermBuilder tb;
     private final int shiftDistance;
-
-    private int index = 1;
 
     public Shift(int shiftDistance, TermBuilder tb) {
         this.shiftDistance = shiftDistance;
         this.tb = tb;
     }
 
-    /// substitute <code>s</code> for <code>v</code> in <code>t</code>.
     public Term apply(Term t) {
-        return apply1(t);
+        if (shiftDistance == 0) {
+            return t;
+        }
+        return apply(t, 1);
     }
 
-    /// substitute <code>s</code> for <code>v</code> in <code>t</code>.
-    protected Term apply1(Term t) {
-        if (t.op() instanceof LogicVariable lv && lv.getIndex() == index) {
-            return tb.var(LogicVariable.create(index + shiftDistance, lv.sort()));
-        } else {
-            return applyOnSubterms(t);
-        }
-    }
-
-    /// substitute <code>s</code> for <code>v</code> in every subterm of <code>t</code>, and build a
-    /// new term. It is assumed, that one of the subterms contains a free occurrence of
-    /// <code>v</code>, and that the case <code>v==t<code> is already handled.
-    private Term applyOnSubterms(Term t) {
-        final int arity = t.arity();
-        final Term[] newSubterms = new Term[arity];
-        for (int i = 0; i < arity; i++) {
-            applyOnSubterm(t, i, newSubterms);
-        }
-        return tb.tf().createTerm(t.op(), newSubterms,
-            t.boundVars());
-    }
-
-    /// Apply the substitution of the subterm <code>subtermIndex</code> of term/formula
-    /// <code>completeTerm</code>. The result is stored in <code>newSubterms</code> and
-    /// <code>newBoundVars</code> (at index <code>subtermIndex</code>)
-    protected void applyOnSubterm(Term completeTerm, int subtermIndex, Term[] newSubterms) {
-        var oldIndex = index;
-        if (completeTerm.op().bindVarsAt(subtermIndex)) {
-            index += completeTerm.varsBoundHere(subtermIndex).size();
-        }
-        newSubterms[subtermIndex] = apply1(completeTerm.sub(subtermIndex));
-
-        index = oldIndex;
-    }
-
-    protected static @Nullable ImmutableArray<QuantifiableVariable> getSingleArray(
-            @Nullable ImmutableArray<QuantifiableVariable> @Nullable [] bv) {
-        if (bv == null) {
-            return null;
-        }
-        ImmutableArray<QuantifiableVariable> result = null;
-        for (ImmutableArray<QuantifiableVariable> arr : bv) {
-            if (arr != null && !arr.isEmpty()) {
-                if (result == null) {
-                    result = arr;
-                } else {
-                    assert arr.equals(result) : "expected: " + result + "\nfound: " + arr;
-                }
+    private Term apply(Term t, int cutoff) {
+        if (t.op() instanceof LogicVariable lv) {
+            if (lv.getIndex() < cutoff) {
+                return t;
             }
+            return tb.var(LogicVariable.create(lv.getIndex() + shiftDistance, lv.sort()));
         }
-        return result;
+        if (t.freeVars().isEmpty()) {
+            return t;
+        }
+        final Term[] newSubterms = new Term[t.arity()];
+        for (int i = 0; i < newSubterms.length; i++) {
+            final int subCutoff =
+                t.op().bindVarsAt(i) ? cutoff + t.varsBoundHere(i).size() : cutoff;
+            newSubterms[i] = apply(t.sub(i), subCutoff);
+        }
+        return tb.tf().createTerm(t.op(), newSubterms, t.boundVars());
     }
 }

@@ -52,7 +52,8 @@ Prefer precise program sorts so rules stay disjoint:
   `Path[...,reference]` type-kind flags, `Path[...,primitiveElement]` /
   `Path[...,referenceElement]` element-kind flags on indexed receivers, and
   `SimpleExpression[primitive]` / `NonSimpleExpression[primitive]` /
-  `Expression[primitive]` on expressions (mappings count as reference
+  `Expression[primitive]` on expressions, and `NonSimpleExpression[reference]` for a
+  struct- or array-typed `new`, call or other non-path value (mappings count as reference
   throughout). There is no index-purity flag: a path may carry a side-effecting
   index, and write rules stay sound by capturing the right-hand side, then the
   receiver, then the index. Accessed members carry
@@ -64,7 +65,9 @@ Prefer precise program sorts so rules stay disjoint:
 - `Variable[memory]` for local memory references.
 - `Path[storage,simple,global]` for contract storage roots.
 - `Path[storage,simple]` for simple storage roots or aliases.
-- `Path[storage,complex]` for member/index paths that need unfolding.
+- `Path[storage,complex]` for member/index paths that need unfolding;
+  `Path[storage,complex,orCall]` also admits a storage-returning internal call
+  (`ref()`), for an lvalue receiver bound to a storage alias before the write.
 - `Path[simple]` for a simple target of either data location.
 - `SimpleExpression`, `NonSimpleExpression`, `Expression`, `Field`, and `Type`
   for statement pieces; `Expression[primitive]` for a right-hand side a capture
@@ -151,7 +154,8 @@ of a member constant; a rule that depends on the kind of `T`
 matches the tag, or a typed read `find<[T]>`, with a generic sort bounded by `FixedArray`,
 `DynamicArray`, `Mapping` or `StructType` (`docs/storage.md` section 8c). A rule that needs the
 static type of a program expression takes it through a varcond: `\staticLength(sp, len)`,
-`\fixedLengthRead(sp, fld, len)`, `\hasStaticSort(sp, \sort(alphaNode))`.
+`\fixedLengthRead(sp, fld, len)`, `\hasStaticSort(sp, \sort(alphaNode))`,
+`\hasStaticElementSort(sp, \sort(alphaNode))` (the same for the element type of `sp`).
 
 ## Storage Rule Pattern
 

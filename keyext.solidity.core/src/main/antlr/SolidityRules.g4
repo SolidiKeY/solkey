@@ -216,7 +216,7 @@ numberLiteral
 // some keywords need to be added here to avoid ambiguities
 // for example, "revert" is a keyword but it can also be a function name
 identifier
-  : (FROM | CALLDATA | ReceiveKeyword | CALLBACK | REVERT | ERROR | ADDRESS | LAYOUT | AT_KW | GlobalKeyword | ConstructorKeyword | PayableKeyword | LeaveKeyword | Identifier) ;
+  : (FROM | CALLDATA | ReceiveKeyword | CALLBACK | REVERT | ERROR | ADDRESS | LAYOUT | AT_KW | GlobalKeyword | ConstructorKeyword | FallbackKeyword | PayableKeyword | LeaveKeyword | Identifier) ;
 
 hexLiteral : HexLiteralFragment+ ;
 

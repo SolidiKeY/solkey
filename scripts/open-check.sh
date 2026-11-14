@@ -26,15 +26,22 @@ if [ $# -gt 0 ]; then files=("$@"); else files=("$SEMANTICS_OPEN_DIR"/*.sol "$RE
 
 "$RUN_KEY" --help >/dev/null 2>&1
 
-known_closers() {
-    awk '
-        /\/\/ open:/ { closes = ($0 ~ /\/\/ open: *closes in KeY/) }
+declarations_after() {
+    awk -v marker="$2" '
+        /\/\/ open:/ { closes = ($0 ~ marker) }
         /^[[:space:]]*function[[:space:]]+[A-Za-z_]/ {
             name = $0; sub(/^[[:space:]]*function[[:space:]]+/, "", name); sub(/\(.*/, "", name)
             if (closes) print name; closes = 0
         }
-        /^[[:space:]]*constructor[[:space:]]*\(/ { if (closes) print "constructor"; closes = 0 }
+        /^[[:space:]]*(constructor|receive|fallback)[[:space:]]*\(/ {
+            name = $0; sub(/^[[:space:]]*/, "", name); sub(/[[:space:]]*\(.*/, "", name)
+            if (closes) print name; closes = 0
+        }
     ' "$1"
+}
+
+known_closers() {
+    declarations_after "$1" '// open: *closes in KeY'
 }
 
 check_file() {
@@ -50,16 +57,20 @@ check_file() {
         echo "LOAD ERROR  $name"
         return
     fi
-    local closers fn
+    local closers marked fn
     closers="$(known_closers "$file")"
+    marked="$(declarations_after "$file" '// open:')"
     for fn in $(sed -n 's/^PASS *\([A-Za-z_0-9]*\).*/\1/p' <<<"$out"); do
+        case "$fn" in
+            constructor | receive | fallback) grep -qx "$fn" <<<"$marked" || continue ;;
+        esac
         grep -qx "$fn" <<<"$closers" || echo "NOW CLOSES  $name:$fn"
     done
     for fn in $(sed -n 's/^FAIL *\([A-Za-z_0-9]*\).*/\1/p' <<<"$out"); do
         grep -qx "$fn" <<<"$closers" && echo "NOW OPEN    $name:$fn"
     done
 }
-export -f check_file known_closers
+export -f check_file known_closers declarations_after
 export RUN_KEY
 
 report="$(printf '%s\n' "${files[@]}" | xargs -P "$jobs" -I{} bash -c 'check_file "$1"' _ {})"

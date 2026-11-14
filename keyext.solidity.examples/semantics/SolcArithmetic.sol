@@ -17,6 +17,12 @@ contract SolcArithmetic {
     uint constant EX = 2;
     uint constant EY = EX ** 10;
     int256 constant SIGNED_CONSTANT = 42;
+    uint256 shiftedConstant;
+    int256 negativeShiftedConstant;
+    int constant ROUNDING_A = 7;
+    int constant ROUNDING_B = 3;
+    int constant ROUNDING_C = ROUNDING_A / ROUNDING_B;
+    int constant ROUNDING_D = (-ROUNDING_A) / ROUNDING_B;
 
     /// solc: semanticTests/arithmetics/divisiod_by_zero.sol
     /// @custom:key box
@@ -636,5 +642,174 @@ contract SolcArithmetic {
         int r = -4266 >> 1;
         int e = -2133;
         assert(r == e);
+    }
+
+    /// solc: smtCheckerTests/operators/unary_operators_tuple_1.sol
+    /// @custom:key box
+    function unaryOperatorsParenthesized(uint bb) public pure {
+        require(bb >= 0 && bb <= 1);
+        bool b = bb == 1;
+        uint x;
+        if (b) ++(x);
+        if (b) --(x);
+        if (b) delete(b);
+        assert(x == 0);
+        assert(!b);
+    }
+
+    /// solc: smtCheckerTests/operators/unary_operators_tuple_2.sol
+    /// @custom:key box
+    function unaryOperatorsNestedParentheses(uint bb) public pure {
+        require(bb >= 0 && bb <= 1);
+        bool b = bb == 1;
+        uint x;
+        if (b) ++((((((x))))));
+        if (b) --((((((x))))));
+        if (b) delete((((((b))))));
+        assert(x == 0);
+        assert(!b);
+    }
+
+    /// solc: smtCheckerTests/operators/unary_operators_tuple_3.sol
+    /// @custom:key box
+    function unaryOperatorsParenthesizedElse(uint bb) public pure {
+        require(bb >= 0 && bb <= 1);
+        bool b = bb == 1;
+        uint x;
+        if (b) ++(x);
+        else x += 1;
+        assert(x == 1);
+    }
+
+    /// solc: semanticTests/operators/shifts/shift_right_negative_lvalue.sol
+    function shiftRightNegativeLvalue() public pure {
+        int256 a = -4266;
+        assert(a >> 0 == -4266);
+        assert(a >> 1 == -2133);
+        assert(a >> 4 == -267);
+        assert(a >> 8 == -17);
+        assert(a >> 16 == -1);
+        assert(a >> 17 == -1);
+        a = -4267;
+        assert(a >> 0 == -4267);
+        assert(a >> 1 == -2134);
+        assert(a >> 4 == -267);
+        assert(a >> 8 == -17);
+        assert(a >> 16 == -1);
+        assert(a >> 17 == -1);
+    }
+
+    /// solc: semanticTests/operators/shifts/shift_right_negative_lvalue.sol
+    /// @custom:key box
+    function shiftRightNegativeLvalueParam(int256 a, uint256 b) public pure {
+        require(a == -4267 && b == 4);
+        int256 r = a >> b;
+        assert(r == -267);
+    }
+
+    /// solc: semanticTests/operators/shifts/shift_right_negative_lvalue_assignment.sol
+    function shiftRightNegativeLvalueAssign() public pure {
+        int256 a = -4266;
+        a >>= 8;
+        assert(a == -17);
+        a = -4267;
+        a >>= 1;
+        assert(a == -2134);
+        a = -4267;
+        a >>= 17;
+        assert(a == -1);
+    }
+
+    /// solc: semanticTests/operators/shifts/shift_negative_constant_right.sol
+    function shiftNegativeConstantRight() public {
+        negativeShiftedConstant = -0x4200 >> 8;
+        assert(negativeShiftedConstant == -66);
+    }
+
+    /// solc: semanticTests/operators/shifts/shift_negative_constant_left.sol
+    function shiftNegativeConstantLeft() public {
+        negativeShiftedConstant = -0x42 << 8;
+        assert(negativeShiftedConstant == -16896);
+    }
+
+    /// solc: semanticTests/operators/shifts/shift_constant_right.sol
+    function shiftConstantRight() public {
+        shiftedConstant = 0x4200 >> 8;
+        assert(shiftedConstant == 0x42);
+    }
+
+    /// solc: semanticTests/operators/shifts/shift_constant_left.sol
+    function shiftConstantLeft() public {
+        shiftedConstant = 0x42 << 8;
+        assert(shiftedConstant == 0x4200);
+    }
+
+    /// solc: semanticTests/arithmetics/addmod_mulmod.sol
+    function addmodLiteralsUnbounded() public pure {
+        assert((2**255 + 2**255) % 7 == addmod(2**255, 2**255, 7));
+        assert((2**255 + 2**255) % 7 == addmod(2**255, 2**255, 7));
+    }
+
+    /// solc: semanticTests/arithmetics/addmod_mulmod_zero.sol
+    /// @custom:key box
+    function addmodZeroModulusReverts(uint256 d) public pure {
+        require(d == 0);
+        uint256 r = addmod(1, 2, d);
+        assert(false);
+    }
+
+    /// solc: semanticTests/arithmetics/addmod_mulmod_zero.sol
+    /// @custom:key box
+    function mulmodZeroModulusReverts(uint256 d) public pure {
+        require(d == 0);
+        uint256 r = mulmod(1, 2, d);
+        assert(false);
+    }
+
+    /// solc: semanticTests/arithmetics/addmod_mulmod_zero.sol
+    function addmodMulmodZeroOperands() public pure {
+        uint256 r1 = mulmod(0, 1, 2);
+        uint256 r2 = mulmod(1, 0, 2);
+        uint256 r3 = addmod(0, 1, 2);
+        uint256 r4 = addmod(1, 0, 2);
+        uint256 r = 2;
+        assert(r == 2);
+    }
+
+    /// solc: semanticTests/constantEvaluator/negative_fractional_mod.sol
+    function negativeFractionalMod() public pure {
+        int x = int((-(-5.2 % 3)) * 5);
+        int t = 5;
+        assert(x == 11);
+        assert((-(-t % 3)) * 5 == 10);
+    }
+
+    /// solc: semanticTests/constantEvaluator/rounding.sol
+    function constantRounding() public pure {
+        assert(ROUNDING_C == 2);
+        assert(-ROUNDING_D == 2);
+    }
+
+    /// solc: semanticTests/expressions/exp_operator_const.sol
+    function expOperatorConst() public pure {
+        uint d = 2 ** 3;
+        assert(d == 8);
+    }
+
+    /// solc: semanticTests/expressions/exp_operator_const_signed.sol
+    function expOperatorConstSigned() public pure {
+        int d = (-2) ** 3;
+        assert(d == -8);
+    }
+
+    /// solc: semanticTests/expressions/exp_zero_literal.sol
+    function expZeroLiteral() public pure {
+        uint d = 0 ** 0;
+        assert(d == 1);
+    }
+
+    /// solc: semanticTests/expressions/unary_too_long_literal.sol
+    function unaryTooLongLiteral() public pure {
+        assert(0 < ~~84926290883049832306107864558384249403874903260938453235235091622489261765859);
     }
 }

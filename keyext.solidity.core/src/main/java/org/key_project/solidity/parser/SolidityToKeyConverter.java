@@ -42,6 +42,7 @@ import org.key_project.solidity.program.ast.statement.*;
 import org.key_project.solidity.program.ext.ContextStatementBlock;
 import org.key_project.solidity.program.parser.ParserUtils;
 import org.key_project.solidity.program.parser.SolidityParseException;
+import org.key_project.solidity.program.parser.TupleAssignment;
 import org.key_project.solidity.rule.metaconstruct.ExpandFunctionBody;
 import org.key_project.solidity.rule.metaconstruct.NormalizeLoop;
 import org.key_project.solidity.rule.sv.ProgramSV;
@@ -448,20 +449,19 @@ public class SolidityToKeyConverter extends KeYSolidityDLParserBaseVisitor<Synta
                 && assign.getOperator() == Operator.COPY_ASSIGN
                 && assign.getLeft() instanceof TupleExpression targets
                 && assign.getRight() instanceof TupleExpression values) {
-            return new Block(ParserUtils.tupleAssignment(
+            if (!targets.getExpressions().stream()
+                    .allMatch(target -> target instanceof ProgramVariable)) {
+                throw new SolidityParseException(
+                    "A tuple assignment in a .key program only assigns local variables");
+            }
+            return new Block(TupleAssignment.assign(
                 new ArrayList<>(targets.getExpressions().toList()),
-                values.getExpressions().toList(), false, this::tupleTemporary));
+                values.getExpressions().toList(), false, TupleAssignment.temporaries(
+                    type -> Objects.requireNonNull(
+                        services.getSolidityInfo().getKeYSolidityType(type)),
+                    services)));
         }
         return new ExpressionStatement(expression);
-    }
-
-    private ProgramVariable tupleTemporary(Expression target) {
-        if (!(target instanceof ProgramVariable pv)) {
-            throw new SolidityParseException(
-                "A tuple assignment in a .key program only assigns local variables");
-        }
-        return new ProgramVariable(new Name(pv.name() + "_tuple"), pv.getKeYSolidityType(),
-            pv.getDataLocation());
     }
 
     @Override

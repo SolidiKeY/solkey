@@ -48,7 +48,9 @@ assert(c > a);`) and a checked overflow at a literal's `uint8` type
 The ten crash families the ports found are fixed (`docs/taclets-implementation.md`,
 "Declarations outside the contract"). A construct the parser still does not support (`this`,
 `super`, `block.*`, `tx.*`, events) is refused at load with a `SolidityParseException` naming
-it.
+it. The third port found one more: a `return` of a conditional with tuple branches
+(`return c ? (1, 2) : (3, 4);`) throws in `ReturnLowering` during the proof
+(`expressions/conditional_expression_tuples.sol`).
 
 ### Proof gets stuck on program text
 
@@ -60,6 +62,8 @@ it.
 - The same holds for a storage read as the mapping key of a compound assignment
   (`m[r] += 1` with `r` a state variable), which leaves `WithdrawalContract.becomeRichest` open
   and is bound to locals in `KingOfEther` and `SimpleAuction.bid`.
+- A conditional expression statement with assignment branches (`c ? a = v : b = v;`) has no
+  rule (`expressions/conditional_expression_with_return_values.sol`).
 
 ### True facts that cannot be proved
 
@@ -67,11 +71,11 @@ it.
 |---|---|---|
 | A variable mentioned only in a loop invariant loses its value (`DropEffectlessElementaries` does not see `LoopSpec` bindings) | `uint i = 7; /// invariant j <= n && i == 7` → `==> i = 7` | 2; `dynamic_arrays_in_storage.sol`, `ArrayRemoveByShifting` |
 | Symbolic `sdiv` bounds remain incomplete for negative operands | Quotient expansion is restricted in the default arithmetic mode | Non-negative dividends: `sdiv = div`, `smod = mod` and positive-divisor quotient bounds automate |
-| Parameter upper bounds and enum ranges are missing; unsigned input non-negativity is assumed | `function g(uint8 x) { assert(x <= 255); }` stays open | Full ranges deferred (Tier 3/5 of `taclet-ideas.md`) |
-| `msg.value`/`msg.sender` carry no range; the non-payable `msg.value == 0` is assumed only in specified obligations | `function u() payable { assert(msg.value >= 0); }` → `leq(msgValue, -1) ==>` | 3; `msg_value_*`, `range_check.sol`, `payable_1.sol` |
+| *(fixed)* Parameter upper bounds and enum ranges are missing | `function g(uint8 x) { assert(x <= 255); }` | Parameters, spec quantifiers and dynamic lengths are range-guarded; stored values are not (`docs/bugs.md`) |
+| `msg.value` carries no range, and `msg.sender` only in specified obligations; the non-payable `msg.value == 0` is assumed only in specified obligations | `function u() payable { assert(msg.value >= 0); }` → `leq(msgValue, -1) ==>` | 3; `msg_value_*`, `range_check.sol`, `payable_1.sol` |
 | *(fixed)* Static → dynamic storage array copy loses the length | `uint[9] d1; uint[] d2; d2 = d1; assert(d2.length == 9)` | `array_copy_storage_storage_static_dynamic.sol` |
 | *(fixed)* A shorter static array copied into a longer one leaves the tail | `big[30] = 4; big = small; assert(big[30] == 0)` | `array_copy_storage_storage_static_static.sol` |
-| A succedent `\exists` whose body has a nested quantifier is never instantiated (`ex_pull_out*` have no heuristics) | `ensures \exists w; … && (\forall i; … vals[i] <= vals[w])` with witness `k` | voting.rst `Ballot.winnerName` |
+| *(fixed)* A succedent `\exists` whose body has a nested quantifier is never instantiated (`ex_pull_out*` had no heuristics) | `ensures \exists w; … && (\forall i; … vals[i] <= vals[w])` with witness `k` | voting.rst `Ballot.winnerName` |
 
 ## (a) Design limitations of the model
 
@@ -99,7 +103,8 @@ Choices the calculus makes on purpose, each of which makes some Solidity behavio
 - **Storage starts arbitrary.** Function obligations start with symbolic storage satisfying the layout invariant,
   including unconstrained data beyond dynamic-array lengths. Empty push changes only the
   length and preserves that data; it does not establish zero values or empty nested arrays.
-  A default-value assertion needs an explicit earlier clear/write or a suitable precondition.
+  A default-value assertion needs an explicit earlier clear/write or a suitable precondition;
+  `delete arr.push();` is such a clear: it resets the appended slot (`storagePushDelete`).
   No clean-tail invariant is assumed. Compiler-specific dangling-reference examples are in
   `semantics/StorageDangling.sol`; Solidity leaves those executions undefined.
   Larger push loops can still exceed the proof budget (`docs/storage.md`).
@@ -182,11 +187,22 @@ functions and open reasons are listed in `keyext.solidity.examples/semantics/REA
 | Types, enums, tuples, literals | `SolcTypes` | 39 | 17 (1 closes: proves false) | 11 | identity casts (proves false), `E(x)`, enum ranges |
 | **Total** | 11 files | **514** | **98** | | |
 
+A third round added ports to the existing files (closed / open; counts in the README table):
+loops +10 / +3 (known closers: the loop never terminates, so the EVM run runs out of gas),
+array members +12 / +4 (bitwise `|`, the arbitrary storage tail), structs and mappings +12, plus
+4 in `SolcMemory` / +2 (a struct parameter gets no obligation), arithmetic +20 / 0, control flow
+(`SolcControlFlow`, a first-round file) +14 / +2 (a conditional with tuple or assignment
+branches), inheritance +3 (`receive`, `fallback`, `baseStateVariables`) / +3 (base constructors
+are not run, `|=`), payments +2 / +1 (the contract's own balance is not tracked). Two upstream
+tests stay out because solc warns about them in a kind `SolcWrapperTest` does not tolerate:
+`various/swap_in_storage_overwrite.sol` ("two copies to storage", although it closes) and
+`operators/ternary_operator_with_tuple.sol` ("Statement has no effect").
+
 Real-world and benchmark:
 
 | Source | Files | Closed | Open |
 |---|---|---|---|
-| OpenZeppelin v5.0.0/v4.9.0, solmate v7, docs `voting.rst` | `OZPausable`, `OZReentrancyGuard`, `OZNonces`, `OZOwnable2Step`, `OZMath`, `OZCounters`, `SolmateOwned`, `DocsBallot` | 40 | `open/DocsBallot.sol` (`winnerName`, strong spec) |
+| OpenZeppelin v5.0.0/v4.9.0, solmate v7, docs `voting.rst` | `OZPausable`, `OZReentrancyGuard`, `OZNonces`, `OZOwnable2Step`, `OZMath`, `OZCounters`, `SolmateOwned`, `DocsBallot` | 40 | — |
 | Solidity by Example | `ArrayReplaceFromEnd`, `Enum`, `FunctionModifier`, `ArrayRemoveByShifting`, `Counter`, `Mapping`, `NestedMapping`, `KingOfEther`, `EtherGame`, `EtherStore`, `Account`, `IterableMapping`, `SendEther`, `TimeLock` | 39 | `open/ArrayRemoveByShifting.sol` (`remove`, full spec); `EtherStore.withdraw` under `-O transferSemantics:withCallback` (the re-entrancy, as intended) |
 | benchmark | 14 files (6 new) | 37/39 | `WithdrawalContract.becomeRichest` (`m[storageKey] += e`), `AccessRestriction.forceOwnerChange` (`&`) |
 

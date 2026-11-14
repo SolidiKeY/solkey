@@ -864,4 +864,117 @@ contract SolcLoops {
         assert(x >= 15);
     }
 
+    /// solc: smtCheckerTests/loops/while_loop_simple_5.sol
+    /// @custom:key box
+    function whileConditionAssignmentExitsAtZero(uint x, uint y) public pure {
+        require(x <= 7 && y <= 3);
+        x = 7;
+        /// @custom:key invariant 0 <= y
+        while ((x = y) > 0) {
+            --y;
+        }
+        assert(x == 0);
+    }
+
+    /// solc: smtCheckerTests/loops/for_loop_4.sol
+    /// @custom:key box
+    function forUpdateRunsFromSecondIteration(uint x) public pure {
+        require(x <= 10);
+        uint first = 1;
+        /// @custom:key invariant (first == 1 && y == 2) || (first == 0 && y == 3)
+        for (uint y = 2; x < 10; y = 3) {
+            if (first == 1)
+                assert(y == 2);
+            else
+                assert(y == 3);
+            first = 0;
+        }
+    }
+
+    /// solc: smtCheckerTests/loops/for_loop_5.sol
+    /// @custom:key box
+    function forAssignmentInitKeptOnExit(uint x) public pure {
+        require(x <= 10);
+        uint y;
+        /// @custom:key invariant x < 10 || y == 2
+        for (y = 2; x < 10; ) {
+            y = 3;
+        }
+        assert(y == 2);
+    }
+
+    /// solc: smtCheckerTests/loops/for_loop_6.sol
+    /// @custom:key box
+    function forAssignmentInitBoundedOnExit(uint x) public pure {
+        require(x <= 10);
+        uint y;
+        /// @custom:key invariant y == 2 || y == 3
+        for (y = 2; x < 10; ) {
+            y = 3;
+        }
+        assert(y < 4);
+    }
+
+    /// solc: smtCheckerTests/loops/for_loop_condition_constant_true_in_first_iteration_and_constant_false_in_second.sol
+    function forTernaryConditionRunsOnce() public pure {
+        uint n = 0;
+        for (uint k = 0; (k == 0 ? true : false); k++) {
+            n++;
+        }
+        assert(n == 1);
+    }
+
+    /// solc: smtCheckerTests/loops/do_while_bmc_iterations_semantics_3.sol
+    function doWhileLeavesAfterThreeIterations() public pure {
+        uint x = 0;
+        int y = 0;
+        do {
+            if (x >= 3)
+                y = 1;
+            ++x;
+        } while (x < 3 || y == 1);
+        assert(x == 3);
+        assert(y == 0);
+    }
+
+    /// solc: smtCheckerTests/loops/while_loop_simple_1.sol
+    /// @custom:key box
+    function whileOverwritesAssignedParameter(uint x) public pure {
+        require(x >= 0 && x < 10);
+        x = 2;
+        while (x > 1) {
+            x = 1;
+        }
+        assert(x == 1);
+    }
+
+    /// solc: smtCheckerTests/loops/while_loop_simple_3.sol
+    /// @custom:key box
+    function whileEmptyBodyExitNegatesCondition(uint x) public pure {
+        require(x >= 0);
+        /// @custom:key invariant true
+        while (x == 2) {
+        }
+        assert(x != 2);
+    }
+
+    /// solc: smtCheckerTests/loops/for_loop_3.sol
+    /// @custom:key box
+    function forInitNeverUpdated(uint x) public pure {
+        require(x <= 10);
+        /// @custom:key invariant y == 2
+        for (uint y = 2; x < 10; ) {
+            assert(y == 2);
+        }
+    }
+
+    /// solc: smtCheckerTests/loops/while_loop_condition_constant_true_in_first_iteration_and_constant_false_in_second.sol
+    function whileTernaryConditionRunsOnce() public pure {
+        uint k = 0;
+        while (k == 0 ? true : false) {
+            ++k;
+        }
+        assert(k == 1);
+    }
+
 }

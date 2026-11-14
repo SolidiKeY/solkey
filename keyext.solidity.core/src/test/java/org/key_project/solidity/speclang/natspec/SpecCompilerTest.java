@@ -34,9 +34,16 @@ public class SpecCompilerTest {
             new Variable("bidders", "address[] storage ref"),
             new Variable("acc", "struct C.Account storage ref"),
             new Variable("grid", "mapping(uint256 => mapping(uint256 => uint256))"),
-            new Variable("TARGET", "uint256", "7000000000000000000")),
+            new Variable("TARGET", "uint256", "7000000000000000000"),
+            new Variable("LIVE", "bool", "true"),
+            new Variable("rows", "mapping(uint256 => uint256)[] storage ref"),
+            new Variable("fixedRows", "mapping(uint256 => uint256)[2] storage ref"),
+            new Variable("byKey", "mapping(uint256 => mapping(uint256 => uint256)[])"),
+            new Variable("nested", "uint256[][] storage ref"),
+            new Variable("pair", "struct Pair storage ref")),
         Map.of("State", List.of("Open", "Closed")),
-        Map.of("Account", List.of(new Variable("id", "uint256"), new Variable("live", "bool"))),
+        Map.of("Account", List.of(new Variable("id", "uint256"), new Variable("live", "bool")),
+            "Pair", List.of(new Variable("left", "uint256"))),
         List.of(DEPOSIT));
 
     private static final SpecCompiler COMPILER = new SpecCompiler(C, DEPOSIT);
@@ -45,63 +52,92 @@ public class SpecCompilerTest {
         return KeyPrinter.print(COMPILER.formula(text, SpecCompiler.Context.invariant(), "test"));
     }
 
+    private static String requires(String text) {
+        return KeyPrinter.print(COMPILER.formula(text,
+            SpecCompiler.Context.requires(DEPOSIT), "test"));
+    }
+
     private static String ensures(String text) {
         return KeyPrinter.print(COMPILER.formula(text,
-            SpecCompiler.Context.ensures(SpecCompiler.parameterTypes(DEPOSIT)), "test"));
+            SpecCompiler.Context.ensures(DEPOSIT), "test"));
     }
 
     @Test
     void stateVariablesMappingsArraysAndStructs() {
-        assertEquals("(find<[int]>(s, cons1(C$n)) = 5)", invariant("n == 5"));
-        assertEquals("(find<[bool]>(s, cons1(C$open)) = TRUE)", invariant("open"));
-        assertEquals("(find<[int]>(s, cons2(C$balances, at(find<[int]>(s, cons1(C$owner))))) = 0)",
+        assertEquals("(find<[int]>(cinv$s, cons1(C$n)) = 5)", invariant("n == 5"));
+        assertEquals("(find<[bool]>(cinv$s, cons1(C$open)) = TRUE)", invariant("open"));
+        assertEquals(
+            "(find<[int]>(cinv$s, cons2(C$balances, at(find<[int]>(cinv$s, cons1(C$owner))))) = 0)",
             invariant("balances[owner] == 0"));
-        assertEquals("(find<[bool]>(s, cons2(C$bidded, at(msgSender))) = TRUE)",
-            invariant("bidded[msg.sender]"));
-        assertEquals("(find<[int]>(s, cons2(C$bidders, size)) > 0)",
+        assertEquals("(find<[bool]>(storage, cons2(C$bidded, at(msgSender))) = TRUE)",
+            requires("bidded[msg.sender]"));
+        assertEquals("(find<[int]>(cinv$s, cons2(C$bidders, size)) > 0)",
             invariant("bidders.length > 0"));
-        assertEquals("(find<[int]>(s, cons2(C$bidders, at(0))) = find<[int]>(s, cons1(C$owner)))",
+        assertEquals(
+            "(find<[int]>(cinv$s, cons2(C$bidders, at(0))) = find<[int]>(cinv$s, cons1(C$owner)))",
             invariant("bidders[0] == owner"));
-        assertEquals("(find<[int]>(s, cons2(C$acc, C$Account$id)) = 1)",
+        assertEquals("(find<[int]>(cinv$s, cons2(C$acc, C$Account$id)) = 1)",
             invariant("acc.id == 1"));
-        assertEquals("(find<[bool]>(s, cons2(C$acc, C$Account$live)) = TRUE)",
+        assertEquals("(find<[bool]>(cinv$s, cons2(C$acc, C$Account$live)) = TRUE)",
             invariant("acc.live"));
-        assertEquals("(find<[int]>(s, cons3(C$grid, at(1), at(2))) = 3)",
+        assertEquals("(find<[int]>(cinv$s, cons3(C$grid, at(1), at(2))) = 3)",
             invariant("grid[1][2] == 3"));
-        assertEquals("(find<[int]>(s, cons1(C$n)) <= 7000000000000000000)",
+        assertEquals("(find<[int]>(cinv$s, cons3(C$rows, atMap(1), at(2))) = 3)",
+            invariant("rows[1][2] == 3"));
+        assertEquals("(find<[int]>(cinv$s, cons3(C$fixedRows, atMap(1), at(2))) = 3)",
+            invariant("fixedRows[1][2] == 3"));
+        assertEquals(
+            "(find<[int]>(cinv$s, cons(C$byKey, cons(at(1), cons(atMap(2), cons(at(3), nil))))) = 4)",
+            invariant("byKey[1][2][3] == 4"));
+        assertEquals("(find<[int]>(cinv$s, cons3(C$nested, at(1), at(2))) = 3)",
+            invariant("nested[1][2] == 3"));
+        assertEquals("(find<[int]>(cinv$s, cons2(C$pair, Pair$left)) = 1)",
+            invariant("pair.left == 1"));
+        assertEquals("(find<[int]>(cinv$s, cons1(C$n)) <= 7000000000000000000)",
             invariant("n <= TARGET"));
+        assertEquals("((find<[bool]>(cinv$s, cons1(C$open)) = TRUE) <-> true)",
+            invariant("open == LIVE"));
     }
 
     @Test
     void enumsMessageNetAndThis() {
-        assertEquals("(find<[int]>(s, cons1(C$state)) = 1)", invariant("state == State.Closed"));
-        assertEquals("(selectSt<[int]>(n, at(find<[int]>(s, cons1(C$owner)))) = msgValue)",
-            invariant("net(owner) == msg.value"));
-        assertEquals("!(find<[int]>(s, cons1(C$owner)) = self)",
+        assertEquals("(find<[int]>(cinv$s, cons1(C$state)) = 1)",
+            invariant("state == State.Closed"));
+        assertEquals("(selectSt<[int]>(net, at(find<[int]>(storage, cons1(C$owner)))) = msgValue)",
+            requires("net(owner) == msg.value"));
+        assertEquals("!(find<[int]>(cinv$s, cons1(C$owner)) = self)",
             invariant("owner != address(this)"));
         assertEquals(
-            "(selectSt<[int]>(n, at(msgSender)) = neg(selectSt<[int]>(n, at(find<[int]>(s, cons1(C$owner))))))",
-            invariant("net(msg.sender) == -net(owner)"));
+            "(selectSt<[int]>(cinv$n, at(find<[int]>(cinv$s, cons1(C$owner)))) = neg(selectSt<[int]>(cinv$n, at(self))))",
+            invariant("net(owner) == -net(address(this))"));
     }
 
     @Test
     void connectivesQuantifiersAndArithmetic() {
         assertEquals(
-            "((find<[int]>(s, cons1(C$n)) < 1) -> !(find<[bool]>(s, cons1(C$open)) = TRUE))",
+            "((find<[int]>(cinv$s, cons1(C$n)) < 1) -> !(find<[bool]>(cinv$s, cons1(C$open)) = TRUE))",
             invariant("n < 1 -> !open"));
         assertEquals(
-            "(\\forall int a; ((selectSt<[int]>(n, at(a)) > 0) -> (find<[bool]>(s, cons2(C$bidded, at(a))) = TRUE)))",
+            "(\\forall int a; (((0 <= a) & (a <= 1461501637330902918203684832716283019655932542975)) -> ((selectSt<[int]>(cinv$n, at(a)) > 0) -> (find<[bool]>(cinv$s, cons2(C$bidded, at(a))) = TRUE))))",
             invariant("\\forall address a; net(a) > 0 -> bidded[a]"));
         assertEquals(
-            "(\\exists int i; (((i >= 0) & (i < find<[int]>(s, cons2(C$bidders, size)))) & (find<[int]>(s, cons2(C$bidders, at(i))) = find<[int]>(s, cons1(C$owner)))))",
-            invariant("\\exists uint i; i >= 0 && i < bidders.length && bidders[i] == owner"));
+            "(\\exists int i; (((0 <= i) & (i <= 115792089237316195423570985008687907853269984665640564039457584007913129639935)) & ((i < find<[int]>(cinv$s, cons2(C$bidders, size))) & (find<[int]>(cinv$s, cons2(C$bidders, at(i))) = find<[int]>(cinv$s, cons1(C$owner))))))",
+            invariant("\\exists uint i; i < bidders.length && bidders[i] == owner"));
+        assertEquals("(\\forall int q; (((0 <= q) & (q <= 255)) -> (q < 256)))",
+            invariant("\\forall uint8 q; q < 256"));
+        assertEquals("(\\exists int q; (((-128 <= q) & (q <= 127)) & (q < 0)))",
+            invariant("\\exists int8 q; q < 0"));
+        assertEquals("(\\forall int q; (((0 <= q) & (q <= 1)) -> (q < 2)))",
+            invariant("\\forall State q; q < 2"));
+        assertEquals("(\\forall bool b; ((b = TRUE) | !(b = TRUE)))",
+            invariant("\\forall bool b; b || !b"));
         assertEquals(
-            "(div((find<[int]>(s, cons1(C$n)) * 2), 3) = mod(find<[int]>(s, cons1(C$n)), -4))",
+            "(div((find<[int]>(cinv$s, cons1(C$n)) * 2), 3) = mod(find<[int]>(cinv$s, cons1(C$n)), -4))",
             invariant("n * 2 / 3 == n % -4"));
-        assertEquals("((find<[bool]>(s, cons1(C$open)) = TRUE) <-> true)",
+        assertEquals("((find<[bool]>(cinv$s, cons1(C$open)) = TRUE) <-> true)",
             invariant("open == true"));
         assertEquals(
-            "!((find<[bool]>(s, cons1(C$open)) = TRUE) <-> (find<[int]>(s, cons1(C$n)) = 0))",
+            "!((find<[bool]>(cinv$s, cons1(C$open)) = TRUE) <-> (find<[int]>(cinv$s, cons1(C$n)) = 0))",
             invariant("open != (n == 0)"));
     }
 
@@ -127,6 +163,14 @@ public class SpecCompilerTest {
         assertContains("cannot be used as a value", () -> invariant("balances == 0"));
         assertContains("only msg.sender and msg.value", () -> invariant("msg.gas == 0"));
         assertContains("test: ", () -> invariant("n =="));
+        assertContains("msg.sender belongs to a single transaction",
+            () -> invariant("owner == msg.sender"));
+        assertContains("msg.value belongs to a single transaction",
+            () -> invariant("\\forall uint q; q != msg.value"));
+        assertContains("cannot quantify over string", () -> invariant("\\forall string q; true"));
+        assertContains("unknown integer type uint7", () -> invariant("\\forall uint7 q; true"));
+        assertContains("the quantified variable storage",
+            () -> ensures("\\forall uint storage; storage >= 0"));
     }
 
     private static void assertContains(String expected, Runnable action) {

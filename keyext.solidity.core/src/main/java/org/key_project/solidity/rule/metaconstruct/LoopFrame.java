@@ -12,6 +12,8 @@ import org.key_project.logic.SyntaxElement;
 import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.declarations.FunctionDeclaration;
 import org.key_project.solidity.program.ast.declarations.FunctionEnums.DataLocation;
+import org.key_project.solidity.program.ast.declarations.FunctionEnums.StateMutability;
+import org.key_project.solidity.program.ast.declarations.ModifierDeclaration;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
@@ -23,13 +25,14 @@ import org.key_project.solidity.program.ast.expressions.operators.AssignExpressi
 import org.key_project.solidity.program.ast.expressions.operators.Operator;
 import org.key_project.solidity.program.ast.expressions.operators.UnaryExpression;
 import org.key_project.solidity.program.ast.references.FunctionReference;
+import org.key_project.solidity.program.ast.references.ModifierReference;
 import org.key_project.solidity.program.ast.statement.FunctionBodyStatement;
 
 import org.jspecify.annotations.Nullable;
 
 public final class LoopFrame {
     private final Set<ProgramVariable> locals = new LinkedHashSet<>();
-    private final Set<FunctionDeclaration> visited =
+    private final Set<Object> visited =
         Collections.newSetFromMap(new IdentityHashMap<>());
     private boolean storage;
     private boolean net;
@@ -69,8 +72,6 @@ public final class LoopFrame {
             case NewExpression ignored -> memory = true;
             case FunctionCallExpression call -> call(call);
             case FunctionBodyStatement call -> {
-                storage = true;
-                net = true;
                 for (Expression target : call.getTargets()) {
                     if (target != null) {
                         target(target);
@@ -97,20 +98,39 @@ public final class LoopFrame {
         FunctionDeclaration function = call.getFunctionExp() instanceof FunctionReference reference
                 ? reference.getReferencedDeclaration()
                 : null;
-        if (function != null) {
-            switch (function.name().toString()) {
-                case "require", "assert", "revert" -> {
-                    return;
-                }
-                default -> callee(function);
-            }
+        if (function == null) {
+            storage = true;
+            net = true;
+            return;
         }
-        storage = true;
-        net = true;
+        switch (function.name().toString()) {
+            case "require", "assert", "revert" -> {
+            }
+            default -> callee(function);
+        }
     }
 
     private void callee(FunctionDeclaration function) {
-        if (function.hasBody() && visited.add(function)) {
+        if (!visited.add(function)) {
+            return;
+        }
+        if (function.getStateMutability() != StateMutability.pure
+                && function.getStateMutability() != StateMutability.view) {
+            storage = true;
+            net = true;
+        }
+        for (ModifierReference modifier : function.getModifiers()) {
+            walk(modifier);
+            ModifierDeclaration declaration = modifier.getDeclaration();
+            if (declaration == null) {
+                storage = true;
+                net = true;
+                memory = true;
+            } else if (visited.add(declaration)) {
+                walk(declaration.getBody());
+            }
+        }
+        if (function.hasBody()) {
             walk(function.getBody());
         }
     }

@@ -3,7 +3,10 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.strategy.quantifierHeuristics;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 
 import org.key_project.logic.Term;
 import org.key_project.logic.TermCreationException;
@@ -65,25 +68,22 @@ public class Substitution {
 
     public Term apply(Term t, Services services) {
         assert isGround() : "non-ground substitutions are not yet implemented: " + this;
-        final Iterator<LogicVariable> it = varMap.keyIterator();
         final TermBuilder tb = services.getTermBuilder();
-        while (it.hasNext()) {
-            final LogicVariable var = it.next();
-            // final Sort quantifiedVarSort = var.sort();
-            // final Function quantifiedVarSortCast =
-            // services.getJavaDLTheory().getCastSymbol(quantifiedVarSort, services);
-            Term instance = getSubstitutedTerm(var);
-            // if (!instance.sort().extendsTrans(quantifiedVarSort)) {
-            // instance = tb.func(quantifiedVarSortCast, instance);
-            // }
-            t = applySubst(instance, t, tb);
+        for (final LogicVariable var : varsFromOutermostBinderInwards()) {
+            t = applySubst(var, getSubstitutedTerm(var), t, tb);
         }
         return t;
     }
 
-    private Term applySubst(Term instance, Term t, TermBuilder tb) {
-        final var subst = new Subst(instance, tb);
-        return subst.apply(t);
+    private List<LogicVariable> varsFromOutermostBinderInwards() {
+        final List<LogicVariable> vars = new ArrayList<>();
+        varMap.keyIterator().forEachRemaining(vars::add);
+        vars.sort(Comparator.comparingInt(LogicVariable::getIndex).reversed());
+        return vars;
+    }
+
+    private Term applySubst(LogicVariable var, Term instance, Term t, TermBuilder tb) {
+        return new Subst(instance, var.getIndex(), tb).apply(t);
     }
 
     /// Try to apply the substitution to a term, introducing casts if necessary (may never be the
@@ -91,12 +91,10 @@ public class Substitution {
     public Term applyWithoutCasts(Term t, Services services) {
         assert isGround() : "non-ground substitutions are not yet implemented: " + this;
         final TermBuilder tb = services.getTermBuilder();
-        final Iterator<LogicVariable> it = varMap.keyIterator();
-        while (it.hasNext()) {
-            final LogicVariable var = it.next();
+        for (final LogicVariable var : varsFromOutermostBinderInwards()) {
             Term instance = getSubstitutedTerm(var);
             try {
-                t = applySubst(instance, t, tb);
+                t = applySubst(var, instance, t, tb);
             } catch (TermCreationException e) {
                 final Sort quantifiedVarSort = var.sort();
                 if (!instance.sort().extendsTrans(quantifiedVarSort)) {

@@ -23,7 +23,7 @@ public sealed interface SpecType {
         static final int DYNAMIC = -1;
     }
 
-    record Struct(String name) implements SpecType {
+    record Struct(String owner, String name) implements SpecType {
     }
 
     /// The `.key` sort a value of this type is read with, or `null` for a reference type.
@@ -53,7 +53,8 @@ public sealed interface SpecType {
         }
         if (type.startsWith("struct ")) {
             String name = type.substring("struct ".length());
-            return new Struct(name.substring(name.lastIndexOf('.') + 1));
+            int dot = name.lastIndexOf('.');
+            return new Struct(dot < 0 ? "" : name.substring(0, dot), name.substring(dot + 1));
         }
         if (type.equals("bool")) {
             return BOOL;

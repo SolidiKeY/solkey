@@ -15,6 +15,7 @@ HAS_MEMORY_ELEMENT_SORT: '\\hasMemoryElementSort';
 HAS_TYPE_SORT: '\\hasTypeSort';
 HAS_ELEMENT_TYPE_SORT: '\\hasElementTypeSort';
 HAS_STATIC_SORT: '\\hasStaticSort';
+HAS_STATIC_ELEMENT_SORT: '\\hasStaticElementSort';
 STATIC_LENGTH: '\\staticLength';
 FIXED_LENGTH_READ: '\\fixedLengthRead';
 NEW_LOCAL_VARS : '\\newLocalVars';

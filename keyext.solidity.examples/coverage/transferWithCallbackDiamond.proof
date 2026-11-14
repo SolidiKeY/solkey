@@ -39,39 +39,51 @@
     };
 }
 \problem {
-\<{
-  transferToOwner()@Payments;
-}\> true
+   transferSucceeds(selectSt<[int]>(storage,
+                                    Payments$owner),
+                    5)
+-> \<{
+     transferToOwner()@Payments;
+   }\> true
 }
 
 \proof {
 (branch "dummy ID"
-(rule "functionBodyExpand" (formula "1"))
-(rule "localValueDeclInitDrop" (formula "1") (newnames "to"))
-(rule "storageRootReadSelect" (formula "1"))
-(rule "transferWithCallbackDiamond" (formula "1") (term "1") (inst "storageSk=storageSk_0") (inst "netSk=netSk_0"))
+(rule "impRight" (formula "1"))
+(rule "functionBodyExpand" (formula "2"))
+(rule "localValueDeclInitDrop" (formula "2") (newnames "to"))
+(rule "storageRootReadSelect" (formula "2"))
+(rule "transferWithCallbackDiamond" (formula "2") (term "1") (inst "storageSk=storageSk_0") (inst "netSk=netSk_0"))
 (branch
-   (rule "leq_literals" (formula "1") (term "1"))
-   (rule "closeTrue" (formula "1"))
-)
-(branch
-   (rule "leq_literals" (formula "1") (term "0,1"))
-   (rule "concrete_impl_1" (formula "1") (term "1"))
-   (rule "polySimp_elimSub" (formula "1") (term "2,2,0,0,1"))
-   (rule "mul_literals" (formula "1") (term "1,2,2,0,0,1"))
-   (rule "sequentialToParallel2" (formula "1"))
-   (rule "simplifyUpdate2" (formula "1"))
-   (rule "applyOnElementary" (formula "1") (term "0"))
-   (rule "polySimp_addComm0" (formula "1") (term "2,2,1,0,0"))
-   (rule "insertCInv" (formula "1") (term "1"))
-   (rule "closeTrue" (formula "1"))
-)
-(branch
-   (rule "leq_literals" (formula "1") (term "0,1"))
-   (rule "concrete_impl_1" (formula "1") (term "1"))
-   (rule "simplifyUpdate2" (formula "1"))
-   (rule "impRight" (formula "1"))
    (rule "simplifyUpdate2" (formula "2"))
+   (rule "leq_literals" (formula "2"))
+   (rule "closeTrue" (formula "2"))
+)
+(branch
+   (rule "applyOnRigidFormula" (formula "2"))
+   (rule "simplifyUpdate1" (formula "2") (term "1"))
+   (rule "applyOnPV" (formula "2") (term "0"))
+   (rule "findDefinitionMemberPrim" (formula "2") (term "0"))
+   (rule "close" (formula "2") (assumesSeqFormula "1"))
+)
+(branch
+   (rule "leq_literals" (formula "2") (term "0,1"))
+   (rule "concrete_impl_1" (formula "2") (term "1"))
+   (rule "polySimp_elimSub" (formula "2") (term "2,2,0,0,1"))
+   (rule "mul_literals" (formula "2") (term "1,2,2,0,0,1"))
+   (rule "sequentialToParallel2" (formula "2"))
+   (rule "simplifyUpdate2" (formula "2"))
+   (rule "applyOnElementary" (formula "2") (term "0"))
+   (rule "polySimp_addComm0" (formula "2") (term "2,2,1,0,0"))
+   (rule "insertCInv" (formula "2") (term "1"))
+   (rule "closeTrue" (formula "2"))
+)
+(branch
+   (rule "leq_literals" (formula "2") (term "0,1"))
+   (rule "concrete_impl_1" (formula "2") (term "1"))
+   (rule "simplifyUpdate2" (formula "2"))
+   (rule "impRight" (formula "2"))
+   (rule "simplifyUpdate2" (formula "3"))
    (rule "andLeft" (formula "1"))
    (rule "simplifyUpdate2" (formula "1"))
    (rule "applyOnRigidFormula" (formula "2"))
@@ -83,9 +95,9 @@
    (rule "applyOnPV" (formula "1") (term "0"))
    (rule "insertCInv" (formula "2"))
    (rule "true_left" (formula "2"))
-   (rule "functionFrameEmpty" (formula "2") (term "1"))
-   (rule "emptyModality" (formula "2") (term "1"))
-   (rule "closeTrue" (formula "2"))
+   (rule "functionFrameEmpty" (formula "3") (term "1"))
+   (rule "emptyModality" (formula "3") (term "1"))
+   (rule "closeTrue" (formula "3"))
 )
 )
 }

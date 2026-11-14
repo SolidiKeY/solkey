@@ -77,10 +77,11 @@ labels in the source.
 ## Deliberately unhandled
 
 `PragmaDirective` and `ImportDirective` are skipped at the source-unit level. Everything else the
-compiler can emit — `UsingForDirective`, `InheritanceSpecifier`, `EventDefinition`,
+compiler can emit — `InheritanceSpecifier`, `EventDefinition`,
 `ErrorDefinition`, `EmitStatement`, `RevertStatement`, `ModifierInvocation`, `FunctionTypeName`,
 `UserDefinedValueTypeDefinition`, `InlineAssembly` and the whole Yul sub-AST — is unsupported and
-fails loudly.
+fails loudly. A `UsingForDirective` is skipped (`using L for T` is resolved at the call); the
+operators it binds are refused where they are used.
 
 ## Two rewrites worth knowing
 
@@ -88,5 +89,9 @@ fails loudly.
   and `msgValue`, which is what the payment rules in `solidityProgramRules.key` match on. See
   `docs/net.md`.
 - `Literal` values are read from `kind` (`number`, `bool`, …), not from `value` alone.
+- A `BinaryOperation` or `UnaryOperation` typed `int_const N` becomes the literal `N`, taken
+  from `typeIdentifier` (`t_rational_N_by_1`, `t_rational_minus_N_by_1`): `typeString`
+  abbreviates long values as `1000...(28 digits omitted)...0000`. One carrying a `function`
+  field is a user-defined operator and is refused.
 
 Tests: `keyext.solidity.core/src/test/java/org/key_project/solidity/logic/parser/SolJsonParserTest.java`.

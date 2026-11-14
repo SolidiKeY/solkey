@@ -9,8 +9,19 @@ implemented in this fork. The ledger, `msg.sender`/`msg.value`, both
 and their proof obligations are in `keyext.solidity.examples/net/`.
 
 Beyond the paper, the diamond transfer rules owe `0 <= v` as a
-"non-negative amount" goal (the EVM's value field is unsigned), while the
-box rules book the debit unconditionally. A transfer to `self` keeps the
+"non-negative amount" goal (the EVM's value field is unsigned) and
+`transferSucceeds(a, v)` as a "transfer succeeds" goal, while the box rules
+book the debit unconditionally. A transfer reverts when the contract's
+balance is below `v` or the receiver rejects the payment (no payable
+`receive`/fallback, or one that reverts or runs out of its 2300-gas
+stipend); the calculus tracks neither, so `transferSucceeds` (declared in
+`netHeader.key`) has no rule and closes only against an assumption, such as
+an antecedent of a hand-written `.key` problem. A diamond obligation of a
+function that reaches a `transfer` therefore stays open, which is correct:
+solc's `smtCheckerTests/blockchain_state/transfer_3.sol`, a transfer from a
+contract holding nothing, always reverts. `send` and `call{value:}` need no
+such goal, since a failed payment binds `false` instead of reverting. A
+transfer to `self` keeps the
 money in the contract, so the rules leave `net` unchanged in that case
 (`\if(a = self) \then(net) \else(...)`); the PO pattern assumes
 `msgSender != self`. The transfer rules do not track the contract's own
@@ -103,11 +114,13 @@ coexist and examples pin the variant they need.
 `require` rule. The transfer rules are split by modality along the same
 line: the box rules carry no guard at all — the debit is booked
 unconditionally, exactly the paper's rule — while the diamond rules owe
-`0 <= v` as a "non-negative amount" goal (`net-transfer-unfunded.key` pins
-the unconditional box booking, the `net-transfer-*diamond.key` starters
-discharge the diamond obligation, and the `examples/open/` twins in the
-core test resources pin that a diamond over an unconstrained amount stays
-open).
+`0 <= v` as a "non-negative amount" goal and the uninterpreted
+`transferSucceeds(a, v)` as a "transfer succeeds" goal
+(`net-transfer-unfunded.key` pins the unconditional box booking, the
+`net-transfer-*diamond.key` starters discharge the diamond obligations by
+assuming `transferSucceeds(to, 5)`, and the `examples/open/` twins in the
+core test resources pin that a diamond over an unconstrained amount, or
+with no `transferSucceeds` assumption, stays open).
 
 ## 4. Remaining work
 
@@ -144,7 +157,9 @@ Mapped to this repository, roughly in order of usefulness:
    treatment (`send*` rules). Unlike paper Remark 1, `call` follows the
    `transferSemantics` choice like `transfer` and `try` (gas is not modeled).
    `SolJSONParser` lowers `(bool ok, ) = a.call{value: v}("")` to
-   `bool ok = a.send(v);` and rejects every other `call`. Still
+   `bool ok = a.send(v);` and rejects every other `call`. A bare
+   `a.send(v);` whose result is discarded is bound to a fresh `bool` first
+   (`sendDiscardedResultCapture`). Still
    open: `call` with a data payload or a used `bytes` result, which need
    `bytes` and a model of return data.
 6. **Control flow for the remaining examples**: Tier-3 `if` (escrow,

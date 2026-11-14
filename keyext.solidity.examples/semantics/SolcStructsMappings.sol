@@ -35,6 +35,12 @@ contract SolcStructsMappings {
     struct HoldsSum { SumArr s; uint x; }
     struct RecX { uint x; RecX[] a; }
     struct Tree { Tree[] children; }
+    struct PackedStr { uint8 a; uint16 b; uint8 c; }
+    struct S8 { uint8 x; }
+    struct Quad { uint64 a; uint64 b; uint64 c; uint64 d; }
+    struct SumM { mapping(address => uint) innerM; uint sum; }
+    struct HoldsSumM { uint x; SumM s; }
+    struct MapCopy { uint8[3] x; uint8[][] y; uint16 z; }
 
     uint toDelete;
     TopDel str;
@@ -78,6 +84,19 @@ contract SolcStructsMappings {
     mapping(uint => mapping(uint => uint)) twodim;
     mapping(uint => uint[8]) data;
     mapping(uint => uint[]) dynamicData;
+    uint8 packedX;
+    uint16 packedY;
+    PackedStr packedData;
+    S8 s8;
+    mapping(uint8 => S8[2]) m1s;
+    mapping(uint8 => S8[]) m2s;
+    Quad[5] quadSource;
+    Quad[10] quadDest;
+    uint canary;
+    SumM aliasS;
+    HoldsSumM aliasT;
+    mapping(uint8 => MapCopy) srcCopy;
+    mapping(uint8 => MapCopy) dstCopy;
 
     /// solc: semanticTests/structs/delete_struct.sol
     function deleteStructKeepsNestedMappings() public {
@@ -935,4 +954,197 @@ contract SolcStructsMappings {
         assert(temp[1][3].value == 7);
     }
 
+    /// solc: semanticTests/structs/packed_storage_structs_delete.sol
+    function packedStructsDelete() public {
+        packedX = 1;
+        packedY = 2;
+        packedData.a = 2;
+        packedData.b = 0xabcd;
+        packedData.c = 0xfa;
+        assert(packedX == 1 && packedY == 2 && packedData.a == 2 && packedData.b == 0xabcd && packedData.c == 0xfa);
+        delete packedY;
+        delete packedData.b;
+        assert(packedX == 1 && packedY == 0 && packedData.a == 2 && packedData.b == 0 && packedData.c == 0xfa);
+        delete packedX;
+        delete packedData;
+        assert(packedX == 0 && packedY == 0);
+        assert(packedData.a == 0 && packedData.b == 0 && packedData.c == 0);
+    }
+
+    /// solc: semanticTests/types/mapping/copy_struct_to_array_stored_in_mapping.sol
+    /// @custom:key box
+    function structFromStorageToStaticArrayInMapping() public {
+        require(m1s[0][0].x == 0);
+        s8.x = 7;
+        m1s[0][1] = s8;
+        S8[2] memory r = m1s[0];
+        assert(r[0].x == 0);
+        assert(r[1].x == 7);
+    }
+
+    /// solc: semanticTests/types/mapping/copy_struct_to_array_stored_in_mapping.sol
+    /// @custom:key box
+    function structFromStorageToDynamicArrayInMapping() public {
+        require(m2s[0].length == 0);
+        s8.x = 7;
+        m2s[0].push();
+        m2s[0][0] = s8;
+        S8[] memory r = m2s[0];
+        assert(r.length == 1);
+        assert(r[0].x == 7);
+    }
+
+    /// solc: semanticTests/types/mapping/copy_struct_to_array_stored_in_mapping.sol
+    /// @custom:key box
+    function structFromMemoryToStaticArrayInMapping() public {
+        require(m1s[0][0].x == 0);
+        s8.x = 7;
+        S8 memory sLocal = s8;
+        m1s[0][1] = sLocal;
+        S8[2] memory r = m1s[0];
+        assert(r[0].x == 0);
+        assert(r[1].x == 7);
+    }
+
+    /// solc: semanticTests/types/mapping/copy_struct_to_array_stored_in_mapping.sol
+    /// @custom:key box
+    function structFromMemoryToDynamicArrayInMapping() public {
+        require(m2s[0].length == 0);
+        s8.x = 7;
+        m2s[0].push();
+        S8 memory sLocal = s8;
+        m2s[0][0] = sLocal;
+        S8[] memory r = m2s[0];
+        assert(r.length == 1);
+        assert(r[0].x == 7);
+    }
+
+    function addToSumM(SumM storage m, address i, uint v) internal {
+        m.innerM[i] = v;
+        m.sum += v;
+    }
+
+    function setInnerM(mapping(address => uint) storage innerM, address i, uint v) internal {
+        innerM[i] = v;
+    }
+
+    function addToHoldsSumM(HoldsSumM storage m, address i, uint v) internal {
+        m.s.innerM[i] = v;
+        m.s.sum += v;
+    }
+
+    /// solc: smtCheckerTests/types/struct/struct_aliasing_parameter_storage_1.sol
+    /// @custom:key box
+    function storageStructParameterAliases(uint amt) public {
+        require(amt <= 1000);
+        require(aliasS.sum == 0);
+        addToSumM(aliasS, msg.sender, amt);
+        assert(aliasS.sum == amt);
+        assert(aliasS.innerM[msg.sender] == amt);
+    }
+
+    /// solc: smtCheckerTests/types/struct/struct_aliasing_parameter_storage_2.sol
+    /// @custom:key box
+    function storageStructMappingParameterAliases(uint amt) public {
+        require(amt <= 1000);
+        setInnerM(aliasS.innerM, msg.sender, amt);
+        assert(aliasS.innerM[msg.sender] == amt);
+    }
+
+    /// solc: smtCheckerTests/types/struct/struct_aliasing_parameter_storage_3.sol
+    /// @custom:key box
+    function storageOuterStructParameterAliases(uint amt) public {
+        require(amt <= 1000);
+        require(aliasT.s.sum == 0);
+        addToHoldsSumM(aliasT, msg.sender, amt);
+        assert(aliasT.s.sum == amt);
+        assert(aliasT.s.innerM[msg.sender] == amt);
+    }
+
+    /// solc: smtCheckerTests/types/struct/struct_aliasing_parameter_storage_4.sol
+    /// @custom:key box
+    function storageInnerStructParameterAliases(uint amt) public {
+        require(amt <= 1000);
+        require(aliasT.s.sum == 0);
+        addToSumM(aliasT.s, msg.sender, amt);
+        assert(aliasT.s.sum == amt);
+        assert(aliasT.s.innerM[msg.sender] == amt);
+    }
+
+    /// solc: semanticTests/types/mapping/copy_from_mapping_to_mapping.sol
+    function copyStructFromMappingToMapping() public {
+        uint8[] memory d = new uint8[](2);
+        d[0] = 3;
+        d[1] = 4;
+        uint8[][] memory y = new uint8[][](2);
+        y[0] = d;
+        y[1] = d;
+        srcCopy[0].x[0] = 7;
+        srcCopy[0].x[1] = 8;
+        srcCopy[0].x[2] = 9;
+        srcCopy[0].y = y;
+        srcCopy[0].z = 13;
+        dstCopy[0] = srcCopy[0];
+        MapCopy memory r = dstCopy[0];
+        assert(r.x[0] == 7);
+        assert(r.x[1] == 8);
+        assert(r.x[2] == 9);
+        assert(r.y.length == 2);
+        assert(r.y[0].length == 2);
+        assert(r.y[0][0] == 3);
+        assert(r.y[0][1] == 4);
+        assert(r.y[1].length == 2);
+        assert(r.y[1][0] == 3);
+        assert(r.y[1][1] == 4);
+        assert(r.z == 13);
+    }
+
+    function fillQuadSource() internal {
+        for (uint i = 0; i < 5; i++) {
+            quadSource[i].a = uint64(1 + i * 4);
+            quadSource[i].b = uint64(2 + i * 4);
+            quadSource[i].c = uint64(3 + i * 4);
+            quadSource[i].d = uint64(4 + i * 4);
+        }
+    }
+
+    function fillQuadDest() internal {
+        for (uint i = 0; i < 10; i++) {
+            quadDest[i].a = uint64(100 + i * 4);
+            quadDest[i].b = uint64(101 + i * 4);
+            quadDest[i].c = uint64(102 + i * 4);
+            quadDest[i].d = uint64(103 + i * 4);
+        }
+    }
+
+    /// solc: semanticTests/storage/static_array_copy_cleanup.sol
+    function staticStructArrayCopyCleansTail() public {
+        canary = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+        fillQuadSource();
+        fillQuadDest();
+        assert(quadSource[0].a == 1 && quadSource[4].d == 20);
+        assert(quadDest[0].a == 100 && quadDest[9].d == 139);
+        quadDest = quadSource;
+        assert(quadDest[0].a == 1 && quadDest[0].b == 2 && quadDest[0].c == 3 && quadDest[0].d == 4);
+        assert(quadDest[4].a == 17 && quadDest[4].b == 18 && quadDest[4].c == 19 && quadDest[4].d == 20);
+        assert(quadDest[5].a == 0 && quadDest[5].b == 0 && quadDest[5].c == 0 && quadDest[5].d == 0);
+        assert(quadDest[9].a == 0 && quadDest[9].b == 0 && quadDest[9].c == 0 && quadDest[9].d == 0);
+        assert(canary == 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
+    }
+
+    /// solc: semanticTests/storage/static_array_copy_cleanup.sol
+    function staticStructArrayDeletesKeepCanary() public {
+        canary = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+        fillQuadSource();
+        fillQuadDest();
+        quadDest = quadSource;
+        delete quadSource;
+        assert(quadSource[0].a == 0 && quadSource[0].b == 0 && quadSource[0].c == 0 && quadSource[0].d == 0);
+        assert(quadSource[4].a == 0 && quadSource[4].b == 0 && quadSource[4].c == 0 && quadSource[4].d == 0);
+        assert(quadDest[0].a == 1 && quadDest[4].d == 20);
+        delete quadDest;
+        assert(quadDest[0].a == 0 && quadDest[0].b == 0 && quadDest[0].c == 0 && quadDest[0].d == 0);
+        assert(quadDest[9].a == 0 && quadDest[9].b == 0 && quadDest[9].c == 0 && quadDest[9].d == 0);
+        assert(canary == 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);
+    }
 }

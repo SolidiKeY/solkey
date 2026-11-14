@@ -112,7 +112,9 @@ and `storagePushReadBack` on an otherwise unknown storage.
 `@custom:` is solc's extension prefix; any other tag is rejected as invalid documentation. A
 tag starts a line and a clause runs to the next tag, so a long clause may continue on the next
 `///` line. The last four make a function *specified* — see `../contracts/README.md` for
-what that means and for the expression language.
+what that means and for the expression language. A clause anywhere else (an `ensures` on the
+contract, an `invariant` on a function, any clause on an internal function or a modifier) is
+an error, not ignored.
 
 ## Known gaps
 

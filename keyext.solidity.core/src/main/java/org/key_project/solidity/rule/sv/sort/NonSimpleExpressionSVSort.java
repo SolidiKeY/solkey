@@ -11,6 +11,7 @@ import org.key_project.logic.Name;
 import org.key_project.solidity.common.Services;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.StaticTypes;
+import org.key_project.solidity.program.ast.abstractions.MemoryReferenceTypes;
 import org.key_project.solidity.program.ast.abstractions.PrimitiveType;
 import org.key_project.solidity.program.ast.expressions.Expression;
 import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
@@ -21,7 +22,7 @@ import org.key_project.solidity.program.ast.references.FieldReference;
 public class NonSimpleExpressionSVSort extends ProgramSVSort {
 
     private enum Filter {
-        ANY, PRIMITIVE
+        ANY, PRIMITIVE, REFERENCE
     }
 
     private static final Map<String, ProgramSVSort> PARAMETERIZED_SORTS = new HashMap<>();
@@ -47,6 +48,8 @@ public class NonSimpleExpressionSVSort extends ProgramSVSort {
             return true;
         if (isPathShaped(pe))
             return false;
+        if (filter == Filter.REFERENCE)
+            return MemoryReferenceTypes.isReferenceType(expression.getType());
         return StaticTypes.unwrap(expression.getType()) instanceof PrimitiveType;
     }
 
@@ -62,13 +65,15 @@ public class NonSimpleExpressionSVSort extends ProgramSVSort {
         if (cached != null) {
             return cached;
         }
-        if (!"primitive".equals(parameter.toLowerCase(Locale.ROOT))) {
-            throw new IllegalArgumentException(
+        Filter filter = switch (parameter.toLowerCase(Locale.ROOT)) {
+            case "primitive" -> Filter.PRIMITIVE;
+            case "reference" -> Filter.REFERENCE;
+            default -> throw new IllegalArgumentException(
                 "Unknown NonSimpleExpression sort flag '" + parameter
-                    + "' (expected 'primitive')");
-        }
+                    + "' (expected 'primitive' or 'reference')");
+        };
         ProgramSVSort result = new NonSimpleExpressionSVSort(
-            new Name("NonSimpleExpression[" + parameter + "]"), Filter.PRIMITIVE);
+            new Name("NonSimpleExpression[" + parameter + "]"), filter);
         PARAMETERIZED_SORTS.put(parameter, result);
         return result;
     }

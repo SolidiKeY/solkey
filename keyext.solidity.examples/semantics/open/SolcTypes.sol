@@ -37,32 +37,12 @@ contract SolcTypes {
         assert(p == D.Left);
     }
 
-    /// solc: smtCheckerTests/types/enum_range.sol
-    function enumRange(D p) public pure {
-        // open: an enum parameter is an unconstrained int, its member range is not assumed
-        assert(p == D.Left || p == D.Right);
-    }
-
-    /// solc: smtCheckerTests/typecast/enum_to_uint_max_value.sol
-    function enumToUintMaxValue(D p) public pure {
-        // open: an enum parameter is an unconstrained int, its member range is not assumed
-        uint x = uint(p);
-        assert(x < 10);
-    }
-
     /// solc: smtCheckerTests/types/storage_value_vars_3.sol
     /// @custom:key box
     function storageValueVarsNonNegative() public view {
         // open: a uint state variable read from storage is not known to be non-negative
         require(a < 0x0000000000000000000000000000000000000100);
         assert(c >= 0);
-    }
-
-    /// solc: smtCheckerTests/typecast/cast_larger_1.sol
-    function castLargerKeepsRange(uint8 x) public pure {
-        // open: a uint8 parameter is an unbounded int, its 0..255 range is not assumed
-        uint16 y = uint16(x);
-        assert(y < 300);
     }
 
     /// solc: smtCheckerTests/typecast/cast_smaller_1.sol

@@ -64,13 +64,16 @@ The contract sets, ported from the SolidityCalculus course (`maltaCourseKey`):
 The `net-*` starters cover the raw machinery: the ledger update, `msg.*` desugaring, and
 `.transfer` under both semantics (simple, capture-argument, capture-receiver,
 with-callback, transfer to self). The transfer rules are split by modality — box books the
-debit with no funds check, diamond owes `0 <= v` as a "non-negative amount" goal — and a
+debit with no funds check, diamond owes `0 <= v` as a "non-negative amount" goal and the
+uninterpreted `transferSucceeds(to, v)` as a "transfer succeeds" goal, provable only from an
+assumption since neither the contract's balance nor the receiver's acceptance is tracked — and a
 transfer to `self` leaves `net` unchanged, so a starter paying an arbitrary address assumes
 it is not `self` (`net-transfer-self.key` / `net-transfer-withcallback-self.key` cover that
 case). `net-transfer-diamond.key` / `net-transfer-withcallback-diamond.key` discharge the
-diamond obligation; the negative twins (a diamond over an unconstrained amount must stay
-open) live in `keyext.solidity.core/src/test/resources/org/key_project/solidity/examples/open/`,
-asserted by `NetExamplesTest#negativeAmountDiamondStaysOpen`.
+diamond obligation by assuming `transferSucceeds(to, 5)`; the negative twins (a diamond over
+an unconstrained amount, or with no `transferSucceeds` assumption, must stay open) live in
+`keyext.solidity.core/src/test/resources/org/key_project/solidity/examples/open/`,
+asserted by `NetExamplesTest#diamondTransferStaysOpen`.
 
 Symbolic POs occasionally need two kinds of sound antecedent strengthening, always noted
 in the file comment: `geq(field, 0)` uint-range assumptions ("Solidity Light" uses

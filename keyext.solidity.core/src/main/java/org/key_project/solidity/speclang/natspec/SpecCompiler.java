@@ -3,10 +3,15 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.speclang.natspec;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.key_project.solidity.keyfile.Key;
@@ -37,29 +42,50 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
 
     /// Where the expression is evaluated: which struct terms stand for storage and the ledger,
     /// whether `\old` and `\result` are meaningful, and the variables in scope.
-    public record Context(String storage, String net, boolean ensures,
-            Map<String, SpecType> locals) {
+    public record Context(String storage, String net, boolean ensures, boolean transaction,
+            Map<String, SpecType> locals, Map<String, String> variables) {
+
+        public Context(String storage, String net, boolean ensures, boolean transaction,
+                Map<String, SpecType> locals) {
+            this(storage, net, ensures, transaction, locals, Map.of());
+        }
+
+        public static final String INVARIANT_STORAGE = "cinv$s";
+        public static final String INVARIANT_NET = "cinv$n";
+
+        public Context(String storage, String net, boolean ensures,
+                Map<String, SpecType> locals) {
+            this(storage, net, ensures, true, locals);
+        }
 
         public static Context invariant() {
-            return new Context("s", "n", false, Map.of());
+            return new Context(INVARIANT_STORAGE, INVARIANT_NET, false, false, Map.of());
         }
 
-        public static Context requires(Map<String, SpecType> parameters) {
-            return new Context("storage", "net", false, parameters);
+        public static Context requires(SolidityOutline.Function function) {
+            return new Context("storage", "net", false, true, parameterTypes(function),
+                parameterVariables(function));
         }
 
-        public static Context ensures(Map<String, SpecType> parameters) {
-            return new Context("storage", "net", true, parameters);
+        public static Context ensures(SolidityOutline.Function function) {
+            return new Context("storage", "net", true, true, parameterTypes(function),
+                parameterVariables(function));
         }
 
         Context old() {
-            return new Context("old", "oldNet", false, locals);
+            return new Context("old", "oldNet", false, transaction, locals, variables);
         }
 
         Context bind(String variable, SpecType type) {
             Map<String, SpecType> extended = new HashMap<>(locals);
             extended.put(variable, type);
-            return new Context(storage, net, ensures, extended);
+            Map<String, String> unshadowed = new HashMap<>(variables);
+            unshadowed.remove(variable);
+            return new Context(storage, net, ensures, transaction, extended, unshadowed);
+        }
+
+        String variable(String name) {
+            return variables.getOrDefault(name, name);
         }
     }
 
@@ -80,6 +106,9 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
     private record Path(List<KeyTerm> segments, SpecType type) {
     }
 
+    private static final Set<String> RESERVED = Set.of("storage", "net", "memory", "mtSt",
+        "msgSender", "msgValue", "self", "selfBalance", "old", "oldNet", "TRUE", "FALSE");
+
     private final SolidityOutline.Contract contract;
     private final SolidityOutline.Function function;
     private final @Nullable SpecType resultType;
@@ -96,6 +125,28 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
 
     public static String resultVariable(SolidityOutline.Function function, String name) {
         return function.returns().size() == 1 ? "result" : "result_" + name;
+    }
+
+    public static Map<String, String> parameterVariables(SolidityOutline.Function function) {
+        Set<String> taken = new HashSet<>(RESERVED);
+        for (SolidityOutline.Parameter ret : function.returns()) {
+            taken.add(resultVariable(function, ret.name()));
+        }
+        List<String> names = function.parameters().stream().map(SolidityOutline.Parameter::name)
+                .toList();
+        Set<String> clashing = names.stream().filter(taken::contains)
+                .collect(Collectors.toSet());
+        taken.addAll(names);
+        Map<String, String> variables = new HashMap<>();
+        for (String name : names) {
+            String variable = name;
+            for (int i = 0; clashing.contains(name) && taken.contains(variable); i++) {
+                variable = name + "$" + i;
+            }
+            taken.add(variable);
+            variables.put(name, variable);
+        }
+        return variables;
     }
 
     public static Map<String, SpecType> parameterTypes(SolidityOutline.Function function) {
@@ -184,7 +235,7 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
         String name = node.getText();
         SpecType local = ctx.locals().get(name);
         if (local != null) {
-            return new Value.OfTerm(Key.constant(name), local);
+            return new Value.OfTerm(Key.constant(ctx.variable(name)), local);
         }
         if (ctx.ensures()) {
             for (SolidityOutline.Parameter ret : function.returns()) {
@@ -199,8 +250,11 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
         }
         SolidityOutline.Variable variable = stateVariable(name);
         if (variable != null && variable.constantValue() != null) {
-            return new Value.OfTerm(Key.num(variable.constantValue()),
-                SpecType.of(variable.type()));
+            SpecType type = SpecType.of(variable.type());
+            return type == SpecType.BOOL
+                    ? new Value.OfFormula(Boolean.parseBoolean(variable.constantValue()) ? Key.TRUE
+                            : Key.FALSE)
+                    : new Value.OfTerm(Key.num(variable.constantValue()), type);
         }
         return read(path(node));
     }
@@ -220,6 +274,11 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
                 String variable = ParserUtils.msgMemberVariable(member);
                 if (variable == null) {
                     throw new SpecException(ParserUtils.unsupportedMsgMember(member));
+                }
+                if (!ctx.transaction()) {
+                    throw new SpecException("msg." + member + " belongs to a single transaction"
+                        + " and cannot appear in a contract invariant, which holds between"
+                        + " transactions");
                 }
                 return integer(Key.constant(variable));
             }
@@ -310,12 +369,71 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
 
     @Override
     public Value visitQuantifier(SolSpecParser.QuantifierContext node) {
-        SpecType type = node.sort().getText().equals("bool") ? SpecType.BOOL : SpecType.INT;
+        String sort = node.sort().getText();
         String variable = node.var.getText();
-        KeyFormula body = asFormula(in(ctx.bind(variable, type), node.expr()));
-        return new Value.OfFormula(Key.quantified(node.q.getText().equals("\\forall"),
-            type.sort(), variable, body));
+        if (RESERVED.contains(variable) || variable.equals("result")
+                || variable.startsWith("result_")) {
+            throw new SpecException("the quantified variable " + variable
+                + " has the name of a variable of the proof obligation; rename it");
+        }
+        boolean universal = node.q.getText().equals("\\forall");
+        if (sort.equals("bool")) {
+            KeyFormula body = asFormula(in(ctx.bind(variable, SpecType.BOOL), node.expr()));
+            return new Value.OfFormula(Key.quantified(universal, "bool", variable, body));
+        }
+        Range range = range(sort);
+        if (range == null) {
+            throw new SpecException("cannot quantify over " + sort
+                + "; use bool, an integer type, address or an enum");
+        }
+        KeyFormula inRange = range.contains(Key.constant(variable));
+        KeyFormula body = asFormula(in(ctx.bind(variable, SpecType.INT), node.expr()));
+        return new Value.OfFormula(Key.quantified(universal, "int", variable,
+            universal ? Key.implies(inRange, body) : Key.and(inRange, body)));
     }
+
+    public record Range(BigInteger low, BigInteger high) {
+
+        public static final Range ADDRESS =
+            new Range(BigInteger.ZERO, BigInteger.TWO.pow(160).subtract(BigInteger.ONE));
+
+        public KeyFormula contains(KeyTerm term) {
+            return Key.and(Key.compare(Relation.LEQ, Key.num(low.toString()), term),
+                Key.compare(Relation.LEQ, term, Key.num(high.toString())));
+        }
+    }
+
+    public @Nullable Range range(String type) {
+        String name = type.trim();
+        Matcher integer = INTEGER_SORT.matcher(name);
+        if (integer.matches()) {
+            int bits = integer.group(2).isEmpty() ? 256 : Integer.parseInt(integer.group(2));
+            if (bits < 8 || bits > 256 || bits % 8 != 0) {
+                throw new SpecException("unknown integer type " + name);
+            }
+            BigInteger half = BigInteger.TWO.pow(bits - 1);
+            return integer.group(1).isEmpty()
+                    ? new Range(half.negate(), half.subtract(BigInteger.ONE))
+                    : new Range(BigInteger.ZERO,
+                        BigInteger.TWO.pow(bits).subtract(BigInteger.ONE));
+        }
+        if (name.matches("address( payable)?") || name.startsWith("contract ")) {
+            return Range.ADDRESS;
+        }
+        if (name.startsWith("enum ")) {
+            name = name.substring("enum ".length());
+            int dot = name.lastIndexOf('.');
+            if (dot >= 0 && !name.substring(0, dot).equals(contract.name())) {
+                return null;
+            }
+            name = name.substring(dot + 1);
+        }
+        List<String> members = contract.enums().get(name);
+        return members == null ? null
+                : new Range(BigInteger.ZERO, BigInteger.valueOf(members.size() - 1));
+    }
+
+    private static final Pattern INTEGER_SORT = Pattern.compile("(u?)int(\\d*)");
 
     private static Value integer(KeyTerm term) {
         return new Value.OfTerm(term, SpecType.INT);
@@ -352,7 +470,11 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
                     default -> throw new SpecException(index.expr(0).getText()
                         + " is neither a mapping nor an array and cannot be indexed");
                 };
-                yield new Path(extend(base.segments(), Key.apply("at", term(index.expr(1)))),
+                String selector =
+                    base.type() instanceof SpecType.Array && element instanceof SpecType.Mapping
+                            ? "atMap"
+                            : "at";
+                yield new Path(extend(base.segments(), Key.apply(selector, term(index.expr(1)))),
                     element);
             }
             case SolSpecParser.MemberContext member -> {
@@ -370,9 +492,10 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
                         throw new SpecException(
                             "struct " + struct.name() + " has no member " + name);
                     }
-                    yield new Path(
-                        extend(base.segments(), Key.constant(
-                            StructLDT.fieldConstantName(contract.name(), struct.name(), name))),
+                    String constant = struct.owner().isEmpty()
+                            ? StructLDT.fieldConstantName(struct.name(), name)
+                            : StructLDT.fieldConstantName(struct.owner(), struct.name(), name);
+                    yield new Path(extend(base.segments(), Key.constant(constant)),
                         SpecType.of(field.type()));
                 }
                 throw new SpecException(

@@ -28,10 +28,12 @@ contract PiggyBankNet {
         paidBy = msg.sender;
     }
 
+    /// @custom:key box
     function payTo(address payable a) public {
         a.transfer(5);
     }
 
+    /// @custom:key box
     function payToPlus(address payable a, uint x) public {
         a.transfer(x + 2);
     }
@@ -46,6 +48,7 @@ contract PiggyBankNet {
         sent = ok;
     }
 
+    /// @custom:key box
     function payOwner() public {
         owner.transfer(5);
     }

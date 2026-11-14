@@ -15,6 +15,18 @@ contract SolcHigherLevelA is SolcHigherLevelRoot {
     uint256 z;
     uint256 private t;
 
+    receive() external payable virtual {
+        require(x == 0);
+        uint256 r = x;
+        assert(r != 1);
+    }
+
+    fallback() external virtual {
+        require(x == 0);
+        uint256 r = x;
+        assert(r != 1);
+    }
+
     function getViaBase() internal view returns (uint256 i) {
         return dataBase;
     }
@@ -215,6 +227,16 @@ contract SolcHigherLevel is SolcHigherLevelA, SolcHigherLevelB, SolcHigherLevelP
     }
 
 
+    /// solc: smtCheckerTests/inheritance/state_variables.sol
+    /// @custom:key box
+    function baseStateVariables(uint y) public {
+        require(x < 10);
+        require(y >= 0 && y < 100);
+        z = x + y;
+        uint r = z;
+        assert(r < 150);
+    }
+
     /// solc: smtCheckerTests/inheritance/state_variables_2.sol
     /// @custom:key box
     function baseStateVariablesChain(uint y) public {
@@ -386,5 +408,21 @@ contract SolcHigherLevel is SolcHigherLevelA, SolcHigherLevelB, SolcHigherLevelP
     function inheritedNamedOverrideUnordered() public pure {
         uint256 r = nf({c: 3, b: 1, a: 2});
         assert(r == 20);
+    }
+
+    /// solc: smtCheckerTests/inheritance/receive.sol, smtCheckerTests/inheritance/fallback_receive.sol
+    /// @custom:key box
+    receive() external payable override {
+        require(x == 0);
+        uint256 r = x;
+        assert(r != 1);
+    }
+
+    /// solc: smtCheckerTests/inheritance/fallback.sol, smtCheckerTests/inheritance/receive_fallback.sol
+    /// @custom:key box
+    fallback() external override {
+        require(x == 0);
+        uint256 r = x;
+        assert(r != 1);
     }
 }

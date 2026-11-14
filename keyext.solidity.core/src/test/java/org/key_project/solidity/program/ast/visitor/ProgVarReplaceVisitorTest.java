@@ -188,7 +188,7 @@ public class ProgVarReplaceVisitorTest {
         SolidityOutline.Contract contract = new SolidityOutline.Contract("C", List.of(function));
         LoopSpec spec = new LoopSpec(List.of("true"), null,
             Map.of("original", new LoopSpec.Binding(original, "bool")), contract, function)
-                .withBreakFlag(original);
+                .withExitFlags(original, original);
         assertSame(spec, spec.rename(Map.of()));
         WhileStatement loop = (WhileStatement) body.getStatements().get(1);
         WhileStatement specified = new WhileStatement(Objects.requireNonNull(loop.getCondition()),
@@ -197,6 +197,7 @@ public class ProgVarReplaceVisitorTest {
         WhileStatement result = (WhileStatement) runOn(specified);
         LoopSpec resultSpec = Objects.requireNonNull(result.getSpec());
         assertSame(renamed, Objects.requireNonNull(resultSpec.breakFlag()));
+        assertSame(renamed, Objects.requireNonNull(resultSpec.returnFlag()));
         assertSame(renamed,
             Objects.requireNonNull(resultSpec.bindings().get("original")).variable());
         assertSame(renamed,

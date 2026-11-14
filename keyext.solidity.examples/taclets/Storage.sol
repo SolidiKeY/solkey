@@ -45,6 +45,8 @@ contract Storage {
     mapping(uint => Ledger) ledgerMap;
     mapping(uint => uint)[] mapArray;
     mapping(bool => uint) boolKeyed;
+    mapping(bool => Token) tokensByFlag;
+    mapping(bool => uint[]) listsByFlag;
     Tree tree;
 
     function storageAssignmentValueNested() public {
@@ -742,6 +744,17 @@ contract Storage {
         assert(r == 2);
     }
 
+    /// @custom:key ensures mapArray[mapArray.length - 1][5] == 7
+    function specArrayOfMappingsElement() public {
+        mapArray.push();
+        mapArray[mapArray.length - 1][5] = 7;
+    }
+
+    /// @custom:key ensures \exists uint i; i + 1 == boolFlags.length
+    function specExistsWitnessBoundedByLength() public {
+        boolFlags.push(true);
+    }
+
     function mappingOfLedgerMember() public {
         ledgerMap[1].nonce = 4;
         ledgerMap[1].balances[2] = 3;
@@ -833,6 +846,33 @@ contract Storage {
         assert(r == minusOne);
     }
 
+    function aliceRef() internal view returns (Person storage) {
+        return alice;
+    }
+
+    function storageFieldWriteCallReceiver() public {
+        aliceRef().age = 5;
+        aliceRef().age += 2;
+        aliceRef().age--;
+        ++aliceRef().age;
+        assert(alice.age == 7);
+        delete aliceRef().age;
+        assert(alice.age == 0);
+        aliceRef().account.balance = 3;
+        assert(alice.account.balance == 3);
+    }
+
+    function shiftStorageOperands() public {
+        total = 10;
+        age = 3;
+        uint r = total << age;
+        balances[1] = 64;
+        uint q = balances[1] >> 2;
+        uint x = 80;
+        uint z = x >> age;
+        assert(r == 80 && q == 16 && z == 10);
+    }
+
     function storageFieldDeleteUnfold() public {
         alice.account.balance = 20;
         delete alice.account.balance;
@@ -866,5 +906,45 @@ contract Storage {
         uint r = --age;
         assert(r == 9);
         assert(age == 9);
+    }
+
+    function storageFieldPreincrementAssignmentUnfold() public {
+        alice.account.balance = 40;
+        uint r = ++alice.account.balance;
+        assert(r == 41);
+        assert(alice.account.balance == 41);
+    }
+
+    function storageFieldPostincrementAssignmentUnfold() public {
+        alice.account.balance = 40;
+        uint r = alice.account.balance++;
+        assert(r == 40);
+        assert(alice.account.balance == 41);
+    }
+
+    function storageFieldPredecrementAssignmentUnfold() public {
+        alice.account.balance = 40;
+        uint r = --alice.account.balance;
+        assert(r == 39);
+        assert(alice.account.balance == 39);
+    }
+
+    function storageFieldPostdecrementAssignmentUnfold() public {
+        alice.account.balance = 40;
+        uint r = alice.account.balance--;
+        assert(r == 40);
+        assert(alice.account.balance == 39);
+    }
+
+    function storageDeleteBoolKeyStruct() public {
+        tokensByFlag[true].value = 5;
+        delete tokensByFlag[true];
+        assert(tokensByFlag[true].value == 0);
+    }
+
+    function storageDeleteBoolKeyArray() public {
+        listsByFlag[false].push(3);
+        delete listsByFlag[false];
+        assert(listsByFlag[false].length == 0);
     }
 }

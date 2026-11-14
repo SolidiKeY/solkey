@@ -27,6 +27,7 @@ import org.key_project.solidity.program.ast.statement.FunctionBodyStatement;
 import org.key_project.solidity.program.ast.statement.FunctionFrame;
 import org.key_project.solidity.program.ast.statement.Statement;
 import org.key_project.solidity.program.parser.ParserUtils;
+import org.key_project.solidity.program.parser.TupleAssignment;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.solidity.rule.sv.ProgramSV;
 import org.key_project.util.collection.ImmutableArray;
@@ -44,10 +45,12 @@ import org.jspecify.annotations.Nullable;
 /// `return;` completes. The result spliced into the modality is the sequence
 ///
 /// ```
-/// T0 p0 = arg0; ... Tn pn = argn; R0 r0 = 0; ... Rm rm = 0; function-frame { <body> } t0 = r0; ...
+/// T0 p0 = arg0; ... Tn pn = argn; R0 r0 = 0; ... Rm rm = 0; function-frame { <body> } tm = rm; ...
+/// t0 = r0;
 /// ```
 ///
-/// where `ti` are the call site's targets; a discarded target gets no assignment. A return
+/// where `ti` are the call site's targets, stored right to left once their locations are evaluated
+/// (see [TupleAssignment]); a discarded target gets no assignment. A return
 /// variable of integer or `bool` type starts at its default, `0` or `false`. The function's
 /// modifiers are wrapped around the frame (see [ModifierInlining]).
 ///
@@ -152,7 +155,7 @@ public class ExpandFunctionBody extends ProgramTransformer {
         }
         stmts.add((Statement) fresh.rename(frame(fn, services), call.getContractName(),
             services));
-        stmts.addAll(assignResults(targets, results));
+        stmts.addAll(assignResults(targets, results, services));
         return stmts.toArray(new SolidityProgramElement[0]);
     }
 
@@ -182,16 +185,14 @@ public class ExpandFunctionBody extends ProgramTransformer {
     }
 
     private static List<Statement> assignResults(List<@Nullable Expression> targets,
-            List<ProgramVariable> results) {
-        final List<Statement> assignments = new ArrayList<>(targets.size());
-        for (int i = 0; i < targets.size(); i++) {
-            Expression target = targets.get(i);
-            if (target != null) {
-                assignments.add(new ExpressionStatement(new AssignExpression(
-                    Operator.COPY_ASSIGN, target, results.get(i))));
-            }
+            List<ProgramVariable> results, Services services) {
+        if (targets.size() == 1 && targets.getFirst() instanceof Expression target) {
+            return List.of(new ExpressionStatement(
+                new AssignExpression(Operator.COPY_ASSIGN, target, results.getFirst())));
         }
-        return assignments;
+        return TupleAssignment.store(targets, results, TupleAssignment.temporaries(
+            type -> Objects.requireNonNull(services.getSolidityInfo().getKeYSolidityType(type)),
+            services));
     }
 
     private static List<Statement> stateVariableInitializers(FunctionDeclaration constructor,

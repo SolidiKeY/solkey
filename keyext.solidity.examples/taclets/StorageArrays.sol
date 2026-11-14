@@ -12,6 +12,7 @@ contract StorageArrays {
     struct LedgerUse { Ledger ledger; }
     struct TokenBucket { Token[] tokens; }
     struct Triple { uint[3] items; uint tag; }
+    struct Node { uint v; Node[] kids; }
 
     uint total;
     uint age;
@@ -65,6 +66,9 @@ contract StorageArrays {
     Person[] personsSource;
     TokenBucket bucketSource;
     Token[3] fixedTokens3;
+    mapping(uint => Triple) triplesByKey;
+    Node nodeTree;
+    Node nodeSpare;
 
     function storageAssignmentValueIndexOnce() public {
         uint i = 0;
@@ -1585,6 +1589,46 @@ contract StorageArrays {
         return values;
     }
 
+    function storageIndexWriteCallReceiver() public {
+        delete values;
+        values.push(4);
+        valuesRef()[0] = 8;
+        valuesRef()[0] += 2;
+        valuesRef()[0]++;
+        --valuesRef()[0];
+        assert(values[0] == 10);
+        delete valuesRef()[0];
+        assert(values[0] == 0);
+    }
+
+    function storagePushDelete() public {
+        delete values;
+        values.push(7);
+        delete values.push();
+        assert(values.length == 2);
+        assert(values[0] == 7 && values[1] == 0);
+        delete tokens;
+        delete tokens.push();
+        assert(tokens.length == 1 && tokens[0].value == 0);
+        delete matrix;
+        delete matrix.push();
+        assert(matrix.length == 1 && matrix[0].length == 0);
+    }
+
+    function storagePushDeleteUnfoldReceiver() public {
+        delete basketA;
+        delete basketA.items.push();
+        assert(basketA.items.length == 1 && basketA.items[0] == 0);
+        delete matrix;
+        delete matrix.push().push();
+        uint n = matrix[0].length;
+        assert(matrix.length == 1 && n >= 1);
+        assert(matrix[0][n - 1] == 0);
+        delete values;
+        delete valuesRef().push();
+        assert(values.length == 1 && values[0] == 0);
+    }
+
     function storagePushPopCallReceiver() public {
         values.push();
         delete values;
@@ -1854,9 +1898,160 @@ contract StorageArrays {
         assert(r == 40);
     }
 
+    /// @custom:key ensures fixedMaps[1][5] == 7 && fixedMaps[0][5] == \old(fixedMaps[0][5])
+    function specFixedArrayOfMappingsElement() public {
+        fixedMaps[1][5] = 7;
+    }
+
     /// @custom:key box
     function storagePopUnfold() public {
         require(0 < basketA.items.length);
         basketA.items.pop();
+    }
+
+    function storageIndexPreincrementAssignmentUnfold() public {
+        ledger.balances[1] = 40;
+        uint r = ++ledger.balances[1];
+        assert(r == 41);
+        assert(ledger.balances[1] == 41);
+    }
+
+    function storageIndexPostincrementAssignmentUnfold() public {
+        ledger.balances[1] = 40;
+        uint r = ledger.balances[1]++;
+        assert(r == 40);
+        assert(ledger.balances[1] == 41);
+    }
+
+    function storageIndexPredecrementAssignmentUnfold() public {
+        ledger.balances[1] = 40;
+        uint r = --ledger.balances[1];
+        assert(r == 39);
+        assert(ledger.balances[1] == 39);
+    }
+
+    function storageIndexPostdecrementAssignmentUnfold() public {
+        ledger.balances[1] = 40;
+        uint r = ledger.balances[1]--;
+        assert(r == 40);
+        assert(ledger.balances[1] == 39);
+    }
+
+    function storageIndexReadMappingStoreRootStaticToDynamic() public {
+        delete fixedByKey[7];
+        copyTargetDyn = fixedByKey[7];
+        assert(copyTargetDyn.length == 3 && copyTargetDyn[2] == 0);
+    }
+
+    function storageIndexReadArrayStoreRootStaticToDynamic() public {
+        delete rowsSource;
+        rowsSource.push();
+        copyTargetDyn = rowsSource[0];
+        assert(copyTargetDyn.length == 3);
+    }
+
+    function storageDeletedFixedRowCopy() public {
+        fixedGrid[0][1] = 5;
+        delete fixedGrid[0];
+        fixedGrid[1] = fixedGrid[0];
+        assert(fixedGrid[1][1] == 0);
+    }
+
+    function storageDeletedFixedByKeyCopy() public {
+        fixedByKey[2][1] = 4;
+        delete fixedByKey[2];
+        fixedValues = fixedByKey[2];
+        assert(fixedValues[1] == 0);
+    }
+
+    function storageDeletedDynamicRowCopy() public {
+        delete rows;
+        rows.push();
+        rows.push();
+        rows[0][2] = 7;
+        delete rows[0];
+        rows[1] = rows[0];
+        assert(rows[1][2] == 0);
+    }
+
+    function storageDeletedStructWithFixedCopy() public {
+        triplesByKey[0].items[1] = 6;
+        triplesByKey[0].tag = 2;
+        delete triplesByKey[0];
+        triple2 = triplesByKey[0];
+        assert(triple2.items[1] == 0 && triple2.tag == 0);
+    }
+
+    function storageRecursiveCopyDisjoint() public {
+        nodeSpare.v = 3;
+        nodeTree.kids.push();
+        nodeTree.kids[nodeTree.kids.length - 1] = nodeSpare;
+        assert(nodeTree.kids[nodeTree.kids.length - 1].v == 3);
+    }
+
+    function storageRecursiveCopySelf() public {
+        nodeTree.kids.push();
+        nodeTree.kids[0].v = 4;
+        nodeTree.kids[0] = nodeTree.kids[0];
+        assert(nodeTree.kids[0].v == 4);
+    }
+
+    function storageRecursiveCopySibling() public {
+        nodeTree.kids.push();
+        nodeTree.kids.push();
+        uint last = nodeTree.kids.length - 1;
+        nodeTree.kids[last].v = 7;
+        nodeTree.kids[last - 1] = nodeTree.kids[last];
+        assert(nodeTree.kids[last - 1].v == 7);
+    }
+
+    function storageRecursiveCopyFromSiblingChild() public {
+        delete nodeTree;
+        nodeTree.kids.push();
+        nodeTree.kids.push();
+        nodeTree.kids[1].kids.push();
+        nodeTree.kids[1].kids.push();
+        nodeTree.kids[1].kids[1].v = 5;
+        nodeTree.kids[0] = nodeTree.kids[1].kids[1];
+        assert(nodeTree.kids[0].v == 5);
+        assert(nodeTree.kids[1].kids[1].v == 5);
+    }
+
+    function nodeKidsRef() internal view returns (Node[] storage) {
+        return nodeTree.kids;
+    }
+
+    function storageRecursiveCopyCallReceiver() public {
+        nodeSpare.v = 3;
+        nodeTree.kids.push();
+        nodeKidsRef()[0] = nodeSpare;
+        assert(nodeTree.kids[0].v == 3);
+    }
+
+    function storageFieldWriteCopySourcePrim() public {
+        total = 7;
+        alice.age = total;
+        assert(alice.age == 7);
+    }
+
+    function storageIndexWriteMappingCopySourcePrim() public {
+        total = 7;
+        balances[3] = total;
+        assert(balances[3] == 7);
+    }
+
+    function storageIndexWriteArrayCopySourcePrim() public {
+        total = 7;
+        uint n = values.length;
+        values.push();
+        values[n] = total;
+        assert(values[n] == 7);
+    }
+
+    function storagePushValueCopySourcePrim() public {
+        total = 7;
+        uint n = values.length;
+        values.push(total);
+        assert(values[n] == 7);
     }
 }

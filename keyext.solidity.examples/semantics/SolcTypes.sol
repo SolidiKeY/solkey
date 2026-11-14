@@ -448,4 +448,21 @@ contract SolcTypes {
         uint r = X;
         assert(r == 1000000001000000001);
     }
+
+    /// solc: smtCheckerTests/types/enum_range.sol
+    function enumRange(D p) public pure {
+        assert(p == D.Left || p == D.Right);
+    }
+
+    /// solc: smtCheckerTests/typecast/enum_to_uint_max_value.sol
+    function enumToUintMaxValue(D p) public pure {
+        uint x = uint(p);
+        assert(x < 10);
+    }
+
+    /// solc: smtCheckerTests/typecast/cast_larger_1.sol
+    function castLargerKeepsRange(uint8 x) public pure {
+        uint16 y = uint16(x);
+        assert(y < 300);
+    }
 }

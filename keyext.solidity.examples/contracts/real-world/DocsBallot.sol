@@ -122,6 +122,8 @@ contract DocsBallot {
     /// @custom:key ensures \exists uint i; 0 <= i && i < proposals.length && winnerName_ == proposals[i].name
     /// @custom:key ensures \forall uint i; 0 <= i && i < proposals.length
     ///     -> (\exists uint w; 0 <= w && w < proposals.length && winnerName_ == proposals[w].name && proposals[i].voteCount <= proposals[w].voteCount)
+    /// @custom:key ensures \exists uint w; 0 <= w && w < proposals.length && winnerName_ == proposals[w].name
+    ///     && (\forall uint i; 0 <= i && i < proposals.length -> proposals[i].voteCount <= proposals[w].voteCount)
     function winnerName() external view
             returns (uint256 winnerName_)
     {

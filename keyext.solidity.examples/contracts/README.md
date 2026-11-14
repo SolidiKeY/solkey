@@ -55,7 +55,7 @@ only_if … on_success … */` blocks into a `.key` problem. Here the same speci
 every function runs with `./run-key.sh contracts/solidikey/Escrow.sol -f placeInEscrow`, with the whole
 file (`./run-key.sh contracts/solidikey/Escrow.sol`), and in KeYther (open the file, pick the function;
 the browser's header says what it is proved against). `--print-problem` prints the generated
-`.key` text, which is the `net/obligations/*.key` shape: an `insertCInv` taclet defining `CInv(s, n)` as
+`.key` text, which is the `net/obligations/*.key` shape: an `insertCInv` taclet defining `CInv(cinv$s, cinv$n)` as
 the conjoined invariants, and the ISoLA 2020 eq.-4 problem
 
 ```
@@ -67,7 +67,8 @@ msg.value bound & !(msgSender = self) & requires & CInv(storage, net) ->
 
 A specified function is always proved in the box modality (partial correctness, as the paper);
 `msg.value >= 0` is assumed for a `payable` function and `msg.value == 0` otherwise, and the
-caller is assumed not to be the contract itself (`msg.sender != address(this)`). `-O
+caller is assumed not to be the contract itself (`msg.sender != address(this)`); `msg.sender`
+and every integer, address or enum parameter are assumed in the range of their type. `-O
 transferSemantics:withCallback` (the dialog's "transfer with callback" in KeYther) selects the
 callback rules, which re-establish `CInv` at every `.transfer`.
 
@@ -87,22 +88,27 @@ primary ::= INT | true | false | IDENT | net(expr) | \old(expr) | \result | addr
 ```
 
 A quantifier's body extends as far right as possible; parenthesize it to end it earlier. What
-each construct becomes (`S` is `s` inside the invariant, `storage` in requires/ensures, `old`
-inside `\old`; `N` likewise `n`/`net`/`oldNet`):
+each construct becomes (`S` is `cinv$s` inside the invariant, `storage` in requires/ensures, `old`
+inside `\old`; `N` likewise `cinv$n`/`net`/`oldNet`):
 
 | Spec | Term |
 |---|---|
 | state variable `x` | `find<[int]>(S, cons1(C$x))`, a `bool` one `find<[bool]>(…) = TRUE` |
-| `m[k]`, `arr[i]`, `arr.length`, `st.f` | `find<[τ]>(S, cons2(C$m, at(k)))`, `… at(i)`, `… size`, `cons2(C$st, C$St$f)` |
-| `Enum.Member` | the member's ordinal |
+| `m[k]`, `arr[i]`, `arr.length`, `st.f` | `find<[τ]>(S, cons2(C$m, at(k)))`, `… at(i)` (`atMap(i)` when the elements are mappings, as in the program), `… size`, `cons2(C$st, C$St$f)` (`St$f` for a file-level struct) |
+| `Enum.Member` | the member's ordinal (file-level enums too) |
 | `net(a)`, `msg.sender`, `msg.value`, `address(this)` | `selectSt<[int]>(N, at(a))`, `msgSender`, `msgValue`, `self` |
-| parameter `p`, `\result` | the program variable `p`, `result` (needs one *named* return) |
+| parameter `p`, `\result` | the program variable `p` (`p$0` when `p` is a name the obligation uses itself: `msgValue`, `self`, `old`, `result`, …), `result` (needs one *named* return) |
 | `\old(e)` | `e` over `old`/`oldNet` (ensures only) |
 | `== != < <= > >= + - * / %` | `= , !(=), <, <=, >, >=, +, -, *, div, mod`; `==` on bools is `<->` |
-| `&& \|\| ! -> <->`, `\forall address a; e` | `& \| ! -> <->`, `\forall int a; e` (`bool` stays `bool`) |
+| `&& \|\| ! -> <->` | `& \| ! -> <->` |
+| `\forall T a; e`, `\exists T a; e` | `\forall int a; ((lo <= a & a <= hi) -> e)`, `\exists int a; ((lo <= a & a <= hi) & e)` with the range of `T`: `uintN` `[0, 2^N-1]`, `intN` `[-2^(N-1), 2^(N-1)-1]`, `address` `[0, 2^160-1]`, an enum `[0, members-1]`; `bool` stays `bool` with no guard |
 
-Errors (an unknown identifier, `\old` outside ensures, indexing a non-mapping, …) name the
-function and the clause. The grammar is `src/main/antlr/SolSpec.g4`, the compiler a visitor
+Errors (an unknown identifier, `\old` outside ensures, indexing a non-mapping, `msg.sender` or
+`msg.value` in a contract invariant, a quantified variable named after an obligation variable such
+as `storage` or `self`, …) name the function and the clause. A clause where no obligation reads it
+is an error too: a contract takes only `invariant`; a public or external function or the
+constructor `requires`, `ensures`, `box`, `skip` and `assignable`; a loop `invariant` and
+`decreases`; an internal or private function, a modifier or a state variable none. The grammar is `src/main/antlr/SolSpec.g4`, the compiler a visitor
 over its parse tree (`speclang/natspec/SpecCompiler`), and the golden tests `SpecCompilerTest`
 list every row.
 
@@ -134,6 +140,11 @@ list every row.
   lists `placeOrIncreaseBid`, `withdraw` and even the empty `myTest` as known-open).
   `closeAuction` is skipped: its loops transfer, so their invariants would have to
   re-establish the contract invariant at every callback.
+- **`EntryPoints.sol`** — not a solidiKeY port: the obligations a contract gets beyond its
+  named functions. It has an invariant and no constructor, so the implicit `constructor`
+  obligation runs the initializers (`limit = 10`) and proves the invariant; `receive` and
+  `fallback` are entry points with their own obligations; `offset(uint result)` and
+  `reset(uint old)` take parameters named like the obligation's own variables. All close.
 - **`Storage.sol`** — MyContract's live probes `m`, `a1`, `d1`, `f`, `h` with their `\result`
   clauses as named returns. All close. (`m` writes 8 and the original spec claimed 7; the port
   states what the body does.)
@@ -221,7 +232,6 @@ proves that the code's own checks keep everyone else out.
 Every clause was checked for vacuity: changing it to something false leaves the proof open.
 
 `real-world/open/` holds specifications that load but do not close, with the reason in the file:
-`DocsBallot.sol` (`winnerName` with one `\exists` over a nested `\forall`) and
 `ArrayRemoveByShifting.sol` (the full functional spec of `remove`: a loop invariant cannot use
 `\old`). `OpenExamplesStayOpenTest` fails when one of them starts to close. `docs/limitations.md` explains each.
 

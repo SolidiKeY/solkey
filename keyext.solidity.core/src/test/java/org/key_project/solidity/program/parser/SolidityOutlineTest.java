@@ -4,9 +4,11 @@
 package org.key_project.solidity.program.parser;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,6 +24,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /// Checks the outline's source ranges and its account of what cannot be proved — the two things
@@ -120,6 +123,33 @@ public class SolidityOutlineTest {
     }
 
     @Test
+    void fileLevelTypesAndUnprovedDocumentationAreRecorded(@TempDir Path dir)
+            throws IOException {
+        Path sol = dir.resolve("T.sol");
+        Files.writeString(sol, """
+                // SPDX-License-Identifier: GPL-2.0-only
+                pragma solidity ^0.8.0;
+                enum Phase { A, B }
+                struct P { uint a; }
+                contract T {
+                    enum Phase { X, Y, Z }
+                    P p;
+                    /// @custom:key ensures r == 1
+                    function g() internal pure returns (uint r) { r = 1; }
+                    /// @custom:key requires true
+                    modifier m() { _; }
+                    function f() public m { p.a = g(); }
+                }""");
+        var contract = SolidityOutline.of(sol).contract("T").orElseThrow();
+
+        assertEquals(List.of("X", "Y", "Z"), contract.enums().get("Phase"));
+        assertEquals(List.of("a"),
+            contract.structs().get("P").stream().map(SolidityOutline.Variable::name).toList());
+        assertEquals(List.of("internal function g", "modifier m"),
+            List.copyOf(contract.otherDocumentation().keySet()));
+    }
+
+    @Test
     void theOutlineRecordsWhatSpecificationsNeed() throws IOException {
         var contract =
             SolidityOutline.of(SolidityExampleTests.example(ExampleDirs.SOLIDIKEY + "/Escrow.sol"))
@@ -136,6 +166,47 @@ public class SolidityOutlineTest {
         assertFalse(contract.function("releaseEscrow").orElseThrow().payable());
         assertEquals(List.of("net(sender) == msg.value && state == State.DepositPlaced"),
             deposit.natspec().ensures());
+    }
+
+    @Test
+    void constantsCarryTheirCompileTimeValue(@TempDir Path dir) throws IOException {
+        Path sol = dir.resolve("K.sol");
+        Files.writeString(sol, """
+                // SPDX-License-Identifier: GPL-2.0-only
+                pragma solidity ^0.8.0;
+                uint constant FILE = LATER + 1;
+                uint constant LATER = 2;
+                contract K {
+                    uint constant RATIONAL = 7 / 2 * 2;
+                    uint constant CAST = uint(5);
+                    uint constant MAXU = type(uint).max;
+                    int8 constant MIN8 = type(int8).min;
+                    address constant OWNER = address(0x1234);
+                    bool constant FLAG = !false;
+                    uint constant BIG = 10 ** 35;
+                    uint constant DERIVED = FILE * CAST - 1;
+                    uint constant QUOTIENT = CAST / 2;
+                    uint constant OVERFLOW = MAXU + CAST;
+                    uint plain = 3;
+                }""");
+        var values = new HashMap<String, String>();
+        for (var variable : SolidityOutline.of(sol).contract("K").orElseThrow()
+                .stateVariables()) {
+            values.put(variable.name(), variable.constantValue());
+        }
+
+        assertEquals("7", values.get("RATIONAL"));
+        assertEquals("5", values.get("CAST"));
+        assertEquals(BigInteger.TWO.pow(256).subtract(BigInteger.ONE).toString(),
+            values.get("MAXU"));
+        assertEquals("-128", values.get("MIN8"));
+        assertEquals("4660", values.get("OWNER"));
+        assertEquals("true", values.get("FLAG"));
+        assertEquals(BigInteger.TEN.pow(35).toString(), values.get("BIG"));
+        assertEquals("14", values.get("DERIVED"));
+        assertEquals("2", values.get("QUOTIENT"));
+        assertNull(values.get("OVERFLOW"));
+        assertNull(values.get("plain"));
     }
 
     @Test

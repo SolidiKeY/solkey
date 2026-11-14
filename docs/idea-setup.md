@@ -143,9 +143,9 @@ configured Gradle JVM.
 The fallback is also the only route that holds a Gradle daemon for as long as its KeYther window
 is open. The fast route is just a detached process.
 
-One limitation: solc permits overloaded functions while `--function` takes only a name, so two
-icons on two overloads both prove the first. That is the whole `--function` API, the CLI included.
-Proving the contract instead covers both, since it never names a function.
+One limitation: the icons pass a function's bare name, and `--function` refuses the bare name of
+an overloaded function (it wants the signature, `f(uint256,uint256)`). Proving the contract
+instead covers every overload, each under its signature.
 
 ### Why the plugin is a separate Gradle build
 

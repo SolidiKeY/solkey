@@ -152,7 +152,8 @@ public class SolcWrapperTest {
     }
 
     private static final List<String> TOLERATED_WARNINGS =
-        List.of("'transfer' is deprecated", "'send' is deprecated", "Contract code size is",
+        List.of("'transfer' is deprecated", "'send' is deprecated",
+            "Failure condition of 'send' ignored", "Contract code size is",
             "Contract initcode size is");
 
     private static final List<String> FAITHFUL_PORT_DIRECTORIES =

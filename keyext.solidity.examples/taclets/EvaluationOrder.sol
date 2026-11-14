@@ -13,6 +13,7 @@ contract EvaluationOrder {
     uint[] values;
     uint[] a;
     uint[][] matrix;
+    mapping(uint => uint) balances;
 
     Person[] persons;
     Person alice;
@@ -462,5 +463,85 @@ contract EvaluationOrder {
         xs[0][mutateStorageCopySource()] = values;
         assert(xs[0][0][0] == 7);
         assert(values[0] == 9);
+    }
+
+    function storageIndexMappingPostincrementAssignmentIndexTarget() public {
+        balances[1] = 5;
+        balances[5] = 100;
+        uint i = 1;
+        i = balances[i]++;
+        assert(i == 5);
+        assert(balances[1] == 6);
+        assert(balances[5] == 100);
+    }
+
+    function storageIndexMappingPostdecrementAssignmentIndexTarget() public {
+        balances[1] = 5;
+        balances[5] = 100;
+        uint i = 1;
+        i = balances[i]--;
+        assert(i == 5);
+        assert(balances[1] == 4);
+        assert(balances[5] == 100);
+    }
+
+    function storageIndexArrayPostincrementAssignmentIndexTarget() public {
+        values = new uint[](2);
+        values[0] = 1;
+        uint i = 0;
+        i = values[i]++;
+        assert(i == 1);
+        assert(values[0] == 2);
+        assert(values[1] == 0);
+    }
+
+    function storageIndexArrayPostdecrementAssignmentIndexTarget() public {
+        values = new uint[](2);
+        values[0] = 1;
+        uint i = 0;
+        i = values[i]--;
+        assert(i == 1);
+        assert(values[0] == 0);
+        assert(values[1] == 0);
+    }
+
+    function memoryIndexArrayPostincrementAssignmentIndexTarget() public pure {
+        uint[] memory xs = new uint[](2);
+        xs[0] = 1;
+        uint i = 0;
+        i = xs[i]++;
+        assert(i == 1);
+        assert(xs[0] == 2);
+        assert(xs[1] == 0);
+    }
+
+    function memoryIndexArrayPostdecrementAssignmentIndexTarget() public pure {
+        uint[] memory xs = new uint[](2);
+        xs[0] = 1;
+        uint i = 0;
+        i = xs[i]--;
+        assert(i == 1);
+        assert(xs[0] == 0);
+        assert(xs[1] == 0);
+    }
+
+    function localAssignPostincrementSelf() public pure {
+        uint y = 7;
+        y = y++;
+        assert(y == 7);
+    }
+
+    function localAssignPostdecrementSelf() public pure {
+        int y = 7;
+        y = y--;
+        assert(y == 7);
+    }
+
+    function localAssignPostincrementOther() public pure {
+        uint y = 7;
+        uint z = 0;
+        z = y++;
+        assert(z == 7);
+        assert(y == 8);
     }
 }

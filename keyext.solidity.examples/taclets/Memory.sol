@@ -10,14 +10,54 @@ contract Memory {
     struct Basket { uint[] items; }
     struct Triple { uint[3] items; uint tag; }
 
+    uint total;
     uint[] values;
     uint[][] matrix;
     uint[3] fixedValues;
     mapping(uint => Person) people;
 
     Person[] persons;
+    Account[] accounts;
     Person alice;
     Basket basketA;
+
+    function memoryWriteFromStoragePath() public {
+        total = 6;
+        alice.age = 7;
+        Person memory carol;
+        carol.age = total;
+        carol.account.balance = alice.age;
+        uint[] memory xs = new uint[](2);
+        xs[0] = total;
+        xs[1] = alice.age;
+        assert(carol.age == 6 && carol.account.balance == 7);
+        assert(xs[0] == 6 && xs[1] == 7);
+    }
+
+    function storagePushMemoryPathArgument() public {
+        Person memory carol;
+        carol.account.balance = 4;
+        Account[] memory list = new Account[](1);
+        list[0].balance = 6;
+        delete accounts;
+        accounts.push(carol.account);
+        accounts.push(list[0]);
+        assert(accounts.length == 2);
+        assert(accounts[0].balance == 4 && accounts[1].balance == 6);
+    }
+
+    function makePerson() internal pure returns (Person memory p) {
+        p.age = 5;
+    }
+
+    function storagePushMemoryValueArgument() public {
+        delete matrix;
+        matrix.push(new uint[](3));
+        assert(matrix.length == 1 && matrix[0].length == 3);
+        delete persons;
+        persons.push(makePerson());
+        assert(persons.length == 1 && persons[0].age == 5);
+    }
 
     function memoryDeepField() public pure {
         Person memory carol;
@@ -953,5 +993,73 @@ contract Memory {
         uint r = xs[1]--;
         assert(r == 40);
         assert(xs[1] == 39);
+    }
+
+    function memoryFieldPreincrementAssignmentUnfold() public pure {
+        Person memory carol;
+        carol.account.balance = 40;
+        uint r = ++carol.account.balance;
+        assert(r == 41);
+        assert(carol.account.balance == 41);
+    }
+
+    function memoryFieldPostincrementAssignmentUnfold() public pure {
+        Person memory carol;
+        carol.account.balance = 40;
+        uint r = carol.account.balance++;
+        assert(r == 40);
+        assert(carol.account.balance == 41);
+    }
+
+    function memoryFieldPredecrementAssignmentUnfold() public pure {
+        Person memory carol;
+        carol.account.balance = 40;
+        uint r = --carol.account.balance;
+        assert(r == 39);
+        assert(carol.account.balance == 39);
+    }
+
+    function memoryFieldPostdecrementAssignmentUnfold() public pure {
+        Person memory carol;
+        carol.account.balance = 40;
+        uint r = carol.account.balance--;
+        assert(r == 40);
+        assert(carol.account.balance == 39);
+    }
+
+    function memoryIndexPreincrementAssignmentUnfold() public pure {
+        Basket memory basket;
+        basket.items = new uint[](4);
+        basket.items[1] = 40;
+        uint r = ++basket.items[1];
+        assert(r == 41);
+        assert(basket.items[1] == 41);
+    }
+
+    function memoryIndexPostincrementAssignmentUnfold() public pure {
+        Basket memory basket;
+        basket.items = new uint[](4);
+        basket.items[1] = 40;
+        uint r = basket.items[1]++;
+        assert(r == 40);
+        assert(basket.items[1] == 41);
+    }
+
+    function memoryIndexPredecrementAssignmentUnfold() public pure {
+        Basket memory basket;
+        basket.items = new uint[](4);
+        basket.items[1] = 40;
+        uint r = --basket.items[1];
+        assert(r == 39);
+        assert(basket.items[1] == 39);
+    }
+
+    function memoryIndexPostdecrementAssignmentUnfold() public pure {
+        Basket memory basket;
+        basket.items = new uint[](4);
+        basket.items[1] = 40;
+        uint r = basket.items[1]--;
+        assert(r == 40);
+        assert(basket.items[1] == 39);
     }
 }

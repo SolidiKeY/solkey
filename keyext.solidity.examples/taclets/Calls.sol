@@ -2,6 +2,8 @@
 pragma solidity ^0.8.0;
 
 uint constant FILE_LEVEL_LIMIT = 42;
+uint constant FILE_LEVEL_FORWARD = FILE_LEVEL_LATER + 1;
+uint constant FILE_LEVEL_LATER = 41;
 
 enum FileLevelColor { Red, Green, Blue }
 
@@ -39,8 +41,15 @@ contract Calls {
     mapping(uint => uint) valuesMap;
     Token tok;
     FileLevelPair pair;
+    Token tupleToken;
+    uint[] tupleLeft;
+    uint[] tupleRight;
+    uint tupleLast;
+    FileLevelColor color;
 
     uint constant LIMIT = 7;
+    uint constant FORWARD_LIMIT = LIMIT_AFTER * 2;
+    uint constant LIMIT_AFTER = 4;
     enum Phase { Open, Closed }
 
     function firstOf(uint[] memory xs) internal pure returns (uint) {
@@ -302,6 +311,203 @@ contract Calls {
         assert(first == 4 && third);
     }
 
+    function tupleSet(uint v) internal returns (uint) {
+        tupleLast = v;
+        return v;
+    }
+
+    function tupleForward(uint x, uint y) internal pure returns (uint, uint) {
+        return returnOrdered(x, y);
+    }
+
+    function tupleStoresRightToLeft() public pure {
+        uint b;
+        (b, b) = (uint(1), uint(2));
+        assert(b == 1);
+    }
+
+    function tupleStoresRightToLeftStorage() public {
+        (total, total, total) = (tupleSet(1), tupleSet(2), tupleSet(3));
+        assert(total == 1 && tupleLast == 3);
+    }
+
+    function tupleCallStoresRightToLeft() public pure {
+        uint b;
+        (b, b) = returnOrdered(2, 1);
+        assert(b == 1);
+    }
+
+    function tupleTargetIndexBeforeStores() public pure {
+        uint[] memory xs = new uint[](2);
+        uint i = 0;
+        (i, xs[i]) = (1, 5);
+        assert(i == 1 && xs[0] == 5 && xs[1] == 0);
+    }
+
+    function tupleTargetKeyBeforeStores() public {
+        uint i = 1;
+        (i, valuesMap[i]) = (2, 7);
+        assert(i == 2 && valuesMap[1] == 7);
+    }
+
+    function tupleCallTargetIndexBeforeStores() public pure {
+        uint[] memory xs = new uint[](3);
+        uint i = 0;
+        (i, xs[i]) = returnOrdered(9, 2);
+        assert(i == 2 && xs[0] == 9 && xs[2] == 0);
+    }
+
+    function tupleTargetBaseBeforeStores() public pure {
+        uint[] memory xs = new uint[](1);
+        uint[] memory ys = new uint[](1);
+        uint[] memory old = xs;
+        (xs[0], xs) = (5, ys);
+        assert(old[0] == 5 && ys[0] == 0);
+    }
+
+    function tupleStoragePointerBaseBeforeStores() public {
+        tok.value = 1;
+        tupleToken.value = 2;
+        Token storage p = tok;
+        (p.value, p) = (7, tupleToken);
+        assert(tok.value == 7 && tupleToken.value == 2 && p.value == 2);
+    }
+
+    function tupleStorageStructCopiedAtStore() public {
+        tok.value = 1;
+        tupleToken.value = 3;
+        (tok, tupleToken.value) = (tupleToken, 9);
+        assert(tok.value == 9 && tupleToken.value == 9);
+    }
+
+    function tupleStorageArrayCopiedAtStore() public {
+        delete tupleLeft;
+        delete tupleRight;
+        tupleLeft.push(1);
+        tupleRight.push(3);
+        tupleRight.push(4);
+        (tupleLeft, tupleRight[0]) = (tupleRight, 9);
+        assert(tupleLeft.length == 2 && tupleLeft[0] == 9 && tupleLeft[1] == 4);
+    }
+
+    function tupleStorageToMemoryCopiedBeforeStores() public {
+        tok.value = 1;
+        Token memory m;
+        (m, tok.value) = (tok, 5);
+        assert(m.value == 1 && tok.value == 5);
+    }
+
+    function tupleStorageCopyAfterValues() public {
+        tok.value = 1;
+        uint r;
+        (tupleToken, r) = (tok, tupleWrite(4));
+        assert(tupleToken.value == 4 && r == 4);
+    }
+
+    function tupleDeclarationCopiesAtStore() public {
+        tok.value = 1;
+        (Token memory m, uint r) = (tok, tupleWrite(4));
+        assert(m.value == 4 && r == 4);
+    }
+
+    function tupleWrite(uint v) internal returns (uint) {
+        tok.value = v;
+        return v;
+    }
+
+    function tupleDiscardedComponentEvaluated() public pure {
+        uint i = 0;
+        uint a;
+        (a, ) = (1, i++);
+        assert(a == 1 && i == 1);
+    }
+
+    function tupleDeclarationDiscardedComponentEvaluated() public {
+        total = 0;
+        (uint a, ) = (1, ++total);
+        assert(a == 1 && total == 1);
+    }
+
+    function tupleReturnForwardsCall() public pure {
+        (uint lo, uint hi) = tupleForward(5, 2);
+        assert(lo == 2 && hi == 5);
+    }
+
+    function tupleForwardEither(bool c, uint x, uint y) internal pure returns (uint, uint) {
+        return c ? returnOrdered(x, y) : (returnOrdered(y, x));
+    }
+
+    function tupleReturnForwardsConditional() public pure {
+        (uint lo, uint hi) = tupleForwardEither(true, 5, 2);
+        (uint lo2, uint hi2) = tupleForwardEither(false, 1, 9);
+        assert(lo == 2 && hi == 5 && lo2 == 1 && hi2 == 9);
+    }
+
+    function tupleTokenPointer() internal view returns (Token storage) {
+        return tupleToken;
+    }
+
+    function tupleStoragePointerFromCall() public {
+        tok.value = 1;
+        tupleToken.value = 3;
+        (tok, tupleToken.value) = (tupleTokenPointer(), 7);
+        assert(tok.value == 7 && tupleToken.value == 7);
+    }
+
+    function tupleStoragePointerFromConditional(bool c) public {
+        tok.value = 1;
+        tupleToken.value = 3;
+        (tok, tupleToken.value) = (c ? tupleToken : tok, 7);
+        assert(tupleToken.value == 7 && tok.value == (c ? 7 : 1));
+    }
+
+    function tupleRightPointer() internal view returns (uint[] storage) {
+        return tupleRight;
+    }
+
+    function tupleStorageArrayFromCall() public {
+        delete tupleLeft;
+        delete tupleRight;
+        tupleLeft.push(1);
+        tupleRight.push(3);
+        tupleRight.push(4);
+        (tupleLeft, tupleRight[0]) = (tupleRightPointer(), 9);
+        assert(tupleLeft.length == 2 && tupleLeft[0] == 9 && tupleLeft[1] == 4);
+    }
+
+    function tupleCallTargetBase() public {
+        tupleToken.value = 1;
+        uint i = 0;
+        (tupleTokenPointer().value, i) = (5, 2);
+        assert(tupleToken.value == 5 && i == 2);
+    }
+
+    function tupleLocalPointersSwap() public {
+        tok.value = 1;
+        tupleToken.value = 3;
+        Token storage p = tok;
+        Token storage q = tupleToken;
+        (p, q) = (q, p);
+        assert(p.value == 3 && q.value == 1 && tok.value == 1);
+    }
+
+    function tupleTargetIndicesSideEffects() public pure {
+        uint[] memory xs = new uint[](3);
+        uint i = 0;
+        (xs[i++], xs[i++]) = (7, 8);
+        assert(i == 2 && xs[0] == 7 && xs[1] == 8);
+    }
+
+    function tupleStorageIndexBoundBeforeStores() public {
+        delete tupleLeft;
+        delete tupleRight;
+        tupleLeft.push(1);
+        tupleRight.push(3);
+        tupleRight.push(4);
+        (tupleLeft[0], tupleLeft) = (5, tupleRight);
+        assert(tupleLeft.length == 2 && tupleLeft[0] == 5 && tupleLeft[1] == 4);
+    }
+
     function returnFromNestedBlock(uint x) internal pure returns (uint) {
         {
             {
@@ -497,11 +703,38 @@ contract Calls {
         assert(n == 2 && t == 10);
     }
 
+    // ── Overloads and parameter names ──
+
+    /// @custom:key box
+    function overloaded(uint a) public pure {
+        require(a == 1);
+        assert(a + 1 == 2);
+    }
+
+    /// @custom:key box
+    function overloaded(uint a, uint b) public pure {
+        require(a == 1 && b == 2);
+        assert(a + b == 3);
+    }
+
+    /// @custom:key box
+    function builtinNamedParameters(uint msgValue, uint msgSender, uint self, uint selfBalance,
+            uint result, uint old, uint oldNet, uint net) public payable {
+        require(msgValue == 1 && msgSender == 2 && self == 3 && selfBalance == 4 && result == 5
+            && old == 6 && oldNet == 7 && net == 8);
+        assert(msgValue + msgSender + self + selfBalance + result + old + oldNet + net == 36);
+    }
+
     // ── Constants, file-level declarations and libraries ──
 
     function constantInlined() public pure {
         uint r = LIMIT;
         assert(r == 7);
+    }
+
+    function constantForwardReference() public pure {
+        uint r = FORWARD_LIMIT + FILE_LEVEL_FORWARD;
+        assert(r == 50);
     }
 
     function contractQualifiedConstantAndEnum() public pure {
@@ -550,5 +783,23 @@ contract Calls {
     function addmodMulmod() public pure {
         assert(addmod(10, 5, 7) == 1);
         assert(mulmod(3, 5, 7) == 1);
+    }
+
+    /// @custom:key ensures color == FileLevelColor.Green && pair.left == 3
+    function specFileLevelEnumAndStruct() public {
+        color = FileLevelColor.Green;
+        pair.left = 3;
+    }
+
+    /// @custom:key ensures \forall FileLevelColor c; c <= FileLevelColor.Blue
+    function specQuantifierOverEnumRange() public pure {
+    }
+
+    /// @custom:key ensures \forall uint q; q + 1 > 0
+    /// @custom:key ensures \forall uint8 q; q <= 255
+    /// @custom:key ensures \forall int8 q; -128 <= q && q <= 127
+    /// @custom:key ensures \forall address q; q < 1461501637330902918203684832716283019655932542976
+    /// @custom:key ensures \exists uint q; q == 0
+    function specQuantifierOverTypeRange() public pure {
     }
 }

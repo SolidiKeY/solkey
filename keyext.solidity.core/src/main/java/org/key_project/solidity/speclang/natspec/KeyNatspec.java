@@ -6,8 +6,10 @@ package org.key_project.solidity.speclang.natspec;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /// The `@custom:key` clauses of one natspec comment, as solc hands the comment over in the AST's
 /// `documentation.text`.
@@ -119,6 +121,24 @@ public record KeyNatspec(List<Clause> clauses) {
     public boolean isSpecified() {
         return has(Kind.INVARIANT) || has(Kind.REQUIRES) || has(Kind.ENSURES);
     }
+
+    public void allowOnly(String place, Set<Kind> allowed) {
+        for (Clause clause : clauses) {
+            if (!allowed.contains(clause.kind())) {
+                throw new SpecException(TAG + " " + clause.kind().name().toLowerCase(Locale.ROOT)
+                    + " is not allowed on " + place
+                    + (allowed.isEmpty() ? ", which takes no clause"
+                            : ", which takes only " + allowed.stream().sorted()
+                                    .map(k -> k.name().toLowerCase(Locale.ROOT))
+                                    .collect(Collectors.joining(", ")))
+                    + "; " + PLACES);
+            }
+        }
+    }
+
+    private static final String PLACES = "a contract invariant goes above the contract,"
+        + " requires and ensures above a public or external function, a loop invariant and"
+        + " decreases above the loop";
 
     private boolean has(Kind kind) {
         return clauses.stream().anyMatch(c -> c.kind() == kind);

@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 import org.key_project.solidity.keyfile.Key;
@@ -22,7 +23,6 @@ import org.key_project.solidity.speclang.natspec.KeyNatspec;
 import org.key_project.solidity.speclang.natspec.SpecCompiler;
 import org.key_project.solidity.speclang.natspec.SpecException;
 import org.key_project.solidity.speclang.natspec.SpecParser;
-import org.key_project.solidity.speclang.natspec.SpecType;
 
 /// Builds the proof obligation for a Solidity function, so a `.sol` file can be verified
 /// without a hand-written `.key` problem beside it.
@@ -32,8 +32,8 @@ import org.key_project.solidity.speclang.natspec.SpecType;
 /// select the box modality with a `/// @key box` natspec comment, which turns its leading
 /// `require` statements into assumptions instead of obligations (see `docs/require-assert.md`).
 ///
-/// Function parameters are declared as program variables and passed to the call; unsigned
-/// integer parameters are constrained to be non-negative,
+/// Function parameters are declared as program variables and passed to the call; an integer,
+/// address or enum parameter is constrained to the range of its type,
 /// so a parameterized function is normally box-tagged and assumes the values its asserts rely
 /// on with a leading `require(x == 5 && y == 7)`.
 public final class SolidityProblemSynthesizer {
@@ -62,20 +62,26 @@ public final class SolidityProblemSynthesizer {
             List<SolidityOutline.Function> provable = contract.provableFunctions();
             if (provable.size() != 1) {
                 throw new IllegalArgumentException("no function selected for " + solFile
-                    + "; use --function with one of: " + names(provable));
+                    + "; use --function with one of: " + names(contract, provable));
             }
-            function = provable.get(0).name();
+            function = contract.id(provable.get(0));
         } else {
             String name = function;
+            List<SolidityOutline.Function> overloads = contract.functions().stream()
+                    .filter(f -> f.name().equals(name)).toList();
             SolidityOutline.Function declared = contract.function(name)
                     .orElseThrow(() -> new IllegalArgumentException("contract " + contract.name()
-                        + " in " + solFile + " has no public function " + name + "; candidates: "
-                        + names(contract.provableFunctions())));
+                        + " in " + solFile
+                        + (overloads.isEmpty() ? " has no public function " + name
+                                : " overloads " + name)
+                        + "; candidates: " + names(contract,
+                            overloads.isEmpty() ? contract.provableFunctions() : overloads)));
             String reason = declared.unsupportedReason().orElse(null);
             if (reason != null) {
                 throw new IllegalArgumentException(contract.name() + "." + name + " in " + solFile
                     + " cannot be proved: " + reason);
             }
+            function = contract.id(declared);
         }
         return new SolidityProblemSpec(contract.name(), function,
             requested == null ? List.of() : requested.choices());
@@ -84,8 +90,9 @@ public final class SolidityProblemSynthesizer {
     /// Every function of `contract` an obligation can be generated for, in declaration order.
     public static List<String> provableFunctions(Path solFile, String contract)
             throws IOException {
-        return names(SolidityOutline.of(solFile).requireContract(contract, solFile)
-                .provableFunctions());
+        SolidityOutline.Contract declared =
+            SolidityOutline.of(solFile).requireContract(contract, solFile);
+        return names(declared, declared.provableFunctions());
     }
 
     public static String problemText(Path solFile, SolidityProblemSpec spec) throws IOException {
@@ -108,15 +115,23 @@ public final class SolidityProblemSynthesizer {
         KeyNatspec functionSpec;
         try {
             contractSpec = KeyNatspec.of(contract.documentation());
+            contractSpec.allowOnly("contract " + contract.name(), CONTRACT_CLAUSES);
             functionSpec = function.natspec();
+            functionSpec.allowOnly(function.isConstructor() ? "the constructor"
+                    : "function " + function.name(),
+                FUNCTION_CLAUSES);
+            contract.otherDocumentation().forEach(
+                (place, text) -> KeyNatspec.of(text).allowOnly(place, Set.of()));
         } catch (SpecException e) {
             throw new SpecException(where + ": " + e.getMessage());
         }
+        Map<String, String> renamed = SpecCompiler.parameterVariables(function);
         List<String> arguments = function.parameters().stream()
-                .map(SolidityOutline.Parameter::name).toList();
+                .map(parameter -> renamed.get(parameter.name())).toList();
         List<KeyProblem.Variable> variables = new ArrayList<>();
         for (SolidityOutline.Parameter parameter : function.parameters()) {
-            variables.add(new KeyProblem.Variable(parameter.keySort(), parameter.name()));
+            variables.add(
+                new KeyProblem.Variable(parameter.keySort(), renamed.get(parameter.name())));
         }
         List<String> results = new ArrayList<>();
         for (SolidityOutline.Parameter ret : function.returns()) {
@@ -124,7 +139,7 @@ public final class SolidityProblemSynthesizer {
             variables.add(new KeyProblem.Variable(ret.keySort(), variable));
             results.add(variable);
         }
-        Call call = Key.call(results, spec.function(), arguments, spec.contract());
+        Call call = Key.call(results, function.name(), arguments, contract.name());
         StorageLayout layout = new StorageLayout(contract);
         if (!contractSpec.isSpecified() && !functionSpec.isSpecified()) {
             KeyFormula obligation = Key.modality(functionSpec.box(), call, Key.TRUE);
@@ -136,24 +151,36 @@ public final class SolidityProblemSynthesizer {
             }
             return new KeyProblem(solFile.toAbsolutePath(), spec.choices(),
                 List.of(), variables, layout.rules(),
-                withParameterFacts(function, obligation));
+                withParameterFacts(contract, function, obligation));
         }
         return specifiedProblem(solFile, contract, function, contractSpec, functionSpec,
             spec.choices(), variables, call, where, layout);
     }
 
-    private static KeyFormula withParameterFacts(SolidityOutline.Function function,
-            KeyFormula obligation) {
-        KeyFormula facts = parameterFacts(function);
+    private static KeyFormula withParameterFacts(SolidityOutline.Contract contract,
+            SolidityOutline.Function function, KeyFormula obligation) {
+        KeyFormula facts = parameterFacts(contract, function);
         return facts.equals(Key.TRUE) ? obligation : Key.implies(facts, obligation);
     }
 
-    private static KeyFormula parameterFacts(SolidityOutline.Function function) {
-        return Key.and(function.parameters().stream()
-                .filter(parameter -> parameter.type().matches("uint\\d*"))
-                .map(parameter -> Key.predicate("geq", Key.constant(parameter.name()), Key.num(0)))
-                .toList());
+    private static KeyFormula parameterFacts(SolidityOutline.Contract contract,
+            SolidityOutline.Function function) {
+        SpecCompiler compiler = new SpecCompiler(contract, function);
+        Map<String, String> renamed = SpecCompiler.parameterVariables(function);
+        List<KeyFormula> facts = new ArrayList<>();
+        for (SolidityOutline.Parameter parameter : function.parameters()) {
+            SpecCompiler.Range range = compiler.range(parameter.type());
+            if (range != null) {
+                facts.add(range.contains(Key.constant(renamed.get(parameter.name()))));
+            }
+        }
+        return Key.and(facts);
     }
+
+    private static final Set<KeyNatspec.Kind> CONTRACT_CLAUSES = Set.of(KeyNatspec.Kind.INVARIANT);
+    private static final Set<KeyNatspec.Kind> FUNCTION_CLAUSES =
+        Set.of(KeyNatspec.Kind.BOX, KeyNatspec.Kind.SKIP, KeyNatspec.Kind.REQUIRES,
+            KeyNatspec.Kind.ENSURES, KeyNatspec.Kind.ASSIGNABLE);
 
     private static final KeyTerm STORAGE = Key.constant("storage");
     private static final KeyTerm NET = Key.constant("net");
@@ -169,7 +196,6 @@ public final class SolidityProblemSynthesizer {
             List<String> options, List<KeyProblem.Variable> variables, Call call, String where,
             StorageLayout layout) {
         SpecCompiler compiler = new SpecCompiler(contract, function);
-        Map<String, SpecType> parameters = SpecCompiler.parameterTypes(function);
         boolean usesOld = functionSpec.ensures().stream()
                 .anyMatch(e -> SpecParser.usesOld(SpecParser.parse(e)));
         List<KeyProblem.Variable> declared = new ArrayList<>(variables);
@@ -190,12 +216,14 @@ public final class SolidityProblemSynthesizer {
                 : Key.labeled("msg.value == 0", Key.eq(MSG_VALUE, Key.num(0))));
         precondition.add(Key.labeled("msg.sender != this",
             Key.not(Key.eq(MSG_SENDER, Key.constant("self")))));
-        KeyFormula facts = parameterFacts(function);
+        precondition.add(Key.labeled("msg.sender is an address",
+            SpecCompiler.Range.ADDRESS.contains(MSG_SENDER)));
+        KeyFormula facts = parameterFacts(contract, function);
         if (!facts.equals(Key.TRUE)) {
             precondition.add(facts);
         }
         precondition.addAll(labeledClauses(functionSpec.requires(),
-            text -> compiler.formula(text, SpecCompiler.Context.requires(parameters),
+            text -> compiler.formula(text, SpecCompiler.Context.requires(function),
                 where + " requires")));
         if (!constructor) {
             if (!layout.isEmpty()) {
@@ -207,7 +235,7 @@ public final class SolidityProblemSynthesizer {
         List<KeyFormula> postcondition = new ArrayList<>();
         postcondition.add(INVARIANT);
         postcondition.addAll(labeledClauses(functionSpec.ensures(),
-            text -> compiler.formula(text, SpecCompiler.Context.ensures(parameters),
+            text -> compiler.formula(text, SpecCompiler.Context.ensures(function),
                 where + " ensures")));
 
         KeyTerm storage = constructor ? MT_ST : STORAGE;
@@ -226,9 +254,11 @@ public final class SolidityProblemSynthesizer {
         update.add(Key.assign("selfBalance",
             constructor ? MSG_VALUE : Key.plus(SELF_BALANCE, MSG_VALUE)));
 
+        String s = SpecCompiler.Context.INVARIANT_STORAGE;
+        String n = SpecCompiler.Context.INVARIANT_NET;
         KeyProblem.Taclet insertInvariant = new KeyProblem.Taclet("insertCInv", "Struct",
-            List.of("s", "n"), quantified,
-            Key.predicate("CInv", Key.constant("s"), Key.constant("n")), invariant, "simplify");
+            List.of(s, n), quantified, Key.predicate("CInv", Key.constant(s), Key.constant(n)),
+            invariant, "simplify");
         List<KeyProblem.Taclet> rules = new ArrayList<>();
         rules.add(insertInvariant);
         rules.addAll(layout.rules());
@@ -256,7 +286,8 @@ public final class SolidityProblemSynthesizer {
                 .resolveSibling(spec.contract() + "." + spec.function() + ".generated.key");
     }
 
-    private static List<String> names(List<SolidityOutline.Function> functions) {
-        return functions.stream().map(SolidityOutline.Function::name).toList();
+    private static List<String> names(SolidityOutline.Contract contract,
+            List<SolidityOutline.Function> functions) {
+        return functions.stream().map(contract::id).toList();
     }
 }

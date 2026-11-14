@@ -86,6 +86,11 @@ public class MemberExp extends SolidityExpression implements Resolver {
         return rightExp;
     }
 
+    public MemberExp withLeftExp(Expression left) {
+        SyntaxElement right = rightExp;
+        return right == null ? new MemberExp(left, id, type) : new MemberExp(left, right, type);
+    }
+
     @Override
     public SyntaxElement getChild(int n) {
         if (n == 0)

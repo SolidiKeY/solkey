@@ -254,17 +254,17 @@ public class SolidityProblemSynthesizerTest {
 
                     \\rules {
                         insertCInv {
-                            \\schemaVar \\term Struct s, n;
-                            \\find(CInv(s, n))
+                            \\schemaVar \\term Struct cinv$s, cinv$n;
+                            \\find(CInv(cinv$s, cinv$n))
                             \\replacewith(
                                 // sender != receiver :
-                                !(find<[int]>(s, cons1(Escrow$sender)) = find<[int]>(s, cons1(Escrow$receiver)))
+                                !(find<[int]>(cinv$s, cons1(Escrow$sender)) = find<[int]>(cinv$s, cons1(Escrow$receiver)))
                                 // amountInEscrow == net(sender) + net(receiver) :
-                                & (find<[int]>(s, cons1(Escrow$amountInEscrow)) = (selectSt<[int]>(n, at(find<[int]>(s, cons1(Escrow$sender)))) + selectSt<[int]>(n, at(find<[int]>(s, cons1(Escrow$receiver))))))
+                                & (find<[int]>(cinv$s, cons1(Escrow$amountInEscrow)) = (selectSt<[int]>(cinv$n, at(find<[int]>(cinv$s, cons1(Escrow$sender)))) + selectSt<[int]>(cinv$n, at(find<[int]>(cinv$s, cons1(Escrow$receiver))))))
                                 // state != State.AwaitingDeposit || net(sender) == 0 :
-                                & (!(find<[int]>(s, cons1(Escrow$state)) = 0) | (selectSt<[int]>(n, at(find<[int]>(s, cons1(Escrow$sender)))) = 0))
+                                & (!(find<[int]>(cinv$s, cons1(Escrow$state)) = 0) | (selectSt<[int]>(cinv$n, at(find<[int]>(cinv$s, cons1(Escrow$sender)))) = 0))
                                 // state == State.DepositPlaced || amountInEscrow == 0 :
-                                & ((find<[int]>(s, cons1(Escrow$state)) = 1) | (find<[int]>(s, cons1(Escrow$amountInEscrow)) = 0)))
+                                & ((find<[int]>(cinv$s, cons1(Escrow$state)) = 1) | (find<[int]>(cinv$s, cons1(Escrow$amountInEscrow)) = 0)))
                             \\heuristics(simplify)
                         };
                         insertLenInv {
@@ -280,6 +280,8 @@ public class SolidityProblemSynthesizerTest {
                         geq(msgValue, 0)
                         // msg.sender != this :
                         & !(msgSender = self)
+                        // msg.sender is an address :
+                        & ((0 <= msgSender) & (msgSender <= 1461501637330902918203684832716283019655932542975))
                         // msg.sender == sender && state == State.AwaitingDeposit && msg.value > 0 :
                         & (((msgSender = find<[int]>(storage, cons1(Escrow$sender))) & (find<[int]>(storage, cons1(Escrow$state)) = 0)) & (msgValue > 0))
                         & CInv(storage, net) ->
@@ -306,8 +308,9 @@ public class SolidityProblemSynthesizerTest {
         assertTrue(text.contains("{old := storage\n     || oldNet := net\n     || net := storeSt("),
             text);
         assertFalse(text.contains("\\schemaVar \\variables"), text);
-        assertTrue(text.contains("(\\exists int hb; (\\forall int a; "), text);
-        assertTrue(text.contains("\\varcond(\\noFreeVarIn(s), \\noFreeVarIn(n))"), text);
+        assertTrue(text.contains("(\\exists int hb; (((0 <= hb) & (hb <= "), text);
+        assertTrue(text.contains("\\varcond(\\noFreeVarIn(cinv$s), \\noFreeVarIn(cinv$n))"),
+            text);
         assertTrue(text.contains("find<[int]>(old, cons2(MultiAuction$balances, at(msgSender)))"),
             text);
         assertTrue(text.contains("// msg.value >= 0 :\n    geq(msgValue, 0)"), text);
@@ -334,6 +337,50 @@ public class SolidityProblemSynthesizerTest {
 
         assertTrue(e.getMessage().contains("B.f ensures"), e.getMessage());
         assertTrue(e.getMessage().contains("unknown identifier nope"), e.getMessage());
+    }
+
+    @Test
+    void aClauseWhereNoObligationReadsItIsRejected(@TempDir Path dir) throws IOException {
+        Map<String, String> misplaced = Map.of(
+            "/// @custom:key ensures x == 0\ncontract M { uint x;\n"
+                + "function f() public { x = 1; } }",
+            "ensures is not allowed on contract M",
+            "contract M { uint x;\n/// @custom:key invariant x == 0\n"
+                + "function f() public { x = 1; } }",
+            "invariant is not allowed on function f",
+            "contract M { uint x;\n/// @custom:key ensures r == 0\n"
+                + "function g() internal returns (uint r) { r = 1; }\n"
+                + "function f() public { x = g(); } }",
+            "ensures is not allowed on internal function g",
+            "contract M { uint x;\n/// @custom:key requires x == 0\n"
+                + "modifier m() { _; }\nfunction f() public m { x = 1; } }",
+            "requires is not allowed on modifier m");
+        for (var entry : misplaced.entrySet()) {
+            Path file = dir.resolve("M.sol");
+            Files.writeString(file, "// SPDX-License-Identifier: GPL-2.0-only\n"
+                + "pragma solidity ^0.8.0;\n" + entry.getKey());
+            var e = assertThrows(IllegalArgumentException.class,
+                () -> SolidityProblemSynthesizer.problemText(file, spec("M", "f")));
+            assertTrue(e.getMessage().contains(entry.getValue()), e.getMessage());
+        }
+    }
+
+    @Test
+    void anInvariantMayNameItsQuantifiedVariablesSOrN(@TempDir Path dir) throws IOException {
+        Path file = dir.resolve("S.sol");
+        Files.writeString(file, """
+                // SPDX-License-Identifier: GPL-2.0-only
+                pragma solidity ^0.8.0;
+                /// @custom:key invariant \\forall uint s; \\forall uint n; m[s] == m[n] || s != n
+                contract S {
+                    mapping(uint => uint) m;
+                    /// @custom:key ensures r == m[k]
+                    function get(uint k) public view returns (uint r) { r = m[k]; }
+                }""");
+
+        var result = SolidityVerifier.verify(file, spec("S", "get"), 10000, -1, 3);
+
+        assertTrue(result.closed(), String.valueOf(result));
     }
 
     @Test
@@ -452,6 +499,60 @@ public class SolidityProblemSynthesizerTest {
             assertEquals(SolidityVerifier.Status.OPEN, fails.status(), String.valueOf(fails));
             assertNull(fails.error());
         }
+    }
+
+    @Test
+    void loopInvariantNamesResolveInTheScopeOfTheLoop(@TempDir Path dir) throws IOException {
+        Path file = dir.resolve("LoopScopes.sol");
+        Files.writeString(file, """
+                pragma solidity ^0.8.0;
+                contract LoopScopes {
+                    uint x;
+                    modifier setsFirst(uint[] memory a) { a[0] = 9; _; }
+                    function markFirst(uint[] memory a) internal pure setsFirst(a) {}
+                    /// @custom:key box
+                    function bodyLocalTrue(uint n) public pure {
+                        uint t = 5;
+                        uint i = 0;
+                        /// @custom:key invariant i <= n && t == 5
+                        while (i < n) { uint t = 7; t += 1; i++; }
+                        assert(t == 5);
+                    }
+                    /// @custom:key box
+                    function closedBlockTrue(uint n) public pure {
+                        uint t = 5;
+                        { uint t = 8; t += 1; }
+                        /// @custom:key invariant i <= n && t == 5
+                        for (uint i = 0; i < n; i++) {}
+                        assert(t == 5);
+                    }
+                    /// @custom:key box
+                    function stateVariableTrue(uint n) public {
+                        require(n >= 1);
+                        x = 5;
+                        uint i = 0;
+                        /// @custom:key invariant i <= n && x == 5
+                        do { uint x = 7; x += 1; i++; } while (i < n);
+                        assert(x == 5);
+                    }
+                    /// @custom:key box
+                    function modifierWriteFalse(uint n) public pure {
+                        require(n == 1);
+                        uint[] memory arr = new uint[](1);
+                        uint i = 0;
+                        /// @custom:key invariant i <= n
+                        while (i < n) { markFirst(arr); i++; }
+                        assert(arr[0] == 0);
+                    }
+                }
+                """);
+        for (String function : List.of("bodyLocalTrue", "closedBlockTrue", "stateVariableTrue")) {
+            var holds = SolidityVerifier.verify(file, spec(null, function), 20000, -1, 3);
+            assertTrue(holds.closed(), String.valueOf(holds));
+        }
+        var fails = SolidityVerifier.verify(file, spec(null, "modifierWriteFalse"), 20000, -1, 3);
+        assertEquals(SolidityVerifier.Status.OPEN, fails.status(), String.valueOf(fails));
+        assertNull(fails.error());
     }
 
     private static Path inMemory(String name) {
@@ -585,7 +686,8 @@ public class SolidityProblemSynthesizerTest {
                 contract Stuck {
                     uint[] dyn;
                     function assignNew() public {
-                        dyn = new uint[](10 + 1);
+                        uint n = 10;
+                        dyn = new uint[](n + 1);
                     }
                 }""");
         try (var session = ProofSession.open(file, spec(null, "assignNew"),
@@ -596,7 +698,7 @@ public class SolidityProblemSynthesizerTest {
             assertFalse(why.get(0).lastRules().isEmpty());
             var stuck = why.get(0).stuck().get(0);
             assertEquals(GoalExplanation.Kind.PROGRAM, stuck.kind());
-            assertTrue(stuck.term().contains("new uint[](10 + 1)"), stuck.term());
+            assertTrue(stuck.term().contains("new uint[](n + 1)"), stuck.term());
         }
     }
 
@@ -895,5 +997,134 @@ public class SolidityProblemSynthesizerTest {
         var outcome = SolidityVerifier.verify(file, spec(contract, function), 0, -1, 0);
 
         assertNull(outcome.error(), outcome.error());
+    }
+
+    @Test
+    void parametersNamedLikeBuiltInsGetTheirOwnVariables(@TempDir Path dir) throws IOException {
+        Path file = dir.resolve("Clash.sol");
+        Files.writeString(file, """
+                // SPDX-License-Identifier: GPL-2.0-only
+                pragma solidity ^0.8.0;
+                contract Clash {
+                    uint s;
+                    /// @custom:key box
+                    function valueTrue(uint msgValue) public payable {
+                        require(msgValue == 5);
+                        assert(msgValue == 5);
+                    }
+                    /// @custom:key box
+                    function valueFalse(uint msgValue) public payable {
+                        require(msgValue == 5);
+                        assert(msg.value == 5);
+                    }
+                    /// @custom:key box
+                    function senderFalse(address msgSender) public view {
+                        require(msgSender == address(0));
+                        assert(msg.sender == address(0));
+                    }
+                    /// @custom:key ensures r == result + 1
+                    function resultTrue(uint result) public pure returns (uint r) {
+                        r = result + 1;
+                    }
+                    /// @custom:key ensures r == result
+                    function resultFalse(uint result) public pure returns (uint r) {
+                        r = result + 1;
+                    }
+                    /// @custom:key ensures s == \\old(s) + old
+                    function oldTrue(uint old) public { s += old; }
+                    /// @custom:key ensures self == address(this)
+                    function selfFalse(address self) public { }
+                    /// @custom:key ensures msgValue == 0
+                    function valueEnsuresFalse(uint msgValue) public { }
+                }""");
+
+        String text = SolidityProblemSynthesizer.problemText(file, spec("Clash", "valueTrue"));
+        assertTrue(text.contains("valueTrue(msgValue$0)@Clash"), text);
+        assertTrue(text.contains("int msgValue$0;"), text);
+        assertTrue(SolidityProblemSynthesizer.problemText(file, spec("Clash", "resultTrue"))
+                .contains("result = resultTrue(result$0)@Clash"));
+        for (String function : List.of("valueTrue", "resultTrue", "oldTrue")) {
+            assertEquals(SolidityVerifier.Status.PROVED,
+                SolidityVerifier.verify(file, spec("Clash", function), 10000, -1, 3).status(),
+                function);
+        }
+        for (String function : List.of("valueFalse", "senderFalse", "resultFalse", "selfFalse",
+            "valueEnsuresFalse")) {
+            assertEquals(SolidityVerifier.Status.OPEN,
+                SolidityVerifier.verify(file, spec("Clash", function), 10000, -1, 3).status(),
+                function);
+        }
+    }
+
+    @Test
+    void everyOverloadIsItsOwnObligation(@TempDir Path dir) throws IOException {
+        Path file = dir.resolve("Overloads.sol");
+        Files.writeString(file, """
+                // SPDX-License-Identifier: GPL-2.0-only
+                pragma solidity ^0.8.0;
+                contract Overloads {
+                    /// @custom:key box
+                    function f(uint a, uint b) public pure {
+                        require(a == 1 && b == 2);
+                        assert(a == 2);
+                    }
+                    /// @custom:key box
+                    function f(uint a) public pure {
+                        require(a == 1);
+                        assert(a == 1);
+                    }
+                    function g(address a) public pure { }
+                }""");
+
+        assertEquals(List.of("f(uint256,uint256)", "f(uint256)", "g"),
+            SolidityVerifier.functions(file, null));
+        assertEquals("f(uint256,uint256)", SolidityProblemSynthesizer
+                .resolve(file, spec(null, "f(uint256, uint256)")).function());
+        assertEquals("g", SolidityProblemSynthesizer.resolve(file, spec(null, "g")).function());
+        assertEquals("g",
+            SolidityProblemSynthesizer.resolve(file, spec(null, "g(address)")).function());
+        var ambiguous = assertThrows(IllegalArgumentException.class,
+            () -> SolidityProblemSynthesizer.resolve(file, spec(null, "f")));
+        assertTrue(ambiguous.getMessage().contains("overloads f"), ambiguous.getMessage());
+        assertEquals(SolidityVerifier.Status.PROVED,
+            SolidityVerifier.verify(file, spec(null, "f(uint256)"), 10000, -1, 3).status());
+        assertEquals(SolidityVerifier.Status.OPEN,
+            SolidityVerifier.verify(file, spec(null, "f(uint256,uint256)"), 10000, -1, 3)
+                    .status());
+    }
+
+    @Test
+    void initializersAndFallbackFunctionsKeepTheInvariant(@TempDir Path dir)
+            throws IOException {
+        Path file = dir.resolve("Entry.sol");
+        Files.writeString(file, """
+                // SPDX-License-Identifier: GPL-2.0-only
+                pragma solidity ^0.8.0;
+                /// @custom:key invariant x == 5
+                contract Holds {
+                    uint x = 5;
+                    receive() external payable { x = 5; }
+                    fallback() external { assert(x == 5); }
+                    function t() public view { assert(x == 5); }
+                }
+                /// @custom:key invariant y == 5
+                contract Breaks {
+                    uint y;
+                    receive() external payable { y = 1; }
+                    fallback() external { assert(y == 4); }
+                }""");
+
+        assertEquals(List.of("constructor", "receive", "fallback", "t"),
+            SolidityVerifier.functions(file, "Holds"));
+        for (String function : List.of("constructor", "receive", "fallback", "t")) {
+            assertEquals(SolidityVerifier.Status.PROVED,
+                SolidityVerifier.verify(file, spec("Holds", function), 10000, -1, 3).status(),
+                function);
+        }
+        for (String function : List.of("constructor", "receive", "fallback")) {
+            assertEquals(SolidityVerifier.Status.OPEN,
+                SolidityVerifier.verify(file, spec("Breaks", function), 10000, -1, 3).status(),
+                function);
+        }
     }
 }

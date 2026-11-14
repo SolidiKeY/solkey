@@ -11,6 +11,7 @@ contract Expressions {
     bool flag;
     Person alice;
     Person bob;
+    uint constant HALF_ETHER = 1 / 2 * 1 ether;
 
     function additionBothStorage() public {
         alice.age = 10;
@@ -20,7 +21,8 @@ contract Expressions {
     }
 
     function additionSimple() public pure {
-        uint r = 1 + 2;
+        uint a = 1;
+        uint r = a + 2;
         assert(r == 3);
     }
 
@@ -31,7 +33,8 @@ contract Expressions {
     }
 
     function divisionSimple() public pure {
-        uint r = 8 / 2;
+        uint a = 8;
+        uint r = a / 2;
         assert(r == 4);
     }
 
@@ -179,12 +182,14 @@ contract Expressions {
     }
 
     function moduloSimple() public pure {
-        uint r = 7 % 3;
+        uint a = 7;
+        uint r = a % 3;
         assert(r == 1);
     }
 
     function multiplicationSimple() public pure {
-        uint r = 3 * 4;
+        uint a = 3;
+        uint r = a * 4;
         assert(r == 12);
     }
 
@@ -194,12 +199,14 @@ contract Expressions {
     }
 
     function powerSimple() public pure {
-        uint r = 2 ** 3;
+        uint a = 2;
+        uint r = a ** 3;
         assert(r == 8);
     }
 
     function subtractionSimple() public pure {
-        uint r = 7 - 2;
+        uint a = 7;
+        uint r = a - 2;
         assert(r == 5);
     }
 
@@ -325,6 +332,23 @@ contract Expressions {
         assert(e == 2000);
         assert(g == 1000000000);
         assert(d == 172800);
+    }
+
+    function literalRationalFolded() public pure {
+        uint r = 7 / 2 * 2;
+        uint h = 1 / 2 + 1 / 2;
+        int s = -7 / 2 * 2;
+        assert(r == 7 && h == 1 && s == -7);
+    }
+
+    function literalRationalConstant() public pure {
+        uint r = HALF_ETHER;
+        assert(r == 5e17);
+    }
+
+    function literalLongConstantFolded() public pure {
+        uint r = (2**256 - 1) / 3 * 3;
+        assert(r == type(uint).max);
     }
 
     // ── Taclet coverage: one function per taclet no other example applies ──

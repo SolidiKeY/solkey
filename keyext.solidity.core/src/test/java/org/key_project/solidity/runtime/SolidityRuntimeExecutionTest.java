@@ -91,7 +91,7 @@ public class SolidityRuntimeExecutionTest {
         }
 
         EvmContractRunner.CallResult result =
-            fixture.runner().call(Abi.signatureOf(fn), args);
+            fixture.runner().call(SolidityRuntimeCheck.calldata(fn, args));
         switch (result.status()) {
             case SUCCESS -> {
             }

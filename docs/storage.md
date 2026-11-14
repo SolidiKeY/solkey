@@ -514,6 +514,50 @@ emitted update.
   (`storageLocalRootRebind`) and `delete` (mapping-preserving, §6) are
   unaffected.
 
+### Overlapping copies
+
+Every storage-to-storage copy rule above and below (`…CopySource`, `…StoreRoot`) reads the
+whole source before it writes the target. solc copies in place, so the two differ only when one
+path is a strict prefix of the other, which only a recursive struct type permits:
+
+      struct N { uint v; N[] kids; }
+      root = root.kids[0];   // solc clears part of the source before reading it
+      n.kids[0] = n;         // solc never terminates
+
+The rules decide which case a copy is in by walking the two paths, with no type analysis and
+no extra proof obligation for an ordinary copy:
+
+      p = q
+      ⇝  ¬inside(p, q)
+         ∧ { storage := save(storage, p, find(srcView(storage, p, q), q)) }
+
+      srcView(st, p, q)             ⇝  srcWalk(st, p, q, p, q)
+      srcWalk(st, p, q, x·xs, y·ys) ⇝  if x = y then srcWalk(st, p, q, xs, ys) else st
+      srcWalk(st, p, q, ε, ε)       ⇝  st
+      srcWalk(st, p, q, ε, y·ys)        no rule
+
+      inside(x·xs, y·ys) ⇝  x = y ∧ inside(xs, ys)
+      inside(x·xs, ε)    ⇝  true
+      inside(ε, ys)      ⇝  false
+
+| Paths | `inside` | `srcView` | Meaning |
+|---|---|---|---|
+| apart (`a = b`, `kids[0] = kids[1]`) | false | `st` | the snapshot copy |
+| equal (`x = x`) | false | `st` | a self-assignment, a no-op under both semantics |
+| source inside target (`root = root.kids[0]`) | false | stuck | the target gets an unknown value, nothing else changes |
+| target inside source (`n.kids[0] = n`) | true | n/a | the goal is false: the copy never ends |
+
+`srcView` is the storage the source is read from; where solc reads a source it has already
+overwritten, the term stays stuck and so denotes no particular value. It keeps both full paths,
+so each overlapping copy gets its own unknown. For every non-recursive type the two walks end in
+the first two rows by simplification alone.
+The false claim `unsound/recursiveCopyOverlap.key` (`nodeTree = nodeTree.kids[0]`, which fails
+on the EVM) closes with a plain snapshot copy; `RulesTest#unsoundWfProblemStaysOpen` keeps it
+open. The true copies `StorageArrays.storageRecursiveCopyDisjoint`, `storageRecursiveCopySelf`,
+`storageRecursiveCopySibling` and `storageRecursiveCopyFromSiblingChild` close. What an
+overlapping copy leaves in its target is not computed (`docs/bugs.md`,
+`semantics/open/StorageOverlap.sol`); the state outside the target is known to be unchanged.
+
 ### Root write (whole struct / primitive at a root)
 
 - `storageRootWriteStore`
@@ -725,7 +769,10 @@ Compound storage updates such as `s.x += e`, `s.a++`, etc., are
 handled by dedicated terminal rules that read, compute and write in
 one update (`storage{Root,Field}{Add,Sub,Mul,Div,Mod}Assign`, the
 `storage…{Pre,Post}{in,de}crement` rules); complex receivers unfold first through their
-`_unfold_leftFst` twins, exactly as for plain assignments. The indexed
+`_unfold_leftFst` twins (`…Assignment_unfold_leftFst` for `v = nsp.fld++` and the like),
+exactly as for plain assignments. A post-fix `v = sp[ie]++` writes the slot and the result
+in one parallel update, `{storage := save(…) || v := find(…)}`: both read the pre-state, so
+`i = m[i]++` increments `m[old i]` and then sets `i` to the old value. The indexed
 terminals come in a mapping and an array form, split by the receiver's
 sort like the plain index rules: `storageIndexMapping…` rewrites to the
 single update, `storageIndexArray…` carries the same `0 ≤ ie < ℓ` /
@@ -746,7 +793,7 @@ modalities:
 Symbolic execution starts from an unconstrained `storage`, so nothing is known about a cell the
 proof has not written — in particular a dynamic array's length could be negative. That gap is
 closed by the length atoms of §8c, not by an axiom: `conforms(emptyOf<[T[]]>, st) ==>` gives
-`0 <= |st|` through `conformsDynSize`. Every generated obligation of a contract with a dynamic
+`0 <= |st| <= 2^256-1` through `conformsDynSize`. Every generated obligation of a contract with a dynamic
 array assumes `lenInv(storage)`, and so does the state after a storage-writing loop or a
 callback, so each dynamic length the push/pop/index rules read is reached by this trigger. A fixed length is
 never read from a cell (§8c).
@@ -762,7 +809,9 @@ The motivating case is `values.push(); values.pop();` (`storagePopUnknownLength`
 `n = |storage[C$values]|` over the entry storage, which `conformsDynSize` closes. Array examples
 need not open with `require(arr.length == N)` unless they assert an exact length.
 
-Nothing bounds the value of a `uint` cell, and no upper bound (`< 2^256`) is stated.
+A length also gets its `uint256` upper bound `|st| <= 2^256-1`, so a range-guarded spec quantifier
+(`\exists uint i; i < arr.length & ...`) can take a witness bounded by a length. Nothing bounds
+the value of any other `uint` cell.
 
 ## 8c. Fixed-size arrays: static lengths (`lenInv`, types as sorts)
 
@@ -802,15 +851,20 @@ struct and every other sort of the program at parse end, and `sortId` takes `[n]
 sort: `\hasStaticSort(sp, \sort(alphaNode))` binds `alphaNode` to the sort of the static type
 if it contains a `T[n]`, else to `Struct`, and the copy writes `find<[alphaNode]>(storage, sp)`
 (`storageRootWriteCopySource`, the field, index, mapping, push and store-root twins, and
-`memoryStorageCopy`). A typed node is observed by `#typedSelect` (`TypeSortTransformer`) through
+`memoryStorageCopy`). The indexed store-root reads `gsp = sp[i]` bind it from the element type
+of the source, `\hasStaticElementSort(sp, …)`, never from the target: `uint[] d = m[k]` with
+`m` mapping to `uint[3]` keeps the length 3. A typed node is observed by `#typedSelect` (`TypeSortTransformer`) through
 one rule per marker, `selectOnFixedSortLength` / `selectOnFindFixed`, `selectOnFindDynamic`,
 `selectOnFindMapping`, `selectOnFindStruct`, matching any term of that sort:
 
     |t|        ⇝  n                                      t : T[n]
     t[a]       ⇝  selectSt<[α]>(untyped(t), a)            α the child's sort if it contains a T[m], else Struct
 
-where `untyped` rebuilds a `find`/`selectSt` at `Struct`, unwraps a `cast`, and reads a typed
-`defaultValue` as `mtSt`. So the length travels in the sort through any copy, and nothing ever
+where `untyped` rebuilds a `find`/`selectSt`/`save`/`delField` at `Struct`, unwraps a `cast`,
+and reads a typed `defaultValue` as `mtSt`. Any other term it would wrap in `cast<[Struct]>`,
+which `castDel` strips at once, so a typed term `untyped` misses makes `selectOnFind*` and
+`castDel` alternate forever: `delField<[int[3]]>`, the reset of a deleted fixed-size element
+read by a copy, did until `untyped` covered it. So the length travels in the sort through any copy, and nothing ever
 writes a fixed array's length cell.
 
 **Copies and resets need no node kind.** `fixed(·)` and `delNodeFixed` are gone. As on the EVM,
@@ -836,11 +890,11 @@ clears all `n` elements even in the constructor, where the length cell of `d1` r
 **The length invariant.** Only dynamic lengths are facts about the state. `conforms(⟦T⟧, st)`
 (`⟦T⟧` is the type tag `emptyOf<[T]>`, a `\unique Struct` constant with no reads; `mtSt` for a
 trivial type — one with no dynamic array below it) says every dynamic length reachable in `st`
-under `T` is non-negative:
+under `T` lies in `0..2^256-1`:
 
     conforms(mtSt, st)  =  conforms(⟦T⟧, mtSt)  =  true
     conforms(⟦T[n]⟧, st)  =  forall int i. conforms(⟦T⟧, st[at(i)]) & conforms(⟦T⟧, st[atMap(i)])
-    conforms(⟦T[]⟧,  st)  =  0 <= |st| & (the same element atoms)
+    conforms(⟦T[]⟧,  st)  =  0 <= |st| <= 2^256-1 & (the same element atoms)
     conforms(⟦mapping(K => V)⟧, st)  =  forall Prim k. conforms(⟦V⟧, st[at(k)])
     conforms(⟦C$S⟧, st)  =  /\ over the non-trivial members m of S : conforms(fieldType(m), st[m])
     lenInv(s)  =  /\ over the non-trivial roots m of C : conforms(fieldType(m), s[m])

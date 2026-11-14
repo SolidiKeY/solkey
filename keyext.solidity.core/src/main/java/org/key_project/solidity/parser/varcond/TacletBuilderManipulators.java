@@ -268,6 +268,10 @@ public class TacletBuilderManipulators {
         new SortBindingConditionBuilder("hasStaticSort", false,
             (sv, gs) -> new TypeSortCondition(sv, gs, TypeSortCondition.Mode.STATIC));
 
+    public static final AbstractConditionBuilder HAS_STATIC_ELEMENT_SORT =
+        new SortBindingConditionBuilder("hasStaticElementSort", false,
+            (sv, gs) -> new TypeSortCondition(sv, gs, TypeSortCondition.Mode.STATIC_ELEMENT));
+
     public static final AbstractConditionBuilder STATIC_LENGTH =
         new ConstructorBasedBuilder("staticLength", StaticLengthCondition.class, SV, SV);
 
@@ -309,7 +313,8 @@ public class TacletBuilderManipulators {
             IS_SUBTYPE, SAME, HAS_SORT, HAS_FIELD_SORT, HAS_MEMORY_FIELD_SORT, HAS_ELEMENT_SORT,
             HAS_MEMORY_ELEMENT_SORT, HAS_TYPE_SORT, HAS_ELEMENT_TYPE_SORT,
             NEW_LOCAL_VARS, GET_INVARIANT, GET_VARIANT, GET_LOOP_BREAK, SAME_AS_TERM,
-            NO_FIXED_ARRAY_ELEMENT, HAS_STATIC_SORT, STATIC_LENGTH, FIXED_LENGTH_READ);
+            NO_FIXED_ARRAY_ELEMENT, HAS_STATIC_SORT, HAS_STATIC_ELEMENT_SORT,
+            STATIC_LENGTH, FIXED_LENGTH_READ);
     }
 
     /// Announce a [TacletBuilderCommand] for the use during the interpretation of asts. This

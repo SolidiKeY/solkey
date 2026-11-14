@@ -1028,6 +1028,11 @@ public class LogicPrinter {
                     layouter.print(v.name().toString());
                 }
             } else {
+                if (v instanceof BoundVariable
+                        && mode != QuantifiableVariablePrintMode.WITH_OUT_DECLARATION) {
+                    layouter.print(v.sort().name().toString());
+                    layouter.print(" ");
+                }
                 layouter.print(v.name().toString());
             }
             if (j < size - 1) {

@@ -132,8 +132,6 @@ non-integer key crash in `docs/bugs.md` and the gap below.
   `view` one) and assume its `ensures`. Recursion also needs a `decreases` clause. Being
   written first in solidity-lean as a soundness lemma over `Stmt.run`, so the taclet can
   follow its shape.
-- **Overloaded obligations.** `--function` and the obligation's `f(a)@C` name a function alone;
-  two public overloads need the signature in both.
 - **Unnamed or non-`.key`-sort returns in obligations.** `SolidityOutline.unsupportedReason`
   still refuses a public function whose return value is unnamed. Now that `return e;` executes,
   such a function could get an obligation that discards the value (`(result_a, ) = f()@C;`).
@@ -243,4 +241,4 @@ many upstream tests and contracts each blocks; defects in supported constructs a
 - **Spec language**: `\old` inside loop invariants; ether/time units and `block` in clauses;
   signed `/` and `%` matching the program's `sdiv`/`smod`; library struct members.
 - **Strategy**: `sdiv` bounds for a negative dividend or divisor (non-negative dividends with a
-  positive divisor automate), and `\heuristics(pullOutQuantifierEx)` on `ex_pull_out*`.
+  positive divisor automate).

@@ -10,6 +10,8 @@ import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.prover.rules.VariableCondition;
 import org.key_project.prover.rules.instantiation.MatchResultInfo;
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.TermBuilder;
+import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.statement.LoopStatement;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.solidity.rule.metaconstruct.LoopFrame;
@@ -70,16 +72,20 @@ public class LoopInvariantCondition implements VariableCondition {
         Term result = switch (kind) {
             case VARIANT -> LoopSpecCompiler.variant(spec, services);
             case INVARIANT -> LoopSpecCompiler.invariant(spec, services);
-            case BREAK -> spec.breakFlag() == null ? services.getTermBuilder().ff()
-                    : services.getTermBuilder().equals(
-                        services.getTermBuilder().var(spec.breakFlag()),
-                        services.getTermBuilder().func(
-                            services.getNamespaces().requireFunction("TRUE")));
+            case BREAK -> services.getTermBuilder().or(isSet(spec.breakFlag(), services),
+                isSet(spec.returnFlag(), services));
         };
         return result == null ? null
                 : matchCond.setInstantiations(svInst.add(resultSV, result, services));
     }
 
+
+    private static Term isSet(@Nullable ProgramVariable flag, Services services) {
+        TermBuilder tb = services.getTermBuilder();
+        return flag == null ? tb.ff()
+                : tb.equals(tb.var(flag),
+                    tb.func(services.getNamespaces().requireFunction("TRUE")));
+    }
 
     private static @Nullable LoopStatement find(SyntaxElement element, Object condition,
             Object body) {

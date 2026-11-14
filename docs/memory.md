@@ -315,6 +315,11 @@ nesting recurses. Listed with their storage twins under a `// generalization:`
 comment; witnesses `memory{Field,Index}WriteMemRefImpureReceiver` and
 `testMemoryFieldWriteImpureReceiver` in `taclets/`.
 
+A simple receiver with a primitive storage-path RHS (`m.x = total;`, `xs[0] = s.age;`) is a
+read the terminals cannot take (`SimpleExpression`) and the value captures do not
+(`NonSimpleExpression[primitive]` excludes paths); `memory{Field,Index}WriteStoragePathRhsCapture`
+read it into a local first: `mv.fld = src; ⟹ T pv = src; mv.fld = pv;`.
+
 Arrays of structs still alias through identity-valued elements:
 
     Token[] memory carolTokens = new Token[](4);
@@ -347,8 +352,10 @@ storage rules of `storage.md` §7 with `find`/`save` replaced by `read`/`write`:
 
 `memoryField{Add,Sub,Mul,Div,Mod}Assign`,
 `memoryField{Pre,Post}{in,de}crement` and their `…Assignment` forms; complex
-receivers unfold first through the `_unfold_leftFst` twins, exactly as for
-plain assignments. `/=` and `%=` guard with `\if(se != 0)\then(…)\else(revert)`.
+receivers unfold first through the `_unfold_leftFst` twins (the `…Assignment`
+forms through `…Assignment_unfold_leftFst`), exactly as for plain assignments.
+A post-fix `v = mv[ie]++` is one parallel update with the result last,
+`{memory := write(…) || v := read(…)}`, so `i = xs[i]++` writes `xs[old i]`. `/=` and `%=` guard with `\if(se != 0)\then(…)\else(revert)`.
 
 The indexed forms (`memoryIndexArray…`) carry the `0 ≤ ie < length` /
 `revert();` goal pair of `memoryIndexWriteArray`, so `xs[i] += 1` on an

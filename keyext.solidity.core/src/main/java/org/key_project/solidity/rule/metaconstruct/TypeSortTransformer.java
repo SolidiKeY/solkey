@@ -46,6 +46,7 @@ public final class TypeSortTransformer extends AbstractTermTransformer {
     private static final Name FIND = new Name("find");
     private static final Name CAST = new Name("cast");
     private static final Name SAVE = new Name("save");
+    private static final Name DEL_FIELD = new Name("delField");
     private static final Name DEFAULT_VALUE = new Name("defaultValue");
 
     private final Kind kind;
@@ -114,7 +115,8 @@ public final class TypeSortTransformer extends AbstractTermTransformer {
         if (view.op() instanceof ParametricFunctionInstance instance) {
             Name base = instance.getBase().name();
             Term[] subs = subs(view);
-            if (base.equals(FIND) || base.equals(SELECT) || base.equals(SAVE)) {
+            if (base.equals(FIND) || base.equals(SELECT) || base.equals(SAVE)
+                    || base.equals(DEL_FIELD)) {
                 return instance(base, struct, services, subs);
             }
             if (base.equals(DEFAULT_VALUE)) {

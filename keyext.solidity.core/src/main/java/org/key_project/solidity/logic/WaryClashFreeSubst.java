@@ -15,9 +15,8 @@ import org.key_project.solidity.rule.metaconstruct.TermTransformer;
 /// transformer. Occurrences in such positions are kept (and [#wasBlocked] is set), so the caller
 /// can wrap the result in a residual substitution; occurrences elsewhere are substituted normally.
 ///
-/// Used by [org.key_project.solidity.logic.op.WarySubstOp] for non-rigid replacements. The
-/// replacement is assumed ground (no free logic variables, e.g. a program variable), so no de
-/// Bruijn shifting of the replacement is needed.
+/// Used by [org.key_project.solidity.logic.op.WarySubstOp] for non-rigid replacements. The result
+/// keeps the substituted variable's binder in its context: the replacement is shifted below it.
 public class WaryClashFreeSubst {
     private final Term s;
     private final TermBuilder tb;
@@ -46,7 +45,7 @@ public class WaryClashFreeSubst {
                 blocked = true;
                 return t;
             }
-            return s;
+            return new Shift(index, tb).apply(s);
         }
         final int arity = t.arity();
         final Term[] newSubterms = new Term[arity];

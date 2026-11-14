@@ -184,6 +184,38 @@ public class PathSVSortTest {
     }
 
     @Test
+    void nonSimpleExpressionReferenceRejectsPathsAndPrimitiveExpressions() {
+        ProgramSVSort nseReference =
+            ProgramSVSort.NON_SIMPLE_EXPRESSION.createInstance("reference");
+        BinaryExpression sum = new BinaryExpression(Operator.ADD,
+            variable("a", DataLocation.Default), new Uint256Literal(BigInteger.ONE));
+        StructDeclaration accountStruct =
+            new StructDeclaration(new Name("Account"), List.of(field("balance")), -1);
+        FieldReference alice = storageField("alice", accountStruct);
+        MemberExp account = new MemberExp(alice, field("account"), accountStruct);
+
+        assertFalse(nseReference.canStandFor(sum, services));
+        assertFalse(nseReference.canStandFor(account, services));
+        assertFalse(nseReference.canStandFor(alice, services));
+        assertThrows(IllegalArgumentException.class,
+            () -> ProgramSVSort.NON_SIMPLE_EXPRESSION.createInstance("storage"));
+    }
+
+    @Test
+    void orCallFlagKeepsComplexPathClassification() {
+        ProgramSVSort complexOrCall = ProgramSVSort.PATH.createInstance("storage,complex,orCall");
+        FieldReference balances = storageField("balances",
+            new MappingType(PrimitiveType.UINT, PrimitiveType.UINT));
+        IndexExpression entry = new IndexExpression(balances, variable("i", DataLocation.Default));
+        BinaryExpression sum = new BinaryExpression(Operator.ADD,
+            variable("x", DataLocation.Default), new Uint256Literal(BigInteger.ONE));
+
+        assertTrue(complexOrCall.canStandFor(entry, services));
+        assertFalse(complexOrCall.canStandFor(balances, services));
+        assertFalse(complexOrCall.canStandFor(sum, services));
+    }
+
+    @Test
     void elementKindFlagsClassifyByElementType() {
         StructDeclaration accountStruct =
             new StructDeclaration(new Name("Account"), List.of(field("balance")), -1);

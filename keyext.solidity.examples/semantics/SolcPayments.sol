@@ -22,6 +22,7 @@ contract SolcPayments {
     uint y;
     uint fx;
     uint fy;
+    uint fdata;
     int ix;
     error _struct;
 
@@ -539,6 +540,10 @@ contract SolcPayments {
         ++fx;
     }
 
+    function fallbackSetData() internal {
+        fdata = 1;
+    }
+
     /// solc: semanticTests/fallback/falback_return.sol
     function fallbackReturn() public {
         fx = 0;
@@ -568,5 +573,25 @@ contract SolcPayments {
         uint a4 = fx;
         uint b4 = fy;
         assert(a1 == 0 && b1 == 1 && b2 == 2 && a3 == 1 && a4 == 2 && b4 == 2);
+    }
+
+    /// solc: semanticTests/receive/inherited.sol
+    function receiveInherited() public {
+        fy = 0;
+        uint r0 = fy;
+        receiveBody();
+        uint r1 = fy;
+        receiveBody();
+        uint r2 = fy;
+        assert(r0 == 0 && r1 == 1 && r2 == 2);
+    }
+
+    /// solc: semanticTests/fallback/inherited.sol
+    function fallbackInherited() public {
+        fdata = 0;
+        uint r0 = fdata;
+        fallbackSetData();
+        uint r1 = fdata;
+        assert(r0 == 0 && r1 == 1);
     }
 }

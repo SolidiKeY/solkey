@@ -35,10 +35,20 @@ contract SolcConstructors {
     uint iy;
     mapping(uint => uint) m1;
     mapping(uint => uint) m2;
+    uint public pi;
+    uint public pk;
 
-    /// solc: semanticTests/constructor/state_variable_initialization.sol, semanticTests/immutable/{assign_at_declaration,increment_decrement,delete}.sol, semanticTests/constants/{simple_constant_variables_test,constant_variables}.sol, smtCheckerTests/deployment/deploy_trusted_keep_storage_constraints.sol
+    /// solc: semanticTests/constructor/state_variable_initialization.sol, semanticTests/immutable/{assign_at_declaration,increment_decrement,delete}.sol, semanticTests/constants/{simple_constant_variables_test,constant_variables}.sol, smtCheckerTests/deployment/deploy_trusted_keep_storage_constraints.sol, semanticTests/inheritance/constructor_with_params.sol
     // open: closes in KeY, but SolidityRuntimeCheck skips a contract with a constructor or an initialized state variable, so no EVM cross-check
-    constructor() {
+    constructor(uint newI, uint newK) {
+        pi = newI;
+        pk = newK;
+        {
+            uint rpi = pi;
+            uint rpk = pk;
+            assert(rpi == newI);
+            assert(rpk == newK);
+        }
         ci = ci + ci;
         ck = ck - ci;
         immX--;

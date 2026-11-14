@@ -174,13 +174,15 @@ final class LoopLowering {
         List<Statement> before = new ArrayList<>();
         List<Statement> iteration = new ArrayList<>();
         Expression condition = Objects.requireNonNullElse(loop.getCondition(), BoolLiteral.TRUE);
+        var spec = loop.getSpec();
+        boolean peel = loop instanceof DoWhileStatement && spec != null;
 
         if (loop instanceof ForStatement forLoop) {
             ForInit init = forLoop.getInit();
             if (init != null) {
                 before.add(init.getInit());
             }
-        } else if (loop instanceof DoWhileStatement) {
+        } else if (loop instanceof DoWhileStatement && !peel) {
             ProgramVariable first = fresh("first");
             before.add(declare(first, BoolLiteral.TRUE));
             iteration.add(assign(first, BoolLiteral.FALSE));
@@ -189,7 +191,11 @@ final class LoopLowering {
         if (flags.cnt != null) {
             iteration.add(declare(flags.cnt, BoolLiteral.FALSE));
         }
+        List<Statement> peeled = new ArrayList<>(iteration);
         iteration.addAll(body.stmts());
+        if (peel) {
+            peeled.addAll(lowerList(statements(loop.getBody()), flags).stmts());
+        }
         if (loop instanceof ForStatement forLoop && forLoop.getUpdate() != null) {
             ForUpdate update = Objects.requireNonNull(forLoop.getUpdate());
             Statement step = new ExpressionStatement(update.getUpdate());
@@ -207,9 +213,15 @@ final class LoopLowering {
             before.add(declare(flags.of(Abrupt.RETURN), BoolLiteral.FALSE));
         }
 
-        var spec = loop.getSpec();
         Statement whileLoop = new WhileStatement(condition, new Block(iteration),
-            spec == null ? null : spec.withBreakFlag(flags.brk));
+            spec == null ? null
+                    : spec.withExitFlags(flags.brk, returns ? flags.of(Abrupt.RETURN) : null));
+        if (peel) {
+            before.add(new Block(peeled));
+            if (!exits.isEmpty()) {
+                whileLoop = new ConditionStatement(notAny(exits, flags), whileLoop);
+            }
+        }
         if (before.isEmpty() && !(returns && outer == null)) {
             return new Lowered(whileLoop, returns ? EnumSet.of(Abrupt.RETURN) : Set.of());
         }

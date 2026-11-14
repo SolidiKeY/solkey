@@ -17,12 +17,17 @@ import org.key_project.solidity.logic.op.ProgramVariable;
 import org.key_project.solidity.program.ast.SolidityProgramElement;
 import org.key_project.solidity.program.ast.declarations.StatementVariableDeclaration;
 import org.key_project.solidity.program.ast.expressions.Expression;
+import org.key_project.solidity.program.ast.expressions.FunctionCallExpression;
 import org.key_project.solidity.program.ast.expressions.TupleExpression;
 import org.key_project.solidity.program.ast.expressions.operators.AssignExpression;
 import org.key_project.solidity.program.ast.expressions.operators.Operator;
+import org.key_project.solidity.program.ast.expressions.operators.TernaryExpression;
+import org.key_project.solidity.program.ast.references.FunctionReference;
 import org.key_project.solidity.program.ast.statement.Block;
+import org.key_project.solidity.program.ast.statement.ConditionStatement;
 import org.key_project.solidity.program.ast.statement.DeclarationStatement;
 import org.key_project.solidity.program.ast.statement.ExpressionStatement;
+import org.key_project.solidity.program.ast.statement.FunctionBodyStatement;
 import org.key_project.solidity.program.ast.statement.ReturnStatement;
 import org.key_project.solidity.program.ast.statement.Statement;
 import org.key_project.solidity.program.ast.visitor.CreatingASTVisitor;
@@ -85,6 +90,10 @@ final class ReturnLowering extends CreatingASTVisitor {
 
     private List<Statement> assignments(ReturnStatement ret) {
         Expression value = Objects.requireNonNull(ret.getReturnExp());
+        Statement forwarded = returns.size() > 1 ? forward(value) : null;
+        if (forwarded != null) {
+            return List.of(forwarded);
+        }
         List<Expression> values = value instanceof TupleExpression tuple
                 ? tuple.getExpressions().toList()
                 : List.of(value);
@@ -112,6 +121,25 @@ final class ReturnLowering extends CreatingASTVisitor {
             statements.add(assign(returns.get(i), temps.get(i)));
         }
         return statements;
+    }
+
+    private @Nullable Statement forward(Expression value) {
+        return switch (value) {
+            case FunctionCallExpression call when call
+                    .getFunctionExp() instanceof FunctionReference reference ->
+                new FunctionBodyStatement(new ArrayList<>(returns), reference,
+                    call.getArguments(), reference.getDispatchContract());
+            case TernaryExpression conditional -> {
+                Statement then = forward(conditional.getTrueExpression());
+                Statement otherwise = forward(conditional.getFalseExpression());
+                yield then == null || otherwise == null ? null
+                        : new ConditionStatement(conditional.getCondition(),
+                            new Block(List.of(then)), new Block(List.of(otherwise)));
+            }
+            case TupleExpression tuple when tuple.getExpressions().size() == 1 ->
+                forward(tuple.getExpressions().get(0));
+            default -> null;
+        };
     }
 
     private boolean readsReturn(SyntaxElement element) {

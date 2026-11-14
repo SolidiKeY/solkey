@@ -84,4 +84,43 @@ contract SolcLoops {
         assert(a == 64);
     }
 
+    // open: closes in KeY, but the loop never terminates, so the EVM run halts out of gas
+    /// solc: smtCheckerTests/loops/do_while_continue.sol
+    /// @custom:key box
+    function doWhileContinueNeverLeaves() public pure {
+        uint x;
+        /// @custom:key invariant x == 0
+        do {
+            continue;
+            x = 1;
+        } while (x == 0);
+        assert(x == 0);
+    }
+
+    // open: closes in KeY, but the loop never terminates, so the EVM run halts out of gas
+    /// solc: smtCheckerTests/loops/for_loop_trivial_condition_3.sol
+    /// @custom:key box
+    function forTrivialConditionResetInBody(uint x) public pure {
+        require(x == 2);
+        uint y;
+        /// @custom:key invariant x == 2
+        for (; x == 2;) {
+            x = 2;
+        }
+        assert(x == 2);
+    }
+
+    // open: closes in KeY, but the loop never terminates, so the EVM run halts out of gas
+    /// solc: smtCheckerTests/loops/for_loop_trivial_condition_2.sol
+    /// @custom:key box
+    function forTrivialConditionUntouched(uint x) public pure {
+        require(x == 2);
+        uint y;
+        /// @custom:key invariant x == 2
+        for (; x == 2;) {
+            y = 7;
+        }
+        assert(x == 2);
+    }
+
 }

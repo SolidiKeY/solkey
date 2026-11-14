@@ -3,23 +3,17 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package org.key_project.solidity.parser.varcond;
 
-import java.util.Stack;
-
 import org.key_project.logic.LogicServices;
 import org.key_project.logic.SyntaxElement;
 import org.key_project.logic.Term;
-import org.key_project.logic.Visitor;
-import org.key_project.logic.op.Operator;
 import org.key_project.logic.op.sv.SchemaVariable;
 import org.key_project.prover.rules.VariableCondition;
 import org.key_project.prover.rules.instantiation.MatchResultInfo;
 import org.key_project.solidity.common.Services;
+import org.key_project.solidity.logic.Shift;
 import org.key_project.solidity.logic.TermBuilder;
-import org.key_project.solidity.logic.op.LogicVariable;
 import org.key_project.solidity.rule.matching.inst.SVInstantiations;
 import org.key_project.solidity.rule.sv.UpdateSV;
-
-import org.jspecify.annotations.NonNull;
 
 import static org.key_project.solidity.logic.equality.RenamingTermProperty.RENAMING_TERM_PROPERTY;
 
@@ -54,110 +48,25 @@ public final class ApplyUpdateOnRigidCondition implements VariableCondition {
         this.result = result;
     }
 
-    ///
     /// Applies the update <code>u</code> on the rigid formula or term <code>phi</code>.
     ///
-    /// If there are free variables in <code>u</code>,
-    /// [#applyUpdateOnRigidQuantifier(Term,Term,Services)] is
-    /// called to take care of potential name clashes.
+    /// Below a binder of <code>phi</code>, the free variables of <code>u</code> are shifted past
+    /// the variables bound there, so that the binder does not capture them.
     ///
     /// @param u the update applied on <code>phi</code>
     /// @param phi the formula or term the update <code>u</code> is applied on
     /// @param services the [Services] to help create terms
     /// @return the term of the update <code>u</code> applied on all subterms of <code>phi</code>
-    /// and
-    /// possible renaming
     private static Term applyUpdateOnRigid(Term u, Term phi, Services services) {
-        if (phi.boundVars().isEmpty() || u.freeVars().isEmpty()) {
-            final TermBuilder tb = services.getTermBuilder();
-            final Term[] updatedSubs = new Term[phi.arity()];
-            for (int i = 0; i < updatedSubs.length; i++) {
-                updatedSubs[i] = tb.apply(u, phi.sub(i));
-            }
-
-            return services.getTermFactory().createTerm(phi.op(), updatedSubs,
-                phi.boundVars());
-        }
-
-        // Here we have to check for name collisions as there are free variables in u
-        return applyUpdateOnRigidQuantifier(u, phi, services);
-    }
-
-    /// This method is used by [#applyUpdateOnRigid(Term,Term,Services)] if `phi` is a
-    /// quantifier and
-    /// `u` contains free variables.
-    ///
-    ///
-    /// @param u the update applied on <code>phi</code>
-    /// @param phi the formula or term the update <code>u</code> is applied on
-    /// @param services the [Services] to help create terms
-    /// @return the term of the update <code>u</code> applied on all subterms of <code>phi</code>
-    /// and
-    /// possible renaming
-    private static Term applyUpdateOnRigidQuantifier(Term u, Term phi, Services services) {
         final TermBuilder tb = services.getTermBuilder();
-
-        final Term[] updatedSubs = phi.subs().toArray(new Term[0]);
-
+        final Term[] updatedSubs = new Term[phi.arity()];
         for (int i = 0; i < updatedSubs.length; i++) {
-            updatedSubs[i] = tb.apply(u, updatedSubs[i]);
+            final Term shiftedU = phi.op().bindVarsAt(i)
+                    ? new Shift(phi.varsBoundHere(i).size(), tb).apply(u)
+                    : u;
+            updatedSubs[i] = tb.apply(shiftedU, phi.sub(i));
         }
-
-        u.execPostOrder(new Visitor<@NonNull Term>() {
-            /// the stack contains the subterms that will be added in the next step of execPostOrder
-            /// in Term
-            /// in order to build the new term. A boolean value between or under the subterms on the
-            /// stack
-            /// indicate that a term using these subterms should build a new term instead of using
-            /// the old
-            /// one, because one of its subterms has been built, too.
-            private final Stack<Object> subStack = new Stack<>(); // of Term (and Boolean)
-            private final Boolean newMarker = Boolean.TRUE;
-
-            @Override
-            public void visit(Term visited) {
-                Operator visitedOp = visited.op();
-                if (visitedOp instanceof LogicVariable lv) {
-                    pushNew(LogicVariable.create(lv.getIndex() + 1, lv.sort()));
-                }
-                // instantiate sub terms
-                final Term[] neededSubs = neededSubs(visitedOp.arity());
-                if (!subStack.empty() && subStack.peek() == newMarker) {
-                    final Term newTerm = tb.tf().createTerm(visitedOp, neededSubs,
-                        visited.boundVars());
-                    pushNew(newTerm);
-                } else {
-                    subStack.push(visited);
-                }
-            }
-
-            private Term[] neededSubs(int n) {
-                boolean newTerm = false;
-                Term[] result = new Term[n];
-                for (int i = n - 1; i >= 0; i--) {
-                    Object top = subStack.pop();
-                    if (top == newMarker) {
-                        newTerm = true;
-                        top = subStack.pop();
-                    }
-                    result[i] = (Term) top;
-                }
-                if (newTerm && (subStack.empty() || subStack.peek() != newMarker)) {
-                    subStack.push(newMarker);
-                }
-                return result;
-            }
-
-            void pushNew(Object t) {
-                if (subStack.empty() || subStack.peek() != newMarker) {
-                    subStack.push(newMarker);
-                }
-                subStack.push(t);
-            }
-        });
-
-        return services.getTermFactory().createTerm(phi.op(), updatedSubs,
-            phi.boundVars());
+        return services.getTermFactory().createTerm(phi.op(), updatedSubs, phi.boundVars());
     }
 
     @Override

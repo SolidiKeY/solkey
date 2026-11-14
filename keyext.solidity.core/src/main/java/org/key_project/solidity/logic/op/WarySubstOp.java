@@ -5,6 +5,7 @@ package org.key_project.solidity.logic.op;
 
 import org.key_project.logic.Name;
 import org.key_project.logic.Term;
+import org.key_project.solidity.logic.Shift;
 import org.key_project.solidity.logic.Subst;
 import org.key_project.solidity.logic.TermBuilder;
 import org.key_project.solidity.logic.WaryClashFreeSubst;
@@ -45,6 +46,6 @@ public final class WarySubstOp extends SubstOp {
         if (cfs.wasBlocked()) {
             return tb.subst(this, term.varsBoundHere(1).get(0), substTerm, res);
         }
-        return res;
+        return new Shift(-1, tb).apply(res);
     }
 }

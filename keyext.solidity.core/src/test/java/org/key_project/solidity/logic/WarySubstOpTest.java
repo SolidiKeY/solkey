@@ -18,7 +18,11 @@ import org.key_project.solidity.logic.sort.SortImpl;
 import org.key_project.solidity.parser.ParserForTesting;
 import org.key_project.solidity.program.ast.abstractions.KeYSolidityType;
 import org.key_project.solidity.program.ast.statement.Block;
+import org.key_project.solidity.strategy.quantifierHeuristics.Substitution;
+import org.key_project.util.collection.DefaultImmutableMap;
+import org.key_project.util.collection.ImmutableMap;
 
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -114,5 +118,83 @@ public class WarySubstOpTest {
 
         assertEquals(emptyModality(tb.equals(cTerm, cTerm)), result,
             "a rigid replacement is pushed through the modality");
+    }
+
+    private Term lv(int index) {
+        return tb.var(LogicVariable.create(index, mySort));
+    }
+
+    @Test
+    void substLowersVariablesBoundFurtherOut() {
+        Term body = tb.equals(lvX, lv(2));
+        Term result = new Subst(cTerm, tb).apply(body);
+
+        assertEquals(tb.equals(cTerm, lv(1)), result,
+            "the variable bound outside the eliminated binder moves one index down");
+    }
+
+    @Test
+    void substBelowBinderShiftsReplacementAndLowersOuterVariables() {
+        BoundVariable y = new BoundVariable(new Name("y"), mySort);
+        Term body = tb.all(y, tb.and(tb.equals(lv(2), lv(1)), tb.equals(lv(3), lv(1))));
+        Term result = new Subst(lv(1), tb).apply(body);
+
+        assertEquals(tb.all(y, tb.and(tb.equals(lv(2), lv(1)), tb.equals(lv(2), lv(1)))),
+            result, "below a binder the replacement is shifted and outer indices are lowered");
+    }
+
+    @Test
+    void substOfInnerTargetKeepsLowerIndices() {
+        Term body = tb.and(tb.equals(lv(1), lv(2)), tb.equals(lv(3), cTerm));
+        Term result = new Subst(cTerm, 2, tb).apply(body);
+
+        assertEquals(tb.and(tb.equals(lv(1), cTerm), tb.equals(lv(2), cTerm)), result,
+            "indices below the target stay, the target is replaced, indices above move down");
+    }
+
+    @Test
+    void substOfInnerTargetShiftsReplacementPastInnerBinders() {
+        Term body = tb.and(tb.equals(lv(1), lv(2)), tb.equals(lv(3), cTerm));
+        Term result = new Subst(lv(1), 2, tb).apply(body);
+
+        assertEquals(tb.and(tb.equals(lv(1), lv(2)), tb.equals(lv(2), cTerm)), result,
+            "a replacement from outside the target binder skips the binders inside it");
+    }
+
+    @Test
+    void substitutionInstantiatesEveryStrippedQuantifier() {
+        SFunction d = new SFunction(new Name("d"), mySort, true, false);
+        services.getNamespaces().functions().addSafely(d);
+        Term dTerm = tb.func(d);
+        ImmutableMap<@NonNull LogicVariable, Term> map = DefaultImmutableMap
+                .<@NonNull LogicVariable, Term>nilMap()
+                .put(LogicVariable.create(1, mySort), cTerm)
+                .put(LogicVariable.create(2, mySort), dTerm);
+
+        Term result = new Substitution(map).apply(tb.equals(lv(2), lv(1)), services);
+
+        assertEquals(tb.equals(dTerm, cTerm), result,
+            "each index gets the instance of its own quantifier");
+    }
+
+    @Test
+    void shiftRaisesEveryFreeVariable() {
+        BoundVariable y = new BoundVariable(new Name("y"), mySort);
+        Term t = tb.and(tb.equals(lv(1), lv(2)), tb.all(y, tb.equals(lv(1), lv(3))));
+        Term result = new Shift(2, tb).apply(t);
+
+        assertEquals(tb.and(tb.equals(lv(3), lv(4)), tb.all(y, tb.equals(lv(1), lv(5)))),
+            result, "every free index is raised, the bound one is kept");
+    }
+
+    @Test
+    void nonRigidSubstitutionLowersVariablesBoundFurtherOut() {
+        Term body = tb.equals(lvX, lv(2));
+        Term substTerm = tb.subst(WarySubstOp.SUBST, x, vTerm, body);
+
+        Term result = WarySubstOp.SUBST.apply(substTerm, tb);
+
+        assertEquals(tb.equals(vTerm, lv(1)), result,
+            "a completed non-rigid substitution removes the binder from the context");
     }
 }

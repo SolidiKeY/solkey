@@ -162,7 +162,14 @@ Notes that are not derivable from the rule names:
 Direct storage updates (no program-level desugaring), e.g. `++age;` ⇝
 `{storage := save(storage, path, find<[int]>(storage, path) + 1)}`. Full
 root / field / index matrix, pre and post, plain and `…Assignment`, plus
-`…_unfold_leftFst` for complex receivers. The indexed forms are split by the
+`…_unfold_leftFst` for complex receivers (`…Assignment_unfold_leftFst` for the
+`result = …` forms, so `r = m2[a][b]--` and `r = ++t.inner.v` alias the receiver
+first). A post-fix `…Assignment` writes the location and the result in one
+parallel update with the result last, `{storage := save(…) || v := find(…)}`
+(`{lv := lv + 1 || v := lv}` on a local): both read the pre-state, so
+`i = m[i]++` increments `m[old i]` and `y = y++` leaves `y` unchanged, as in
+Solidity, where the right-hand side is evaluated before the target is
+assigned. The indexed forms are split by the
 receiver's sort like the plain index rules: the array form carries the
 `inBounds` / `outOfBounds` (`revert();`) goal pair, the mapping form does not.
 Operator matching checks the operator enum (not just the AST node class) so
@@ -201,7 +208,8 @@ local value. Both require a non-negative shift count. Left shift uses
 `mul(x, pow(2, n))`; right shift uses floor division `div(x, pow(2, n))`,
 including negative signed operands. Operand capture preserves the original
 operand types and evaluates the right operand before the left, matching the
-existing arithmetic calculus. `localShiftLeftAssign` and
+existing arithmetic calculus; like the other binary operators, an operand that is
+a storage path (`sx << sy`, `m[1] >> 2`) is captured too. `localShiftLeftAssign` and
 `localShiftRightAssign` handle `<<=` and `>>=` on local values through those
 expression taclets. Left-shift truncation is not modeled under the existing
 unbounded integer semantics. Storage/memory compound shifts and `|`, `^`, `~`
@@ -401,7 +409,19 @@ argument; `storagePushValue_unfold_leftFstReceiver` takes any `Expression`.
 function of this contract returning a storage reference (`f().push()`, the
 `InternalCallExpression` sort), and `localValuePush_unfold_leftFstReceiver` a complex receiver
 of `v = nsp.push()`. `storagePushMemoryCopySource` takes a memory local `sp.push(mv)`,
-writing `copyMem(mtSt, memory, mv)` as `memoryToStorage*` do. Array bounds/length are read
+writing `copyMem(mtSt, memory, mv)` as `memoryToStorage*` do; any other memory-valued argument
+(`m.inner`, `a[i]`, `new T[](k)`, `f()`) is first bound to a memory local by
+`storagePushValue_unfold_rightFstMemory{Path,Value}Argument`. `delete sp.push();` is
+`storagePushDelete`: the push's length update, then `delAt` on the appended slot, so the new
+element reads as its default even though an empty `push()` alone leaves the slot's old
+contents (`docs/limitations.md`); `storagePushDelete_unfold_leftFstReceiver` aliases a complex
+or call receiver first (`delete s.b.push()`, `delete m.push().push()`, `delete f().push()`).
+
+The write-side unfold rules whose receiver is `Path[storage,complex,orCall]` (field and index
+writes, `delete`, compound assignment and `++`/`--` on `nsp.fld` / `nsp[ie]`) also accept a
+storage-returning internal call as the receiver: `f()[0] = 8;`, `f().x += 1;` and
+`delete f()[0];` bind `f()` to a storage alias first, like the `_CallReceiver` read and push
+rules. Array bounds/length are read
 from **post-update** storage (bound emitted inside `\replacewith`, not via `\add`).
 `storagePopSave`'s nonempty branch clears the popped slot with the mapping-preserving
 `delAt(storage, sp · at(ℓ-1))` (not eager `defaultValue`), reusing the `delNode`
@@ -424,8 +444,8 @@ named it twice; reads commute through it with `selectOnDelAtCons`, and the reset
 resolves on read through `delField<[alpha]>`.
 
 ### Array length non-negativity (length invariant)
-A dynamic length is non-negative because the node conforms to its type: `conformsDynSize` adds
-`0 <= |st|` under `conforms(⟦T[]⟧, st) ==>`; a fixed length is static (see the table below and
+A dynamic length lies in the `uint256` range because the node conforms to its type: `conformsDynSize`
+adds `0 <= |st| <= 2^256-1` under `conforms(⟦T[]⟧, st) ==>`; a fixed length is static (see the table below and
 `docs/storage.md` §8b). This is what
 closes `storagePopUnknownLength`, `storagePushLengthPositive` and `storagePushReadBack` without a
 `require` on the length. The former axiom `sizeNotNegative` (`0 <= selectSt<[int]>(st, size)`
@@ -506,7 +526,7 @@ tag (`#elemOf`):
 |---|---|---|
 | `conformsEmpty`, `conformsOnEmptyStorage` | anywhere | `conforms(mtSt, st)` and `conforms(t, mtSt)` are `true` |
 | `conformsStruct` | anywhere | `conforms(⟦C$S⟧, st)` ⇝ one atom per non-trivial member (`#structConforms`) |
-| `conformsDynSize` | `conforms(⟦T[]⟧, st) ==>` | adds `0 <= \|st\|` |
+| `conformsDynSize` | `conforms(⟦T[]⟧, st) ==>` | adds `0 <= \|st\| <= 2^256-1` |
 | `conformsFixedElem`, `conformsDynElem` | array atom `==>`, `st[at(i)]` with `i : int` | adds `conforms(⟦e⟧, st[at(i)])` |
 | `conformsFixedElemMap`, `conformsDynElemMap` | array atom `==>`, `st[atMap(i)]` (`atMap : int`) | adds `conforms(⟦e⟧, st[atMap(i)])` |
 | `conformsMapElem` | `conforms(⟦mapping<[K, V]>⟧, st) ==>`, `st[at(k)]` with `k : Prim` | adds `conforms(⟦V⟧, st[at(k)])` |
@@ -545,6 +565,15 @@ matches. Widening `delFieldDefault` to `StValue` would close the same gap by rei
 overlap the paragraph above records; pushing the cast keeps the split. The three
 `*DeleteThenCopy` examples all fail without it.
 
+A copy whose source contains a fixed-size array reads the deleted value at its typed sort, so
+`selectOnDelAtCons` leaves `delField<[T]>` with `T` a typed node sort such as `int[3]`, which
+no `delField` rule matches. `#typedSelect` re-sorts it to `delField<[Struct]>` like `find`,
+`selectSt` and `save` (`TypeSortTransformer.untyped`), where `delFieldIndexStruct` and its
+siblings resolve it; before, it wrapped the term in `cast<[Struct]>`, which `castDel` removed
+again, and `selectOnFind{Fixed,Struct}` and `castDel` alternated until the step limit.
+`delFieldIndexStruct` takes any `Prim` key (`at(pk)`), so a `bool`-keyed mapping entry resets
+too. The `storageDeleted*Copy` and `storageDeleteBoolKey*` examples pin both.
+
 `save<[T]>(t, p, v)` is `t` with `v` assigned at `p`, and it has the sort `T` of `t`: a write
 is `save<[Struct]>(storage, p, v)`, and the leaf at the end of a path has the sort of what it
 replaces. That sort is what lets one symbol serve both the write and the copy. Before,
@@ -567,6 +596,25 @@ selector at a time (`selectOnCopyMemPrim`, `selectOnCopyMemRef`) beside the whol
 `findOnCopy`. No `.sol` example can exercise the mapping half — both front ends reject a copy
 whose type carries a mapping — so `keyext.solidity.examples/storage/copyKeepsMapping.key` pins it
 and the `testCopy*` group of `taclets/` pins the mapping-free half of every leaf rule.
+
+The `…StoreRoot` reads `gsp = sp[i]` take the copied sort from the source element
+(`\hasStaticElementSort(sp, …)`), not from the target `gsp`: a static-to-dynamic copy
+`uint[] d = m[k]` with `m` mapping to `uint[3]` must keep the source's fixed length, and a
+target sort of `Struct` lost it, so from zero storage the copy read as length 0.
+
+The copy is a snapshot: the whole source is read before the target is written. solc copies in
+place, member by member and element by element, so the two differ when the source lies inside
+the target or the target inside the source. Only a recursive struct (`struct N { N[] kids; }`)
+makes that possible: `root = root.kids[0]` clears part of the source before reading it, and
+`n.kids[0] = n` never terminates. Every copy rule therefore reads its source through
+`srcView(storage, target, source)` and adds the conjunct `!inside(target, source)`. Both walk
+the two paths (`srcViewStart`, `srcWalkCons`, `srcWalkNil`; `insideCons`, `insideSource`,
+`insideTarget`): paths that part, or are equal, give the pre-state storage and `inside` false,
+so the rule is the snapshot copy; a source inside the target leaves `srcWalk` stuck, so the
+target gets an unknown value and the rest of the storage is kept; a target inside the source
+makes `inside` true and the goal false. No type analysis is involved, and for a non-recursive
+type the walks reduce by simplification alone. The value an overlapping copy leaves is not
+computed, which is sound but incomplete (`docs/storage.md`, "Overlapping copies").
 
 `delAt` names its storage argument once, where the `save(st, p, <deleted value at p>)` form it
 replaced named it twice. That doubled the storage term at every `push`/`pop`, so a sequence of
@@ -690,7 +738,9 @@ occur in a term or update position, and a simple path is a root. The
 static type; for index expressions rebuilt during taclet instantiation the type
 is re-derived from the base's element type (`PathSVSort.typeOf`).
 `NonSimpleExpression[primitive]` filters non-simple expressions to
-operator-shaped, primitive-typed, non-path ones (`NonSimpleExpressionSVSort`);
+operator-shaped, primitive-typed, non-path ones (`NonSimpleExpressionSVSort`), and
+`NonSimpleExpression[reference]` to the non-path ones of struct or array type
+(`new T[](n)`, a call returning memory or storage);
 `SimpleExpression[primitive]` analogously restricts literals/variables to
 primitive static type (`SimpleExpressionSVSort`); `Expression[primitive]`
 (`ExpressionSVSort`) is the union a capture rule needs — primitive-typed and not
@@ -787,6 +837,7 @@ then resumes the modifier's loop iteration. A modifier return instead exits its 
 | `while (c) body` with `break`/`return` | `bool brk = false; while (!brk && !ret && c) { bool cnt = false; body }` |
 | `for (init; c; upd) body` | `{ init; while (c) { body if (!brk && !ret) upd; } }`, so `continue` still runs `upd` |
 | `do body while (c)` | `{ bool first = true; while (first \|\| c) { first = false; body } }` |
+| `do body while (c)` with a loop spec | `{ body if (!brk && !ret) while (!brk && !ret && c) body }`: the first iteration is peeled |
 | a loop with a `return` | `ret` is shared by nested loops; the outermost is followed by `if (ret) return;` |
 
 A flag is created only when used, so a loop without `break`/`continue`/`return` keeps its
@@ -812,14 +863,22 @@ for (uint i = 0; i < values.length; i++) { c = c + 1; }
 
 The expression language is that of the function specifications (`keyext.solidity.examples/
 README.md`, "Specification expressions"), with the `uint`/`int`/`bool`/`address` locals and
-parameters in scope at the loop as variables; several `invariant` lines are conjoined. solc
+parameters in scope at the loop as variables; several `invariant` lines are conjoined. The
+parser scopes names by block (`SolJSONParser.scoped`) and reads the spec before the loop body,
+so a local declared in the body or in a closed block does not capture a name. A loop in an
+internal or private function or in a modifier takes a spec too: the spec names its function by
+its own `FunctionDefinition` or `ModifierDefinition` node (`SolidityOutline.functionOf`). solc
 drops comments inside a function body, so `SolcParser` hands the source to `SolJSONParser`,
 which reads the `///` lines above the loop's `src` offset into a `LoopSpec` on the
 `LoopStatement`. The spec binds each source name to the program variable it denotes;
 `CreatingASTVisitor` carries it through rebuilds, `ProgVarReplaceVisitor` renames its bindings
 (inlining, clashing declarations), and `LoopLowering` moves it to the `while` it produces, so
-the invariant of a `for` or `do … while` holds at the head of that `while`. A `break` exit
-proves the continuation directly, under the box and the diamond alike. `LoopSpecCompiler` compiles the clauses
+the invariant of a `for` holds at the head of that `while`. A `do … while` with a spec has
+its first iteration peeled, so its invariant holds after each run of the body that goes on to
+the condition, not before the first one: an unpeeled `first` flag would be anonymised at the
+head and unnameable, and no invariant over the program could then rule out a second run of the
+body from a state where `c` is false. A `break` or `return` exit proves the continuation
+directly, under the box and the diamond alike. `LoopSpecCompiler` compiles the clauses
 when the rule fires, against the variables' current names.
 
 | Rule | Goals |
@@ -830,20 +889,25 @@ when the rule fires, against the variables' current names.
 - `\getInvariant(cond, body, inv)` / `\getVariant(cond, body, dec)` find the matched loop in
   the context program by its condition and body, and fail when it has no clause, so a loop
   without `invariant` (or, under the diamond, without `decreases`) is unwound instead.
-- `\getLoopBreak(cond, body, broke)` binds `broke` to this loop's generated break flag
-  being `TRUE`, or `false` when it has none. `LoopSpec` carries the flag through AST rebuilding
-  and variable renaming. Both rules assume `!broke` only at an arbitrary normal loop head
+- `\getLoopBreak(cond, body, broke)` binds `broke` to this loop's generated break or
+  return flag being `TRUE`, or `false` when it has neither. `LoopSpec` carries the flags
+  through AST rebuilding and variable renaming. Both rules assume `!broke` only at an arbitrary normal loop head
   (the lowering declares the flag `false` just before the loop and re-enters only after an
   iteration without a break); after executing the body they require the invariant (and, under
   the diamond, the decrease) for normal/continue completion and the original continuation for
   a break. Break paths need not preserve the invariant nor decrease the variant. Nested loops
   keep separate flags, and the existing lowering runs a `for` update after `continue` but
   skips it after `break`. This follows Java KeY's traditional invariant rule's completion
-  split. Return handling is unchanged.
+  split. A `return` exits like a `break`: the shared `ret` flag is part of `broke`, so the
+  returning iteration proves the continuation (`if (ret) return;`, or the guarded rest of an
+  outer iteration) with the returned value it assigned, instead of re-establishing the
+  invariant from an anonymised `ret`.
 - `#loopAnon` (`LoopAnonTransformer`) gives a fresh constant to what `LoopFrame` says the
   condition and the body may change: the locals they assign or declare (the lowering's flags
-  included), `storage` when they write a non-local, and `net` when they call anything but
-  `require`/`assert`/`revert` (calls also make them write storage). A loop that only reads
+  included), `storage` when they write a non-local, and `net` and `storage` when they call
+  anything but `require`/`assert`/`revert` or an internal `pure`/`view` function. A called
+  internal function is walked with its modifiers (their arguments and bodies), transitively,
+  so a write through a memory parameter in a callee's modifier counts as a memory write. A loop that only reads
   storage keeps every storage fact. The condition runs in every iteration, so it is framed
   too: framing the body alone proved `assert(i == 0)` after `while (i++ < 3) {}` with
   `invariant true` (`unprovableInvariantConditionSideEffect` in `taclets/`).
@@ -863,7 +927,8 @@ when the rule fires, against the variables' current names.
   gas on the EVM). Measuring at the head on both ends instead would make the `break`
   iteration decrease the variant (`invariantVariantSkipsBreakIteration` stays open then).
 - Integers are unbounded, so anonymised locals need no range facts. Generated obligations
-  assume unsigned input parameters are non-negative; array lengths are bounded by
+  assume every integer, address and enum input parameter lies in its type's range; array
+  lengths are bounded below by
   `lenInv(storage)`, assumed for the anonymised state (`#loopAnon`) and not part of the
   invariant to prove.
 
@@ -1065,21 +1130,43 @@ inlined call has its own frame. `revert` needs no frame rule, because `revertBox
 `revertDiamond` close the goal for the whole transaction. A `.key` program that writes `return;`
 outside any frame is stuck.
 
-**Tuple assignments are desugared by the parsers** (`ParserUtils.tupleAssignment`):
-`(a, b, c) = (b, c, a);` evaluates every value into a temporary before assigning any target, so
-permutations are correct. A declaration `(uint a, , bool b) = (4, 5, true);` declares the
-variables and assigns them directly, since a new variable cannot occur in its own initializer.
-A discarded component keeps only a call among the values, for its effects. A tuple is assigned
-from a tuple or from a call of a function of the contract; anything else (an external call
-returning a tuple) is a `SolidityParseException`.
+**Tuple assignments are desugared by the parsers** (`TupleAssignment`), in solc's order:
+
+1. The values, left to right, each into a temporary, so `(a, b, c) = (b, c, a);` permutes. A
+   value that is a storage struct or array gets a `storage` temporary, a reference, so it is
+   copied when it is stored, not when it is evaluated: `(x, y) = (y, x)` on storage structs is
+   `y = x; x = y;`, not a swap (solc warns about it). A call or conditional counts as storage
+   when solc types it `storage pointer`/`storage ref` (the parser records these). A discarded
+   component is still evaluated (`(a, ) = (1, i++)` increments `i`); only literals and
+   variable reads are dropped.
+2. A storage reference stored into a `memory` target is copied to a `memory` temporary once all
+   values are evaluated, as solc converts the value tuple to the target types.
+3. The locations the targets denote, left to right: a non-literal index or mapping key (unless
+   it is a variable no target writes), a `memory` base that is not a plain local, and a base
+   variable that is itself a target, or a call or conditional, are put in temporaries.
+   `(i, xs[i]) = (1, 5)` writes `xs[old i]`. A storage target that indexes an array, in a tuple
+   that also copies a struct or array into storage, is read into a temporary too, so its bounds
+   check sees the old length: `(a[0], a) = (5, b)` with `a` empty reverts.
+4. The stores, right to left, so with a repeated target the leftmost value is the one left:
+   `(y, y) = (1, 2)` leaves `y == 1`.
+
+A declaration `(uint a, , bool b) = (4, 5, true);` declares the variables and assigns them
+directly, since a new variable cannot occur in its own initializer or repeat; a storage
+struct or array value for a `memory` variable takes the temporary path above. A tuple is
+assigned from a tuple or from a call of a function of the contract; anything else (an external
+call returning a tuple) is a `SolidityParseException`. From a call, `ExpandFunctionBody` runs
+steps 2 to 4 on the callee's return variables after its frame, and `return g();` with a
+tuple-returning `g` becomes `(r1, …, rn) = g(); return;` (`return c ? g() : h();` becomes an
+`if` over the two).
 
 Remaining constraints:
 
 - **Overloading.** A `.sol` call names its callee by solc's declaration id, so overloads
   resolve as solc resolves them. A `.key` call `f(a)@C` picks among the functions named `f` by
   arity, then by argument kind (integer/address, `bool`); two overloads with the same arity and
-  kinds (`uint8` vs `uint256`) are an ambiguity error. An obligation is still named by the
-  function alone, so `--function` proves the first of two public overloads.
+  kinds (`uint8` vs `uint256`) are an ambiguity error. Each public overload gets its own
+  obligation, named by its signature (`f(uint256,uint256)`) wherever the bare name is
+  ambiguous; `--function f` is refused then and lists the signatures.
 - **Returns of other types start unconstrained**: `R ri;` is skipped by `valueDeclSkip`.
 
 Examples: the `internalCall*`, `return*`, `tuple*`, `overload*` and `modifier*` functions in
@@ -1089,7 +1176,17 @@ Examples: the `internalCall*`, `return*`, `tuple*`, `overload*` and `modifier*` 
 every library before the contracts:
 
 - A `constant` (of a contract, inherited, written `C.K` or `L.K`, or at file level) is replaced
-  at each read by its initializer expression; it is never read from storage.
+  at each read by its initializer expression; it is never read from storage. Initializers are
+  parsed on first use, so a constant or state-variable initializer may name a constant, a state
+  variable or a function declared after it; state variables still initialize in declaration
+  order.
+- A literal-only `BinaryOperation` or `UnaryOperation` (solc types it `int_const N`) is the
+  literal `N`: solc evaluates it exactly as a rational, so `7 / 2 * 2` is `7`, not `6`. The
+  value is read from the type identifier `t_rational_N_by_1`, which solc never abbreviates.
+- In a specification a constant is its compile-time value (`SolidityConstants.valueOf`): a
+  literal, a conversion, `type(T).min`/`max`, another constant, or arithmetic over these whose
+  result fits its type, of type integer, address or bool.
+- A user-defined operator (`using {f as +} for T global`) is refused at load.
 - A file-level or library function is inlined like an internal function. `L.f(a)` calls it, and
   `x.f(a)` under `using L for T` calls it as `f(x, a)`.
 - A file-level or library enum or struct is declared like a contract's; the field constants of
@@ -1136,7 +1233,8 @@ compiles the clauses (`speclang/natspec/`: `KeyNatspec` splits the natspec text,
 parses an expression with the ANTLR grammar `SolSpec.g4`, `SpecCompiler` — a visitor over
 that parse tree — emits the `.key` term text) into the same generated `.key`
 problem the `net/obligations/*.key` files spell out by hand — an `insertCInv` rewrite taclet defining
-`CInv(s, n)` as the conjoined invariants, and the ISoLA 2020 eq.-4 problem: `msg.value` bound,
+`CInv(cinv$s, cinv$n)` as the conjoined invariants (schema variables no spec identifier can name;
+the invariant may not mention `msg.sender`/`msg.value`), and the ISoLA 2020 eq.-4 problem: `msg.value` bound,
 requires, `CInv(storage, net)` in the antecedent; the ledger booking
 `net := storeSt(net, at(msgSender), …)` as update; the call in the **box** modality; `CInv`
 and the ensures as postcondition. `\old(e)` declares `Struct old, oldNet` and snapshots them in
@@ -1163,6 +1261,17 @@ term, which is what `createSkolemConstant` records — before, every `exLeft`/`a
 failed the generic-sort check, so no quantified problem could be proved. The surface grammar
 and the emission table are in `keyext.solidity.examples/README.md`.
 
+Bound variables are de Bruijn indices (`LogicVariable`, `@1` is the nearest binder), so every
+operation that moves a term across a binder adjusts them. `Shift` (`#logicShift`, used by
+`all_pull_out*`/`ex_pull_out*`) raises every free index, not only the first. `Subst`
+(`{\subst u; t}`, `elim_forall*`/`elim_exists*`, `allLeft`) lowers the indices bound outside the
+eliminated binder and shifts `t` below the binders it is moved under; `WarySubstOp` and the
+quantifier-instantiation `Substitution` (outermost variable first) go through it.
+`applyOnRigidFormula`/`applyOnRigidTerm` shift the update past the binder they push it under.
+`distr_*`, `elim_forall_leq`/`elim_exists_leq` and `ex_pull_out0..3` carry Java KeY's
+heuristics. Regression problems: `quantifier*.key` and `unsound/updateUnderBinderCapture.key` in
+the core test resources, run by `RulesTest`.
+
 ### Constructors
 
 A constructor is listed by `SolidityOutline` and `SolJSONParser` under the name `constructor` (solc
@@ -1173,6 +1282,17 @@ selfBalance := msgValue` (a function without clauses gets `{storage := mtSt || n
 prepends `field = initializer;` for every state variable of the contract that has an initializer,
 in declaration order, before the constructor's `function-frame`. `contracts/solidikey/Counter.sol` is the
 minimal example (`uint limit = 5;` establishes the invariant `limit == 5`).
+
+A contract with an invariant and no constructor gets the implicit one: `SolidityOutline` lists a
+`constructor` without parameters and `SolJSONParser` declares it with an empty body, so its
+obligation runs only the initializers and proves the invariant from the empty state.
+`receive()` and `fallback()` are listed under those names and proved like any public function
+(`CInv` assumed and re-established, `msg.value >= 0` when payable). A parameter is declared
+under its own name unless the obligation already uses that name (`msgValue`, `msgSender`,
+`self`, `selfBalance`, `net`, `storage`, `old`, `oldNet`, a `result` variable, …); then it
+becomes `p$0` (`SpecCompiler.parameterVariables`), and the clauses that name `p` read that
+variable. `contracts/solidikey/EntryPoints.sol` covers all three, `builtinNamedParameters` and
+`overloaded` in `taclets/Calls.sol` the plain obligations.
 
 `trueNotFalse` / `falseNotTrue` (`formulaNormalizationRules.key`) rewrite `TRUE = FALSE` and
 `FALSE = TRUE` to `false`. The bool literals had no distinctness axiom, so an infeasible branch

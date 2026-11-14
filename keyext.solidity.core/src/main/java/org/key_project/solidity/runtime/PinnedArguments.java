@@ -53,7 +53,7 @@ public final class PinnedArguments {
             SolidityOutline.Function function) throws IOException {
         Map<String, Bounds> pins = new HashMap<>();
         Map<String, BigInteger> locals = new HashMap<>();
-        for (JsonNode statement : bodyOf(solFile, contract, function.name())) {
+        for (JsonNode statement : bodyOf(solFile, contract, function)) {
             if (!collectPins(statement, locals, pins)) {
                 break;
             }
@@ -69,18 +69,24 @@ public final class PinnedArguments {
         return Optional.of(values);
     }
 
-    private static JsonNode bodyOf(Path solFile, String contract, String function)
-            throws IOException {
+    private static JsonNode bodyOf(Path solFile, String contract,
+            SolidityOutline.Function function) throws IOException {
         JsonNode contractNode = SolcAst.contractNode(solFile, contract).orElse(null);
+        List<String> types = function.parameters().stream()
+                .map(SolidityOutline.Parameter::type).toList();
         if (contractNode != null) {
             for (JsonNode member : contractNode.get("nodes").values()) {
                 if ("FunctionDefinition".equals(text(member, "nodeType"))
-                        && function.equals(text(member, "name"))) {
+                        && function.name().equals(text(member, "name"))
+                        && types.equals(member.get("parameters").get("parameters").valueStream()
+                                .map(p -> text(p.get("typeDescriptions"), "typeString"))
+                                .toList())) {
                     return member.get("body").get("statements");
                 }
             }
         }
-        throw new IllegalArgumentException(contract + "." + function + " not in " + solFile);
+        throw new IllegalArgumentException(
+            contract + "." + function.signature() + " not in " + solFile);
     }
 
     /// Records what `statement` pins and returns whether the walk may continue: local literal

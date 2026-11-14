@@ -49,6 +49,28 @@ contract Payments {
         flag = ok;
     }
 
+    /// solc: smtCheckerTests/blockchain_state/transfer_3.sol
+    /// @custom:key box
+    function transferUnfundedKeepsStorage() public {
+        total = 7;
+        address payable to = payable(owner);
+        to.transfer(1);
+        assert(total == 7);
+    }
+
+    function sendFailureIsNoRevert() public {
+        address payable to = payable(owner);
+        bool ok = to.send(1);
+        flag = ok;
+    }
+
+    /// @custom:key box
+    function sendDiscardedResult() public {
+        total = 1;
+        payable(owner).send(5);
+        assert(total == 1);
+    }
+
     /// @custom:key box
     function callToSender() public {
         uint amount = 5;

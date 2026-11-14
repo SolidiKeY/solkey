@@ -2,7 +2,10 @@
 pragma solidity ^0.8.0;
 
 contract SolcHigherLevelBaseBase {
+    constructor() {}
+
     uint x;
+    uint256 m_base = 5;
 
     function bg() internal pure virtual returns (uint256 r) {
         return 1;
@@ -42,7 +45,144 @@ contract SolcHigherLevelBase is SolcHigherLevelBaseBase {
     }
 }
 
-contract SolcHigherLevel is SolcHigherLevelBase {
+contract SolcHigherLevelDiamondA {
+    uint public i;
+    uint public k;
+
+    constructor(uint newI, uint newK) {
+        i = newI;
+        k = newK;
+    }
+}
+
+abstract contract SolcHigherLevelDiamondB is SolcHigherLevelDiamondA {
+    uint public j;
+
+    constructor(uint newJ) {
+        j = newJ;
+    }
+}
+
+contract SolcHigherLevelDiamondC is SolcHigherLevelDiamondA {
+    constructor(uint newI, uint newK) SolcHigherLevelDiamondA(newI, newK) {}
+}
+
+contract SolcHigherLevelParams {
+    uint public pi;
+    uint public pk;
+
+    constructor(uint newI, uint newK) {
+        pi = newI;
+        pk = newK;
+    }
+}
+
+contract SolcHigherLevelFixedParams {
+    uint public qi;
+    uint public qk;
+
+    constructor(uint newI, uint newK) {
+        qi = newI;
+        qk = newK;
+    }
+}
+
+contract SolcHigherLevelModifiedCtor {
+    uint256 data;
+
+    constructor() ctorMod {
+        data |= 2;
+    }
+
+    modifier ctorMod virtual {
+        data |= 1;
+        _;
+    }
+}
+
+contract SolcHigherLevelCreationContext {
+    uint256 creationData;
+
+    constructor() creationMod1 {
+        creationF1();
+    }
+
+    function creationF1() public creationMod2 {
+        creationData |= 0x1;
+    }
+
+    function creationF2() public {
+        creationData |= 0x20;
+    }
+
+    function creationF3() public virtual {}
+
+    modifier creationMod1 virtual {
+        creationF2();
+        _;
+    }
+
+    modifier creationMod2 {
+        creationF3();
+        if (false) _;
+    }
+}
+
+contract SolcHigherLevel is SolcHigherLevelBase, SolcHigherLevelDiamondB, SolcHigherLevelDiamondC,
+        SolcHigherLevelParams, SolcHigherLevelFixedParams(2, 1), SolcHigherLevelModifiedCtor,
+        SolcHigherLevelCreationContext {
+    uint256 m_derived = 6;
+
+    /// solc: semanticTests/various/inline_member_init_inheritence.sol, semanticTests/inheritance/constructor_with_params_diamond_inheritance.sol, semanticTests/inheritance/constructor_with_params_inheritance.sol, semanticTests/inheritance/constructor_with_params_inheritance_2.sol, semanticTests/modifiers/function_modifier_for_constructor.sol, semanticTests/modifiers/function_modifier_calling_functions_in_creation_context.sol
+    // open: inheritance: a derived constructor runs neither base initializers nor base constructors, and the base-constructor calls in its header are stuck
+    constructor(uint newI, uint newK) SolcHigherLevelDiamondB(newI) SolcHigherLevelDiamondC(newI, newK + 1)
+            SolcHigherLevelParams(newI, newK + 1) {
+        uint256 rb = m_base;
+        uint256 rd = m_derived;
+        assert(rb == 5);
+        assert(rd == 6);
+        uint ri = i;
+        uint rj = j;
+        uint rk = k;
+        assert(ri == newI);
+        assert(rj == newI);
+        assert(rk == newK + 1);
+        uint rpi = pi;
+        uint rpk = pk;
+        assert(rpi == newI);
+        assert(rpk == newK + 1);
+        uint rqi = qi;
+        uint rqk = qk;
+        assert(rqi == 2);
+        assert(rqk == 1);
+        uint256 rdata = data;
+        assert(rdata == 6);
+        uint256 rcreation = creationData;
+        assert(rcreation == 0x4300);
+    }
+
+    modifier ctorMod override {
+        data |= 4;
+        _;
+    }
+
+    modifier creationMod1 override {
+        creationF4();
+        _;
+    }
+
+    /// solc: semanticTests/modifiers/function_modifier_calling_functions_in_creation_context.sol
+    // open: no rule for the compound assignment |=
+    function creationF3() public override {
+        creationData |= 0x300;
+    }
+
+    /// solc: semanticTests/modifiers/function_modifier_calling_functions_in_creation_context.sol
+    // open: no rule for the compound assignment |=
+    function creationF4() public {
+        creationData |= 0x4000;
+    }
+
     function bg() internal pure override returns (uint256 r) {
         return 3;
     }

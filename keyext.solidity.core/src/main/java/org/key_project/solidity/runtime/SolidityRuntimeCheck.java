@@ -94,7 +94,7 @@ public final class SolidityRuntimeCheck {
 
         List<Verdict> verdicts = new ArrayList<>();
         for (SolidityOutline.Function fn : functions) {
-            verdicts.add(verdictFor(runner, solFile, target.name(), fn));
+            verdicts.add(verdictFor(runner, solFile, target, fn));
         }
         return verdicts;
     }
@@ -108,23 +108,35 @@ public final class SolidityRuntimeCheck {
             "contract " + contract.name() + " declares no function " + function)));
     }
 
-    private static Verdict verdictFor(EvmContractRunner runner, Path solFile, String contract,
-            SolidityOutline.Function fn) throws IOException {
+    private static Verdict verdictFor(EvmContractRunner runner, Path solFile,
+            SolidityOutline.Contract contract, SolidityOutline.Function fn) throws IOException {
+        String label = contract.id(fn);
+        if (fn.isConstructor()) {
+            return new Verdict(label, Outcome.SKIPPED, "runs only at deployment");
+        }
         List<BigInteger> arguments = List.of();
         if (!fn.parameters().isEmpty()) {
-            Optional<List<BigInteger>> pinned = PinnedArguments.of(solFile, contract, fn);
+            Optional<List<BigInteger>> pinned = PinnedArguments.of(solFile, contract.name(), fn);
             if (pinned.isEmpty()) {
-                return new Verdict(fn.name(), Outcome.SKIPPED,
+                return new Verdict(label, Outcome.SKIPPED,
                     "takes parameters no leading require pins to a value");
             }
             arguments = pinned.get();
         }
-        EvmContractRunner.CallResult result = runner.call(Abi.signatureOf(fn), arguments);
+        EvmContractRunner.CallResult result = runner.call(calldata(fn, arguments));
         return switch (result.status()) {
-            case SUCCESS -> new Verdict(fn.name(), Outcome.OK, "");
+            case SUCCESS -> new Verdict(label, Outcome.OK, "");
             case EXCEPTIONAL_HALT ->
-                new Verdict(fn.name(), Outcome.HALTED, result.haltReason());
-            case REVERT -> revertVerdict(fn.name(), result.revertData());
+                new Verdict(label, Outcome.HALTED, result.haltReason());
+            case REVERT -> revertVerdict(label, result.revertData());
+        };
+    }
+
+    public static Bytes calldata(SolidityOutline.Function fn, List<BigInteger> arguments) {
+        return switch (fn.name()) {
+            case SolidityOutline.Function.RECEIVE -> Bytes.EMPTY;
+            case SolidityOutline.Function.FALLBACK -> Bytes.fromHexString("0xffffffff");
+            default -> Abi.encodeCall(Abi.signatureOf(fn), arguments);
         };
     }
 

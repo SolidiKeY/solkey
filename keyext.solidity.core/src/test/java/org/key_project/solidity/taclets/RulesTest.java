@@ -130,7 +130,7 @@ public class RulesTest {
     public void unsoundWfProblemStaysOpen(String exampleName, Path exampleFile)
             throws ProblemLoaderException {
         Proof proof = loadAndProve(exampleFile, 10000, -1);
-        assertFalse(proof.closed(), exampleName + " proves a false layout-invariant claim");
+        assertFalse(proof.closed(), exampleName + " proves a false claim");
     }
 
     static Stream<Arguments> unsoundFiles() throws Exception {

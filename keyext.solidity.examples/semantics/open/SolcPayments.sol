@@ -7,6 +7,7 @@ contract SolcPayments {
     uint fy;
     int ix;
     bool lock;
+    address payable recipient;
 
     receive() external payable {
         ++fy;
@@ -211,5 +212,13 @@ contract SolcPayments {
         (bool ok, ) = payable(p).call{value: 0}("");
         uint r = fy;
         assert(r == 0);
+    }
+
+    // open: design-limitation: the contract's own balance is not tracked, so a transfer from a contract holding nothing is not known to revert
+    /// solc: smtCheckerTests/blockchain_state/transfer_3.sol
+    /// @custom:key box
+    function transferUnfundedReverts() public {
+        recipient.transfer(1);
+        assert(false);
     }
 }

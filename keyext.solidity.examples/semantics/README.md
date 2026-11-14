@@ -26,21 +26,21 @@ proofs that require default values in an unconstrained storage tail are checked 
 | `SolcExpressions.sol` | `expressions/`, `exponentiation/` | 20 |
 | `SolcStructs.sol` | `structs/` | 11 |
 | `SolcArrays.sol` | `array/`, `array/push`, `array/pop`, `array/delete` | 12 |
-| `SolcMemory.sol` | `structs/memory_*`, `array/copying`, `array/delete` | 11 |
+| `SolcMemory.sol` | `structs/memory_*`, `array/copying`, `array/delete`, `memoryManagement/` | 15 |
 | `SolcMappings.sol` | `structs/*mapping*`, `array/copying/array_elements_to_mapping.sol` | 9 |
-| `SolcControlFlow.sol` | `statements/`, `various/`, `expressions/conditional_expression_storage_memory_*` | 10 |
-| `SolcLoops.sol` | `statements/`, `viaYul/loops/`, loop-heavy `array/`; smt `loops/` | 54 |
-| `SolcArrayMembers.sol` | `array/` push, pop, delete, copying, allocation; `storage/`; smt `array_members/` | 74 |
+| `SolcControlFlow.sol` | `statements/`, `various/`, `expressions/conditional_expression_storage_memory_*`, `viaYul/` tuples and short-circuit; smt `operators/` conditionals, `types/tuple_assignment_array.sol` | 24 |
+| `SolcLoops.sol` | `statements/`, `viaYul/loops/`, loop-heavy `array/`; smt `loops/` | 64 |
+| `SolcArrayMembers.sol` | `array/` push, pop, delete, copying, allocation; `storage/`; smt `array_members/` | 87 |
 | `SolcFunctionCalls.sol` | `functionCall/`, `freeFunctions/`; smt `functions/` | 35 |
-| `SolcStructsMappings.sol` | remaining `structs/`, mapping tests of `functionCall/`, `variables/`, `types/`, `storage/`, `viaYul/storage/`; smt `types/struct*`, `mapping*` | 53 |
+| `SolcStructsMappings.sol` | remaining `structs/`, mapping tests of `functionCall/`, `variables/`, `types/`, `storage/`, `viaYul/storage/`; smt `types/struct*`, `mapping*` | 65 |
 | `SolcStructArrays.sol` | smt `types/struct/` nested storage arrays | 2 |
 | `SolcConstructors.sol` | `constructor/`, `immutable/`, `constants/`, `scoping/`; smt constructor, `inheritance/constructor_*`, `file_level/` | 37 |
-| `SolcPayments.sol` | `payable/`, `receive/`, `fallback/`, `reverts/`, `errors/`, `tryCatch/`; smt `special/`, `blockchain_state/`, `try_catch/` | 35 |
+| `SolcPayments.sol` | `payable/`, `receive/`, `fallback/`, `reverts/`, `errors/`, `tryCatch/`; smt `special/`, `blockchain_state/`, `try_catch/` | 39 |
 | `SolcModifiers.sol` | `modifiers/`; smt `modifiers/` | 47 |
 | `SolcSmtControlFlow.sol` | smt `control_flow/`, `bmc_coverage/`, `verification_target/`, `invariants/`, `complex/slither/` | 91 |
-| `SolcArithmetic.sol` | `arithmetics/`, `exponentiation/`, `integer/`, `operators/`; smt `operators/`, `overflow/` | 59 |
-| `SolcHigherLevel.sol` | `inheritance/`, `virtualFunctions/`, `getters/`; smt `inheritance/` | 19 |
-| `SolcTypes.sol` | `enums/`, `literals/`, `types/`; smt `types/`, `typecast/` | 39 |
+| `SolcArithmetic.sol` | `arithmetics/`, `exponentiation/`, `integer/`, `operators/`; smt `operators/`, `overflow/` | 79 |
+| `SolcHigherLevel.sol` | `inheritance/`, `virtualFunctions/`, `getters/`; smt `inheritance/` | 25 |
+| `SolcTypes.sol` | `enums/`, `literals/`, `types/`; smt `types/`, `typecast/` | 42 |
 
 The function counts are obligations (helpers included). `semantics/open/` holds what did not close
 (see "The `open/` directory").
@@ -118,17 +118,21 @@ Applied uniformly; every function names its upstream file in a `/// solc:` line.
 
 ## The `open/` directory
 
-`open/` holds, for each of the eleven newer themes, the upstream claims that do **not** close:
+`open/` holds, for eleven themes, the upstream claims that do **not** close:
 the faithful form of a port whose closing twin needed a workaround, and tests stopped by a
-missing construct or a defect. Every file loads (`--no-prove`) and states something true on the
+missing construct or a defect. `open/StorageOverlap.sol` is a local probe, not a port: a true
+claim after an overlapping recursive copy. Every file loads (`--no-prove`) and states something true on the
 EVM, except the proves-false witnesses noted below. `OpenExamplesStayOpenTest` (CI-only)
 enumerates the directory and fails when a function changes status; each function has a
 `// open:` line with the reason, and moving a function into the closing file is how a fix is
-recorded. `scripts/open-check.sh` lists the functions to move. Four functions here do close:
+recorded. `scripts/open-check.sh` lists the functions to move. Seven functions here do close:
 `SolcConstructors.constructor` (true, kept out only because the runtime check skips
-constructors), and `SolcPayments.trySuccessKeepsStorageUnsound`/`callKeepsStorageUnsound`
-and `SolcTypes.ternaryLiteralOverflow` (false on the EVM: soundness witnesses, see
-`docs/bugs.md`).
+constructors), `SolcLoops.doWhileContinueNeverLeaves`, `forTrivialConditionResetInBody` and
+`forTrivialConditionUntouched` (true, but their loops never end, so the EVM run halts out of
+gas), and `SolcPayments.trySuccessKeepsStorageUnsound`/`callKeepsStorageUnsound` and
+`SolcTypes.ternaryLiteralOverflow` (false on the EVM: soundness witnesses, see
+`docs/bugs.md`). `open/SolcStructsMappings.sol` has no obligation at all: its two functions take
+a struct parameter, which has no `.key` sort, so they load but are neither proved nor run.
 
 ```bash
 ./run-key.sh keyext.solidity.examples/semantics/open/SolcLoops.sol -f binomialFaithfulRowsSmall --open-goals
@@ -189,6 +193,16 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `smtCheckerTests/loops/while_1_break.sol` | `whileBreakOrIncrement` |
 | `smtCheckerTests/loops/while_nested_break.sol` | `nestedWhileBreak` |
 | `smtCheckerTests/loops/while_nested_continue.sol` | `nestedWhileContinue` |
+| `smtCheckerTests/loops/while_loop_simple_5.sol` | `whileConditionAssignmentExitsAtZero` |
+| `smtCheckerTests/loops/for_loop_4.sol` | `forUpdateRunsFromSecondIteration` |
+| `smtCheckerTests/loops/for_loop_5.sol` | `forAssignmentInitKeptOnExit` |
+| `smtCheckerTests/loops/for_loop_6.sol` | `forAssignmentInitBoundedOnExit` |
+| `smtCheckerTests/loops/for_loop_condition_constant_true_in_first_iteration_and_constant_false_in_second.sol` | `forTernaryConditionRunsOnce` |
+| `smtCheckerTests/loops/do_while_bmc_iterations_semantics_3.sol` | `doWhileLeavesAfterThreeIterations` |
+| `smtCheckerTests/loops/while_loop_simple_1.sol` | `whileOverwritesAssignedParameter` |
+| `smtCheckerTests/loops/while_loop_simple_3.sol` | `whileEmptyBodyExitNegatesCondition` |
+| `smtCheckerTests/loops/for_loop_3.sol` | `forInitNeverUpdated` |
+| `smtCheckerTests/loops/while_loop_condition_constant_true_in_first_iteration_and_constant_false_in_second.sol` | `whileTernaryConditionRunsOnce` |
 
 ### `SolcArrayMembers.sol`
 
@@ -263,6 +277,14 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `smtCheckerTests/array_members/push_2d_arg_1_safe.sol` | `pushMemoryRowThenValue` |
 | `smtCheckerTests/array_members/storage_pointer_push_1.sol` | `storagePointerPush` |
 | `semanticTests/array/push/array_push_struct.sol` | `pushStructFromMemory` |
+| `smtCheckerTests/operators/delete_array.sol` | `deleteArrayBranch` |
+| `smtCheckerTests/operators/delete_array_index.sol` | `deleteArrayIndexBranch` |
+| `smtCheckerTests/operators/delete_array_2d.sol` | `deleteArray2d` |
+| `smtCheckerTests/operators/delete_multid_array.sol` | `deleteMultidF`, `deleteMultidG`, `deleteMultidH`, `deleteMultidI` |
+| `smtCheckerTests/operators/delete_array_push.sol` | `deletePushResult` |
+| `semanticTests/array/copying/array_copy_including_array.sol` | `copyIncludingArrayCleared`, `copyIncludingArrayClear` |
+| `semanticTests/array/copying/array_copy_storage_storage_different_base_nested.sol` | `copyDifferentBaseNested` |
+| `smtCheckerTests/array_members/length_assignment_memory_to_memory.sol` | `lengthMemoryToMemory` |
 
 ### `SolcFunctionCalls.sol`
 
@@ -357,6 +379,14 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `smtCheckerTests/types/array_mapping_aliasing_1.sol` | `arrayOfMappingsElementAlias` |
 | `semanticTests/structs/struct_storage_push_zero_value.sol` | `pushedStructIsZero` |
 | `semanticTests/structs/copy_struct_array_from_storage.sol` | `copyStructArrayIntoNestedArray`, `copyStructArraysIntoMemoryRows` |
+| `semanticTests/structs/packed_storage_structs_delete.sol` | `packedStructsDelete` |
+| `semanticTests/types/mapping/copy_struct_to_array_stored_in_mapping.sol` | `structFromStorageToStaticArrayInMapping`, `structFromStorageToDynamicArrayInMapping`, `structFromMemoryToStaticArrayInMapping`, `structFromMemoryToDynamicArrayInMapping` |
+| `semanticTests/storage/static_array_copy_cleanup.sol` | `staticStructArrayCopyCleansTail`, `staticStructArrayDeletesKeepCanary` |
+| `smtCheckerTests/types/struct/struct_aliasing_parameter_storage_1.sol` | `storageStructParameterAliases` |
+| `smtCheckerTests/types/struct/struct_aliasing_parameter_storage_2.sol` | `storageStructMappingParameterAliases` |
+| `smtCheckerTests/types/struct/struct_aliasing_parameter_storage_3.sol` | `storageOuterStructParameterAliases` |
+| `smtCheckerTests/types/struct/struct_aliasing_parameter_storage_4.sol` | `storageInnerStructParameterAliases` |
+| `semanticTests/types/mapping/copy_from_mapping_to_mapping.sol` | `copyStructFromMappingToMapping` |
 
 ### `SolcStructArrays.sol`
 
@@ -446,6 +476,8 @@ let them close under the normal source-size budgets, without a clean-tail invari
 | `smtCheckerTests/try_catch/try_multiple_returned_values.sol` | `tryReturnsShadowState` |
 | `semanticTests/fallback/falback_return.sol` | `fallbackReturn` |
 | `semanticTests/fallback/fallback_or_receive.sol` | `fallbackOrReceive` |
+| `semanticTests/receive/inherited.sol` | `receiveInherited` |
+| `semanticTests/fallback/inherited.sol` | `fallbackInherited` |
 
 ### `SolcModifiers.sol`
 
@@ -619,17 +651,11 @@ let them close under the normal source-size budgets, without a clean-tail invari
 | `smtCheckerTests/operators/const_exp_1.sol` | `constantExponent` |
 | `smtCheckerTests/operators/constant_evaluation_unary_minus_chc.sol` | `constantUnaryMinus` |
 | `smtCheckerTests/operators/unary_add_array_push_1.sol` | `unaryAddOnPush` |
-
 | `smtCheckerTests/operators/mod_signed.sol` | `modSignFollowsDividend` |
-
 | `smtCheckerTests/operators/mod_n.sol` | `modBelowDivisor` |
-
 | `smtCheckerTests/operators/mod_even.sol` | `modOfDoubleIsZero` |
-
 | `smtCheckerTests/operators/compound_add_chain.sol` | `compoundAddChain` |
-
 | `semanticTests/arithmetics/checked_modifier_called_by_unchecked.sol` | `checkedModifierCalledByUnchecked` |
-
 | `smtCheckerTests/operators/compound_sub.sol` | `compoundSubSelfReference` |
 | `smtCheckerTests/operators/compound_sub_mapping.sol` | `compoundSubMapping` |
 | `smtCheckerTests/operators/compound_sub_array_index.sol` | `compoundSubArrayIndex` |
@@ -637,6 +663,23 @@ let them close under the normal source-size budgets, without a clean-tail invari
 | `semanticTests/operators/shifts/shift_right.sol` | `shiftRightParam` |
 | `semanticTests/operators/shifts/shift_constant_right_assignment.sol` | `shiftRightAssign` |
 | `semanticTests/operators/shifts/shift_right_negative_literal.sol` | `shiftRightNegativeLiteral` |
+| `smtCheckerTests/operators/unary_operators_tuple_1.sol` | `unaryOperatorsParenthesized` |
+| `smtCheckerTests/operators/unary_operators_tuple_2.sol` | `unaryOperatorsNestedParentheses` |
+| `smtCheckerTests/operators/unary_operators_tuple_3.sol` | `unaryOperatorsParenthesizedElse` |
+| `semanticTests/operators/shifts/shift_right_negative_lvalue.sol` | `shiftRightNegativeLvalue`, `shiftRightNegativeLvalueParam` |
+| `semanticTests/operators/shifts/shift_right_negative_lvalue_assignment.sol` | `shiftRightNegativeLvalueAssign` |
+| `semanticTests/operators/shifts/shift_negative_constant_right.sol` | `shiftNegativeConstantRight` |
+| `semanticTests/operators/shifts/shift_negative_constant_left.sol` | `shiftNegativeConstantLeft` |
+| `semanticTests/operators/shifts/shift_constant_right.sol` | `shiftConstantRight` |
+| `semanticTests/operators/shifts/shift_constant_left.sol` | `shiftConstantLeft` |
+| `semanticTests/arithmetics/addmod_mulmod.sol` | `addmodLiteralsUnbounded` |
+| `semanticTests/arithmetics/addmod_mulmod_zero.sol` | `addmodZeroModulusReverts`, `mulmodZeroModulusReverts`, `addmodMulmodZeroOperands` |
+| `semanticTests/constantEvaluator/negative_fractional_mod.sol` | `negativeFractionalMod` |
+| `semanticTests/constantEvaluator/rounding.sol` | `constantRounding` |
+| `semanticTests/expressions/exp_operator_const.sol` | `expOperatorConst` |
+| `semanticTests/expressions/exp_operator_const_signed.sol` | `expOperatorConstSigned` |
+| `semanticTests/expressions/exp_zero_literal.sol` | `expZeroLiteral` |
+| `semanticTests/expressions/unary_too_long_literal.sol` | `unaryTooLongLiteral` |
 
 ### `SolcHigherLevel.sol`
 
@@ -664,6 +707,11 @@ let them close under the normal source-size budgets, without a clean-tail invari
 | `semanticTests/virtualFunctions/internal_virtual_function_calls.sol` | `internalVirtualFunctionCalls` |
 | `semanticTests/virtualFunctions/virtual_function_calls.sol` | `virtualFunctionCallViaBase` |
 | `semanticTests/inheritance/inherited_function_named_parameters.sol` | `inheritedNamedOverrideUnordered` |
+| `smtCheckerTests/inheritance/receive.sol` | `receive` |
+| `smtCheckerTests/inheritance/fallback_receive.sol` | `receive` |
+| `smtCheckerTests/inheritance/fallback.sol` | `fallback` |
+| `smtCheckerTests/inheritance/receive_fallback.sol` | `fallback` |
+| `smtCheckerTests/inheritance/state_variables.sol` | `baseStateVariables` |
 
 ### `SolcTypes.sol`
 
@@ -707,6 +755,9 @@ let them close under the normal source-size budgets, without a clean-tail invari
 | `smtCheckerTests/typecast/same_size.sol` | `sameSizePreserving` |
 | `smtCheckerTests/typecast/upcast.sol` | `upcastPreserving` |
 | `semanticTests/enums/using_contract_enums_with_explicit_contract_name.sol` | `enumExplicitContractName` |
+| `smtCheckerTests/types/enum_range.sol` | `enumRange` |
+| `smtCheckerTests/typecast/enum_to_uint_max_value.sol` | `enumToUintMaxValue` |
+| `smtCheckerTests/typecast/cast_larger_1.sol` | `castLargerKeepsRange` |
 
 ## Compiler-specific storage-tail examples
 
@@ -726,6 +777,9 @@ portable Solidity guarantee. No clean-tail invariant is assumed.
 | `binomialRowsNine` | `semanticTests/array/memory_arrays_of_various_sizes.sol` | nested memory rows: does not close within the default budget, nor with -m 1000000 |
 | `multiArrayFillByPushLoops` | `semanticTests/array/dynamic_multi_array_cleanup.sol` | nested push loops exceed the suite budget of 50000 steps / 30 s |
 | `pushNoArgs2dLoop` | `semanticTests/array/push/push_no_args_2d.sol` | unrolling 43 pushes exceeds the suite budget of 50000 steps / 30 s |
+| `doWhileContinueNeverLeaves` | `smtCheckerTests/loops/do_while_continue.sol` | closes in KeY, but the loop never terminates, so the EVM run halts out of gas |
+| `forTrivialConditionResetInBody` | `smtCheckerTests/loops/for_loop_trivial_condition_3.sol` | closes in KeY, but the loop never terminates, so the EVM run halts out of gas |
+| `forTrivialConditionUntouched` | `smtCheckerTests/loops/for_loop_trivial_condition_2.sol` | closes in KeY, but the loop never terminates, so the EVM run halts out of gas |
 
 ### `open/SolcFunctionCalls.sol`
 
@@ -737,7 +791,7 @@ portable Solidity guarantee. No clean-tail invariant is assumed.
 
 | Function | Upstream (`test/libsolidity/`) | Why it stays open |
 |---|---|---|
-| `constructor` | `semanticTests/constructor/state_variable_initialization.sol` | closes in KeY, but SolidityRuntimeCheck skips a contract with a constructor or an initialized state variable, so no EVM cross-check |
+| `constructor` | `semanticTests/constructor/state_variable_initialization.sol`, `semanticTests/inheritance/constructor_with_params.sol` | closes in KeY, but SolidityRuntimeCheck skips a contract with a constructor or an initialized state variable, so no EVM cross-check |
 | `immutableUninitialized` | `semanticTests/immutable/uninitialized.sol` | an immutable is plain storage, so outside the constructor a never-assigned one is unconstrained instead of zero |
 | `msgValueZero` | `semanticTests/state/msg_value.sol` | a non-payable function does not assume msg.value == 0 |
 | `multipleInitializationsAssignExpr` | `semanticTests/immutable/multiple_initializations.sol` | no rule for a compound assignment used as an expression |
@@ -762,6 +816,7 @@ portable Solidity guarantee. No clean-tail invariant is assumed.
 | `callWithoutCodeReverts` | `semanticTests/revertStrings/called_contract_has_code.sol` | an external call outside try has no rule, so symbolic execution stops at it |
 | `callRunsReceive` | `semanticTests/receive/empty_calldata_calls_receive.sol` | under noCallback a call keeps the caller's storage, so the receive increment is not seen |
 | `callKeepsStorageUnsound` | `semanticTests/receive/empty_calldata_calls_receive.sol` | closes in KeY but fails on the EVM: under noCallback a call keeps the caller's storage, though the empty-calldata call to the contract itself runs receive |
+| `transferUnfundedReverts` | `smtCheckerTests/blockchain_state/transfer_3.sol` | design-limitation: the contract's own balance is not tracked, so a transfer from a contract holding nothing is not known to revert |
 
 ### `open/SolcSmtControlFlow.sol`
 
@@ -782,6 +837,22 @@ portable Solidity guarantee. No clean-tail invariant is assumed.
 | `uncheckedInt8SumWraps` | `smtCheckerTests/overflow/overflow_sum_signed.sol` | design-limitation: unbounded integers, int8 127 + 1 does not wrap to -128 |
 | `uncheckedInt8MulWraps` | `smtCheckerTests/overflow/overflow_mul_signed.sol` | design-limitation: unbounded integers, int8 100 * 2 does not wrap to -56 |
 
+### `open/SolcArrayMembers.sol`
+
+| Function | Upstream (`test/libsolidity/`) | Why it stays open |
+|---|---|---|
+| `copyIncludingArray` | `semanticTests/array/copying/array_copy_including_array.sol` | no rule executes bitwise \|; the empty pushes also leave small[2][2][0] unconstrained (closing twin: copyIncludingArrayCleared) |
+| `deleteArrayIndex2d` | `smtCheckerTests/operators/delete_array_index_2d.sol` | design-limitation: arbitrary storage tail, the empty push a[0].push() keeps a stale a[0][0] that the else branch never clears |
+| `pushLhsRhs2d` | `smtCheckerTests/array_members/push_as_lhs_and_rhs_2d_1.sol` | design-limitation: arbitrary storage tail, the empty pushes keep stale values in b[0][0] and b[1][0] |
+| `pushLhsRhs2dAnyState` | `smtCheckerTests/array_members/push_as_lhs_and_rhs_2d_2.sol` | design-limitation: arbitrary storage tail, the empty pushes keep stale inner lengths and a stale last element |
+
+### `open/SolcControlFlow.sol`
+
+| Function | Upstream (`test/libsolidity/`) | Why it stays open |
+|---|---|---|
+| `conditionalExpressionTuples` | `semanticTests/expressions/conditional_expression_tuples.sol` | missing-rule: a `return` of a conditional whose branches are tuples is refused as a return of 1 value from a function with 2 return values |
+| `conditionalExpressionAssigns` | `semanticTests/expressions/conditional_expression_with_return_values.sol` | missing-rule: no rule executes a conditional expression statement whose branches are assignments, `cond ? a = v : b = v;` |
+
 ### `open/SolcHigherLevel.sol`
 
 | Function | Upstream (`test/libsolidity/`) | Why it stays open |
@@ -790,6 +861,21 @@ portable Solidity guarantee. No clean-tail invariant is assumed.
 | `inheritedFunction` | `semanticTests/inheritance/inherited_function.sol` | a base-qualified call A.f() is lowered to address.f() and has no rule |
 | `inheritedNamedBaseOrdered` | `semanticTests/inheritance/inherited_function_named_parameters.sol` | a base-qualified call A.f(...) is lowered to address.f(...) and has no rule |
 | `overriddenFunctionStaticCallParent` | `smtCheckerTests/inheritance/overridden_function_static_call_parent.sol` | a base-qualified call BaseBase.init(c, d) is lowered to address.init(c, d) and has no rule |
+| `constructor` | `semanticTests/various/inline_member_init_inheritence.sol` | inheritance: a derived constructor runs neither base initializers nor base constructors, and the base-constructor calls in its header are stuck |
+| `constructor` | `semanticTests/inheritance/constructor_with_params_diamond_inheritance.sol` | inheritance: a derived constructor runs neither base initializers nor base constructors, and the base-constructor calls in its header are stuck |
+| `constructor` | `semanticTests/inheritance/constructor_with_params_inheritance.sol` | inheritance: a derived constructor runs neither base initializers nor base constructors, and the base-constructor calls in its header are stuck |
+| `constructor` | `semanticTests/inheritance/constructor_with_params_inheritance_2.sol` | inheritance: a derived constructor runs neither base initializers nor base constructors, and the base-constructor calls in its header are stuck |
+| `constructor` | `semanticTests/modifiers/function_modifier_for_constructor.sol` | inheritance: a derived constructor runs neither base initializers nor base constructors, and the base-constructor calls in its header are stuck |
+| `constructor` | `semanticTests/modifiers/function_modifier_calling_functions_in_creation_context.sol` | inheritance: a derived constructor runs neither base initializers nor base constructors, and the base-constructor calls in its header are stuck |
+| `creationF3` | `semanticTests/modifiers/function_modifier_calling_functions_in_creation_context.sol` | no rule for the compound assignment \|= |
+| `creationF4` | `semanticTests/modifiers/function_modifier_calling_functions_in_creation_context.sol` | no rule for the compound assignment \|= |
+
+### `open/SolcStructsMappings.sol`
+
+| Function | Upstream (`test/libsolidity/`) | Why it stays open |
+|---|---|---|
+| `structFromCalldataToStaticArrayInMapping` | `semanticTests/types/mapping/copy_struct_to_array_stored_in_mapping.sol` | unsupported: a struct parameter (`S8 calldata`) has no .key sort, so no obligation is generated; the function loads but is neither proved nor run |
+| `structFromCalldataToDynamicArrayInMapping` | `semanticTests/types/mapping/copy_struct_to_array_stored_in_mapping.sol` | unsupported: a struct parameter (`S8 calldata`) has no .key sort, so no obligation is generated; the function loads but is neither proved nor run |
 
 ### `open/SolcTypes.sol`
 
@@ -798,10 +884,7 @@ portable Solidity guarantee. No clean-tail invariant is assumed.
 | `constructingEnumsFromInts` | `semanticTests/enums/constructing_enums_from_ints.sol` | no rule executes an integer-to-enum conversion E(x); the proof stops on it |
 | `enumExplicitConversionInRange` | `semanticTests/enums/enum_explicit_overflow.sol` | no rule executes an integer-to-enum conversion E(x); the proof stops on it |
 | `enumFromUint` | `smtCheckerTests/typecast/enum_from_uint.sol` | no rule executes an integer-to-enum conversion E(x); the proof stops on it |
-| `enumRange` | `smtCheckerTests/types/enum_range.sol` | an enum parameter is an unconstrained int, its member range is not assumed |
-| `enumToUintMaxValue` | `smtCheckerTests/typecast/enum_to_uint_max_value.sol` | an enum parameter is an unconstrained int, its member range is not assumed |
 | `storageValueVarsNonNegative` | `smtCheckerTests/types/storage_value_vars_3.sol` | a uint state variable read from storage is not known to be non-negative |
-| `castLargerKeepsRange` | `smtCheckerTests/typecast/cast_larger_1.sol` | a uint8 parameter is an unbounded int, its 0..255 range is not assumed |
 | `castSmallerBoundsRange` | `smtCheckerTests/typecast/cast_smaller_1.sol` | the narrowing cast uint8(x) is the identity, so y is not bounded by 255 |
 | `castSmallerTruncates` | `smtCheckerTests/typecast/cast_smaller_2.sol` | the narrowing cast uint16(a) is the identity instead of truncating |
 | `downcastTruncates` | `smtCheckerTests/typecast/downcast.sol` | narrowing and sign-changing casts are the identity instead of wrapping |
@@ -812,6 +895,12 @@ portable Solidity guarantee. No clean-tail invariant is assumed.
 | `packingSignedTypes` | `semanticTests/types/packing_signed_types.sol` | int8(uint8 0xfa) is the identity instead of reinterpreting to -6 |
 | `nestedTuplesParenthesized` | `semanticTests/types/nested_tuples.sol` | a parenthesized tuple target ((a, b)) = (...) has no rule |
 | `ternaryLiteralOverflow` | `semanticTests/literals/ternary_operator_with_literal_types_overflow.sol` | closes in KeY, but the uint8 addition 63 + 255 panics with 0x11 on the EVM |
+
+### `open/StorageOverlap.sol`
+
+| Function | Upstream (`test/libsolidity/`) | Why it stays open |
+|---|---|---|
+| `copyFromOwnChildReadsCleared` | local probe | design-limitation: the value an overlapping recursive copy leaves in its target is unknown, the copy rules have no in-place semantics; `nodeTree = nodeTree.kids[0]` leaves `nodeTree.kids[1].v == 0` on the EVM (true twin of `unsound/recursiveCopyOverlap.key`) |
 
 ## Gaps the first port found
 
@@ -915,11 +1004,20 @@ rather than an oversight. `docs/limitations.md` ranks them by how many tests eac
   is ported only where a box function can end in `assert(false)` after the reverting statement
   (`SolcPayments`).
 - **Constructs that do not load or get stuck**: `events/`, custom errors, `libraries/`,
-  `using/`, `userDefinedValueType/`, `functionTypes/`, `inlineAssembly/`, struct literals,
-  `type(T)`, `addmod`/`mulmod`, `this`/`block`/`tx`, `super`, file-level declarations, contract
-  creation (`deployment/`), external calls outside `try`.
+  `using/`, `userDefinedValueType/`, `functionTypes/`, `inlineAssembly/` (also the
+  `memoryManagement/` tests that measure memory with `mload(0x40)`), struct constructor calls
+  (named or positional) and inline array literals (ports assign member by member and element by
+  element instead), memory array lengths computed from constants, `type(T)`,
+  `this`/`block`/`tx`, `super`, file-level declarations, contract creation (`deployment/`),
+  external calls outside `try`, `fallback(bytes calldata)` and calls with non-empty calldata.
+- **Upstream code with a solc warning `SolcWrapperTest` does not tolerate**:
+  `various/swap_in_storage_overwrite.sol` in its tuple form `(sx, sy) = (sy, sx)` ("This
+  assignment performs two copies to storage"; it closes and runs clean, but stays out), and
+  `smtCheckerTests/operators/ternary_operator_with_tuple.sol` ("Statement has no effect").
 - **Tests without an observable claim**: expectations on raw calldata or return data, SMTChecker
   files whose only `assert` is refuted and whose negation is not always true, and loops that
-  never terminate for the pinned inputs (the EVM run would run out of gas).
+  never terminate for every input (`smtCheckerTests/loops/for_loop_1.sol`,
+  `for_loop_trivial_condition_1.sol`). A non-terminating loop that closes in KeY is kept in
+  `open/SolcLoops.sol` as a known closer.
 
 Per-theme counts of closed, open and not-ported tests are in `docs/limitations.md`, section (e).

@@ -88,6 +88,16 @@ contract SolcArrayMembers {
     SA s2;
     uint[] fnArr;
     int[][] pointer2d;
+    uint[] delArr;
+    uint[] delIdx;
+    uint[][] del2d;
+    uint[] delMultiA;
+    uint[][] delMultiB;
+    int[][] delPush2d;
+    uint[3][90][] copyLarge;
+    uint[3][3][] copySmall;
+    uint48[5][2] baseData1;
+    uint120[6][3] baseData2;
 
     function emptyMemory() internal pure returns (uint[] memory) {
     }
@@ -1046,4 +1056,191 @@ contract SolcArrayMembers {
         assert(d == 5);
     }
 
+    function delIdxInit() internal {
+        delIdx.push();
+        delIdx.push();
+        delIdx.push();
+        delIdx.push();
+    }
+
+    function del2dInit() internal {
+        del2d.push(); del2d.push(); del2d.push();
+        del2d[2].push();
+        del2d[2].push();
+        del2d[2].push();
+        del2d[2].push();
+    }
+
+    /// solc: smtCheckerTests/operators/delete_array.sol
+    /// @custom:key box
+    function deleteArrayBranch(uint bp) public {
+        require(bp <= 1);
+        bool b = bp == 1;
+        delArr.push();
+        delArr.push();
+        delArr.push();
+        delArr[2] = 3;
+        require(b);
+        if (b)
+            delete delArr;
+        else
+            delete delArr[2];
+        assert(delArr.length == 0);
+    }
+
+    /// solc: smtCheckerTests/operators/delete_array_index.sol
+    /// @custom:key box
+    function deleteArrayIndexBranch(uint bp) public {
+        require(bp >= 0 && bp <= 1);
+        bool b = bp == 1;
+        require(delIdx.length == 0);
+        delIdxInit();
+        delIdx[2] = 3;
+        require(!b);
+        if (b)
+            delete delIdx;
+        else
+            delete delIdx[2];
+        assert(delIdx[2] == 0);
+    }
+
+    /// solc: smtCheckerTests/operators/delete_array_2d.sol
+    /// @custom:key box
+    function deleteArray2d() public {
+        require(del2d.length == 0);
+        del2dInit();
+        require(del2d[2][3] == 4);
+        delete del2d;
+        assert(del2d[2][3] == 0);
+    }
+
+    /// solc: smtCheckerTests/operators/delete_multid_array.sol
+    /// @custom:key box
+    function deleteMultidF(uint x, uint v) public {
+        require(x >= 0 && x < 1);
+        require(v >= 0 && v < 10);
+        require(x < delMultiA.length);
+        delMultiA[x] = v;
+        delete delMultiA;
+        assert(delMultiA.length == 0);
+    }
+
+    /// solc: smtCheckerTests/operators/delete_multid_array.sol
+    /// @custom:key box
+    function deleteMultidG(uint x, uint y, uint v) public {
+        require(x >= 0 && x < 1);
+        require(y >= 0 && y < 1);
+        require(v >= 0 && v < 10);
+        require(x < delMultiB.length);
+        require(y < delMultiB[x].length);
+        delMultiB[x][y] = v;
+        delete delMultiB;
+        assert(delMultiB.length == 0);
+    }
+
+    /// solc: smtCheckerTests/operators/delete_multid_array.sol
+    /// @custom:key box
+    function deleteMultidH(uint x, uint y, uint v) public {
+        require(x >= 0 && x < 1);
+        require(y >= 0 && y < 1);
+        require(v >= 0 && v < 10);
+        require(x < delMultiB.length);
+        require(y < delMultiB[x].length);
+        delMultiB[x][y] = v;
+        delete delMultiB[x];
+        assert(delMultiB[x].length == 0);
+    }
+
+    /// solc: smtCheckerTests/operators/delete_multid_array.sol
+    /// @custom:key box
+    function deleteMultidI(uint x, uint y, uint v) public {
+        require(x >= 0 && x < 1);
+        require(y >= 0 && y < 1);
+        require(v >= 0 && v < 10);
+        require(x < delMultiB.length);
+        require(y < delMultiB[x].length);
+        delMultiB[x][y] = v;
+        require(y < delMultiB.length);
+        delete delMultiB[y];
+        assert(delMultiB[y].length == 0);
+    }
+
+    /// solc: smtCheckerTests/operators/delete_array_push.sol
+    function deletePushResult() public {
+        delete delPush2d.push();
+        assert(delPush2d[delPush2d.length - 1].length == 0);
+        delete delPush2d.push().push();
+        uint length = delPush2d.length;
+        uint length2 = delPush2d[length - 1].length;
+        assert(delPush2d[length - 1][length2 - 1] == 0);
+    }
+
+    /// solc: semanticTests/array/copying/array_copy_including_array.sol
+    /// @custom:key box
+    function copyIncludingArrayCleared() public {
+        require(copyLarge.length == 0 && copySmall.length == 0);
+        for (uint i = 0; i < 7; i++) {
+            delete copyLarge.push();
+            delete copySmall.push();
+        }
+        copyLarge[3][2][0] = 2;
+        copyLarge[1] = copyLarge[3];
+        copySmall[3][2][0] = 2;
+        copySmall[1] = copySmall[2];
+        uint r = ((
+            copySmall[3][2][0] * 0x100 +
+            copySmall[1][2][0]) * 0x100 +
+            copyLarge[3][2][0]) * 0x100 +
+            copyLarge[1][2][0];
+        delete copySmall;
+        delete copyLarge;
+        assert(r == 0x02000202);
+    }
+
+    /// solc: semanticTests/array/copying/array_copy_including_array.sol
+    /// @custom:key box
+    function copyIncludingArrayClear() public {
+        require(copyLarge.length == 0 && copySmall.length == 0);
+        for (uint i = 0; i < 7; i++) {
+            copyLarge.push();
+            copySmall.push();
+        }
+        copySmall[3][2][0] = 0;
+        copyLarge[3][2][0] = 0;
+        while (copySmall.length > 0)
+            copySmall.pop();
+        while (copyLarge.length > 0)
+            copyLarge.pop();
+        assert(copySmall.length == 0);
+        assert(copyLarge.length == 0);
+    }
+
+    /// solc: semanticTests/array/copying/array_copy_storage_storage_different_base_nested.sol
+    function copyDifferentBaseNested() public {
+        baseData2[0][0] = 11;
+        baseData2[1][0] = 22;
+        baseData2[2][0] = 33;
+
+        baseData1[0][0] = 0;
+        baseData1[0][1] = 1;
+        baseData1[0][2] = 2;
+        baseData1[0][3] = 3;
+        baseData1[0][4] = 4;
+        baseData1[1][0] = 3;
+        baseData2 = baseData1;
+        assert(baseData1[0][1] == baseData2[0][1]);
+        uint256 x = baseData2.length;
+        uint120 y = baseData2[0][4];
+        assert(x == 3);
+        assert(y == 4);
+    }
+
+    /// solc: smtCheckerTests/array_members/length_assignment_memory_to_memory.sol
+    /// @custom:key box
+    function lengthMemoryToMemory(uint n) public pure {
+        require(n >= 0 && n < 4);
+        uint[] memory arr = new uint[](n);
+        uint[] memory arr2 = arr;
+        assert(arr2.length == arr.length);
+    }
 }

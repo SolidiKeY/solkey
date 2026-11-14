@@ -3,8 +3,8 @@ pragma solidity ^0.8.0;
 
 /// Ports of the memory-location tests of the solc compiler test suite:
 /// `semanticTests/structs/memory_structs_*.sol`, `structs/struct_storage_to_memory.sol`,
-/// `structs/struct_memory_to_storage.sol`, `array/copying/array_copy_storage_to_memory.sol`
-/// and `array/delete/memory_arrays_delete.sol`.
+/// `structs/struct_memory_to_storage.sol`, `array/copying/array_copy_storage_to_memory.sol`,
+/// `array/delete/memory_arrays_delete.sol` and `memoryManagement/memory_types_initialisation.sol`.
 ///
 /// Upstream reads its results back through return values; here each observed value is bound to
 /// a local and stated with `assert`. Fixed-size arrays (`S[5] data`) become dynamic arrays with
@@ -18,6 +18,7 @@ contract SolcMemory {
     Inner inner;
     Inner[] data;
     uint[] prims;
+    mapping(uint => uint) initData;
 
     /// solc: structs/memory_structs_read_write.sol (`testInit`) — a fresh memory struct reads
     /// as all zeros.
@@ -139,5 +140,54 @@ contract SolcMemory {
         uint[] memory m = prims;
         assert(m[0] == 3);
         assert(m[1] == 4);
+    }
+
+    function statReturn() internal returns (uint[5] memory) {
+        initData[2] = 3;
+    }
+
+    function dynReturn() internal returns (uint[] memory) {
+        statReturn();
+    }
+
+    function nestedReturn() internal returns (uint[3][] memory) {
+        statReturn();
+    }
+
+    function nestedStatReturn() internal returns (uint[3][7] memory) {
+        statReturn();
+    }
+
+    /// solc: memoryManagement/memory_types_initialisation.sol (`stat`) — an unassigned
+    /// `uint[5] memory` return reads as five zeros.
+    function unassignedStaticMemoryReturnIsZero() public {
+        uint[5] memory r = statReturn();
+        assert(r[0] == 0 && r[1] == 0 && r[2] == 0 && r[3] == 0 && r[4] == 0);
+        assert(initData[2] == 3);
+    }
+
+    /// solc: memoryManagement/memory_types_initialisation.sol (`dyn`) — an unassigned
+    /// `uint[] memory` return is empty.
+    function unassignedDynamicMemoryReturnIsEmpty() public {
+        uint[] memory r = dynReturn();
+        assert(r.length == 0);
+    }
+
+    /// solc: memoryManagement/memory_types_initialisation.sol (`nested`) — an unassigned
+    /// `uint[3][] memory` return is empty.
+    function unassignedNestedDynamicMemoryReturnIsEmpty() public {
+        uint[3][] memory r = nestedReturn();
+        assert(r.length == 0);
+    }
+
+    /// solc: memoryManagement/memory_types_initialisation.sol (`nestedStat`) — an unassigned
+    /// `uint[3][7] memory` return reads as 21 zeros.
+    function unassignedNestedStaticMemoryReturnIsZero() public {
+        uint[3][7] memory r = nestedStatReturn();
+        for (uint i = 0; i < 7; i++) {
+            for (uint j = 0; j < 3; j++) {
+                assert(r[i][j] == 0);
+            }
+        }
     }
 }

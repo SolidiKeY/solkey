@@ -53,6 +53,10 @@ public final class EvmContractRunner {
     }
 
     public CallResult call(String signature, List<BigInteger> args) {
+        return call(Abi.encodeCall(signature, args));
+    }
+
+    public CallResult call(Bytes input) {
         SimpleWorld world = new SimpleWorld();
         world.createAccount(SENDER, 0, Wei.of(BigInteger.TEN.pow(18)));
         world.createAccount(CONTRACT, 1, Wei.ZERO).setCode(runtimeCode);
@@ -68,7 +72,7 @@ public final class EvmContractRunner {
                 .gasPrice(Wei.ZERO)
                 .value(Wei.ZERO)
                 .apparentValue(Wei.ZERO)
-                .inputData(Abi.encodeCall(signature, args))
+                .inputData(input)
                 .code(evm.getCodeUncached(runtimeCode))
                 .blockValues(new SimpleBlockValues())
                 .miningBeneficiary(Address.ZERO)

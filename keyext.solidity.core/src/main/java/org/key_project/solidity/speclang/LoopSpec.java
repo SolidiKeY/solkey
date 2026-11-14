@@ -14,16 +14,19 @@ import org.jspecify.annotations.Nullable;
 
 public record LoopSpec(List<String> invariants, @Nullable String decreases,
         Map<String, Binding> bindings, SolidityOutline.Contract contract,
-        SolidityOutline.Function function, @Nullable ProgramVariable breakFlag) {
+        SolidityOutline.Function function, @Nullable ProgramVariable breakFlag,
+        @Nullable ProgramVariable returnFlag) {
 
     public LoopSpec(List<String> invariants, @Nullable String decreases,
             Map<String, Binding> bindings, SolidityOutline.Contract contract,
             SolidityOutline.Function function) {
-        this(invariants, decreases, bindings, contract, function, null);
+        this(invariants, decreases, bindings, contract, function, null, null);
     }
 
-    public LoopSpec withBreakFlag(@Nullable ProgramVariable variable) {
-        return new LoopSpec(invariants, decreases, bindings, contract, function, variable);
+    public LoopSpec withExitFlags(@Nullable ProgramVariable breakVariable,
+            @Nullable ProgramVariable returnVariable) {
+        return new LoopSpec(invariants, decreases, bindings, contract, function, breakVariable,
+            returnVariable);
     }
 
     public record Binding(ProgramVariable variable, String type) {
@@ -41,10 +44,16 @@ public record LoopSpec(List<String> invariants, @Nullable String decreases,
             }
             renamed.put(entry.getKey(), binding);
         }
-        ProgramVariable renamedBreak = breakFlag == null ? null
-                : replacements.getOrDefault(breakFlag, breakFlag);
-        return changed || renamedBreak != breakFlag
-                ? new LoopSpec(invariants, decreases, renamed, contract, function, renamedBreak)
+        ProgramVariable renamedBreak = renamedFlag(breakFlag, replacements);
+        ProgramVariable renamedReturn = renamedFlag(returnFlag, replacements);
+        return changed || renamedBreak != breakFlag || renamedReturn != returnFlag
+                ? new LoopSpec(invariants, decreases, renamed, contract, function, renamedBreak,
+                    renamedReturn)
                 : this;
+    }
+
+    private static @Nullable ProgramVariable renamedFlag(@Nullable ProgramVariable flag,
+            Map<ProgramVariable, ProgramVariable> replacements) {
+        return flag == null ? null : replacements.getOrDefault(flag, flag);
     }
 }
