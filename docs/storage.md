@@ -534,7 +534,7 @@ no extra proof obligation for an ordinary copy:
       srcView(st, p, q)             ⇝  srcWalk(st, p, q, p, q)
       srcWalk(st, p, q, x·xs, y·ys) ⇝  if x = y then srcWalk(st, p, q, xs, ys) else st
       srcWalk(st, p, q, ε, ε)       ⇝  st
-      srcWalk(st, p, q, ε, y·ys)        no rule
+      srcWalk(st, p, q, ε, h·t)     ⇝  view(st, p, q)
 
       inside(x·xs, y·ys) ⇝  x = y ∧ inside(xs, ys)
       inside(x·xs, ε)    ⇝  true
@@ -544,19 +544,43 @@ no extra proof obligation for an ordinary copy:
 |---|---|---|---|
 | apart (`a = b`, `kids[0] = kids[1]`) | false | `st` | the snapshot copy |
 | equal (`x = x`) | false | `st` | a self-assignment, a no-op under both semantics |
-| source inside target (`root = root.kids[0]`) | false | stuck | the target gets an unknown value, nothing else changes |
+| source inside target (`root = root.kids[0]`) | false | `view` | solc's in-place copy, computed on read |
 | target inside source (`n.kids[0] = n`) | true | n/a | the goal is false: the copy never ends |
 
-`srcView` is the storage the source is read from; where solc reads a source it has already
-overwritten, the term stays stuck and so denotes no particular value. It keeps both full paths,
-so each overlapping copy gets its own unknown. For every non-recursive type the two walks end in
-the first two rows by simplification alone.
+`srcView` is the storage the source is read from. For every non-recursive type the two walks
+end in the first two rows by simplification alone, with no type analysis and no proof
+obligation.
+
+When the source lies inside the target, `q = p·h·t`, solc overwrites part of the source while
+it copies. `view(st, p, q)` is the storage as that copy sees it, and three rules answer a read
+of the source node at `q` (`«p' ← q'»` abbreviates `find(srcView(st, p', q'), q')`, the same
+copy one level down):
+
+      q.length                 ⇝  st[q.length]                              viewSize
+
+      q[i]      (h = [j])      ⇝  «p[j] ← q[j]»                    i = j    viewIndex
+                                  st[q[i]]                          i < j or j ≥ st[q.length]
+                                  save(st, p[j], «p[j] ← q[j]»)[q[i]]       otherwise
+
+      q.m       (h = .a)       ⇝  «p.a ← q.a»                      m = a    viewMember
+                                  st[q.m]                           before(m, a)
+                                  save(st, p.a, «p.a ← q.a»)[q.m]           otherwise
+
+An element before `j` is read from the old storage, element `j` is the same overlapping copy
+one level deeper, and a later element is read from the storage that copy left; the existing
+`selectOnSaveNil…` rules then set the new length and clear the old tail. `before(m, a)` is the
+declaration order of struct members: the loader writes one `memberBefore_…` taclet per member
+into the problem, beside `insertLenInv` (`StorageLayout`). A hand-written `.key` problem that
+lacks them leaves the member case undecided. The order is the legacy pipeline's.
+
+The three read rules are in the rule set `overlapView`, which the strategy applies only outside
+the branches of an undecided conditional (`NotInConditionalBranchFeature`): with unknown array
+lengths the unfolding has no bottom, so it advances only where the lengths decide the case.
 The false claim `unsound/recursiveCopyOverlap.key` (`nodeTree = nodeTree.kids[0]`, which fails
 on the EVM) closes with a plain snapshot copy; `RulesTest#unsoundWfProblemStaysOpen` keeps it
-open. The true copies `StorageArrays.storageRecursiveCopyDisjoint`, `storageRecursiveCopySelf`,
-`storageRecursiveCopySibling` and `storageRecursiveCopyFromSiblingChild` close. What an
-overlapping copy leaves in its target is not computed (`docs/bugs.md`,
-`semantics/open/StorageOverlap.sol`); the state outside the target is known to be unchanged.
+open. `StorageArrays.storageRecursiveCopyFromOwnChild` and `…FromOwnChildMember` prove the
+in-place result; `storageRecursiveCopyDisjoint`, `…Self`, `…Sibling` and `…FromSiblingChild`
+are the non-overlapping copies.
 
 ### Root write (whole struct / primitive at a root)
 

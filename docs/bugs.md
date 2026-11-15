@@ -148,14 +148,6 @@ user-defined operator) is refused at load with a `SolidityParseException` naming
   `uint i = 7; uint j = 0; /// @custom:key invariant j <= n && i == 7` `while (j < n) j = j + 1;`
   leaves `==> i = 7`. A parameter alike (`for (uint i = n; i < 100; i++)` with invariant
   `n <= i`). Workaround: mention the variable after the loop, or use a literal.
-- **The value an overlapping recursive copy leaves is unknown.** When the source lies inside
-  the target, `srcWalk` stays stuck: the state outside the target is kept, but no rule gives
-  solc's in-place result for the target itself. With `struct Node { uint v; Node[] kids; }` and
-  `nodeTree.kids = [S]`, `S.kids = [A, B]`, `B.v = 5`:
-  `nodeTree = nodeTree.kids[0]; assert(nodeTree.kids[1].v == 0);` stays open; the EVM passes it
-  (the copy clears `B` before reading it). `semantics/open/StorageOverlap.sol`
-  `copyFromOwnChildReadsCleared`, whose `delete x.push()` setup makes the claim hold from any
-  storage. Fix: rules for the in-place copy.
 - **Symbolic `sdiv` bounds remain incomplete.** The default `NON_LIN_ARITH_NONE`
   gives `defOps_div`/`defOps_sdiv` infinite cost. For a non-negative dividend,
   `sdiv`/`smod` now equal `div`/`mod` and positive-divisor quotient bounds automate;

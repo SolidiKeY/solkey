@@ -2054,4 +2054,24 @@ contract StorageArrays {
         values.push(total);
         assert(values[n] == 7);
     }
+
+    function storageRecursiveCopyFromOwnChild() public {
+        delete nodeTree;
+        delete nodeTree.kids.push();
+        delete nodeTree.kids[0].kids.push();
+        delete nodeTree.kids[0].kids.push();
+        nodeTree.kids[0].kids[1].v = 5;
+        nodeTree = nodeTree.kids[0];
+        assert(nodeTree.kids.length == 2);
+        assert(nodeTree.kids[0].v == 0 && nodeTree.kids[0].kids.length == 0);
+        assert(nodeTree.kids[1].v == 0);
+    }
+
+    function storageRecursiveCopyFromOwnChildMember() public {
+        delete nodeTree;
+        delete nodeTree.kids.push();
+        nodeTree.kids[0].v = 9;
+        nodeTree = nodeTree.kids[0];
+        assert(nodeTree.v == 9);
+    }
 }

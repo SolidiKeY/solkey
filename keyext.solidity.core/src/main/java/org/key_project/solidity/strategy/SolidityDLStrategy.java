@@ -24,6 +24,7 @@ import org.key_project.solidity.strategy.feature.CountBranchFeature;
 import org.key_project.solidity.strategy.feature.EqNonDuplicateAppFeature;
 import org.key_project.solidity.strategy.feature.NonDuplicateAppFeature;
 import org.key_project.solidity.strategy.feature.NonDuplicateAppModPositionFeature;
+import org.key_project.solidity.strategy.feature.NotInConditionalBranchFeature;
 import org.key_project.solidity.strategy.feature.RuleSetDispatchFeature;
 import org.key_project.solidity.strategy.termfeature.IsInductionVariable;
 
@@ -161,6 +162,9 @@ public final class SolidityDLStrategy extends AbstractFeatureStrategy implements
 
         bindRuleSet(d, "inReachableStateImplication",
             add(NonDuplicateAppModPositionFeature.INSTANCE, longConst(100)));
+
+        bindRuleSet(d, "overlapView",
+            add(NotInConditionalBranchFeature.INSTANCE, longConst(-4500)));
 
         setupUserTaclets(d);
 

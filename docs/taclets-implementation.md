@@ -610,11 +610,14 @@ makes that possible: `root = root.kids[0]` clears part of the source before read
 `srcView(storage, target, source)` and adds the conjunct `!inside(target, source)`. Both walk
 the two paths (`srcViewStart`, `srcWalkCons`, `srcWalkNil`; `insideCons`, `insideSource`,
 `insideTarget`): paths that part, or are equal, give the pre-state storage and `inside` false,
-so the rule is the snapshot copy; a source inside the target leaves `srcWalk` stuck, so the
-target gets an unknown value and the rest of the storage is kept; a target inside the source
-makes `inside` true and the goal false. No type analysis is involved, and for a non-recursive
-type the walks reduce by simplification alone. The value an overlapping copy leaves is not
-computed, which is sound but incomplete (`docs/storage.md`, "Overlapping copies").
+so the rule is the snapshot copy; a target inside the source makes `inside` true and the goal
+false. No type analysis is involved, and for a non-recursive type the walks reduce by
+simplification alone. A source inside the target becomes `view(st, target, source)`
+(`srcWalkInside`), the storage as solc's in-place copy sees it: `viewSize`, `viewIndex` and
+`viewMember` answer each read of the source by where it falls relative to the overlap, using
+the `before` member order the loader writes as `memberBefore_…` taclets. They are in the rule
+set `overlapView`, applied only outside the branches of an undecided conditional, so unknown
+lengths do not unfold without end (`docs/storage.md`, "Overlapping copies").
 
 `delAt` names its storage argument once, where the `save(st, p, <deleted value at p>)` form it
 replaced named it twice. That doubled the storage term at every `push`/`pop`, so a sequence of

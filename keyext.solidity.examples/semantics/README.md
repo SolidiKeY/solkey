@@ -120,8 +120,7 @@ Applied uniformly; every function names its upstream file in a `/// solc:` line.
 
 `open/` holds, for eleven themes, the upstream claims that do **not** close:
 the faithful form of a port whose closing twin needed a workaround, and tests stopped by a
-missing construct or a defect. `open/StorageOverlap.sol` is a local probe, not a port: a true
-claim after an overlapping recursive copy. Every file loads (`--no-prove`) and states something true on the
+missing construct or a defect. Every file loads (`--no-prove`) and states something true on the
 EVM, except the proves-false witnesses noted below. `OpenExamplesStayOpenTest` (CI-only)
 enumerates the directory and fails when a function changes status; each function has a
 `// open:` line with the reason, and moving a function into the closing file is how a fix is
@@ -895,12 +894,6 @@ portable Solidity guarantee. No clean-tail invariant is assumed.
 | `packingSignedTypes` | `semanticTests/types/packing_signed_types.sol` | int8(uint8 0xfa) is the identity instead of reinterpreting to -6 |
 | `nestedTuplesParenthesized` | `semanticTests/types/nested_tuples.sol` | a parenthesized tuple target ((a, b)) = (...) has no rule |
 | `ternaryLiteralOverflow` | `semanticTests/literals/ternary_operator_with_literal_types_overflow.sol` | closes in KeY, but the uint8 addition 63 + 255 panics with 0x11 on the EVM |
-
-### `open/StorageOverlap.sol`
-
-| Function | Upstream (`test/libsolidity/`) | Why it stays open |
-|---|---|---|
-| `copyFromOwnChildReadsCleared` | local probe | design-limitation: the value an overlapping recursive copy leaves in its target is unknown, the copy rules have no in-place semantics; `nodeTree = nodeTree.kids[0]` leaves `nodeTree.kids[1].v == 0` on the EVM (true twin of `unsound/recursiveCopyOverlap.key`) |
 
 ## Gaps the first port found
 
