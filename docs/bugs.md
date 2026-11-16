@@ -148,6 +148,12 @@ user-defined operator) is refused at load with a `SolidityParseException` naming
   `uint i = 7; uint j = 0; /// @custom:key invariant j <= n && i == 7` `while (j < n) j = j + 1;`
   leaves `==> i = 7`. A parameter alike (`for (uint i = n; i < 100; i++)` with invariant
   `n <= i`). Workaround: mention the variable after the loop, or use a literal.
+- **A loop that descends a recursive struct has no termination measure.**
+  `/// @custom:key invariant true` `while (nodeTree.kids.length > 0) nodeTree = nodeTree.kids[0];`
+  `assert(nodeTree.kids.length == 0);` closes under box and stays open under diamond: each
+  iteration shortens the `kids[0]` chain, but no term denotes its depth, so `decreases` cannot
+  state it. Fix: a depth function over a storage path, defined by the finite-tree assumption of
+  `docs/storage.md`, "Overlapping copies".
 - **Symbolic `sdiv` bounds remain incomplete.** The default `NON_LIN_ARITH_NONE`
   gives `defOps_div`/`defOps_sdiv` infinite cost. For a non-negative dividend,
   `sdiv`/`smod` now equal `div`/`mod` and positive-divisor quotient bounds automate;

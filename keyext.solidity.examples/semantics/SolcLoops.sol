@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 contract SolcLoops {
-    uint[][] array2d;
     struct Data {
         uint x;
         uint y;
@@ -10,7 +9,6 @@ contract SolcLoops {
 
     uint sx;
     uint sy;
-    uint[] storageArray;
     uint[] dynamic;
     Data[] data;
     uint[] ids;
@@ -240,20 +238,6 @@ contract SolcLoops {
         assert(r1 == 1);
         assert(r2 == 1);
         assert(r8 == 1);
-    }
-
-    /// solc: array/array_storage_index_boundary_test.sol
-    function boundaryTestPushedSlotsAreZero() public {
-        delete storageArray;
-        uint len = 10;
-        while (storageArray.length < len)
-            storageArray.push();
-        while (storageArray.length > len)
-            storageArray.pop();
-        uint l = storageArray.length;
-        uint r = storageArray[9];
-        assert(l == 10);
-        assert(r == 0);
     }
 
     /// solc: array/dynamic_array_cleanup.sol
@@ -756,16 +740,6 @@ contract SolcLoops {
             ++x;
         }
         assert(x != 3);
-    }
-
-    /// solc: array/push/push_no_args_2d.sol
-    /// @custom:key box
-    function pushChainedAssign(uint value) public {
-        require(value == 512);
-        require(array2d.length == 0);
-        array2d.push().push() = value;
-        uint a = array2d[0][0];
-        assert(a == 512);
     }
 
     /// solc: smtCheckerTests/loops/for_1_break.sol

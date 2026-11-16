@@ -105,7 +105,9 @@ Choices the calculus makes on purpose, each of which makes some Solidity behavio
   length and preserves that data; it does not establish zero values or empty nested arrays.
   A default-value assertion needs an explicit earlier clear/write or a suitable precondition;
   `delete arr.push();` is such a clear: it resets the appended slot (`storagePushDelete`).
-  No clean-tail invariant is assumed. Compiler-specific dangling-reference examples are in
+  No clean-tail invariant is assumed: the claims that would need one are in
+  `keyext.solidity.examples/negative/no-clean-tail/`, true on the EVM and kept open by
+  `NoCleanTailExamplesStayOpenTest`. Compiler-specific dangling-reference examples are in
   `semantics/StorageDangling.sol`; Solidity leaves those executions undefined.
   Larger push loops can still exceed the proof budget (`docs/storage.md`).
 - **Immutables are storage.** An immutable is read from storage, so outside the constructor
@@ -182,7 +184,7 @@ functions and open reasons are listed in `keyext.solidity.examples/semantics/REA
 | Payments, reverts, try | `SolcPayments` | 35 | 14 (2 close: proves-false witnesses) | 11 | `msg.*` ranges, `try` callee havocked, noCallback unsound |
 | Modifiers | `SolcModifiers` | 47 | 0 | 9 | argument calls, modifier returns, multiple placeholders and modifier loops now close; modifier locals are fresh |
 | smtChecker control flow | `SolcSmtControlFlow` | 89 | 4 | 11 | `msg.value`, storage assignment expressions |
-| Arithmetic | `SolcArithmetic` | 58 | 8 (1 in closing file) | 10 | wrapping; `unaryAddOnPush` needs known appended contents |
+| Arithmetic | `SolcArithmetic` | 58 | 8 (1 in `negative/no-clean-tail/`) | 10 | wrapping; `unaryAddOnPush` needs known appended contents |
 | Inheritance, getters | `SolcHigherLevel` | 19 | 7 | 13 | virtual dispatch (proves false), `Base.f()` |
 | Types, enums, tuples, literals | `SolcTypes` | 39 | 17 (1 closes: proves false) | 11 | identity casts (proves false), `E(x)`, enum ranges |
 | **Total** | 11 files | **514** | **98** | | |

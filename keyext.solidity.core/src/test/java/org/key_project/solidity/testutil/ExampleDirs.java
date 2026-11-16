@@ -26,6 +26,7 @@ public final class ExampleDirs {
     public static final String NEGATIVE = "negative";
     public static final String ILLEGAL = NEGATIVE + "/illegal";
     public static final String UNPROVABLE = NEGATIVE + "/unprovable";
+    public static final String NO_CLEAN_TAIL = NEGATIVE + "/no-clean-tail";
 
     private ExampleDirs() {}
 }

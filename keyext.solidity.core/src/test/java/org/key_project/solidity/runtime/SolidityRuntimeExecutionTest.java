@@ -29,29 +29,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-/// Cross-checks the calculus against a real EVM: every provable example function of
-/// `taclets/*.sol` and `semantics/*.sol` is compiled with solc, deployed on an in-process Besu
-/// EVM, and executed. A function whose proof closes must not hit a failing `assert` — Panic(0x01) —
-/// when actually run.
-///
-/// Runs and proofs do not agree everywhere, and the verdicts reflect that:
-/// - A box-tagged function whose `require` reverts on the fresh all-zero storage is vacuous at
-/// runtime, exactly as the box modality treats it, and is skipped. So is a box-tagged function
-/// that hits one of the panics the calculus models as an explicit `revert();` (an array index
-/// out of bounds, a `pop` on an empty array, a zero divisor): the proof closes on that revert
-/// branch without claiming anything about the run.
-/// - Functions proved with KeY's unbounded integers may hit a checked-arithmetic Panic (0x11
-/// overflow, ...) on the EVM; expected cases are listed in [#KNOWN_DIVERGENT].
-/// - A parameterized function runs with the values its leading `require` pins, recovered by
-/// [PinnedArguments].
-///
-/// The `taclets/` half runs in the common `test` task; the `semantics/` half is tagged
-/// `solidityExamples` and runs in the CI-only `testSolidityExamples` task.
 public class SolidityRuntimeExecutionTest {
 
-    /// Examples whose proofs rely on KeY's unbounded mathematical integers and therefore panic
-    /// under the EVM's checked arithmetic. Keyed `Contract.function`; a Panic(0x01) entry would
-    /// hide an assert violation and needs written justification.
     private static final Set<String> KNOWN_DIVERGENT = Set.of();
 
     private static final Set<Integer> PANICS_MODELED_AS_REVERT = Set.of(0x12, 0x31, 0x32);
@@ -65,6 +44,13 @@ public class SolidityRuntimeExecutionTest {
     @ParameterizedTest(name = "{0}.{1}")
     @MethodSource("testSuiteExamples")
     void runsWithoutAssertFailure(String contract, String function) throws IOException {
+        runCase(contract, function);
+    }
+
+    @ParameterizedTest(name = "{0}.{1}")
+    @MethodSource("noCleanTailExamples")
+    void noCleanTailExampleRunsWithoutAssertFailure(String contract, String function)
+            throws IOException {
         runCase(contract, function);
     }
 
@@ -145,11 +131,18 @@ public class SolidityRuntimeExecutionTest {
         return SolidityExampleTests.contractFunctions(ExampleDirs.SEMANTICS);
     }
 
+    static Stream<Arguments> noCleanTailExamples() throws IOException {
+        return SolidityExampleTests.contractFunctions(ExampleDirs.NO_CLEAN_TAIL);
+    }
+
     private static Path source(String contract) {
-        Path taclets = SolidityExampleTests.examplesDir(ExampleDirs.TACLETS)
-                .resolve(contract + ".sol");
-        return Files.exists(taclets) ? taclets
-                : SolidityExampleTests.example(ExampleDirs.SEMANTICS + "/" + contract + ".sol");
+        for (String directory : List.of(ExampleDirs.TACLETS, ExampleDirs.NO_CLEAN_TAIL)) {
+            Path source = SolidityExampleTests.examplesDir(directory).resolve(contract + ".sol");
+            if (Files.exists(source)) {
+                return source;
+            }
+        }
+        return SolidityExampleTests.example(ExampleDirs.SEMANTICS + "/" + contract + ".sol");
     }
 
     private static Fixture fixture(String contract) {

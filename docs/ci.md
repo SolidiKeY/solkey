@@ -31,7 +31,12 @@ the local gate stays fast, and the GUI module has its own job.
 | `Solidity / rule-generalization` | `./gradlew :keyext.solidity.core:testRuleGeneralization` | `RuleGeneralizationTest` |
 | `Solidity / gui` | `./gradlew :keyext.solidity.gui:test` | the `keyext.solidity.gui` tests (headless) |
 
-`SolcSemanticsExamplesTest`, `ContractExamplesTest` and `OpenExamplesStayOpenTest` prove with
+The module tests also include `NoCleanTailExamplesStayOpenTest`: every function of
+`negative/no-clean-tail/` is true on the EVM and must stay open, because the calculus assumes
+no clean storage tail (`keyext.solidity.examples/negative/README.md`).
+
+`SolcSemanticsExamplesTest`, `ContractExamplesTest`, `NoCleanTailExamplesStayOpenTest` and
+`OpenExamplesStayOpenTest` prove with
 no timeout and the step budget `StepBudget.estimate` derives from the function's source size,
 so their outcome is the same on every machine (keyext.solidity.examples/README.md, "Step
 budgets"). A closing function that fails with `STEP_LIMIT` needs more steps than the estimate.

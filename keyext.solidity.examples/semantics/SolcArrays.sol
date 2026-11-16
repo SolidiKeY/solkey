@@ -77,15 +77,6 @@ contract SolcArrays {
         assert(storageArray[0] == 0);
     }
 
-    /// solc: array/array_storage_index_zeroed_test.sol — the direct form of the same
-    /// invariant: a freshly pushed slot reads as zero.
-    /// @custom:key box
-    function pushedSlotIsZeroed() public {
-        require(storageArray.length == 0);
-        storageArray.push();
-        assert(storageArray[0] == 0);
-    }
-
     /// solc: array/array_storage_index_access.sol — element writes are independent of each
     /// other.
     /// @custom:key box

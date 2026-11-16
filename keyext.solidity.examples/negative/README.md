@@ -9,6 +9,32 @@ mathematical integers give the overflowing operation a non-reverting path. No te
 the directory; moving an example here is how it is retired from the suites while staying
 compilable.
 
+## `no-clean-tail/`
+
+`no-clean-tail/` holds claims that are **true on the EVM and must stay unproved**. Each reads a
+default value from a slot an empty `push()` exposed: zero on a chain where solc cleared
+everything beyond the array's length, but symbolic execution starts from an arbitrary storage
+and assumes no such clean tail (`docs/limitations.md`, "Storage starts arbitrary"), since
+assembly or a dangling storage reference can leave data there. An example that needs the zero
+states it itself with `delete arr.push();`.
+
+`NoCleanTailExamplesStayOpenTest` (common `test` task) enumerates the directory and fails when
+a function closes, so an example joins by being written and a rule that starts assuming a clean
+tail turns the test red. `SolidityRuntimeExecutionTest` runs every function on the EVM, which
+keeps the other half of the claim: none hits a failing `assert`. Each file is named after the
+file its functions came from, `<origin>Tail.sol`:
+
+| File | From | Functions |
+|---|---|---|
+| `StorageArraysTail.sol` | `taclets/StorageArrays.sol` | `testEmptyPushReadsDefaultValue`, `testFixedCopyThenEmptyPushReadsZero`, `testFixedShapeEmptyPushFixedElementReadsZero`, `testEmptyPushFixedArrayReturnReadsZero`, `testEmptyPushDynamicArrayReturnReadsZero`, `testEmptyPushStructReturnReadsZero` |
+| `SolcArithmeticTail.sol` | `semantics/SolcArithmetic.sol` | `unaryAddOnPush` |
+| `SolcArraysTail.sol` | `semantics/SolcArrays.sol` | `pushedSlotIsZeroed` |
+| `SolcLoopsTail.sol` | `semantics/SolcLoops.sol` | `boundaryTestPushedSlotsAreZero`, `pushChainedAssign` |
+| `SolcStructsMappingsTail.sol` | `semantics/SolcStructsMappings.sol` | `copyStructArrayIntoNestedArray`, `pushedStructIsZero` |
+| `SolcArrayMembersTail.sol` | `semantics/SolcArrayMembers.sol`, `semantics/open/SolcArrayMembers.sol` | `deleteArrayIndex2d`, `pushLhsRhs2d`, `pushLhsRhs2dAnyState` (from `open/`), `copyNestedStorageToMemory`, `length2dStorageToStorage`, `pushLhs2dLast`, `pushLhs3dLast`, `pushLhsAndRhs1d`, `pushLhsCompound`, `pushNested`, `pushNoArgs1d`, `pushNoArgs1dLvalue`, `pushZero2d`, `pushZeroReadsZero` |
+
+The solc ports keep their `/// solc:` line, which names the upstream test.
+
 ## `illegal/`
 
 `illegal/` holds one **minimal contract per construct** Solidity itself rejects, so each file

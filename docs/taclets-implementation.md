@@ -607,17 +607,22 @@ place, member by member and element by element, so the two differ when the sourc
 the target or the target inside the source. Only a recursive struct (`struct N { N[] kids; }`)
 makes that possible: `root = root.kids[0]` clears part of the source before reading it, and
 `n.kids[0] = n` never terminates. Every copy rule therefore reads its source through
-`srcView(storage, target, source)` and adds the conjunct `!inside(target, source)`. Both walk
+`srcView(storage, target, source)` and continues with `revert()` when
+`inside(target, source)`, as an index out of bounds does. Both walk
 the two paths (`srcViewStart`, `srcWalkCons`, `srcWalkNil`; `insideCons`, `insideSource`,
 `insideTarget`): paths that part, or are equal, give the pre-state storage and `inside` false,
-so the rule is the snapshot copy; a target inside the source makes `inside` true and the goal
-false. No type analysis is involved, and for a non-recursive type the walks reduce by
+so the rule is the snapshot copy; a target inside the source makes `inside` true, which a
+diamond rejects and a box accepts. No type analysis is involved, and for a non-recursive type the walks reduce by
 simplification alone. A source inside the target becomes `view(st, target, source)`
 (`srcWalkInside`), the storage as solc's in-place copy sees it: `viewSize`, `viewIndex` and
 `viewMember` answer each read of the source by where it falls relative to the overlap, using
-the `before` member order the loader writes as `memberBefore_…` taclets. They are in the rule
-set `overlapView`, applied only outside the branches of an undecided conditional, so unknown
-lengths do not unfold without end (`docs/storage.md`, "Overlapping copies").
+the `before` member order the loader writes as `memberBefore_…` taclets: a component copied
+before the overlapping one has its old value, the overlapping one is the same copy one level
+down, and a later one is the default value, which holds at every depth, so a storage of
+unknown depth needs no unfolding (`storageRecursiveCopyFromOwnChildLaterKidsCleared`,
+`…AnyKidLength`, `…LaterMemberCleared`). That last case assumes a finite storage tree. The
+rules are in the rule set `overlapView`, applied only outside the branches of an undecided
+conditional (`docs/storage.md`, "Overlapping copies").
 
 `delAt` names its storage argument once, where the `save(st, p, <deleted value at p>)` form it
 replaced named it twice. That doubled the storage term at every `push`/`pop`, so a sequence of

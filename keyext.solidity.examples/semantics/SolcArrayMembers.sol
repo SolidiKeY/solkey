@@ -6,10 +6,6 @@ pragma solidity ^0.8.0;
 /// and `smtCheckerTests/array_members/` and `out_of_bounds/`. Each function names the upstream file
 /// it comes from (see `README.md` for the adaptation rules).
 contract SolcArrayMembers {
-    uint[][] lhs2d;
-    uint[][][] lhs3d;
-    uint[][] lenArr;
-    uint[][] lenArr2;
     struct S { uint x; }
     struct B { int[] b; }
     struct TS { B[] s; }
@@ -23,21 +19,17 @@ contract SolcArrayMembers {
     uint[] pushData;
     uint[] popEmpty;
     int[] parenData;
-    uint[] noArgs1d;
-    uint[] lhsRhs1d;
     S[] noArgsStruct;
     uint[] deleted;
     uint[] cleared;
     uint[] fromMemory;
     uint[][] nestedFromMem;
     uint[][] nestedFromMemory;
-    int[] compound;
     B sb;
     T tsb;
     uint[][] push2dArg;
     PS[] structData;
     uint[] pushArg;
-    uint[] zero1d;
     int[][] pushPush2;
     int[][][] pushPush3;
     uint[] lhs1d;
@@ -70,7 +62,6 @@ contract SolcArrayMembers {
     uint[][] same2;
     uint[][] same4;
     uint[] sameMem;
-    uint[][] nestedP;
     uint[] dyn1;
     uint[] dyn2;
     uint[] dynamicData;
@@ -82,8 +73,6 @@ contract SolcArrayMembers {
     mapping(uint => mapping(uint => St[5])) multipleMap;
     uint[][][] src1;
     uint[][] dst1;
-    uint[][] zero2d;
-    uint[][] nestedToMemory;
     SA s1;
     SA s2;
     uint[] fnArr;
@@ -272,32 +261,6 @@ contract SolcArrayMembers {
         assert(l == 0);
     }
 
-    /// solc: semanticTests/array/push/push_no_args_1d.sol
-    /// @custom:key box
-    function pushNoArgs1dLvalue() public {
-        require(noArgs1d.length == 0);
-        noArgs1d.push() = 42;
-        assert(noArgs1d.length == 1);
-        assert(noArgs1d[0] == 42);
-        noArgs1d.push();
-        assert(noArgs1d.length == 2);
-        assert(noArgs1d[1] == 0);
-        noArgs1d.push() = 111;
-        assert(noArgs1d.length == 3);
-        assert(noArgs1d[2] == 111);
-    }
-
-    /// solc: semanticTests/array/push/push_no_args_1d.sol
-    /// @custom:key box
-    function pushNoArgs1d() public {
-        require(noArgs1d.length == 0);
-        noArgs1d.push() = 42;
-        uint y = noArgs1d.push();
-        assert(y == 0);
-        assert(noArgs1d.length == 2);
-        assert(noArgs1d[1] == 0);
-    }
-
     /// solc: semanticTests/array/push/push_no_args_struct.sol
     /// @custom:key box
     function pushNoArgsStructLvalue(uint y) public {
@@ -394,27 +357,6 @@ contract SolcArrayMembers {
         uint val = dyn2[5];
         assert(len == 10);
         assert(val == 4);
-    }
-
-    /// solc: semanticTests/array/copying/array_copy_storage_to_memory_nested.sol
-    /// @custom:key box
-    function copyNestedStorageToMemory() public {
-        require(nestedToMemory.length == 0);
-        nestedToMemory.push();
-        nestedToMemory.push();
-        nestedToMemory[0].push(0);
-        nestedToMemory[0].push(1);
-        nestedToMemory[1].push(2);
-        nestedToMemory[1].push(3);
-        uint[][] memory m = nestedToMemory;
-        uint l = m.length;
-        uint a = m[0][1];
-        uint b = m[1][0];
-        uint c = m[1][1];
-        assert(l == 2);
-        assert(a == 1);
-        assert(b == 2);
-        assert(c == 3);
     }
 
     /// solc: semanticTests/array/copying/storage_memory_nested.sol
@@ -618,21 +560,6 @@ contract SolcArrayMembers {
         assert(r == x);
     }
 
-    /// solc: smtCheckerTests/array_members/push_zero_safe.sol
-    function pushZeroReadsZero() public {
-        zero1d.push();
-        uint r = zero1d[zero1d.length - 1];
-        assert(r == 0);
-    }
-
-    /// solc: smtCheckerTests/array_members/push_zero_2d_safe.sol
-    function pushZero2d() public {
-        zero2d.push();
-        zero2d[zero2d.length - 1].push();
-        uint r = zero2d[zero2d.length - 1][0];
-        assert(r == 0);
-    }
-
     /// solc: smtCheckerTests/array_members/push_push_no_args_1.sol
     function pushPushNoArgs2d() public {
         pushPush2.push().push();
@@ -688,15 +615,6 @@ contract SolcArrayMembers {
         b[0] = 32;
         uint r = refAlias2[0][0];
         assert(r == 32);
-    }
-
-    /// solc: smtCheckerTests/array_members/push_as_lhs_and_rhs_1d.sol
-    function pushLhsAndRhs1d() public {
-        lhsRhs1d.push() = lhsRhs1d.push();
-        uint length = lhsRhs1d.length;
-        assert(length >= 2);
-        assert(lhsRhs1d[length - 1] == 0);
-        assert(lhsRhs1d[length - 1] == lhsRhs1d[length - 2]);
     }
 
     /// solc: smtCheckerTests/array_members/storage_pointer_push_1_safe.sol
@@ -900,18 +818,6 @@ contract SolcArrayMembers {
         assert(same3[5].length == t);
     }
 
-    /// solc: semanticTests/array/push/array_push_nested.sol
-    /// @custom:key box
-    function pushNested() public {
-        require(nestedP.length == 0);
-        nestedP.push();
-        assert(nestedP.length == 1);
-        assert(nestedP[0].length == 0);
-        nestedP[0].push();
-        assert(nestedP[0].length == 1);
-        assert(nestedP[0][0] == 0);
-    }
-
     function setX(S storage s, uint y) internal {
         s.x = y;
     }
@@ -954,43 +860,6 @@ contract SolcArrayMembers {
         assert(y == 0);
     }
 
-    /// solc: smtCheckerTests/array_members/push_as_lhs_2d.sol
-    function pushLhs2dLast() public {
-        lhs2d.push().push() = 2;
-        assert(lhs2d.length > 0);
-        assert(lhs2d[lhs2d.length - 1].length == 1);
-        assert(lhs2d[lhs2d.length - 1][lhs2d[lhs2d.length - 1].length - 1] == 2);
-    }
-
-    /// solc: smtCheckerTests/array_members/push_as_lhs_3d.sol
-    function pushLhs3dLast() public {
-        lhs3d.push().push().push() = 2;
-        uint length1 = lhs3d.length;
-        uint length2 = lhs3d[length1 - 1].length;
-        uint length3 = lhs3d[length1 - 1][length2 - 1].length;
-        assert(length1 > 0);
-        assert(length2 == 1);
-        assert(length3 == 1);
-        assert(lhs3d[length1 - 1][length2 - 1][length3 - 1] == 2);
-    }
-
-    /// solc: smtCheckerTests/array_members/length_1d_assignment_2d_storage_to_storage.sol
-    /// @custom:key box
-    function length2dStorageToStorage() public {
-        require(lenArr.length == 0);
-        require(lenArr2.length == 0);
-        lenArr.push();
-        lenArr.push();
-        lenArr2.push();
-        lenArr2.push();
-        uint a = lenArr2[0].length;
-        uint b = lenArr[0].length;
-        assert(a == b);
-        uint c = lenArr2.length;
-        uint d = lenArr.length;
-        assert(c == d);
-    }
-
     /// solc: semanticTests/array/push/array_push_nested_from_memory.sol
     function pushNestedFromMemory() public {
         delete nestedFromMemory;
@@ -1002,14 +871,6 @@ contract SolcArrayMembers {
         assert(nestedFromMemory[0].length > 0);
         uint r = nestedFromMemory[0][0];
         assert(r == 1);
-    }
-
-    /// solc: smtCheckerTests/array_members/push_as_lhs_compound_assignment.sol
-    /// @custom:key box
-    function pushLhsCompound() public {
-        require(compound.length == 0);
-        compound.push() -= 1;
-        assert(compound[0] < 0);
     }
 
     /// solc: smtCheckerTests/array_members/push_as_lhs_struct.sol

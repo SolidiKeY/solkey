@@ -15,4 +15,10 @@ contract RecursiveCopyOverlap {
         nodeTree = nodeTree.kids[0];
         assert(nodeTree.kids[1].v == 5);
     }
+
+    function copyIntoOwnChild() public {
+        delete nodeTree;
+        nodeTree.kids.push();
+        nodeTree.kids[0] = nodeTree;
+    }
 }

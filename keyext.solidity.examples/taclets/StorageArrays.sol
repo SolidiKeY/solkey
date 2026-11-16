@@ -13,6 +13,7 @@ contract StorageArrays {
     struct TokenBucket { Token[] tokens; }
     struct Triple { uint[3] items; uint tag; }
     struct Node { uint v; Node[] kids; }
+    struct Chain { Chain[] next; uint tag; }
 
     uint total;
     uint age;
@@ -69,6 +70,7 @@ contract StorageArrays {
     mapping(uint => Triple) triplesByKey;
     Node nodeTree;
     Node nodeSpare;
+    Chain chainRoot;
 
     function storageAssignmentValueIndexOnce() public {
         uint i = 0;
@@ -626,13 +628,6 @@ contract StorageArrays {
         assert(fixedGrid[1].length == 3);
     }
 
-    function testEmptyPushReadsDefaultValue() public {
-        uint n = values.length;
-        values.push();
-        assert(values.length == n + 1);
-        assert(values[n] == 0);
-    }
-
     function testPopPushValueResetsValue() public {
         uint n = values.length;
         values.push(73);
@@ -641,18 +636,6 @@ contract StorageArrays {
         values.push();
         assert(values.length == n + 1);
         assert(values[n] == 0);
-    }
-
-    // import
-    function testFixedCopyThenEmptyPushReadsZero() public {
-        copySource9[8] = 41;
-        copyTargetDyn = copySource9;
-        copySource9[8] = 42;
-        copyTargetDyn.push();
-        assert(copySource9.length == 9);
-        assert(copyTargetDyn.length == 10);
-        assert(copyTargetDyn[8] == 41);
-        assert(copyTargetDyn[9] == 0);
     }
 
     // import
@@ -800,34 +783,6 @@ contract StorageArrays {
         delete rows[n];
         assert(row.length == 3);
         assert(row[2] == 0);
-    }
-
-    function testFixedShapeEmptyPushFixedElementReadsZero() public {
-        uint n = rows.length;
-        rows.push();
-        assert(rows.length == n + 1);
-        assert(rows[n].length == 3);
-        assert(rows[n][0] == 0);
-        assert(rows[n][2] == 0);
-    }
-
-    function testEmptyPushFixedArrayReturnReadsZero() public {
-        uint[3] storage row = rows.push();
-        assert(row.length == 3);
-        assert(row[0] == 0);
-        assert(row[2] == 0);
-    }
-
-    function testEmptyPushDynamicArrayReturnReadsZero() public {
-        uint[] storage row = matrix.push();
-        assert(row.length == 0);
-        row.push();
-        assert(row[0] == 0);
-    }
-
-    function testEmptyPushStructReturnReadsZero() public {
-        Token storage token = tokens.push();
-        assert(token.value == 0);
     }
 
     function testDeleteArrayLeavesDataPastLength() public {
@@ -2073,5 +2028,70 @@ contract StorageArrays {
         nodeTree.kids[0].v = 9;
         nodeTree = nodeTree.kids[0];
         assert(nodeTree.v == 9);
+    }
+
+    /// @custom:key box
+    function storageRecursiveCopyFromOwnChildLaterKidsCleared(uint i) public {
+        require(0 < nodeTree.kids.length);
+        require(0 < i && i < nodeTree.kids[0].kids.length);
+        nodeTree = nodeTree.kids[0];
+        assert(nodeTree.kids[i].v == 0 && nodeTree.kids[i].kids.length == 0);
+    }
+
+    /// @custom:key box
+    function storageRecursiveCopyFromOwnChildAnyKidLength(uint i) public {
+        require(0 < nodeTree.kids.length);
+        require(i < nodeTree.kids[0].kids.length);
+        nodeTree = nodeTree.kids[0];
+        assert(nodeTree.kids[i].kids.length == 0 || i == 0);
+    }
+
+    /// @custom:key box
+    function storageRecursiveCopyFromOwnChildLaterMemberCleared() public {
+        require(0 < chainRoot.next.length);
+        chainRoot = chainRoot.next[0];
+        assert(chainRoot.tag == 0);
+    }
+
+    function storageRecursiveCopyFromOwnChildLaterMember() public {
+        delete chainRoot;
+        delete chainRoot.next.push();
+        delete chainRoot.next[0].next.push();
+        chainRoot.next[0].tag = 9;
+        chainRoot.next[0].next[0].tag = 4;
+        chainRoot.tag = 3;
+        chainRoot = chainRoot.next[0];
+        assert(chainRoot.tag == 0 && chainRoot.next.length == 1);
+        assert(chainRoot.next[0].tag == 0);
+    }
+
+    /// @custom:key box
+    function storageRecursiveCopyIntoOwnChildIndex() public {
+        require(0 < nodeTree.kids.length);
+        nodeTree.kids[0] = nodeTree;
+        assert(false);
+    }
+
+    /// @custom:key box
+    function storageRecursiveCopyIntoOwnChildMember() public {
+        require(0 < nodeTree.kids.length);
+        nodeTree.kids[0].kids = nodeTree.kids;
+        assert(false);
+    }
+
+    /// @custom:key box
+    function storageRecursiveCopyIntoOwnChildPush() public {
+        require(0 < nodeTree.kids.length);
+        nodeTree.kids[0].kids.push(nodeTree.kids[0]);
+        assert(false);
+    }
+
+    /// @custom:key box
+    function storageRecursiveCopyIntoOwnChildUnlessApart(uint i, uint j) public {
+        require(i < nodeTree.kids.length && j < nodeTree.kids.length);
+        require(0 < nodeTree.kids[i].kids.length);
+        uint r = nodeTree.kids[j].v;
+        nodeTree.kids[i].kids[0] = nodeTree.kids[j];
+        assert(i != j && nodeTree.kids[i].kids[0].v == r);
     }
 }

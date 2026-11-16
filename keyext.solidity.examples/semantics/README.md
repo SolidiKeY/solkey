@@ -18,27 +18,29 @@ after `break`, `virtual` modifiers, shadowing, a return left unassigned), so `So
 tolerates those warning kinds here and in `contracts/real-world/`. `open/` keeps what does not
 close yet (see "The `open/` directory").
 
-Contracts are grouped by upstream theme. Runtime assertions are cross-checked on the EVM;
-proofs that require default values in an unconstrained storage tail are checked to stay open:
+Contracts are grouped by upstream theme. Runtime assertions are cross-checked on the EVM.
+Ports that need a default value in an unconstrained storage tail are true on the EVM but do not
+close; they live in `negative/no-clean-tail/`, where `NoCleanTailExamplesStayOpenTest` checks
+that they stay open (`negative/README.md`):
 
 | File | Upstream | Functions |
 |---|---|---|
 | `SolcExpressions.sol` | `expressions/`, `exponentiation/` | 20 |
 | `SolcStructs.sol` | `structs/` | 11 |
-| `SolcArrays.sol` | `array/`, `array/push`, `array/pop`, `array/delete` | 12 |
+| `SolcArrays.sol` | `array/`, `array/push`, `array/pop`, `array/delete` | 11 |
 | `SolcMemory.sol` | `structs/memory_*`, `array/copying`, `array/delete`, `memoryManagement/` | 15 |
 | `SolcMappings.sol` | `structs/*mapping*`, `array/copying/array_elements_to_mapping.sol` | 9 |
 | `SolcControlFlow.sol` | `statements/`, `various/`, `expressions/conditional_expression_storage_memory_*`, `viaYul/` tuples and short-circuit; smt `operators/` conditionals, `types/tuple_assignment_array.sol` | 24 |
-| `SolcLoops.sol` | `statements/`, `viaYul/loops/`, loop-heavy `array/`; smt `loops/` | 64 |
-| `SolcArrayMembers.sol` | `array/` push, pop, delete, copying, allocation; `storage/`; smt `array_members/` | 87 |
+| `SolcLoops.sol` | `statements/`, `viaYul/loops/`, loop-heavy `array/`; smt `loops/` | 62 |
+| `SolcArrayMembers.sol` | `array/` push, pop, delete, copying, allocation; `storage/`; smt `array_members/` | 76 |
 | `SolcFunctionCalls.sol` | `functionCall/`, `freeFunctions/`; smt `functions/` | 35 |
-| `SolcStructsMappings.sol` | remaining `structs/`, mapping tests of `functionCall/`, `variables/`, `types/`, `storage/`, `viaYul/storage/`; smt `types/struct*`, `mapping*` | 65 |
+| `SolcStructsMappings.sol` | remaining `structs/`, mapping tests of `functionCall/`, `variables/`, `types/`, `storage/`, `viaYul/storage/`; smt `types/struct*`, `mapping*` | 63 |
 | `SolcStructArrays.sol` | smt `types/struct/` nested storage arrays | 2 |
 | `SolcConstructors.sol` | `constructor/`, `immutable/`, `constants/`, `scoping/`; smt constructor, `inheritance/constructor_*`, `file_level/` | 37 |
 | `SolcPayments.sol` | `payable/`, `receive/`, `fallback/`, `reverts/`, `errors/`, `tryCatch/`; smt `special/`, `blockchain_state/`, `try_catch/` | 39 |
 | `SolcModifiers.sol` | `modifiers/`; smt `modifiers/` | 47 |
 | `SolcSmtControlFlow.sol` | smt `control_flow/`, `bmc_coverage/`, `verification_target/`, `invariants/`, `complex/slither/` | 91 |
-| `SolcArithmetic.sol` | `arithmetics/`, `exponentiation/`, `integer/`, `operators/`; smt `operators/`, `overflow/` | 79 |
+| `SolcArithmetic.sol` | `arithmetics/`, `exponentiation/`, `integer/`, `operators/`; smt `operators/`, `overflow/` | 78 |
 | `SolcHigherLevel.sol` | `inheritance/`, `virtualFunctions/`, `getters/`; smt `inheritance/` | 25 |
 | `SolcTypes.sol` | `enums/`, `literals/`, `types/`; smt `types/`, `typecast/` | 42 |
 
@@ -152,7 +154,6 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `semanticTests/viaYul/loops/return.sol` | `returnLeavesLoop` |
 | `semanticTests/viaYul/if.sol` | `breakOutOfDoWhileFalseSmallSums`, `breakOutOfDoWhileFalseLargeSums` |
 | `semanticTests/functionCall/calling_other_functions.sol` | `collatzReachesOne` |
-| `semanticTests/array/array_storage_index_boundary_test.sol` | `boundaryTestPushedSlotsAreZero` |
 | `semanticTests/array/dynamic_array_cleanup.sol` | `fillThenHalfClear` |
 | `semanticTests/array/array_memory_index_access.sol` | `memoryArrayLoopWriteRead` |
 | `semanticTests/array/array_2d_new.sol` | `newInnerArraysInLoop` |
@@ -187,7 +188,6 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `smtCheckerTests/loops/for_loop_bmc_iterations_break_5.sol` | `forSecondBreakUnreachable` |
 | `smtCheckerTests/loops/for_loop_bmc_iterations_continue_4.sol` | `forContinueRunsUpdateAfterReassign` |
 | `smtCheckerTests/loops/for_loop_bmc_iterations_shallow_unroll.sol` | `forShallowUnrollAssertIsFalse` |
-| `semanticTests/array/push/push_no_args_2d.sol` | `pushChainedAssign` |
 | `smtCheckerTests/loops/for_1_break.sol` | `forBreakOrIncrement` |
 | `smtCheckerTests/loops/while_1_break.sol` | `whileBreakOrIncrement` |
 | `smtCheckerTests/loops/while_nested_break.sol` | `nestedWhileBreak` |
@@ -221,14 +221,12 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `semanticTests/array/push/array_push.sol` | `pushReadsBack` |
 | `semanticTests/array/pop/array_pop_storage_empty.sol` | `pushPopLeavesEmpty` |
 | `semanticTests/array/pop/parenthesized.sol` | `parenthesizedPop` |
-| `semanticTests/array/push/push_no_args_1d.sol` | `pushNoArgs1dLvalue`, `pushNoArgs1d` |
 | `semanticTests/array/push/push_no_args_struct.sol` | `pushNoArgsStructLvalue`, `pushNoArgsStruct` |
 | `semanticTests/array/delete/delete_storage_array.sol` | `deleteStorageArray` |
 | `semanticTests/array/copying/array_copy_clear_storage.sol` | `copyShrinksStorage` |
 | `semanticTests/array/copying/array_copy_memory_to_storage.sol` | `copyMemoryToStorage`, `copyMemoryFixedToStorage` |
 | `semanticTests/array/copying/nested_array_memory_to_storage.sol` | `copyNestedMemoryToStorage` |
 | `semanticTests/array/copying/array_copy_storage_storage_dyn_dyn.sol` | `copyStorageStorageDynDyn` |
-| `semanticTests/array/copying/array_copy_storage_to_memory_nested.sol` | `copyNestedStorageToMemory` |
 | `semanticTests/array/copying/storage_memory_nested.sol` | `storageMemoryNestedFixed` |
 | `semanticTests/array/copying/array_to_mapping.sol` | `arrayToMappingFromStorage` |
 | `semanticTests/array/copying/nested_array_element_storage_to_storage.sol` | `nestedElementStorageToStorage` |
@@ -238,8 +236,6 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `semanticTests/storage/array_accessor.sol` | `arrayAccessor` |
 | `semanticTests/storage/mappings_array2d_pop_delete.sol` | `mappingArray2dDelete`, `mappingArray2dPopRepush` |
 | `smtCheckerTests/array_members/push_arg_1.sol` | `pushArgReadsBackAtEnd` |
-| `smtCheckerTests/array_members/push_zero_safe.sol` | `pushZeroReadsZero` |
-| `smtCheckerTests/array_members/push_zero_2d_safe.sol` | `pushZero2d` |
 | `smtCheckerTests/array_members/push_push_no_args_1.sol` | `pushPushNoArgs2d` |
 | `smtCheckerTests/array_members/push_push_no_args_2.sol` | `pushPushNoArgs3d` |
 | `smtCheckerTests/array_members/push_as_lhs_1d.sol` | `pushLhs1dEmpty`, `pushLhs1dLast` |
@@ -264,14 +260,9 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `smtCheckerTests/array_members/length_same_after_assignment.sol` | `lengthSameAfterMemoryCopy` |
 | `smtCheckerTests/array_members/length_same_after_assignment_2.sol` | `lengthSameAfterElementWrite` |
 | `smtCheckerTests/array_members/length_same_after_assignment_3.sol` | `lengthSameAfterRowCopy` |
-| `semanticTests/array/push/array_push_nested.sol` | `pushNested` |
 | `semanticTests/array/copying/array_copy_storage_storage_static_dynamic.sol` | `copyStaticToDynamic` |
 | `semanticTests/array/copying/array_copy_storage_storage_static_static.sol` | `copyStaticToLargerStatic` |
-| `smtCheckerTests/array_members/push_as_lhs_2d.sol` | `pushLhs2dLast` |
-| `smtCheckerTests/array_members/push_as_lhs_3d.sol` | `pushLhs3dLast` |
-| `smtCheckerTests/array_members/length_1d_assignment_2d_storage_to_storage.sol` | `length2dStorageToStorage` |
 | `semanticTests/array/push/array_push_nested_from_memory.sol` | `pushNestedFromMemory` |
-| `smtCheckerTests/array_members/push_as_lhs_compound_assignment.sol` | `pushLhsCompound` |
 | `smtCheckerTests/array_members/push_as_lhs_struct.sol` | `pushLhsStruct` |
 | `smtCheckerTests/array_members/push_2d_arg_1_safe.sol` | `pushMemoryRowThenValue` |
 | `smtCheckerTests/array_members/storage_pointer_push_1.sol` | `storagePointerPush` |
@@ -376,8 +367,7 @@ Generated from the `/// solc:` lines. The first six files name their upstream fi
 | `semanticTests/storage/accessors_mapping_for_array.sol` | `mappingOfArrays` |
 | `smtCheckerTests/types/mapping_aliasing_2.sol` | `mappingParametersMayAlias` |
 | `smtCheckerTests/types/array_mapping_aliasing_1.sol` | `arrayOfMappingsElementAlias` |
-| `semanticTests/structs/struct_storage_push_zero_value.sol` | `pushedStructIsZero` |
-| `semanticTests/structs/copy_struct_array_from_storage.sol` | `copyStructArrayIntoNestedArray`, `copyStructArraysIntoMemoryRows` |
+| `semanticTests/structs/copy_struct_array_from_storage.sol` | `copyStructArraysIntoMemoryRows` |
 | `semanticTests/structs/packed_storage_structs_delete.sol` | `packedStructsDelete` |
 | `semanticTests/types/mapping/copy_struct_to_array_stored_in_mapping.sol` | `structFromStorageToStaticArrayInMapping`, `structFromStorageToDynamicArrayInMapping`, `structFromMemoryToStaticArrayInMapping`, `structFromMemoryToDynamicArrayInMapping` |
 | `semanticTests/storage/static_array_copy_cleanup.sol` | `staticStructArrayCopyCleansTail`, `staticStructArrayDeletesKeepCanary` |
@@ -649,7 +639,6 @@ let them close under the normal source-size budgets, without a clean-tail invari
 | `smtCheckerTests/operators/constant_propagation_2.sol` | `constantPropagationDivision` |
 | `smtCheckerTests/operators/const_exp_1.sol` | `constantExponent` |
 | `smtCheckerTests/operators/constant_evaluation_unary_minus_chc.sol` | `constantUnaryMinus` |
-| `smtCheckerTests/operators/unary_add_array_push_1.sol` | `unaryAddOnPush` |
 | `smtCheckerTests/operators/mod_signed.sol` | `modSignFollowsDividend` |
 | `smtCheckerTests/operators/mod_n.sol` | `modBelowDivisor` |
 | `smtCheckerTests/operators/mod_even.sol` | `modOfDoubleIsZero` |
@@ -841,9 +830,6 @@ portable Solidity guarantee. No clean-tail invariant is assumed.
 | Function | Upstream (`test/libsolidity/`) | Why it stays open |
 |---|---|---|
 | `copyIncludingArray` | `semanticTests/array/copying/array_copy_including_array.sol` | no rule executes bitwise \|; the empty pushes also leave small[2][2][0] unconstrained (closing twin: copyIncludingArrayCleared) |
-| `deleteArrayIndex2d` | `smtCheckerTests/operators/delete_array_index_2d.sol` | design-limitation: arbitrary storage tail, the empty push a[0].push() keeps a stale a[0][0] that the else branch never clears |
-| `pushLhsRhs2d` | `smtCheckerTests/array_members/push_as_lhs_and_rhs_2d_1.sol` | design-limitation: arbitrary storage tail, the empty pushes keep stale values in b[0][0] and b[1][0] |
-| `pushLhsRhs2dAnyState` | `smtCheckerTests/array_members/push_as_lhs_and_rhs_2d_2.sol` | design-limitation: arbitrary storage tail, the empty pushes keep stale inner lengths and a stale last element |
 
 ### `open/SolcControlFlow.sol`
 
@@ -903,7 +889,7 @@ length-only push.
 
 | Function | Was | Fix |
 |---|---|---|
-| `SolcArrays.pushedSlotIsZeroed` | A freshly pushed slot stays symbolic | Length-only push intentionally preserves the previous slot; the zero assertion needs a clear-tail precondition and remains open |
+| `SolcArrays.pushedSlotIsZeroed` | A freshly pushed slot stays symbolic | Length-only push intentionally preserves the previous slot; the zero assertion needs a clear-tail precondition and remains open, now in `negative/no-clean-tail/SolcArraysTail.sol` |
 | `SolcExpressions.bareIncrementOnLocal` | `i++;` as a statement had rules for storage paths but not for a local | added `local{Pre,Post}{in,de}crement` |
 | `SolcExpressions.compoundAssignOnLocal` | `r += e;` existed for storage paths only, and a non-simple RHS had no capture at any location | added `local{Add,Sub,Mul,Div,Mod}Assign` and the location-neutral `*AssignValueRhsCapture` family |
 | `SolcArrays.storageArrayAliasWritesThrough` | the array index rules split on `global` vs `complex`, so a `simple`+`local` alias root matched neither | dropped `global` from `storageIndex{Read,Write}Array*_root`, matching their `BindLocalRoot`/`StoreRoot`/`CopySource` siblings |
@@ -938,8 +924,8 @@ operations fell 10×, and the duplicated storage copies are gone entirely.
 
 The ports cross-check SolKey against upstream, but they are not complete: a wrong rule can
 keep every port closed. Found by mutating one rule family, proving every closing `semantics/*.sol`
-with `--budget`, and comparing the failures with `SYMBOLIC_TAIL_OPENS` in
-`SolcSemanticsExamplesTest`.
+with `--budget`, and comparing the failures with the functions that are open by design (now in
+`negative/no-clean-tail/`).
 
 **Discarded arithmetic expressions as no-ops.** Replacing the six `discard*Expression` rules
 (`solidityProgramRules.key`) by `\replacewith(\modality{#mod}{c# #c}\endmodality(post))` drops
