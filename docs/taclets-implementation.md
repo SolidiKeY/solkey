@@ -158,6 +158,31 @@ Notes that are not derivable from the rule names:
   `docs/array-shape-coverage.md` indexes 76 matrix/cube examples built by breadth-first
   expansion of fixed and dynamic dimensions and the memory/storage copy and alias edges.
 
+#### Shortcut rules for reads over writes
+
+`selectOnSave` and `selectOnDelAtCons` compare the two path heads with `\if(a1 = a2)`, which
+costs two more steps (`equalUnique`/`eqClose`, then `ifthenelse_*`) even when the answer is
+visible in the term. Shortcut rules in `structRules.key` cover those cases in one step; each is
+an instance of the general rule, provable from it, and has no variable condition:
+
+| Rule | Heads | Result |
+|---|---|---|
+| `selectOnSaveSame` | the same term twice | the `\then` branch |
+| `selectOnSaveSizeAt`, `selectOnSaveAtSize`, `selectOnSaveSizeAtMap`, `selectOnSaveAtMapSize` | `size` against `at(k)` / `atMap(i)` | the write is skipped |
+| `selectOnSaveAtAt` | `at(k)` against `at(k')` | `\if(k = k')` on the indices |
+| `selectOnDelAtSameNil`, `selectOnDelAtSameCons` | the same term twice, rest of the path `nil` / `cons` | `delField` / `delAt` one level down, no `isEmpty` test |
+
+The shortcuts are in `simplify`; the two general rules are in `simplify_enlarging`, so a
+shortcut always fires first and the general rule only handles heads that need a proof (symbolic
+storage pointers, two different member fields). Do not move the general rules back to
+`simplify`: the shortcuts then lose ties and the gain disappears. Do not move the shortcuts to
+`concrete`: they then rewrite inside `\if` branches that are about to be discarded.
+
+`consR1`, `consR2`, `consR3` (`listRules.key`) append to a concrete path of length 1 to 3 in one
+step instead of the `consRcons` chain. Splitting `findDefinitionElement` by `nil`/`cons` the same
+way was tried and dropped: it changed the order of arithmetic normalisation and made small
+proofs (`ERC20.mint`, `Counter.inc`) longer.
+
 ### Increment / decrement (`++`/`--`, pre/post, plain and `result = …`)
 Direct storage updates (no program-level desugaring), e.g. `++age;` ⇝
 `{storage := save(storage, path, find<[int]>(storage, path) + 1)}`. Full
