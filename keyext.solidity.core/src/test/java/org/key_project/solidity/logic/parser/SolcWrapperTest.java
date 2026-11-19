@@ -54,7 +54,7 @@ public class SolcWrapperTest {
         assumeTrue(nativeSolc.isPresent(), "no native solc of the pinned version");
         String input = standardJsonAstInput(
             Files.readString(
-                SolidityExampleTests.example(ExampleDirs.SOLIDIKEY + "/ArrayMatrixDD.sol")));
+                SolidityExampleTests.example(ExampleDirs.TACLETS + "/NestedArrays.sol")));
         assertEquals(astOf(WasmSolcCompiler.get().compile(input)),
             astOf(nativeSolc.get().compile(input)));
         assertTrue(nativeSolc.get().version().startsWith(

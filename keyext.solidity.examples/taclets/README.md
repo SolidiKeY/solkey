@@ -9,6 +9,7 @@ One contract per file, one function per example, grouped by theme:
 | `Storage.sol` | storage roots, struct fields, aliases, deletes and mappings |
 | `StorageArrays.sol` | storage array indices, `push`, `pop`, fixed lengths and array copies |
 | `Memory.sol` | memory values and copies between memory and storage |
+| `NestedArrays.sol` | nested fixed/dynamic array shapes copied across storage and memory (`docs/array-shape-coverage.md`) |
 | `EvaluationOrder.sol` | evaluation order of operands, receivers and indices |
 | `Calls.sol` | internal calls, returns, tuples, parameters and file-level declarations |
 | `Modifiers.sol` | modifiers and their placeholder continuations |

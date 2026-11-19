@@ -17,8 +17,8 @@ explains what the `open/` directories keep. `AGENTS.md` has the commands to run 
 
 The example tests prove each function with no timeout and a step budget that depends only on
 its source: `StepBudget.estimate`, 60 rule applications per byte of the function's
-declaration, clamped to 10 000..100 000. So a result never depends on the machine. The densest
-closing proof measured so far needs about 36 steps per byte (`ArrayCubeFDF`), so the budget
+declaration, clamped to 10 000..100 000. So a result never depends on the machine. A dense
+proof such as `NestedArrays.dynamicCubeMemoryToStorageIsDeep` needs about 10 steps per byte, so the budget
 leaves headroom; a proof that closes only with more steps fails with `STEP_LIMIT`, and
 `./run-key.sh FILE.sol --json` shows the count it needs.
 

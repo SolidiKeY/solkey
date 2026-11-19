@@ -1,8 +1,8 @@
 # Shape-directed copy and reset: a compiler-based proof proposal
 
-`keyext.solidity.examples/contracts/solidikey/ArrayCopyShapes.sol` contains executable witnesses.
-The copy/reset observations have corresponding regressions in `taclets/`; a default-value
-assertion after empty push additionally needs known tail data. These examples support a
+The executable witnesses are `keyext.solidity.examples/taclets/NestedArrays.sol` and the
+`testShapeCopy*` and `testFixedShape*` functions of `taclets/StorageArrays.sol`; a default-value
+assertion after empty push additionally needs known tail data (`negative/no-clean-tail/`). These examples support a
 generalization of the copy/reset model. The implementation keeps `save`, `delAt`,
 `delNode`, and `delNodeFixed`; `C_T` and `R_T` below are mathematical notation rather than
 new constructors. Fixed-array reset guards are removed; array reset selectors use the old
@@ -171,8 +171,8 @@ into portable Solidity guarantees.
 ## Reproduce the observations
 
 ```bash
-./run-key.sh keyext.solidity.examples/contracts/solidikey/ArrayCopyShapes.sol --open-goals -m 20000
-./run-key.sh keyext.solidity.examples/contracts/solidikey/ArrayCopyShapes.sol --solc
+./run-key.sh keyext.solidity.examples/taclets/NestedArrays.sol --open-goals -m 20000
+./run-key.sh keyext.solidity.examples/taclets/NestedArrays.sol --solc
 ```
 
 To inspect the project's pinned compiler output after its soljson has been downloaded:
@@ -182,18 +182,18 @@ node <<'JS'
 const fs = require('fs');
 const solc = require('./keyext.solidity.core/build/soljson/soljson-v0.8.34+commit.80d5c536.js');
 const compile = solc.cwrap('solidity_compile', 'string', ['string', 'number', 'number']);
-const file = 'keyext.solidity.examples/contracts/solidikey/ArrayCopyShapes.sol';
+const file = 'keyext.solidity.examples/taclets/NestedArrays.sol';
 const input = {
     language: 'Solidity',
-    sources: { 'ArrayCopyShapes.sol': { content: fs.readFileSync(file, 'utf8') } },
+    sources: { 'NestedArrays.sol': { content: fs.readFileSync(file, 'utf8') } },
     settings: { viaIR: true, optimizer: { enabled: false },
         outputSelection: { '*': { '*': ['ir'] } } }
 };
 const output = JSON.parse(compile(JSON.stringify(input), 0, 0));
 for (const error of output.errors || []) process.stderr.write(error.formattedMessage);
 if ((output.errors || []).some(error => error.severity === 'error')) process.exit(1);
-fs.writeFileSync('/tmp/ArrayCopyShapes.ir.yul',
-    output.contracts['ArrayCopyShapes.sol'].ArrayCopyShapes.ir);
+fs.writeFileSync('/tmp/NestedArrays.ir.yul',
+    output.contracts['NestedArrays.sol'].NestedArrays.ir);
 JS
 ```
 

@@ -91,8 +91,8 @@ Array reset selectors compare each index with the original length: valid element
 while out-of-range data is preserved. Reference-element selection produces `delNodeIndex(st, i)`;
 its field selectors resolve the range test only when the child is read. The marker retains
 array-kind and shape invariant information from the original child. This avoids expanding
-conditional struct values that later writes overwrite; `ArrayCubeFDF.storageAssignmentCopiesDeeply`
-closes in 12,000 steps under its original 29,700-step budget.
+conditional struct values that later writes overwrite; `NestedArrays.cubeStorageCopyIsDeep`
+exercises it.
 The term comparator short-circuits identical term objects, avoiding recursive self-comparisons
 of the shared symbolic storage prefixes without changing the ordering result.
 Its comparison cache evicts individual old entries at the existing 100,000-entry limit,
@@ -151,12 +151,11 @@ Notes that are not derivable from the rule names:
   selector-split defaults. The sizes are static for a fixed-size target (its type), a dynamic one takes the
   source's (`d2 = d1` with `uint[9] d1` gives `d2.length == 9`, the source read at its sort
   `int[9]`), see `docs/storage.md` 8c.
-  `contracts/solidikey/ArrayCopyShapes.sol` checks both dimensions of a shorter nested fixed-array
-  copy, dynamic tail reuse, struct members, source independence, and self-copy through a
-  storage alias. `docs/array-copy-shapes.md` proposes a structural-induction proof against
+  `taclets/NestedArrays.sol` checks nested copies: both dimensions of a shorter fixed-array
+  copy, fixed dimensions becoming dynamic, and cubes across memory and storage.
+  `docs/array-copy-shapes.md` proposes a structural-induction proof against
   solc 0.8.34's generated copy/reset helpers and states the aliasing and clean-tail premises.
-  `docs/array-shape-coverage.md` indexes 76 matrix/cube examples built by breadth-first
-  expansion of fixed and dynamic dimensions and the memory/storage copy and alias edges.
+  `docs/array-shape-coverage.md` maps every nested-array shape and edge to its examples.
 
 #### Shortcut rules for reads over writes
 

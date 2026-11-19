@@ -659,6 +659,28 @@ contract StorageArrays {
         assert(dynMapsOfFixed[0][7][2] == 19);
     }
 
+    function testDeleteEntryOfMappingInArrayKeepsOtherKeys() public {
+        delete dynMapsOfFixed;
+        dynMapsOfFixed.push();
+        dynMapsOfFixed[0][7][2] = 19;
+        dynMapsOfFixed[0][8][1] = 23;
+        delete dynMapsOfFixed[0][7];
+        assert(dynMapsOfFixed.length == 1);
+        assert(dynMapsOfFixed[0][7].length == 3);
+        assert(dynMapsOfFixed[0][7][2] == 0);
+        assert(dynMapsOfFixed[0][8][1] == 23);
+    }
+
+    function testDeleteArrayOfMappingsOfFixedArraysKeepsEntries() public {
+        delete dynMapsOfFixed;
+        dynMapsOfFixed.push();
+        dynMapsOfFixed[0][7][2] = 19;
+        delete dynMapsOfFixed;
+        dynMapsOfFixed.push();
+        assert(dynMapsOfFixed[0][7].length == 3);
+        assert(dynMapsOfFixed[0][7][2] == 19);
+    }
+
     function testShapeCopyFixedTailAndSourceIndependence() public {
         copySmall[0] = 11;
         copySmall[19] = 12;
