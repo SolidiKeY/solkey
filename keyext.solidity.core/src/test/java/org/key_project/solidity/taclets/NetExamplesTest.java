@@ -19,8 +19,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/// Runs the `net` ledger examples — the `.key` problems of `keyext.solidity.examples/net/`
-/// covering `msg.sender`/`msg.value`, `.transfer` under both `transferSemantics` choices, and
+/// Runs the `net` ledger examples — the `.key` problems of
+/// `keyext.solidity.examples/contracts/solidikey-plain/obligations/` covering
+/// `msg.sender`/`msg.value`, `.transfer` under both `transferSemantics` choices, and
 /// the contract-invariant-at-transfer obligations (`CInv` via a per-problem `insertCInv`
 /// taclet, `docs/net.md`). They stay `.key`-based because the synthesized `.sol` obligations
 /// cannot carry an invariant, an antecedent (e.g. `to = self`), or the
@@ -36,14 +37,16 @@ public class NetExamplesTest {
     @ParameterizedTest(name = "{0}")
     @MethodSource("examples")
     void netExampleCloses(String name) throws Exception {
-        Path key = SolidityExampleTests.example(ExampleDirs.NET_OBLIGATIONS + "/" + name);
+        Path key =
+            SolidityExampleTests.example(ExampleDirs.SOLIDIKEY_PLAIN_OBLIGATIONS + "/" + name);
         Proof proof = SolidityExampleTests.loadAndProve(key, 50000, 30000);
         assertTrue(proof.closed(), () -> SolidityExampleTests.describeOpenGoals(name, proof));
     }
 
     static Stream<Arguments> examples() throws IOException {
         return SolidityExampleTests
-                .keyFiles(SolidityExampleTests.examplesDir(ExampleDirs.NET_OBLIGATIONS)).stream()
+                .keyFiles(SolidityExampleTests.examplesDir(ExampleDirs.SOLIDIKEY_PLAIN_OBLIGATIONS))
+                .stream()
                 .map(p -> Arguments.of(p.getFileName().toString()));
     }
 

@@ -6,7 +6,8 @@ implemented in this fork. The ledger, `msg.sender`/`msg.value`, both
 `transfer` semantics and phase 1 of the contract invariant are implemented;
 §4 lists what is left. Rules live in `solidityProgramRules.key` under the
 "Rules for address payments" banner (`scripts/taclet.sh --index`); examples
-and their proof obligations are in `keyext.solidity.examples/net/`.
+are in `keyext.solidity.examples/contracts/solidikey-plain/`, their proof obligations in its
+`obligations/`.
 
 Beyond the paper, the diamond transfer rules owe `0 <= v` as a
 "non-negative amount" goal (the EVM's value field is unsigned) and
@@ -145,7 +146,7 @@ Mapped to this repository, roughly in order of usefulness:
    (`speclang/natspec/`, documented in
    `keyext.solidity.examples/README.md`). `SolidityProblemSynthesizer`
    compiles them into the generated `.key` text: the `insertCInv` taclet and
-   the eq.-4 problem, exactly the shape of the hand-written `net/obligations/*.key`.
+   the eq.-4 problem, exactly the shape of the hand-written `contracts/solidikey-plain/obligations/*.key`.
    `net(a)` lowers to `selectSt<[int]>(net, at(a))`, `\old(e)` against the
    `old`/`oldNet` variables. Not done: feeding the clauses into a
    `SpecificationRepository` so a callback varcond could look them up; the
@@ -192,7 +193,7 @@ open proofs there are the expected result, not a regression.
 
 Every taclet example lives in `keyext.solidity.examples/taclets/` and is called as
 `f()@File`. The `net` examples call functions of the dedicated
-`keyext.solidity.examples/net/PiggyBankNet.sol` instead, because solc's typing rules would
+`keyext.solidity.examples/contracts/solidikey-plain/PiggyBankNet.sol` instead, because solc's typing rules would
 leak into the taclet contracts: `msg.value` is only allowed in a `payable` function, and
 `.transfer` requires `address payable` receivers. `SolJSONParser` handles both forms since
 `parseMemberAccess` learned them (an identifier base named `msg` with a negative

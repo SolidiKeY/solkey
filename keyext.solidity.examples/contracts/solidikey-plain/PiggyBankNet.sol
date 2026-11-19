@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 // Course PiggyBank1 (SolidityCalculus/maltaCourseKey/piggybank) in the supported
 // fragment: the PiggyBankState enum is a uint (0 Unused, 1 InUse, 2 Broken), modifiers
 // are inlined requires, `now` is the timeNow state variable, `365 days` is 31536000.
-// Verified per function by the piggybank-*.key problems beside this file against the
+// Verified per function by the piggybank-*.key problems of obligations/ against the
 // course invariant
 //   state != Broken -> balance == net(owner),
 //   state == Broken -> net(owner) == 0.

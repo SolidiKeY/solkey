@@ -137,7 +137,7 @@ public class SolidityProblemSynthesizerTest {
 
     @Test
     void anAddressParameterIsDeclaredAsAnInt() throws IOException {
-        Path file = SolidityExampleTests.example(ExampleDirs.NET + "/PiggyBankNet.sol");
+        Path file = SolidityExampleTests.example(ExampleDirs.SOLIDIKEY_PLAIN + "/PiggyBankNet.sol");
 
         String text =
             SolidityProblemSynthesizer.problemText(file, spec("PiggyBankNet", "payToPlus"));

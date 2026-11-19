@@ -125,7 +125,7 @@ Three shapes have no `assert` form and are not covered by any example:
   out-of-bounds array access used to be checked this way.
 - **The `net` payment ledger** (`docs/net.md`) — needs a `\rules` block to define `CInv`
   and an obligation that books `msg.value`, which the plain `assert`-style obligation does
-  not carry. Covered by the `.key` problems of `net/` (see `../net/README.md` below) and,
+  not carry. Covered by the `.key` problems of `contracts/solidikey-plain/obligations/` (see `../contracts/solidikey-plain/README.md`) and,
   since the `@custom:key` clauses exist, by the specified contracts of `../contracts/`, whose
   obligation is generated in exactly that shape. (Taclet *options* a plain obligation can
   take too: `run-key.sh -O category:choice`, e.g. `-O transferSemantics:withCallback`.)

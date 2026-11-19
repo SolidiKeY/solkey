@@ -8,6 +8,7 @@ by `ContractExamplesTest` (except `benchmark/`):
 | `solidikey/` | the example contracts of solidiKeY |
 | `real-world/` | published contracts, rewritten until every function closes; `open/` keeps what does not close yet |
 | `real-world-plain/` | `real-world/` with its specification written as `require` and `assert` (see below) |
+| `solidikey-plain/` | the `net` scenario contracts (`PiggyBankNet`, `EscrowNet`, `AuctionNet`, `AuctionWithdrawNet`, `CasinoNet`) without `@custom:key` clauses, proved by the `.key` problems of `solidikey-plain/obligations/` (`solidikey-plain/README.md`); not run by `ContractExamplesTest` |
 | `benchmark/` | published contracts kept as published, to measure what SolKey verifies without a rewrite (`benchmark/README.md`) |
 
 `real-world-plain/` mirrors `real-world/` with its specification written in the code: each
@@ -55,7 +56,7 @@ only_if … on_success … */` blocks into a `.key` problem. Here the same speci
 every function runs with `./run-key.sh contracts/solidikey/Escrow.sol -f placeInEscrow`, with the whole
 file (`./run-key.sh contracts/solidikey/Escrow.sol`), and in KeYther (open the file, pick the function;
 the browser's header says what it is proved against). `--print-problem` prints the generated
-`.key` text, which is the `net/obligations/*.key` shape: an `insertCInv` taclet defining `CInv(cinv$s, cinv$n)` as
+`.key` text, which is the `solidikey-plain/obligations/*.key` shape: an `insertCInv` taclet defining `CInv(cinv$s, cinv$n)` as
 the conjoined invariants, and the ISoLA 2020 eq.-4 problem
 
 ```
@@ -120,7 +121,7 @@ list every row.
   original's extra `\forall address a; …` "no third party pays" conjunct is left out — it
   would need the callee-side reasoning of `withdrawFromEscrow`'s transfer.
 - **`PiggyBank.sol`** — PiggyBank1 with its enum; the original carried no specification, so
-  the course invariant of `../net/PiggyBankNet.sol` is used and the modifier conditions become
+  the course invariant of `solidikey-plain/PiggyBankNet.sol` is used and the modifier conditions become
   `requires`. Both functions close.
 - **`MultiAuction.sol`** — the quantified invariant ported as written (`\exists address hb;
   \forall address a; …`, array membership via `\exists uint i; … bidders[i] == a`,
@@ -140,10 +141,10 @@ list every row.
   states what the body does.)
 
 Not ported: `multicontract/MultiAuction.sol` (a `library` with a struct-with-mapping parameter;
-libraries are unsupported) and `text/`. The `net/obligations/*.key` problems stay as the hand-written
+libraries are unsupported) and `text/`. The `solidikey-plain/obligations/*.key` problems stay as the hand-written
 reference for the same obligation shape.
 
-Every body follows the calculus conventions listed in `../net/README.md`: modifiers
+Every body follows the calculus conventions listed in `solidikey-plain/README.md`: modifiers
 are inlined requires (written before the prover inlined modifiers itself), `now` is a `timeNow` state variable, a storage read inside a comparison
 or a compound expression is bound to a local first. `ContractExamplesTest` enumerates the
 directory (the CI-only `solidityExamples` group), so a new contract joins by being written.
@@ -158,7 +159,7 @@ Those changes are only what the supported fragment forces: events, custom errors
 messages are dropped; a call inside a modifier is replaced by the callee's body, libraries are
 inlined and inheritance is flattened (each crashes the loader, `docs/bugs.md`); `bytes32`
 becomes `uint256`; struct constructors become `push()` plus field writes; `block.timestamp`
-becomes `timeNow`; storage reads are bound to locals as described in `../net/README.md`, "Calculus conventions";
+becomes `timeNow`; storage reads are bound to locals as described in `solidikey-plain/README.md`, "Calculus conventions";
 and return values are named, since an obligation refers to them by name. `ContractExamplesTest`
 enumerates this directory (not `real-world/open/`).
 

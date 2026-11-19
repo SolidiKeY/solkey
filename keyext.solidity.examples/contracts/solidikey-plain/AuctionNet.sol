@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 // Course transfer-last OneAuction (SolidityCalculus/maltaCourseKey/auction-transfer-last)
 // in the supported fragment: the AuctionMode enum is a uint (0 NeverStarted, 1 Open,
 // 2 Closed), modifiers are inlined requires, `now` is the timeNow state variable.
-// Verified per function by the auction-*.key problems beside this file against the course
+// Verified per function by the auction-*.key problems of obligations/ against the course
 // invariant
 //   bid == net(bidder) + net(owner),
 //   net(owner) <= 0,

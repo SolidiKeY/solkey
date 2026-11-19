@@ -139,7 +139,8 @@ contracts): use `/tmp`.
 
 Add new taclet examples as functions of the matching `keyext.solidity.examples/taclets/` file, and
 scenario/invariant examples as contracts plus `.key` obligations in
-`keyext.solidity.examples/net/`; conventions for both are in that module's `README.md`. After
+`keyext.solidity.examples/contracts/solidikey-plain/` (obligations in its `obligations/`); conventions for both are in that module's
+`README.md` and in `contracts/solidikey-plain/README.md`. After
 changing a feature, update `docs/taclets-implementation.md` (implemented) or
 `docs/taclet-ideas.md` (backlog).
 

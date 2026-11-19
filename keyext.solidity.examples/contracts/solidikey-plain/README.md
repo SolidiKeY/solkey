@@ -1,9 +1,9 @@
 # Net scenario examples
 
-`net/` holds the scenario contracts and their `net`-ledger proof obligations
+`solidikey-plain/` holds the `net`-ledger scenario contracts and, in `obligations/`, their proof obligations
 (`docs/net.md`). Each contract is real Solidity — `payable` functions reading
 `msg.sender`/`msg.value`, `address payable` receivers, `.transfer`, `payable(...)` casts
-— and each `.key` problem beside it verifies one function by calling it in the modality,
+— and each `.key` problem of `obligations/` verifies one function by calling it in the modality,
 solidiKeY-style, against a contract invariant supplied by a per-problem `insertCInv`
 taclet:
 

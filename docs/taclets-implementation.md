@@ -841,8 +841,8 @@ the one supported shape, `(bool ok, ) = a.call{value: v}("")`, to `bool ok = a.s
 other `call` (a second option such as `gas`, non-empty data, a used `bytes` result, or no
 `{value: …}`) is a `SolidityParseException`: tuples are assigned only from tuples and internal
 calls (see "Function-body inlining"). Examples:
-`send*` and `callToSender` in `taclets/Payments.sol`, and `net/obligations/net-send-simple.key` and
-`net/obligations/net-call-withcallback-simple.key`.
+`send*` and `callToSender` in `taclets/Payments.sol`, and `contracts/solidikey-plain/obligations/net-send-simple.key` and
+`contracts/solidikey-plain/obligations/net-call-withcallback-simple.key`.
 
 ### Loops (`while`, `for`, `do … while`, `break`, `continue`)
 
@@ -1264,7 +1264,7 @@ A `.sol` function whose contract carries `@custom:key invariant` clauses, or whi
 compiles the clauses (`speclang/natspec/`: `KeyNatspec` splits the natspec text, `SpecParser`
 parses an expression with the ANTLR grammar `SolSpec.g4`, `SpecCompiler` — a visitor over
 that parse tree — emits the `.key` term text) into the same generated `.key`
-problem the `net/obligations/*.key` files spell out by hand — an `insertCInv` rewrite taclet defining
+problem the `contracts/solidikey-plain/obligations/*.key` files spell out by hand — an `insertCInv` rewrite taclet defining
 `CInv(cinv$s, cinv$n)` as the conjoined invariants (schema variables no spec identifier can name;
 the invariant may not mention `msg.sender`/`msg.value`), and the ISoLA 2020 eq.-4 problem: `msg.value` bound,
 requires, `CInv(storage, net)` in the antecedent; the ledger booking

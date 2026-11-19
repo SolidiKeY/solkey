@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 // Course escrow-v2 (SolidityCalculus/maltaCourseKey/escrow) in the supported fragment:
 // the State enum is a uint (0 AwaitingDeposit, 1 DepositPlaced, 2 Withdrawn), modifiers
 // are inlined requires, `now` is the timeNow state variable. Verified per function by the
-// escrow-*.key problems beside this file against the course invariant
+// escrow-*.key problems of obligations/ against the course invariant
 //   sender != receiver,
 //   amountInEscrow == net(sender) + net(receiver),
 //   state == AwaitingDeposit -> net(sender) == 0,

@@ -5,8 +5,7 @@
 | `taclets/` | one function per taclet example, grouped by theme (`taclets/README.md`: how to write one) | `TacletStarterExamplesTest`, `PaperTestExamplesTest`, `SolidityRuntimeExecutionTest` |
 | `coverage/` | saved proofs for the taclets no `taclets/` function reaches | `TacletCoverageTest` |
 | `semantics/` | ports of the Solidity compiler's own tests; `open/` keeps what does not close yet | `SolcSemanticsExamplesTest`, `OpenExamplesStayOpenTest` |
-| `contracts/` | contracts specified in `@custom:key` clauses: solidiKeY's, published ones, and a benchmark | `ContractExamplesTest`, `OpenExamplesStayOpenTest`, `scripts/benchmark.sh` |
-| `net/` | scenario contracts and their `net`-ledger `.key` obligations (`obligations/`) | `NetExamplesTest` |
+| `contracts/` | contracts specified in `@custom:key` clauses: solidiKeY's, published ones, and a benchmark; `solidikey-plain/` holds the `net` scenario contracts with their `.key` obligations | `ContractExamplesTest`, `OpenExamplesStayOpenTest`, `scripts/benchmark.sh`, `NetExamplesTest` |
 | `negative/` | what the calculus does not model (`unprovable/`), true claims that must stay open because no clean storage tail is assumed (`no-clean-tail/`) and what solc rejects (`illegal/`) | `NoCleanTailExamplesStayOpenTest`, `IllegalExamplesCompileTest` |
 
 Each directory's `README.md` describes it. The directory names are constants of the test class

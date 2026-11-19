@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 // Casino (SolidityCalculus/SimpleCasino) in the supported fragment. The course ships no
 // .key obligations for it, so the invariant here is our own money-conservation one over
-// the net ledger (the casino-*.key problems beside this file):
+// the net ledger (the casino-*.key problems of obligations/):
 //   state != BET_PLACED -> net(operator) + net(player) == pot,
 //   state == BET_PLACED -> net(operator) + net(player) == pot + bet.
 // decideBet resolves by the parity of the revealed secret and pays the win with the
