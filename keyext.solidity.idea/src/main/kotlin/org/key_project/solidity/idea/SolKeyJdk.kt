@@ -3,6 +3,7 @@ package org.key_project.solidity.idea
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ProjectRootManager
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -35,7 +36,25 @@ object SolKeyJdk {
         System.getenv("JAVA_HOME"),
         runCatching { ProjectRootManager.getInstance(project).projectSdk?.homePath }.getOrNull(),
         System.getProperty("java.home"),
-    )
+    ) + registeredJdkHomes() + installedJdkHomes()
+
+    private fun registeredJdkHomes(): List<String> = runCatching {
+        ProjectJdkTable.getInstance().allJdks.mapNotNull { it.homePath }
+    }.getOrDefault(emptyList())
+
+    private fun installedJdkHomes(): List<String> {
+        val home = System.getProperty("user.home")
+        return listOf(
+            File(home, ".jdks"),
+            File(home, ".gradle/jdks"),
+            File("/usr/lib/jvm"),
+            File("/Library/Java/JavaVirtualMachines"),
+        ).flatMap { dir ->
+            dir.listFiles()?.sortedBy { it.name }?.flatMap { jdk ->
+                listOf(jdk.path, File(jdk, "Contents/Home").path)
+            } ?: emptyList()
+        }
+    }
 
     private fun executableIn(home: String): String? {
         val name = if (isWindows()) "java.exe" else "java"

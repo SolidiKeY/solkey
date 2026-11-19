@@ -106,7 +106,9 @@ first contract under a newer JVM. `run-key.sh` hunts for a 21 for the same reaso
 
 The plugin used to run whatever JVM the IDE itself runs on, which works only for as long as the
 JBR stays 21. It now takes the first JDK 21 of: **Settings → Tools → SolKey → JDK 21 home**,
-`SOLKEY_JAVA_HOME`, `JAVA_HOME`, the project SDK, the IDE's own JVM. None of them a 21 and the
+`SOLKEY_JAVA_HOME`, `JAVA_HOME`, the project SDK, the IDE's own JVM, every JDK registered in the
+IDE, then `~/.jdks`, `~/.gradle/jdks`, `/usr/lib/jvm` and `/Library/Java/JavaVirtualMachines`.
+An SDK *named* 21 does not count: on Arch `/usr/lib/jvm/default` follows the newest JDK. None a 21 and the
 click says so in a notification instead of failing with a Truffle stack trace.
 
 Inside a checkout it also picks up the Graal compiler jars `shadowJar` stages beside the fat jar
