@@ -1,7 +1,7 @@
 package org.key_project.solidity.idea
 
 /**
- * A public function declaration found in the text of a `.sol` file. [contract] is null for a
+ * A public or external function declaration found in a `.sol` file. [contract] is null for a
  * file-level (free) function; [offset] is the offset of the `function` keyword and [endOffset] the
  * offset just past its body, so a caret can be resolved to the function it sits in.
  */
@@ -10,6 +10,7 @@ data class SolFunction(
     val name: String,
     val offset: Int,
     val endOffset: Int,
+    val hasParameters: Boolean,
 ) {
     operator fun contains(caret: Int): Boolean = caret in offset until endOffset
 }
@@ -45,7 +46,7 @@ data class SolOutline(
  * A false positive here costs one error dialog, a false negative one missing icon.
  *
  * Matching `SolidityOutline.functionsOf`, a declaration qualifies when it is a `function` (not a
- * constructor, modifier, `receive` or `fallback`), is `public`, and has a body.
+ * constructor, modifier, `receive` or `fallback`), is `public` or `external`, and has a body.
  */
 object SolFunctionScanner {
 
@@ -133,16 +134,18 @@ object SolFunctionScanner {
         contract: String?,
     ): Pair<SolFunction, Int>? {
         val name = readIdentifierAfter(text, nameStart) ?: return null
-        val afterParameters = skipBalancedParentheses(text, name.second) ?: return null
+        val parametersStart = skipTrivia(text, name.second)
+        val afterParameters = skipBalancedParentheses(text, parametersStart) ?: return null
+        val hasParameters = skipTrivia(text, parametersStart + 1) < afterParameters - 1
         // Everything from the parameter list to the body or the semicolon: the modifier run.
         val (modifiers, end, hasBody) = readModifierRun(text, afterParameters)
-        if (!hasBody || !containsWord(modifiers, "public")) {
+        if (!hasBody || !(containsWord(modifiers, "public") || containsWord(modifiers, "external"))) {
             return null
         }
         // Looked at, not consumed: the main loop still walks the body, so its braces keep the
         // container stack balanced.
         val bodyEnd = skipBalancedBraces(text, end) ?: text.length
-        return SolFunction(contract, name.first, keywordStart, bodyEnd) to end
+        return SolFunction(contract, name.first, keywordStart, bodyEnd, hasParameters) to end
     }
 
     /**
@@ -189,10 +192,15 @@ object SolFunctionScanner {
         while (i < text.length) {
             val c = text[i]
             when {
-                c == '/' && i + 1 < text.length && text[i + 1] == '/' -> i = skipLineComment(text, i)
-                c == '/' && i + 1 < text.length && text[i + 1] == '*' -> i = skipBlockComment(text, i)
+                c == '/' && i + 1 < text.length && text[i + 1] in "/*" -> {
+                    run.append(' ')
+                    i = skipTrivia(text, i)
+                }
                 c == '"' || c == '\'' -> i = skipString(text, i)
-                c == '(' -> i = skipBalancedParentheses(text, i) ?: text.length
+                c == '(' -> {
+                    run.append(' ')
+                    i = skipBalancedParentheses(text, i) ?: text.length
+                }
                 // Stop *at* the terminator, never past it: the main loop owns the brace stack, and
                 // swallowing the body's `{` here would make its `}` pop the contract's frame.
                 c == '{' -> return Triple(run.toString(), i, true)
@@ -244,16 +252,15 @@ object SolFunctionScanner {
     }
 
     /**
-     * Skips the parenthesised group starting at the next `(` after [from], and returns the offset
+     * Skips the parenthesised group starting at [from], and returns the offset
      * just past its matching `)`. Null when there is no `(` there or it is never closed.
      */
     private fun skipBalancedParentheses(text: CharSequence, from: Int): Int? {
-        val start = skipTrivia(text, from)
-        if (start >= text.length || text[start] != '(') {
+        if (from >= text.length || text[from] != '(') {
             return null
         }
         var depth = 0
-        var i = start
+        var i = from
         while (i < text.length) {
             val c = text[i]
             when {

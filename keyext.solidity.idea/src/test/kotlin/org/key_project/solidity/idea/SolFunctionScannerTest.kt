@@ -30,18 +30,18 @@ class SolFunctionScannerTest {
     }
 
     @Test
-    fun `only public functions are offered`() {
+    fun `public and external functions are offered`() {
         val source = """
             contract A {
                 function pub() public { }
                 function inter() internal { }
                 function priv() private { }
-                function ext() external { }
+                function ext(uint value) external { }
                 function bare() { }
             }
         """.trimIndent()
 
-        assertEquals(listOf("A.pub"), names(source))
+        assertEquals(listOf("A.pub", "A.ext"), names(source))
     }
 
     /**
@@ -56,7 +56,26 @@ class SolFunctionScannerTest {
             }
         """.trimIndent()
 
-        assertEquals(listOf("A.f"), names(source))
+        val function = SolFunctionScanner.scan(source).single()
+        assertEquals("f", function.name)
+        assertTrue(function.hasParameters)
+    }
+
+    @Test
+    fun `only declarations with real parameters count as parameterized`() {
+        val source = """
+            contract A {
+                function f /* comment */(
+                    /* comment with ) */ uint amount
+                ) onlyOwner(amount)external { }
+                function g(/* comment */)external/**/view returns (uint) { return 1; }
+            }
+        """.trimIndent()
+
+        assertEquals(
+            listOf("f" to true, "g" to false),
+            SolFunctionScanner.scan(source).map { it.name to it.hasParameters },
+        )
     }
 
     /** `returns (uint)` and a modifier call both put parentheses in the modifier run. */

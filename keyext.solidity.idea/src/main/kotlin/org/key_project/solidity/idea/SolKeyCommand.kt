@@ -51,6 +51,9 @@ enum class SolKeyTool(
     );
 
     val usesCoreJar: Boolean get() = jar == CORE_JAR
+
+    fun isAvailableFor(target: SolKeyTarget): Boolean =
+        this != SOLC || target !is SolKeyTarget.Function || !target.function.hasParameters
 }
 
 private const val CORE_JAR = "keyext.solidity.core/build/libs/keyext.solidity.core-exe.jar"

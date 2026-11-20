@@ -21,7 +21,7 @@ import com.intellij.util.Alarm
 import javax.swing.Icon
 
 /**
- * Puts a ▶ in the gutter beside every contract and every public function of an open `.sol` file.
+ * Puts a ▶ in the gutter beside contracts and public or external functions of an open `.sol` file.
  *
  * The icons live in the editor's own markup model rather than coming from a `LineMarkerProvider`,
  * because that extension point is registered per language and the IDE only knows Solidity when a
@@ -133,7 +133,7 @@ private class ProveGutterIconRenderer(
     }
 
     override fun getTooltipText(): String =
-        "Prove ${target.label} in KeYther (right-click for the headless prover and solc)"
+        "Prove ${target.label} in KeYther (right-click for more actions)"
 
     override fun getAlignment(): Alignment = Alignment.LEFT
 
@@ -147,9 +147,10 @@ private class ProveGutterIconRenderer(
     override fun getClickAction(): AnAction =
         SolKeyRunAction(SolKeyTool.KEY_GUI, project, file, target)
 
-    /** Right click offers all three tools on the same target. */
+    /** Right click offers the tools available for the target. */
     override fun getPopupMenuActions(): ActionGroup = DefaultActionGroup(
-        SolKeyTool.entries.map { SolKeyRunAction(it, project, file, target) },
+        SolKeyTool.entries.filter { it.isAvailableFor(target) }
+            .map { SolKeyRunAction(it, project, file, target) },
     )
 
     override fun equals(other: Any?): Boolean =

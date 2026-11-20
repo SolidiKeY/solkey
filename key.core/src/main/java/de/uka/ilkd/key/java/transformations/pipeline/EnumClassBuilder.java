@@ -3,9 +3,6 @@
  * SPDX-License-Identifier: GPL-2.0-only */
 package de.uka.ilkd.key.java.transformations.pipeline;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.EnumDeclaration;
 import com.github.javaparser.ast.expr.FieldAccessExpr;
@@ -20,18 +17,12 @@ import com.github.javaparser.symbolsolver.javaparsermodel.declarations.JavaParse
 /// @since 2006-11-20
 /// @version 2026-03-03
 public class EnumClassBuilder extends JavaTransformerAbstract {
-    /// a mapping of enums to the newly created class declarations.
-    final Map<EnumDeclaration, EnumClassDeclaration> substitutes = new LinkedHashMap<>();
-
     public EnumClassBuilder(TransformationPipelineServices pipelineServices) {
         super(pipelineServices);
     }
 
     @Override
     public void apply(CompilationUnit cu) {
-        cu.walk(EnumDeclaration.class, it -> {
-            substitutes.put(it, new EnumClassDeclaration(it));
-        });
         cu.walk(NameExpr.class, it -> {
             if (it.getParentNode().isPresent() && it.getParentNode().get() instanceof SwitchEntry
                     && it.resolve() instanceof JavaParserEnumConstantDeclaration ed) {
@@ -39,8 +30,8 @@ public class EnumClassBuilder extends JavaTransformerAbstract {
                     new FieldAccessExpr(new NameExpr(ed.getType().toString()), ed.getName()));
             }
         });
-        for (var e : substitutes.entrySet()) {
-            e.getKey().replace(e.getValue());
+        for (var declaration : cu.findAll(EnumDeclaration.class)) {
+            declaration.replace(new EnumClassDeclaration(declaration));
         }
     }
 }

@@ -39,6 +39,9 @@ object SolKeyLauncher {
      * — which also rebuilds the jar, so the click after an edit to SolKey is the only slow one.
      */
     fun launch(project: Project, tool: SolKeyTool, file: VirtualFile, target: SolKeyTarget) {
+        if (!tool.isAvailableFor(target)) {
+            return
+        }
         // Every tool here is a separate process that reads the file from disk. Without this, an
         // edit still sitting in the editor is invisible to it, and the run silently reports on
         // the previous version of the contract — which looks exactly like a tool that does not

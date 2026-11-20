@@ -11,8 +11,8 @@ import org.junit.jupiter.api.Test
 class SolKeyCommandTest {
 
     private val path = "/tmp/TestSuite.sol"
-    private val function = SolKeyTarget.Function(SolFunction("TestSuite", "testAssert", 0, 10))
-    private val freeFunction = SolKeyTarget.Function(SolFunction(null, "free", 0, 10))
+    private val function = SolKeyTarget.Function(SolFunction("TestSuite", "testAssert", 0, 10, false))
+    private val freeFunction = SolKeyTarget.Function(SolFunction(null, "free", 0, 10, false))
     private val contract = SolKeyTarget.Contract(SolContract("TestSuite", 0, 100))
 
     private fun arguments(tool: SolKeyTool, target: SolKeyTarget) =
@@ -72,6 +72,19 @@ class SolKeyCommandTest {
             listOf(path, "--solc", "--contract", "TestSuite"),
             arguments(SolKeyTool.SOLC, contract),
         )
+    }
+
+    @Test
+    fun `parameterized functions offer both KeY tools and contracts still offer solc`() {
+        val parameterized = SolKeyTarget.Function(function.function.copy(hasParameters = true))
+
+        assertEquals(
+            listOf(SolKeyTool.KEY_GUI, SolKeyTool.KEY_HEADLESS),
+            SolKeyTool.entries.filter { it.isAvailableFor(parameterized) },
+        )
+        assertEquals(SolKeyTool.entries, SolKeyTool.entries.filter { it.isAvailableFor(function) })
+        assertEquals(SolKeyTool.entries, SolKeyTool.entries.filter { it.isAvailableFor(contract) })
+        assertEquals(arguments(SolKeyTool.KEY_GUI, function), arguments(SolKeyTool.KEY_GUI, parameterized))
     }
 
     @Test

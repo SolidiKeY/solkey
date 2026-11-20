@@ -6,16 +6,15 @@
     <description><![CDATA[
         Prove a Solidity contract or function with KeY.
         <p>
-        Click the ▶ beside any public function in a <code>.sol</code> file to open KeYther, the
+        Click the ▶ beside a public or external function in a <code>.sol</code> file to open KeYther, the
         SolKey prover GUI, on that function's proof obligation — no function picker in between.
-        A function no obligation can be generated for (one that returns a value, or takes a
-        parameter with no <code>.key</code> sort) is refused with the reason. The ▶ beside a
+        If KeYther cannot generate an obligation, it reports the reason, such as an unnamed
+        return value or a parameter with no <code>.key</code> sort. The ▶ beside a
         <code>contract</code> covers every function it declares.
         <p>
-        Right-click a ▶ for the other two tools on the same target: the headless prover, which
-        reports <code>N/M closed</code> and the remaining sequents in a console, and solc, which
-        compiles the contract and runs it on an in-process EVM — so a failing
-        <code>assert</code> is reported as such, without a proof.
+        Right-click a ▶ for the headless prover, which reports <code>N/M closed</code> and the
+        remaining sequents in a console. Contracts and functions without parameters also offer
+        Compile and Run (solc + EVM), which reports any failing <code>assert</code>.
         <p>
         No Solidity language plugin is required: the declarations are found by scanning the file.
         <p>

@@ -26,12 +26,21 @@ open class SolKeyRunAction(
 
     override fun update(e: AnActionEvent) {
         if (target != null) {
-            e.presentation.isEnabledAndVisible = true
+            e.presentation.isEnabledAndVisible = tool.isAvailableFor(target)
             return
         }
         val editorFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
-        e.presentation.isEnabledAndVisible =
-            e.project != null && editorFile?.extension.equals("sol", ignoreCase = true)
+        if (e.project == null || !editorFile?.extension.equals("sol", ignoreCase = true)) {
+            e.presentation.isEnabledAndVisible = false
+            return
+        }
+        val atCaret = if (tool == SolKeyTool.SOLC) {
+            e.getData(CommonDataKeys.EDITOR)?.let(::targetAtCaret)
+        } else {
+            null
+        }
+        e.presentation.isEnabledAndVisible = tool != SolKeyTool.SOLC ||
+            (atCaret != null && tool.isAvailableFor(atCaret))
     }
 
     override fun actionPerformed(e: AnActionEvent) {
@@ -47,7 +56,7 @@ open class SolKeyRunAction(
             Messages.showErrorDialog(
                 inProject,
                 "The caret is outside every contract in this file. Put it inside one — or " +
-                    "inside a public function, to run on that function alone — or click a ▶ in " +
+                    "inside a public or external function, to run on that function alone — or click a ▶ in " +
                     "the gutter.",
                 "Nothing to Run at the Caret",
             )
@@ -57,8 +66,7 @@ open class SolKeyRunAction(
     }
 
     /**
-     * The narrowest thing the caret sits in: a public function if it is inside one, otherwise the
-     * contract around it. Smallest wins, so a `library` inside a `contract` is the one picked.
+     * The narrowest thing the caret sits in: a public or external function, or the enclosing contract.
      */
     private fun targetAtCaret(editor: Editor): SolKeyTarget? {
         val caret = editor.caretModel.offset

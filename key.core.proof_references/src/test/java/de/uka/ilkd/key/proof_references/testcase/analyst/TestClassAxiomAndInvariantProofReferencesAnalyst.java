@@ -27,7 +27,7 @@ public class TestClassAxiomAndInvariantProofReferencesAnalyst
             new ClassAxiomAndInvariantProofReferencesAnalyst(),
             element -> IProofReference.USE_INVARIANT.equals(element.getKind()),
             new ExpectedProofReferences(IProofReference.USE_INVARIANT,
-                "and(geq(select<[int]>(heap,self,Child::$x),Z(0(#))),leq(select<[int]>(heap,self,Child::$x),Z(0(1(#)))))<<SC>>"));
+                "and(geq(select<[int]>(heap,self,Child::#x),Z(0(#))),leq(select<[int]>(heap,self,Child::#x),Z(0(1(#)))))<<SC>>"));
     }
 
     /**
@@ -41,7 +41,7 @@ public class TestClassAxiomAndInvariantProofReferencesAnalyst
             new ClassAxiomAndInvariantProofReferencesAnalyst(),
             element -> IProofReference.USE_AXIOM.equals(element.getKind()),
             new ExpectedProofReferences(IProofReference.USE_AXIOM,
-                "equiv(java.lang.Object::$inv(heap,self),not(equals(Child::select(heap,self,InvariantInOperationContract::$child),null))<<impl>>)"));
+                "equiv(java.lang.Object::$inv(heap,self),not(equals(select<[Child]>(heap,self,InvariantInOperationContract::#child),null))<<impl>>)"));
     }
 
     /**
@@ -55,7 +55,7 @@ public class TestClassAxiomAndInvariantProofReferencesAnalyst
             new ClassAxiomAndInvariantProofReferencesAnalyst(),
             element -> IProofReference.USE_AXIOM.equals(element.getKind()),
             new ExpectedProofReferences(IProofReference.USE_AXIOM,
-                "equiv(java.lang.Object::$inv(heap,self),not(equals(ChildContainer::select(heap,self,NestedInvariantInOperationContract::$cc),null))<<impl>>)"));
+                "equiv(java.lang.Object::$inv(heap,self),not(equals(select<[ChildContainer]>(heap,self,NestedInvariantInOperationContract::#cc),null))<<impl>>)"));
     }
 
     /**
@@ -69,21 +69,21 @@ public class TestClassAxiomAndInvariantProofReferencesAnalyst
             new ExpectedProofReferences(IProofReference.USE_AXIOM,
                 "equiv(java.lang.Object::$inv(heap,self),true)"),
             new ExpectedProofReferences(IProofReference.USE_AXIOM,
-                "equals(test.ModelFieldTest::$f(heap,self),mul(Z(2(#)),select<[int]>(heap,self,test.ModelFieldTest::$x)))"));
+                "equals(test.ModelFieldTest::f(heap,self),mul(Z(2(#)),select<[int]>(heap,self,test.ModelFieldTest::#x)))"));
     }
 
     /**
-     * Tests "ModelFieldTest#test.ModelFieldTest::$f".
+     * Tests "ModelFieldTest#test.ModelFieldTest::f".
      */
     @Test
     public void testModelFieldTest_f() throws Exception {
         doReferenceFunctionTest(TESTCASE_DIRECTORY,
             "/proofReferences/ModelFieldTest/ModelFieldTest.java", "test.ModelFieldTest",
-            "test.ModelFieldTest::$f", false, new ClassAxiomAndInvariantProofReferencesAnalyst(),
+            "test.ModelFieldTest::f", false, new ClassAxiomAndInvariantProofReferencesAnalyst(),
             new ExpectedProofReferences(IProofReference.USE_AXIOM,
                 "equiv(java.lang.Object::$inv(heap,self),true)"),
             new ExpectedProofReferences(IProofReference.USE_AXIOM,
-                "equals(test.ModelFieldTest::$f(heap,self),mul(Z(2(#)),select<[int]>(heap,self,test.ModelFieldTest::$x)))"));
+                "equals(test.ModelFieldTest::f(heap,self),mul(Z(2(#)),select<[int]>(heap,self,test.ModelFieldTest::#x)))"));
     }
 
     /**

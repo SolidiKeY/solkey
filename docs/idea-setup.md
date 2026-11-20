@@ -15,20 +15,18 @@ Three entry points, narrowest first:
 
 ## Click ▶ beside a function or a contract → run it
 
-The `keyext.solidity.idea` module is an IDEA plugin that draws a ▶ in the gutter beside every
-public function of an open `.sol` file, and beside every `contract` in it. Clicking a function's
-icon opens KeYther straight on that function's proof — no picker in between. A function no
-obligation can be generated for (it returns a value, or takes a parameter with no `.key` sort) is
-refused with the reason rather than falling back to the picker.
+The `keyext.solidity.idea` module is an IDEA plugin that draws a ▶ in the gutter beside each
+contract and each public or external function with a body in an open `.sol` file. Clicking a
+function's icon opens its proof in KeYther. If KeYther cannot generate a proof obligation, it
+reports the reason, such as an unnamed return value or a parameter with no `.key` sort.
 
-**Right-click** either icon for the three tools a SolKey checkout offers, all on whatever the icon
-sits beside:
+**Right-click** either icon for the tools available on that target.
 
 | Tool | What it runs | Where it reports |
 |---|---|---|
 | **Prove in KeYther (KeY GUI)** | `keyext.solidity.gui-exe.jar` | its own window |
 | **Prove Headless (KeY CLI)** | `keyext.solidity.core-exe.jar` — the same thing `./run-key.sh` runs | a console in the Run tool window |
-| **Compile and Run (solc + EVM)** | `keyext.solidity.core-exe.jar --solc` | a console in the Run tool window |
+| **Compile and Run (solc + EVM)**, for contracts and functions without parameters | `keyext.solidity.core-exe.jar --solc` | a console in the Run tool window |
 
 Left click stays what it always was: KeYther on that target.
 
@@ -58,8 +56,8 @@ be argued away. Use it before reaching for KeY, not instead of it.
 
 Two things it declines rather than answers, because the honest answer is unavailable:
 
-- A function taking parameters that no leading `require` pins to a value is `SKIPPED` — there is
-  nothing to call it with. `PinnedArguments` recovers the rest.
+- During a contract-level run, a function taking parameters that no leading `require` pins to a
+  value is `SKIPPED`. `PinnedArguments` recovers concrete values where it can.
 - A contract with a constructor or an initialized state variable is `SKIPPED` whole. The runner
   installs runtime bytecode without executing creation code, so its storage would start all-zero,
   which is not the contract you deploy — every verdict from it would be about an unreachable state.
@@ -80,9 +78,9 @@ and **reinstalled after every change to it** — there is no hot reload. Use
 sandbox IDE with it already loaded.
 
 All three are on the editor context menu under **SolKey**, and in *Find Action* as **Prove in
-KeYther (KeY GUI)**, **Prove Headless (KeY CLI)** and **Compile with solc** — so each can take a
-keyboard shortcut. From there they resolve the target from the caret: the public function it is
-in, or else the contract around it.
+KeYther (KeY GUI)**, **Prove Headless (KeY CLI)** and **Compile and Run (solc + EVM)**, so each can
+take a keyboard shortcut. They use the public or external function at the caret, or the enclosing
+contract. The same target restrictions apply in the gutter and at the caret.
 
 No Solidity language plugin is required. `LineMarkerProvider`, the usual way to put something in
 the gutter, is registered per language, and IDEA only knows Solidity if a third-party plugin
