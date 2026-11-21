@@ -2421,7 +2421,7 @@ contract StorageArrays {
         nodeTree = nodeTree.kids[0];
         assert(nodeTree.kids.length == 2);
         assert(nodeTree.kids[0].v == 0 && nodeTree.kids[0].kids.length == 0);
-        assert(nodeTree.kids[1].v == 0);
+        assert(nodeTree.kids[1].v == 5);
     }
 
     function storageRecursiveCopyFromOwnChildMember() public {
@@ -2434,14 +2434,16 @@ contract StorageArrays {
         assert(nodeTree.v == 9);
     }
 
-    /// @custom:key box
-    function storageRecursiveCopyFromOwnChildLaterKidsCleared(uint i) public {
-        // Node nodeTree
-        // Node { uint v; Node[] kids; }
-        require(0 < nodeTree.kids.length);
-        require(0 < i && i < nodeTree.kids[0].kids.length);
-        nodeTree = nodeTree.kids[0];
-        assert(nodeTree.kids[i].v == 0 && nodeTree.kids[i].kids.length == 0);
+    function storageRecursiveCopyFromOwnChildArray() public {
+        delete nodeTree;
+        delete nodeTree.kids.push();
+        delete nodeTree.kids[0].kids.push();
+        delete nodeTree.kids[0].kids.push();
+        nodeTree.kids[0].kids[0].v = 3;
+        nodeTree.kids[0].kids[1].v = 5;
+        nodeTree.kids = nodeTree.kids[0].kids;
+        assert(nodeTree.kids.length == 2);
+        assert(nodeTree.kids[0].v == 3 && nodeTree.kids[1].v == 5);
     }
 
     /// @custom:key box
@@ -2450,17 +2452,19 @@ contract StorageArrays {
         // Node { uint v; Node[] kids; }
         require(0 < nodeTree.kids.length);
         require(i < nodeTree.kids[0].kids.length);
+        uint len = nodeTree.kids[0].kids[i].kids.length;
         nodeTree = nodeTree.kids[0];
-        assert(nodeTree.kids[i].kids.length == 0 || i == 0);
+        assert(nodeTree.kids[i].kids.length == len);
     }
 
     /// @custom:key box
-    function storageRecursiveCopyFromOwnChildLaterMemberCleared() public {
+    function storageRecursiveCopyFromOwnChildPreservesLaterMember() public {
         // Chain chainRoot
         // Chain { Chain[] next; uint tag; }
         require(0 < chainRoot.next.length);
+        uint tag = chainRoot.next[0].tag;
         chainRoot = chainRoot.next[0];
-        assert(chainRoot.tag == 0);
+        assert(chainRoot.tag == tag);
     }
 
     function storageRecursiveCopyFromOwnChildLaterMember() public {
@@ -2473,8 +2477,8 @@ contract StorageArrays {
         chainRoot.next[0].next[0].tag = 4;
         chainRoot.tag = 3;
         chainRoot = chainRoot.next[0];
-        assert(chainRoot.tag == 0 && chainRoot.next.length == 1);
-        assert(chainRoot.next[0].tag == 0);
+        assert(chainRoot.tag == 9 && chainRoot.next.length == 1);
+        assert(chainRoot.next[0].tag == 4);
     }
 
     /// @custom:key box

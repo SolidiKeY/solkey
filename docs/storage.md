@@ -516,87 +516,29 @@ emitted update.
 
 ### Overlapping copies
 
-Every storage-to-storage copy rule above and below (`…CopySource`, `…StoreRoot`) reads the
-whole source before it writes the target. solc copies in place, so the two differ only when one
-path is a strict prefix of the other, which only a recursive struct type permits:
-
-      struct N { uint v; N[] kids; }
-      root = root.kids[0];   // solc clears part of the source before reading it
-      n.kids[0] = n;         // solc never terminates
-
-The rules decide which case a copy is in by walking the two paths, with no type analysis and
-no extra proof obligation for an ordinary copy:
+Storage-to-storage assignment reads the value at the source path from pre-assignment storage
+and writes it with `save`. This includes `root = root.kids[0]` and
+`root.kids = root.kids[0].kids`. Solidity 0.8.39 snapshots the source before copying when the
+target contains it. Earlier compiler versions could overwrite part of the source during the
+copy. See the [Solidity advisory](https://www.soliditylang.org/blog/2026/11/19/overlapping-recursive-storage-struct-copy-corruption-bug/).
 
       {π p = q; ω}φ
       ⇝  if inside(p, q) then {π revert(); ω}φ
-         else { storage := save(storage, p, find(srcView(storage, p, q), q)) } {π ω}φ
-
-      srcView(st, p, q)             ⇝  srcWalk(st, p, q, p, q)
-      srcWalk(st, p, q, x·xs, y·ys) ⇝  if x = y then srcWalk(st, p, q, xs, ys) else st
-      srcWalk(st, p, q, ε, ε)       ⇝  st
-      srcWalk(st, p, q, ε, h·t)     ⇝  view(st, p, q)
+         else { storage := save(storage, p, find(storage, q)) } {π ω}φ
 
       inside(x·xs, y·ys) ⇝  x = y ∧ inside(xs, ys)
       inside(x·xs, ε)    ⇝  true
       inside(ε, ys)      ⇝  false
 
-| Paths | `inside` | `srcView` | Meaning |
-|---|---|---|---|
-| apart (`a = b`, `kids[0] = kids[1]`) | false | `st` | the snapshot copy |
-| equal (`x = x`) | false | `st` | a self-assignment, a no-op under both semantics |
-| source inside target (`root = root.kids[0]`) | false | `view` | solc's in-place copy, computed on read |
-| target inside source (`n.kids[0] = n`) | true | n/a | the copy never ends: a `revert()`, as an index out of bounds is |
+`inside(p, q)` tests whether the target `p` is a strict descendant of the source `q`.
+Solidity leaves that direction undefined. SolKey models it as abrupt termination, so
+`recursiveCopyIntoOwnChild.key` stays open and the corresponding box examples accept it.
+`storageRecursiveCopyIntoOwnChildUnlessApart` applies the same test to symbolic indices.
 
-`srcView` is the storage the source is read from. For every non-recursive type the two walks
-end in the first two rows by simplification alone, with no type analysis and no proof
-obligation.
-
-When the source lies inside the target, `q = p·h·t`, solc overwrites part of the source while
-it copies. `view(st, p, q)` is the storage as that copy sees it, and three rules answer a read
-of the source node at `q` (`«p' ← q'»` abbreviates `find(srcView(st, p', q'), q')`, the same
-copy one level down):
-
-      q.length                 ⇝  st[q.length]                              viewSize
-
-      q[i]      (h = [j])      ⇝  «p[j] ← q[j]»                    i = j    viewIndex
-                                  st[q[i]]                          i < j or j ≥ st[q.length]
-                                  the default value                 otherwise
-
-      q.m       (h = .a)       ⇝  «p.a ← q.a»                      m = a    viewMember
-                                  st[q.m]                           before(m, a)
-                                  the default value                 otherwise
-
-An element before `j` is read from the old storage, element `j` is the same overlapping copy
-one level deeper, and a later element is zero; a member likewise. What solc copies after the
-overlapping component it reads from `q` once that component's copy has overwritten the region
-`q` lies in: either the copy shrank an array and cleared `q`, or it left at `q` the same
-in-place copy one level down, whose later components are zero by the same argument. Only the
-cleared case ends the descent, so the later components are zero at every level, and no rule
-unfolds a copy to find that out. This assumes the storage is a finite tree: along an endless
-`kids[0].kids[0]…` chain of non-empty arrays the copy never ends, and the rules then describe
-a result the EVM does not produce. `before(m, a)` is the
-declaration order of struct members: the loader writes one `memberBefore_…` taclet per member
-into the problem, beside `insertLenInv` (`StorageLayout`). A hand-written `.key` problem that
-lacks them leaves the member case undecided. The order is the legacy pipeline's.
-
-The three read rules are in the rule set `overlapView`, which the strategy applies only outside
-the branches of an undecided conditional (`NotInConditionalBranchFeature`), so a read is
-answered for the case the proof is in and not for every case of an enclosing conditional.
-The false claim `unsound/recursiveCopyOverlap.key` (`nodeTree = nodeTree.kids[0]`, which fails
-on the EVM) closes with a plain snapshot copy; `RulesTest#unsoundWfProblemStaysOpen` keeps it
-open. A copy whose target lies inside its source recurses until the EVM halts (checked on the
-EVM for an index, a member and a `push` target), so the rules continue with `revert()`: a
-diamond rejects it, `unsound/recursiveCopyIntoOwnChild.key` stays open, and a box accepts it
-(`StorageArrays.storageRecursiveCopyIntoOwnChildIndex`, `…Member`, `…Push`).
-`…IntoOwnChildUnlessApart` leaves the case to the indices: after
-`kids[a].kids[0] = kids[b]` a box knows `a != b`.
-`StorageArrays.storageRecursiveCopyFromOwnChild` and `…FromOwnChildMember` prove the
-in-place result, and `…FromOwnChildLaterMember` the zero of a member declared after the
-overlapping one. `…FromOwnChildLaterKidsCleared`, `…FromOwnChildAnyKidLength` and
-`…FromOwnChildLaterMemberCleared` start from an unknown storage, whose depth nothing bounds:
-they close only because the later components need no unfolding.
-`storageRecursiveCopyDisjoint`, `…Self`, `…Sibling` and `…FromSiblingChild` are the
-non-overlapping copies.
+`StorageArrays.storageRecursiveCopyFromOwnChild`, `…FromOwnChildArray`, and
+`…FromOwnChildLaterMember` check that the snapshot preserves nested values. The symbolic
+`…FromOwnChildAnyKidLength` and `…FromOwnChildPreservesLaterMember` examples check copies from
+an arbitrary initial storage state.
 
 ### Root write (whole struct / primitive at a root)
 

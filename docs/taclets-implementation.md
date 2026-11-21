@@ -626,27 +626,10 @@ The `…StoreRoot` reads `gsp = sp[i]` take the copied sort from the source elem
 `uint[] d = m[k]` with `m` mapping to `uint[3]` must keep the source's fixed length, and a
 target sort of `Struct` lost it, so from zero storage the copy read as length 0.
 
-The copy is a snapshot: the whole source is read before the target is written. solc copies in
-place, member by member and element by element, so the two differ when the source lies inside
-the target or the target inside the source. Only a recursive struct (`struct N { N[] kids; }`)
-makes that possible: `root = root.kids[0]` clears part of the source before reading it, and
-`n.kids[0] = n` never terminates. Every copy rule therefore reads its source through
-`srcView(storage, target, source)` and continues with `revert()` when
-`inside(target, source)`, as an index out of bounds does. Both walk
-the two paths (`srcViewStart`, `srcWalkCons`, `srcWalkNil`; `insideCons`, `insideSource`,
-`insideTarget`): paths that part, or are equal, give the pre-state storage and `inside` false,
-so the rule is the snapshot copy; a target inside the source makes `inside` true, which a
-diamond rejects and a box accepts. No type analysis is involved, and for a non-recursive type the walks reduce by
-simplification alone. A source inside the target becomes `view(st, target, source)`
-(`srcWalkInside`), the storage as solc's in-place copy sees it: `viewSize`, `viewIndex` and
-`viewMember` answer each read of the source by where it falls relative to the overlap, using
-the `before` member order the loader writes as `memberBefore_…` taclets: a component copied
-before the overlapping one has its old value, the overlapping one is the same copy one level
-down, and a later one is the default value, which holds at every depth, so a storage of
-unknown depth needs no unfolding (`storageRecursiveCopyFromOwnChildLaterKidsCleared`,
-`…AnyKidLength`, `…LaterMemberCleared`). That last case assumes a finite storage tree. The
-rules are in the rule set `overlapView`, applied only outside the branches of an undecided
-conditional (`docs/storage.md`, "Overlapping copies").
+Storage copies use the source value from pre-assignment storage, including when a recursive
+struct or array is copied onto an ancestor. This models the snapshot behavior introduced in
+Solidity 0.8.39. The reverse direction is undefined in Solidity. SolKey uses `inside` to
+recognize it and models it as abrupt termination (see [Overlapping copies](storage.md#overlapping-copies)).
 
 `delAt` names its storage argument once, where the `save(st, p, <deleted value at p>)` form it
 replaced named it twice. That doubled the storage term at every `push`/`pop`, so a sequence of

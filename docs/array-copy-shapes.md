@@ -180,7 +180,7 @@ To inspect the project's pinned compiler output after its soljson has been downl
 ```bash
 node <<'JS'
 const fs = require('fs');
-const solc = require('./keyext.solidity.core/build/soljson/soljson-v0.8.34+commit.80d5c536.js');
+const solc = require('./keyext.solidity.core/build/soljson/soljson-v0.8.39+commit.ce47f2c8.js');
 const compile = solc.cwrap('solidity_compile', 'string', ['string', 'number', 'number']);
 const file = 'keyext.solidity.examples/taclets/NestedArrays.sol';
 const input = {

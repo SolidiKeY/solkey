@@ -164,7 +164,8 @@ public class SolcWrapperTest {
         List.of("Unreachable code", "Virtual modifiers are deprecated", "This declaration shadows",
             "Unnamed return variable can remain unassigned", "Unused function parameter",
             "Unused try/catch parameter", "Unused local variable",
-            "Function state mutability can be restricted");
+            "Function state mutability can be restricted",
+            "\"error\" will be promoted to keyword in the future");
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("exampleContracts")

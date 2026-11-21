@@ -4,13 +4,9 @@
 package org.key_project.solidity.proof.init;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.key_project.solidity.keyfile.Key;
 import org.key_project.solidity.keyfile.KeyFormula;
@@ -22,7 +18,6 @@ import org.key_project.solidity.theory.StructLDT;
 public final class StorageLayout {
 
     private final List<String> roots = new ArrayList<>();
-    private final List<KeyProblem.Taclet> memberOrder = new ArrayList<>();
 
     public StorageLayout(SolidityOutline.Contract contract) {
         for (SolidityOutline.Variable variable : contract.stateVariables()) {
@@ -31,43 +26,6 @@ public final class StorageLayout {
                 roots.add(StructLDT.fieldConstantName(contract.name(), variable.name()));
             }
         }
-        Map<String, String> owners = structOwners(contract);
-        contract.structs().forEach((struct, members) -> {
-            String owner = owners.get(struct);
-            if (owner == null || !(owner.isEmpty() || owner.equals(contract.name()))) {
-                return;
-            }
-            List<KeyFormula> earlier = new ArrayList<>();
-            for (SolidityOutline.Variable member : members) {
-                String field = owner.isEmpty()
-                        ? StructLDT.fieldConstantName(struct, member.name())
-                        : StructLDT.fieldConstantName(owner, struct, member.name());
-                KeyFormula isEarlier = earlier.isEmpty() ? Key.not(Key.eq(M, M))
-                        : earlier.stream().reduce(Key::or).orElseThrow();
-                memberOrder.add(new KeyProblem.Taclet(
-                    "memberBefore_" + struct + "_" + member.name(), "MemberField",
-                    List.of("m"), false, Key.predicate("before", M, Key.constant(field)),
-                    isEarlier, "concrete"));
-                earlier.add(Key.eq(M, Key.constant(field)));
-            }
-        });
-    }
-
-    private static final Pattern STRUCT_TYPE = Pattern.compile("struct (?:(\\w+)\\.)?(\\w+)");
-
-    private static Map<String, String> structOwners(SolidityOutline.Contract contract) {
-        Map<String, String> owners = new HashMap<>();
-        List<String> types = new ArrayList<>();
-        contract.stateVariables().forEach(v -> types.add(v.type()));
-        contract.structs().values().forEach(ms -> ms.forEach(m -> types.add(m.type())));
-        for (String type : types) {
-            Matcher matcher = STRUCT_TYPE.matcher(type);
-            while (matcher.find()) {
-                owners.putIfAbsent(matcher.group(2),
-                    matcher.group(1) == null ? "" : matcher.group(1));
-            }
-        }
-        return owners;
     }
 
     public boolean isEmpty() {
@@ -87,15 +45,11 @@ public final class StorageLayout {
             atoms.add(Key.predicate("conforms", fieldType(root),
                 Key.typed("selectSt", "Struct", S, Key.constant(root))));
         }
-        List<KeyProblem.Taclet> rules = new ArrayList<>();
-        rules.add(new KeyProblem.Taclet("insertLenInv", "Struct", List.of("s"), false,
+        return List.of(new KeyProblem.Taclet("insertLenInv", "Struct", List.of("s"), false,
             Key.predicate("lenInv", S), Key.and(atoms), "simplify"));
-        rules.addAll(memberOrder);
-        return rules;
     }
 
     private static final KeyTerm S = Key.constant("s");
-    private static final KeyTerm M = Key.constant("m");
 
     private static KeyTerm fieldType(String root) {
         return Key.apply("fieldType", Key.constant(root));

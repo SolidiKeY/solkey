@@ -14,20 +14,20 @@ ext.graalCompilerDir = "graal-compiler"
 
 // The solc build hosted on the JVM. Pinned: the AST shape the taclet examples were written
 // against must not shift underneath them. Metadata: https://binaries.soliditylang.org/wasm/list.json
-ext.solcLongVersion = "0.8.34+commit.80d5c536"
+ext.solcLongVersion = "0.8.39+commit.ce47f2c8"
 ext.soljsonFile = "soljson-v${solcLongVersion}.js"
-ext.soljsonSha256 = "c8649f8d57f81b3244c7d2dd662efc0620d1ae296f623b347a2c616a6cfd11d8"
+ext.soljsonSha256 = "f0458011dbcd48eb1e8e3311ed92d2c34906e5e55bf516c626b1efaf5d44fa58"
 
 // The same release as a native executable, preferred over the WebAssembly build when present:
 // about fifty times faster. Metadata: https://binaries.soliditylang.org/<platform>/list.json
 ext.nativeSolcDir = "solc-native"
 ext.nativeSolcBuilds = [
         "linux"  : [platform: "linux-amd64", file: "solc-linux-amd64-v${solcLongVersion}",
-                    sha256  : "d40adc6f9fdbb22a97d32a02fa05688bf2ee7886affc48c9851b0afd4a726b39"],
+                    sha256  : "b8b0642d46838575d3177628b685564b52f51f2aee546cb4dce781951d23c666"],
         "mac"    : [platform: "macosx-amd64", file: "solc-macosx-amd64-v${solcLongVersion}",
-                    sha256  : "0a2829292697dda542e4e365bb63fbd6d3ed51537140222a880ab760cffa7746"],
+                    sha256  : "6134d77c433e3b714b64b4101a6147cacff93d50137c0b66ab80825fb274ef51"],
         "windows": [platform: "windows-amd64", file: "solc-windows-amd64-v${solcLongVersion}.exe",
-                    sha256  : "98657c736ca36c8baf6cedef028d0e74e6af3efcf32e08f16788d061350a0981"],
+                    sha256  : "a769165dc9e2f8d006e8ff2b57bf3caf5d905530f7a3fc0e98218a8fabd892e9"],
 ]
 
 def hostOs = System.getProperty("os.name").toLowerCase()

@@ -6,16 +6,6 @@ contract RecursiveCopyOverlap {
 
     Node nodeTree;
 
-    function copyFromOwnChild() public {
-        delete nodeTree;
-        nodeTree.kids.push();
-        nodeTree.kids[0].kids.push();
-        nodeTree.kids[0].kids.push();
-        nodeTree.kids[0].kids[1].v = 5;
-        nodeTree = nodeTree.kids[0];
-        assert(nodeTree.kids[1].v == 5);
-    }
-
     function copyIntoOwnChild() public {
         delete nodeTree;
         nodeTree.kids.push();

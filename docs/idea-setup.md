@@ -43,7 +43,7 @@ errors and warnings it deploys the contract on an **in-process Besu EVM** and ca
 clicked, one function or every provable function of a contract:
 
 ```
-solc 0.8.34+commit.80d5c536.Emscripten.clang: 0 errors, 0 warnings
+solc 0.8.39+commit.ce47f2c8.Emscripten.clang: 0 errors, 0 warnings
 OK   assertHolds
 FAIL assertFails — ASSERT_FAILED: Panic(0x01 assert failed)
 1/2 ran without a failing assert
@@ -117,7 +117,7 @@ does. Outside one there is nowhere to find them, so solc is slower there, not br
 Both matter only when the WebAssembly solc runs. `shadowJar` also stages the pinned native `solc`
 beside each fat jar (`build/libs/solc-native/`), and the jar prefers it: **Compile and Run** on
 a 5 800-line contract takes about a second instead of 23 s (97 s without the Graal flags). For a jar of
-your own outside a checkout, set `SOLKEY_SOLC` or put solc 0.8.34 on the `PATH`
+your own outside a checkout, set `SOLKEY_SOLC` or put solc 0.8.39 on the `PATH`
 (`docs/solc-ast.md`).
 
 ### What a click actually runs, and why it matters

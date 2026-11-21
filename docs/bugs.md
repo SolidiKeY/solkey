@@ -65,18 +65,10 @@ non-reverting. Not planned now (fix ideas 6A–6C).
   string a snapshot temporary instead of a storage alias: `(s1, s2) = (s2, s1)` on storage strings
   proves a swap, while solc copies at store time, right to left, as it does for structs and
   arrays (no swap). Not yet checked on the EVM.
-- **The overlap walk trusts the prover's integers.** `srcWalk` and `inside` compare mapping
-  keys as KeY integers, so the unbounded integers and the identity conversions above let an overlapping
-  recursive copy through. With `struct Node { uint v; Node[] kids; }`,
-  `mapping(uint => Node) byId` and `byId[0] = {kids: [S]}`, `S.kids = [A, B]`, `B.v = 5`:
-  `uint big = 2**256 - 1; uint k; unchecked { k = big + 1; }`
-  `byId[k] = byId[0].kids[0]; assert(byId[k].kids[1].v == 5);` closes, since the prover takes
-  `k = 2**256` and finds the paths apart; on the EVM `k == 0`, the copy runs in place and the
-  assert fails. Same with `mapping(uint8 => Node)` and `uint wide = 256; uint8 k = uint8(wide);`.
-  Fixed by the integer fixes (6A–6C, 4A), not by the copy rules.
 - **A cyclic memory struct is copied to storage in finite time.** `memoryToStorageStoreRoot`
   writes the lazy `copyMem(mtSt, memory, mv)` and never asks whether the memory value is finite;
-  the overlap walk covers storage sources only. With the same `Node` and `Node nodeTree`:
+  the `inside` check covers storage sources only. For `struct Node { uint v; Node[] kids; }`
+  and `Node nodeTree`:
   `Node memory m; m.v = 5; m.kids = new Node[](1); m.kids[0] = m; nodeTree = m;`
   `assert(nodeTree.v == 5);` closes under the diamond; solc's copy recurses until the EVM halts
   with `TOO_MANY_STACK_ITEMS` (without `m.kids[0] = m` it succeeds). Only the IR pipeline
