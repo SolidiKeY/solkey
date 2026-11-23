@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ProjectRootManager
 import java.io.File
+import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -23,12 +24,29 @@ object SolKeyJdk {
 
     private val jitSupport = ConcurrentHashMap<String, Boolean>()
 
-    /** The `java` of the first JDK 21 found, or null when there is none. */
-    fun javaExecutable(project: Project): String? =
+    private val windowFailures = ConcurrentHashMap<String, String>()
+
+    /**
+     * The `java` of the first JDK 21 found, or null when there is none. With [needsWindow], a JDK
+     * whose AWT cannot load is skipped: a generic Linux build on NixOS finds no X libraries, so
+     * KeYther dies before its first window while the headless tools run fine on it.
+     */
+    fun javaExecutable(project: Project, needsWindow: Boolean = false): String? =
+        jdk21Executables(project).firstOrNull { !needsWindow || windowFailure(it) == null }
+
+    fun windowlessJdks(project: Project): Map<String, String> =
+        jdk21Executables(project).mapNotNull { java -> windowFailure(java)?.let { java to it } }
+            .toMap()
+
+    fun missingConfiguredJdk(): String? =
+        SolKeySettings.getInstance().jdkPath.takeIf { it.isNotBlank() && executableIn(it) == null }
+
+    private fun jdk21Executables(project: Project): Sequence<String> =
         candidates(project).asSequence()
             .filter { it.isNotBlank() }
-            .map { executableIn(it) }
-            .firstOrNull { it != null && isVersion21(it) }
+            .mapNotNull { executableIn(it) }
+            .distinct()
+            .filter { isVersion21(it) }
 
     private fun candidates(project: Project): List<String> = listOfNotNull(
         SolKeySettings.getInstance().jdkPath,
@@ -116,6 +134,33 @@ object SolKeyJdk {
             runCommand(java, *arguments.toTypedArray(), "-version") != null
         }
         return if (supported) arguments else emptyList()
+    }
+
+    private fun windowFailure(java: String): String? =
+        windowFailures.computeIfAbsent(java) { probeWindow(it) }.ifEmpty { null }
+
+    private fun probeWindow(java: String): String {
+        val probe = runCatching {
+            Files.createTempDirectory("solkey-probe").resolve("WindowProbe.java").also {
+                Files.writeString(
+                    it,
+                    "class WindowProbe { public static void main(String[] a) { " +
+                        "java.awt.Toolkit.getDefaultToolkit(); } }",
+                )
+                it.toFile().deleteOnExit()
+                it.parent.toFile().deleteOnExit()
+            }
+        }.getOrNull() ?: return ""
+        val output = runCatching {
+            CapturingProcessHandler(
+                GeneralCommandLine(java, "-Djava.awt.headless=false", probe.toString()),
+            ).runProcess(PROBE_TIMEOUT_MS)
+        }.getOrNull() ?: return ""
+        return output.stderr.lineSequence()
+            .firstOrNull { "UnsatisfiedLinkError" in it }
+            ?.substringAfter("UnsatisfiedLinkError: ")
+            ?.trim()
+            .orEmpty()
     }
 
     /** The output of a short-lived probe, or null when it failed to run or exited non-zero. */

@@ -52,9 +52,9 @@ object SolKeyLauncher {
         // The staleness check walks two source trees, and finding a JDK may start a probe;
         // neither belongs on the EDT, nor does starting the process itself.
         ApplicationManager.getApplication().executeOnPooledThread {
-            val java = SolKeyJdk.javaExecutable(project)
+            val java = SolKeyJdk.javaExecutable(project, needsWindow = !tool.showsConsole)
             if (java == null) {
-                notifyMissingJdk(project)
+                notifyMissingJdk(project, tool)
                 return@executeOnPooledThread
             }
             val root = findSolkeyRoot(file)
@@ -235,16 +235,28 @@ object SolKeyLauncher {
         )
     }
 
-    private fun notifyMissingJdk(project: Project) {
+    private fun notifyMissingJdk(project: Project, tool: SolKeyTool) {
+        val windowless = if (tool.showsConsole) emptyMap() else SolKeyJdk.windowlessJdks(project)
+        val details = buildList {
+            SolKeyJdk.missingConfiguredJdk()?.let {
+                add("The configured JDK no longer exists: $it")
+            }
+            windowless.forEach { (java, reason) ->
+                add("$java is a JDK 21 but cannot open a window: $reason")
+            }
+        }
+        val title =
+            if (windowless.isEmpty()) "No JDK 21 found" else "No JDK 21 that can open KeYther"
         withSettingsAction(
             project,
             NotificationGroupManager.getInstance()
                 .getNotificationGroup(NOTIFICATIONS)
                 .createNotification(
-                    "No JDK 21 found",
+                    title,
                     "SolKey runs solc as WebAssembly, and the Truffle release that interprets it " +
                         "needs a JDK 21 — a 24 or newer fails on the first contract. Point " +
-                        "Settings | Tools | SolKey at one, or set SOLKEY_JAVA_HOME.",
+                        "Settings | Tools | SolKey at one, or set SOLKEY_JAVA_HOME." +
+                        details.joinToString("") { "<br>$it" },
                     NotificationType.ERROR,
                 ),
         )
