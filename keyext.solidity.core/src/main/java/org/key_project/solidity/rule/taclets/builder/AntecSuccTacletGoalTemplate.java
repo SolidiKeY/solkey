@@ -42,6 +42,11 @@ public class AntecSuccTacletGoalTemplate extends TacletGoalTemplate {
         return replaceWith;
     }
 
+    @Override
+    public Object replaceWithExpressionAsObject() {
+        return replaceWith;
+    }
+
 
     /// toString
     @Override

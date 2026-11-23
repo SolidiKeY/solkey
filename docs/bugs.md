@@ -114,6 +114,14 @@ user-defined operator) is refused at load with a `SolidityParseException` naming
   "return of 1 values from a function with 2 return values" (`ReturnLowering.assignments`): the
   conditional counts as one value, not a 2-tuple. `semantics/open/SolcControlFlow.sol`
   `conditionalExpressionTuples`.
+- **`run-key.sh` crashes on `MultiAuction`'s quantified invariant.** Every obligation of
+  `contracts/solidikey/MultiAuction.sol`, even the empty `myTest`, fails at step 0 with
+  `RuntimeException` "TODO" from `TacletApp.replaceInstantiation`, reached through
+  `PosTacletApp.resolveCollisionWithContext` when the strategy completes a taclet app; so do the
+  generated `contracts/solidikey-plain/obligations/open/MultiAuction-*.key`. Under the test
+  harness (`ContractExamplesTest`, `NetExamplesTest`) the same proofs run and stay open, so the
+  CLI's strategy setup differs. Reproducer:
+  `./run-key.sh keyext.solidity.examples/contracts/solidikey/MultiAuction.sol -f myTest`.
 
 ## Proof gets stuck on program text
 

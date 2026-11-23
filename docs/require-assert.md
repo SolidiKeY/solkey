@@ -50,7 +50,7 @@ the rules of §4 only ever see a simple condition `se` (a Boolean variable or li
 
 ## 4. Simple rules
 
-All three put the condition into the antecedent of the continuing goal:
+All four put the condition into the antecedent of the continuing goal:
 
 ```
 (requireBox)              Γ, c ⊢ [π ω]φ
@@ -66,15 +66,24 @@ All three put the condition into the antecedent of the continuing goal:
 (assertSimple)       Γ ⊢ c        Γ, c ⊢ {π ω}φ             {·} ∈ { [·], ⟨·⟩ }
                  ─────────────────────────────────          "Violated" / "Holds"
                    Γ ⊢ {π assert(c); ω}φ
+
+
+(assertSimpleLeft)        Γ, c, {π ω}φ ⊢ Δ
+                 ─────────────────────────────────          one goal
+                   Γ, {π assert(c); ω}φ ⊢ Δ
 ```
 
 - `requireBox`: a failed `require` reverts, which box accepts, so nothing is proved for it.
   The rule matches only in the succedent (`\find(==> …)`). In the antecedent, dropping the
   `¬c` case would be unsound.
-- `requireDiamond` and `assertSimple` have the same shape. Both match anywhere with
-  `\sameUpdateLevel`, so the added `c` is read in the state the statement runs in.
-  In the antecedent they are still sound, since `⟨require(c)⟩φ` and `{assert(c)}φ` both imply
-  `c ∧ {…}φ`.
+- `requireDiamond` and `assertSimple` have the same shape. `requireDiamond` matches anywhere
+  with `\sameUpdateLevel`, so the added `c` is read in the state the statement runs in; in the
+  antecedent it is still sound, since `⟨require(c)⟩φ` implies `c ∧ ⟨…⟩φ`.
+- `assertSimple` and `assertSimpleLeft` split `assert` by side. Both are sequent-anchored, so
+  they match under the top-level updates and put that update prefix on every formula they
+  create, `c` included. In the antecedent `{assert(c); ω}φ` is the conjunction `c ∧ {ω}φ`, so
+  `assertSimpleLeft` keeps both conjuncts in one goal; a "Violated" branch there would have to
+  prove `Δ` without `{ω}φ` (`coverage/assertSimpleLeft.key` closes only this way).
 
 `require` does not go through `revert();`. An explicit `revert();` statement keeps its own
 two rules (`docs/storage.md` §8): `revertBox` ⇝ `⊤`, `revertDiamond` ⇝ `⊥`.
@@ -82,7 +91,8 @@ two rules (`docs/storage.md` §8): `revertBox` ⇝ `⊤`, `revertDiamond` ⇝ `�
 ## 5. Discipline
 
 **Pairwise disjointness.** Capture matches a nonsimple operand, the simple rules a simple one.
-`requireBox` and `requireDiamond` are split by modality, so exactly one rule applies.
+`requireBox` and `requireDiamond` are split by modality, `assertSimple` and
+`assertSimpleLeft` by side, so exactly one rule applies.
 
 **Termination.** Capture decreases the complex-expression count (component 2 of the storage
 termination measure); each simple rule removes the statement (component 4).
@@ -95,4 +105,5 @@ termination measure); each simple rule removes the statement (component 4).
 | `assertConditionCapture`   | `assert(nse);`            | 1 (capture)                    |
 | `requireBox`               | `⊢ [… require(se); …]φ`   | 1: `se` assumed                |
 | `requireDiamond`           | `⟨… require(se); …⟩φ`     | 2: prove `se`; `se` assumed    |
-| `assertSimple`             | `{… assert(se); …}φ`      | 2: prove `se`; `se` assumed    |
+| `assertSimple`             | `⊢ {… assert(se); …}φ`    | 2: prove `se`; `se` assumed    |
+| `assertSimpleLeft`         | `{… assert(se); …}φ ⊢`    | 1: `se` and the rest assumed   |
