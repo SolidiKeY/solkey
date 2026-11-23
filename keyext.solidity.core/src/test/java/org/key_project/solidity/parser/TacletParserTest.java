@@ -22,6 +22,7 @@ import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -262,6 +263,19 @@ public class TacletParserTest {
                     }
                 """;
         assertTrue(equals(impleft, parseTaclet(impleftString)));
+    }
+
+    @Test
+    public void testAntecReplacewithVisibleToExecutor() {
+        Taclet taclet = parseTaclet("""
+                and_left_add {
+                   \\find(b & b0 ==>)
+                   \\replacewith(b ==>)
+                   \\add(b0 ==>)
+                }""");
+        var template = assertInstanceOf(AntecSuccTacletGoalTemplate.class,
+            taclet.goalTemplates().get(0));
+        assertSame(template.replaceWith(), template.replaceWithExpressionAsObject());
     }
 
     private boolean equals(Taclet a, Taclet b) {

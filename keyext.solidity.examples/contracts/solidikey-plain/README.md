@@ -1,6 +1,27 @@
-# Net scenario examples
+# solidiKeY without `@custom:key`
 
-`solidikey-plain/` holds the `net`-ledger scenario contracts and, in `obligations/`, their proof obligations
+`solidikey-plain/` holds what `../solidikey/` specifies in `@custom:key` clauses, written without
+them, in three parts:
+
+- the `net` scenario contracts (`*Net.sol`) and their hand-written `.key` obligations in
+  `obligations/`, below. `../solidikey/` carries each as a specified contract: `Escrow`,
+  `PiggyBank`, `Auction`, `AuctionWithdraw`, `Casino`, and `Ledger` for the `net-*` helpers;
+- `Counter.sol`, `EntryPoints.sol`, `FixedLengths.sol`, `Storage.sol` and `MultiAuction.sol`:
+  `../solidikey/`'s contracts with the specification written as `require` and `assert` under
+  `@custom:key box`, as `../real-world-plain/` does (`../README.md`). `MultiAuction.sol` keeps
+  only the clauses that mention neither `net` nor `address(this)`. `ContractExamplesTest` proves
+  them (`FixedLengths`' three default-value reads stay open as in `../solidikey/`) and skips the
+  `*Net` contracts;
+- the `.key` problems that `./run-key.sh ../solidikey/<C>.sol -f <function> --print-problem`
+  generates for the functions whose specification mentions `net` (`Escrow-*.key`,
+  `PiggyBank-*.key`), whose program they load through `\programSource`. `NetExamplesTest` proves
+  them with the hand-written ones, and checks that `obligations/open/MultiAuction-*.key` stay
+  open, as `../solidikey/MultiAuction.sol` does (`run-key.sh` crashes on them, `docs/bugs.md`).
+  Regenerate a problem when its source's specification changes.
+
+## Net scenario contracts
+
+The `net`-ledger scenario contracts have their proof obligations in `obligations/`
 (`docs/net.md`). Each contract is real Solidity — `payable` functions reading
 `msg.sender`/`msg.value`, `address payable` receivers, `.transfer`, `payable(...)` casts
 — and each `.key` problem of `obligations/` verifies one function by calling it in the modality,

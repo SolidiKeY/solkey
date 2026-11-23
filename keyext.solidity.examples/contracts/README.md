@@ -8,7 +8,7 @@ by `ContractExamplesTest` (except `benchmark/`):
 | `solidikey/` | the example contracts of solidiKeY |
 | `real-world/` | published contracts, rewritten until every function closes; `open/` keeps what does not close yet |
 | `real-world-plain/` | `real-world/` with its specification written as `require` and `assert` (see below) |
-| `solidikey-plain/` | the `net` scenario contracts (`PiggyBankNet`, `EscrowNet`, `AuctionNet`, `AuctionWithdrawNet`, `CasinoNet`) without `@custom:key` clauses, proved by the `.key` problems of `solidikey-plain/obligations/` (`solidikey-plain/README.md`); not run by `ContractExamplesTest` |
+| `solidikey-plain/` | `solidikey/` without `@custom:key` clauses: the `net` scenario contracts (`PiggyBankNet`, `EscrowNet`, `AuctionNet`, `AuctionWithdrawNet`, `CasinoNet`), proved by the `.key` problems of `solidikey-plain/obligations/` and not run by `ContractExamplesTest`; the other `solidikey/` contracts written as `require` and `assert`; and the generated `.key` problems of the `solidikey/` functions whose specification mentions `net` (`solidikey-plain/README.md`) |
 | `benchmark/` | published contracts kept as published, to measure what SolKey verifies without a rewrite (`benchmark/README.md`) |
 
 `real-world-plain/` mirrors `real-world/` with its specification written in the code: each
@@ -19,8 +19,7 @@ of a constructor. Modifiers are inlined, `unchecked` blocks are removed (their c
 early `return` becomes an assignment to the named return so the asserts run last. Each such
 function is tagged `/// @custom:key box`, so a `require` is assumed as the `requires` was, and a
 payable one that needs it gets the `require(msg.value >= 0)` a specified function assumes; loop
-invariants stay as `@custom:key` tags. Its `solidikey/` holds `Counter` of `solidikey/` written
-the same way.
+invariants stay as `@custom:key` tags. `solidikey-plain/` writes `solidikey/` the same way.
 
 Quantifiers become parameters, since a proof holds for every argument:
 
@@ -41,8 +40,8 @@ in two parts, proved by `ContractExamplesTest`:
 
 | Directory | Holds |
 |---|---|
-| `open/key-spec/` | every function such a clause belongs to, as the `.key` problem `<Contract>-<function>.key` that `./run-key.sh <source> -f <function> --print-problem` generates from its specified source in `real-world/` (`Escrow` and `PiggyBank` from `solidikey/`), whose program it loads through `\programSource`; a contract invariant belongs to every function, so such a contract's functions all move, and a function the source marks `skip` has no problem. Regenerate a problem when its source's specification changes |
-| `open/unprovable/` | what does not close yet: `ArrayRemoveByShifting.sol` mirrors `real-world/open/`, whose loop invariant cannot state the shifted prefix, and `MultiAuction.sol` of `solidikey/`, whose quantified invariants (kept as `@custom:key` clauses, as in `key-spec/`) exhaust the step budget as in `solidikey/` |
+| `open/key-spec/` | every function such a clause belongs to, as the `.key` problem `<Contract>-<function>.key` that `./run-key.sh <source> -f <function> --print-problem` generates from its specified source in `real-world/`, whose program it loads through `\programSource`; a contract invariant belongs to every function, so such a contract's functions all move, and a function the source marks `skip` has no problem. Regenerate a problem when its source's specification changes |
+| `open/unprovable/` | what does not close yet: `ArrayRemoveByShifting.sol` mirrors `real-world/open/`, whose loop invariant cannot state the shifted prefix |
 
 `ContractExamplesTest` lists the functions that do not close as known open. The directives are
 listed in `../taclets/README.md`, "Directives".
@@ -129,8 +128,19 @@ list every row.
   automode does not close them: the quantifier instantiations explode into hundreds of goals
   within the step budget, including goals that are closable by hand (`ContractExamplesTest`
   lists `placeOrIncreaseBid`, `withdraw` and even the empty `myTest` as known-open).
+  `run-key.sh` crashes on them (`docs/bugs.md`).
   `closeAuction` is skipped: its loops transfer, so their invariants would have to
   re-establish the contract invariant at every callback.
+- **`Auction.sol`, `AuctionWithdraw.sol`, `Casino.sol`** — `solidikey-plain/`'s `AuctionNet`,
+  `AuctionWithdrawNet` and `CasinoNet` with enums, constructors and the specification of their
+  `auction-*`, `auction-withdraw-*` and `casino-*` obligations: the invariant, the antecedent
+  pins as invariants or `requires`, the postconditions as `ensures`. `AuctionWithdraw.closeAuction`
+  is skipped as in the course. All close; the `-withcallback` obligations prove only the
+  invariant under `transferSemantics:withCallback`, so they have no `@custom:key` form.
+- **`Ledger.sol`** — `PiggyBankNet`'s `readMsg`/`payTo`/`payToPlus`/`sendTo`/`callTo`/`payOwner`
+  helpers, with the ledger effect the `net-*` starters check as `ensures` (a transfer to
+  `address(this)` leaves `net` unchanged, an untouched address keeps its `net`). All close; the
+  diamond and callback starters have no `@custom:key` form.
 - **`EntryPoints.sol`** — not a solidiKeY port: the obligations a contract gets beyond its
   named functions. It has an invariant and no constructor, so the implicit `constructor`
   obligation runs the initializers (`limit = 10`) and proves the invariant; `receive` and

@@ -28,7 +28,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /// `transferSemantics` taclet option; the program bodies themselves load from the `.sol`
 /// beside each problem via `\programSource`. The negative twins under the
 /// `org/key_project/solidity/examples/open/` test resources pin the diamond's non-negative
-/// amount and transfer-succeeds obligations by staying open.
+/// amount and transfer-succeeds obligations by staying open. The problems generated from
+/// `contracts/solidikey/` sit beside the hand-written ones; those of `obligations/open/`
+/// (`MultiAuction`'s quantified invariants) must stay open, as `ContractExamplesTest` checks for
+/// their source.
 @Tag("solidityExamples")
 public class NetExamplesTest {
 
@@ -46,6 +49,23 @@ public class NetExamplesTest {
     static Stream<Arguments> examples() throws IOException {
         return SolidityExampleTests
                 .keyFiles(SolidityExampleTests.examplesDir(ExampleDirs.SOLIDIKEY_PLAIN_OBLIGATIONS))
+                .stream()
+                .map(p -> Arguments.of(p.getFileName().toString()));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("openObligations")
+    void openObligationStaysOpen(String name) throws Exception {
+        Path key = SolidityExampleTests
+                .example(ExampleDirs.SOLIDIKEY_PLAIN_OBLIGATIONS_OPEN + "/" + name);
+        Proof proof = SolidityExampleTests.loadAndProve(key, 10000, 30000);
+        assertFalse(proof.closed(), () -> name + " closed; move it out of obligations/open/");
+    }
+
+    static Stream<Arguments> openObligations() throws IOException {
+        return SolidityExampleTests
+                .keyFiles(
+                    SolidityExampleTests.examplesDir(ExampleDirs.SOLIDIKEY_PLAIN_OBLIGATIONS_OPEN))
                 .stream()
                 .map(p -> Arguments.of(p.getFileName().toString()));
     }

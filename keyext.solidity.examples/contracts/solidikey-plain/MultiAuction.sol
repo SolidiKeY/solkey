@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-only
 pragma solidity ^0.8.0;
 
-// The contracts/solidikey/MultiAuction.sol example with its specification written as require and
-// assert. Each clause with no Solidity form stays a @custom:key clause.
-/// @custom:key invariant \exists address hb; \forall address a; balances[hb] >= balances[a] && (a != hb && a != auctionOwner -> balances[a] == net(a)) && (state == State.AUCTION_OPEN -> net(auctionOwner) == 0) && balances[hb] == net(hb) + net(auctionOwner)
-/// @custom:key invariant state == State.AUCTION_OPEN -> \forall address a; (net(a) > 0 -> bidded[a] == true) && ((\exists uint i; i >= 0 && i < bidders.length && bidders[i] == a) <-> bidded[a] == true)
-/// @custom:key invariant auctionOwner != address(this)
+// The ../solidikey/MultiAuction.sol example with the part of its specification that does not
+// mention net or address(this) written as require and assert: the invariants
+// balances[auctionOwner] == 0 and !(\exists uint i; ... bidders[i] == auctionOwner), the latter
+// at a parameter i, and placeOrIncreaseBid's ensures. The whole specification, net and the
+// quantified invariants included, is in the generated obligations/MultiAuction-*.key problems.
 contract MultiAuction {
     address payable private auctionOwner;
     mapping(address => uint) public balances;
@@ -21,7 +21,6 @@ contract MultiAuction {
         state = State.AUCTION_OPEN;
     }
 
-    /// @custom:key assignable balances[msg.sender], bidders[bidders.length], bidders.length, bidded[msg.sender], net(msg.sender)
     /// @custom:key box
     function placeOrIncreaseBid(uint i) public payable {
         require(balances[auctionOwner] == 0);
@@ -46,8 +45,6 @@ contract MultiAuction {
         assert(i >= bidders.length || bidders[i] != auctionOwner);
     }
 
-    /// @custom:key ensures net(msg.sender) == 0
-    /// @custom:key assignable balances[msg.sender], net(msg.sender)
     /// @custom:key box
     function withdraw(uint i) public {
         require(balances[auctionOwner] == 0);
@@ -63,7 +60,6 @@ contract MultiAuction {
         assert(i >= bidders.length || bidders[i] != auctionOwner);
     }
 
-    /// @custom:key assignable net(msg.sender)
     /// @custom:key box
     function myTest(uint i) public {
         require(balances[auctionOwner] == 0);

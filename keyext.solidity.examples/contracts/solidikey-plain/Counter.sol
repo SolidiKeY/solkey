@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 pragma solidity ^0.8.0;
 
-// The contracts/solidikey/Counter.sol example with its specification written as require and assert.
+// The ../solidikey/Counter.sol example with its specification written as require and assert.
 contract Counter {
     uint public limit = 5;
     uint public count;
