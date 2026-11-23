@@ -30,6 +30,10 @@ reports the reason, such as an unnamed return value or a parameter with no `.key
 
 Left click stays what it always was: KeYther on that target.
 
+A `.key` file gets one ▶ too, beside its `\problem` (or `\proofObligation`). Left click opens
+KeYther on the file; right click adds **Prove Headless (KeY CLI)**, which runs the file with
+`--open-goals`. There is no solc entry, and the editor menu works the same way at any caret.
+
 On a **contract**, the headless prover gets `--contract Foo` and no `--function`, which is what
 makes the CLI prove every provable function of it and end with `N/M closed` plus a
 `FAILED (k): …` recap. On a **function** it also gets `--open-goals`, so an unclosed proof prints

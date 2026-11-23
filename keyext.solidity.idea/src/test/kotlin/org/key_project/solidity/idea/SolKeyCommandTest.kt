@@ -110,4 +110,24 @@ class SolKeyCommandTest {
         assertEquals(SolKeyTool.KEY_HEADLESS.jar, SolKeyTool.SOLC.jar)
         assertEquals(true, SolKeyTool.KEY_HEADLESS.usesCoreJar)
     }
+
+    private val problem = SolKeyTarget.Problem(0, "problem.key")
+
+    @Test
+    fun `a key problem is passed as the file alone`() {
+        assertEquals(listOf("/tmp/problem.key"), SolKeyCommand.arguments(SolKeyTool.KEY_GUI, problem, "/tmp/problem.key"))
+        assertEquals(
+            listOf("/tmp/problem.key", "--open-goals"),
+            SolKeyCommand.arguments(SolKeyTool.KEY_HEADLESS, problem, "/tmp/problem.key"),
+        )
+        assertFalse(SolKeyTool.SOLC.isAvailableFor(problem))
+    }
+
+    @Test
+    fun `the gradle fallback names a key problem as keyFile`() {
+        assertEquals(
+            listOf("-PkeyFile=\"/tmp/problem.key\""),
+            SolKeyCommand.gradleParameters(SolKeyTool.KEY_GUI, problem, "/tmp/problem.key"),
+        )
+    }
 }

@@ -52,8 +52,11 @@ enum class SolKeyTool(
 
     val usesCoreJar: Boolean get() = jar == CORE_JAR
 
-    fun isAvailableFor(target: SolKeyTarget): Boolean =
-        this != SOLC || target !is SolKeyTarget.Function || !target.function.hasParameters
+    fun isAvailableFor(target: SolKeyTarget): Boolean = when (target) {
+        is SolKeyTarget.Problem -> this != SOLC
+        is SolKeyTarget.Function -> this != SOLC || !target.function.hasParameters
+        is SolKeyTarget.Contract -> true
+    }
 }
 
 private const val CORE_JAR = "keyext.solidity.core/build/libs/keyext.solidity.core-exe.jar"
@@ -74,6 +77,11 @@ sealed interface SolKeyTarget {
     data class Contract(val contract: SolContract) : SolKeyTarget {
         override val label: String get() = contract.name
     }
+
+    /** The `\problem` of a `.key` file, which the tools take as the file alone. */
+    data class Problem(val offset: Int, val fileName: String) : SolKeyTarget {
+        override val label: String get() = fileName
+    }
 }
 
 /**
@@ -88,6 +96,12 @@ object SolKeyCommand {
     fun arguments(tool: SolKeyTool, target: SolKeyTarget, filePath: String): List<String> =
         buildList {
             add(filePath)
+            if (target is SolKeyTarget.Problem) {
+                if (tool == SolKeyTool.KEY_HEADLESS) {
+                    add("--open-goals")
+                }
+                return@buildList
+            }
             when (tool) {
                 // KeYther rejects `--contract` without `--function` (a contract alone tells its
                 // picker nothing it cannot infer), so a contract-level click opens the picker.
@@ -123,6 +137,13 @@ object SolKeyCommand {
         buildList {
             // Quoted: `scriptParameters` is one string, split with ParametersListUtil.parse, which
             // honours double quotes — so a path with spaces survives as one argument.
+            if (target is SolKeyTarget.Problem) {
+                add("-PkeyFile=\"$filePath\"")
+                if (tool == SolKeyTool.KEY_HEADLESS) {
+                    add("-PcliArgs=--open-goals")
+                }
+                return@buildList
+            }
             add(if (tool.usesCoreJar) "-PkeyFile=\"$filePath\"" else "-PsolFile=\"$filePath\"")
             when (tool) {
                 SolKeyTool.KEY_GUI -> if (target is SolKeyTarget.Function) {

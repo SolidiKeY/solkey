@@ -30,12 +30,19 @@ open class SolKeyRunAction(
             return
         }
         val editorFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
-        if (e.project == null || !editorFile?.extension.equals("sol", ignoreCase = true)) {
+        val isKey = KeyProblemScanner.isKeyFile(editorFile?.extension)
+        if (e.project == null ||
+            !(editorFile?.extension.equals("sol", ignoreCase = true) || isKey)
+        ) {
             e.presentation.isEnabledAndVisible = false
             return
         }
+        if (isKey) {
+            e.presentation.isEnabledAndVisible = tool != SolKeyTool.SOLC
+            return
+        }
         val atCaret = if (tool == SolKeyTool.SOLC) {
-            e.getData(CommonDataKeys.EDITOR)?.let(::targetAtCaret)
+            e.getData(CommonDataKeys.EDITOR)?.let { targetAtCaret(it, editorFile!!) }
         } else {
             null
         }
@@ -51,7 +58,11 @@ open class SolKeyRunAction(
         }
         val editor = e.getData(CommonDataKeys.EDITOR) ?: return
         val editorFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
-        val atCaret = targetAtCaret(editor)
+        val atCaret = targetAtCaret(editor, editorFile)
+        if (atCaret == null && KeyProblemScanner.isKeyFile(editorFile.extension)) {
+            Messages.showErrorDialog(inProject, "This file has no \\problem to prove.", "Nothing to Run")
+            return
+        }
         if (atCaret == null) {
             Messages.showErrorDialog(
                 inProject,
@@ -68,7 +79,11 @@ open class SolKeyRunAction(
     /**
      * The narrowest thing the caret sits in: a public or external function, or the enclosing contract.
      */
-    private fun targetAtCaret(editor: Editor): SolKeyTarget? {
+    private fun targetAtCaret(editor: Editor, file: VirtualFile): SolKeyTarget? {
+        if (KeyProblemScanner.isKeyFile(file.extension)) {
+            return KeyProblemScanner.find(editor.document.charsSequence)
+                ?.let { SolKeyTarget.Problem(it, file.name) }
+        }
         val caret = editor.caretModel.offset
         val outline = SolFunctionScanner.scanAll(editor.document.charsSequence)
         outline.functions.firstOrNull { caret in it }

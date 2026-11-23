@@ -21,7 +21,8 @@ import com.intellij.util.Alarm
 import javax.swing.Icon
 
 /**
- * Puts a ▶ in the gutter beside contracts and public or external functions of an open `.sol` file.
+ * Puts a ▶ in the gutter beside contracts and public or external functions of an open `.sol` file,
+ * and beside the `\\problem` of an open `.key` file.
  *
  * The icons live in the editor's own markup model rather than coming from a `LineMarkerProvider`,
  * because that extension point is registered per language and the IDE only knows Solidity when a
@@ -74,13 +75,18 @@ class SolGutterInstaller(
             return
         }
         val added = mutableListOf<RangeHighlighter>()
-        val outline = SolFunctionScanner.scanAll(text)
-        val targets = outline.contracts.map { SolKeyTarget.Contract(it) } +
-            outline.functions.map { SolKeyTarget.Function(it) }
+        val targets = if (KeyProblemScanner.isKeyFile(file.extension)) {
+            listOfNotNull(KeyProblemScanner.find(text)?.let { SolKeyTarget.Problem(it, file.name) })
+        } else {
+            val outline = SolFunctionScanner.scanAll(text)
+            outline.contracts.map { SolKeyTarget.Contract(it) } +
+                outline.functions.map { SolKeyTarget.Function(it) }
+        }
         for (target in targets) {
             val offset = when (target) {
                 is SolKeyTarget.Contract -> target.contract.offset
                 is SolKeyTarget.Function -> target.function.offset
+                is SolKeyTarget.Problem -> target.offset
             }
             if (offset >= editor.document.textLength) {
                 continue
@@ -99,13 +105,15 @@ class SolGutterInstaller(
         editor.putUserData(HIGHLIGHTERS, null)
     }
 
-    /** The `.sol` file [editor] shows, or null when the icons do not belong there. */
+    /** The `.sol` or `.key` file [editor] shows, or null when the icons do not belong there. */
     private fun fileOf(editor: Editor): VirtualFile? {
         if (editor.project != project || editor.editorKind != EditorKind.MAIN_EDITOR) {
             return null
         }
         val file = FileDocumentManager.getInstance().getFile(editor.document) ?: return null
-        return file.takeIf { it.extension.equals("sol", ignoreCase = true) }
+        return file.takeIf {
+            it.extension.equals("sol", ignoreCase = true) || KeyProblemScanner.isKeyFile(it.extension)
+        }
     }
 
     private companion object {
@@ -129,7 +137,7 @@ private class ProveGutterIconRenderer(
     override fun getIcon(): Icon = when (target) {
         // A whole contract is many proofs, and the icon says so before the click does.
         is SolKeyTarget.Contract -> AllIcons.Actions.RunAll
-        is SolKeyTarget.Function -> AllIcons.Actions.Execute
+        is SolKeyTarget.Function, is SolKeyTarget.Problem -> AllIcons.Actions.Execute
     }
 
     override fun getTooltipText(): String =

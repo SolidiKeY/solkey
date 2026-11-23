@@ -16,6 +16,9 @@
         remaining sequents in a console. Contracts and functions without parameters also offer
         Compile and Run (solc + EVM), which reports any failing <code>assert</code>.
         <p>
+        A <code>.key</code> file gets a ▶ beside its <code>\problem</code>: click it to open the
+        problem in KeYther, or right-click it for the headless prover.
+        <p>
         No Solidity language plugin is required: the declarations are found by scanning the file.
         <p>
         <code>.key</code> and <code>.proof</code> files are syntax highlighted with the prover's
