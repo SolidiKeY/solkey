@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 // Course transfer-last OneAuction (SolidityCalculus/maltaCourseKey/auction-transfer-last)
-// in the supported fragment: the AuctionMode enum is a uint (0 NeverStarted, 1 Open,
-// 2 Closed), modifiers are inlined requires, `now` is the timeNow state variable.
+// in the supported fragment: modifiers are inlined requires, `now` is the timeNow state variable.
 // Verified per function by the auction-*.key problems of obligations/ against the course
 // invariant
 //   bid == net(bidder) + net(owner),
@@ -12,7 +11,9 @@ pragma solidity ^0.8.0;
 // makeBid refunds the outbid bidder with the transfer LAST (ISoLA 2020, Fig. 5), so the
 // invariant also holds at the transfer point (auction-makeBid-withcallback.key).
 contract AuctionNet {
-    uint mode; // 0 NeverStarted, 1 Open, 2 Closed
+    enum AuctionMode { NeverStarted, Open, Closed }
+
+    AuctionMode mode;
     address payable owner;
     uint closingTime;
     address payable bidder;
@@ -20,7 +21,7 @@ contract AuctionNet {
     uint timeNow;
 
     function makeBid() public payable {
-        require(mode == 1);
+        require(mode == AuctionMode.Open);
         address own = owner;
         require(msg.sender != own);
         uint currentBid = bid;
@@ -34,12 +35,12 @@ contract AuctionNet {
     }
 
     function closeAuction() public {
-        require(mode == 1);
+        require(mode == AuctionMode.Open);
         address own = owner;
         address bdr = bidder;
         require(msg.sender == own || msg.sender == bdr);
         require(timeNow > closingTime);
-        mode = 2;
+        mode = AuctionMode.Closed;
         uint tmp = bid;
         bid = 0;
         owner.transfer(tmp);

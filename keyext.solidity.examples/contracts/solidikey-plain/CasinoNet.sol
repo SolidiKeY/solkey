@@ -10,17 +10,19 @@ pragma solidity ^0.8.0;
 // transfer LAST, so the invariant also holds at the payout point
 // (casino-decideBet-withcallback.key).
 contract CasinoNet {
+    enum State { IDLE, GAME_AVAILABLE, BET_PLACED }
+
     address payable operator;
     address payable player;
     uint pot;
     uint bet;
     uint guess; // 0 HEADS, 1 TAILS
-    uint state; // 1 game open, 2 bet placed
+    State state;
 
     function addToPot() public payable {
         address op = operator;
         require(msg.sender == op);
-        require(state == 1);
+        require(state == State.GAME_AVAILABLE);
         uint p = pot;
         pot = p + msg.value;
     }
@@ -28,19 +30,19 @@ contract CasinoNet {
     function placeBet(uint g) public payable {
         address pl = player;
         require(msg.sender == pl);
-        require(state == 1);
+        require(state == State.GAME_AVAILABLE);
         uint p = pot;
         require(msg.value <= p);
         bet = msg.value;
         guess = g;
-        state = 2;
+        state = State.BET_PLACED;
     }
 
     function decideBet(uint secret) public {
         address op = operator;
         require(msg.sender == op);
-        require(state == 2);
-        state = 1;
+        require(state == State.BET_PLACED);
+        state = State.GAME_AVAILABLE;
         uint b = bet;
         bet = 0;
         uint coin = secret % 2;

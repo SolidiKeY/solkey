@@ -14,7 +14,9 @@ pragma solidity ^0.8.0;
 // it (the sum drops to 0 while bid keeps its value) - provably so, which is why the
 // course ships no closeAuction .key either.
 contract AuctionWithdrawNet {
-    uint mode; // 0 NeverStarted, 1 Open, 2 Closed
+    enum AuctionMode { NeverStarted, Open, Closed }
+
+    AuctionMode mode;
     address payable owner;
     uint closingTime;
     address payable bidder;
@@ -23,7 +25,7 @@ contract AuctionWithdrawNet {
     mapping(address => uint) withdrawableBalances;
 
     function makeBid() public payable {
-        require(mode == 1);
+        require(mode == AuctionMode.Open);
         address own = owner;
         require(msg.sender != own);
         uint currentBid = bid;
@@ -37,12 +39,12 @@ contract AuctionWithdrawNet {
     }
 
     function closeAuction() public {
-        require(mode == 1);
+        require(mode == AuctionMode.Open);
         address own = owner;
         address bdr = bidder;
         require(msg.sender == own || msg.sender == bdr);
         require(timeNow > closingTime);
-        mode = 2;
+        mode = AuctionMode.Closed;
         uint b = bid;
         uint wb = withdrawableBalances[own];
         withdrawableBalances[own] = wb + b;

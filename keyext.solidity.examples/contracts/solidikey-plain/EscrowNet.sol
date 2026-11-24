@@ -2,14 +2,15 @@
 pragma solidity ^0.8.0;
 
 // Course escrow-v2 (SolidityCalculus/maltaCourseKey/escrow) in the supported fragment:
-// the State enum is a uint (0 AwaitingDeposit, 1 DepositPlaced, 2 Withdrawn), modifiers
-// are inlined requires, `now` is the timeNow state variable. Verified per function by the
-// escrow-*.key problems of obligations/ against the course invariant
+// modifiers are inlined requires, `now` is the timeNow state variable. Verified per
+// function by the escrow-*.key problems of obligations/ against the course invariant
 //   sender != receiver,
 //   amountInEscrow == net(sender) + net(receiver),
 //   state == AwaitingDeposit -> net(sender) == 0,
 //   state != DepositPlaced   -> amountInEscrow == 0.
 contract EscrowNet {
+    enum State { AwaitingDeposit, DepositPlaced, Withdrawn }
+
     address sender;
     address payable receiver;
     uint delayUntilRelease;
@@ -17,22 +18,22 @@ contract EscrowNet {
     uint amountInEscrow;
     bool releasedBySender;
     bool releasedByReceiver;
-    uint state; // 0 AwaitingDeposit, 1 DepositPlaced, 2 Withdrawn
+    State state;
     uint timeNow;
 
     function placeInEscrow() public payable {
         address snd = sender;
         require(msg.sender == snd);
-        require(state == 0);
+        require(state == State.AwaitingDeposit);
         require(msg.value > 0);
         amountInEscrow = msg.value;
         uint rt = timeNow + delayUntilRelease;
         releaseTime = rt;
-        state = 1;
+        state = State.DepositPlaced;
     }
 
     function releaseEscrow() public {
-        require(state == 1);
+        require(state == State.DepositPlaced);
         address snd = sender;
         address rcv = receiver;
         if (msg.sender == snd) {
@@ -46,11 +47,11 @@ contract EscrowNet {
     function withdrawFromEscrow() public {
         address rcv = receiver;
         require(msg.sender == rcv);
-        require(state == 1);
+        require(state == State.DepositPlaced);
         require(timeNow >= releaseTime);
         require(releasedByReceiver);
         require(releasedBySender);
-        state = 2;
+        state = State.Withdrawn;
         receiver.transfer(amountInEscrow);
         amountInEscrow = 0;
     }
