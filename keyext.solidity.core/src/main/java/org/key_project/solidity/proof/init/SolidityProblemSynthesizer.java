@@ -189,7 +189,6 @@ public final class SolidityProblemSynthesizer {
     private static final KeyTerm MT_ST = Key.constant("mtSt");
     private static final KeyTerm MSG_SENDER = Key.constant("msgSender");
     private static final KeyTerm MSG_VALUE = Key.constant("msgValue");
-    private static final KeyTerm SELF_BALANCE = Key.constant("selfBalance");
     private static final KeyFormula LEN_INV = Key.predicate("lenInv", STORAGE);
     private static final KeyFormula INVARIANT = Key.predicate("CInv", STORAGE, NET);
 
@@ -253,8 +252,6 @@ public final class SolidityProblemSynthesizer {
         KeyTerm sender = Key.apply("at", MSG_SENDER);
         update.add(Key.assign("net", Key.apply("storeSt", ledger, sender,
             Key.plus(Key.typed("selectSt", "int", ledger, sender), MSG_VALUE))));
-        update.add(Key.assign("selfBalance",
-            constructor ? MSG_VALUE : Key.plus(SELF_BALANCE, MSG_VALUE)));
 
         String s = SpecCompiler.Context.INVARIANT_STORAGE;
         String n = SpecCompiler.Context.INVARIANT_NET;

@@ -26,7 +26,7 @@ transfer to `self` keeps the
 money in the contract, so the rules leave `net` unchanged in that case
 (`\if(a = self) \then(net) \else(...)`); the PO pattern assumes
 `msgSender != self`. The transfer rules do not track the contract's own
-balance; the PO pattern still credits `msgValue` to `selfBalance`.
+balance, and neither does the PO pattern.
 
 Read `storage.md` (calculus conventions), `key-taclets.md` (authoring
 syntax), and `require-assert.md` (box/diamond revert discipline) first.

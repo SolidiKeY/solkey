@@ -285,8 +285,7 @@ public class SolidityProblemSynthesizerTest {
                         // msg.sender == sender && state == State.AwaitingDeposit && msg.value > 0 :
                         & (((msgSender = find<[int]>(storage, cons1(Escrow$sender))) & (find<[int]>(storage, cons1(Escrow$state)) = 0)) & (msgValue > 0))
                         & CInv(storage, net) ->
-                        {net := storeSt(net, at(msgSender), (selectSt<[int]>(net, at(msgSender)) + msgValue))
-                         || selfBalance := (selfBalance + msgValue)}
+                        {net := storeSt(net, at(msgSender), (selectSt<[int]>(net, at(msgSender)) + msgValue))}
                         \\[{ placeInEscrow()@Escrow; }\\]
                             (CInv(storage, net)
                              // net(sender) == msg.value && state == State.DepositPlaced :

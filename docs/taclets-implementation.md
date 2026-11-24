@@ -1291,8 +1291,7 @@ the core test resources, run by `RulesTest`.
 
 A constructor is listed by `SolidityOutline` and `SolJSONParser` under the name `constructor` (solc
 names it `""`), so `constructor(args)@C;` is an ordinary function-body call. Its obligation starts
-from the empty state: the update is `storage := mtSt || net := storeSt(mtSt, at(msgSender), …) ||
-selfBalance := msgValue` (a function without clauses gets `{storage := mtSt || net := mtSt}`), and
+from the empty state: the update is `storage := mtSt || net := storeSt(mtSt, at(msgSender), …)` (a function without clauses gets `{storage := mtSt || net := mtSt}`), and
 `CInv(storage, net)` is *not* assumed — the constructor has to establish it. `ExpandFunctionBody`
 prepends `field = initializer;` for every state variable of the contract that has an initializer,
 in declaration order, before the constructor's `function-frame`. `contracts/solidikey/Counter.sol` is the

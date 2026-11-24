@@ -60,8 +60,7 @@ the conjoined invariants, and the ISoLA 2020 eq.-4 problem
 
 ```
 msg.value bound & !(msgSender = self) & requires & CInv(storage, net) ->
-{[old := storage || oldNet := net ||] net := storeSt(net, at(msgSender), net(msgSender) + msgValue)
- || selfBalance := selfBalance + msgValue}
+{[old := storage || oldNet := net ||] net := storeSt(net, at(msgSender), net(msgSender) + msgValue)}
 \[{ [result = ]f()@C; }\] (CInv(storage, net) & ensures)
 ```
 
