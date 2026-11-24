@@ -84,8 +84,9 @@ Bug 10 shares one need with bug 4: a per-type table of value ranges.
 
 ### 10. Missing ranges for stored values and `msg.value`
 
-Generated obligations assume every integer, address and enum parameter is in its type's range,
-specified obligations assume `msg.sender` is an address, spec quantifiers are range-guarded and
+Generated obligations assume `uintN` and address parameters are `>= 0` and enum parameters in
+range (no upper bounds: overflow is not modelled), specified obligations assume
+`msg.sender >= 0`, spec quantifiers get the same guards and
 `conformsDynSize` bounds dynamic lengths by `2^256-1` (10A, done). Values read from storage and
 `msg.value` in an unspecified function remain unbounded.
 

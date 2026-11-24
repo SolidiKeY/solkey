@@ -118,14 +118,14 @@ public class SpecCompilerTest {
             "((find<[int]>(cinv$s, cons1(C$n)) < 1) -> !(find<[bool]>(cinv$s, cons1(C$open)) = TRUE))",
             invariant("n < 1 -> !open"));
         assertEquals(
-            "(\\forall int a; (((0 <= a) & (a <= 1461501637330902918203684832716283019655932542975)) -> ((selectSt<[int]>(cinv$n, at(a)) > 0) -> (find<[bool]>(cinv$s, cons2(C$bidded, at(a))) = TRUE))))",
+            "(\\forall int a; ((0 <= a) -> ((selectSt<[int]>(cinv$n, at(a)) > 0) -> (find<[bool]>(cinv$s, cons2(C$bidded, at(a))) = TRUE))))",
             invariant("\\forall address a; net(a) > 0 -> bidded[a]"));
         assertEquals(
-            "(\\exists int i; (((0 <= i) & (i <= 115792089237316195423570985008687907853269984665640564039457584007913129639935)) & ((i < find<[int]>(cinv$s, cons2(C$bidders, size))) & (find<[int]>(cinv$s, cons2(C$bidders, at(i))) = find<[int]>(cinv$s, cons1(C$owner))))))",
+            "(\\exists int i; ((0 <= i) & ((i < find<[int]>(cinv$s, cons2(C$bidders, size))) & (find<[int]>(cinv$s, cons2(C$bidders, at(i))) = find<[int]>(cinv$s, cons1(C$owner))))))",
             invariant("\\exists uint i; i < bidders.length && bidders[i] == owner"));
-        assertEquals("(\\forall int q; (((0 <= q) & (q <= 255)) -> (q < 256)))",
+        assertEquals("(\\forall int q; ((0 <= q) -> (q < 256)))",
             invariant("\\forall uint8 q; q < 256"));
-        assertEquals("(\\exists int q; (((-128 <= q) & (q <= 127)) & (q < 0)))",
+        assertEquals("(\\exists int q; (q < 0))",
             invariant("\\exists int8 q; q < 0"));
         assertEquals("(\\forall int q; (((0 <= q) & (q <= 1)) -> (q < 2)))",
             invariant("\\forall State q; q < 2"));

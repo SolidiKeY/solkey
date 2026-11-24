@@ -170,8 +170,10 @@ public final class SolidityProblemSynthesizer {
         List<KeyFormula> facts = new ArrayList<>();
         for (SolidityOutline.Parameter parameter : function.parameters()) {
             SpecCompiler.Range range = compiler.range(parameter.type());
-            if (range != null) {
-                facts.add(range.contains(Key.constant(renamed.get(parameter.name()))));
+            KeyFormula fact = range == null ? Key.TRUE
+                    : range.contains(Key.constant(renamed.get(parameter.name())));
+            if (!fact.equals(Key.TRUE)) {
+                facts.add(fact);
             }
         }
         return Key.and(facts);

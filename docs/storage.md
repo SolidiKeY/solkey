@@ -791,7 +791,7 @@ The motivating case is `values.push(); values.pop();` (`storagePopUnknownLength`
 `n = |storage[C$values]|` over the entry storage, which `conformsDynSize` closes. Array examples
 need not open with `require(arr.length == N)` unless they assert an exact length.
 
-A length also gets its `uint256` upper bound `|st| <= 2^256-1`, so a range-guarded spec quantifier
+A length also gets its `uint256` upper bound `|st| <= 2^256-1`, so a spec quantifier
 (`\exists uint i; i < arr.length & ...`) can take a witness bounded by a length. Nothing bounds
 the value of any other `uint` cell.
 

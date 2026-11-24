@@ -796,9 +796,9 @@ contract Calls {
     }
 
     /// @custom:key ensures \forall uint q; q + 1 > 0
-    /// @custom:key ensures \forall uint8 q; q <= 255
-    /// @custom:key ensures \forall int8 q; -128 <= q && q <= 127
-    /// @custom:key ensures \forall address q; q < 1461501637330902918203684832716283019655932542976
+    /// @custom:key ensures \forall uint8 q; q >= 0
+    /// @custom:key ensures \forall int8 q; q < 0 || q >= 0
+    /// @custom:key ensures \forall address q; q >= 0
     /// @custom:key ensures \exists uint q; q == 0
     function specQuantifierOverTypeRange() public pure {
     }

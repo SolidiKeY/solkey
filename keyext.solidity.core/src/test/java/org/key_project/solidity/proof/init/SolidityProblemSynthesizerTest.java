@@ -281,7 +281,7 @@ public class SolidityProblemSynthesizerTest {
                         // msg.sender != this :
                         & !(msgSender = self)
                         // msg.sender is an address :
-                        & ((0 <= msgSender) & (msgSender <= 1461501637330902918203684832716283019655932542975))
+                        & (0 <= msgSender)
                         // msg.sender == sender && state == State.AwaitingDeposit && msg.value > 0 :
                         & (((msgSender = find<[int]>(storage, cons1(Escrow$sender))) & (find<[int]>(storage, cons1(Escrow$state)) = 0)) & (msgValue > 0))
                         & CInv(storage, net) ->
@@ -308,7 +308,7 @@ public class SolidityProblemSynthesizerTest {
         assertTrue(text.contains("{old := storage\n     || oldNet := net\n     || net := storeSt("),
             text);
         assertFalse(text.contains("\\schemaVar \\variables"), text);
-        assertTrue(text.contains("(\\exists int hb; (((0 <= hb) & (hb <= "), text);
+        assertTrue(text.contains("(\\exists int hb; ((0 <= hb) & (\\forall int a; "), text);
         assertTrue(text.contains("\\varcond(\\noFreeVarIn(cinv$s), \\noFreeVarIn(cinv$n))"),
             text);
         assertTrue(text.contains("find<[int]>(old, cons2(MultiAuction$balances, at(msgSender)))"),

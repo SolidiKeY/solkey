@@ -101,7 +101,7 @@ inside `\old`; `N` likewise `cinv$n`/`net`/`oldNet`):
 | `\old(e)` | `e` over `old`/`oldNet` (ensures only) |
 | `== != < <= > >= + - * / %` | `= , !(=), <, <=, >, >=, +, -, *, div, mod`; `==` on bools is `<->` |
 | `&& \|\| ! -> <->` | `& \| ! -> <->` |
-| `\forall T a; e`, `\exists T a; e` | `\forall int a; ((lo <= a & a <= hi) -> e)`, `\exists int a; ((lo <= a & a <= hi) & e)` with the range of `T`: `uintN` `[0, 2^N-1]`, `intN` `[-2^(N-1), 2^(N-1)-1]`, `address` `[0, 2^160-1]`, an enum `[0, members-1]`; `bool` stays `bool` with no guard |
+| `\forall T a; e`, `\exists T a; e` | `\forall int a; ((lo <= a & a <= hi) -> e)`, `\exists int a; ((lo <= a & a <= hi) & e)` (absent bounds are dropped) with the range of `T`: `uintN` and `address` `[0, ∞)`, `intN` unguarded (no upper bounds: overflow is not modelled), an enum `[0, members-1]`; `bool` stays `bool` with no guard |
 
 Errors (an unknown identifier, `\old` outside ensures, indexing a non-mapping, `msg.sender` or
 `msg.value` in a contract invariant, a quantified variable named after an obligation variable such

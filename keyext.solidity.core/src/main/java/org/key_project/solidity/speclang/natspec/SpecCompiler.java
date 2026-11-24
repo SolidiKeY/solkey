@@ -389,18 +389,27 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
         }
         KeyFormula inRange = range.contains(Key.constant(variable));
         KeyFormula body = asFormula(in(ctx.bind(variable, SpecType.INT), node.expr()));
-        return new Value.OfFormula(Key.quantified(universal, "int", variable,
-            universal ? Key.implies(inRange, body) : Key.and(inRange, body)));
+        KeyFormula guarded = inRange.equals(Key.TRUE) ? body
+                : universal ? Key.implies(inRange, body) : Key.and(inRange, body);
+        return new Value.OfFormula(Key.quantified(universal, "int", variable, guarded));
     }
 
-    public record Range(BigInteger low, BigInteger high) {
+    public record Range(@Nullable BigInteger low, @Nullable BigInteger high) {
 
-        public static final Range ADDRESS =
-            new Range(BigInteger.ZERO, BigInteger.TWO.pow(160).subtract(BigInteger.ONE));
+        public static final Range ADDRESS = new Range(BigInteger.ZERO, null);
+        public static final Range UNBOUNDED = new Range(null, null);
 
         public KeyFormula contains(KeyTerm term) {
-            return Key.and(Key.compare(Relation.LEQ, Key.num(low.toString()), term),
-                Key.compare(Relation.LEQ, term, Key.num(high.toString())));
+            List<KeyFormula> bounds = new ArrayList<>();
+            BigInteger low = this.low;
+            BigInteger high = this.high;
+            if (low != null) {
+                bounds.add(Key.compare(Relation.LEQ, Key.num(low.toString()), term));
+            }
+            if (high != null) {
+                bounds.add(Key.compare(Relation.LEQ, term, Key.num(high.toString())));
+            }
+            return Key.and(bounds);
         }
     }
 
@@ -412,11 +421,7 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
             if (bits < 8 || bits > 256 || bits % 8 != 0) {
                 throw new SpecException("unknown integer type " + name);
             }
-            BigInteger half = BigInteger.TWO.pow(bits - 1);
-            return integer.group(1).isEmpty()
-                    ? new Range(half.negate(), half.subtract(BigInteger.ONE))
-                    : new Range(BigInteger.ZERO,
-                        BigInteger.TWO.pow(bits).subtract(BigInteger.ONE));
+            return integer.group(1).isEmpty() ? Range.UNBOUNDED : Range.ADDRESS;
         }
         if (name.matches("address( payable)?") || name.startsWith("contract ")) {
             return Range.ADDRESS;
