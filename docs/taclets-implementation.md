@@ -36,13 +36,13 @@ Sort hierarchy (declared across the `*Header.key` files; `StValue`/`MemValue`/
 `Prim` in `solidityDLHeader.key`): values storable in storage have sort
 `StValue` (`Struct` + `Prim`), values storable in memory have sort `MemValue`
 (`Identity` + `Prim`); `Prim` (`int`, `bool`, contract sorts) extends both.
-Accordingly `storeSt`/`save` take `StValue`, `write` takes `MemValue`, and
-`copySt` takes `Struct` as last argument. The array and mapping sorts
+Accordingly `store`/`save` take `StValue`, `write` takes `MemValue`, and
+`copy` takes `Struct` as last argument. The array and mapping sorts
 `SolJSONParser` creates per declared type (`uint256[]`, `uint256[3]`,
 `mapping(bool => int256)`) extend **`Struct`**, not `StValue` directly: the value
 at such a path *is* a struct node at run time — `mtSt` extended with `at(i)`
 fields, which is why `memoryStorageCopy` reads it `find<[Struct]>` — so every
-`selectSt`/`find`/`save`/`copySt` rule, all stated on `Struct`, applies to it.
+`select`/`find`/`save`/`copy` rule, all stated on `Struct`, applies to it.
 Siblings of `Struct` under `StValue` would be incomparable with it, and a
 generic bound at such a sort would produce terms no rule could consume.
 `SolJsonParserTest#arrayAndMappingSortsExtendStruct` pins this down. Taclets
@@ -82,10 +82,10 @@ off the struct-sorted reads by its *sort* generic instead: the read cast is
 bound `alphaPrim \extends Prim`, so a `<[Struct]>` read is a failed
 instantiation rather than a ranked race (the `simplify_enlarging` ranking is
 performance-only). Struct-sorted element reads
-`selectSt<[Struct]>(delNode(st), at(i))` — plain-`Field` index, so neither the
+`select<[Struct]>(delNode(st), at(i))` — plain-`Field` index, so neither the
 `MapField` nor the `RefField` rule matches — get their own
 `selectStDelNodeIndexStruct`, which re-wraps the element exactly like the `RefField`
-rule (`delNode(selectSt(st, at(i)))`), so `delete arr` keeps the mapping members of
+rule (`delNode(select(st, at(i)))`), so `delete arr` keeps the mapping members of
 struct elements.
 Array reset selectors compare each index with the original length: valid elements are reset,
 while out-of-range data is preserved. Reference-element selection produces `delNodeIndex(st, i)`;
@@ -100,8 +100,8 @@ preventing repeated cache-wide recomputation of those symbolic terms.
 `StorageDangling.testDeleteArrayLeavesDataPastLength` exercises the preserved tail.
 
 `MapField` is the sub-sort that earns its place: it is the only case that reads
-*through* the delete marker (`selectSt(st, mf)`) instead of re-wrapping it
-(`delNode(selectSt(st, rf))`) or resetting. Classifying a mapping member as a
+*through* the delete marker (`select(st, mf)`) instead of re-wrapping it
+(`delNode(select(st, rf))`) or resetting. Classifying a mapping member as a
 reference would leave its entries under the marker and they would read as
 defaults — losing exactly the "delete preserves mappings" rule.
 
@@ -472,9 +472,9 @@ A dynamic length lies in the `uint256` range because the node conforms to its ty
 adds `0 <= |st| <= 2^256-1` under `conforms(⟦T[]⟧, st) ==>`; a fixed length is static (see the table below and
 `docs/storage.md` §8b). This is what
 closes `storagePopUnknownLength`, `storagePushLengthPositive` and `storagePushReadBack` without a
-`require` on the length. The former axiom `sizeNotNegative` (`0 <= selectSt<[int]>(st, size)`
+`require` on the length. The former axiom `sizeNotNegative` (`0 <= select<[int]>(st, size)`
 for every `st`) was removed: `save(st, cons(size, nil), -1)` has length `-1`, so it proved
-`!(selectSt<[int]>(st, size) = -1)` (`unsound/sizeNotNegativeAnyStruct.key`); no closed proof of
+`!(select<[int]>(st, size) = -1)` (`unsound/sizeNotNegativeAnyStruct.key`); no closed proof of
 `taclets/`, `contracts/` or the benchmark depended on it. The `cnf_andComm`/`cnf_orComm`
 order guards in `FOLStrategy` (`termSmallerThan`, mirroring `key.core`'s `JFOLStrategy`) that
 landed with it stay: unguarded, `commute_and` ping-pongs on a succedent conjunction and starves
@@ -488,10 +488,10 @@ branch), fixed-length array allocation (`memoryArrayFreshAlloc`, assignment form
 memory or storage, to a fresh memory local, and `newArrayCaptureStorageRoot` one written to a
 state variable), primitive-default vs. reference-slot
 delete (`memoryRootDeleteFreshRebind` and field/index delete), and lazy
-storage↔memory copies via `copySt` / `copyMem`. `memoryIndexWriteStorageRefRhsCapture`
+storage↔memory copies via `copy` / `copyMem`. `memoryIndexWriteStorageRefRhsCapture`
 captures a storage reference into a fresh memory local before evaluating an indexed
 memory destination; the existing write rules retain bounds checks and receiver/index
-capture. `newFromCopySt` propagates freshness through the copy view, whose allocation
+capture. `newFromCopy` propagates freshness through the copy view, whose allocation
 is already recorded by `addM`. Tests check independent array/struct snapshots, allocation
 after copies, an impure destination index, and source/destination bounds.
 `memoryStorageCopy` handles
@@ -543,7 +543,7 @@ the generated `lenInv(storage)`, whose `conforms(⟦T⟧, node)` atoms (`⟦T⟧
 `emptyOf<[T]>`, `mtSt` for a type without a dynamic array) state that every reachable dynamic
 length is non-negative (`StorageLayout`; `contracts/solidikey/FixedLengths.sol`, `testFixedArrayLength`,
 `testFixedElementOfDynamicArrayLength`, `storageShorterStaticCopyClearsTail`). With `|st|` for
-`selectSt<[int]>(st, size)`, `st[a]` for `selectSt<[Struct]>(st, a)` and `⟦e⟧` for the element's
+`select<[int]>(st, size)`, `st[a]` for `select<[Struct]>(st, a)` and `⟦e⟧` for the element's
 tag (`#elemOf`):
 
 | Rule | Where | Effect |
@@ -592,7 +592,7 @@ overlap the paragraph above records; pushing the cast keeps the split. The three
 A copy whose source contains a fixed-size array reads the deleted value at its typed sort, so
 `selectOnDelAtCons` leaves `delField<[T]>` with `T` a typed node sort such as `int[3]`, which
 no `delField` rule matches. `#typedSelect` re-sorts it to `delField<[Struct]>` like `find`,
-`selectSt` and `save` (`TypeSortTransformer.untyped`), where `delFieldIndexStruct` and its
+`select` and `save` (`TypeSortTransformer.untyped`), where `delFieldIndexStruct` and its
 siblings resolve it; before, it wrapped the term in `cast<[Struct]>`, which `castDel` removed
 again, and `selectOnFind{Fixed,Struct}` and `castDel` alternated until the step limit.
 `delFieldIndexStruct` takes any `Prim` key (`at(pk)`), so a `bool`-keyed mapping entry resets
@@ -612,7 +612,7 @@ leaf is the written value (`saveNilPrim`); a struct leaf is resolved by what is 
 a `MapField` member comes from the old value (`selectOnSaveNilMap`), any other member is again
 a leaf one level down (`selectOnSaveNilMember`), and an element `at(i)` takes solc's three
 cases (`selectOnSaveNilIndex`). `#typedSelect` re-sorts a `save` to `Struct` like `find` and
-`selectSt`, so a leaf of a fixed-array sort does not loop with `castDel`. `saveStValueCast`
+`select`, so a leaf of a fixed-array sort does not loop with `castDel`. `saveStValueCast`
 pushes a cast from `StValue` into the leaf, as `selectStValueCast` does for a select. The same
 leaf sits under a memory-to-storage copy, `save<[Struct]>(storage, p, copyMem(mtSt, memory,
 mv))`, so `structMemoryRules.key` reads `copyMem` one
@@ -1251,7 +1251,7 @@ problem the `contracts/solidikey-plain/obligations/*.key` files spell out by han
 `CInv(cinv$s, cinv$n)` as the conjoined invariants (schema variables no spec identifier can name;
 the invariant may not mention `msg.sender`/`msg.value`), and the ISoLA 2020 eq.-4 problem: `msg.value` bound,
 requires, `CInv(storage, net)` in the antecedent; the ledger booking
-`net := storeSt(net, at(msgSender), …)` as update; the call in the **box** modality; `CInv`
+`net := store(net, at(msgSender), …)` as update; the call in the **box** modality; `CInv`
 and the ensures as postcondition. `\old(e)` declares `Struct old, oldNet` and snapshots them in
 the update; a single named return declares `int result` and calls `result = f()@C;`, and
 several named returns `lo, hi` declare `int result_lo, result_hi` and call
@@ -1291,7 +1291,7 @@ the core test resources, run by `RulesTest`.
 
 A constructor is listed by `SolidityOutline` and `SolJSONParser` under the name `constructor` (solc
 names it `""`), so `constructor(args)@C;` is an ordinary function-body call. Its obligation starts
-from the empty state: the update is `storage := mtSt || net := storeSt(mtSt, at(msgSender), …)` (a function without clauses gets `{storage := mtSt || net := mtSt}`), and
+from the empty state: the update is `storage := mtSt || net := store(mtSt, at(msgSender), …)` (a function without clauses gets `{storage := mtSt || net := mtSt}`), and
 `CInv(storage, net)` is *not* assumed — the constructor has to establish it. `ExpandFunctionBody`
 prepends `field = initializer;` for every state variable of the contract that has an initializer,
 in declaration order, before the constructor's `function-frame`. `contracts/solidikey/Counter.sol` is the

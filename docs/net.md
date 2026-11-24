@@ -69,7 +69,7 @@ maintained by the calculus, not by the program. On top of it:
 | Unbounded ints ("Solidity Light") | Done (`intHeader.key`); bounded (checked) semantics is not modeled — see `docs/taclet-ideas.md` Tier 5 |
 | `result = f(args)@C;` call statement | Parses (`SolidityRules.g4` `FunctionBodyStatement`); inlined by `ExpandFunctionBody`. The `functionBodyExpand` taclet is in the standard rule set (`solidityProgramRules.key`), together with `blockEmpty`, which discards the inlined body block |
 | `address` type | Registered in `SolidityInfo`, mapped to the `int` sort |
-| `net` mapping | **Done**: `Struct net` in `netHeader.key`, read/write via `selectSt`/`storeSt` |
+| `net` mapping | **Done**: `Struct net` in `netHeader.key`, read/write via `select`/`store` |
 | `msg.sender` / `msg.value` | **Done**: desugared to the `msgSender`/`msgValue` program variables in `SolidityToKeyConverter` |
 | `transfer` / `send` / `call{value:}` | `transfer` **done with both semantics, each split by modality** (`transferNoCallbackBox`/`transferNoCallbackDiamond` and both capture rules; `transferWithCallbackBox`/`transferWithCallbackDiamond` under the `transferSemantics` choice); `send` **done** the same way (`send*` rules: success books the debit and binds `TRUE`, failure binds `FALSE`); `call{value:}` only as `(bool ok, ) = a.call{value: v}("")`, lowered to `send` by `SolJSONParser` |
 | Havoc update | **Done** in `transferWithCallbackBox`/`Diamond`: `{storage := storageSk \|\| net := netSk}` with skolem SVs (the `memoryReferenceDeclFreshAlloc` fresh-symbol pattern) |
@@ -82,8 +82,8 @@ maintained by the calculus, not by the program. On top of it:
 `Struct net;` next to `Struct storage;`. Since `address` is the `int`
 sort, `net(sadr)` is expressed with the existing struct primitives:
 
-    read   :  selectSt<[int]>(net, at(sadr))
-    write  :  {net := storeSt(net, at(sadr), selectSt<[int]>(net, at(sadr)) + v)}
+    read   :  select<[int]>(net, at(sadr))
+    write  :  {net := store(net, at(sadr), select<[int]>(net, at(sadr)) + v)}
 
 Everything needed already exists in `structRules.key`: read-over-write
 (`selectOnStore`), and `selectOnEmpty` + `defaultValue<[int]> = 0`, which
@@ -147,7 +147,7 @@ Mapped to this repository, roughly in order of usefulness:
    `keyext.solidity.examples/README.md`). `SolidityProblemSynthesizer`
    compiles them into the generated `.key` text: the `insertCInv` taclet and
    the eq.-4 problem, exactly the shape of the hand-written `contracts/solidikey-plain/obligations/*.key`.
-   `net(a)` lowers to `selectSt<[int]>(net, at(a))`, `\old(e)` against the
+   `net(a)` lowers to `select<[int]>(net, at(a))`, `\old(e)` against the
    `old`/`oldNet` variables. Not done: feeding the clauses into a
    `SpecificationRepository` so a callback varcond could look them up; the
    with-callback rules still expand `CInv` through the generated taclet.

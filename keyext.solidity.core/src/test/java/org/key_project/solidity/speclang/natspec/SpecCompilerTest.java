@@ -103,12 +103,12 @@ public class SpecCompilerTest {
     void enumsMessageNetAndThis() {
         assertEquals("(find<[int]>(cinv$s, cons1(C$state)) = 1)",
             invariant("state == State.Closed"));
-        assertEquals("(selectSt<[int]>(net, at(find<[int]>(storage, cons1(C$owner)))) = msgValue)",
+        assertEquals("(select<[int]>(net, at(find<[int]>(storage, cons1(C$owner)))) = msgValue)",
             requires("net(owner) == msg.value"));
         assertEquals("!(find<[int]>(cinv$s, cons1(C$owner)) = self)",
             invariant("owner != address(this)"));
         assertEquals(
-            "(selectSt<[int]>(cinv$n, at(find<[int]>(cinv$s, cons1(C$owner)))) = neg(selectSt<[int]>(cinv$n, at(self))))",
+            "(select<[int]>(cinv$n, at(find<[int]>(cinv$s, cons1(C$owner)))) = neg(select<[int]>(cinv$n, at(self))))",
             invariant("net(owner) == -net(address(this))"));
     }
 
@@ -118,7 +118,7 @@ public class SpecCompilerTest {
             "((find<[int]>(cinv$s, cons1(C$n)) < 1) -> !(find<[bool]>(cinv$s, cons1(C$open)) = TRUE))",
             invariant("n < 1 -> !open"));
         assertEquals(
-            "(\\forall int a; ((0 <= a) -> ((selectSt<[int]>(cinv$n, at(a)) > 0) -> (find<[bool]>(cinv$s, cons2(C$bidded, at(a))) = TRUE))))",
+            "(\\forall int a; ((0 <= a) -> ((select<[int]>(cinv$n, at(a)) > 0) -> (find<[bool]>(cinv$s, cons2(C$bidded, at(a))) = TRUE))))",
             invariant("\\forall address a; net(a) > 0 -> bidded[a]"));
         assertEquals(
             "(\\exists int i; ((0 <= i) & ((i < find<[int]>(cinv$s, cons2(C$bidders, size))) & (find<[int]>(cinv$s, cons2(C$bidders, at(i))) = find<[int]>(cinv$s, cons1(C$owner))))))",
@@ -148,7 +148,7 @@ public class SpecCompilerTest {
             "((ok = TRUE) -> (find<[int]>(storage, cons1(C$n)) = (find<[int]>(old, cons1(C$n)) + x)))",
             ensures("ok -> n == \\old(n) + x"));
         assertEquals(
-            "(selectSt<[int]>(net, at(msgSender)) = selectSt<[int]>(oldNet, at(msgSender)))",
+            "(select<[int]>(net, at(msgSender)) = select<[int]>(oldNet, at(msgSender)))",
             ensures("net(msg.sender) == \\old(net(msg.sender))"));
     }
 

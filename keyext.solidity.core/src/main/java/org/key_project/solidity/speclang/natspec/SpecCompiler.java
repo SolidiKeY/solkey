@@ -33,7 +33,7 @@ import org.jspecify.annotations.Nullable;
 /// `keyext.solidity.examples/contracts/solidikey-plain/obligations/` spell it: a state variable `x`
 /// is
 /// `find<[int]>(S, cons1(C$x))`, a mapping entry `m[k]` is
-/// `find<[int]>(S, cons2(C$m, at(k)))`, `net(a)` is `selectSt<[int]>(N, at(a))`, `msg.sender`
+/// `find<[int]>(S, cons2(C$m, at(k)))`, `net(a)` is `select<[int]>(N, at(a))`, `msg.sender`
 /// and `msg.value` are the `msgSender` and `msgValue` program variables, `address(this)` is
 /// `self`.
 ///
@@ -222,7 +222,7 @@ public final class SpecCompiler extends SolSpecBaseVisitor<SpecCompiler.Value> {
 
     @Override
     public Value visitNet(SolSpecParser.NetContext node) {
-        return integer(Key.typed("selectSt", "int", Key.constant(ctx.net()),
+        return integer(Key.typed("select", "int", Key.constant(ctx.net()),
             Key.apply("at", term(node.expr()))));
     }
 

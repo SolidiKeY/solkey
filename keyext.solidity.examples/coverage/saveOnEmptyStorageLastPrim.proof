@@ -33,7 +33,7 @@
     \unique MemberField g;
 }
 \problem {
-  selectSt<[int]>(save<[Struct]>(mtSt, cons(f, nil), 5),
+  select<[int]>(save<[Struct]>(mtSt, cons(f, nil), 5),
                   f)
 = 5
 }

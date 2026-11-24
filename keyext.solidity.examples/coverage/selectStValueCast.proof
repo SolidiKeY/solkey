@@ -37,8 +37,8 @@
     \unique MapMemberField mf;
 }
 \problem {
-  cast<[Struct]>(selectSt<[StValue]>(s, f))
-= selectSt<[Struct]>(s, f)
+  cast<[Struct]>(select<[StValue]>(s, f))
+= select<[Struct]>(s, f)
 }
 
 \proof {

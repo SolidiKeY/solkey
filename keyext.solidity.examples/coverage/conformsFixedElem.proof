@@ -33,7 +33,7 @@
 \problem {
    conforms(emptyOf<[int[][3]]>, st)
 -> leq(0,
-       selectSt<[int]>(selectSt<[Struct]>(st, at(1)),
+       select<[int]>(select<[Struct]>(st, at(1)),
                        size))
 }
 

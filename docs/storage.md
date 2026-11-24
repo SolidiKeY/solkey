@@ -780,9 +780,9 @@ array assumes `lenInv(storage)`, and so does the state after a storage-writing l
 callback, so each dynamic length the push/pop/index rules read is reached by this trigger. A fixed length is
 never read from a cell (§8c).
 
-An earlier axiom, `sizeNotNegative`, added `0 <= selectSt<[int]>(st, size)` for every `st`,
+An earlier axiom, `sizeNotNegative`, added `0 <= select<[int]>(st, size)` for every `st`,
 after Java KeY's `arrayLengthNotNegative`. It was inconsistent: `save(st, cons(size, nil), -1)`
-is a struct whose length is `-1`, so `!(selectSt<[int]>(st, size) = -1)` was provable
+is a struct whose length is `-1`, so `!(select<[int]>(st, size) = -1)` was provable
 (`unsound/sizeNotNegativeAnyStruct.key`). Java KeY's rule is sound because `length` is a
 function of the object, not a heap cell.
 
@@ -840,9 +840,9 @@ one rule per marker, `selectOnFixedSortLength` / `selectOnFindFixed`, `selectOnF
 `selectOnFindMapping`, `selectOnFindStruct`, matching any term of that sort:
 
     |t|        ⇝  n                                      t : T[n]
-    t[a]       ⇝  selectSt<[α]>(untyped(t), a)            α the child's sort if it contains a T[m], else Struct
+    t[a]       ⇝  select<[α]>(untyped(t), a)            α the child's sort if it contains a T[m], else Struct
 
-where `untyped` rebuilds a `find`/`selectSt`/`save`/`delField` at `Struct`, unwraps a `cast`,
+where `untyped` rebuilds a `find`/`select`/`save`/`delField` at `Struct`, unwraps a `cast`,
 and reads a typed `defaultValue` as `mtSt`. Any other term it would wrap in `cast<[Struct]>`,
 which `castDel` strips at once, so a typed term `untyped` misses makes `selectOnFind*` and
 `castDel` alternate forever: `delField<[int[3]]>`, the reset of a deleted fixed-size element
@@ -853,9 +853,9 @@ writes a fixed array's length cell.
 a copy clears the old destination only below its old length and a reset only below the old
 length, so both take the length of a node through `#len(t)`: `n` when the node's inferred sort is
 `T[n]`, else the cell `|t|`. The sort is inferred from the term (a typed read or cast gives its
-sort; a `selectSt` chain from a member constant gives the member's declared type, then the
+sort; a `select` chain from a member constant gives the member's declared type, then the
 element types; `save<[T]>` has `T`, or its first argument's sort at `Struct`; `delNode`,
-`storeSt`, `delAt` keep their first argument's).
+`store`, `delAt` keep their first argument's).
 Where a reset or copy target is created, `#typedChild(st, a, node)` wraps the child in
 `cast<[T]>(·)` when its type `T` contains a fixed-size array, so the type survives the later
 rewriting of the select:

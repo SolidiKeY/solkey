@@ -939,7 +939,7 @@ arithmetic expression statement. Only `taclets/Expressions.sol` catches it:
 | `arithmeticDiscardKeepsSideEffects` | `ix++ + ix++;` no longer increments `ix` |
 
 **Checked and caught by the ports.** Making `delete` also reset mapping members
-(`selectStDelNodeMap` returning `delNode(selectSt<[Struct]>(st, mf))`) opens
+(`selectStDelNodeMap` returning `delNode(select<[Struct]>(st, mf))`) opens
 `deleteStructKeepsMappingMember`, `deleteStructKeepsNestedMappings`,
 `mappingsSurvivePopAndDelete` and `mappingArray2dPopRepush`.
 

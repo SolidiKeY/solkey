@@ -18,7 +18,7 @@ import static org.key_project.solidity.program.ast.SolidityProgramElement.takeCh
 /// implicit `this` receiver). Unlike the old KeY-Java-style design, this node carries **no** logic
 /// operator: the field's logic symbol is registered once under
 /// [StateVariableDeclaration#getFieldConstantName] and is looked up lazily by a symbolic-execution
-/// rule when it moves the field access into the logic (e.g. as part of a `selectSt`/`storeSt`
+/// rule when it moves the field access into the logic (e.g. as part of a `select`/`store`
 /// term). This keeps program syntax decoupled from the logic encoding and avoids any
 /// `convertToTerm`-style translation in Java.
 public class FieldReference extends SolidityExpression

@@ -79,7 +79,7 @@ public class SolJsonParserTest {
         assertEquals("balance", balanceDecl.getName().toString());
         // the field's logic symbol is registered under the namespaced constant name ...
         assertEquals("SimpleContract$balance", balanceDecl.getFieldConstantName().toString());
-        // ... as a Field-sorted constant, so the selectSt/storeSt theory covers it uniformly
+        // ... as a Field-sorted constant, so the select/store theory covers it uniformly
         // with struct members (phase 2 unification). Mapping and reference members carry a
         // Field sub-sort so rules dispatch on it instead of recovering the value kind from
         // the AST; a value member is a MemberField (SolJSONParser#fieldSortFor).

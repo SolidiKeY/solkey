@@ -215,7 +215,7 @@ public class SolidityProblemSynthesizerTest {
 
         assertTrue(text.contains("\\find(lenInv(s))"), text);
         assertTrue(text.contains(
-            "conforms(fieldType(%1$s$copyTargetDyn), selectSt<[Struct]>(s, %1$s$copyTargetDyn))"
+            "conforms(fieldType(%1$s$copyTargetDyn), select<[Struct]>(s, %1$s$copyTargetDyn))"
                     .formatted(contract)),
             text);
         assertFalse(text.contains("conforms(fieldType(%s$copySource9)".formatted(contract)), text);
@@ -237,7 +237,7 @@ public class SolidityProblemSynthesizerTest {
 
         assertTrue(text.contains("{storage := mtSt\n     || net := mtSt}\n    "
             + "\\<{ constructor()@FixedLengths; }\\>(true)"), text);
-        assertTrue(text.contains("conforms(fieldType(FixedLengths$dyn), selectSt<[Struct]>(s, "
+        assertTrue(text.contains("conforms(fieldType(FixedLengths$dyn), select<[Struct]>(s, "
             + "FixedLengths$dyn))"), text);
         assertFalse(text.contains("conforms(fieldType(FixedLengths$d1)"), text);
     }
@@ -260,9 +260,9 @@ public class SolidityProblemSynthesizerTest {
                                 // sender != receiver :
                                 !(find<[int]>(cinv$s, cons1(Escrow$sender)) = find<[int]>(cinv$s, cons1(Escrow$receiver)))
                                 // amountInEscrow == net(sender) + net(receiver) :
-                                & (find<[int]>(cinv$s, cons1(Escrow$amountInEscrow)) = (selectSt<[int]>(cinv$n, at(find<[int]>(cinv$s, cons1(Escrow$sender)))) + selectSt<[int]>(cinv$n, at(find<[int]>(cinv$s, cons1(Escrow$receiver))))))
+                                & (find<[int]>(cinv$s, cons1(Escrow$amountInEscrow)) = (select<[int]>(cinv$n, at(find<[int]>(cinv$s, cons1(Escrow$sender)))) + select<[int]>(cinv$n, at(find<[int]>(cinv$s, cons1(Escrow$receiver))))))
                                 // state != State.AwaitingDeposit || net(sender) == 0 :
-                                & (!(find<[int]>(cinv$s, cons1(Escrow$state)) = 0) | (selectSt<[int]>(cinv$n, at(find<[int]>(cinv$s, cons1(Escrow$sender)))) = 0))
+                                & (!(find<[int]>(cinv$s, cons1(Escrow$state)) = 0) | (select<[int]>(cinv$n, at(find<[int]>(cinv$s, cons1(Escrow$sender)))) = 0))
                                 // state == State.DepositPlaced || amountInEscrow == 0 :
                                 & ((find<[int]>(cinv$s, cons1(Escrow$state)) = 1) | (find<[int]>(cinv$s, cons1(Escrow$amountInEscrow)) = 0)))
                             \\heuristics(simplify)
@@ -285,11 +285,11 @@ public class SolidityProblemSynthesizerTest {
                         // msg.sender == sender && state == State.AwaitingDeposit && msg.value > 0 :
                         & (((msgSender = find<[int]>(storage, cons1(Escrow$sender))) & (find<[int]>(storage, cons1(Escrow$state)) = 0)) & (msgValue > 0))
                         & CInv(storage, net) ->
-                        {net := storeSt(net, at(msgSender), (selectSt<[int]>(net, at(msgSender)) + msgValue))}
+                        {net := store(net, at(msgSender), (select<[int]>(net, at(msgSender)) + msgValue))}
                         \\[{ placeInEscrow()@Escrow; }\\]
                             (CInv(storage, net)
                              // net(sender) == msg.value && state == State.DepositPlaced :
-                             & ((selectSt<[int]>(net, at(find<[int]>(storage, cons1(Escrow$sender)))) = msgValue) & (find<[int]>(storage, cons1(Escrow$state)) = 1)))
+                             & ((select<[int]>(net, at(find<[int]>(storage, cons1(Escrow$sender)))) = msgValue) & (find<[int]>(storage, cons1(Escrow$state)) = 1)))
                     }
                     """
                     .formatted(file.toAbsolutePath()),
@@ -304,7 +304,7 @@ public class SolidityProblemSynthesizerTest {
             spec("MultiAuction", "placeOrIncreaseBid"));
 
         assertTrue(text.contains("    Struct old;\n    Struct oldNet;\n"), text);
-        assertTrue(text.contains("{old := storage\n     || oldNet := net\n     || net := storeSt("),
+        assertTrue(text.contains("{old := storage\n     || oldNet := net\n     || net := store("),
             text);
         assertFalse(text.contains("\\schemaVar \\variables"), text);
         assertTrue(text.contains("(\\exists int hb; ((0 <= hb) & (\\forall int a; "), text);

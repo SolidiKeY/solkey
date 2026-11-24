@@ -36,11 +36,11 @@ The Maude model uses these operations:
 - `write(mem, id, field, value)` - write one field of one identity. `value` has
   sort `MemValue`, the supersort of everything storable in memory: `Identity`
   (references) and `Prim` (`int`, `bool`, contract sorts). `Struct` and `List`
-  are not storable in memory — structs enter it only via `copySt`, whose last
+  are not storable in memory — structs enter it only via `copy`, whose last
   argument is `Struct`-sorted.
 - `delete(mem, id)` - reset the identity subtree to defaults.
 - `erase(mem)` - normalize identity-copy writes used by lazy copy semantics.
-- `copySt(mem, id, st)` - install a lazy storage-to-memory view.
+- `copy(mem, id, st)` - install a lazy storage-to-memory view.
 - `copyMem(st, mem, id)` - install a lazy memory-to-storage view.
 
 Default reads:
@@ -376,14 +376,14 @@ Effect shape:
 
     new(memory, r)
     carol := idC(r, nil)
-    memory := copySt(memory, r, select(storage, alice))
+    memory := copy(memory, r, select(storage, alice))
 
-Reads through `carol` delegate to the storage snapshot installed by `copySt`:
+Reads through `carol` delegate to the storage snapshot installed by `copy`:
 
-    read(copySt(mem, r, st), idC(r, path), identityField)
+    read(copy(mem, r, st), idC(r, path), identityField)
       = idC(r, path identityField)
 
-    read(copySt(mem, r, st), idC(r, path), primitiveField)
+    read(copy(mem, r, st), idC(r, path), primitiveField)
       = find(st, path primitiveField)
 
 The copy is independent from later storage writes in the source program state:
@@ -430,12 +430,12 @@ The lazy `copyMem` view delegates storage reads back to memory:
 
     find(copyMem(st, memory, id), path primitiveField)
       = readR(memory, id, path primitiveField)
-    selectSt(copyMem(st, memory, id), primitiveField)
+    select(copyMem(st, memory, id), primitiveField)
       = read(memory, id, primitiveField)
-    selectSt<[Struct]>(copyMem(st, memory, id), refField)
+    select<[Struct]>(copyMem(st, memory, id), refField)
       = copyMem(mtSt, memory, read<[Identity]>(memory, id, refField))
 
-The `selectSt` forms are what a read reaches once the storage side has
+The `select` forms are what a read reaches once the storage side has
 unfolded the path: the copy sits under the leaf `save(old, nil, copyMem(…))`,
 which `structRules.key` reads by member sort (a mapping member of the storage
 target stays the target's own), one selector at a time.
@@ -454,5 +454,5 @@ Use the eager variant only when a fully materialized struct is required.
 - Deleting an identity-valued field freshens that field; old aliases remain.
 - Memory arrays have length and bounds checks, but no mappings, `push`, or
   `pop`.
-- Cross-domain storage-memory assignments are handled by `copySt` and
+- Cross-domain storage-memory assignments are handled by `copy` and
   `copyMem`, not by ordinary single-location memory rules.

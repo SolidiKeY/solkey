@@ -43,7 +43,7 @@ public final class StorageLayout {
         List<KeyFormula> atoms = new ArrayList<>();
         for (String root : roots) {
             atoms.add(Key.predicate("conforms", fieldType(root),
-                Key.typed("selectSt", "Struct", S, Key.constant(root))));
+                Key.typed("select", "Struct", S, Key.constant(root))));
         }
         return List.of(new KeyProblem.Taclet("insertLenInv", "Struct", List.of("s"), false,
             Key.predicate("lenInv", S), Key.and(atoms), "simplify"));

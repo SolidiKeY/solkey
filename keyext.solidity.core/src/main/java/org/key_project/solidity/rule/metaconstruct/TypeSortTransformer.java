@@ -42,7 +42,7 @@ public final class TypeSortTransformer extends AbstractTermTransformer {
     }
 
     private static final Name EMPTY_OF = new Name("emptyOf");
-    private static final Name SELECT = new Name("selectSt");
+    private static final Name SELECT = new Name("select");
     private static final Name FIND = new Name("find");
     private static final Name CAST = new Name("cast");
     private static final Name SAVE = new Name("save");
@@ -159,7 +159,7 @@ public final class TypeSortTransformer extends AbstractTermTransformer {
         }
         if (term.op() instanceof Function f && !(term.op() instanceof TypedField)) {
             return switch (f.name().toString()) {
-                case "delNode", "storeSt", "delAt" -> inferSort(term.sub(0), services);
+                case "delNode", "store", "delAt" -> inferSort(term.sub(0), services);
                 case "delNodeIndex" -> TypeSorts.childOf(inferSort(term.sub(0), services),
                     services.getTermBuilder().func(
                         services.getNamespaces().requireFunction("at"), term.sub(1)),

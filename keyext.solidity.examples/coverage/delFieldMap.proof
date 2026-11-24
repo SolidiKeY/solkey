@@ -31,7 +31,7 @@
     \unique MapMemberField mf;
 }
 \problem {
-delField<[Struct]>(s, mf) = selectSt<[Struct]>(s, mf)
+delField<[Struct]>(s, mf) = select<[Struct]>(s, mf)
 }
 
 \proof {

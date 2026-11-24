@@ -34,7 +34,7 @@
 \problem {
    conforms(emptyOf<[StorageArrays$Basket]>, st)
 -> leq(0,
-       selectSt<[int]>(selectSt<[Struct]>(st,
+       select<[int]>(select<[Struct]>(st,
                                           StorageArrays$Basket$items),
                        size))
 }

@@ -60,7 +60,7 @@ the conjoined invariants, and the ISoLA 2020 eq.-4 problem
 
 ```
 msg.value bound & !(msgSender = self) & requires & CInv(storage, net) ->
-{[old := storage || oldNet := net ||] net := storeSt(net, at(msgSender), net(msgSender) + msgValue)}
+{[old := storage || oldNet := net ||] net := store(net, at(msgSender), net(msgSender) + msgValue)}
 \[{ [result = ]f()@C; }\] (CInv(storage, net) & ensures)
 ```
 
@@ -95,7 +95,7 @@ inside `\old`; `N` likewise `cinv$n`/`net`/`oldNet`):
 | state variable `x` | `find<[int]>(S, cons1(C$x))`, a `bool` one `find<[bool]>(…) = TRUE` |
 | `m[k]`, `arr[i]`, `arr.length`, `st.f` | `find<[τ]>(S, cons2(C$m, at(k)))`, `… at(i)` (`atMap(i)` when the elements are mappings, as in the program), `… size`, `cons2(C$st, C$St$f)` (`St$f` for a file-level struct) |
 | `Enum.Member` | the member's ordinal (file-level enums too) |
-| `net(a)`, `msg.sender`, `msg.value`, `address(this)` | `selectSt<[int]>(N, at(a))`, `msgSender`, `msgValue`, `self` |
+| `net(a)`, `msg.sender`, `msg.value`, `address(this)` | `select<[int]>(N, at(a))`, `msgSender`, `msgValue`, `self` |
 | parameter `p`, `\result` | the program variable `p` (`p$0` when `p` is a name the obligation uses itself: `msgValue`, `self`, `old`, `result`, …), `result` (needs one *named* return) |
 | `\old(e)` | `e` over `old`/`oldNet` (ensures only) |
 | `== != < <= > >= + - * / %` | `= , !(=), <, <=, >, >=, +, -, *, div, mod`; `==` on bools is `<->` |

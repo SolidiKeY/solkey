@@ -37,7 +37,7 @@
     \unique MapMemberField mf;
 }
 \problem {
-  selectSt<[int]>(selectSt<[Struct]>(save<[Struct]>(mtSt,
+  select<[int]>(select<[Struct]>(save<[Struct]>(mtSt,
                                                     cons(f,
                                                          cons(g,
                                                               nil)),

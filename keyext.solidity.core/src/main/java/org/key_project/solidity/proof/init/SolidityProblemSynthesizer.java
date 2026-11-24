@@ -250,8 +250,8 @@ public final class SolidityProblemSynthesizer {
             update.add(Key.assign("oldNet", ledger));
         }
         KeyTerm sender = Key.apply("at", MSG_SENDER);
-        update.add(Key.assign("net", Key.apply("storeSt", ledger, sender,
-            Key.plus(Key.typed("selectSt", "int", ledger, sender), MSG_VALUE))));
+        update.add(Key.assign("net", Key.apply("store", ledger, sender,
+            Key.plus(Key.typed("select", "int", ledger, sender), MSG_VALUE))));
 
         String s = SpecCompiler.Context.INVARIANT_STORAGE;
         String n = SpecCompiler.Context.INVARIANT_NET;

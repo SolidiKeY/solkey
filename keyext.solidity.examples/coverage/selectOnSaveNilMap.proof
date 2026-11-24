@@ -31,9 +31,9 @@
     Struct src;
 }
 \problem {
-  selectSt<[Struct]>(save<[Struct]>(st, nil, src),
+  select<[Struct]>(save<[Struct]>(st, nil, src),
                      atMap(0))
-= selectSt<[Struct]>(st, atMap(0))
+= select<[Struct]>(st, atMap(0))
 }
 
 \proof {

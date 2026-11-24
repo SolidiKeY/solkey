@@ -31,8 +31,8 @@ taclet:
 ```
 \problem {
     pre & CInv(storage, net) ->
-    {old := storage || net := storeSt(net, at(msgSender),
-                                      selectSt<[int]>(net, at(msgSender)) + msgValue)}
+    {old := storage || net := store(net, at(msgSender),
+                                      select<[int]>(net, at(msgSender)) + msgValue)}
     \[{ makeBid()@AuctionNet; }\] (CInv(storage, net) & post)
 }
 ```
@@ -41,7 +41,7 @@ taclet:
 function, prove the invariant restored plus the function's postcondition). Every
 `insertCInv` conjunct, antecedent pin, and postcondition conjunct carries a `//` comment
 stating it in the course's surface syntax (`// net(owner) <= 0 :`), so a PO reads
-top-to-bottom without decoding the `find`/`selectSt` terms. The bodies are
+top-to-bottom without decoding the `find`/`select` terms. The bodies are
 loaded from the `.sol` sources (`SolJSONParser` desugars `msg.*` to the
 `msgSender`/`msgValue` program variables, resolves `transfer`/`send` to the builtins, and
 unwraps `payable(...)`/`address(...)` casts) and inlined by `functionBodyExpand`. The

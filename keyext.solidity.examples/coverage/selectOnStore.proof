@@ -37,7 +37,7 @@
     \unique MapMemberField mf;
 }
 \problem {
-selectSt<[int]>(storeSt(s, f, 5), f) = 5
+select<[int]>(store(s, f, 5), f) = 5
 }
 
 \proof {

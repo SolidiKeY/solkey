@@ -988,7 +988,7 @@ public class SolJSONParser {
 
     /// Registers a unique field constant under the given namespaced name. Both contract state
     /// variables (`Contract$field`) and struct members (`Contract$Struct$member`) use the same
-    /// scheme, so a single `selectSt`/`storeSt` theory (whose field argument is of sort `Field`)
+    /// scheme, so a single `select`/`store` theory (whose field argument is of sort `Field`)
     /// covers both. The constant is stamped with the `Field` sub-sort matching its Solidity type so
     /// `delete` can classify the member (see [#fieldSortFor]). No-op if the struct theory — and
     /// thus

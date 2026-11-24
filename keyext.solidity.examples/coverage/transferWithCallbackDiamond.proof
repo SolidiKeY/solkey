@@ -39,7 +39,7 @@
     };
 }
 \problem {
-   transferSucceeds(selectSt<[int]>(storage,
+   transferSucceeds(select<[int]>(storage,
                                     Payments$owner),
                     5)
 -> \<{

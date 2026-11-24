@@ -37,7 +37,7 @@
     \unique MapMemberField mf;
 }
 \problem {
-  selectSt<[Struct]>(copyMem(s, m, id), f)
+  select<[Struct]>(copyMem(s, m, id), f)
 = copyMem(mtSt, m, read<[Identity]>(m, id, f))
 }
 

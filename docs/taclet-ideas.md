@@ -186,7 +186,7 @@ shape. Two neighbouring statement forms are not yet as general:
 - **Writing a storage reference into a memory location** (`mv.a = sp`,
   `mv[i] = sp`) has no rule, and neither has writing a *complex* memory
   reference into a storage location outside the receiver-capture path. A
-  storage-to-memory element copy is a deep copy (`copySt`) and needs its own
+  storage-to-memory element copy is a deep copy (`copy`) and needs its own
   terminal, not just a capture.
 
 ## Raised by the benchmark

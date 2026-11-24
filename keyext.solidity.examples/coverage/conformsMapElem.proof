@@ -33,7 +33,7 @@
 \problem {
    conforms(emptyOf<[mapping<[int, int[]]>]>, st)
 -> leq(0,
-       selectSt<[int]>(selectSt<[Struct]>(st, at(5)),
+       select<[int]>(select<[Struct]>(st, at(5)),
                        size))
 }
 
