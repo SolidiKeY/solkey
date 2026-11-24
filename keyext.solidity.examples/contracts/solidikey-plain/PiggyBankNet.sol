@@ -18,6 +18,7 @@ contract PiggyBankNet {
     address paidBy;
     uint paidValue;
     uint state; // 0 Unused, 1 InUse, 2 Broken
+    // TODO: Look enumeration
     uint timeOfFirstDeposit;
     uint balance;
     uint timeNow;
