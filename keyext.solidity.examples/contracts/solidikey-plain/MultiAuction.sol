@@ -61,7 +61,7 @@ contract MultiAuction {
     }
 
     /// @custom:key box
-    function myTest(uint i) public {
+    function myTest(uint i) public view {
         require(balances[auctionOwner] == 0);
         require(i >= bidders.length || bidders[i] != auctionOwner);
         require(0 == 0);

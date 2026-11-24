@@ -35,6 +35,14 @@
     {
       "type": "org.key_project.solidity.parser.varcond.NewLocalVarsCondition",
       "allPublicConstructors": true
+    },
+    {
+      "type": "org.key_project.solidity.parser.varcond.FixedLengthReadCondition",
+      "allPublicConstructors": true
+    },
+    {
+      "type": "org.key_project.solidity.parser.varcond.StaticLengthCondition",
+      "allPublicConstructors": true
     }
   ],
   "resources": [
