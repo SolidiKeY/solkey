@@ -15,24 +15,30 @@ scripts/benchmark.sh keyext.solidity.examples/contracts/benchmark/Coin.sol
 
 The benchmark is not part of any test group. It is expected to have open goals.
 
-## Results (2026-10-06): 37 of 39 obligations close
+## Results (2026-11-26): 43 of 43 obligations close
 
 | Contract | Source | Loads verbatim | Closed | Code lines (−/+) | What is left |
 |---|---|---|---|---|---|
 | `Counter` | Solidity by Example | yes | 2/2 | 0/0 | — |
 | `SimpleStorage` | Solidity docs | yes | 1/1 | 0/0 | — |
 | `Mapping`, `NestedMapping` | Solidity by Example | yes | 4/4 | 0/0 | — |
-| `Fund` | Solidity docs, security considerations | yes | 1/1 | 0/0 | — |
+| `Fund` | Solidity docs, security considerations | yes | 2/2 | 0/0 | — |
 | `Coin` | Solidity docs | no: event, custom error | 3/3 | −4/+1 | — |
-| `EtherWallet` | Solidity by Example | no: `require` message | 2/2 | −4/+1 | `getBalance` dropped |
-| `SendingEther` (`ReceiveEther`, `SendEther`) | Solidity by Example | no: `require` messages | 3/3 | −6/+3 | `getBalance` dropped |
+| `EtherWallet` | Solidity by Example | no: `require` message | 3/3 | −4/+1 | `getBalance` dropped |
+| `SendingEther` (`ReceiveEther`, `SendEther`) | Solidity by Example | no: `require` messages | 5/5 | −6/+3 | `getBalance` dropped |
 | `Purchase` | Solidity docs | no: custom errors | 5/5 | −17/+5 | — (the modifiers are kept) |
 | `SimpleAuction` | Solidity docs | no: events | 4/4 | −17/+12 | — |
 | `ERC20` | Solidity by Example | no: import | 5/5 | −13/+18 | — (+15 of them the inlined `IERC20`) |
 | `SendContract` | Solidity docs, common patterns | no: custom error | 2/2 | −2/+1 | — |
 | `Todos` | Solidity by Example | no: struct constructors | 1/1 | −12/+0 | `create` dropped |
-| `WithdrawalContract` | Solidity docs, common patterns | no: custom error | 2/3 | −2/+1 | `becomeRichest`: `m[storageKey] += e` |
-| `AccessRestriction` | Solidity docs, common patterns | no: custom errors | 2/3 | −12/+6 | `forceOwnerChange`: bitwise `&` |
+| `WithdrawalContract` | Solidity docs, common patterns | no: custom error | 3/3 | −2/+1 | — |
+| `AccessRestriction` | Solidity docs, common patterns | no: custom errors | 3/3 | −12/+6 | — |
+
+Since 2026-10-06 (37/39): `receive`, `fallback` and the implicit constructor became
+obligations (`EtherWallet`, `Fund`, `ReceiveEther`: +4). `WithdrawalContract.becomeRichest`
+closes, since a compound assignment now evaluates a non-simple key first
+(`storageIndex⟨op⟩Assign_unfold_leftSndIndex`), and `AccessRestriction.forceOwnerChange`
+closes through the `&` rules.
 
 Since 2026-09-26 (19/21): internal calls, `return e;`, tuples, constructors, loops, `send` and
 `call{value: v}("")` were added to the prover. `ERC20.mint`/`burn` now close; `SimpleAuction.withdraw`

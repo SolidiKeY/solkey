@@ -319,6 +319,9 @@ A simple receiver with a primitive storage-path RHS (`m.x = total;`, `xs[0] = s.
 read the terminals cannot take (`SimpleExpression`) and the value captures do not
 (`NonSimpleExpression[primitive]` excludes paths); `memory{Field,Index}WriteStoragePathRhsCapture`
 read it into a local first: `mv.fld = src; ⟹ T pv = src; mv.fld = pv;`.
+The other direction, a state variable assigned from a memory field or element
+(`total = xs[0];`), goes through `memory{Field,Index}Read_unfold_rightSndRootResult`:
+`gsp = mv[ie]; ⟹ T pv = mv[ie]; gsp = pv;`.
 
 Arrays of structs still alias through identity-valued elements:
 
@@ -359,7 +362,9 @@ A post-fix `v = mv[ie]++` is one parallel update with the result last,
 
 The indexed forms (`memoryIndexArray…`) carry the `0 ≤ ie < length` /
 `revert();` goal pair of `memoryIndexWriteArray`, so `xs[i] += 1` on an
-out-of-range `i` reverts instead of writing.
+out-of-range `i` reverts instead of writing. A non-simple index (`xs[xs[1]] += e`,
+`xs[i++] -= e`) is captured first by `memoryIndex⟨op⟩Assign_unfold_leftSndIndex`,
+right side before index, as in `storage.md` §7.
 
 Two forms the storage matrix has do not exist here: there is no **root** rule,
 because a memory root variable holds an `Identity` rather than an int cell, and

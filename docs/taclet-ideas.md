@@ -240,5 +240,3 @@ many upstream tests and contracts each blocks; defects in supported constructs a
 - **Immutables** as values, not storage slots (constants are inlined at reads).
 - **Spec language**: `\old` inside loop invariants; ether/time units and `block` in clauses;
   signed `/` and `%` matching the program's `sdiv`/`smod`; library struct members.
-- **Strategy**: `sdiv` bounds for a negative dividend or divisor (non-negative dividends with a
-  positive divisor automate).

@@ -445,6 +445,86 @@ contract Expressions {
         assert(x == 5);
     }
 
+    function addAssignStoragePathRhsCapture() public {
+        age = 2;
+        alice.age = 3;
+        alice.age += age;
+        uint r = alice.age;
+        assert(r == 5);
+    }
+
+    function subAssignStoragePathRhsCapture() public {
+        uint x = 10;
+        alice.age = 4;
+        x -= alice.age;
+        assert(x == 6);
+    }
+
+    function mulAssignStoragePathRhsCapture() public {
+        age = 3;
+        age *= age;
+        uint r = age;
+        assert(r == 9);
+    }
+
+    function divAssignStoragePathRhsCapture() public {
+        age = 42;
+        bob.age = 6;
+        age /= bob.age;
+        uint r = age;
+        assert(r == 7);
+    }
+
+    function modAssignStoragePathRhsCapture() public {
+        uint x = 17;
+        age = 5;
+        x %= age;
+        assert(x == 2);
+    }
+
+    function addAssignMemoryPathRhsCapture() public pure {
+        uint[] memory xs = new uint[](2);
+        xs[0] = 4;
+        uint x = 3;
+        x += xs[0];
+        assert(x == 7);
+    }
+
+    function subAssignMemoryPathRhsCapture() public {
+        uint[] memory xs = new uint[](2);
+        xs[1] = 4;
+        age = 10;
+        age -= xs[1];
+        uint r = age;
+        assert(r == 6);
+    }
+
+    function mulAssignMemoryPathRhsCapture() public pure {
+        Person memory p;
+        p.age = 6;
+        uint x = 7;
+        x *= p.age;
+        assert(x == 42);
+    }
+
+    function divAssignMemoryPathRhsCapture() public pure {
+        uint[] memory xs = new uint[](2);
+        xs[0] = 42;
+        xs[1] = 6;
+        xs[0] /= xs[1];
+        uint r = xs[0];
+        assert(r == 7);
+    }
+
+    function modAssignMemoryPathRhsCapture() public {
+        uint[] memory xs = new uint[](1);
+        xs[0] = 5;
+        alice.age = 17;
+        alice.age %= xs[0];
+        uint r = alice.age;
+        assert(r == 2);
+    }
+
     function boolInequalityCaptureLhs() public pure {
         bool b = true;
         bool r = !b != b;
@@ -565,6 +645,32 @@ contract Expressions {
         assert(r3 == minusOne);
     }
 
+    /// @custom:key box
+    function signedDivisionNegativeDividendBounds(int x, int y) public pure {
+        require(x <= -1 && y >= 1);
+        int q = x / y;
+        assert(x <= q && q <= 0);
+    }
+
+    /// @custom:key box
+    function signedDivisionNegativeDivisorBounds(int x, int y) public pure {
+        require(x >= 0 && y <= -1);
+        int q = x / y;
+        assert(-x <= q && q <= 0);
+    }
+
+    /// @custom:key box
+    function powerSymbolicBase(uint x) public pure {
+        require(x <= 10);
+        assert(x ** 0 == 1 && x ** 1 == x && x ** 2 == x * x);
+    }
+
+    /// @custom:key box
+    function shiftSymbolicAmount(uint x, uint n) public pure {
+        require(x <= 100 && n < 8);
+        assert(1 << n > 0 && x >> n <= x);
+    }
+
     function powerUnfoldLeft() public pure {
         uint x = 1;
         uint y = 3;
@@ -629,5 +735,23 @@ contract Expressions {
         age = b ? 1 : 2;
         uint r = age;
         assert(r == 1);
+    }
+
+    function ternaryStatementCaptureCond() public {
+        uint x = 5;
+        age = 0;
+        alice.age = 0;
+        x == 5 ? age = 1 : alice.age = 2;
+        uint r = age;
+        uint q = alice.age;
+        assert(r == 1 && q == 0);
+    }
+
+    function ternaryStatementToIf() public pure {
+        bool b = false;
+        uint x = 0;
+        uint y = 0;
+        b ? x += 1 : y += 2;
+        assert(x == 0 && y == 2);
     }
 }

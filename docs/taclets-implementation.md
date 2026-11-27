@@ -207,7 +207,10 @@ mapping member.
 ### Compound assignment
 `+=`, `-=`, `*=`, `/=`, `%=` at root / field / index, each with a terminal and a
 `_unfold_leftFst` for complex receivers (the array form carrying the bounds goal
-pair of `storageIndexWriteArraySave`). `/=` and `%=` guard with
+pair of `storageIndexWriteArraySave`). A non-simple index (`m[richest] += e`,
+`xs[i++] -= e`) is evaluated by `{storage,memory}Index⟨op⟩Assign_unfold_leftSndIndex`:
+the right side into a fresh variable, then the index, so the order is right side,
+receiver, index, as in solc. `/=` and `%=` guard with
 `\if(se != 0)\then(…)\else(revert)`; integers are unbounded mathematical
 integers, so there is no overflow guard. Bitwise `&= |= ^=` and storage/memory `<<= >>=` parse but
 are deferred. Listed under `// generalization:` comments.
@@ -327,7 +330,10 @@ from the EVM's checked arithmetic); `/` and `%` revert on a zero denominator.
   condition (always evaluated); `ternaryToIf` (and `ternaryToIfStorage`, its
   twin for a storage-path target, which is not a `Variable`) rewrites the
   remaining `v = se ? e1 : e2;` to `if (se) v = e1; else v = e2;`, handing the
-  split to the `if` rules below.
+  split to the `if` rules below. A conditional used as a statement
+  (`c ? a = v : b = v;`) is executed by `ternaryStatementCaptureCond` and
+  `ternaryStatementToIf`: `se ? e1 : e2;` becomes `if (se) e1; else e2;`, so only the
+  chosen branch runs.
 - `if` / `if`-`else` statements: `ifUnfold` / `ifElseUnfold` hoist a non-simple
   guard into a fresh variable; `ifSplit` / `ifElseSplit` are the Java KeY
   `ifElseSplit`-style sequent-level two-goal split (`\find( ==> \modality...)`
@@ -357,10 +363,20 @@ from the EVM's checked arithmetic); `/` and `%` revert on a zero denominator.
   protection, after normal simplification. `smod_lessPositiveDenom` applies
   for either dividend sign; `smodMultiple` reduces a multiple of its nonzero
   divisor to zero. These facts use mathematical integers and no type ranges.
-  In the same rule set, `sdivNonNegNum` and `smodNonNegNum` add `sdiv = div` and
-  `smod = mod` for a non-negative dividend (so program `/ %` meet spec `/ %`), and
-  `sdivBoundsPositive` / `divBoundsPositive` add the quotient bounds
-  `q * d <= n < q * d + d` for a positive divisor, without the infinite-cost `div_axiom`.
+  The default arithmetic mode is DefOps, so `div_axiom` / `sdiv_axiom` (`intDiv.key`) expand
+  each quotient once: `q * d <= n < q * d + |d|` in every sign case. As in KeY's Java
+  rules, `sdiv` has no lemma of its own: `sdiv_axiom` rewrites it to `div` of a non-negative
+  dividend, and `div_bounds` (same rule set) adds `0 <= ±q <= n` for `n >= 0` and a nonzero
+  divisor, signed by the divisor like `div_axiom`. That magnitude bound is the nonlinear step
+  the linear arithmetic cannot take from the product bounds.
+- `intPow.key` is the upstream `intPow.key` without `powDef`, the `log` rules and the Java
+  `int`-range lemmas: `powConcrete0`/`powConcrete1` (`pow(b, 0) = 1`, `pow(b, 1) = b`),
+  `powSplitFactor`, `powAdd`, `powMono*`, `powPositive*` and `powGeq1Concrete`, with
+  `undefinedPow` for a negative exponent. Two additions: `powSplitFactorLiteral` unfolds a
+  literal exponent automatically (`pow(x, 2)` becomes `x * x`; a literal base is evaluated by
+  the cheaper `pow_literals` first), and `powNonNegative` adds `pow(b, e) >= 0` for
+  `b, e >= 0`; `powPositive` and `powNonNegative` are in `solidity_remainder_bounds`. So
+  `1 << n > 0` and `x >> n <= x` (`div(x, pow(2, n))`) close.
 - Deferred: `| ~`, and unary `+` (removed in Solidity ≥0.5).
   General `&` and `^` execution and arithmetic shifts are supported as described above.
   Overflow is not modeled: integers are unbounded, and examples that depend on
@@ -1014,6 +1030,14 @@ closes where `nested.recursive[4].z` does not).
 - `{add,sub,mul,div,mod}AssignValueRhsCapture` — hoist a non-simple RHS out of a compound
   assignment. Location-neutral (an `Expression` target, like `fieldWriteValueRhsCapture`), so
   one rule per operator covers local and storage root/field/index targets.
+- `{add,sub,mul,div,mod}Assign{Storage,Memory}PathRhsCapture` — the same for a primitive path
+  RHS, which `NonSimpleExpression` excludes: `pot += other;`, `m_a *= m_a;`, `x += xs[0];`
+  read the path into a fresh local first. The storage form takes `Path[storage,primitive]`, the
+  memory form `Path[memory,complex,primitive]`; a value local is neither, so the captured
+  `lhs op= pv` does not match again.
+- `memory{Field,Index}Read_unfold_rightSndRootResult` — a state variable assigned from a memory
+  field or element (`x = xs[0];`): the `_rightSndResult` twins take only a complex target, and
+  `memory{Field,Index}Read` only a `Variable`, so the read goes into a local first.
 - `ternaryToIfStorage` — the `ternaryToIf` twin for a storage-path target, which is not a
   `Variable`.
 - `storageIndex{Read,Write}{Array,Mapping}*` no longer require the `global` flag. They

@@ -20,24 +20,4 @@ contract SolcControlFlow {
             assert(u == 3 && v == 4);
         }
     }
-
-    function conditionalAssigns(bool cond, uint v) internal pure returns (uint a, uint b) {
-        cond ? a = v : b = v;
-    }
-
-    // open: missing-rule: no rule executes a conditional expression statement whose branches
-    // are assignments, `cond ? a = v : b = v;`
-    /// solc: semanticTests/expressions/conditional_expression_with_return_values.sol — upstream
-    /// `f(true, 20) -> 20, 0` and `f(false, 20) -> 0, 20`: `cond ? a = v : b = v;` assigns
-    /// only in the chosen branch.
-    /// @custom:key box
-    function conditionalExpressionAssigns(uint p) public pure {
-        require(p <= 1);
-        (uint a, uint b) = conditionalAssigns(p == 1, 20);
-        if (p == 1) {
-            assert(a == 20 && b == 0);
-        } else {
-            assert(a == 0 && b == 20);
-        }
-    }
 }

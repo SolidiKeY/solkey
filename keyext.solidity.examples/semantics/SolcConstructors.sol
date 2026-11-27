@@ -132,6 +132,14 @@ contract SolcConstructors {
         assert(r == 49);
     }
 
+    /// solc: semanticTests/constructor/base_constructor_arguments.sol
+    function baseConstructorArgumentsSelfMul() public {
+        m_a = 7;
+        m_a *= m_a;
+        uint r = m_a;
+        assert(r == 49);
+    }
+
     /// solc: semanticTests/constructor/inline_member_init_inheritence_without_constructor.sol
     function inlineMemberInit() public {
         m_base = 5;

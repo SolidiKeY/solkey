@@ -1062,4 +1062,20 @@ contract Memory {
         assert(r == 40);
         assert(basket.items[1] == 39);
     }
+
+    function memoryFieldRead_unfold_rightSndRootResult() public {
+        Person memory carol;
+        carol.age = 9;
+        total = carol.age;
+        uint r = total;
+        assert(r == 9);
+    }
+
+    function memoryIndexRead_unfold_rightSndRootResult() public {
+        uint[] memory xs = new uint[](2);
+        xs[1] = 7;
+        total = xs[1];
+        uint r = total;
+        assert(r == 7);
+    }
 }

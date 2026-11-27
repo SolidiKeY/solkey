@@ -30,7 +30,6 @@ contract SolcConstructors {
     uint immutable u;
     bool immutable b;
     address immutable a;
-    uint m_a;
     uint ix;
     uint iy;
     mapping(uint => uint) m1;
@@ -151,14 +150,5 @@ contract SolcConstructors {
         assert(rb == 0);
         assert(rc == 0);
         assert(rd == 21);
-    }
-
-    /// solc: semanticTests/constructor/base_constructor_arguments.sol
-    // open: the right side of a compound assignment reads storage
-    function baseConstructorArgumentsSelfMul() public {
-        m_a = 7;
-        m_a *= m_a;
-        uint r = m_a;
-        assert(r == 49);
     }
 }

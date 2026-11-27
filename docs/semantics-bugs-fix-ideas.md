@@ -6,7 +6,7 @@ This covers the open semantics bugs: places where SolKey's model of a construct 
 
 All come from `docs/bugs.md` plus the unbounded-integer design choice it opens with. Each bug lists two to four fix ideas, labelled A, B, C, and listed in order of preference, best first. The numbers and letters are stable labels (`docs/bugs.md` cites them), so they do not run in order. **When a bug here is fixed, delete its section and its row in the plan.**
 
-Left out on purpose: crashes, proofs stuck on program text, strategy gaps (`sdiv` heuristics, `ex_pull_out`, `\dropEffectlessElementaries`, the mapping-reference `cast` chain) and the `--solc` runner bugs. Those are tool defects, not wrong semantics.
+Left out on purpose: crashes, proofs stuck on program text, strategy gaps (`ex_pull_out`, `\dropEffectlessElementaries`, the mapping-reference `cast` chain) and the `--solc` runner bugs. Those are tool defects, not wrong semantics.
 
 Already fixed, and so removed: 1 (named arguments bind by position, 1B), 2 (modifier locals shared, 2B), 3 (virtual call binds to base, 3A), 7 (`address` named return unconstrained: returns take the locals' `ParserUtils.defaultValue`), 8 (uninitialised local unconstrained, 8A: `ParserUtils.defaultValue`), 9 (`constant` reads as storage, 9A), 11 (static → dynamic copy loses the length, 11B) and 12 (shorter static copy leaves the tail, 12D).
 

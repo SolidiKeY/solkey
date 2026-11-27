@@ -30,13 +30,13 @@ that they stay open (`negative/README.md`):
 | `SolcArrays.sol` | `array/`, `array/push`, `array/pop`, `array/delete` | 11 |
 | `SolcMemory.sol` | `structs/memory_*`, `array/copying`, `array/delete`, `memoryManagement/` | 15 |
 | `SolcMappings.sol` | `structs/*mapping*`, `array/copying/array_elements_to_mapping.sol` | 9 |
-| `SolcControlFlow.sol` | `statements/`, `various/`, `expressions/conditional_expression_storage_memory_*`, `viaYul/` tuples and short-circuit; smt `operators/` conditionals, `types/tuple_assignment_array.sol` | 24 |
+| `SolcControlFlow.sol` | `statements/`, `various/`, `expressions/conditional_expression_storage_memory_*`, `viaYul/` tuples and short-circuit; smt `operators/` conditionals, `types/tuple_assignment_array.sol` | 25 |
 | `SolcLoops.sol` | `statements/`, `viaYul/loops/`, loop-heavy `array/`; smt `loops/` | 62 |
 | `SolcArrayMembers.sol` | `array/` push, pop, delete, copying, allocation; `storage/`; smt `array_members/` | 76 |
 | `SolcFunctionCalls.sol` | `functionCall/`, `freeFunctions/`; smt `functions/` | 35 |
 | `SolcStructsMappings.sol` | remaining `structs/`, mapping tests of `functionCall/`, `variables/`, `types/`, `storage/`, `viaYul/storage/`; smt `types/struct*`, `mapping*` | 63 |
 | `SolcStructArrays.sol` | smt `types/struct/` nested storage arrays | 2 |
-| `SolcConstructors.sol` | `constructor/`, `immutable/`, `constants/`, `scoping/`; smt constructor, `inheritance/constructor_*`, `file_level/` | 37 |
+| `SolcConstructors.sol` | `constructor/`, `immutable/`, `constants/`, `scoping/`; smt constructor, `inheritance/constructor_*`, `file_level/` | 38 |
 | `SolcPayments.sol` | `payable/`, `receive/`, `fallback/`, `reverts/`, `errors/`, `tryCatch/`; smt `special/`, `blockchain_state/`, `try_catch/` | 39 |
 | `SolcModifiers.sol` | `modifiers/`; smt `modifiers/` | 47 |
 | `SolcSmtControlFlow.sol` | smt `control_flow/`, `bmc_coverage/`, `verification_target/`, `invariants/`, `complex/slither/` | 91 |
@@ -784,7 +784,6 @@ portable Solidity guarantee. No clean-tail invariant is assumed.
 | `msgValueZero` | `semanticTests/state/msg_value.sol` | a non-payable function does not assume msg.value == 0 |
 | `multipleInitializationsAssignExpr` | `semanticTests/immutable/multiple_initializations.sol` | no rule for a compound assignment used as an expression |
 | `mappingLocalCompoundAssignment` | `semanticTests/variables/mapping_local_compound_assignment.sol` | a parenthesized assignment as index base, (m = m2)[2] = 21, gets stuck |
-| `baseConstructorArgumentsSelfMul` | `semanticTests/constructor/base_constructor_arguments.sol` | the right side of a compound assignment reads storage |
 
 ### `open/SolcPayments.sol`
 
@@ -836,7 +835,6 @@ portable Solidity guarantee. No clean-tail invariant is assumed.
 | Function | Upstream (`test/libsolidity/`) | Why it stays open |
 |---|---|---|
 | `conditionalExpressionTuples` | `semanticTests/expressions/conditional_expression_tuples.sol` | missing-rule: a `return` of a conditional whose branches are tuples is refused as a return of 1 value from a function with 2 return values |
-| `conditionalExpressionAssigns` | `semanticTests/expressions/conditional_expression_with_return_values.sol` | missing-rule: no rule executes a conditional expression statement whose branches are assignments, `cond ? a = v : b = v;` |
 
 ### `open/SolcHigherLevel.sol`
 

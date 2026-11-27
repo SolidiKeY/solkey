@@ -54,23 +54,19 @@ it. The third port found one more: a `return` of a conditional with tuple branch
 
 ### Proof gets stuck on program text
 
-- A compound assignment whose right side is a bare storage path (`pot += other;`, `m_a *= m_a;`,
-  `proposals[p].voteCount += sender.weight;`) matches neither the terminal rules
-  (`SimpleExpression`) nor the capture rules (`NonSimpleExpression[primitive]` excludes paths).
-  A non-simple right side that reads storage (`map[p] += map[p] + x`) closes. Workaround: bind
-  the read to a local.
-- The same holds for a storage read as the mapping key of a compound assignment
-  (`m[r] += 1` with `r` a state variable), which leaves `WithdrawalContract.becomeRichest` open
-  and is bound to locals in `KingOfEther` and `SimpleAuction.bid`.
-- A conditional expression statement with assignment branches (`c ? a = v : b = v;`) has no
-  rule (`expressions/conditional_expression_with_return_values.sol`).
+- *(fixed)* A compound assignment whose right side is a bare storage or memory path
+  (`pot += other;`, `m_a *= m_a;`, `x += xs[0];`), a storage read as the mapping key of one
+  (`m[r] += 1`), a state variable assigned from a memory element (`x = xs[0];`) and a
+  conditional expression statement with assignment branches (`c ? a = v : b = v;`,
+  `expressions/conditional_expression_with_return_values.sol`) now have rules.
 
 ### True facts that cannot be proved
 
 | Gap | Reproducer (open goal) | Reports |
 |---|---|---|
 | A variable mentioned only in a loop invariant loses its value (`DropEffectlessElementaries` does not see `LoopSpec` bindings) | `uint i = 7; /// invariant j <= n && i == 7` → `==> i = 7` | 2; `dynamic_arrays_in_storage.sol`, `ArrayRemoveByShifting` |
-| Symbolic `sdiv` bounds remain incomplete for negative operands | Quotient expansion is restricted in the default arithmetic mode | Non-negative dividends: `sdiv = div`, `smod = mod` and positive-divisor quotient bounds automate |
+| *(fixed)* Symbolic `sdiv` bounds were incomplete for negative operands | `require(x < 0 && y > 0); assert(x / y <= 0)` | `div_bounds` gives the quotient's sign and magnitude; `sdiv` reaches it through `sdiv_axiom` |
+| *(fixed)* `pow` with a symbolic operand had no rules | `assert(x ** 2 == x * x)`, `1 << n > 0`, `x >> n <= x` | upstream `intPow.key` ported as `intPow.key` |
 | *(fixed)* Parameter upper bounds and enum ranges are missing | `function g(uint8 x) { assert(x <= 255); }` | Parameters and spec quantifiers get only lower bounds (`0 <=` for `uintN`/`address`, enum ranges); upper bounds are dropped because overflow is not modelled. Dynamic lengths are bounded; stored values are not (`docs/bugs.md`) |
 | `msg.value` carries no range, and `msg.sender` only in specified obligations; the non-payable `msg.value == 0` is assumed only in specified obligations | `function u() payable { assert(msg.value >= 0); }` → `leq(msgValue, -1) ==>` | 3; `msg_value_*`, `range_check.sol`, `payable_1.sol` |
 | *(fixed)* Static → dynamic storage array copy loses the length | `uint[9] d1; uint[] d2; d2 = d1; assert(d2.length == 9)` | `array_copy_storage_storage_static_dynamic.sol` |
@@ -206,7 +202,7 @@ Real-world and benchmark:
 |---|---|---|---|
 | OpenZeppelin v5.0.0/v4.9.0, solmate v7, docs `voting.rst` | `OZPausable`, `OZReentrancyGuard`, `OZNonces`, `OZOwnable2Step`, `OZMath`, `OZCounters`, `SolmateOwned`, `DocsBallot` | 40 | — |
 | Solidity by Example | `ArrayReplaceFromEnd`, `Enum`, `FunctionModifier`, `ArrayRemoveByShifting`, `Counter`, `Mapping`, `NestedMapping`, `KingOfEther`, `EtherGame`, `EtherStore`, `Account`, `IterableMapping`, `SendEther`, `TimeLock` | 39 | `open/ArrayRemoveByShifting.sol` (`remove`, full spec); `EtherStore.withdraw` under `-O transferSemantics:withCallback` (the re-entrancy, as intended) |
-| benchmark | 14 files (6 new) | 37/39 | `WithdrawalContract.becomeRichest` (`m[storageKey] += e`), `AccessRestriction.forceOwnerChange` (`&`) |
+| benchmark | 14 files (6 new) | 43/43 | — |
 
 Not ported as real-world contracts: Todos (struct literal, `string` parameters), Vault and
 CrowdFund (external IERC20 calls), MultiSigWallet (`bytes` calls), Payable/ReceiveEther

@@ -760,6 +760,9 @@ sort like the plain index rules: `storageIndexMapping…` rewrites to the
 single update, `storageIndexArray…` carries the same `0 ≤ ie < ℓ` /
 `revert();` branch pair as `storageIndexWriteArraySave`, so
 `values[i] += 1` on an out-of-range `i` reverts instead of writing.
+A non-simple index, `m[richest] += e` or `m[i++] += e`, is first captured by
+`storageIndex⟨op⟩Assign_unfold_leftSndIndex`: `rv = e; pv = richest; m[pv] += rv;`.
+The right side is captured first, so `m[i++] += i` adds the old `i` to `m[old i]`.
 
 ## 8. Abrupt Termination
 

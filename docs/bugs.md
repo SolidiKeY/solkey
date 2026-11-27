@@ -125,18 +125,6 @@ user-defined operator) is refused at load with a `SolidityParseException` naming
 
 ## Proof gets stuck on program text
 
-- **A compound assignment whose right side is a storage path.** `pot += other;`,
-  `m_a *= m_a;`, `x += m_a;` (local target) stay as program text: the terminals take a
-  `SimpleExpression`, the `*AssignValueRhsCapture` rules a `NonSimpleExpression[primitive]`,
-  which excludes paths (`NonSimpleExpressionSVSort.isPathShaped`). Workaround:
-  `uint o = other; pot += o;`. A storage read as the mapping key (`m[r] += 1`) stalls the same
-  way.
-- **A state variable assigned from a memory array element.** `uint[] memory b = new uint[](2);`
-  `b[0] = 7; x = b[0];` stays as program text; `uint y = b[0]; x = y;` closes. Same when `b` is
-  a memory parameter.
-- **A conditional expression statement with assignment branches.** `c == 0 ? a = 7 : b = 7;`
-  (`a`, `b` state variables) has no rule: `--why` reports "no rule executes the active
-  statement". `semantics/open/SolcControlFlow.sol` `conditionalExpressionAssigns`.
 - **A local of contract type.** `C c = C(address(0)); assert(address(c) == address(0));` loads
   but leaves `c = address(0);` as program text: the contract conversion is not modelled.
 
@@ -154,10 +142,6 @@ user-defined operator) is refused at load with a `SolidityParseException` naming
   iteration shortens the `kids[0]` chain, but no term denotes its depth, so `decreases` cannot
   state it. Fix: a depth function over a storage path, defined by the finite-tree assumption of
   `docs/storage.md`, "Overlapping copies".
-- **Symbolic `sdiv` bounds remain incomplete.** The default `NON_LIN_ARITH_NONE`
-  gives `defOps_div`/`defOps_sdiv` infinite cost. For a non-negative dividend,
-  `sdiv`/`smod` now equal `div`/`mod` and positive-divisor quotient bounds automate;
-  a negative dividend or divisor still gets no quotient bound.
 - **Stored values and `msg.value` have no range facts.** Parameters, `msg.sender` (in
   specified obligations) and dynamic lengths (`conformsDynSize`: `0 <= |st| <= 2^256-1`) are in
   their type's range, and `\forall T q; P` compiles to `\forall int q; (lo <= q & q <= hi) -> P`.
@@ -175,9 +159,6 @@ user-defined operator) is refused at load with a `SolidityParseException` naming
   `select(storage, cons(a, cons(size, nil)))` with the bound `size`, so the invariant no longer
   talks about the length. No false claim was found to close. Fix: add these names to
   `SpecCompiler.RESERVED`.
-- **`pow` with a symbolic operand has no rules.** Only `pow_literals` exists (upstream
-  `intPow.key` was not ported), so `x ** 0 == 1`, `x ** 1 == x`, `x ** 2 == x * x`,
-  `1 << n > 0` (`require(n < 8)`) and `x >> n <= x` all stay open on `pow(x, 0)`, `pow(2, n)`, ….
 - **A storage-array index target shrunk by the same tuple.** In
   `uint[] a; function f() public { a.push(); uint[] memory e; (a[0], a) = (5, e); }` solc
   bounds-checks `a[0]` against the old length and then writes a stale slot past the new length;

@@ -544,4 +544,106 @@ contract EvaluationOrder {
         assert(z == 7);
         assert(y == 8);
     }
+
+    function storageIndexAddAssignStorageKey() public {
+        balances[0] = 3;
+        balances[3] = 10;
+        balances[balances[0]] += 5;
+        assert(balances[3] == 15);
+        assert(balances[0] == 3);
+    }
+
+    function storageIndexSubAssignImpureIndex() public {
+        balances[0] = 10;
+        uint i = 0;
+        balances[i++] -= i + 3;
+        assert(i == 1);
+        assert(balances[0] == 7);
+    }
+
+    function storageIndexMulAssignImpureIndex() public {
+        balances[1] = 5;
+        uint i = 1;
+        balances[i++] *= i + 2;
+        assert(i == 2);
+        assert(balances[1] == 15);
+    }
+
+    function storageIndexDivAssignImpureIndex() public {
+        balances[2] = 20;
+        uint i = 2;
+        balances[i++] /= i + 2;
+        assert(i == 3);
+        assert(balances[2] == 5);
+    }
+
+    /// @custom:key box
+    function storageIndexModAssignImpureIndex() public {
+        require(a.length == 0);
+        a.push(7);
+        a.push(7);
+        uint i = 0;
+        a[i++] %= i + 4;
+        assert(i == 1);
+        assert(a[0] == 3);
+        assert(a[1] == 7);
+    }
+
+    /// @custom:key box
+    function storageIndexAddAssignImpureReceiverAndIndex() public {
+        require(matrix.length == 0);
+        matrix.push();
+        require(matrix[0].length == 0);
+        matrix[0].push(5);
+        matrix[0].push(5);
+        uint i = 0;
+        matrix[i][i++] += i + 1;
+        assert(i == 1);
+        assert(matrix[0][0] == 6);
+        assert(matrix[0][1] == 5);
+    }
+
+    function memoryIndexAddAssignMemoryKey() public pure {
+        uint[] memory xs = new uint[](2);
+        xs[0] = 1;
+        xs[xs[1]] += 5;
+        assert(xs[0] == 6);
+        assert(xs[1] == 0);
+    }
+
+    function memoryIndexSubAssignImpureIndex() public pure {
+        uint[] memory xs = new uint[](2);
+        xs[0] = 10;
+        uint i = 0;
+        xs[i++] -= i + 3;
+        assert(i == 1);
+        assert(xs[0] == 7);
+    }
+
+    function memoryIndexMulAssignImpureIndex() public pure {
+        uint[] memory xs = new uint[](2);
+        xs[0] = 5;
+        uint i = 0;
+        xs[i++] *= i + 2;
+        assert(i == 1);
+        assert(xs[0] == 10);
+    }
+
+    function memoryIndexDivAssignImpureIndex() public pure {
+        uint[] memory xs = new uint[](2);
+        xs[0] = 20;
+        uint i = 0;
+        xs[i++] /= i + 4;
+        assert(i == 1);
+        assert(xs[0] == 5);
+    }
+
+    function memoryIndexModAssignImpureIndex() public pure {
+        uint[] memory xs = new uint[](2);
+        xs[0] = 7;
+        uint i = 0;
+        xs[i++] %= i + 4;
+        assert(i == 1);
+        assert(xs[0] == 3);
+    }
 }
